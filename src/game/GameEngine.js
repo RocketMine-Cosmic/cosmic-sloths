@@ -266,6 +266,9 @@ export class GameEngine {
         const wUpgrades = this.save.weaponUpgrades?.[w.id] || {};
         const dmgUpgradeLevel = wUpgrades.damage || 0;
         const areaUpgradeLevel = wUpgrades.area || 0;
+        const cdUpgradeLevel = wUpgrades.cooldown || 0;
+        
+        const isMastered = dmgUpgradeLevel >= 5 && areaUpgradeLevel >= 5 && cdUpgradeLevel >= 5;
         
         const wDmgMult = 1 + (dmgUpgradeLevel * 0.1); // +10% per level
         const wAreaMult = 1 + (areaUpgradeLevel * 0.1); // +10% per level
@@ -291,14 +294,20 @@ export class GameEngine {
                 damage: dmg,
                 pierce: 2 + Math.floor(w.level/2),
                 life: 2,
-                color: '#00ff00'
+                color: isMastered ? '#4169E1' : '#00ff00',
+                isMastered: isMastered,
+                weaponId: 'napBeam'
             });
         }
         else if (w.id === 'vineWhip') {
             this.enemies.forEach(e => {
                 if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < 100 * area) {
                     this.damageEnemy(e, dmg);
-                    this.addParticle(e.x, e.y, '#228B22', 10);
+                    this.addParticle(e.x, e.y, isMastered ? '#FF0000' : '#228B22', 10);
+                    if (isMastered) {
+                        this.player.hp = Math.min(this.player.maxHp, this.player.hp + (dmg * 0.05));
+                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                    }
                 }
             });
         }
@@ -311,6 +320,28 @@ export class GameEngine {
                 this.enemies.forEach(e => {
                     if (Math.hypot(e.x - px, e.y - py) < 20) this.damageEnemy(e, dmg * 0.2);
                 });
+                
+                if (isMastered) {
+                    let nearest = null;
+                    let minDist = 200;
+                    this.enemies.forEach(e => {
+                        const d = Math.hypot(e.x - px, e.y - py);
+                        if (d < minDist) { minDist = d; nearest = e; }
+                    });
+                    if (nearest) {
+                        const lAngle = Math.atan2(nearest.y - py, nearest.x - px);
+                        this.projectiles.push({
+                            x: px, y: py,
+                            vx: Math.cos(lAngle) * 300,
+                            vy: Math.sin(lAngle) * 300,
+                            radius: 3,
+                            damage: dmg * 0.5,
+                            pierce: 1,
+                            life: 1,
+                            color: '#FF0000'
+                        });
+                    }
+                }
             }
         }
         else if (w.id === 'napalm') {
@@ -321,8 +352,10 @@ export class GameEngine {
                 damage: dmg * 0.5,
                 pierce: 999,
                 life: 3 + w.level,
-                color: 'rgba(255, 69, 0, 0.5)',
-                isAoe: true
+                color: isMastered ? 'rgba(0, 191, 255, 0.5)' : 'rgba(255, 69, 0, 0.5)',
+                isAoe: true,
+                isMastered: isMastered,
+                weaponId: 'napalm'
             });
         }
         else if (w.id === 'novaPulse') {
@@ -333,10 +366,26 @@ export class GameEngine {
                 damage: dmg,
                 pierce: 999,
                 life: 0.5,
-                color: 'rgba(0, 255, 255, 0.6)',
+                color: isMastered ? 'rgba(138, 43, 226, 0.6)' : 'rgba(0, 255, 255, 0.6)',
                 isAoe: true,
                 pulse: true
             });
+            if (isMastered) {
+                setTimeout(() => {
+                    if (this.isGameOver || this.isVictory) return;
+                    this.projectiles.push({
+                        x: this.player.x, y: this.player.y,
+                        vx: 0, vy: 0,
+                        radius: 10 * area,
+                        damage: dmg * 0.5,
+                        pierce: 999,
+                        life: 0.5,
+                        color: 'rgba(138, 43, 226, 0.4)',
+                        isAoe: true,
+                        pulse: true
+                    });
+                }, 500);
+            }
         }
         else if (w.id === 'shieldBubble') {
             this.projectiles.push({
@@ -346,9 +395,11 @@ export class GameEngine {
                 damage: dmg,
                 pierce: 999,
                 life: 2.0,
-                color: 'rgba(255, 255, 255, 0.3)',
+                color: isMastered ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
                 isAoe: true,
-                pushback: 250
+                pushback: 250,
+                isMastered: isMastered,
+                weaponId: 'shieldBubble'
             });
         }
         else if (w.id === 'burningBarrier') {
@@ -437,6 +488,22 @@ export class GameEngine {
                             p.hitList.add(e);
                             this.damageEnemy(e, p.damage);
                             p.pierce--;
+                            
+                            if (p.isMastered && p.weaponId === 'napBeam') {
+                                let nearest = null;
+                                let minDist = 150;
+                                this.enemies.forEach(ce => {
+                                    if (ce !== e && !p.hitList.has(ce)) {
+                                        const d = Math.hypot(ce.x - e.x, ce.y - e.y);
+                                        if (d < minDist) { minDist = d; nearest = ce; }
+                                    }
+                                });
+                                if (nearest) {
+                                    this.damageEnemy(nearest, p.damage * 0.5);
+                                    p.hitList.add(nearest);
+                                    this.addParticle(nearest.x, nearest.y, '#4169E1', 5);
+                                }
+                            }
                         }
                     }
                 });
@@ -469,10 +536,33 @@ export class GameEngine {
                             e.y += Math.sin(angle) * p.pushback * dt;
                         }
                     });
+                    
+                    if (p.isMastered && p.weaponId === 'shieldBubble' && this.frameCount % 30 === 0) {
+                        const inRange = this.enemies.filter(e => Math.hypot(e.x - p.x, e.y - p.y) < p.radius * 2);
+                        if (inRange.length > 0) {
+                            const target = inRange[Math.floor(Math.random() * inRange.length)];
+                            const angle = Math.atan2(target.y - p.y, target.x - p.x);
+                            this.projectiles.push({
+                                x: p.x, y: p.y,
+                                vx: Math.cos(angle) * 400,
+                                vy: Math.sin(angle) * 400,
+                                radius: 3,
+                                damage: p.damage * 0.5,
+                                pierce: 1,
+                                life: 1,
+                                color: '#FFD700'
+                            });
+                        }
+                    }
                 } else {
                     if (this.frameCount % 15 === 0) {
                         this.enemies.forEach(e => {
-                            if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) this.damageEnemy(e, p.damage);
+                            if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
+                                this.damageEnemy(e, p.damage);
+                                if (p.isMastered && p.weaponId === 'napalm') {
+                                    e.slowTimer = 0.5;
+                                }
+                            }
                         });
                     }
                 }
@@ -521,9 +611,11 @@ export class GameEngine {
             const dist = Math.hypot(dx, dy);
             
             if (dist > 0) {
-                e.x += (dx / dist) * e.speed * 60 * dt;
-                e.y += (dy / dist) * e.speed * 60 * dt;
+                const currentSpeed = e.slowTimer > 0 ? e.speed * 0.5 : e.speed;
+                e.x += (dx / dist) * currentSpeed * 60 * dt;
+                e.y += (dy / dist) * currentSpeed * 60 * dt;
             }
+            if (e.slowTimer > 0) e.slowTimer -= dt;
             
             if (dist < this.player.radius + e.radius) {
                 if (!e.attackTimer || e.attackTimer <= 0) {
@@ -819,13 +911,17 @@ export class GameEngine {
 
         const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
         if (swarm) {
+            const wUpgrades = this.save.weaponUpgrades?.['slothSwarm'] || {};
+            const isMastered = (wUpgrades.damage || 0) >= 5 && (wUpgrades.area || 0) >= 5 && (wUpgrades.cooldown || 0) >= 5;
+            
             const count = 1 + Math.floor(swarm.level / 2);
-            const area = swarm.baseArea * this.player.areaMult * (1 + (swarm.level-1)*0.1);
+            const area = swarm.baseArea * this.player.areaMult * (1 + (swarm.level-1)*0.1) * (1 + (wUpgrades.area || 0) * 0.1);
+            const speedMult = isMastered ? 6 : 3;
             for(let i=0; i<count; i++) {
-                const angle = (Math.PI * 2 / count) * i + this.time * 3;
+                const angle = (Math.PI * 2 / count) * i + this.time * speedMult;
                 const px = this.player.x + Math.cos(angle) * (60 * area);
                 const py = this.player.y + Math.sin(angle) * (60 * area);
-                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillStyle = isMastered ? '#FF0000' : '#8B4513';
                 this.ctx.beginPath(); this.ctx.arc(px, py, 6, 0, Math.PI*2); this.ctx.fill();
             }
         }

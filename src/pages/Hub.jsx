@@ -119,11 +119,27 @@ export default function Hub() {
 
         return (
             <div className="space-y-4 md:space-y-6">
-                {baseWeapons.map(weapon => (
-                    <div key={weapon.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                {baseWeapons.map(weapon => {
+                    const wUpgrades = save.weaponUpgrades?.[weapon.id] || {};
+                    const isMastered = (wUpgrades.damage || 0) >= UPGRADE_COSTS.length && 
+                                       (wUpgrades.area || 0) >= UPGRADE_COSTS.length && 
+                                       (wUpgrades.cooldown || 0) >= UPGRADE_COSTS.length;
+
+                    return (
+                    <div key={weapon.id} className={`bg-slate-800 p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
                         <div className="mb-4">
-                            <h3 className="font-bold text-lg md:text-xl text-white">{weapon.name}</h3>
+                            <div className="flex justify-between items-start mb-1">
+                                <h3 className={`font-bold text-lg md:text-xl ${isMastered ? 'text-yellow-400' : 'text-white'}`}>{weapon.name}</h3>
+                                {isMastered && (
+                                    <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded border border-yellow-500/50">
+                                        MASTERED
+                                    </div>
+                                )}
+                            </div>
                             <p className="text-slate-400 text-xs md:text-sm">{weapon.desc}</p>
+                            {isMastered && (
+                                <p className="text-yellow-300 text-xs md:text-sm font-bold mt-2">✨ {weapon.masteryDesc}</p>
+                            )}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                             {upgradeTypes.map(stat => {
@@ -176,7 +192,8 @@ export default function Hub() {
                             })}
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         );
     };
