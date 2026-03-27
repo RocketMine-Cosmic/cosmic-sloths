@@ -6,7 +6,7 @@ import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles, Crossh
 import Leaderboard from '../components/game/Leaderboard';
 import UpgradesTab from '../components/game/UpgradesTab';
 
-const UPGRADE_COSTS = [100, 300, 600, 1200, 2400];
+const UPGRADE_COSTS = [500, 1000, 2000, 4000, 8000];
 
 export default function Hub() {
     const navigate = useNavigate();

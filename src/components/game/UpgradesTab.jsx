@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Coffee, Shield, Zap, Heart, Magnet, Timer, Sparkles } from 'lucide-react';
 
 const UPGRADE_TYPES = [
-    { id: 'permanent', name: 'Permanent (Weak)', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [5, 10, 20, 40, 80] },
-    { id: 'weekly', name: 'Weekly (Medium)', goldCosts: [100, 250, 500, 1000, 2000], tokenCosts: [1, 2, 5, 10, 20] },
+    { id: 'permanent', name: 'Permanent (Weak)', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [10, 20, 40, 80, 160] },
+    { id: 'weekly', name: 'Weekly (Medium)', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [5, 10, 20, 40, 80] },
     { id: 'seasonal', name: 'Seasonal (Strong)', goldCosts: [2000, 5000, 10000, 20000, 40000], tokenCosts: [20, 50, 100, 200, 400] }
 ];
 
@@ -22,8 +22,8 @@ const COSMETICS = [
     { id: 'fire', name: 'Fire Trail', goldCost: 10000, tokenCost: 100, icon: '🔥' },
     { id: 'ice', name: 'Ice Trail', goldCost: 10000, tokenCost: 100, icon: '❄️' },
     { id: 'toxic', name: 'Toxic Trail', goldCost: 10000, tokenCost: 100, icon: '🧪' },
-    { id: 'void', name: 'Void Trail', goldCost: 25000, tokenCost: 250, icon: '🌌' },
-    { id: 'gold', name: 'Golden Trail', goldCost: 50000, tokenCost: 500, icon: '✨' }
+    { id: 'void', name: 'Void Trail', goldCost: 50000, tokenCost: 500, icon: '🌌' },
+    { id: 'gold', name: 'Golden Trail', goldCost: 100000, tokenCost: 1000, icon: '✨' }
 ];
 
 export default function UpgradesTab({ save, setSave, SaveManager }) {
