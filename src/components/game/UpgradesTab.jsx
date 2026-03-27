@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Coffee, Shield, Zap, Heart, Magnet, Timer, Sparkles } from 'lucide-react';
 
 const UPGRADE_TYPES = [
-    { id: 'permanent', name: 'Permanent (Weak)', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [5, 10, 20, 40, 80] },
-    { id: 'weekly', name: 'Weekly (Medium)', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [3, 5, 10, 20, 40] },
-    { id: 'seasonal', name: 'Seasonal (Strong)', goldCosts: [2000, 5000, 10000, 20000, 40000], tokenCosts: [10, 25, 50, 100, 200] }
+    { id: 'permanent', name: 'Permanent (Weak)', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [250, 500, 1000, 2000, 4000] },
+    { id: 'weekly', name: 'Weekly (Medium)', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [125, 250, 500, 1000, 2000] },
+    { id: 'seasonal', name: 'Seasonal (Strong)', goldCosts: [2000, 5000, 10000, 20000, 40000], tokenCosts: [500, 1250, 2500, 5000, 10000] }
 ];
 
 const STATS = [
@@ -19,11 +19,11 @@ const STATS = [
 
 const COSMETICS = [
     { id: 'default', name: 'None', goldCost: 0, tokenCost: 0, icon: '⚪' },
-    { id: 'fire', name: 'Fire Trail', goldCost: 10000, tokenCost: 50, icon: '🔥' },
-    { id: 'ice', name: 'Ice Trail', goldCost: 10000, tokenCost: 50, icon: '❄️' },
-    { id: 'toxic', name: 'Toxic Trail', goldCost: 10000, tokenCost: 50, icon: '🧪' },
-    { id: 'void', name: 'Void Trail', goldCost: 50000, tokenCost: 250, icon: '🌌' },
-    { id: 'gold', name: 'Golden Trail', goldCost: 100000, tokenCost: 500, icon: '✨' }
+    { id: 'fire', name: 'Fire Trail', goldCost: 10000, tokenCost: 2500, icon: '🔥' },
+    { id: 'ice', name: 'Ice Trail', goldCost: 10000, tokenCost: 2500, icon: '❄️' },
+    { id: 'toxic', name: 'Toxic Trail', goldCost: 10000, tokenCost: 2500, icon: '🧪' },
+    { id: 'void', name: 'Void Trail', goldCost: 50000, tokenCost: 12500, icon: '🌌' },
+    { id: 'gold', name: 'Golden Trail', goldCost: 100000, tokenCost: 25000, icon: '✨' }
 ];
 
 export default function UpgradesTab({ save, setSave, SaveManager }) {
