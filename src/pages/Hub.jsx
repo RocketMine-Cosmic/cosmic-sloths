@@ -20,7 +20,7 @@ export default function Hub() {
     const handleBuyCharacter = (char, currency = 'gold') => {
         if (save.unlockedCharacters.includes(char.id)) return;
         
-        const tokenCost = char.cost;
+        const tokenCost = Math.max(1, Math.floor(char.cost / 100));
 
         if (currency === 'gold' && save.gold >= char.cost) {
             const newSave = { 
@@ -49,6 +49,7 @@ export default function Hub() {
         if (currentLevel >= UPGRADE_COSTS.length) return;
         
         const cost = UPGRADE_COSTS[currentLevel];
+        const tokenCost = Math.max(1, Math.floor(cost / 100));
         
         if (currency === 'gold' && save.gold >= cost) {
             const newSave = { ...save, gold: save.gold - cost };
@@ -57,8 +58,8 @@ export default function Hub() {
             newSave.weaponUpgrades[weaponId][stat] = currentLevel + 1;
             SaveManager.save(newSave);
             setSave(newSave);
-        } else if (currency === 'token' && (save.cosmicTokens || 0) >= cost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cost };
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
             if (!newSave.weaponUpgrades) newSave.weaponUpgrades = {};
             if (!newSave.weaponUpgrades[weaponId]) newSave.weaponUpgrades[weaponId] = {};
             newSave.weaponUpgrades[weaponId][stat] = currentLevel + 1;
@@ -68,7 +69,7 @@ export default function Hub() {
     };
 
     const handleBuyTalent = (talent, currency = 'gold') => {
-        const tokenCost = talent.cost;
+        const tokenCost = Math.max(1, Math.floor(talent.cost / 100));
 
         if (currency === 'gold' && save.gold >= talent.cost) {
             const newSave = { ...save, gold: save.gold - talent.cost };
@@ -161,13 +162,13 @@ export default function Hub() {
                                             {!isMax && (
                                                 <button
                                                     onClick={() => handleBuyWeaponUpgrade(weapon.id, stat.id, 'token')}
-                                                    disabled={(save.cosmicTokens || 0) < cost}
+                                                    disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(cost / 100))}
                                                     className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
-                                                        (save.cosmicTokens || 0) >= cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                        (save.cosmicTokens || 0) >= Math.max(1, Math.floor(cost / 100)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                         'bg-slate-800 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
-                                                    💠 {cost}
+                                                    💠 {Math.max(1, Math.floor(cost / 100))}
                                                 </button>
                                             )}
                                         </div>
@@ -230,12 +231,12 @@ export default function Hub() {
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'token'); }}
-                                    disabled={(save.cosmicTokens || 0) < char.cost}
+                                    disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(char.cost / 100))}
                                     className={`flex-1 py-2 rounded-lg font-bold text-sm md:text-base ${
-                                        (save.cosmicTokens || 0) >= char.cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
+                                        (save.cosmicTokens || 0) >= Math.max(1, Math.floor(char.cost / 100)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
                                     }`}
                                 >
-                                    💠 {char.cost}
+                                    💠 {Math.max(1, Math.floor(char.cost / 100))}
                                 </button>
                             </div>
                         )}
@@ -363,13 +364,13 @@ export default function Hub() {
                                                     {!isUnlocked && (
                                                         <button
                                                             onClick={() => handleBuyTalent(talent, 'token')}
-                                                            disabled={!canUnlock || (save.cosmicTokens || 0) < talent.cost}
+                                                            disabled={!canUnlock || (save.cosmicTokens || 0) < Math.max(1, Math.floor(talent.cost / 100))}
                                                             className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
-                                                                canUnlock && (save.cosmicTokens || 0) >= talent.cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                                canUnlock && (save.cosmicTokens || 0) >= Math.max(1, Math.floor(talent.cost / 100)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                                             }`}
                                                         >
-                                                            💠 {talent.cost}
+                                                            💠 {Math.max(1, Math.floor(talent.cost / 100))}
                                                         </button>
                                                     )}
                                                 </div>
