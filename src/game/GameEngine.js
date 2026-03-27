@@ -89,6 +89,16 @@ export class GameEngine {
         this.particles = [];
         this.damageTexts = [];
         
+        this.stars = [];
+        for (let i = 0; i < 150; i++) {
+            this.stars.push({
+                x: Math.random() * 2000,
+                y: Math.random() * 2000,
+                size: Math.random() * 2 + 0.5,
+                parallax: Math.random() * 0.4 + 0.1
+            });
+        }
+        
         this.keys = {};
         this.time = 0;
         this.frameCount = 0;
@@ -938,41 +948,47 @@ export class GameEngine {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         if (this.arenaImage && this.arenaImage.complete) {
-            const imgW = this.arenaImage.width;
-            const imgH = this.arenaImage.height;
-            const parallaxFactor = 0.2;
-            
-            let offsetX = -(this.camera.x * parallaxFactor) % imgW;
-            let offsetY = -(this.camera.y * parallaxFactor) % imgH;
-            
-            if (offsetX > 0) offsetX -= imgW;
-            if (offsetY > 0) offsetY -= imgH;
-            
-            this.ctx.globalAlpha = 0.7;
-            for (let x = offsetX; x < this.canvas.width; x += imgW) {
-                for (let y = offsetY; y < this.canvas.height; y += imgH) {
-                    this.ctx.drawImage(this.arenaImage, x, y, imgW, imgH);
-                }
-            }
+            this.ctx.globalAlpha = 0.5;
+            const scale = Math.max(this.canvas.width / this.arenaImage.width, this.canvas.height / this.arenaImage.height);
+            const drawW = this.arenaImage.width * scale;
+            const drawH = this.arenaImage.height * scale;
+            const x = (this.canvas.width - drawW) / 2;
+            const y = (this.canvas.height - drawH) / 2;
+            this.ctx.drawImage(this.arenaImage, x, y, drawW, drawH);
             this.ctx.globalAlpha = 1.0;
         }
+
+        this.ctx.fillStyle = '#ffffff';
+        this.stars.forEach(star => {
+            let sx = (star.x - this.camera.x * star.parallax) % 2000;
+            let sy = (star.y - this.camera.y * star.parallax) % 2000;
+            if (sx < 0) sx += 2000;
+            if (sy < 0) sy += 2000;
+            
+            const screenX = (sx / 2000) * this.canvas.width;
+            const screenY = (sy / 2000) * this.canvas.height;
+            
+            this.ctx.globalAlpha = star.parallax;
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, star.size, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+        this.ctx.globalAlpha = 1.0;
 
         this.ctx.save();
         this.ctx.translate(-this.camera.x, -this.camera.y);
         
-        if (!this.arenaImage || !this.arenaImage.complete) {
-            this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-            this.ctx.lineWidth = 1;
-            const gridSize = 100;
-            const startX = Math.floor(this.camera.x / gridSize) * gridSize;
-            const startY = Math.floor(this.camera.y / gridSize) * gridSize;
-            
-            for(let x = startX; x < startX + this.canvas.width + gridSize; x += gridSize) {
-                this.ctx.beginPath(); this.ctx.moveTo(x, this.camera.y); this.ctx.lineTo(x, this.camera.y + this.canvas.height); this.ctx.stroke();
-            }
-            for(let y = startY; y < startY + this.canvas.height + gridSize; y += gridSize) {
-                this.ctx.beginPath(); this.ctx.moveTo(this.camera.x, y); this.ctx.lineTo(this.camera.x + this.canvas.width, y); this.ctx.stroke();
-            }
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        this.ctx.lineWidth = 1;
+        const gridSize = 100;
+        const startX = Math.floor(this.camera.x / gridSize) * gridSize;
+        const startY = Math.floor(this.camera.y / gridSize) * gridSize;
+        
+        for(let x = startX; x < startX + this.canvas.width + gridSize; x += gridSize) {
+            this.ctx.beginPath(); this.ctx.moveTo(x, this.camera.y); this.ctx.lineTo(x, this.camera.y + this.canvas.height); this.ctx.stroke();
+        }
+        for(let y = startY; y < startY + this.canvas.height + gridSize; y += gridSize) {
+            this.ctx.beginPath(); this.ctx.moveTo(this.camera.x, y); this.ctx.lineTo(this.camera.x + this.canvas.width, y); this.ctx.stroke();
         }
 
         this.pickups.forEach(p => {
