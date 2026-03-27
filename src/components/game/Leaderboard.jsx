@@ -6,7 +6,7 @@ import { CHARACTERS } from '../../game/Constants';
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [view, setView] = useState('weekly'); // 'weekly' or 'seasonal'
+    const [view, setView] = useState('weekly'); // 'weekly', 'seasonal', or 'all_time'
 
     useEffect(() => {
         fetchScores();
@@ -20,7 +20,7 @@ export default function Leaderboard() {
             const seasonNum = Math.floor(weekNum / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
 
-            const filter = view === 'weekly' ? { week_id } : { season_id };
+            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : {};
             
             // Fetch top 50 scores
             const data = await base44.entities.RunScore.filter(filter, '-score', 50);
@@ -53,6 +53,12 @@ export default function Leaderboard() {
                         className={`px-4 py-2 rounded-lg font-bold transition-colors ${view === 'seasonal' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
                         Seasonal
+                    </button>
+                    <button 
+                        onClick={() => setView('all_time')}
+                        className={`px-4 py-2 rounded-lg font-bold transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        All Time
                     </button>
                 </div>
             </div>
