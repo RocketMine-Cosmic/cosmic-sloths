@@ -1208,13 +1208,33 @@ export class GameEngine {
         }
 
         this.pickups.forEach(p => {
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
             this.ctx.fillStyle = p.color;
-            this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.type === 'xp' ? 4 : 6, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.beginPath();
+            if (p.type === 'xp') {
+                this.ctx.rotate(this.time * 2);
+                this.ctx.moveTo(0, -6);
+                this.ctx.lineTo(4, 0);
+                this.ctx.lineTo(0, 6);
+                this.ctx.lineTo(-4, 0);
+            } else if (p.type === 'gold') {
+                this.ctx.rotate(Math.sin(this.time * 5) * 0.2);
+                for (let i = 0; i < 8; i++) {
+                    const a = (Math.PI / 4) * i;
+                    this.ctx.lineTo(Math.cos(a) * 6, Math.sin(a) * 6);
+                }
+            } else {
+                this.ctx.rect(-4, -4, 8, 8);
+            }
+            this.ctx.closePath();
+            this.ctx.fill();
+            this.ctx.restore();
         });
 
         if (this.characterPickup) {
             this.ctx.fillStyle = this.characterPickup.color;
-            this.ctx.beginPath(); this.ctx.arc(this.characterPickup.x, this.characterPickup.y, 15, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.fillRect(this.characterPickup.x - 15, this.characterPickup.y - 15, 30, 30);
             this.ctx.fillStyle = '#ffffff';
             this.ctx.font = '16px Arial';
             this.ctx.textAlign = 'center';
@@ -1276,7 +1296,12 @@ export class GameEngine {
             } else if (p.type === 'stomp') {
                 this.ctx.fillStyle = p.color;
                 this.ctx.beginPath();
-                this.ctx.ellipse(0, 0, p.radius, p.radius*0.5, 0, 0, Math.PI*2);
+                for(let i=0; i<12; i++) {
+                    const a = (Math.PI * 2 / 12) * i;
+                    const r = p.radius * (i % 2 === 0 ? 1 : 0.8);
+                    this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r * 0.5);
+                }
+                this.ctx.closePath();
                 this.ctx.fill();
             } else if (p.type === 'repair_beam') {
                 this.ctx.strokeStyle = p.color;
@@ -1293,26 +1318,41 @@ export class GameEngine {
                 this.ctx.stroke();
             } else if (p.isAoe) {
                 this.ctx.fillStyle = p.color;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.beginPath();
+                for (let i=0; i<16; i++) {
+                    const a = (Math.PI * 2 / 16) * i;
+                    this.ctx.lineTo(Math.cos(a) * p.radius, Math.sin(a) * p.radius);
+                }
+                this.ctx.closePath();
+                this.ctx.fill();
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 2;
                 this.ctx.globalAlpha = 0.5;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2); this.ctx.stroke();
+                this.ctx.stroke();
             } else {
                 // Default projectile
                 this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius*0.5, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.fillRect(-p.radius*0.5, -p.radius*0.5, p.radius, p.radius);
                 this.ctx.fillStyle = p.color;
                 this.ctx.globalAlpha = 0.5;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.fillRect(-p.radius, -p.radius, p.radius*2, p.radius*2);
             }
             this.ctx.restore();
         });
 
         if (this.hazards) {
             this.hazards.forEach(h => {
+                this.ctx.save();
+                this.ctx.translate(h.x, h.y);
+                this.ctx.rotate(this.time);
                 this.ctx.beginPath();
-                this.ctx.arc(h.x, h.y, h.radius, 0, Math.PI * 2);
+                const spikes = 12;
+                for (let i = 0; i < spikes * 2; i++) {
+                    const a = (Math.PI * 2 / (spikes * 2)) * i;
+                    const r = i % 2 === 0 ? h.radius : h.radius * 0.8;
+                    this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                }
+                this.ctx.closePath();
                 if (h.active) {
                     this.ctx.fillStyle = 'rgba(255, 69, 0, 0.8)';
                     this.ctx.fill();
@@ -1323,6 +1363,7 @@ export class GameEngine {
                     this.ctx.lineWidth = 2;
                     this.ctx.stroke();
                 }
+                this.ctx.restore();
             });
         }
 
@@ -1434,28 +1475,21 @@ export class GameEngine {
             if (p.type === 'spark') {
                 this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
             } else if (p.type === 'glow') {
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.size * 2, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
             } else if (p.type === 'slash') {
                 this.ctx.fillRect(-p.size*2, -p.size/4, p.size*4, p.size/2);
             } else if (p.type === 'smoke') {
                 this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
             } else if (p.type === 'glitch') {
                 this.ctx.fillRect(-p.size, -p.size/2, p.size*2, p.size);
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
             } else if (p.type === 'circle') {
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
             } else {
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.size ? p.size / 2 : 2, 0, Math.PI * 2);
-                this.ctx.fill();
+                const s = p.size ? p.size : 4;
+                this.ctx.fillRect(-s/2, -s/2, s, s);
             }
             this.ctx.restore();
         });
