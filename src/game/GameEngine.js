@@ -142,8 +142,10 @@ export class GameEngine {
     }
 
     spawnEnemies(dt) {
-        const spawnRate = Math.max(0.1, 1.0 - (this.time / 300));
-        if (Math.random() < dt / spawnRate) {
+        const progress = Math.min(1, this.time / this.arena.duration);
+        const spawnRate = 2.0 - (1.95 * Math.pow(progress, 2));
+        
+        if (Math.random() < dt / Math.max(0.02, spawnRate)) {
             const angle = Math.random() * Math.PI * 2;
             const dist = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
             const ex = this.player.x + Math.cos(angle) * dist;
@@ -152,15 +154,17 @@ export class GameEngine {
             const availableEnemies = ENEMIES.filter((_, i) => i <= Math.floor(this.time / 60) || i === 0);
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
-            if (this.time > 60 && Math.random() < 0.01) {
+            const hpMult = 0.5 + (3.5 * Math.pow(progress, 1.5));
+            
+            if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elite = ENEMIES.find(e => e.id === 'elite');
                 if (elite) {
-                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * (1 + this.time/120), hp: elite.hp * (1 + this.time/120) });
+                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2 });
                     return;
                 }
             }
             
-            this.enemies.push({ ...type, x: ex, y: ey, maxHp: type.hp * (1 + this.time/300), hp: type.hp * (1 + this.time/300) });
+            this.enemies.push({ ...type, x: ex, y: ey, maxHp: type.hp * hpMult, hp: type.hp * hpMult });
         }
     }
 
@@ -316,8 +320,9 @@ export class GameEngine {
             if (e.hp <= 0) {
                 this.kills++;
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
-                if (Math.random() < 0.1) {
-                    this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: 1, color: '#ffd700' });
+                if (Math.random() < 0.3) {
+                    const goldValue = 1 + Math.floor(this.time / 60);
+                    this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
                 }
                 this.addParticle(e.x, e.y, e.color, 15);
                 return false;
