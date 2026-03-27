@@ -20,10 +20,11 @@ export class GameEngine {
             regen: baseChar.regen + (saveStats.regen * 0.2),
             armor: baseChar.armor,
             areaMult: 1,
-            cooldownMult: 1,
+            cooldownMult: 1 - ((saveStats.cooldown || 0) * 0.05),
             projSpeedMult: 1,
             goldMult: 1,
             xpMult: 1,
+            luck: saveStats.luck || 0,
             color: baseChar.color,
             weapons: [{ ...WEAPONS.napBeam, level: 1, timer: 0 }],
             passives: []
@@ -320,7 +321,7 @@ export class GameEngine {
             if (e.hp <= 0) {
                 this.kills++;
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
-                if (Math.random() < 0.3) {
+                if (Math.random() < 0.3 + (this.player.luck * 0.05)) {
                     const goldValue = 1 + Math.floor(this.time / 60);
                     this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
                 }

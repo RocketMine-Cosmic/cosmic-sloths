@@ -21,7 +21,9 @@ export const SaveManager = {
         health: 0,
         speed: 0,
         magnet: 0,
-        regen: 0
+        regen: 0,
+        cooldown: 0,
+        luck: 0
       }
     };
   },

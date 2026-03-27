@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS } from '../game/Constants';
-import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight } from 'lucide-react';
+import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles } from 'lucide-react';
 
 const UPGRADE_COSTS = [50, 150, 300, 600, 1200];
 
@@ -14,13 +14,13 @@ export default function Hub() {
     const [activeTab, setActiveTab] = useState('deploy');
 
     const handleBuyUpgrade = (stat) => {
-        const currentLevel = save.permanentUpgrades[stat];
+        const currentLevel = save.permanentUpgrades[stat] || 0;
         if (currentLevel >= UPGRADE_COSTS.length) return;
         
         const cost = UPGRADE_COSTS[currentLevel];
         if (save.gold >= cost) {
             const newSave = { ...save, gold: save.gold - cost };
-            newSave.permanentUpgrades[stat]++;
+            newSave.permanentUpgrades[stat] = currentLevel + 1;
             SaveManager.save(newSave);
             setSave(newSave);
         }
@@ -49,13 +49,15 @@ export default function Hub() {
             { id: 'health', name: 'Thick Fur (Max HP)', icon: Heart },
             { id: 'speed', name: 'Morning Coffee (Speed)', icon: Coffee },
             { id: 'magnet', name: 'Gravity Boots (Pickup)', icon: Magnet },
-            { id: 'regen', name: 'Photosynthesis (Regen)', icon: Shield }
+            { id: 'regen', name: 'Photosynthesis (Regen)', icon: Shield },
+            { id: 'cooldown', name: 'Alarm Clock (Cooldown)', icon: Timer },
+            { id: 'luck', name: 'Four-Leaf Clover (Luck)', icon: Sparkles }
         ];
 
         return (
             <div className="space-y-3 md:space-y-4">
                 {stats.map(stat => {
-                    const level = save.permanentUpgrades[stat.id];
+                    const level = save.permanentUpgrades[stat.id] || 0;
                     const cost = UPGRADE_COSTS[level];
                     const isMax = level >= UPGRADE_COSTS.length;
                     const canAfford = save.gold >= cost;
