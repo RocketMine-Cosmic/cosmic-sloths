@@ -22,9 +22,22 @@ export default function Leaderboard() {
 
             const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : {};
             
-            // Fetch top 50 scores
-            const data = await base44.entities.RunScore.filter(filter, '-score', 50);
-            setScores(data);
+            // Fetch top scores (fetch more to allow deduplication)
+            const data = await base44.entities.RunScore.filter(filter, '-score', 300);
+            
+            // Deduplicate by player_name, keeping the highest score
+            const uniqueScores = [];
+            const seenPlayers = new Set();
+            
+            for (const score of data) {
+                if (!seenPlayers.has(score.player_name)) {
+                    seenPlayers.add(score.player_name);
+                    uniqueScores.push(score);
+                }
+                if (uniqueScores.length >= 50) break;
+            }
+            
+            setScores(uniqueScores);
         } catch (error) {
             console.error('Failed to fetch leaderboard', error);
         }
