@@ -75,114 +75,65 @@ export const UPGRADES = [
 ];
 
 export const ENEMIES = [
-  { id: 'stardust_mite', name: 'Stardust Mite', hp: 10, speed: 2.2, damage: 5, color: '#e0ffff', radius: 10, xp: 1, pixels: [
-    " 11 ",
-    "1221",
-    "1111",
-    "1  1"
-  ]},
-  { id: 'nebula_jelly', name: 'Nebula Jelly', hp: 20, speed: 1.2, damage: 8, color: '#ff00ff', radius: 14, xp: 2, pixels: [
-    "  1111  ",
-    " 122221 ",
-    "11111111",
-    "11 11 11",
-    "1  1  1 "
-  ]},
-  { id: 'plasma_wraith', name: 'Plasma Wraith', hp: 35, speed: 1.5, damage: 12, color: '#00ffff', radius: 16, xp: 4, pixels: [
-    "  111  ",
-    " 12121 ",
-    " 11111 ",
-    "  111  ",
-    " 1   1 "
-  ]},
-  { id: 'asteroid_brute', name: 'Asteroid Brute', hp: 80, speed: 0.6, damage: 20, color: '#8b7355', radius: 20, xp: 6, pixels: [
-    "  1111  ",
-    " 131131 ",
-    "11111111",
-    "13111131",
-    " 113311 ",
-    "  1111  "
-  ]},
-  { id: 'void_stalker', name: 'Void Stalker', hp: 45, speed: 2.0, damage: 15, color: '#4b0082', radius: 16, xp: 5, pixels: [
-    "1    1",
-    "11  11",
-    " 1111 ",
-    " 1221 ",
-    "  11  "
-  ]},
-  { id: 'solar_flare', name: 'Solar Flare', hp: 25, speed: 2.5, damage: 18, color: '#ff4500', radius: 14, xp: 4, pixels: [
-    "  1  ",
-    " 121 ",
-    "12321",
-    " 121 ",
-    "  1  "
-  ]},
-  { id: 'elite_dark_matter', name: 'Dark Matter Anomaly', hp: 300, speed: 1.2, damage: 25, color: '#191970', radius: 26, xp: 60, pixels: [
-    "  111111  ",
-    " 13311331 ",
-    "1311111131",
-    "1112222111",
-    "1112222111",
-    "1311111131",
-    " 13311331 ",
-    "  111111  "
-  ]},
-  { id: 'elite_pulsar', name: 'Pulsar Sentinel', hp: 250, speed: 1.8, damage: 30, color: '#00ced1', radius: 24, xp: 60, pixels: [
-    "   11   ",
-    "  1221  ",
-    " 123321 ",
-    "12311321",
-    "12311321",
-    " 123321 ",
-    "  1221  ",
-    "   11   "
-  ]},
-  { id: 'boss_nebula_lord', name: 'Nebula Overlord', hp: 6000, speed: 0.9, damage: 40, color: '#800080', radius: 50, xp: 600, isBoss: true, pixels: [
-    "    111111    ",
-    "  1122222211  ",
-    " 122333333221 ",
-    "12331111113321",
-    "12312211221321",
-    "12312211221321",
-    "12331111113321",
-    " 122333333221 ",
-    "  1122222211  ",
-    "    111111    ",
-    "   11    11   ",
-    "  11      11  "
-  ]},
-  { id: 'boss_supernova', name: 'Supernova Core', hp: 8000, speed: 0.7, damage: 50, color: '#ff8c00', radius: 55, xp: 800, isBoss: true, pixels: [
-    "      11      ",
-    "    112211    ",
-    "   12233221   ",
-    "  1233333321  ",
-    " 123311113321 ",
-    " 123122221321 ",
-    "12331233213321",
-    "12331233213321",
-    " 123122221321 ",
-    " 123311113321 ",
-    "  1233333321  ",
-    "   12233221   ",
-    "    112211    ",
-    "      11      "
-  ]},
-  { id: 'boss_blackhole', name: 'Event Horizon Entity', hp: 10000, speed: 0.5, damage: 80, color: '#000000', radius: 65, xp: 1000, isBoss: true, pixels: [
-    "      3333      ",
-    "    33111133    ",
-    "   3113333113   ",
-    "  313300003313  ",
-    " 31300222200313 ",
-    " 31302000020313 ",
-    "3130200000020313",
-    "3130200000020313",
-    " 31302000020313 ",
-    " 31300222200313 ",
-    "  313300003313  ",
-    "   3113333113   ",
-    "    33111133    ",
-    "      3333      "
-  ]}
+  // Station
+  { id: 'station_drone', name: 'Rogue Drone', hp: 10, speed: 2.2, damage: 5, color: '#e0ffff', radius: 12, xp: 1, emoji: '🛸', arenas: ['station'] },
+  { id: 'station_cyborg', name: 'Infected Cyborg', hp: 25, speed: 1.5, damage: 8, color: '#ff00ff', radius: 14, xp: 2, emoji: '🤖', arenas: ['station'] },
+  { id: 'station_turret', name: 'Defense Turret', hp: 40, speed: 0.5, damage: 15, color: '#aaaaaa', radius: 16, xp: 3, emoji: '🔫', arenas: ['station'] },
+  
+  // Asteroid
+  { id: 'rock_mite', name: 'Rock Mite', hp: 15, speed: 2.0, damage: 6, color: '#8b7355', radius: 10, xp: 1, emoji: '🪨', arenas: ['asteroid'] },
+  { id: 'crystal_crawler', name: 'Crystal Crawler', hp: 30, speed: 1.2, damage: 10, color: '#00ffff', radius: 15, xp: 3, emoji: '🦂', arenas: ['asteroid', 'crystal'] },
+  { id: 'asteroid_brute', name: 'Asteroid Brute', hp: 80, speed: 0.6, damage: 20, color: '#8b7355', radius: 20, xp: 6, emoji: '🦍', arenas: ['asteroid'] },
+
+  // Nebula
+  { id: 'nebula_jelly', name: 'Nebula Jelly', hp: 20, speed: 1.2, damage: 8, color: '#ff00ff', radius: 14, xp: 2, emoji: '🦑', arenas: ['nebula'] },
+  { id: 'gas_floater', name: 'Gas Floater', hp: 35, speed: 1.0, damage: 12, color: '#00ffff', radius: 18, xp: 4, emoji: '🐡', arenas: ['nebula', 'plasma'] },
+  { id: 'stardust_mite', name: 'Stardust Mite', hp: 10, speed: 2.2, damage: 5, color: '#e0ffff', radius: 10, xp: 1, emoji: '🦠', arenas: ['nebula'] },
+
+  // Void
+  { id: 'void_stalker', name: 'Void Stalker', hp: 45, speed: 2.0, damage: 15, color: '#4b0082', radius: 16, xp: 5, emoji: '👾', arenas: ['void', 'blackhole'] },
+  { id: 'shadow_fiend', name: 'Shadow Fiend', hp: 60, speed: 1.8, damage: 18, color: '#191970', radius: 18, xp: 6, emoji: '🦇', arenas: ['void'] },
+  { id: 'void_eye', name: 'Watcher', hp: 30, speed: 1.5, damage: 10, color: '#ffffff', radius: 14, xp: 3, emoji: '👁️', arenas: ['void'] },
+
+  // Plasma
+  { id: 'plasma_wraith', name: 'Plasma Wraith', hp: 35, speed: 1.5, damage: 12, color: '#00ffff', radius: 16, xp: 4, emoji: '👻', arenas: ['plasma'] },
+  { id: 'solar_flare', name: 'Solar Flare', hp: 25, speed: 2.5, damage: 18, color: '#ff4500', radius: 14, xp: 4, emoji: '☄️', arenas: ['plasma', 'moon'] },
+  { id: 'fire_elemental', name: 'Fire Elemental', hp: 50, speed: 1.2, damage: 20, color: '#ff0000', radius: 18, xp: 5, emoji: '🔥', arenas: ['plasma'] },
+
+  // Crystal
+  { id: 'shard_golem', name: 'Shard Golem', hp: 80, speed: 0.8, damage: 20, color: '#00ffff', radius: 22, xp: 8, emoji: '🧊', arenas: ['crystal'] },
+  { id: 'gem_bat', name: 'Gem Bat', hp: 20, speed: 2.5, damage: 8, color: '#ff00ff', radius: 12, xp: 2, emoji: '🦇', arenas: ['crystal'] },
+
+  // Moon
+  { id: 'lunar_tick', name: 'Lunar Tick', hp: 20, speed: 2.8, damage: 8, color: '#dddddd', radius: 10, xp: 2, emoji: '🕷️', arenas: ['moon'] },
+  { id: 'moon_worm', name: 'Moon Worm', hp: 40, speed: 1.5, damage: 12, color: '#aaaaaa', radius: 16, xp: 4, emoji: '🐛', arenas: ['moon'] },
+
+  // Blackhole
+  { id: 'event_horror', name: 'Event Horizon Horror', hp: 100, speed: 1.0, damage: 25, color: '#000000', radius: 20, xp: 10, emoji: '👁️‍🗨️', arenas: ['blackhole'] },
+  { id: 'singularity_spawn', name: 'Singularity Spawn', hp: 50, speed: 2.0, damage: 18, color: '#4b0082', radius: 15, xp: 5, emoji: '🌀', arenas: ['blackhole'] },
+
+  // Mothership
+  { id: 'alien_grunt', name: 'Alien Grunt', hp: 40, speed: 1.8, damage: 15, color: '#32cd32', radius: 14, xp: 4, emoji: '👽', arenas: ['mothership'] },
+  { id: 'alien_brute', name: 'Alien Brute', hp: 90, speed: 1.2, damage: 22, color: '#006400', radius: 20, xp: 8, emoji: '👹', arenas: ['mothership'] },
+  { id: 'ufo_scout', name: 'UFO Scout', hp: 30, speed: 2.5, damage: 10, color: '#c0c0c0', radius: 16, xp: 3, emoji: '🛸', arenas: ['mothership'] },
+
+  // Dimension
+  { id: 'dimensional_shambler', name: 'Dimensional Shambler', hp: 60, speed: 1.5, damage: 20, color: '#ff00ff', radius: 16, xp: 6, emoji: '🐙', arenas: ['dimension'] },
+  { id: 'glitch_entity', name: 'Glitch Entity', hp: 40, speed: 2.2, damage: 15, color: '#00ff00', radius: 14, xp: 4, emoji: '👾', arenas: ['dimension'] },
+  
+  // Generic / All Arenas (spawn later)
+  { id: 'cosmic_parasite', name: 'Cosmic Parasite', hp: 30, speed: 2.0, damage: 10, color: '#ff1493', radius: 12, xp: 3, emoji: '🦟' },
+  { id: 'space_dragon', name: 'Space Dragon', hp: 150, speed: 1.5, damage: 30, color: '#ff4500', radius: 25, xp: 15, emoji: '🐉' },
+  
+  // Elites (spawn anywhere after a while)
+  { id: 'elite_dark_matter', name: 'Dark Matter Anomaly', hp: 300, speed: 1.2, damage: 25, color: '#191970', radius: 26, xp: 60, emoji: '🌑' },
+  { id: 'elite_pulsar', name: 'Pulsar Sentinel', hp: 250, speed: 1.8, damage: 30, color: '#00ced1', radius: 24, xp: 60, emoji: '⭐' },
+  
+  // Bosses (spawn anywhere at the end)
+  { id: 'boss_nebula_lord', name: 'Nebula Overlord', hp: 6000, speed: 0.9, damage: 40, color: '#800080', radius: 50, xp: 600, isBoss: true, emoji: '🦑' },
+  { id: 'boss_supernova', name: 'Supernova Core', hp: 8000, speed: 0.7, damage: 50, color: '#ff8c00', radius: 55, xp: 800, isBoss: true, emoji: '🌞' },
+  { id: 'boss_blackhole', name: 'Event Horizon Entity', hp: 10000, speed: 0.5, damage: 80, color: '#000000', radius: 65, xp: 1000, isBoss: true, emoji: '🕳️' },
+  { id: 'boss_alien_queen', name: 'Alien Queen', hp: 7000, speed: 0.8, damage: 45, color: '#32cd32', radius: 60, xp: 700, isBoss: true, emoji: '👑' }
 ];
 
 export const CHARACTER_TALENTS = {

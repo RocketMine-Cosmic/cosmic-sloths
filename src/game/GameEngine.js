@@ -270,7 +270,11 @@ export class GameEngine {
             const ex = this.player.x + Math.cos(angle) * dist;
             const ey = this.player.y + Math.sin(angle) * dist;
             
-            const availableEnemies = ENEMIES.filter(e => !e.isBoss && (ENEMIES.indexOf(e) <= Math.floor(this.time / 60) || ENEMIES.indexOf(e) === 0));
+            let availableEnemies = ENEMIES.filter(e => 
+                !e.isBoss && 
+                (!e.arenas || e.arenas.includes(this.arena.id))
+            );
+            if (availableEnemies.length === 0) availableEnemies = ENEMIES.filter(e => !e.isBoss);
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
             const hpMult = (1.0 + (5.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
@@ -1048,7 +1052,27 @@ export class GameEngine {
         });
 
         this.enemies.forEach(e => {
-            if (e.pixels) {
+            if (e.emoji) {
+                this.ctx.font = `${e.radius * 2.5}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                this.ctx.save();
+                this.ctx.translate(e.x, e.y);
+                
+                if (e.hp < e.maxHp) {
+                    this.ctx.rotate(Math.sin(this.time * 20) * 0.1);
+                } else {
+                    this.ctx.translate(0, Math.sin(this.time * 5 + e.x) * 2);
+                }
+                
+                if (this.player.x < e.x) {
+                    this.ctx.scale(-1, 1);
+                }
+                
+                this.ctx.fillText(e.emoji, 0, 0);
+                this.ctx.restore();
+            } else if (e.pixels) {
                 const pixelSize = (e.radius * 2) / e.pixels[0].length;
                 const startX = e.x - e.radius;
                 const startY = e.y - (e.pixels.length * pixelSize) / 2;
