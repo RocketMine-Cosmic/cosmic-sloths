@@ -7,6 +7,7 @@ export const SaveManager = {
       unlockedCharacters: [...defaultChars],
       foundCharacters: [],
       unlockedArenasByCharacter: {},
+      unlockedTalents: {},
       permanentUpgrades: {
         damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0
       }
@@ -31,6 +32,10 @@ export const SaveManager = {
             parsed.unlockedCharacters.forEach(c => {
                 parsed.unlockedArenasByCharacter[c] = parsed.unlockedArenas || ['station'];
             });
+        }
+
+        if (!parsed.unlockedTalents) {
+            parsed.unlockedTalents = {};
         }
         
         return { ...defaultSave, ...parsed };

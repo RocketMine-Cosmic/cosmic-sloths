@@ -78,3 +78,56 @@ export const ENEMIES = [
   { id: 'boss_void', name: 'Void Behemoth', hp: 5000, speed: 0.8, damage: 30, color: '#4b0082', radius: 40, xp: 500, isBoss: true },
   { id: 'boss_mech', name: 'Mecha-Sloth', hp: 6000, speed: 1.0, damage: 40, color: '#c0c0c0', radius: 35, xp: 500, isBoss: true }
 ];
+
+export const CHARACTER_TALENTS = {
+  neobyte: [
+    { id: 'neo_1', name: 'Commander Aura', desc: '+10% Area', cost: 500, stat: 'areaMult', value: 0.1 },
+    { id: 'neo_2', name: 'Tactical Reload', desc: '-10% Cooldown', cost: 1000, stat: 'cooldownMult', value: -0.1 },
+    { id: 'neo_3', name: 'Orbital Strike', desc: '+25% Damage', cost: 2000, stat: 'damageMult', value: 0.25 }
+  ],
+  pandypaws: [
+    { id: 'pan_1', name: 'Extra Plating', desc: '+3 Armor', cost: 500, stat: 'armor', value: 3 },
+    { id: 'pan_2', name: 'Bear Hug', desc: '+20% Area', cost: 1000, stat: 'areaMult', value: 0.2 },
+    { id: 'pan_3', name: 'Juggernaut', desc: '+50 Max HP', cost: 2000, stat: 'maxHp', value: 50 }
+  ],
+  novabyte: [
+    { id: 'nova_1', name: 'Blast Shield', desc: '+20 Max HP', cost: 500, stat: 'maxHp', value: 20 },
+    { id: 'nova_2', name: 'Volatile Mix', desc: '+15% Damage', cost: 1000, stat: 'damageMult', value: 0.15 },
+    { id: 'nova_3', name: 'Chain Reaction', desc: '+30% Area', cost: 2000, stat: 'areaMult', value: 0.3 }
+  ],
+  glitch: [
+    { id: 'gli_1', name: 'Overclock', desc: '+10% Speed', cost: 500, stat: 'speedMult', value: 0.1 },
+    { id: 'gli_2', name: 'Critical Error', desc: '+1 Luck', cost: 1000, stat: 'luck', value: 1 },
+    { id: 'gli_3', name: 'System Wipe', desc: '+30% Damage', cost: 2000, stat: 'damageMult', value: 0.3 }
+  ],
+  holodrift: [
+    { id: 'holo_1', name: 'Data Mining', desc: '+10% XP', cost: 500, stat: 'xpMult', value: 0.1 },
+    { id: 'holo_2', name: 'Wider Net', desc: '+30 Magnet', cost: 1000, stat: 'magnetRange', value: 30 },
+    { id: 'holo_3', name: 'Holographic Decoy', desc: '+20% Speed', cost: 2000, stat: 'speedMult', value: 0.2 }
+  ],
+  codebreaker: [
+    { id: 'code_1', name: 'Bypass', desc: '-5% Cooldown', cost: 500, stat: 'cooldownMult', value: -0.05 },
+    { id: 'code_2', name: 'Root Access', desc: '+15% Gold', cost: 1000, stat: 'goldMult', value: 0.15 },
+    { id: 'code_3', name: 'God Mode', desc: '+2 Luck', cost: 2000, stat: 'luck', value: 2 }
+  ],
+  dataphantom: [
+    { id: 'data_1', name: 'Ghost Protocol', desc: '+10% Speed', cost: 500, stat: 'speedMult', value: 0.1 },
+    { id: 'data_2', name: 'Firewall', desc: '+2 Armor', cost: 1000, stat: 'armor', value: 2 },
+    { id: 'data_3', name: 'DDoS', desc: '+20% Proj Speed', cost: 2000, stat: 'projSpeedMult', value: 0.2 }
+  ],
+  neonvortex: [
+    { id: 'neon_1', name: 'Focus', desc: '+10% Proj Speed', cost: 500, stat: 'projSpeedMult', value: 0.1 },
+    { id: 'neon_2', name: 'Dead Eye', desc: '+20% Damage', cost: 1000, stat: 'damageMult', value: 0.2 },
+    { id: 'neon_3', name: 'Singularity', desc: '+30% Area', cost: 2000, stat: 'areaMult', value: 0.3 }
+  ],
+  synthbeats: [
+    { id: 'syn_1', name: 'Crowd Control', desc: '+10% Area', cost: 500, stat: 'areaMult', value: 0.1 },
+    { id: 'syn_2', name: 'Merch Sales', desc: '+20% Gold', cost: 1000, stat: 'goldMult', value: 0.2 },
+    { id: 'syn_3', name: 'Encore', desc: '-15% Cooldown', cost: 2000, stat: 'cooldownMult', value: -0.15 }
+  ],
+  skybyte: [
+    { id: 'sky_1', name: 'Aerodynamics', desc: '+10% Speed', cost: 500, stat: 'speedMult', value: 0.1 },
+    { id: 'sky_2', name: 'Evasive Maneuvers', desc: '+2 Armor', cost: 1000, stat: 'armor', value: 2 },
+    { id: 'sky_3', name: 'Carpet Bomb', desc: '+25% Area', cost: 2000, stat: 'areaMult', value: 0.25 }
+  ]
+};

@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS } from './Constants';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, save, callbacks) {
@@ -9,26 +9,40 @@ export class GameEngine {
         
         const saveStats = save.permanentUpgrades || {};
         
+        const charTalents = save.unlockedTalents?.[characterId] || [];
+        const talentsData = CHARACTER_TALENTS[characterId] || [];
+        
+        let talentBonus = {
+            maxHp: 0, speedMult: 0, damageMult: 0, magnetRange: 0, regen: 0, armor: 0, areaMult: 0, cooldownMult: 0, projSpeedMult: 0, goldMult: 0, xpMult: 0, luck: 0
+        };
+
+        charTalents.forEach(tId => {
+            const t = talentsData.find(td => td.id === tId);
+            if (t) {
+                talentBonus[t.stat] = (talentBonus[t.stat] || 0) + t.value;
+            }
+        });
+
         const baseChar = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
         
         this.player = {
             name: baseChar.name,
             x: 0, y: 0, radius: 16,
-            maxHp: baseChar.hp + (saveStats.health * 10),
-            hp: baseChar.hp + (saveStats.health * 10),
+            maxHp: baseChar.hp + (saveStats.health * 10) + (talentBonus.maxHp || 0),
+            hp: baseChar.hp + (saveStats.health * 10) + (talentBonus.maxHp || 0),
             speed: baseChar.speed,
-            speedMult: 1 + (saveStats.speed * 0.05),
-            damageMult: (baseChar.damageMult || 1) + (saveStats.damage * 0.05),
-            magnetRange: (baseChar.magnetRange || 60) + (saveStats.magnet * 15),
-            regen: baseChar.regen + (saveStats.regen * 0.2),
-            armor: baseChar.armor,
-            areaMult: (baseChar.areaMult || 1),
-            cooldownMult: (baseChar.cooldownMult || 1) - ((saveStats.cooldown || 0) * 0.05),
-            projSpeedMult: (baseChar.projSpeedMult || 1),
-            goldMult: (baseChar.goldMult || 1),
-            xpMult: (baseChar.xpMult || 1),
-            luck: (baseChar.luck || 0) + (saveStats.luck || 0),
+            speedMult: 1 + (saveStats.speed * 0.05) + (talentBonus.speedMult || 0),
+            damageMult: (baseChar.damageMult || 1) + (saveStats.damage * 0.05) + (talentBonus.damageMult || 0),
+            magnetRange: (baseChar.magnetRange || 60) + (saveStats.magnet * 15) + (talentBonus.magnetRange || 0),
+            regen: baseChar.regen + (saveStats.regen * 0.2) + (talentBonus.regen || 0),
+            armor: baseChar.armor + (talentBonus.armor || 0),
+            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0),
+            cooldownMult: (baseChar.cooldownMult || 1) - ((saveStats.cooldown || 0) * 0.05) + (talentBonus.cooldownMult || 0),
+            projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0),
+            goldMult: (baseChar.goldMult || 1) + (talentBonus.goldMult || 0),
+            xpMult: (baseChar.xpMult || 1) + (talentBonus.xpMult || 0),
+            luck: (baseChar.luck || 0) + (saveStats.luck || 0) + (talentBonus.luck || 0),
             color: baseChar.color,
             weapons: [{ ...WEAPONS.napBeam, level: 1, timer: 0 }],
             passives: []

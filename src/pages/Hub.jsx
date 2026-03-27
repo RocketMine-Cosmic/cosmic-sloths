@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, ARENAS } from '../game/Constants';
+import { CHARACTERS, ARENAS, CHARACTER_TALENTS } from '../game/Constants';
 import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles } from 'lucide-react';
 
 const UPGRADE_COSTS = [50, 150, 300, 600, 1200];
@@ -36,6 +36,18 @@ export default function Hub() {
             SaveManager.save(newSave);
             setSave(newSave);
             setSelectedChar(char.id);
+        }
+    };
+
+    const handleBuyTalent = (talent) => {
+        if (save.gold >= talent.cost) {
+            const newSave = { ...save, gold: save.gold - talent.cost };
+            if (!newSave.unlockedTalents[selectedChar]) {
+                newSave.unlockedTalents[selectedChar] = [];
+            }
+            newSave.unlockedTalents[selectedChar].push(talent.id);
+            SaveManager.save(newSave);
+            setSave(newSave);
         }
     };
 
@@ -194,11 +206,59 @@ export default function Hub() {
                         >
                             🦥 Crew
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('talents')}
+                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                        >
+                            🧬 Talents
+                        </button>
                     </div>
 
                     <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
                         {activeTab === 'upgrades' && renderUpgrades()}
                         {activeTab === 'characters' && renderCharacters()}
+                        {activeTab === 'talents' && (
+                            <div>
+                                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">{CHARACTERS.find(c => c.id === selectedChar)?.name}'s Talents</h2>
+                                <div className="space-y-4 relative">
+                                    <div className="absolute left-6 md:left-8 top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
+                                    
+                                    {(CHARACTER_TALENTS[selectedChar] || []).map((talent, index) => {
+                                        const unlocked = save.unlockedTalents[selectedChar] || [];
+                                        const isUnlocked = unlocked.includes(talent.id);
+                                        const canUnlock = !isUnlocked && (index === 0 || unlocked.includes(CHARACTER_TALENTS[selectedChar][index-1].id));
+                                        const canAfford = save.gold >= talent.cost;
+                                        
+                                        return (
+                                            <div key={talent.id} className="relative z-10 flex items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-700">
+                                                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-4 ${
+                                                    isUnlocked ? 'bg-cyan-900 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]' :
+                                                    canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
+                                                    'bg-slate-800 border-slate-700 text-slate-600'
+                                                }`}>
+                                                    {index + 1}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className={`font-bold text-lg ${isUnlocked ? 'text-cyan-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
+                                                    <p className="text-slate-400 text-sm">{talent.desc}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleBuyTalent(talent)}
+                                                    disabled={isUnlocked || !canUnlock || !canAfford}
+                                                    className={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                                                        isUnlocked ? 'bg-cyan-900/50 text-cyan-500 border border-cyan-800' :
+                                                        canUnlock && canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                        'bg-slate-800 text-slate-600 border border-slate-700'
+                                                    }`}
+                                                >
+                                                    {isUnlocked ? 'UNLOCKED' : `🪙 ${talent.cost}`}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                         {activeTab === 'deploy' && (
                             <div className="h-full flex flex-col justify-between">
                                 <div>
