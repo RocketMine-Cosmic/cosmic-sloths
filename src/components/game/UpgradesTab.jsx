@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Coffee, Shield, Zap, Heart, Magnet, Timer, Sparkles } from 'lucide-react';
 
 const UPGRADE_TYPES = [
-    { id: 'permanent', name: 'Permanent (Weak)', currency: 'gold', costs: [500, 1000, 2000, 4000, 8000] },
-    { id: 'weekly', name: 'Weekly (Medium)', currency: 'gold', costs: [100, 250, 500, 1000, 2000] },
-    { id: 'seasonal', name: 'Seasonal (Strong)', currency: 'token', costs: [5, 10, 20, 40, 80] }
+    { id: 'permanent', name: 'Permanent (Weak)', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [5, 10, 20, 40, 80] },
+    { id: 'weekly', name: 'Weekly (Medium)', goldCosts: [100, 250, 500, 1000, 2000], tokenCosts: [1, 2, 5, 10, 20] },
+    { id: 'seasonal', name: 'Seasonal (Strong)', goldCosts: [2000, 5000, 10000, 20000, 40000], tokenCosts: [20, 50, 100, 200, 400] }
 ];
 
 const STATS = [
@@ -18,41 +18,42 @@ const STATS = [
 ];
 
 const COSMETICS = [
-    { id: 'default', name: 'None', cost: 0, currency: 'gold', icon: '⚪' },
-    { id: 'fire', name: 'Fire Trail', cost: 5000, currency: 'gold', icon: '🔥' },
-    { id: 'ice', name: 'Ice Trail', cost: 5000, currency: 'gold', icon: '❄️' },
-    { id: 'toxic', name: 'Toxic Trail', cost: 5000, currency: 'gold', icon: '🧪' },
-    { id: 'void', name: 'Void Trail', cost: 20, currency: 'token', icon: '🌌' },
-    { id: 'gold', name: 'Golden Trail', cost: 50, currency: 'token', icon: '✨' }
+    { id: 'default', name: 'None', goldCost: 0, tokenCost: 0, icon: '⚪' },
+    { id: 'fire', name: 'Fire Trail', goldCost: 10000, tokenCost: 100, icon: '🔥' },
+    { id: 'ice', name: 'Ice Trail', goldCost: 10000, tokenCost: 100, icon: '❄️' },
+    { id: 'toxic', name: 'Toxic Trail', goldCost: 10000, tokenCost: 100, icon: '🧪' },
+    { id: 'void', name: 'Void Trail', goldCost: 25000, tokenCost: 250, icon: '🌌' },
+    { id: 'gold', name: 'Golden Trail', goldCost: 50000, tokenCost: 500, icon: '✨' }
 ];
 
 export default function UpgradesTab({ save, setSave, SaveManager }) {
     const [activeCategory, setActiveCategory] = useState('permanent');
 
-    const handleBuyUpgrade = (stat, type) => {
+    const handleBuyUpgrade = (stat, type, currency) => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === type);
         const saveKey = type === 'permanent' ? 'permanentUpgrades' : type === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
         const upgrades = save[saveKey] || {};
         const currentLevel = upgrades[stat] || 0;
         
-        if (currentLevel >= typeConfig.costs.length) return;
+        if (currentLevel >= typeConfig.goldCosts.length) return;
         
-        const cost = typeConfig.costs[currentLevel];
+        const goldCost = typeConfig.goldCosts[currentLevel];
+        const tokenCost = typeConfig.tokenCosts[currentLevel];
 
-        if (typeConfig.currency === 'gold' && save.gold >= cost) {
-            const newSave = { ...save, gold: save.gold - cost };
+        if (currency === 'gold' && save.gold >= goldCost) {
+            const newSave = { ...save, gold: save.gold - goldCost };
             newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
             SaveManager.save(newSave);
             setSave(newSave);
-        } else if (typeConfig.currency === 'token' && (save.cosmicTokens || 0) >= cost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cost };
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
             newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
             SaveManager.save(newSave);
             setSave(newSave);
         }
     };
 
-    const handleBuyCosmetic = (cosmetic) => {
+    const handleBuyCosmetic = (cosmetic, currency) => {
         const unlocked = save.unlockedCosmetics || ['default'];
         const cosmetics = save.cosmetics || { trail: 'default' };
 
@@ -63,14 +64,14 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
             return;
         }
 
-        if (cosmetic.currency === 'gold' && save.gold >= cosmetic.cost) {
-            const newSave = { ...save, gold: save.gold - cosmetic.cost };
+        if (currency === 'gold' && save.gold >= cosmetic.goldCost) {
+            const newSave = { ...save, gold: save.gold - cosmetic.goldCost };
             newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
             newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
             SaveManager.save(newSave);
             setSave(newSave);
-        } else if (cosmetic.currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.cost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.cost };
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.tokenCost };
             newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
             newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
             SaveManager.save(newSave);
@@ -109,10 +110,13 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
                         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
                         const upgrades = save[saveKey] || {};
                         const level = upgrades[stat.id] || 0;
-                        const cost = typeConfig.costs[level];
-                        const isMax = level >= typeConfig.costs.length;
+                        const isMax = level >= typeConfig.goldCosts.length;
                         
-                        const canAfford = typeConfig.currency === 'gold' ? save.gold >= cost : (save.cosmicTokens || 0) >= cost;
+                        const goldCost = isMax ? 0 : typeConfig.goldCosts[level];
+                        const tokenCost = isMax ? 0 : typeConfig.tokenCosts[level];
+                        
+                        const canAffordGold = save.gold >= goldCost;
+                        const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
                         const Icon = stat.icon;
 
                         return (
@@ -132,16 +136,28 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
                                     <button
-                                        onClick={() => handleBuyUpgrade(stat.id, activeCategory)}
-                                        disabled={isMax || !canAfford}
+                                        onClick={() => handleBuyUpgrade(stat.id, activeCategory, 'gold')}
+                                        disabled={isMax || !canAffordGold}
                                         className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
                                             isMax ? 'bg-slate-700 text-slate-500' :
-                                            canAfford ? (typeConfig.currency === 'gold' ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-emerald-600 hover:bg-emerald-500 text-white') :
+                                            canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                         }`}
                                     >
-                                        {isMax ? 'MAX' : `${typeConfig.currency === 'gold' ? '🪙' : '💠'} ${cost}`}
+                                        {isMax ? 'MAX' : `🪙 ${goldCost}`}
                                     </button>
+                                    {!isMax && (
+                                        <button
+                                            onClick={() => handleBuyUpgrade(stat.id, activeCategory, 'token')}
+                                            disabled={!canAffordToken}
+                                            className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                                canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                'bg-slate-700 text-slate-400 border border-slate-600'
+                                            }`}
+                                        >
+                                            💠 {tokenCost}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -152,27 +168,49 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
                             const unlocked = save.unlockedCosmetics || ['default'];
                             const isUnlocked = unlocked.includes(cosmetic.id);
                             const isEquipped = save.cosmetics?.trail === cosmetic.id;
-                            const canAfford = cosmetic.currency === 'gold' ? save.gold >= cosmetic.cost : (save.cosmicTokens || 0) >= cosmetic.cost;
+                            const canAffordGold = save.gold >= cosmetic.goldCost;
+                            const canAffordToken = (save.cosmicTokens || 0) >= cosmetic.tokenCost;
 
                             return (
                                 <div key={cosmetic.id} className={`bg-slate-800 p-4 rounded-lg border-2 flex flex-col items-center text-center gap-3 ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700'}`}>
                                     <div className="text-4xl">{cosmetic.icon}</div>
                                     <h3 className="font-bold text-lg text-white">{cosmetic.name}</h3>
                                     
-                                    <button
-                                        onClick={() => handleBuyCosmetic(cosmetic)}
-                                        disabled={(!isUnlocked && !canAfford) || isEquipped}
-                                        className={`w-full py-2 rounded-lg font-bold transition-colors text-sm ${
-                                            isEquipped ? 'bg-pink-600 text-white' :
-                                            isUnlocked ? 'bg-slate-700 text-white hover:bg-slate-600' :
-                                            canAfford ? (cosmetic.currency === 'gold' ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-emerald-600 hover:bg-emerald-500 text-white') :
-                                            'bg-slate-800 text-slate-500 border border-slate-700'
-                                        }`}
-                                    >
-                                        {isEquipped ? 'EQUIPPED' : 
-                                         isUnlocked ? 'EQUIP' : 
-                                         `${cosmetic.currency === 'gold' ? '🪙' : '💠'} ${cosmetic.cost}`}
-                                    </button>
+                                    {isEquipped || isUnlocked ? (
+                                        <button
+                                            onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
+                                            disabled={isEquipped}
+                                            className={`w-full py-2 rounded-lg font-bold transition-colors text-sm ${
+                                                isEquipped ? 'bg-pink-600 text-white' :
+                                                'bg-slate-700 text-white hover:bg-slate-600'
+                                            }`}
+                                        >
+                                            {isEquipped ? 'EQUIPPED' : 'EQUIP'}
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2 w-full">
+                                            <button
+                                                onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
+                                                disabled={!canAffordGold}
+                                                className={`flex-1 py-2 rounded-lg font-bold transition-colors text-sm ${
+                                                    canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                    'bg-slate-800 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                🪙 {cosmetic.goldCost}
+                                            </button>
+                                            <button
+                                                onClick={() => handleBuyCosmetic(cosmetic, 'token')}
+                                                disabled={!canAffordToken}
+                                                className={`flex-1 py-2 rounded-lg font-bold transition-colors text-sm ${
+                                                    canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                    'bg-slate-800 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                💠 {cosmetic.tokenCost}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
