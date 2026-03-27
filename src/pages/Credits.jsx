@@ -43,17 +43,26 @@ export default function Credits() {
 
                     <div className="space-y-12 text-slate-300">
                         <div>
-                            <h2 className="text-2xl font-bold text-white mb-2">RocketMine(Sloths in Space)</h2>
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 mb-2">
+                                <h2 className="text-2xl font-bold text-white">RocketMine(Sloths in Space)</h2>
+                                <a href="https://app.omen.foundation?ref=D2EBE0BE67BAAE" target="_blank" rel="noopener noreferrer" className="text-xs bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-full font-bold transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">OmenX Referral Link</a>
+                            </div>
                             <p className="text-xl text-emerald-400">Game Design and Development</p>
                         </div>
 
                         <div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Salty(Sloths In Space)</h2>
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 mb-2">
+                                <h2 className="text-2xl font-bold text-white">Salty(Sloths In Space)</h2>
+                                <a href="https://app.omen.foundation/?ref=59880CD0E839EA" target="_blank" rel="noopener noreferrer" className="text-xs bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-full font-bold transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">OmenX Referral Link</a>
+                            </div>
                             <p className="text-xl text-emerald-400">Character Design, Testing and Insight</p>
                         </div>
 
                         <div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Crybel(Sloths In Space)</h2>
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 mb-2">
+                                <h2 className="text-2xl font-bold text-white">Crybel(Sloths In Space)</h2>
+                                <a href="https://app.omen.foundation/?ref=F00B595C31EDDA" target="_blank" rel="noopener noreferrer" className="text-xs bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-full font-bold transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">OmenX Referral Link</a>
+                            </div>
                             <p className="text-xl text-emerald-400">Testing, Advice and Insight</p>
                         </div>
 
