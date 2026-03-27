@@ -1193,19 +1193,6 @@ export class GameEngine {
 
         this.ctx.save();
         this.ctx.translate(-this.camera.x + this.shakeX, -this.camera.y + this.shakeY);
-        
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-        this.ctx.lineWidth = 1;
-        const gridSize = 100;
-        const startX = Math.floor(this.camera.x / gridSize) * gridSize;
-        const startY = Math.floor(this.camera.y / gridSize) * gridSize;
-        
-        for(let x = startX; x < startX + this.canvas.width + gridSize; x += gridSize) {
-            this.ctx.beginPath(); this.ctx.moveTo(x, this.camera.y); this.ctx.lineTo(x, this.camera.y + this.canvas.height); this.ctx.stroke();
-        }
-        for(let y = startY; y < startY + this.canvas.height + gridSize; y += gridSize) {
-            this.ctx.beginPath(); this.ctx.moveTo(this.camera.x, y); this.ctx.lineTo(this.camera.x + this.canvas.width, y); this.ctx.stroke();
-        }
 
         this.pickups.forEach(p => {
             this.ctx.save();
