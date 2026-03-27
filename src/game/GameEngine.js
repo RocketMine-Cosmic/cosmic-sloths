@@ -152,20 +152,31 @@ export class GameEngine {
         this.updateEnemies(dt);
         this.updatePickups(dt);
         
-        if (!this.characterPickupSpawned && this.lockedCharacters.length > 0 && this.time > 60) {
-            this.characterPickupSpawned = true;
-            const charIdToSpawn = this.lockedCharacters[Math.floor(Math.random() * this.lockedCharacters.length)];
-            const charData = CHARACTERS.find(c => c.id === charIdToSpawn);
+        if (!this.characterPickupSpawned && this.lockedCharacters.length > 0) {
+            if (this.characterSpawnRoll === undefined) {
+                this.characterSpawnRoll = Math.random();
+                this.characterSpawnTime = 120 + Math.random() * 120; // 2 to 4 minutes
+            }
             
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 1000;
-            this.characterPickup = {
-                x: this.player.x + Math.cos(angle) * dist,
-                y: this.player.y + Math.sin(angle) * dist,
-                charId: charIdToSpawn,
-                color: charData.color,
-                name: charData.name
-            };
+            if (this.time > this.characterSpawnTime) {
+                this.characterPickupSpawned = true;
+                
+                // 30% chance to actually spawn a pod this run
+                if (this.characterSpawnRoll < 0.30) {
+                    const charIdToSpawn = this.lockedCharacters[Math.floor(Math.random() * this.lockedCharacters.length)];
+                    const charData = CHARACTERS.find(c => c.id === charIdToSpawn);
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 3000 + Math.random() * 2000; // 3000 to 5000 units away
+                    this.characterPickup = {
+                        x: this.player.x + Math.cos(angle) * dist,
+                        y: this.player.y + Math.sin(angle) * dist,
+                        charId: charIdToSpawn,
+                        color: charData.color,
+                        name: charData.name
+                    };
+                }
+            }
         }
         
         if (this.characterPickup) {
