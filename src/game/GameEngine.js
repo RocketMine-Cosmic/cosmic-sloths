@@ -216,13 +216,15 @@ export class GameEngine {
                 const dist = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
                 const ex = this.player.x + Math.cos(angle) * dist;
                 const ey = this.player.y + Math.sin(angle) * dist;
-                this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp, hp: boss.hp });
+                const bossHpMult = 5.0;
+                const bossDmgMult = 3.0;
+                this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
                 this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
             }
         }
 
         const progress = Math.min(1, this.time / this.arena.duration);
-        const spawnRate = 2.0 - (1.95 * Math.pow(progress, 2));
+        const spawnRate = 1.5 - (1.48 * Math.pow(progress, 1.5));
         
         if (Math.random() < dt / Math.max(0.02, spawnRate)) {
             const angle = Math.random() * Math.PI * 2;
@@ -233,17 +235,18 @@ export class GameEngine {
             const availableEnemies = ENEMIES.filter(e => !e.isBoss && (ENEMIES.indexOf(e) <= Math.floor(this.time / 60) || ENEMIES.indexOf(e) === 0));
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
-            const hpMult = 0.5 + (3.5 * Math.pow(progress, 1.5));
+            const hpMult = 1.0 + (8.0 * Math.pow(progress, 2.0));
+            const dmgMult = 1.0 + (3.0 * Math.pow(progress, 1.5));
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elite = ENEMIES.find(e => e.id === 'elite');
                 if (elite) {
-                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2 });
+                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult });
                     return;
                 }
             }
             
-            this.enemies.push({ ...type, x: ex, y: ey, maxHp: type.hp * hpMult, hp: type.hp * hpMult });
+            this.enemies.push({ ...type, x: ex, y: ey, maxHp: type.hp * hpMult, hp: type.hp * hpMult, damage: type.damage * dmgMult });
         }
     }
 
