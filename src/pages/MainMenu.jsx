@@ -5,6 +5,12 @@ import { motion } from 'framer-motion';
 export default function MainMenu() {
     const navigate = useNavigate();
 
+    const handleExit = () => {
+        if (window.confirm("Are you sure you want to exit?")) {
+            window.close();
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden font-mono">
             <div className="absolute inset-0 opacity-50">
@@ -41,13 +47,31 @@ export default function MainMenu() {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="z-10 flex flex-col gap-6 w-full max-w-md px-6"
+                className="z-10 flex flex-col gap-4 w-full max-w-md px-6"
             >
                 <button 
                     onClick={() => navigate('/hub')}
-                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-2xl font-bold py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
                 >
-                    START GAME
+                    PLAY
+                </button>
+                <button 
+                    onClick={() => navigate('/info')}
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                >
+                    INFO
+                </button>
+                <button 
+                    onClick={() => navigate('/credits')}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                >
+                    CREDITS
+                </button>
+                <button 
+                    onClick={handleExit}
+                    className="w-full bg-red-600 hover:bg-red-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
+                >
+                    EXIT
                 </button>
             </motion.div>
             

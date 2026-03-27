@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS } from '../game/Constants';
-import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles, Crosshair, Trophy } from 'lucide-react';
+import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, ArrowLeft, Timer, Sparkles, Crosshair, Trophy } from 'lucide-react';
 import Leaderboard from '../components/game/Leaderboard';
 import UpgradesTab from '../components/game/UpgradesTab';
 
@@ -264,6 +264,12 @@ export default function Hub() {
             <div className="max-w-5xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
                     <div>
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 w-fit"
+                        >
+                            <ArrowLeft className="w-4 h-4" /> Main Menu
+                        </button>
                         <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 tracking-tight">SLOTH LOUNGE</h1>
                         <p className="text-slate-400 mt-1 text-sm md:text-base">Rest, upgrade, and prepare for the cosmic void.</p>
                     </div>

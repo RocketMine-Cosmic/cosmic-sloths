@@ -9,6 +9,8 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import MainMenu from './pages/MainMenu';
 import Hub from './pages/Hub';
 import Game from './pages/Game';
+import Info from './pages/Info';
+import Credits from './pages/Credits';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -39,6 +41,8 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<MainMenu />} />
       <Route path="/hub" element={<Hub />} />
       <Route path="/game" element={<Game />} />
+      <Route path="/info" element={<Info />} />
+      <Route path="/credits" element={<Credits />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
