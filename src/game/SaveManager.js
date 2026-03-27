@@ -2,7 +2,12 @@ export const SaveManager = {
   load: () => {
     try {
       const data = localStorage.getItem('cosmic_sloth_save');
-      if (data) return JSON.parse(data);
+      if (data) {
+        const parsed = JSON.parse(data);
+        const allChars = ['neobyte', 'pandypaws', 'novabyte', 'glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'];
+        parsed.unlockedCharacters = [...new Set([...(parsed.unlockedCharacters || []), ...allChars])];
+        return parsed;
+      }
     } catch (e) {
       console.error('Failed to load save', e);
     }
