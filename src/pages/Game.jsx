@@ -104,6 +104,8 @@ export default function Game() {
                 currentSave.gold += stats.gold;
                 currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
                 currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
+                currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
+                currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
                 SaveManager.save(currentSave);
                 setGameOverStats(stats);
                 saveScore(stats, false);
@@ -113,6 +115,8 @@ export default function Game() {
                 currentSave.gold += stats.gold;
                 currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
                 currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
+                currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
+                currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
                 const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 if (currentIndex >= 0 && currentIndex < ARENAS.length - 1) {
                     const nextArena = ARENAS[currentIndex + 1];

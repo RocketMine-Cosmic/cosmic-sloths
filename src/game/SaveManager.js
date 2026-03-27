@@ -21,7 +21,9 @@ export const SaveManager = {
       cosmetics: { trail: 'default' },
       unlockedCosmetics: ['default'],
       maxTimeSurvived: 0,
-      totalKills: 0
+      totalKills: 0,
+      totalGoldEarned: 0,
+      maxLevelReached: 0
     };
 
     try {
@@ -58,6 +60,8 @@ export const SaveManager = {
         if (!parsed.unlockedCosmetics) parsed.unlockedCosmetics = ['default'];
         if (parsed.maxTimeSurvived === undefined) parsed.maxTimeSurvived = 0;
         if (parsed.totalKills === undefined) parsed.totalKills = 0;
+        if (parsed.totalGoldEarned === undefined) parsed.totalGoldEarned = 0;
+        if (parsed.maxLevelReached === undefined) parsed.maxLevelReached = 0;
         
         return { ...defaultSave, ...parsed };
       }

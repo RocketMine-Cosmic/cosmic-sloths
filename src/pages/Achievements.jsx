@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Clock, Skull, Users, Star } from 'lucide-react';
+import { ArrowLeft, Trophy, Clock, Skull, Users, Star, Coins, ArrowUpCircle } from 'lucide-react';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS } from '../game/Constants';
 
@@ -13,6 +13,8 @@ export default function Achievements() {
     const maxTimeSurvived = save.maxTimeSurvived || 0;
     const unlockedCharactersCount = save.unlockedCharacters?.length || 0;
     const totalCharacters = CHARACTERS.length;
+    const totalGoldEarned = save.totalGoldEarned || 0;
+    const maxLevelReached = save.maxLevelReached || 0;
 
     const achievements = [
         {
@@ -23,6 +25,7 @@ export default function Achievements() {
             progress: Math.min(maxTimeSurvived, 300),
             target: 300,
             isUnlocked: maxTimeSurvived >= 300,
+            points: 10,
             color: 'text-blue-400',
             bg: 'bg-blue-900/50',
             border: 'border-blue-500'
@@ -35,9 +38,36 @@ export default function Achievements() {
             progress: Math.min(maxTimeSurvived, 600),
             target: 600,
             isUnlocked: maxTimeSurvived >= 600,
+            points: 20,
             color: 'text-purple-400',
             bg: 'bg-purple-900/50',
             border: 'border-purple-500'
+        },
+        {
+            id: 'survive_20',
+            title: 'Master',
+            desc: 'Survive for 20 minutes in a single run.',
+            icon: <Clock className="w-8 h-8" />,
+            progress: Math.min(maxTimeSurvived, 1200),
+            target: 1200,
+            isUnlocked: maxTimeSurvived >= 1200,
+            points: 50,
+            color: 'text-pink-400',
+            bg: 'bg-pink-900/50',
+            border: 'border-pink-500'
+        },
+        {
+            id: 'survive_30',
+            title: 'Cosmic Legend',
+            desc: 'Survive for 30 minutes in a single run.',
+            icon: <Clock className="w-8 h-8" />,
+            progress: Math.min(maxTimeSurvived, 1800),
+            target: 1800,
+            isUnlocked: maxTimeSurvived >= 1800,
+            points: 100,
+            color: 'text-rose-400',
+            bg: 'bg-rose-900/50',
+            border: 'border-rose-500'
         },
         {
             id: 'kills_100',
@@ -47,6 +77,7 @@ export default function Achievements() {
             progress: Math.min(totalKills, 100),
             target: 100,
             isUnlocked: totalKills >= 100,
+            points: 10,
             color: 'text-red-400',
             bg: 'bg-red-900/50',
             border: 'border-red-500'
@@ -54,11 +85,12 @@ export default function Achievements() {
         {
             id: 'kills_1000',
             title: 'Exterminator',
-            desc: 'Defeat 1000 enemies across all runs.',
+            desc: 'Defeat 1,000 enemies across all runs.',
             icon: <Skull className="w-8 h-8" />,
             progress: Math.min(totalKills, 1000),
             target: 1000,
             isUnlocked: totalKills >= 1000,
+            points: 20,
             color: 'text-orange-400',
             bg: 'bg-orange-900/50',
             border: 'border-orange-500'
@@ -66,14 +98,28 @@ export default function Achievements() {
         {
             id: 'kills_10000',
             title: 'Cosmic Destroyer',
-            desc: 'Defeat 10000 enemies across all runs.',
+            desc: 'Defeat 10,000 enemies across all runs.',
             icon: <Skull className="w-8 h-8" />,
             progress: Math.min(totalKills, 10000),
             target: 10000,
             isUnlocked: totalKills >= 10000,
+            points: 50,
             color: 'text-yellow-400',
             bg: 'bg-yellow-900/50',
             border: 'border-yellow-500'
+        },
+        {
+            id: 'kills_50000',
+            title: 'Genocidal Sloth',
+            desc: 'Defeat 50,000 enemies across all runs.',
+            icon: <Skull className="w-8 h-8" />,
+            progress: Math.min(totalKills, 50000),
+            target: 50000,
+            isUnlocked: totalKills >= 50000,
+            points: 100,
+            color: 'text-amber-400',
+            bg: 'bg-amber-900/50',
+            border: 'border-amber-500'
         },
         {
             id: 'unlock_half',
@@ -83,6 +129,7 @@ export default function Achievements() {
             progress: Math.min(unlockedCharactersCount, Math.floor(totalCharacters / 2)),
             target: Math.floor(totalCharacters / 2),
             isUnlocked: unlockedCharactersCount >= Math.floor(totalCharacters / 2),
+            points: 30,
             color: 'text-emerald-400',
             bg: 'bg-emerald-900/50',
             border: 'border-emerald-500'
@@ -95,11 +142,67 @@ export default function Achievements() {
             progress: Math.min(unlockedCharactersCount, totalCharacters),
             target: totalCharacters,
             isUnlocked: unlockedCharactersCount >= totalCharacters,
+            points: 100,
             color: 'text-cyan-400',
             bg: 'bg-cyan-900/50',
             border: 'border-cyan-500'
+        },
+        {
+            id: 'gold_10k',
+            title: 'Wealthy',
+            desc: 'Earn 10,000 Gold across all runs.',
+            icon: <Coins className="w-8 h-8" />,
+            progress: Math.min(totalGoldEarned, 10000),
+            target: 10000,
+            isUnlocked: totalGoldEarned >= 10000,
+            points: 20,
+            color: 'text-yellow-300',
+            bg: 'bg-yellow-900/50',
+            border: 'border-yellow-400'
+        },
+        {
+            id: 'gold_100k',
+            title: 'Filthy Rich',
+            desc: 'Earn 100,000 Gold across all runs.',
+            icon: <Coins className="w-8 h-8" />,
+            progress: Math.min(totalGoldEarned, 100000),
+            target: 100000,
+            isUnlocked: totalGoldEarned >= 100000,
+            points: 50,
+            color: 'text-yellow-500',
+            bg: 'bg-yellow-900/50',
+            border: 'border-yellow-600'
+        },
+        {
+            id: 'level_50',
+            title: 'Power Up',
+            desc: 'Reach Level 50 in a single run.',
+            icon: <ArrowUpCircle className="w-8 h-8" />,
+            progress: Math.min(maxLevelReached, 50),
+            target: 50,
+            isUnlocked: maxLevelReached >= 50,
+            points: 30,
+            color: 'text-green-400',
+            bg: 'bg-green-900/50',
+            border: 'border-green-500'
+        },
+        {
+            id: 'level_100',
+            title: 'Ascended',
+            desc: 'Reach Level 100 in a single run.',
+            icon: <ArrowUpCircle className="w-8 h-8" />,
+            progress: Math.min(maxLevelReached, 100),
+            target: 100,
+            isUnlocked: maxLevelReached >= 100,
+            points: 100,
+            color: 'text-teal-400',
+            bg: 'bg-teal-900/50',
+            border: 'border-teal-500'
         }
     ];
+
+    const totalPoints = achievements.reduce((acc, ach) => acc + (ach.isUnlocked ? ach.points : 0), 0);
+    const maxPoints = achievements.reduce((acc, ach) => acc + ach.points, 0);
 
     const formatProgress = (val, target, isTime) => {
         if (isTime) {
@@ -108,7 +211,7 @@ export default function Achievements() {
             const m2 = Math.floor(target / 60);
             return `${m1}:${s1.toString().padStart(2, '0')} / ${m2}:00`;
         }
-        return `${val} / ${target}`;
+        return `${val.toLocaleString()} / ${target.toLocaleString()}`;
     };
 
     return (
@@ -142,11 +245,19 @@ export default function Achievements() {
                     animate={{ y: 0, opacity: 1 }}
                     className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-10 shadow-2xl"
                 >
-                    <div className="flex items-center gap-4 mb-8">
-                        <Trophy className="w-10 h-10 text-yellow-400" />
-                        <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                            ACHIEVEMENTS
-                        </h1>
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 border-b border-slate-800 pb-8">
+                        <div className="flex items-center gap-4">
+                            <Trophy className="w-10 h-10 text-yellow-400" />
+                            <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                                ACHIEVEMENTS
+                            </h1>
+                        </div>
+                        <div className="bg-slate-950 px-6 py-3 rounded-xl border border-slate-700 shadow-inner text-center">
+                            <div className="text-sm text-slate-400 font-bold mb-1">ACHIEVEMENT POINTS</div>
+                            <div className="text-2xl md:text-3xl font-black text-cyan-400">
+                                {totalPoints} <span className="text-lg text-slate-500">/ {maxPoints}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -161,9 +272,14 @@ export default function Achievements() {
                                     {ach.icon}
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className={`font-bold text-lg ${ach.isUnlocked ? 'text-white' : 'text-slate-400'}`}>
-                                        {ach.title}
-                                    </h3>
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h3 className={`font-bold text-lg ${ach.isUnlocked ? 'text-white' : 'text-slate-400'}`}>
+                                            {ach.title}
+                                        </h3>
+                                        <span className={`font-bold text-sm px-2 py-0.5 rounded ${ach.isUnlocked ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-500'}`}>
+                                            {ach.points} pts
+                                        </span>
+                                    </div>
                                     <p className="text-sm text-slate-400 mb-2">{ach.desc}</p>
                                     <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
                                         <div 
