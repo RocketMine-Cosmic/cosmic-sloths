@@ -43,23 +43,23 @@ export default function Credits() {
 
                     <div className="space-y-12 text-slate-300">
                         <div>
-                            <h2 className="text-xl font-bold text-emerald-400 mb-2">Lead Developer</h2>
-                            <p className="text-2xl text-white">[Your Name Here]</p>
+                            <h2 className="text-2xl font-bold text-white mb-2">RocketMine(Sloths in Space)</h2>
+                            <p className="text-xl text-emerald-400">Game Development</p>
                         </div>
 
                         <div>
-                            <h2 className="text-xl font-bold text-emerald-400 mb-2">Game Design</h2>
-                            <p className="text-2xl text-white">[Your Name Here]</p>
+                            <h2 className="text-2xl font-bold text-white mb-2">Salty(Sloths In Space)</h2>
+                            <p className="text-xl text-emerald-400">Character Design, Testing and Insight</p>
                         </div>
 
                         <div>
-                            <h2 className="text-xl font-bold text-emerald-400 mb-2">Art & Audio</h2>
-                            <p className="text-2xl text-white">[Contributors Here]</p>
+                            <h2 className="text-2xl font-bold text-white mb-2">Crybel(Sloths In Space)</h2>
+                            <p className="text-xl text-emerald-400">Testing, Advice and Insight</p>
                         </div>
 
                         <div>
-                            <h2 className="text-xl font-bold text-emerald-400 mb-2">Special Thanks</h2>
-                            <p className="text-2xl text-white">To all the cosmic sloths out there.</p>
+                            <h2 className="text-2xl font-bold text-white mb-2">Special Thanks</h2>
+                            <p className="text-xl text-emerald-400">To all the cosmic sloths out there.</p>
                         </div>
                     </div>
                 </motion.div>
