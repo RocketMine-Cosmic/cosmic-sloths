@@ -61,6 +61,17 @@ export default function Credits() {
                             <h2 className="text-2xl font-bold text-white mb-2">Special Thanks</h2>
                             <p className="text-xl text-emerald-400">To all the cosmic sloths out there.</p>
                         </div>
+
+                        <div className="pt-8 border-t border-slate-800 mt-8">
+                            <h3 className="text-lg font-bold text-white mb-2">Tips are Welcome and Appreciated</h3>
+                            <p className="text-slate-300 mb-2">You can send to:</p>
+                            <div className="bg-slate-950 p-3 rounded border border-slate-800 font-mono text-xs md:text-sm text-cyan-400 break-all select-all mb-3">
+                                0x2ff7418bb9074295ef5ecbcadb1829a26ec083c1
+                            </div>
+                            <p className="text-sm text-slate-400">
+                                All tips will be evenly split between those in the credits once a threshold has been reached. Thanks For Playing :)
+                            </p>
+                        </div>
                     </div>
                 </motion.div>
             </div>
