@@ -19,11 +19,11 @@ const STATS = [
 
 const COSMETICS = [
     { id: 'default', name: 'None', goldCost: 0, tokenCost: 0, icon: '⚪' },
-    { id: 'fire', name: 'Fire Trail', goldCost: 5000, tokenCost: 1250, icon: '🔥' },
-    { id: 'ice', name: 'Ice Trail', goldCost: 5000, tokenCost: 1250, icon: '❄️' },
-    { id: 'toxic', name: 'Toxic Trail', goldCost: 5000, tokenCost: 1250, icon: '🧪' },
-    { id: 'void', name: 'Void Trail', goldCost: 25000, tokenCost: 6250, icon: '🌌' },
-    { id: 'gold', name: 'Golden Trail', goldCost: 50000, tokenCost: 12500, icon: '✨' }
+    { id: 'fire', name: 'Fire Trail', goldCost: 2500, tokenCost: 625, icon: '🔥' },
+    { id: 'ice', name: 'Ice Trail', goldCost: 2500, tokenCost: 625, icon: '❄️' },
+    { id: 'toxic', name: 'Toxic Trail', goldCost: 2500, tokenCost: 625, icon: '🧪' },
+    { id: 'void', name: 'Void Trail', goldCost: 12500, tokenCost: 3125, icon: '🌌' },
+    { id: 'gold', name: 'Golden Trail', goldCost: 25000, tokenCost: 6250, icon: '✨' }
 ];
 
 export default function UpgradesTab({ save, setSave, SaveManager }) {
