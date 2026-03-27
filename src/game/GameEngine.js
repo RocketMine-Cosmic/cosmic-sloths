@@ -59,6 +59,8 @@ export class GameEngine {
             .filter(id => !(save.foundCharacters || []).includes(id));
         this.characterPickupSpawned = false;
         this.characterPickup = null;
+        this.bossSpawned = false;
+        this.enemyProjectiles = [];
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -179,6 +181,20 @@ export class GameEngine {
     }
 
     spawnEnemies(dt) {
+        if (this.time >= this.arena.duration - 30 && !this.bossSpawned) {
+            this.bossSpawned = true;
+            const bosses = ENEMIES.filter(e => e.isBoss);
+            if (bosses.length > 0) {
+                const boss = bosses[Math.floor(Math.random() * bosses.length)];
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
+                const ex = this.player.x + Math.cos(angle) * dist;
+                const ey = this.player.y + Math.sin(angle) * dist;
+                this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp, hp: boss.hp });
+                this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
+            }
+        }
+
         const progress = Math.min(1, this.time / this.arena.duration);
         const spawnRate = 2.0 - (1.95 * Math.pow(progress, 2));
         
@@ -188,7 +204,7 @@ export class GameEngine {
             const ex = this.player.x + Math.cos(angle) * dist;
             const ey = this.player.y + Math.sin(angle) * dist;
             
-            const availableEnemies = ENEMIES.filter((_, i) => i <= Math.floor(this.time / 60) || i === 0);
+            const availableEnemies = ENEMIES.filter(e => !e.isBoss && (ENEMIES.indexOf(e) <= Math.floor(this.time / 60) || ENEMIES.indexOf(e) === 0));
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
             const hpMult = 0.5 + (3.5 * Math.pow(progress, 1.5));
@@ -425,6 +441,24 @@ export class GameEngine {
             }
             return p.life > 0 && p.pierce > 0;
         });
+
+        if (this.enemyProjectiles) {
+            this.enemyProjectiles = this.enemyProjectiles.filter(p => {
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.life -= dt;
+                
+                if (Math.hypot(this.player.x - p.x, this.player.y - p.y) < this.player.radius + p.radius) {
+                    const actualDmg = Math.max(1, p.damage - this.player.armor);
+                    this.player.hp -= actualDmg;
+                    this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                    this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                    if (this.player.hp <= 0) this.gameOver();
+                    return false;
+                }
+                return p.life > 0;
+            });
+        }
     }
 
     updateEnemies(dt) {
@@ -432,11 +466,14 @@ export class GameEngine {
             if (e.hp <= 0) {
                 this.kills++;
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
-                if (Math.random() < 0.3 + (this.player.luck * 0.05)) {
+                if (e.isBoss) {
+                    this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: 1, color: '#ff00ff' });
+                    this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
+                } else if (Math.random() < 0.3 + (this.player.luck * 0.05)) {
                     const goldValue = 1 + Math.floor(this.time / 60);
                     this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
                 }
-                this.addParticle(e.x, e.y, e.color, 15);
+                this.addParticle(e.x, e.y, e.color, e.isBoss ? 50 : 15);
                 return false;
             }
             
@@ -460,6 +497,27 @@ export class GameEngine {
                 }
             }
             if (e.attackTimer > 0) e.attackTimer -= dt;
+
+            if (e.isBoss) {
+                if (!e.skillTimer) e.skillTimer = 0;
+                e.skillTimer -= dt;
+                if (e.skillTimer <= 0) {
+                    e.skillTimer = 3.0;
+                    for(let i=0; i<8; i++) {
+                        const angle = (Math.PI * 2 / 8) * i;
+                        this.enemyProjectiles.push({
+                            x: e.x, y: e.y,
+                            vx: Math.cos(angle) * 150,
+                            vy: Math.sin(angle) * 150,
+                            radius: 5,
+                            damage: e.damage * 0.5,
+                            life: 3,
+                            color: '#ff0000'
+                        });
+                    }
+                }
+            }
+
             return true;
         });
     }
@@ -474,6 +532,9 @@ export class GameEngine {
                 } else if (p.type === 'gold') {
                     this.gold += Math.floor(p.value * this.player.goldMult);
                     this.callbacks.onGoldChange(this.gold);
+                } else if (p.type === 'reroll') {
+                    if (this.callbacks.onRerollFound) this.callbacks.onRerollFound();
+                    this.addDamageText(this.player.x, this.player.y - 40, `+1 Reroll Token!`, '#ff00ff');
                 }
                 return false;
             }
@@ -706,6 +767,13 @@ export class GameEngine {
             this.ctx.fillStyle = p.color;
             this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); this.ctx.fill();
         });
+
+        if (this.enemyProjectiles) {
+            this.enemyProjectiles.forEach(p => {
+                this.ctx.fillStyle = p.color;
+                this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); this.ctx.fill();
+            });
+        }
 
         const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
         if (swarm) {

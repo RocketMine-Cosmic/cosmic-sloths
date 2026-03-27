@@ -74,5 +74,7 @@ export const ENEMIES = [
   { id: 'worm', name: 'Void Worm', hp: 15, speed: 1.8, damage: 8, color: '#8a2be2', radius: 10, xp: 2 },
   { id: 'asteroid', name: 'Asteroid Frag', hp: 50, speed: 0.5, damage: 15, color: '#a9a9a9', radius: 15, xp: 5 },
   { id: 'jelly', name: 'Space Jelly', hp: 30, speed: 1, damage: 12, color: '#7fffd4', radius: 14, xp: 4 },
-  { id: 'elite', name: 'Elite Pirate', hp: 200, speed: 1.5, damage: 20, color: '#ff1493', radius: 20, xp: 50 }
+  { id: 'elite', name: 'Elite Pirate', hp: 200, speed: 1.5, damage: 20, color: '#ff1493', radius: 20, xp: 50 },
+  { id: 'boss_void', name: 'Void Behemoth', hp: 5000, speed: 0.8, damage: 30, color: '#4b0082', radius: 40, xp: 500, isBoss: true },
+  { id: 'boss_mech', name: 'Mecha-Sloth', hp: 6000, speed: 1.0, damage: 40, color: '#c0c0c0', radius: 35, xp: 500, isBoss: true }
 ];

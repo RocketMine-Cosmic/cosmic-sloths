@@ -164,8 +164,13 @@ export default function Hub() {
                         <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 tracking-tight">SLOTH LOUNGE</h1>
                         <p className="text-slate-400 mt-1 text-sm md:text-base">Rest, upgrade, and prepare for the cosmic void.</p>
                     </div>
-                    <div className="text-xl md:text-2xl font-bold text-yellow-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg">
-                        🪙 {save.gold}
+                    <div className="flex gap-2 md:gap-4">
+                        <div className="text-xl md:text-2xl font-bold text-purple-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg">
+                            🎲 {save.rerollTokens || 0}
+                        </div>
+                        <div className="text-xl md:text-2xl font-bold text-yellow-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg">
+                            🪙 {save.gold}
+                        </div>
                     </div>
                 </header>
 

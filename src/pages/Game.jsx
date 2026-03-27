@@ -19,7 +19,7 @@ export default function Game() {
         hp: 100, maxHp: 100,
         time: 0, duration: 300, level: 1,
         xp: 0, xpRequired: 10,
-        gold: 0
+        gold: 0, rerollTokens: 0
     });
     
     const [levelUpChoices, setLevelUpChoices] = useState(null);
@@ -45,6 +45,12 @@ export default function Game() {
             onLevelUp: (choices) => {
                 setGameState(s => ({ ...s, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired }));
                 setLevelUpChoices(choices);
+            },
+            onRerollFound: () => {
+                const currentSave = SaveManager.load();
+                currentSave.rerollTokens = (currentSave.rerollTokens || 0) + 1;
+                SaveManager.save(currentSave);
+                setGameState(s => ({ ...s, rerollTokens: currentSave.rerollTokens }));
             },
             onCharacterFound: (charId) => {
                 const currentSave = SaveManager.load();
@@ -84,7 +90,8 @@ export default function Game() {
         
         setGameState({
             hp: engine.player.hp, maxHp: engine.player.maxHp,
-            time: 0, duration: engine.arena.duration, level: 1, xp: 0, xpRequired: 10, gold: 0
+            time: 0, duration: engine.arena.duration, level: 1, xp: 0, xpRequired: 10, gold: 0,
+            rerollTokens: save.rerollTokens || 0
         });
 
         return () => {
@@ -113,6 +120,19 @@ export default function Game() {
         setLevelUpChoices(null);
     };
 
+    const handleReroll = () => {
+        const currentSave = SaveManager.load();
+        if (currentSave.rerollTokens > 0) {
+            currentSave.rerollTokens -= 1;
+            SaveManager.save(currentSave);
+            setGameState(s => ({ ...s, rerollTokens: currentSave.rerollTokens }));
+            if (engineRef.current) {
+                engineRef.current.isPaused = false; // Temporarily unpause to allow levelUp to pause again
+                engineRef.current.levelUp();
+            }
+        }
+    };
+
     const handleJoystickChange = (pos) => {
         if (engineRef.current) {
             engineRef.current.joystick = pos;
@@ -131,7 +151,7 @@ export default function Game() {
             <UIOverlay {...gameState} />
             
             {levelUpChoices && (
-                <LevelUpModal choices={levelUpChoices} onSelect={handleUpgradeSelect} />
+                <LevelUpModal choices={levelUpChoices} onSelect={handleUpgradeSelect} rerollTokens={gameState.rerollTokens} onReroll={handleReroll} />
             )}
             
             {gameOverStats && (
