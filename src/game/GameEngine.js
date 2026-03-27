@@ -120,6 +120,11 @@ export class GameEngine {
         this.enemyProjectiles = [];
         this.hazards = [];
         
+        this.shakeX = 0;
+        this.shakeY = 0;
+        this.shakeTimer = 0;
+        this.hitStopTimer = 0;
+        
         this.bindEvents();
         this.lastTime = performance.now();
         this.animationId = requestAnimationFrame(this.loop.bind(this));
@@ -150,6 +155,21 @@ export class GameEngine {
 
     update(dt) {
         if (dt > 0.1) dt = 0.1; // Cap dt to prevent huge jumps
+        
+        if (this.hitStopTimer > 0) {
+            this.hitStopTimer -= dt;
+            return; // Pause logic for hit-stop
+        }
+        
+        if (this.shakeTimer > 0) {
+            this.shakeX = (Math.random() - 0.5) * this.shakeTimer * 20;
+            this.shakeY = (Math.random() - 0.5) * this.shakeTimer * 20;
+            this.shakeTimer -= dt;
+        } else {
+            this.shakeX = 0;
+            this.shakeY = 0;
+        }
+
         this.frameCount++;
         this.time += dt;
         
@@ -250,6 +270,15 @@ export class GameEngine {
             p.life -= dt;
             p.x += p.vx * dt;
             p.y += p.vy * dt;
+            if (p.rotation !== undefined) p.rotation += (p.rotSpeed || 0) * dt;
+            if (p.type === 'smoke') {
+                p.size += dt * 10;
+                p.vx *= 0.95;
+                p.vy *= 0.95;
+            } else if (p.type === 'spark') {
+                p.vx *= 0.9;
+                p.vy *= 0.9;
+            }
             return p.life > 0;
         });
         
@@ -393,6 +422,18 @@ export class GameEngine {
             
             let angle = nearest ? Math.atan2(nearest.y - this.player.y, nearest.x - this.player.x) : Math.random() * Math.PI * 2;
             
+            let projColor = isMastered ? '#4169E1' : '#00ff00';
+            let projType = 'beam';
+            
+            // Character specific flair
+            if (this.characterId === 'skybyte') { projColor = '#00ffff'; projType = 'dual_laser'; }
+            if (this.characterId === 'neobyte') { projColor = '#4169E1'; projType = 'lightning'; }
+            if (this.characterId === 'glitch') { projColor = '#8a2be2'; projType = 'glitch_slash'; }
+            if (this.characterId === 'pandypaws') { projColor = '#ff69b4'; projType = 'stomp'; }
+            if (this.characterId === 'holodrift') { projColor = '#20b2aa'; projType = 'repair_beam'; }
+
+            this.addParticle(this.player.x, this.player.y, projColor, 10, 'glow', 1.5); // Muzzle flash
+
             this.projectiles.push({
                 x: this.player.x, y: this.player.y,
                 vx: Math.cos(angle) * 300 * this.player.projSpeedMult,
@@ -401,10 +442,19 @@ export class GameEngine {
                 damage: dmg,
                 pierce: 2 + Math.floor(w.level/2),
                 life: 2,
-                color: isMastered ? '#4169E1' : '#00ff00',
+                color: projColor,
+                type: projType,
                 isMastered: isMastered,
                 weaponId: 'napBeam'
             });
+            
+            if (projType === 'dual_laser') {
+                 this.projectiles.push({
+                    x: this.player.x + Math.cos(angle + Math.PI/2)*10, y: this.player.y + Math.sin(angle + Math.PI/2)*10,
+                    vx: Math.cos(angle) * 300 * this.player.projSpeedMult, vy: Math.sin(angle) * 300 * this.player.projSpeedMult,
+                    radius: 4 * area, damage: dmg, pierce: 2 + Math.floor(w.level/2), life: 2, color: projColor, type: projType, isMastered, weaponId: 'napBeam'
+                });
+            }
         }
         else if (w.id === 'vineWhip') {
             this.enemies.forEach(e => {
@@ -590,6 +640,15 @@ export class GameEngine {
             p.y += p.vy * dt;
             p.life -= dt;
             
+            // Trails
+            if (!p.isAoe && this.frameCount % 2 === 0) {
+                if (p.type === 'dual_laser') this.addParticle(p.x, p.y, p.color, 1, 'glow', 0.5);
+                else if (p.type === 'lightning') this.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'spark', 0.8);
+                else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 2, 'glitch', 1.0);
+                else if (p.type === 'repair_beam') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 0.5);
+                else this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
+            }
+
             if (!p.isAoe) {
                 this.enemies.forEach(e => {
                     if (p.pierce > 0 && Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
@@ -612,7 +671,17 @@ export class GameEngine {
                         if (!p.hitList.has(e)) {
                             p.hitList.add(e);
                             this.damageEnemy(e, p.damage);
-                            this.addParticle(e.x, e.y, p.color, 3);
+                            
+                            // Impact Effects
+                            this.shake(0.1);
+                            this.hitStopTimer = 0.02;
+                            this.addParticle(e.x, e.y, p.color, 15, 'spark', 1.5);
+                            this.addParticle(e.x, e.y, '#ffffff', 5, 'glow', 2);
+                            
+                            if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'glow', 2);
+                            if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'smoke', 2);
+                            if (p.type === 'glitch_slash') this.addParticle(e.x, e.y, p.color, 8, 'glitch', 2);
+
                             p.pierce--;
                             
                             if (p.isMastered && p.weaponId === 'napBeam') {
@@ -722,6 +791,13 @@ export class GameEngine {
             if (e.hp <= 0) {
                 this.kills++;
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
+                
+                // Death Splatter
+                this.addParticle(e.x, e.y, e.color, e.isBoss ? 100 : 25, 'spark', e.isBoss ? 3 : 1.5);
+                this.addParticle(e.x, e.y, '#ffffff', e.isBoss ? 20 : 5, 'glow', e.isBoss ? 4 : 2);
+                this.addParticle(e.x, e.y, e.color, e.isBoss ? 30 : 10, 'smoke', 2);
+                this.shake(e.isBoss ? 0.5 : 0.05);
+
                 if (e.isBoss) {
                     this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: 1, color: '#ff00ff' });
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
@@ -731,7 +807,6 @@ export class GameEngine {
                         this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
                     }
                 }
-                this.addParticle(e.x, e.y, e.color, e.isBoss ? 50 : 15);
                 return false;
             }
             
@@ -882,8 +957,12 @@ export class GameEngine {
 
     updatePickups(dt) {
         this.pickups = this.pickups.filter(p => {
+            if (this.frameCount % 10 === 0 && p.type === 'xp') {
+                this.addParticle(p.x, p.y, p.color, 1, 'glow', 0.3); // XP sparkles
+            }
             const dist = Math.hypot(this.player.x - p.x, this.player.y - p.y);
             if (dist < this.player.radius + 10) {
+                this.addParticle(p.x, p.y, p.color, 5, 'spark', 1); // Collection burst
                 if (p.type === 'xp') {
                     this.xp += p.value * this.player.xpMult;
                     if (this.xp >= this.xpRequired) this.levelUp();
@@ -913,13 +992,25 @@ export class GameEngine {
         this.addDamageText(enemy.x, enemy.y - 10, Math.floor(amount), '#ffffff');
     }
 
-    addParticle(x, y, color, count) {
+    shake(amount) {
+        this.shakeTimer = Math.max(this.shakeTimer, amount);
+    }
+
+    addParticle(x, y, color, count, type = 'spark', sizeMult = 1) {
         for(let i=0; i<count; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 100 + 50;
+            const speed = Math.random() * 150 * sizeMult + 50;
             this.particles.push({
-                x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-                life: Math.random() * 0.5 + 0.2, color
+                x, y, 
+                vx: Math.cos(angle) * speed, 
+                vy: Math.sin(angle) * speed,
+                life: Math.random() * 0.5 + 0.2, 
+                maxLife: 0.7,
+                color,
+                type,
+                size: (Math.random() * 4 + 2) * sizeMult,
+                rotation: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 10
             });
         }
     }
@@ -1102,6 +1193,19 @@ export class GameEngine {
                 this.ctx.stroke();
             }
         };
+
+        // General Enemy Trails based on ID
+        if (this.frameCount % 4 === 0) {
+            if (e.id.includes('serpent') || e.id.includes('flare') || e.id.includes('elemental')) this.addParticle(e.x, e.y, e.color, 1, 'smoke', 1);
+            if (e.id.includes('jelly') || e.id.includes('wraith')) this.addParticle(e.x, e.y, e.color, 1, 'glow', 0.8);
+            if (e.id.includes('leech') || e.id.includes('parasite') || e.id.includes('worm')) this.addParticle(e.x, e.y + e.radius, e.color, 1, 'spark', 0.5); // Drip
+            if (e.id.includes('behemoth') || e.id.includes('blackhole') || e.id.includes('horror')) {
+                const a = Math.random() * Math.PI * 2;
+                this.addParticle(e.x + Math.cos(a)*e.radius*1.5, e.y + Math.sin(a)*e.radius*1.5, e.color, 1, 'spark', 0.5);
+            }
+            if (e.id.includes('stalker') || e.id.includes('shambler') || e.id.includes('entity')) this.addParticle(e.x, e.y, e.color, 1, 'glitch', 1);
+            if (e.id.includes('mantis') || e.id.includes('dragon') || e.id.includes('wyrm')) this.addParticle(e.x, e.y, '#ff4500', 2, 'spark', 1);
+        }
 
         switch (e.id) {
             case 't1_parasite':
@@ -1565,7 +1669,7 @@ export class GameEngine {
         this.ctx.globalAlpha = 1.0;
 
         this.ctx.save();
-        this.ctx.translate(-this.camera.x, -this.camera.y);
+        this.ctx.translate(-this.camera.x + this.shakeX, -this.camera.y + this.shakeY);
         
         this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
         this.ctx.lineWidth = 1;
@@ -1677,12 +1781,39 @@ export class GameEngine {
             }
         }
 
+        this.ctx.globalCompositeOperation = 'screen';
         this.particles.forEach(p => {
+            this.ctx.globalAlpha = Math.max(0, p.life / (p.maxLife || 1));
             this.ctx.fillStyle = p.color;
-            this.ctx.globalAlpha = p.life * 2;
-            this.ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
-            this.ctx.globalAlpha = 1.0;
+            
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
+            this.ctx.rotate(p.rotation || 0);
+
+            if (p.type === 'spark') {
+                this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+            } else if (p.type === 'glow') {
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.size * 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else if (p.type === 'slash') {
+                this.ctx.fillRect(-p.size*2, -p.size/4, p.size*4, p.size/2);
+            } else if (p.type === 'smoke') {
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else if (p.type === 'glitch') {
+                this.ctx.fillRect(-p.size, -p.size/2, p.size*2, p.size);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+            } else {
+                this.ctx.fillRect(-2, -2, 4, 4);
+            }
+            this.ctx.restore();
         });
+        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.globalAlpha = 1.0;
 
         this.enemies.forEach(e => {
             if (!e.burrowed) {
