@@ -230,6 +230,32 @@ export class GameEngine {
                 isAoe: true
             });
         }
+        else if (w.id === 'novaPulse') {
+            this.projectiles.push({
+                x: this.player.x, y: this.player.y,
+                vx: 0, vy: 0,
+                radius: 10 * area,
+                damage: dmg,
+                pierce: 999,
+                life: 0.5,
+                color: 'rgba(0, 255, 255, 0.6)',
+                isAoe: true,
+                pulse: true
+            });
+        }
+        else if (w.id === 'shieldBubble') {
+            this.projectiles.push({
+                x: this.player.x, y: this.player.y,
+                vx: 0, vy: 0,
+                radius: 80 * area,
+                damage: dmg,
+                pierce: 999,
+                life: 2.0,
+                color: 'rgba(255, 255, 255, 0.3)',
+                isAoe: true,
+                pushback: 250
+            });
+        }
     }
 
     updateProjectiles(dt) {
@@ -250,10 +276,35 @@ export class GameEngine {
                     }
                 });
             } else {
-                if (this.frameCount % 15 === 0) {
+                if (p.pulse) {
+                    p.radius += 500 * dt;
                     this.enemies.forEach(e => {
-                        if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) this.damageEnemy(e, p.damage);
+                        if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
+                            if (!p.hitList) p.hitList = new Set();
+                            if (!p.hitList.has(e)) {
+                                p.hitList.add(e);
+                                this.damageEnemy(e, p.damage);
+                            }
+                        }
                     });
+                } else if (p.pushback) {
+                    p.x = this.player.x;
+                    p.y = this.player.y;
+                    this.enemies.forEach(e => {
+                        const dist = Math.hypot(e.x - p.x, e.y - p.y);
+                        if (dist < p.radius) {
+                            if (this.frameCount % 15 === 0) this.damageEnemy(e, p.damage);
+                            const angle = Math.atan2(e.y - p.y, e.x - p.x);
+                            e.x += Math.cos(angle) * p.pushback * dt;
+                            e.y += Math.sin(angle) * p.pushback * dt;
+                        }
+                    });
+                } else {
+                    if (this.frameCount % 15 === 0) {
+                        this.enemies.forEach(e => {
+                            if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) this.damageEnemy(e, p.damage);
+                        });
+                    }
                 }
             }
             return p.life > 0 && p.pierce > 0;
