@@ -1071,220 +1071,408 @@ export class GameEngine {
         this.ctx.shadowColor = e.color;
         this.ctx.shadowBlur = 15;
 
+        // Helper to draw tentacles
+        const drawTentacle = (count, length, width, color, speed = 1) => {
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = width;
+            this.ctx.lineCap = 'round';
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i + Math.sin(t * speed) * 0.5;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 0);
+                this.ctx.quadraticCurveTo(
+                    Math.cos(angle) * length * 0.5, 
+                    Math.sin(angle) * length * 0.5 + Math.sin(t * 2 + i) * 10, 
+                    Math.cos(angle) * length, 
+                    Math.sin(angle) * length
+                );
+                this.ctx.stroke();
+            }
+        };
+
         switch (e.id) {
             case 'void_leech':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius * 1.5, e.radius * 0.8, wiggle, 0, Math.PI * 2); this.ctx.fill();
+                // Long writhing slug
+                this.ctx.fillStyle = '#1a0b2e'; // Dark purple-black
+                this.ctx.beginPath();
+                this.ctx.moveTo(e.radius, 0);
+                for(let i=0; i<=10; i++) {
+                    const x = e.radius - (i * e.radius * 0.2);
+                    const y = Math.sin(t + i * 0.5) * 5;
+                    const w = e.radius * (1 - i/12);
+                    this.ctx.lineTo(x, y + w);
+                }
+                for(let i=10; i>=0; i--) {
+                    const x = e.radius - (i * e.radius * 0.2);
+                    const y = Math.sin(t + i * 0.5) * 5;
+                    const w = e.radius * (1 - i/12);
+                    this.ctx.lineTo(x, y - w);
+                }
+                this.ctx.fill();
+                
+                // Glowing suckers
                 this.ctx.fillStyle = '#00ffff';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.8, -e.radius * 0.3, 3, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, e.radius * 0.3, 2, 0, Math.PI * 2); this.ctx.fill();
+                for(let i=0; i<5; i++) {
+                    const x = e.radius * 0.8 - (i * 8);
+                    const y = Math.sin(t + i * 0.5) * 5;
+                    this.ctx.beginPath(); this.ctx.arc(x, y, 2, 0, Math.PI*2); this.ctx.fill();
+                }
                 break;
+
             case 'nebula_serpent':
-                this.ctx.fillStyle = e.color;
-                for (let i = 0; i < 5; i++) {
-                    const offset = Math.sin(t - i) * 5;
-                    this.ctx.beginPath(); this.ctx.arc(-i * 8, offset, e.radius - i * 2, 0, Math.PI * 2); this.ctx.fill();
+                // Translucent body with stars
+                for (let i = 0; i < 6; i++) {
+                    const offset = Math.sin(t - i) * 8;
+                    this.ctx.fillStyle = `rgba(255, 0, 255, ${0.8 - i * 0.1})`;
+                    this.ctx.beginPath(); 
+                    this.ctx.arc(-i * 10, offset, e.radius - i * 1.5, 0, Math.PI * 2); 
+                    this.ctx.fill();
+                    
+                    // Stars inside
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.beginPath(); this.ctx.arc(-i * 10 + Math.random()*4-2, offset + Math.random()*4-2, 1, 0, Math.PI*2); this.ctx.fill();
                 }
+                // Fanged maw
                 this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, -3, 3, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.beginPath();
+                this.ctx.moveTo(e.radius * 0.5, -5); this.ctx.lineTo(e.radius, 0); this.ctx.lineTo(e.radius * 0.5, 5);
+                this.ctx.fill();
                 break;
+
             case 'asteroid_kraken':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.arc(0, -5, e.radius, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = '#00ffff';
-                this.ctx.lineWidth = 3;
-                for (let i = 0; i < 4; i++) {
-                    this.ctx.beginPath(); this.ctx.moveTo(0, 0); this.ctx.quadraticCurveTo(Math.cos(t + i) * 15, 15, Math.sin(t + i) * 20, 25); this.ctx.stroke();
+                // Rocky head
+                this.ctx.fillStyle = '#8b7355';
+                this.ctx.beginPath(); 
+                this.ctx.moveTo(e.radius, 0);
+                for(let i=0; i<8; i++) {
+                    const a = (Math.PI*2/8)*i;
+                    const r = e.radius + (i%2===0 ? 2 : -2);
+                    this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
                 }
-                break;
-            case 'plasma_jelly':
-                this.ctx.fillStyle = `rgba(0, 255, 255, ${0.5 + pulse * 0.2})`;
-                this.ctx.beginPath(); this.ctx.arc(0, -e.radius * 0.5, e.radius, Math.PI, 0); this.ctx.fill();
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 2;
-                for (let i = -1; i <= 1; i++) {
-                    this.ctx.beginPath(); this.ctx.moveTo(i * e.radius * 0.5, 0); this.ctx.lineTo(i * e.radius * 0.8 + Math.sin(t + i) * 5, e.radius * 1.5); this.ctx.stroke();
-                }
-                break;
-            case 'quantum_swarm':
-                this.ctx.fillStyle = e.color;
-                for (let i = 0; i < 3; i++) {
-                    this.ctx.beginPath(); this.ctx.arc(Math.cos(t * 2 + i * 2) * e.radius, Math.sin(t * 2 + i * 2) * e.radius, 3, 0, Math.PI * 2); this.ctx.fill();
-                }
-                break;
-            case 'rift_stalker':
-                this.ctx.fillStyle = e.color;
-                this.ctx.globalAlpha = 0.8;
-                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius * 1.2, e.radius * 0.8, 0, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = '#000000';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, -2, 4, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = '#ff00ff';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, -2, 1, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.globalAlpha = 1.0;
-                break;
-            case 'solar_mantis':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.moveTo(e.radius, 0); this.ctx.lineTo(-e.radius, -e.radius * 0.5); this.ctx.lineTo(-e.radius, e.radius * 0.5); this.ctx.fill();
-                this.ctx.strokeStyle = '#ffff00';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath(); this.ctx.moveTo(0, -e.radius * 0.5); this.ctx.lineTo(e.radius * 1.5, -e.radius * 1.2 + Math.sin(t) * 5); this.ctx.stroke();
-                this.ctx.beginPath(); this.ctx.moveTo(0, e.radius * 0.5); this.ctx.lineTo(e.radius * 1.5, e.radius * 1.2 - Math.sin(t) * 5); this.ctx.stroke();
-                break;
-            case 'cosmic_horror_spawn':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius * pulse, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = '#000000';
-                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius * 0.4 * pulse, 0, Math.PI * 2); this.ctx.fill();
-                break;
-            case 'eclipse_harpy':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                this.ctx.beginPath(); this.ctx.ellipse(0, -e.radius * 0.5, e.radius * 1.5, e.radius * 0.5, Math.sin(t) * 0.2, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.fill();
+                
+                // Crystal tentacles
+                drawTentacle(6, e.radius * 2, 3, '#00ffff', 0.5);
+                
+                // Glowing eye
                 this.ctx.fillStyle = '#ff0000';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, 0, 2, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 4, 0, Math.PI*2); this.ctx.fill();
                 break;
-            case 'starspine_urchin':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius * 0.8, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = e.color;
-                this.ctx.lineWidth = 2;
-                for (let i = 0; i < 8; i++) {
-                    const angle = (Math.PI / 4) * i + t;
-                    this.ctx.beginPath(); this.ctx.moveTo(Math.cos(angle) * e.radius * 0.8, Math.sin(angle) * e.radius * 0.8); this.ctx.lineTo(Math.cos(angle) * e.radius * 1.5, Math.sin(angle) * e.radius * 1.5); this.ctx.stroke();
-                }
-                break;
-            case 'cryo_wraith':
-                this.ctx.fillStyle = `rgba(173, 216, 230, ${0.6 + pulse * 0.2})`;
-                this.ctx.beginPath(); this.ctx.moveTo(0, -e.radius); this.ctx.quadraticCurveTo(e.radius, 0, 0, e.radius * 1.5 + Math.sin(t) * 5); this.ctx.quadraticCurveTo(-e.radius, 0, 0, -e.radius); this.ctx.fill();
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.3, -e.radius * 0.2, 2, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.arc(-e.radius * 0.3, -e.radius * 0.2, 2, 0, Math.PI * 2); this.ctx.fill();
-                break;
-            case 'pulsar_anglerfish':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius * 1.2, e.radius * 0.8, 0, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = '#00ffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath(); this.ctx.moveTo(0, -e.radius * 0.8); this.ctx.quadraticCurveTo(e.radius, -e.radius * 1.5, e.radius * 1.5, -e.radius * 0.5); this.ctx.stroke();
-                this.ctx.fillStyle = '#00ffff';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 1.5, -e.radius * 0.5, 4 * pulse, 0, Math.PI * 2); this.ctx.fill();
-                break;
-            case 'nebula_siren':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.arc(0, -e.radius * 0.5, e.radius * 0.8, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = '#ff00ff';
-                this.ctx.lineWidth = 2;
-                for (let i = -1; i <= 1; i++) {
-                    this.ctx.beginPath(); this.ctx.moveTo(i * e.radius * 0.5, 0); this.ctx.quadraticCurveTo(i * e.radius + Math.sin(t + i) * 5, e.radius, i * e.radius * 0.5 + Math.sin(t * 2 + i) * 5, e.radius * 2); this.ctx.stroke();
-                }
-                break;
-            case 'void_crawler':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius * 1.2, 0, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = '#000000';
-                this.ctx.lineWidth = 2;
-                for (let i = -1; i <= 1; i += 2) {
-                    this.ctx.beginPath(); this.ctx.moveTo(e.radius * 0.5, i * e.radius * 0.5); this.ctx.lineTo(e.radius * 1.5, i * e.radius * 0.8 + Math.sin(t) * 3); this.ctx.stroke();
-                    this.ctx.beginPath(); this.ctx.moveTo(-e.radius * 0.5, i * e.radius * 0.5); this.ctx.lineTo(-e.radius * 1.5, i * e.radius * 0.8 - Math.sin(t) * 3); this.ctx.stroke();
-                }
-                break;
-            case 'ion_stingray':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.moveTo(e.radius * 1.5, 0); this.ctx.lineTo(-e.radius, -e.radius); this.ctx.lineTo(-e.radius * 0.5, 0); this.ctx.lineTo(-e.radius, e.radius); this.ctx.fill();
+
+            case 'plasma_jelly':
+                // Translucent dome
+                this.ctx.fillStyle = `rgba(0, 255, 255, ${0.4 + pulse * 0.2})`;
+                this.ctx.beginPath(); 
+                this.ctx.arc(0, -5, e.radius, Math.PI, 0); 
+                this.ctx.lineTo(e.radius, 5);
+                this.ctx.quadraticCurveTo(0, -2, -e.radius, 5);
+                this.ctx.fill();
+                
+                // Lightning veins
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 1;
-                this.ctx.beginPath(); this.ctx.moveTo(-e.radius * 0.5, 0); this.ctx.lineTo(-e.radius * 2 - Math.sin(t * 5) * 5, Math.sin(t * 3) * 5); this.ctx.stroke();
-                break;
-            case 'fractal_moth':
-                this.ctx.fillStyle = '#000000';
-                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius * 0.4, e.radius, 0, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = `rgba(255, 105, 180, ${0.7 + pulse * 0.3})`;
-                this.ctx.beginPath(); this.ctx.ellipse(e.radius * 0.8, -e.radius * 0.5, e.radius * 1.2, e.radius * 0.8, Math.sin(t * 3) * 0.5, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.ellipse(e.radius * 0.8, e.radius * 0.5, e.radius * 1.2, e.radius * 0.8, -Math.sin(t * 3) * 0.5, 0, Math.PI * 2); this.ctx.fill();
-                break;
-            case 'black_hole_tick':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = '#800080';
-                this.ctx.lineWidth = 2;
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI * 2 / 6) * i + t;
-                    this.ctx.beginPath(); this.ctx.moveTo(Math.cos(angle) * e.radius * 0.5, Math.sin(angle) * e.radius * 0.5); this.ctx.lineTo(Math.cos(angle) * e.radius * 1.5, Math.sin(angle) * e.radius * 1.5); this.ctx.stroke();
-                }
-                break;
-            case 'aurora_banshee':
-                this.ctx.fillStyle = `rgba(127, 255, 212, ${0.5 + pulse * 0.3})`;
-                this.ctx.beginPath(); this.ctx.moveTo(0, -e.radius); this.ctx.quadraticCurveTo(e.radius * 1.5, 0, 0, e.radius * 1.5); this.ctx.quadraticCurveTo(-e.radius * 1.5, 0, 0, -e.radius); this.ctx.fill();
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath(); this.ctx.arc(0, -e.radius * 0.3, 3, 0, Math.PI * 2); this.ctx.fill();
-                break;
-            case 'elite_solar_drake':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.moveTo(e.radius * 1.5, 0); this.ctx.lineTo(-e.radius, -e.radius); this.ctx.lineTo(-e.radius * 0.5, 0); this.ctx.lineTo(-e.radius, e.radius); this.ctx.fill();
-                this.ctx.fillStyle = '#ff4500';
-                this.ctx.beginPath(); this.ctx.moveTo(0, 0); this.ctx.lineTo(-e.radius * 1.5, -e.radius * 0.5 + Math.sin(t * 4) * 5); this.ctx.lineTo(-e.radius * 1.5, e.radius * 0.5 - Math.sin(t * 4) * 5); this.ctx.fill();
-                break;
-            case 'elite_singularity_slug':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.ellipse(0, e.radius * 0.5, e.radius * 1.5, e.radius * 0.8, 0, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = '#000000';
-                this.ctx.beginPath(); this.ctx.arc(0, -e.radius * 0.2, e.radius * 0.6 * pulse, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = '#800080';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath(); this.ctx.arc(0, -e.radius * 0.2, e.radius * 0.8 * pulse, 0, Math.PI * 2); this.ctx.stroke();
-                break;
-            case 'boss_gravity_behemoth':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius * 0.8, 0, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = '#000000';
-                for (let i = 0; i < 5; i++) {
-                    this.ctx.beginPath(); this.ctx.arc(Math.cos(t + i) * e.radius * 0.6, Math.sin(t + i) * e.radius * 0.5, 8, 0, Math.PI * 2); this.ctx.fill();
-                }
-                break;
-            case 'boss_phantom_leviathan':
-                this.ctx.fillStyle = `rgba(224, 255, 255, ${0.7 + pulse * 0.2})`;
-                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius * 1.5, e.radius * 0.8, 0, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath(); this.ctx.arc(e.radius, -e.radius * 0.2, 5, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.moveTo(0, -e.radius + 2); this.ctx.lineTo(Math.sin(t)*5, 0); this.ctx.stroke();
+                
+                // Pulsing stingers
                 this.ctx.strokeStyle = '#00ffff';
-                this.ctx.lineWidth = 3;
-                for (let i = 0; i < 3; i++) {
-                    this.ctx.beginPath(); this.ctx.moveTo(-e.radius * 1.5, 0); this.ctx.quadraticCurveTo(-e.radius * 2, Math.sin(t * 2 + i) * 20, -e.radius * 2.5, 0); this.ctx.stroke();
-                }
-                break;
-            case 'boss_cosmic_hydra':
-                this.ctx.fillStyle = e.color;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius * 0.8, 0, Math.PI * 2); this.ctx.fill();
-                const heads = e.heads || 3;
-                for (let i = 0; i < heads; i++) {
-                    const angle = (Math.PI * 2 / heads) * i + Math.sin(t) * 0.2;
-                    this.ctx.strokeStyle = e.color;
-                    this.ctx.lineWidth = 8;
-                    this.ctx.beginPath(); this.ctx.moveTo(0, 0); 
-                    const hx = Math.cos(angle) * e.radius * 1.5;
-                    const hy = Math.sin(angle) * e.radius * 1.5;
-                    this.ctx.quadraticCurveTo(Math.cos(angle + 0.5) * e.radius, Math.sin(angle + 0.5) * e.radius, hx, hy);
+                this.ctx.lineWidth = 2;
+                for(let i=-2; i<=2; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i*4, 5);
+                    this.ctx.lineTo(i*6 + Math.sin(t*2+i)*5, 20);
                     this.ctx.stroke();
-                    this.ctx.fillStyle = '#006400';
-                    this.ctx.beginPath(); this.ctx.arc(hx, hy, 12, 0, Math.PI * 2); this.ctx.fill();
-                    this.ctx.fillStyle = '#ff0000';
-                    this.ctx.beginPath(); this.ctx.arc(hx + 4, hy - 2, 3, 0, Math.PI * 2); this.ctx.fill();
                 }
                 break;
-            case 'boss_star_eater_wyrm':
-                this.ctx.fillStyle = e.color;
-                for (let i = 0; i < 8; i++) {
-                    const offset = Math.sin(t - i * 0.5) * 15;
-                    this.ctx.beginPath(); this.ctx.arc(-i * 12, offset, e.radius - i * 3, 0, Math.PI * 2); this.ctx.fill();
-                }
-                this.ctx.fillStyle = '#000000';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, 0, e.radius * 0.6 * pulse, 0, Math.PI * 2); this.ctx.fill();
+
+            case 'quantum_swarm':
+                // Insectoid
+                this.ctx.fillStyle = '#00ff00';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.5, 0, 0, Math.PI*2); this.ctx.fill();
+                // Wings
+                this.ctx.fillStyle = `rgba(200, 255, 200, 0.5)`;
+                this.ctx.beginPath(); this.ctx.ellipse(0, -5, e.radius*1.5, e.radius*0.5, Math.sin(t*20)*0.5, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.ellipse(0, 5, e.radius*1.5, e.radius*0.5, -Math.sin(t*20)*0.5, 0, Math.PI*2); this.ctx.fill();
+                break;
+
+            case 'rift_stalker':
+                // Panther-like shadow
+                this.ctx.fillStyle = '#1a0033';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius*1.2, e.radius*0.6, 0, 0, Math.PI*2); this.ctx.fill();
+                // Head
+                this.ctx.beginPath(); this.ctx.arc(e.radius, -2, 6, 0, Math.PI*2); this.ctx.fill();
+                // Portals/Spots
+                this.ctx.fillStyle = '#9400d3';
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 3 + pulse, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(-5, 2, 2, 0, Math.PI*2); this.ctx.fill();
+                break;
+
+            case 'solar_mantis':
+                // Angular body
+                this.ctx.fillStyle = '#ff4500';
+                this.ctx.beginPath();
+                this.ctx.moveTo(e.radius, 0);
+                this.ctx.lineTo(-5, -5);
+                this.ctx.lineTo(-e.radius, 0);
+                this.ctx.lineTo(-5, 5);
+                this.ctx.fill();
+                // Solar wings
+                this.ctx.fillStyle = `rgba(255, 215, 0, 0.6)`;
+                this.ctx.beginPath(); this.ctx.moveTo(0, -2); this.ctx.lineTo(-10, -20); this.ctx.lineTo(10, -15); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.moveTo(0, 2); this.ctx.lineTo(-10, 20); this.ctx.lineTo(10, 15); this.ctx.fill();
+                // Blades
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath(); this.ctx.moveTo(10, -5); this.ctx.lineTo(20, -10); this.ctx.stroke();
+                this.ctx.beginPath(); this.ctx.moveTo(10, 5); this.ctx.lineTo(20, 10); this.ctx.stroke();
+                break;
+
+            case 'cosmic_horror_spawn':
+                // Blobby baby
+                this.ctx.fillStyle = '#800080';
+                this.ctx.beginPath(); 
+                this.ctx.arc(0, 0, e.radius * (0.8 + pulse*0.2), 0, Math.PI*2); 
+                this.ctx.fill();
+                // Many eyes
                 this.ctx.fillStyle = '#ffff00';
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, -e.radius * 0.4, 4, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.arc(e.radius * 0.5, e.radius * 0.4, 4, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(2, -2, 2, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(-2, 2, 1.5, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(3, 3, 1, 0, Math.PI*2); this.ctx.fill();
                 break;
+
+            case 'eclipse_harpy':
+                // Sleek body
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.4, 0, 0, Math.PI*2); this.ctx.fill();
+                // Eclipse wings (black with white rim)
+                this.ctx.fillStyle = '#000000';
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath(); 
+                this.ctx.moveTo(0, -2); this.ctx.quadraticCurveTo(e.radius*1.5, -e.radius*1.5, -e.radius, -5); 
+                this.ctx.fill(); this.ctx.stroke();
+                this.ctx.beginPath(); 
+                this.ctx.moveTo(0, 2); this.ctx.quadraticCurveTo(e.radius*1.5, e.radius*1.5, -e.radius, 5); 
+                this.ctx.fill(); this.ctx.stroke();
+                break;
+
+            case 'gravity_behemoth':
+                // Turtle shell
+                this.ctx.fillStyle = '#2f4f4f';
+                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius, 0, Math.PI*2); this.ctx.fill();
+                // Orbs
+                this.ctx.fillStyle = '#4b0082';
+                for(let i=0; i<5; i++) {
+                    const a = (Math.PI*2/5)*i + t*0.5;
+                    this.ctx.beginPath(); this.ctx.arc(Math.cos(a)*e.radius*0.6, Math.sin(a)*e.radius*0.6, 6, 0, Math.PI*2); this.ctx.fill();
+                }
+                // Head
+                this.ctx.fillStyle = '#556b2f';
+                this.ctx.beginPath(); this.ctx.arc(e.radius+5, 0, 8, 0, Math.PI*2); this.ctx.fill();
+                break;
+
+            case 'starspine_urchin':
+                // Crystalline ball
+                this.ctx.fillStyle = '#00ced1';
+                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius*0.7, 0, Math.PI*2); this.ctx.fill();
+                // Spikes
+                this.ctx.fillStyle = '#ffffff';
+                for(let i=0; i<12; i++) {
+                    const a = (Math.PI*2/12)*i + t;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(Math.cos(a)*e.radius*0.7, Math.sin(a)*e.radius*0.7);
+                    this.ctx.lineTo(Math.cos(a)*e.radius*1.5, Math.sin(a)*e.radius*1.5);
+                    this.ctx.lineTo(Math.cos(a+0.2)*e.radius*0.7, Math.sin(a+0.2)*e.radius*0.7);
+                    this.ctx.fill();
+                }
+                break;
+
+            case 'phantom_leviathan':
+                // Ghost whale
+                this.ctx.fillStyle = `rgba(224, 255, 255, ${0.5 + pulse*0.2})`;
+                this.ctx.beginPath();
+                this.ctx.moveTo(e.radius, 0);
+                this.ctx.quadraticCurveTo(0, -e.radius*0.8, -e.radius*1.5, 0);
+                this.ctx.quadraticCurveTo(0, e.radius*0.8, e.radius, 0);
+                this.ctx.fill();
+                // Fins
+                this.ctx.beginPath(); this.ctx.moveTo(0, -e.radius*0.5); this.ctx.lineTo(-5, -e.radius*1.2); this.ctx.lineTo(5, -e.radius*0.5); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.moveTo(0, e.radius*0.5); this.ctx.lineTo(-5, e.radius*1.2); this.ctx.lineTo(5, e.radius*0.5); this.ctx.fill();
+                break;
+
+            case 'cryo_wraith':
+                // Ice ghost
+                this.ctx.fillStyle = `rgba(173, 216, 230, ${0.6 + pulse*0.2})`;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, -e.radius);
+                this.ctx.quadraticCurveTo(e.radius, -e.radius, e.radius*0.5, 0);
+                this.ctx.lineTo(0, e.radius + Math.sin(t*5)*5);
+                this.ctx.lineTo(-e.radius*0.5, 0);
+                this.ctx.quadraticCurveTo(-e.radius, -e.radius, 0, -e.radius);
+                this.ctx.fill();
+                // Glowing eyes
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath(); this.ctx.arc(3, -5, 2, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(-3, -5, 2, 0, Math.PI*2); this.ctx.fill();
+                break;
+
+            case 'pulsar_anglerfish':
+                // Fish body
+                this.ctx.fillStyle = '#ff1493';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.7, 0, 0, Math.PI*2); this.ctx.fill();
+                // Lure
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath(); this.ctx.moveTo(5, -5); this.ctx.quadraticCurveTo(15, -15, 20, -5); this.ctx.stroke();
+                this.ctx.fillStyle = '#00ffff';
+                this.ctx.shadowColor = '#00ffff';
+                this.ctx.shadowBlur = 10;
+                this.ctx.beginPath(); this.ctx.arc(20, -5, 3 + pulse, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.shadowBlur = 0;
+                break;
+
+            case 'nebula_siren':
+                // Torso
+                this.ctx.fillStyle = '#dda0dd';
+                this.ctx.beginPath(); this.ctx.arc(0, -5, 8, 0, Math.PI*2); this.ctx.fill();
+                // Tentacles/Hair
+                drawTentacle(5, 20, 2, '#ee82ee', 0.8);
+                break;
+
+            case 'void_crawler':
+                // Beetle shell
+                this.ctx.fillStyle = '#2f0000';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*1.2, 0, 0, Math.PI*2); this.ctx.fill();
+                // Legs
+                this.ctx.strokeStyle = '#000000';
+                this.ctx.lineWidth = 2;
+                for(let i=0; i<3; i++) {
+                    const y = -10 + i*10;
+                    this.ctx.beginPath(); this.ctx.moveTo(5, y); this.ctx.lineTo(15, y - Math.sin(t*10 + i)*5); this.ctx.stroke();
+                    this.ctx.beginPath(); this.ctx.moveTo(-5, y); this.ctx.lineTo(-15, y - Math.sin(t*10 + i)*5); this.ctx.stroke();
+                }
+                break;
+
+            case 'ion_stingray':
+                // Flat body
+                this.ctx.fillStyle = '#00fa9a';
+                this.ctx.beginPath();
+                this.ctx.moveTo(e.radius*1.5, 0);
+                this.ctx.lineTo(0, -e.radius);
+                this.ctx.lineTo(-e.radius*0.5, 0);
+                this.ctx.lineTo(0, e.radius);
+                this.ctx.fill();
+                // Tail
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.beginPath(); this.ctx.moveTo(-e.radius*0.5, 0); this.ctx.lineTo(-e.radius*2, Math.sin(t*5)*5); this.ctx.stroke();
+                break;
+
+            case 'fractal_moth':
+                // Body
+                this.ctx.fillStyle = '#000000';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 0, 3, 10, 0, 0, Math.PI*2); this.ctx.fill();
+                // Fractal wings
+                this.ctx.fillStyle = `rgba(255, 105, 180, 0.7)`;
+                this.ctx.save();
+                this.ctx.scale(1 + Math.sin(t*20)*0.2, 1);
+                this.ctx.beginPath(); this.ctx.moveTo(0, -5); this.ctx.lineTo(15, -15); this.ctx.lineTo(10, 0); this.ctx.lineTo(15, 15); this.ctx.lineTo(0, 5); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.moveTo(0, -5); this.ctx.lineTo(-15, -15); this.ctx.lineTo(-10, 0); this.ctx.lineTo(-15, 15); this.ctx.lineTo(0, 5); this.ctx.fill();
+                this.ctx.restore();
+                break;
+
+            case 'black_hole_tick':
+                // Round body
+                this.ctx.fillStyle = '#000000';
+                this.ctx.strokeStyle = '#800080';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius, 0, Math.PI*2); this.ctx.fill(); this.ctx.stroke();
+                // Legs
+                for(let i=0; i<8; i++) {
+                    const a = (Math.PI*2/8)*i;
+                    this.ctx.beginPath(); this.ctx.moveTo(Math.cos(a)*e.radius, Math.sin(a)*e.radius);
+                    this.ctx.lineTo(Math.cos(a)*(e.radius+5), Math.sin(a)*(e.radius+5));
+                    this.ctx.stroke();
+                }
+                break;
+
+            case 'aurora_banshee':
+                // Ethereal form
+                this.ctx.fillStyle = `rgba(127, 255, 212, ${0.5 + pulse*0.3})`;
+                this.ctx.beginPath();
+                this.ctx.arc(0, -5, 8, 0, Math.PI*2);
+                this.ctx.moveTo(-8, 0);
+                this.ctx.quadraticCurveTo(0, 20 + Math.sin(t*3)*5, 8, 0);
+                this.ctx.fill();
+                // Screaming mouth
+                this.ctx.fillStyle = '#000000';
+                this.ctx.beginPath(); this.ctx.ellipse(0, -3, 2, 4 + pulse*2, 0, 0, Math.PI*2); this.ctx.fill();
+                break;
+
+            case 'elite_solar_drake':
+                // Dragon shape
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.beginPath();
+                this.ctx.moveTo(15, 0); // Nose
+                this.ctx.lineTo(0, -5);
+                this.ctx.lineTo(-10, -15); // Wing tip
+                this.ctx.lineTo(-5, 0);
+                this.ctx.lineTo(-10, 15); // Wing tip
+                this.ctx.lineTo(0, 5);
+                this.ctx.fill();
+                // Fire breath hint
+                this.ctx.fillStyle = '#ff4500';
+                this.ctx.beginPath(); this.ctx.arc(18, 0, 2 + Math.random()*2, 0, Math.PI*2); this.ctx.fill();
+                break;
+
+            case 'elite_singularity_slug':
+                // Fat slug
+                this.ctx.fillStyle = '#483d8b';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.6, 0, 0, Math.PI*2); this.ctx.fill();
+                // Black hole on back
+                this.ctx.fillStyle = '#000000';
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.beginPath(); this.ctx.arc(0, -5, 8, 0, Math.PI*2); this.ctx.fill(); this.ctx.stroke();
+                break;
+
+            case 'boss_cosmic_hydra':
+                // Central body
+                this.ctx.fillStyle = '#32cd32';
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI*2); this.ctx.fill();
+                // Heads
+                const heads = e.heads || 3;
+                for(let i=0; i<heads; i++) {
+                    const a = (Math.PI*2/heads)*i + Math.sin(t)*0.2;
+                    const len = 30 + Math.sin(t*2+i)*5;
+                    this.ctx.strokeStyle = '#32cd32';
+                    this.ctx.lineWidth = 8;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, 0);
+                    this.ctx.quadraticCurveTo(Math.cos(a)*len*0.5, Math.sin(a)*len*0.5 + 10, Math.cos(a)*len, Math.sin(a)*len);
+                    this.ctx.stroke();
+                    // Head
+                    this.ctx.fillStyle = '#006400';
+                    this.ctx.beginPath(); this.ctx.arc(Math.cos(a)*len, Math.sin(a)*len, 8, 0, Math.PI*2); this.ctx.fill();
+                    // Mouth
+                    this.ctx.fillStyle = '#ff0000';
+                    this.ctx.beginPath(); this.ctx.arc(Math.cos(a)*len + 3, Math.sin(a)*len, 3, 0, Math.PI*2); this.ctx.fill();
+                }
+                break;
+
+            case 'boss_star_eater_wyrm':
+                // Segmented worm
+                for(let i=8; i>=0; i--) {
+                    const x = -i * 15;
+                    const y = Math.sin(t - i*0.5) * 10;
+                    this.ctx.fillStyle = i===0 ? '#ff4500' : '#8b0000'; // Head is brighter
+                    this.ctx.beginPath(); this.ctx.arc(x, y, 20 - i, 0, Math.PI*2); this.ctx.fill();
+                }
+                // Maw
+                this.ctx.fillStyle = '#000000';
+                this.ctx.beginPath(); this.ctx.arc(5, Math.sin(t)*10, 12, 0, Math.PI*2); this.ctx.fill();
+                break;
+
             default:
+                // Fallback circle
                 this.ctx.fillStyle = e.color;
                 this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius, 0, Math.PI * 2); this.ctx.fill();
                 break;
