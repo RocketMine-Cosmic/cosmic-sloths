@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS } from '../game/Constants';
-import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles, Crosshair } from 'lucide-react';
+import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles, Crosshair, Trophy } from 'lucide-react';
+import Leaderboard from '../components/game/Leaderboard';
 
 const UPGRADE_COSTS = [100, 300, 600, 1200, 2400];
 
@@ -390,12 +391,19 @@ export default function Hub() {
                         >
                             ⚔️ Armory
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('leaderboard')}
+                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'leaderboard' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                        >
+                            🏆 Leaderboard
+                        </button>
                     </div>
 
                     <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
                         {activeTab === 'upgrades' && renderUpgrades()}
                         {activeTab === 'armory' && renderArmory()}
                         {activeTab === 'characters' && renderCharacters()}
+                        {activeTab === 'leaderboard' && <Leaderboard />}
                         {activeTab === 'talents' && (
                             <div>
                                 <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">{CHARACTERS.find(c => c.id === selectedChar)?.name}'s Talents</h2>

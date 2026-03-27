@@ -1,0 +1,48 @@
+{
+  "name": "RunScore",
+  "type": "object",
+  "properties": {
+    "player_name": {
+      "type": "string",
+      "description": "Name of the player"
+    },
+    "score": {
+      "type": "number",
+      "description": "Calculated score for the run"
+    },
+    "time_survived": {
+      "type": "number",
+      "description": "Time survived in seconds"
+    },
+    "level": {
+      "type": "number",
+      "description": "Level reached"
+    },
+    "kills": {
+      "type": "number",
+      "description": "Enemies defeated"
+    },
+    "character_id": {
+      "type": "string",
+      "description": "Character used"
+    },
+    "arena_id": {
+      "type": "string",
+      "description": "Arena played"
+    },
+    "week_id": {
+      "type": "string",
+      "description": "Identifier for the week (e.g., 2026-W13)"
+    },
+    "season_id": {
+      "type": "string",
+      "description": "Identifier for the season (e.g., 2026-S1)"
+    }
+  },
+  "required": [
+    "player_name",
+    "score",
+    "week_id",
+    "season_id"
+  ]
+}

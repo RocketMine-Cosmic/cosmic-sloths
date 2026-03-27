@@ -8,6 +8,8 @@ import { ARENAS } from '../game/Constants';
 import GameOverModal from '../components/game/GameOverModal';
 import VictoryModal from '../components/game/VictoryModal';
 import VirtualJoystick from '../components/game/VirtualJoystick';
+import { base44 } from '@/api/base44Client';
+import moment from 'moment';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -37,6 +39,33 @@ export default function Game() {
         };
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
+
+        const saveScore = async (stats, isVictory) => {
+            try {
+                const user = await base44.auth.me();
+                const playerName = user ? user.full_name : 'Anonymous Sloth';
+                const score = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20 + (isVictory ? 5000 : 0);
+                const week_id = moment().format('YYYY-[W]ww');
+                
+                const weekNum = moment().week();
+                const seasonNum = Math.floor(weekNum / 4) + 1;
+                const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+                
+                await base44.entities.RunScore.create({
+                    player_name: playerName,
+                    score: score,
+                    time_survived: stats.time,
+                    level: stats.level,
+                    kills: stats.kills,
+                    character_id: stats.characterId || characterId,
+                    arena_id: stats.arenaId || arenaId,
+                    week_id: week_id,
+                    season_id: season_id
+                });
+            } catch (e) {
+                console.error('Failed to save score', e);
+            }
+        };
 
         const engine = new GameEngine(canvas, characterId, arenaId, save, {
             onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
@@ -73,6 +102,7 @@ export default function Game() {
                 currentSave.gold += stats.gold;
                 SaveManager.save(currentSave);
                 setGameOverStats(stats);
+                saveScore(stats, false);
             },
             onVictory: (stats) => {
                 const currentSave = SaveManager.load();
@@ -89,6 +119,7 @@ export default function Game() {
                 }
                 SaveManager.save(currentSave);
                 setVictoryStats(stats);
+                saveScore(stats, true);
             }
         });
         
