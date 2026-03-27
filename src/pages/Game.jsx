@@ -23,7 +23,7 @@ export default function Game() {
     const [gameOverStats, setGameOverStats] = useState(null);
 
     useEffect(() => {
-        const { characterId, arenaId } = location.state || { characterId: 'rookie', arenaId: 'station' };
+        const { characterId, arenaId } = location.state || { characterId: 'neobyte', arenaId: 'station' };
         const saveStats = SaveManager.load().permanentUpgrades;
         
         const canvas = canvasRef.current;

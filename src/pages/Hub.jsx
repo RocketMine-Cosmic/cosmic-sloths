@@ -9,7 +9,7 @@ const UPGRADE_COSTS = [100, 250, 500, 1000, 2000];
 export default function Hub() {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const [selectedChar, setSelectedChar] = useState('rookie');
+    const [selectedChar, setSelectedChar] = useState('neobyte');
     const [selectedArena, setSelectedArena] = useState('station');
     const [activeTab, setActiveTab] = useState('deploy');
 

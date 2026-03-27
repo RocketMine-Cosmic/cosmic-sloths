@@ -8,7 +8,7 @@ export const SaveManager = {
     }
     return {
       gold: 0,
-      unlockedCharacters: ['rookie'],
+      unlockedCharacters: ['neobyte'],
       unlockedArenas: ['station'],
       permanentUpgrades: {
         damage: 0,
