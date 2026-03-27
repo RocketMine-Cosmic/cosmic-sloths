@@ -102,6 +102,7 @@ export default function Hub() {
                 const isUnlocked = save.unlockedCharacters.includes(char.id);
                 const isSelected = selectedChar === char.id;
                 const canAfford = save.gold >= char.cost;
+                const isFindable = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'].includes(char.id);
 
                 return (
                     <div 
@@ -128,7 +129,7 @@ export default function Hub() {
                             <div className="text-slate-300">REG: <span className="text-white">{char.regen}</span></div>
                         </div>
 
-                        {!isUnlocked && (
+                        {!isUnlocked && !isFindable && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char); }}
                                 disabled={!canAfford}
@@ -138,6 +139,11 @@ export default function Hub() {
                             >
                                 🪙 {char.cost} to Unlock
                             </button>
+                        )}
+                        {!isUnlocked && isFindable && (
+                            <div className="w-full py-2 rounded-lg font-bold text-sm md:text-base bg-slate-700 text-slate-400 text-center border border-slate-600">
+                                🔍 Find in Maps
+                            </div>
                         )}
                         {isUnlocked && (
                             <div className="text-center text-cyan-400 font-bold py-2 text-sm md:text-base">
@@ -205,7 +211,8 @@ export default function Hub() {
                                         <h3 className="text-sm md:text-base text-slate-400 mb-2">Select Arena</h3>
                                         <div className="grid grid-cols-1 gap-2 md:gap-3">
                                             {ARENAS.map(arena => {
-                                                const isUnlocked = save.unlockedArenas.includes(arena.id);
+                                                const charArenas = save.unlockedArenasByCharacter[selectedChar] || ['station'];
+                                                const isUnlocked = charArenas.includes(arena.id);
                                                 return (
                                                 <button
                                                     key={arena.id}

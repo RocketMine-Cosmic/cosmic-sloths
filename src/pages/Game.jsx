@@ -28,7 +28,7 @@ export default function Game() {
 
     useEffect(() => {
         const { characterId, arenaId } = location.state || { characterId: 'neobyte', arenaId: 'station' };
-        const saveStats = SaveManager.load().permanentUpgrades;
+        const save = SaveManager.load();
         
         const canvas = canvasRef.current;
         const resizeCanvas = () => {
@@ -38,7 +38,7 @@ export default function Game() {
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        const engine = new GameEngine(canvas, characterId, arenaId, saveStats, {
+        const engine = new GameEngine(canvas, characterId, arenaId, save, {
             onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
             onTimeChange: (time) => setGameState(s => ({ ...s, time })),
             onGoldChange: (gold) => setGameState(s => ({ ...s, gold })),
@@ -46,23 +46,36 @@ export default function Game() {
                 setGameState(s => ({ ...s, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired }));
                 setLevelUpChoices(choices);
             },
+            onCharacterFound: (charId) => {
+                const currentSave = SaveManager.load();
+                if (!currentSave.foundCharacters.includes(charId)) {
+                    currentSave.foundCharacters.push(charId);
+                    if (!currentSave.unlockedCharacters.includes(charId)) {
+                        currentSave.unlockedCharacters.push(charId);
+                    }
+                    SaveManager.save(currentSave);
+                }
+            },
             onGameOver: (stats) => {
-                const save = SaveManager.load();
-                save.gold += stats.gold;
-                SaveManager.save(save);
+                const currentSave = SaveManager.load();
+                currentSave.gold += stats.gold;
+                SaveManager.save(currentSave);
                 setGameOverStats(stats);
             },
             onVictory: (stats) => {
-                const save = SaveManager.load();
-                save.gold += stats.gold;
+                const currentSave = SaveManager.load();
+                currentSave.gold += stats.gold;
                 const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 if (currentIndex >= 0 && currentIndex < ARENAS.length - 1) {
                     const nextArena = ARENAS[currentIndex + 1];
-                    if (!save.unlockedArenas.includes(nextArena.id)) {
-                        save.unlockedArenas.push(nextArena.id);
+                    if (!currentSave.unlockedArenasByCharacter[stats.characterId]) {
+                        currentSave.unlockedArenasByCharacter[stats.characterId] = ['station'];
+                    }
+                    if (!currentSave.unlockedArenasByCharacter[stats.characterId].includes(nextArena.id)) {
+                        currentSave.unlockedArenasByCharacter[stats.characterId].push(nextArena.id);
                     }
                 }
-                SaveManager.save(save);
+                SaveManager.save(currentSave);
                 setVictoryStats(stats);
             }
         });

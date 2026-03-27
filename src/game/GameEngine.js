@@ -1,10 +1,13 @@
 import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES } from './Constants';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, saveStats, callbacks) {
+    constructor(canvas, characterId, arenaId, save, callbacks) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
+        this.characterId = characterId;
+        
+        const saveStats = save.permanentUpgrades || {};
         
         const baseChar = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
@@ -51,6 +54,11 @@ export class GameEngine {
         this.isPaused = false;
         this.isGameOver = false;
         this.isVictory = false;
+        
+        this.lockedCharacters = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte']
+            .filter(id => !(save.foundCharacters || []).includes(id));
+        this.characterPickupSpawned = false;
+        this.characterPickup = null;
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -127,6 +135,33 @@ export class GameEngine {
         this.updateProjectiles(dt);
         this.updateEnemies(dt);
         this.updatePickups(dt);
+        
+        if (!this.characterPickupSpawned && this.lockedCharacters.length > 0 && this.time > 60) {
+            this.characterPickupSpawned = true;
+            const charIdToSpawn = this.lockedCharacters[Math.floor(Math.random() * this.lockedCharacters.length)];
+            const charData = CHARACTERS.find(c => c.id === charIdToSpawn);
+            
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 1000;
+            this.characterPickup = {
+                x: this.player.x + Math.cos(angle) * dist,
+                y: this.player.y + Math.sin(angle) * dist,
+                charId: charIdToSpawn,
+                color: charData.color,
+                name: charData.name
+            };
+        }
+        
+        if (this.characterPickup) {
+            const dist = Math.hypot(this.player.x - this.characterPickup.x, this.player.y - this.characterPickup.y);
+            if (dist < this.player.radius + 20) {
+                if (this.callbacks.onCharacterFound) {
+                    this.callbacks.onCharacterFound(this.characterPickup.charId);
+                }
+                this.addDamageText(this.characterPickup.x, this.characterPickup.y - 20, `UNLOCKED: ${this.characterPickup.name}!`, '#00ffff');
+                this.characterPickup = null;
+            }
+        }
 
         // Particles & Text
         this.particles = this.particles.filter(p => {
@@ -607,7 +642,8 @@ export class GameEngine {
             level: this.level,
             kills: this.kills,
             gold: this.gold,
-            arenaId: this.arena.id
+            arenaId: this.arena.id,
+            characterId: this.characterId
         });
     }
 
@@ -635,6 +671,36 @@ export class GameEngine {
             this.ctx.fillStyle = p.color;
             this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.type === 'xp' ? 4 : 6, 0, Math.PI * 2); this.ctx.fill();
         });
+
+        if (this.characterPickup) {
+            this.ctx.fillStyle = this.characterPickup.color;
+            this.ctx.beginPath(); this.ctx.arc(this.characterPickup.x, this.characterPickup.y, 15, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = '16px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('🦥', this.characterPickup.x, this.characterPickup.y + 5);
+            
+            const dx = this.characterPickup.x - this.player.x;
+            const dy = this.characterPickup.y - this.player.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > Math.min(this.canvas.width, this.canvas.height) / 2 - 50) {
+                const angle = Math.atan2(dy, dx);
+                const arrowDist = Math.min(this.canvas.width, this.canvas.height) / 2 - 50;
+                const ax = this.player.x + Math.cos(angle) * arrowDist;
+                const ay = this.player.y + Math.sin(angle) * arrowDist;
+                
+                this.ctx.save();
+                this.ctx.translate(ax, ay);
+                this.ctx.rotate(angle);
+                this.ctx.fillStyle = this.characterPickup.color;
+                this.ctx.beginPath();
+                this.ctx.moveTo(15, 0);
+                this.ctx.lineTo(-10, 10);
+                this.ctx.lineTo(-10, -10);
+                this.ctx.fill();
+                this.ctx.restore();
+            }
+        }
 
         this.projectiles.forEach(p => {
             this.ctx.fillStyle = p.color;
