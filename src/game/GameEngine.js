@@ -48,6 +48,7 @@ export class GameEngine {
         
         this.isPaused = false;
         this.isGameOver = false;
+        this.isVictory = false;
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -68,7 +69,7 @@ export class GameEngine {
     }
 
     loop(timestamp) {
-        if (!this.isPaused && !this.isGameOver) {
+        if (!this.isPaused && !this.isGameOver && !this.isVictory) {
             const dt = (timestamp - this.lastTime) / 1000;
             this.update(dt);
             this.draw();
@@ -84,6 +85,11 @@ export class GameEngine {
         
         if (this.frameCount % 30 === 0) {
             this.callbacks.onTimeChange(Math.floor(this.time));
+        }
+
+        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory) {
+            this.victory();
+            return;
         }
 
         // Regen
@@ -372,6 +378,17 @@ export class GameEngine {
             level: this.level,
             kills: this.kills,
             gold: this.gold
+        });
+    }
+
+    victory() {
+        this.isVictory = true;
+        this.callbacks.onVictory({
+            time: Math.floor(this.time),
+            level: this.level,
+            kills: this.kills,
+            gold: this.gold,
+            arenaId: this.arena.id
         });
     }
 

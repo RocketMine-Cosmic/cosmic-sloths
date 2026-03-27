@@ -6,6 +6,7 @@ export const SaveManager = {
         const parsed = JSON.parse(data);
         const allChars = ['neobyte', 'pandypaws', 'novabyte', 'glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'];
         parsed.unlockedCharacters = [...new Set([...(parsed.unlockedCharacters || []), ...allChars])];
+        if (!parsed.unlockedArenas) parsed.unlockedArenas = ['station'];
         return parsed;
       }
     } catch (e) {

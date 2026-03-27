@@ -4,7 +4,9 @@ import { GameEngine } from '../game/GameEngine';
 import { SaveManager } from '../game/SaveManager';
 import UIOverlay from '../components/game/UIOverlay';
 import LevelUpModal from '../components/game/LevelUpModal';
+import { ARENAS } from '../game/Constants';
 import GameOverModal from '../components/game/GameOverModal';
+import VictoryModal from '../components/game/VictoryModal';
 import VirtualJoystick from '../components/game/VirtualJoystick';
 
 export default function Game() {
@@ -15,13 +17,14 @@ export default function Game() {
     
     const [gameState, setGameState] = useState({
         hp: 100, maxHp: 100,
-        time: 0, level: 1,
+        time: 0, duration: 300, level: 1,
         xp: 0, xpRequired: 10,
         gold: 0
     });
     
     const [levelUpChoices, setLevelUpChoices] = useState(null);
     const [gameOverStats, setGameOverStats] = useState(null);
+    const [victoryStats, setVictoryStats] = useState(null);
 
     useEffect(() => {
         const { characterId, arenaId } = location.state || { characterId: 'neobyte', arenaId: 'station' };
@@ -48,6 +51,19 @@ export default function Game() {
                 save.gold += stats.gold;
                 SaveManager.save(save);
                 setGameOverStats(stats);
+            },
+            onVictory: (stats) => {
+                const save = SaveManager.load();
+                save.gold += stats.gold;
+                const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
+                if (currentIndex >= 0 && currentIndex < ARENAS.length - 1) {
+                    const nextArena = ARENAS[currentIndex + 1];
+                    if (!save.unlockedArenas.includes(nextArena.id)) {
+                        save.unlockedArenas.push(nextArena.id);
+                    }
+                }
+                SaveManager.save(save);
+                setVictoryStats(stats);
             }
         });
         
@@ -55,7 +71,7 @@ export default function Game() {
         
         setGameState({
             hp: engine.player.hp, maxHp: engine.player.maxHp,
-            time: 0, level: 1, xp: 0, xpRequired: 10, gold: 0
+            time: 0, duration: engine.arena.duration, level: 1, xp: 0, xpRequired: 10, gold: 0
         });
 
         return () => {
@@ -107,6 +123,10 @@ export default function Game() {
             
             {gameOverStats && (
                 <GameOverModal stats={gameOverStats} />
+            )}
+            
+            {victoryStats && (
+                <VictoryModal stats={victoryStats} />
             )}
         </div>
     );

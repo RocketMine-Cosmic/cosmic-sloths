@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function UIOverlay({ hp, maxHp, time, level, xp, xpRequired, gold }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -27,7 +27,7 @@ export default function UIOverlay({ hp, maxHp, time, level, xp, xpRequired, gold
                 
                 <div className="bg-slate-800/80 p-2 md:p-3 rounded-lg border border-slate-600 text-center min-w-[70px] md:min-w-[120px]">
                     <div className="text-[10px] md:text-sm text-slate-300">SURVIVE</div>
-                    <div className="text-lg md:text-2xl font-bold">{formatTime(time)}</div>
+                    <div className="text-lg md:text-2xl font-bold">{formatTime(time)} / {formatTime(duration || 300)}</div>
                 </div>
 
                 <div className="bg-slate-800/80 p-2 rounded-lg border border-slate-600 text-right min-w-[70px] md:min-w-[100px]">

@@ -202,19 +202,23 @@ export default function Hub() {
                                     <div>
                                         <h3 className="text-sm md:text-base text-slate-400 mb-2">Select Arena</h3>
                                         <div className="grid grid-cols-1 gap-2 md:gap-3">
-                                            {ARENAS.map(arena => (
+                                            {ARENAS.map(arena => {
+                                                const isUnlocked = save.unlockedArenas.includes(arena.id);
+                                                return (
                                                 <button
                                                     key={arena.id}
-                                                    onClick={() => setSelectedArena(arena.id)}
+                                                    onClick={() => isUnlocked && setSelectedArena(arena.id)}
                                                     className={`p-3 md:p-4 rounded-lg border text-left transition-all ${
+                                                        !isUnlocked ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed' :
                                                         selectedArena === arena.id 
                                                         ? 'bg-slate-800 border-cyan-500 text-cyan-400' 
                                                         : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
                                                     }`}
                                                 >
                                                     <span className="font-bold text-base md:text-lg">{arena.name}</span>
+                                                    {!isUnlocked && <span className="ml-2 text-xs">🔒 Locked</span>}
                                                 </button>
-                                            ))}
+                                            )})}
                                         </div>
                                     </div>
                                 </div>
