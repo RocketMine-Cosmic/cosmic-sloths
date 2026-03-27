@@ -1,6 +1,7 @@
 import React from 'react';
+import { Pause } from 'lucide-react';
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, onPause }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -30,8 +31,16 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     <div className="text-lg md:text-2xl font-bold">{formatTime(time)} / {formatTime(duration || 300)}</div>
                 </div>
 
-                <div className="bg-slate-800/80 p-2 rounded-lg border border-slate-600 text-right min-w-[70px] md:min-w-[100px]">
-                    <div className="text-yellow-400 font-bold text-sm md:text-base">🪙 {gold}</div>
+                <div className="flex gap-2">
+                    <div className="bg-slate-800/80 p-2 rounded-lg border border-slate-600 text-right min-w-[70px] md:min-w-[100px]">
+                        <div className="text-yellow-400 font-bold text-sm md:text-base">🪙 {gold}</div>
+                    </div>
+                    <button 
+                        onClick={onPause}
+                        className="pointer-events-auto bg-slate-800/80 p-2 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center"
+                    >
+                        <Pause className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                    </button>
                 </div>
             </div>
 

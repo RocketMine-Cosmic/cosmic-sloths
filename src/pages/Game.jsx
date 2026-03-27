@@ -8,6 +8,7 @@ import { ARENAS } from '../game/Constants';
 import GameOverModal from '../components/game/GameOverModal';
 import VictoryModal from '../components/game/VictoryModal';
 import VirtualJoystick from '../components/game/VirtualJoystick';
+import PauseModal from '../components/game/PauseModal';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 
@@ -27,6 +28,7 @@ export default function Game() {
     const [levelUpChoices, setLevelUpChoices] = useState(null);
     const [gameOverStats, setGameOverStats] = useState(null);
     const [victoryStats, setVictoryStats] = useState(null);
+    const [isPaused, setIsPaused] = useState(false);
 
     useEffect(() => {
         const { characterId, arenaId } = location.state || { characterId: 'neobyte', arenaId: 'station' };
@@ -176,6 +178,24 @@ export default function Game() {
         }
     };
 
+    const handlePause = () => {
+        if (engineRef.current && !engineRef.current.isGameOver && !engineRef.current.isVictory && !levelUpChoices) {
+            engineRef.current.isPaused = true;
+            setIsPaused(true);
+        }
+    };
+
+    const handleResume = () => {
+        if (engineRef.current) {
+            engineRef.current.isPaused = false;
+            setIsPaused(false);
+        }
+    };
+
+    const handleRestart = () => {
+        window.location.reload();
+    };
+
     return (
         <div className="w-screen h-screen overflow-hidden bg-black relative select-none">
             <canvas 
@@ -185,8 +205,12 @@ export default function Game() {
             
             <VirtualJoystick onChange={handleJoystickChange} />
             
-            <UIOverlay {...gameState} />
+            <UIOverlay {...gameState} onPause={handlePause} />
             
+            {isPaused && (
+                <PauseModal onResume={handleResume} onRestart={handleRestart} />
+            )}
+
             {levelUpChoices && (
                 <LevelUpModal choices={levelUpChoices} onSelect={handleUpgradeSelect} rerollTokens={gameState.rerollTokens} onReroll={handleReroll} />
             )}
