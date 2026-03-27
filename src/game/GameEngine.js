@@ -286,25 +286,22 @@ export class GameEngine {
             const ex = this.player.x + Math.cos(angle) * dist;
             const ey = this.player.y + Math.sin(angle) * dist;
             
-            // Tier system: 
-            // Tier 1: Always available
-            // Tier 2: Available after 60s
-            // Tier 3: Available after 150s
-            // Tier 4: Available after 240s
-            let maxTier = 1;
-            if (this.time > 60) maxTier = 2;
-            if (this.time > 150) maxTier = 3;
-            if (this.time > 240) maxTier = 4;
+            const arenaIndex = ARENAS.findIndex(a => a.id === this.arena.id);
+            let minTier = Math.max(1, arenaIndex);
+            let maxTier = arenaIndex + 1;
+            
+            if (progress > 0.33) maxTier += 1;
+            if (progress > 0.66) maxTier += 1;
+            
+            maxTier = Math.min(10, maxTier);
 
             let availableEnemies = ENEMIES.filter(e => 
                 !e.isBoss && 
-                (!e.arenas || e.arenas.includes(this.arena.id)) &&
-                (e.tier || 1) <= maxTier
+                e.tier >= minTier && e.tier <= maxTier
             );
             
             if (availableEnemies.length === 0) {
-                // Fallback if no enemies match criteria (shouldn't happen if config is correct)
-                availableEnemies = ENEMIES.filter(e => !e.isBoss && (e.tier || 1) <= maxTier);
+                availableEnemies = ENEMIES.filter(e => !e.isBoss && e.tier === 1);
             }
             
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
@@ -313,10 +310,10 @@ export class GameEngine {
             const dmgMult = (1.0 + (2.0 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
-                const elites = ENEMIES.filter(e => e.id.startsWith('elite'));
+                const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
                 if (elites.length > 0) {
                     const elite = elites[Math.floor(Math.random() * elites.length)];
-                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult });
+                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult, radius: elite.radius * 1.5 });
                     return;
                 }
             }
@@ -1107,8 +1104,9 @@ export class GameEngine {
         };
 
         switch (e.id) {
-            case 'moon_worm':
-            case 'cosmic_parasite':
+            case 't1_parasite':
+            case 't4_worm':
+            case 't8_wyrm':
                 // Long writhing slug
                 this.ctx.fillStyle = '#1a0b2e'; // Dark purple-black
                 this.ctx.beginPath();
@@ -1136,7 +1134,9 @@ export class GameEngine {
                 }
                 break;
 
-            case 'dimensional_shambler':
+            case 't5_shambler':
+            case 't7_weaver':
+            case 't10_god':
                 // Translucent body with stars
                 for (let i = 0; i < 6; i++) {
                     const offset = Math.sin(t - i) * 8;
@@ -1156,7 +1156,9 @@ export class GameEngine {
                 this.ctx.fill();
                 break;
 
-            case 'station_turret':
+            case 't3_turret':
+            case 't7_kraken':
+            case 't10_ripper':
                 // Rocky head
                 this.ctx.fillStyle = '#8b7355';
                 this.ctx.beginPath(); 
@@ -1176,7 +1178,7 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.arc(0, 0, 4, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'nebula_jelly':
+            case 't2_jelly':
                 // Translucent dome
                 this.ctx.fillStyle = `rgba(0, 255, 255, ${0.4 + pulse * 0.2})`;
                 this.ctx.beginPath(); 
@@ -1201,9 +1203,11 @@ export class GameEngine {
                 }
                 break;
 
-            case 'station_drone':
-            case 'stardust_mite':
-            case 'alien_grunt':
+            case 't1_drone':
+            case 't4_grunt':
+            case 't6_wasp':
+            case 't9_apex_drone':
+            case 't10_swarm':
                 // Insectoid
                 this.ctx.fillStyle = '#00ff00';
                 this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.5, 0, 0, Math.PI*2); this.ctx.fill();
@@ -1213,7 +1217,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.ellipse(0, 5, e.radius*1.5, e.radius*0.5, -Math.sin(t*20)*0.5, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'void_stalker':
+            case 't3_stalker':
+            case 't8_overlord':
                 // Panther-like shadow
                 this.ctx.fillStyle = '#1a0033';
                 this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius*1.2, e.radius*0.6, 0, 0, Math.PI*2); this.ctx.fill();
@@ -1225,7 +1230,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.arc(-5, 2, 2, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'solar_flare':
+            case 't2_flare':
+            case 't7_seraph':
                 // Angular body
                 this.ctx.fillStyle = '#ff4500';
                 this.ctx.beginPath();
@@ -1245,7 +1251,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.moveTo(10, 5); this.ctx.lineTo(20, 10); this.ctx.stroke();
                 break;
 
-            case 'event_horror':
+            case 't5_horror':
+            case 't9_apex_horror':
                 // Blobby baby
                 this.ctx.fillStyle = '#800080';
                 this.ctx.beginPath(); 
@@ -1258,7 +1265,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.arc(3, 3, 1, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'shadow_fiend':
+            case 't5_fiend':
+            case 't9_apex_fiend':
                 // Sleek body
                 this.ctx.fillStyle = '#1a1a1a';
                 this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.4, 0, 0, Math.PI*2); this.ctx.fill();
@@ -1274,9 +1282,10 @@ export class GameEngine {
                 this.ctx.fill(); this.ctx.stroke();
                 break;
 
-            case 'asteroid_brute':
-            case 'shard_golem':
-            case 'alien_brute':
+            case 't5_brute':
+            case 't5_golem':
+            case 't7_behemoth':
+            case 't8_titan':
                 // Turtle shell
                 this.ctx.fillStyle = '#2f4f4f';
                 this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius, 0, Math.PI*2); this.ctx.fill();
@@ -1291,7 +1300,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.arc(e.radius+5, 0, 8, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'rock_mite':
+            case 't1_mite':
+            case 't8_monolith':
                 // Crystalline ball
                 this.ctx.fillStyle = '#00ced1';
                 this.ctx.beginPath(); this.ctx.arc(0, 0, e.radius*0.7, 0, Math.PI*2); this.ctx.fill();
@@ -1307,7 +1317,9 @@ export class GameEngine {
                 }
                 break;
 
-            case 'elite_pulsar':
+            case 't6_whale':
+            case 't8_leviathan':
+            case 't10_eater':
                 // Ghost whale
                 this.ctx.fillStyle = `rgba(224, 255, 255, ${0.5 + pulse*0.2})`;
                 this.ctx.beginPath();
@@ -1320,7 +1332,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.moveTo(0, e.radius*0.5); this.ctx.lineTo(-5, e.radius*1.2); this.ctx.lineTo(5, e.radius*0.5); this.ctx.fill();
                 break;
 
-            case 'plasma_wraith':
+            case 't3_wraith':
+            case 't7_phantom':
                 // Ice ghost
                 this.ctx.fillStyle = `rgba(173, 216, 230, ${0.6 + pulse*0.2})`;
                 this.ctx.beginPath();
@@ -1336,7 +1349,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.arc(-3, -5, 2, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'ufo_scout':
+            case 't2_scout':
+            case 't6_ray':
                 // Fish body
                 this.ctx.fillStyle = '#ff1493';
                 this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.7, 0, 0, Math.PI*2); this.ctx.fill();
@@ -1351,7 +1365,7 @@ export class GameEngine {
                 this.ctx.shadowBlur = 0;
                 break;
 
-            case 'gas_floater':
+            case 't3_floater':
                 // Torso
                 this.ctx.fillStyle = '#dda0dd';
                 this.ctx.beginPath(); this.ctx.arc(0, -5, 8, 0, Math.PI*2); this.ctx.fill();
@@ -1359,8 +1373,8 @@ export class GameEngine {
                 drawTentacle(5, 20, 2, '#ee82ee', 0.8);
                 break;
 
-            case 'station_cyborg':
-            case 'crystal_crawler':
+            case 't2_cyborg':
+            case 't3_crawler':
                 // Beetle shell
                 this.ctx.fillStyle = '#2f0000';
                 this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*1.2, 0, 0, Math.PI*2); this.ctx.fill();
@@ -1374,7 +1388,7 @@ export class GameEngine {
                 }
                 break;
 
-            case 'glitch_entity':
+            case 't4_entity':
                 // Flat body
                 this.ctx.fillStyle = '#00fa9a';
                 this.ctx.beginPath();
@@ -1388,11 +1402,10 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.moveTo(-e.radius*0.5, 0); this.ctx.lineTo(-e.radius*2, Math.sin(t*5)*5); this.ctx.stroke();
                 break;
 
-            case 'gem_bat':
-                // Body
+            case 't1_bat':
+                // Fractal wings
                 this.ctx.fillStyle = '#000000';
                 this.ctx.beginPath(); this.ctx.ellipse(0, 0, 3, 10, 0, 0, Math.PI*2); this.ctx.fill();
-                // Fractal wings
                 this.ctx.fillStyle = `rgba(255, 105, 180, 0.7)`;
                 this.ctx.save();
                 this.ctx.scale(1 + Math.sin(t*20)*0.2, 1);
@@ -1401,8 +1414,8 @@ export class GameEngine {
                 this.ctx.restore();
                 break;
 
-            case 'void_eye':
-            case 'lunar_tick':
+            case 't1_tick':
+            case 't2_eye':
                 // Round body
                 this.ctx.fillStyle = '#000000';
                 this.ctx.strokeStyle = '#800080';
@@ -1417,7 +1430,8 @@ export class GameEngine {
                 }
                 break;
 
-            case 'fire_elemental':
+            case 't4_elemental':
+            case 't9_apex_elemental':
                 // Ethereal form
                 this.ctx.fillStyle = `rgba(127, 255, 212, ${0.5 + pulse*0.3})`;
                 this.ctx.beginPath();
@@ -1430,7 +1444,8 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.ellipse(0, -3, 2, 4 + pulse*2, 0, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'space_dragon':
+            case 't6_dragon':
+            case 't9_apex_dragon':
                 // Dragon shape
                 this.ctx.fillStyle = '#ffd700';
                 this.ctx.beginPath();
@@ -1446,8 +1461,9 @@ export class GameEngine {
                 this.ctx.beginPath(); this.ctx.arc(18, 0, 2 + Math.random()*2, 0, Math.PI*2); this.ctx.fill();
                 break;
 
-            case 'singularity_spawn':
-            case 'elite_dark_matter':
+            case 't4_spawn':
+            case 't6_slug':
+            case 't10_terror':
                 // Fat slug
                 this.ctx.fillStyle = '#483d8b';
                 this.ctx.beginPath(); this.ctx.ellipse(0, 0, e.radius, e.radius*0.6, 0, 0, Math.PI*2); this.ctx.fill();
