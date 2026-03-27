@@ -962,7 +962,7 @@ export class GameEngine {
             }
             const dist = Math.hypot(this.player.x - p.x, this.player.y - p.y);
             if (dist < this.player.radius + 10) {
-                this.addParticle(p.x, p.y, p.color, 5, 'spark', 1); // Collection burst
+                this.addParticle(p.x, p.y, p.color, 5, 'circle', 1); // Collection burst
                 if (p.type === 'xp') {
                     this.xp += p.value * this.player.xpMult;
                     if (this.xp >= this.xpRequired) this.levelUp();
@@ -1807,8 +1807,14 @@ export class GameEngine {
                 this.ctx.fillRect(-p.size, -p.size/2, p.size*2, p.size);
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+            } else if (p.type === 'circle') {
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                this.ctx.fill();
             } else {
-                this.ctx.fillRect(-2, -2, 4, 4);
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.size ? p.size / 2 : 2, 0, Math.PI * 2);
+                this.ctx.fill();
             }
             this.ctx.restore();
         });
