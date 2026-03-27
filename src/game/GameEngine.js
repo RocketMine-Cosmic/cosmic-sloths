@@ -257,8 +257,9 @@ export class GameEngine {
             const dmgMult = 1.0 + (3.0 * Math.pow(progress, 1.5));
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
-                const elite = ENEMIES.find(e => e.id === 'elite');
-                if (elite) {
+                const elites = ENEMIES.filter(e => e.id.startsWith('elite'));
+                if (elites.length > 0) {
+                    const elite = elites[Math.floor(Math.random() * elites.length)];
                     this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult });
                     return;
                 }
