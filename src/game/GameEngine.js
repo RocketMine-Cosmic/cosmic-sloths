@@ -263,47 +263,73 @@ export class GameEngine {
             });
         }
         else if (w.id === 'burningBarrier') {
+            // Synergy: Shield Bubble + Napalm
             this.projectiles.push({
                 x: this.player.x, y: this.player.y,
                 vx: 0, vy: 0,
                 radius: 100 * area,
                 damage: dmg,
                 pierce: 999,
-                life: 2.5,
-                color: 'rgba(255, 100, 0, 0.4)',
+                life: 3.0 + (w.level * 0.5),
+                color: 'rgba(255, 69, 0, 0.4)',
                 isAoe: true,
                 pushback: 150,
                 burn: true
             });
         }
         else if (w.id === 'laserNova') {
-            const count = 8 + Math.floor(w.level);
-            for(let i=0; i<count; i++) {
-                const angle = (Math.PI * 2 / count) * i;
+            // Synergy: Nova Pulse + Nap Beam
+            this.projectiles.push({
+                x: this.player.x, y: this.player.y,
+                vx: 0, vy: 0,
+                radius: 15 * area,
+                damage: dmg,
+                pierce: 999,
+                life: 0.8,
+                color: 'rgba(0, 255, 255, 0.8)',
+                isAoe: true,
+                pulse: true
+            });
+            // Also fire piercing beams in 8 directions
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i;
                 this.projectiles.push({
                     x: this.player.x, y: this.player.y,
                     vx: Math.cos(angle) * 400 * this.player.projSpeedMult,
                     vy: Math.sin(angle) * 400 * this.player.projSpeedMult,
                     radius: 8 * area,
-                    damage: dmg,
-                    pierce: 5,
+                    damage: dmg * 0.5,
+                    pierce: 5 + Math.floor(w.level/2),
                     life: 2,
-                    color: '#ff00ff'
+                    color: '#00ffff'
                 });
             }
         }
         else if (w.id === 'thornySwarm') {
-            const count = 3 + Math.floor(w.level / 2);
+            // Synergy: Sloth Swarm + Vine Whip
+            const count = 2 + Math.floor(w.level / 2);
             for(let i=0; i<count; i++) {
                 const angle = (Math.PI * 2 / count) * i + this.time * 4;
                 const px = this.player.x + Math.cos(angle) * (80 * area);
                 const py = this.player.y + Math.sin(angle) * (80 * area);
+                
+                // Orbiting damage
                 this.enemies.forEach(e => {
-                    if (Math.hypot(e.x - px, e.y - py) < 40) {
-                        this.damageEnemy(e, dmg);
+                    if (Math.hypot(e.x - px, e.y - py) < 30) {
+                        this.damageEnemy(e, dmg * 0.3);
                         this.addParticle(e.x, e.y, '#228B22', 5);
                     }
                 });
+                
+                // Occasional whip strike from the orbiting sloth
+                if (Math.random() < 0.1) {
+                    this.enemies.forEach(e => {
+                        if (Math.hypot(e.x - px, e.y - py) < 120 * area) {
+                            this.damageEnemy(e, dmg);
+                            this.addParticle(e.x, e.y, '#32CD32', 10);
+                        }
+                    });
+                }
             }
         }
     }
@@ -345,7 +371,9 @@ export class GameEngine {
                         if (dist < p.radius) {
                             if (this.frameCount % 15 === 0) {
                                 this.damageEnemy(e, p.damage);
-                                if (p.burn) this.addParticle(e.x, e.y, '#ff4500', 3);
+                                if (p.burn) {
+                                    this.addParticle(e.x, e.y, '#ff4500', 3);
+                                }
                             }
                             const angle = Math.atan2(e.y - p.y, e.x - p.x);
                             e.x += Math.cos(angle) * p.pushback * dt;
@@ -511,12 +539,28 @@ export class GameEngine {
             }
             this.player.passives.push(upgrade);
         } else if (upgrade.type === 'weapon') {
-            const existing = this.player.weapons.find(w => w.id === upgrade.weaponId);
             const levelIncrement = upgrade.value || 1;
-            if (existing) {
-                existing.level += levelIncrement;
-            } else {
-                this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: levelIncrement, timer: 0 });
+            
+            // Check if this weapon is part of an active synergy
+            let appliedToSynergy = false;
+            for (const synergy of SYNERGIES) {
+                if (synergy.weapon1 === upgrade.weaponId || synergy.weapon2 === upgrade.weaponId) {
+                    const activeSynergy = this.player.weapons.find(w => w.id === synergy.result);
+                    if (activeSynergy) {
+                        activeSynergy.level += levelIncrement;
+                        appliedToSynergy = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!appliedToSynergy) {
+                const existing = this.player.weapons.find(w => w.id === upgrade.weaponId);
+                if (existing) {
+                    existing.level += levelIncrement;
+                } else {
+                    this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: levelIncrement, timer: 0 });
+                }
                 this.checkSynergies();
             }
         }
@@ -524,24 +568,26 @@ export class GameEngine {
     }
 
     checkSynergies() {
-        SYNERGIES.forEach(syn => {
-            const hasSynergy = this.player.weapons.find(w => w.id === syn.result);
-            if (!hasSynergy) {
-                const hasW1 = this.player.weapons.find(w => w.id === syn.weapon1);
-                const hasW2 = this.player.weapons.find(w => w.id === syn.weapon2);
-                if (hasW1 && hasW2) {
-                    this.player.weapons.push({ ...WEAPONS[syn.result], level: 1, timer: 0 });
-                    
-                    const idx1 = this.player.weapons.findIndex(w => w.id === syn.weapon1);
-                    if (idx1 !== -1) this.player.weapons.splice(idx1, 1);
-                    
-                    const idx2 = this.player.weapons.findIndex(w => w.id === syn.weapon2);
-                    if (idx2 !== -1) this.player.weapons.splice(idx2, 1);
-                    
-                    this.addDamageText(this.player.x, this.player.y - 40, `SYNERGY!`, '#ffaa00');
-                }
+        for (const synergy of SYNERGIES) {
+            const w1 = this.player.weapons.find(w => w.id === synergy.weapon1);
+            const w2 = this.player.weapons.find(w => w.id === synergy.weapon2);
+            
+            if (w1 && w2) {
+                // Remove base weapons
+                this.player.weapons = this.player.weapons.filter(w => w.id !== synergy.weapon1 && w.id !== synergy.weapon2);
+                
+                // Add synergy weapon, combining their levels
+                const newLevel = Math.max(w1.level, w2.level) + 1;
+                this.player.weapons.push({ ...WEAPONS[synergy.result], level: newLevel, timer: 0 });
+                
+                // Show a notification or effect here if desired
+                this.addDamageText(this.player.x, this.player.y - 40, "SYNERGY FORMED!", '#ff00ff');
+                
+                // Check again in case multiple synergies formed (rare but possible)
+                this.checkSynergies();
+                break;
             }
-        });
+        }
     }
 
     gameOver() {
@@ -610,16 +656,17 @@ export class GameEngine {
 
         const thornySwarm = this.player.weapons.find(w => w.id === 'thornySwarm');
         if (thornySwarm) {
-            const count = 3 + Math.floor(thornySwarm.level / 2);
+            const count = 2 + Math.floor(thornySwarm.level / 2);
             const area = thornySwarm.baseArea * this.player.areaMult * (1 + (thornySwarm.level-1)*0.1);
             for(let i=0; i<count; i++) {
                 const angle = (Math.PI * 2 / count) * i + this.time * 4;
                 const px = this.player.x + Math.cos(angle) * (80 * area);
                 const py = this.player.y + Math.sin(angle) * (80 * area);
-                this.ctx.fillStyle = '#228B22';
+                this.ctx.fillStyle = '#32CD32'; // Greenish for thorny
                 this.ctx.beginPath(); this.ctx.arc(px, py, 8, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.fillStyle = '#8B4513';
-                this.ctx.beginPath(); this.ctx.arc(px, py, 4, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.strokeStyle = '#228B22';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
             }
         }
 
