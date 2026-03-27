@@ -6,6 +6,7 @@ export class GameEngine {
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
         this.characterId = characterId;
+        this.save = save;
         
         const saveStats = save.permanentUpgrades || {};
         
@@ -251,14 +252,26 @@ export class GameEngine {
             w.timer -= dt;
             if (w.timer <= 0) {
                 this.fireWeapon(w);
-                w.timer = (w.baseCooldown / 60) * Math.max(0.2, this.player.cooldownMult);
+                
+                const wUpgrades = this.save.weaponUpgrades?.[w.id] || {};
+                const cdUpgradeLevel = wUpgrades.cooldown || 0;
+                const cdMultiplier = 1 - (cdUpgradeLevel * 0.05); // -5% per level
+                
+                w.timer = (w.baseCooldown / 60) * Math.max(0.2, this.player.cooldownMult) * cdMultiplier;
             }
         });
     }
 
     fireWeapon(w) {
-        const dmg = w.baseDamage * this.player.damageMult * (1 + (w.level-1)*0.2);
-        const area = w.baseArea * this.player.areaMult * (1 + (w.level-1)*0.1);
+        const wUpgrades = this.save.weaponUpgrades?.[w.id] || {};
+        const dmgUpgradeLevel = wUpgrades.damage || 0;
+        const areaUpgradeLevel = wUpgrades.area || 0;
+        
+        const wDmgMult = 1 + (dmgUpgradeLevel * 0.1); // +10% per level
+        const wAreaMult = 1 + (areaUpgradeLevel * 0.1); // +10% per level
+
+        const dmg = w.baseDamage * this.player.damageMult * (1 + (w.level-1)*0.2) * wDmgMult;
+        const area = w.baseArea * this.player.areaMult * (1 + (w.level-1)*0.1) * wAreaMult;
         
         if (w.id === 'napBeam') {
             let nearest = null;

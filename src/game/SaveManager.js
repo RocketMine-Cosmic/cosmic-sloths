@@ -11,7 +11,8 @@ export const SaveManager = {
       unlockedTalents: {},
       permanentUpgrades: {
         damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0
-      }
+      },
+      weaponUpgrades: {}
     };
 
     try {

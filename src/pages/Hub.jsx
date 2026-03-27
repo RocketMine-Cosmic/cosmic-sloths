@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, ARENAS, CHARACTER_TALENTS } from '../game/Constants';
-import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles } from 'lucide-react';
+import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS } from '../game/Constants';
+import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles, Crosshair } from 'lucide-react';
 
 const UPGRADE_COSTS = [100, 300, 600, 1200, 2400];
 
@@ -59,6 +59,30 @@ export default function Hub() {
         }
     };
 
+    const handleBuyWeaponUpgrade = (weaponId, stat, currency = 'gold') => {
+        const weaponData = save.weaponUpgrades?.[weaponId] || {};
+        const currentLevel = weaponData[stat] || 0;
+        if (currentLevel >= UPGRADE_COSTS.length) return;
+        
+        const cost = UPGRADE_COSTS[currentLevel];
+        
+        if (currency === 'gold' && save.gold >= cost) {
+            const newSave = { ...save, gold: save.gold - cost };
+            if (!newSave.weaponUpgrades) newSave.weaponUpgrades = {};
+            if (!newSave.weaponUpgrades[weaponId]) newSave.weaponUpgrades[weaponId] = {};
+            newSave.weaponUpgrades[weaponId][stat] = currentLevel + 1;
+            SaveManager.save(newSave);
+            setSave(newSave);
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= cost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cost };
+            if (!newSave.weaponUpgrades) newSave.weaponUpgrades = {};
+            if (!newSave.weaponUpgrades[weaponId]) newSave.weaponUpgrades[weaponId] = {};
+            newSave.weaponUpgrades[weaponId][stat] = currentLevel + 1;
+            SaveManager.save(newSave);
+            setSave(newSave);
+        }
+    };
+
     const handleBuyTalent = (talent, currency = 'gold') => {
         const tokenCost = talent.cost;
 
@@ -83,6 +107,78 @@ export default function Hub() {
 
     const startGame = () => {
         navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena } });
+    };
+
+    const renderArmory = () => {
+        const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
+        const upgradeTypes = [
+            { id: 'damage', name: 'Damage', icon: Zap },
+            { id: 'area', name: 'Area', icon: Sparkles },
+            { id: 'cooldown', name: 'Cooldown', icon: Timer }
+        ];
+
+        return (
+            <div className="space-y-4 md:space-y-6">
+                {baseWeapons.map(weapon => (
+                    <div key={weapon.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <div className="mb-4">
+                            <h3 className="font-bold text-lg md:text-xl text-white">{weapon.name}</h3>
+                            <p className="text-slate-400 text-xs md:text-sm">{weapon.desc}</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                            {upgradeTypes.map(stat => {
+                                const level = save.weaponUpgrades?.[weapon.id]?.[stat.id] || 0;
+                                const cost = UPGRADE_COSTS[level];
+                                const isMax = level >= UPGRADE_COSTS.length;
+                                const canAfford = save.gold >= cost;
+                                const Icon = stat.icon;
+
+                                return (
+                                    <div key={stat.id} className="bg-slate-900 p-3 rounded-lg border border-slate-700 flex flex-col justify-between">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2 text-slate-300">
+                                                <Icon size={16} className="text-cyan-400" />
+                                                <span className="font-bold text-xs md:text-sm">{stat.name}</span>
+                                            </div>
+                                            <div className="flex gap-1">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <div key={i} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 w-full">
+                                            <button
+                                                onClick={() => handleBuyWeaponUpgrade(weapon.id, stat.id, 'gold')}
+                                                disabled={isMax || !canAfford}
+                                                className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
+                                                    isMax ? 'bg-slate-800 text-slate-600' :
+                                                    canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                    'bg-slate-800 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                {isMax ? 'MAX' : `🪙 ${cost}`}
+                                            </button>
+                                            {!isMax && (
+                                                <button
+                                                    onClick={() => handleBuyWeaponUpgrade(weapon.id, stat.id, 'token')}
+                                                    disabled={(save.cosmicTokens || 0) < cost}
+                                                    className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
+                                                        (save.cosmicTokens || 0) >= cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                        'bg-slate-800 text-slate-500 border border-slate-700'
+                                                    }`}
+                                                >
+                                                    💠 {cost}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
     };
 
     const renderUpgrades = () => {
@@ -246,7 +342,7 @@ export default function Hub() {
                 </header>
 
                 <div className="flex flex-col md:flex-row gap-8">
-                    <div className="w-full md:w-64 grid grid-cols-2 sm:grid-cols-4 md:flex md:flex-col gap-2 pb-2 md:pb-0">
+                    <div className="w-full md:w-64 grid grid-cols-2 sm:grid-cols-5 md:flex md:flex-col gap-2 pb-2 md:pb-0">
                         <button 
                             onClick={() => setActiveTab('deploy')}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'deploy' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
@@ -271,10 +367,17 @@ export default function Hub() {
                         >
                             🧬 Skill Tree
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('armory')}
+                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'armory' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                        >
+                            ⚔️ Armory
+                        </button>
                     </div>
 
                     <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
                         {activeTab === 'upgrades' && renderUpgrades()}
+                        {activeTab === 'armory' && renderArmory()}
                         {activeTab === 'characters' && renderCharacters()}
                         {activeTab === 'talents' && (
                             <div>
