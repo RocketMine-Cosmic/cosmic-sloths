@@ -18,7 +18,7 @@ export const DIFFICULTIES = [
 ];
 
 export const ARENAS = [
-  { id: 'station', name: 'Derelict Station', bg: '#1a1a2e', duration: 180 },
+  { id: 'station', name: 'Derelict Station', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', duration: 180 },
   { id: 'asteroid', name: 'Asteroid Belt', bg: '#2d1b19', duration: 210 },
   { id: 'nebula', name: 'Nebula Hall', bg: '#2b103a', duration: 240 },
   { id: 'void', name: 'The Deep Void', bg: '#0a0a0a', duration: 270 },

@@ -45,6 +45,12 @@ export class GameEngine {
         const baseChar = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
         
+        this.arenaImage = null;
+        if (this.arena.image) {
+            this.arenaImage = new Image();
+            this.arenaImage.src = this.arena.image;
+        }
+
         let playerImage = null;
         if (baseChar.image) {
             playerImage = new Image();
@@ -931,20 +937,42 @@ export class GameEngine {
         this.ctx.fillStyle = this.arena.bg;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
+        if (this.arenaImage && this.arenaImage.complete) {
+            const imgW = this.arenaImage.width;
+            const imgH = this.arenaImage.height;
+            const parallaxFactor = 0.2;
+            
+            let offsetX = -(this.camera.x * parallaxFactor) % imgW;
+            let offsetY = -(this.camera.y * parallaxFactor) % imgH;
+            
+            if (offsetX > 0) offsetX -= imgW;
+            if (offsetY > 0) offsetY -= imgH;
+            
+            this.ctx.globalAlpha = 0.7;
+            for (let x = offsetX; x < this.canvas.width; x += imgW) {
+                for (let y = offsetY; y < this.canvas.height; y += imgH) {
+                    this.ctx.drawImage(this.arenaImage, x, y, imgW, imgH);
+                }
+            }
+            this.ctx.globalAlpha = 1.0;
+        }
+
         this.ctx.save();
         this.ctx.translate(-this.camera.x, -this.camera.y);
         
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-        this.ctx.lineWidth = 1;
-        const gridSize = 100;
-        const startX = Math.floor(this.camera.x / gridSize) * gridSize;
-        const startY = Math.floor(this.camera.y / gridSize) * gridSize;
-        
-        for(let x = startX; x < startX + this.canvas.width + gridSize; x += gridSize) {
-            this.ctx.beginPath(); this.ctx.moveTo(x, this.camera.y); this.ctx.lineTo(x, this.camera.y + this.canvas.height); this.ctx.stroke();
-        }
-        for(let y = startY; y < startY + this.canvas.height + gridSize; y += gridSize) {
-            this.ctx.beginPath(); this.ctx.moveTo(this.camera.x, y); this.ctx.lineTo(this.camera.x + this.canvas.width, y); this.ctx.stroke();
+        if (!this.arenaImage || !this.arenaImage.complete) {
+            this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            this.ctx.lineWidth = 1;
+            const gridSize = 100;
+            const startX = Math.floor(this.camera.x / gridSize) * gridSize;
+            const startY = Math.floor(this.camera.y / gridSize) * gridSize;
+            
+            for(let x = startX; x < startX + this.canvas.width + gridSize; x += gridSize) {
+                this.ctx.beginPath(); this.ctx.moveTo(x, this.camera.y); this.ctx.lineTo(x, this.camera.y + this.canvas.height); this.ctx.stroke();
+            }
+            for(let y = startY; y < startY + this.canvas.height + gridSize; y += gridSize) {
+                this.ctx.beginPath(); this.ctx.moveTo(this.camera.x, y); this.ctx.lineTo(this.camera.x + this.canvas.width, y); this.ctx.stroke();
+            }
         }
 
         this.pickups.forEach(p => {
