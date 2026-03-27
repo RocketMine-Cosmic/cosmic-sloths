@@ -187,28 +187,28 @@ export default function Hub() {
                 </header>
 
                 <div className="flex flex-col md:flex-row gap-8">
-                    <div className="w-full md:w-64 flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
+                    <div className="w-full md:w-64 grid grid-cols-2 sm:grid-cols-4 md:flex md:flex-col gap-2 pb-2 md:pb-0">
                         <button 
                             onClick={() => setActiveTab('deploy')}
-                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'deploy' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'deploy' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🚀 Deploy
                         </button>
                         <button 
                             onClick={() => setActiveTab('upgrades')}
-                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'upgrades' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'upgrades' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             ⚙️ Upgrades
                         </button>
                         <button 
                             onClick={() => setActiveTab('characters')}
-                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'characters' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'characters' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🦥 Crew
                         </button>
                         <button 
                             onClick={() => setActiveTab('talents')}
-                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🧬 Skill Tree
                         </button>
