@@ -619,9 +619,14 @@ export class GameEngine {
                     this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: 1, color: '#ff00ff' });
                     this.pickups.push({ x: e.x + 20, y: e.y, type: 'token', value: 1, color: '#10b981' }); // Emerald color for crypto token
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
-                } else if (Math.random() < 0.45 + (this.player.luck * 0.05)) {
-                    const goldValue = 1 + Math.floor(this.time / 60);
-                    this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
+                } else {
+                    if (Math.random() < 0.50 + (this.player.luck * 0.05)) {
+                        const goldValue = 1 + Math.floor(this.time / 30);
+                        this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
+                    }
+                    if (Math.random() < 0.005 + (this.player.luck * 0.001)) {
+                        this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'token', value: 1, color: '#10b981' });
+                    }
                 }
                 this.addParticle(e.x, e.y, e.color, e.isBoss ? 50 : 15);
                 return false;
