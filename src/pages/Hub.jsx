@@ -4,7 +4,7 @@ import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, CHARACTER_TALENTS } from '../game/Constants';
 import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles } from 'lucide-react';
 
-const UPGRADE_COSTS = [50, 150, 300, 600, 1200];
+const UPGRADE_COSTS = [100, 300, 600, 1200, 2400];
 
 export default function Hub() {
     const navigate = useNavigate();

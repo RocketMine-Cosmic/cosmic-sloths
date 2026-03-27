@@ -1,14 +1,14 @@
 export const CHARACTERS = [
   { id: 'neobyte', name: 'NeoByte', desc: 'Commander. Balanced all-rounder.', hp: 120, speed: 3.0, armor: 2, regen: 0.1, cost: 0, color: '#4169E1', damageMult: 1.0, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
-  { id: 'pandypaws', name: 'Pandypaws', desc: 'Heavy Armor Mechanic. Tanky but slow, low damage.', hp: 200, speed: 2.4, armor: 5, regen: 0.5, cost: 500, color: '#FF69B4', damageMult: 0.8, cooldownMult: 1.2, areaMult: 1.2, magnetRange: 50, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 0.8 },
-  { id: 'novabyte', name: 'NovaByte', desc: 'Comms & Demolitions. High area and damage, low HP.', hp: 80, speed: 3.0, armor: 0, regen: 0, cost: 1000, color: '#FF4500', damageMult: 1.3, cooldownMult: 1.1, areaMult: 1.5, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
-  { id: 'glitch', name: 'Glitch', desc: 'Stealth Assassin. Very fast, high damage, fragile.', hp: 60, speed: 3.6, armor: 0, regen: 0, cost: 1500, color: '#8A2BE2', damageMult: 1.4, cooldownMult: 0.8, areaMult: 0.8, magnetRange: 40, luck: 1, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.2 },
-  { id: 'holodrift', name: 'HoloDrift', desc: 'Engineer. High magnet range and XP gain.', hp: 100, speed: 2.9, armor: 1, regen: 0.1, cost: 2000, color: '#20B2AA', damageMult: 0.9, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 120, luck: 0, goldMult: 1.0, xpMult: 1.3, projSpeedMult: 1.0 },
-  { id: 'codebreaker', name: 'CodeBreaker', desc: 'Cyber Warfare Hacker. Fast cooldowns, high luck.', hp: 90, speed: 3.1, armor: 1, regen: 0, cost: 2500, color: '#32CD32', damageMult: 0.7, cooldownMult: 0.6, areaMult: 1.0, magnetRange: 60, luck: 3, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
-  { id: 'dataphantom', name: 'DataPhantom', desc: 'Strategic Hacker. High projectile speed, good armor.', hp: 110, speed: 3.0, armor: 3, regen: 0.2, cost: 3000, color: '#4682B4', damageMult: 1.0, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.5 },
-  { id: 'neonvortex', name: 'NeonVortex', desc: 'Elite Sniper. Extreme damage, very slow cooldowns.', hp: 50, speed: 3.2, armor: 0, regen: 0, cost: 3500, color: '#FFD700', damageMult: 2.0, cooldownMult: 1.5, areaMult: 0.7, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 2.0 },
-  { id: 'synthbeats', name: 'SynthBeats', desc: 'Diplomat. High gold gain and luck.', hp: 100, speed: 3.0, armor: 1, regen: 0.2, cost: 4000, color: '#FF8C00', damageMult: 0.9, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 70, luck: 2, goldMult: 1.5, xpMult: 1.0, projSpeedMult: 1.0 },
-  { id: 'skybyte', name: 'SkyByte', desc: 'Ace Pilot. Very fast, good damage and area.', hp: 90, speed: 3.5, armor: 0, regen: 0, cost: 5000, color: '#00FFFF', damageMult: 1.2, cooldownMult: 0.9, areaMult: 1.2, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.3 }
+  { id: 'pandypaws', name: 'Pandypaws', desc: 'Heavy Armor Mechanic. Tanky but slow, low damage.', hp: 200, speed: 2.4, armor: 5, regen: 0.5, cost: 1000, color: '#FF69B4', damageMult: 0.8, cooldownMult: 1.2, areaMult: 1.2, magnetRange: 50, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 0.8 },
+  { id: 'novabyte', name: 'NovaByte', desc: 'Comms & Demolitions. High area and damage, low HP.', hp: 80, speed: 3.0, armor: 0, regen: 0, cost: 2000, color: '#FF4500', damageMult: 1.3, cooldownMult: 1.1, areaMult: 1.5, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
+  { id: 'glitch', name: 'Glitch', desc: 'Stealth Assassin. Very fast, high damage, fragile.', hp: 60, speed: 3.6, armor: 0, regen: 0, cost: 3000, color: '#8A2BE2', damageMult: 1.4, cooldownMult: 0.8, areaMult: 0.8, magnetRange: 40, luck: 1, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.2 },
+  { id: 'holodrift', name: 'HoloDrift', desc: 'Engineer. High magnet range and XP gain.', hp: 100, speed: 2.9, armor: 1, regen: 0.1, cost: 4000, color: '#20B2AA', damageMult: 0.9, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 120, luck: 0, goldMult: 1.0, xpMult: 1.3, projSpeedMult: 1.0 },
+  { id: 'codebreaker', name: 'CodeBreaker', desc: 'Cyber Warfare Hacker. Fast cooldowns, high luck.', hp: 90, speed: 3.1, armor: 1, regen: 0, cost: 5000, color: '#32CD32', damageMult: 0.7, cooldownMult: 0.6, areaMult: 1.0, magnetRange: 60, luck: 3, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
+  { id: 'dataphantom', name: 'DataPhantom', desc: 'Strategic Hacker. High projectile speed, good armor.', hp: 110, speed: 3.0, armor: 3, regen: 0.2, cost: 6000, color: '#4682B4', damageMult: 1.0, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.5 },
+  { id: 'neonvortex', name: 'NeonVortex', desc: 'Elite Sniper. Extreme damage, very slow cooldowns.', hp: 50, speed: 3.2, armor: 0, regen: 0, cost: 7000, color: '#FFD700', damageMult: 2.0, cooldownMult: 1.5, areaMult: 0.7, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 2.0 },
+  { id: 'synthbeats', name: 'SynthBeats', desc: 'Diplomat. High gold gain and luck.', hp: 100, speed: 3.0, armor: 1, regen: 0.2, cost: 8000, color: '#FF8C00', damageMult: 0.9, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 70, luck: 2, goldMult: 1.5, xpMult: 1.0, projSpeedMult: 1.0 },
+  { id: 'skybyte', name: 'SkyByte', desc: 'Ace Pilot. Very fast, good damage and area.', hp: 90, speed: 3.5, armor: 0, regen: 0, cost: 10000, color: '#00FFFF', damageMult: 1.2, cooldownMult: 0.9, areaMult: 1.2, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.3 }
 ];
 
 export const ARENAS = [
@@ -81,53 +81,53 @@ export const ENEMIES = [
 
 export const CHARACTER_TALENTS = {
   neobyte: [
-    { id: 'neo_1', name: 'Commander Aura', desc: '+10% Area', cost: 500, stat: 'areaMult', value: 0.1 },
-    { id: 'neo_2', name: 'Tactical Reload', desc: '-10% Cooldown', cost: 1000, stat: 'cooldownMult', value: -0.1 },
-    { id: 'neo_3', name: 'Orbital Strike', desc: '+25% Damage', cost: 2000, stat: 'damageMult', value: 0.25 }
+    { id: 'neo_1', name: 'Commander Aura', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
+    { id: 'neo_2', name: 'Tactical Reload', desc: '-10% Cooldown', cost: 2000, stat: 'cooldownMult', value: -0.1 },
+    { id: 'neo_3', name: 'Orbital Strike', desc: '+25% Damage', cost: 4000, stat: 'damageMult', value: 0.25 }
   ],
   pandypaws: [
-    { id: 'pan_1', name: 'Extra Plating', desc: '+3 Armor', cost: 500, stat: 'armor', value: 3 },
-    { id: 'pan_2', name: 'Bear Hug', desc: '+20% Area', cost: 1000, stat: 'areaMult', value: 0.2 },
-    { id: 'pan_3', name: 'Juggernaut', desc: '+50 Max HP', cost: 2000, stat: 'maxHp', value: 50 }
+    { id: 'pan_1', name: 'Extra Plating', desc: '+3 Armor', cost: 1000, stat: 'armor', value: 3 },
+    { id: 'pan_2', name: 'Bear Hug', desc: '+20% Area', cost: 2000, stat: 'areaMult', value: 0.2 },
+    { id: 'pan_3', name: 'Juggernaut', desc: '+50 Max HP', cost: 4000, stat: 'maxHp', value: 50 }
   ],
   novabyte: [
-    { id: 'nova_1', name: 'Blast Shield', desc: '+20 Max HP', cost: 500, stat: 'maxHp', value: 20 },
-    { id: 'nova_2', name: 'Volatile Mix', desc: '+15% Damage', cost: 1000, stat: 'damageMult', value: 0.15 },
-    { id: 'nova_3', name: 'Chain Reaction', desc: '+30% Area', cost: 2000, stat: 'areaMult', value: 0.3 }
+    { id: 'nova_1', name: 'Blast Shield', desc: '+20 Max HP', cost: 1000, stat: 'maxHp', value: 20 },
+    { id: 'nova_2', name: 'Volatile Mix', desc: '+15% Damage', cost: 2000, stat: 'damageMult', value: 0.15 },
+    { id: 'nova_3', name: 'Chain Reaction', desc: '+30% Area', cost: 4000, stat: 'areaMult', value: 0.3 }
   ],
   glitch: [
-    { id: 'gli_1', name: 'Overclock', desc: '+10% Speed', cost: 500, stat: 'speedMult', value: 0.1 },
-    { id: 'gli_2', name: 'Critical Error', desc: '+1 Luck', cost: 1000, stat: 'luck', value: 1 },
-    { id: 'gli_3', name: 'System Wipe', desc: '+30% Damage', cost: 2000, stat: 'damageMult', value: 0.3 }
+    { id: 'gli_1', name: 'Overclock', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
+    { id: 'gli_2', name: 'Critical Error', desc: '+1 Luck', cost: 2000, stat: 'luck', value: 1 },
+    { id: 'gli_3', name: 'System Wipe', desc: '+30% Damage', cost: 4000, stat: 'damageMult', value: 0.3 }
   ],
   holodrift: [
-    { id: 'holo_1', name: 'Data Mining', desc: '+10% XP', cost: 500, stat: 'xpMult', value: 0.1 },
-    { id: 'holo_2', name: 'Wider Net', desc: '+30 Magnet', cost: 1000, stat: 'magnetRange', value: 30 },
-    { id: 'holo_3', name: 'Holographic Decoy', desc: '+20% Speed', cost: 2000, stat: 'speedMult', value: 0.2 }
+    { id: 'holo_1', name: 'Data Mining', desc: '+10% XP', cost: 1000, stat: 'xpMult', value: 0.1 },
+    { id: 'holo_2', name: 'Wider Net', desc: '+30 Magnet', cost: 2000, stat: 'magnetRange', value: 30 },
+    { id: 'holo_3', name: 'Holographic Decoy', desc: '+20% Speed', cost: 4000, stat: 'speedMult', value: 0.2 }
   ],
   codebreaker: [
-    { id: 'code_1', name: 'Bypass', desc: '-5% Cooldown', cost: 500, stat: 'cooldownMult', value: -0.05 },
-    { id: 'code_2', name: 'Root Access', desc: '+15% Gold', cost: 1000, stat: 'goldMult', value: 0.15 },
-    { id: 'code_3', name: 'God Mode', desc: '+2 Luck', cost: 2000, stat: 'luck', value: 2 }
+    { id: 'code_1', name: 'Bypass', desc: '-5% Cooldown', cost: 1000, stat: 'cooldownMult', value: -0.05 },
+    { id: 'code_2', name: 'Root Access', desc: '+15% Gold', cost: 2000, stat: 'goldMult', value: 0.15 },
+    { id: 'code_3', name: 'God Mode', desc: '+2 Luck', cost: 4000, stat: 'luck', value: 2 }
   ],
   dataphantom: [
-    { id: 'data_1', name: 'Ghost Protocol', desc: '+10% Speed', cost: 500, stat: 'speedMult', value: 0.1 },
-    { id: 'data_2', name: 'Firewall', desc: '+2 Armor', cost: 1000, stat: 'armor', value: 2 },
-    { id: 'data_3', name: 'DDoS', desc: '+20% Proj Speed', cost: 2000, stat: 'projSpeedMult', value: 0.2 }
+    { id: 'data_1', name: 'Ghost Protocol', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
+    { id: 'data_2', name: 'Firewall', desc: '+2 Armor', cost: 2000, stat: 'armor', value: 2 },
+    { id: 'data_3', name: 'DDoS', desc: '+20% Proj Speed', cost: 4000, stat: 'projSpeedMult', value: 0.2 }
   ],
   neonvortex: [
-    { id: 'neon_1', name: 'Focus', desc: '+10% Proj Speed', cost: 500, stat: 'projSpeedMult', value: 0.1 },
-    { id: 'neon_2', name: 'Dead Eye', desc: '+20% Damage', cost: 1000, stat: 'damageMult', value: 0.2 },
-    { id: 'neon_3', name: 'Singularity', desc: '+30% Area', cost: 2000, stat: 'areaMult', value: 0.3 }
+    { id: 'neon_1', name: 'Focus', desc: '+10% Proj Speed', cost: 1000, stat: 'projSpeedMult', value: 0.1 },
+    { id: 'neon_2', name: 'Dead Eye', desc: '+20% Damage', cost: 2000, stat: 'damageMult', value: 0.2 },
+    { id: 'neon_3', name: 'Singularity', desc: '+30% Area', cost: 4000, stat: 'areaMult', value: 0.3 }
   ],
   synthbeats: [
-    { id: 'syn_1', name: 'Crowd Control', desc: '+10% Area', cost: 500, stat: 'areaMult', value: 0.1 },
-    { id: 'syn_2', name: 'Merch Sales', desc: '+20% Gold', cost: 1000, stat: 'goldMult', value: 0.2 },
-    { id: 'syn_3', name: 'Encore', desc: '-15% Cooldown', cost: 2000, stat: 'cooldownMult', value: -0.15 }
+    { id: 'syn_1', name: 'Crowd Control', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
+    { id: 'syn_2', name: 'Merch Sales', desc: '+20% Gold', cost: 2000, stat: 'goldMult', value: 0.2 },
+    { id: 'syn_3', name: 'Encore', desc: '-15% Cooldown', cost: 4000, stat: 'cooldownMult', value: -0.15 }
   ],
   skybyte: [
-    { id: 'sky_1', name: 'Aerodynamics', desc: '+10% Speed', cost: 500, stat: 'speedMult', value: 0.1 },
-    { id: 'sky_2', name: 'Evasive Maneuvers', desc: '+2 Armor', cost: 1000, stat: 'armor', value: 2 },
-    { id: 'sky_3', name: 'Carpet Bomb', desc: '+25% Area', cost: 2000, stat: 'areaMult', value: 0.25 }
+    { id: 'sky_1', name: 'Aerodynamics', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
+    { id: 'sky_2', name: 'Evasive Maneuvers', desc: '+2 Armor', cost: 2000, stat: 'armor', value: 2 },
+    { id: 'sky_3', name: 'Carpet Bomb', desc: '+25% Area', cost: 4000, stat: 'areaMult', value: 0.25 }
   ]
 };
