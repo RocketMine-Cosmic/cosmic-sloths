@@ -15,6 +15,8 @@ export default function Achievements() {
     const totalCharacters = CHARACTERS.length;
     const totalGoldEarned = save.totalGoldEarned || 0;
     const maxLevelReached = save.maxLevelReached || 0;
+    const totalUnlockedCosmetics = save.unlockedCosmetics?.length || 0;
+    const totalUnlockedTalents = Object.values(save.unlockedTalents || {}).reduce((acc, arr) => acc + arr.length, 0);
 
     const achievements = [
         {
@@ -198,6 +200,97 @@ export default function Achievements() {
             color: 'text-teal-400',
             bg: 'bg-teal-900/50',
             border: 'border-teal-500'
+        },
+        {
+            id: 'survive_60',
+            title: 'Time Lord',
+            desc: 'Survive for 60 minutes in a single run.',
+            icon: <Clock className="w-8 h-8" />,
+            progress: Math.min(maxTimeSurvived, 3600),
+            target: 3600,
+            isUnlocked: maxTimeSurvived >= 3600,
+            points: 200,
+            color: 'text-fuchsia-400',
+            bg: 'bg-fuchsia-900/50',
+            border: 'border-fuchsia-500'
+        },
+        {
+            id: 'kills_100000',
+            title: 'Sloth God',
+            desc: 'Defeat 100,000 enemies across all runs.',
+            icon: <Skull className="w-8 h-8" />,
+            progress: Math.min(totalKills, 100000),
+            target: 100000,
+            isUnlocked: totalKills >= 100000,
+            points: 200,
+            color: 'text-red-600',
+            bg: 'bg-red-900/50',
+            border: 'border-red-600'
+        },
+        {
+            id: 'gold_1m',
+            title: 'Billionaire',
+            desc: 'Earn 1,000,000 Gold across all runs.',
+            icon: <Coins className="w-8 h-8" />,
+            progress: Math.min(totalGoldEarned, 1000000),
+            target: 1000000,
+            isUnlocked: totalGoldEarned >= 1000000,
+            points: 200,
+            color: 'text-yellow-200',
+            bg: 'bg-yellow-900/50',
+            border: 'border-yellow-300'
+        },
+        {
+            id: 'level_150',
+            title: 'Beyond Limits',
+            desc: 'Reach Level 150 in a single run.',
+            icon: <ArrowUpCircle className="w-8 h-8" />,
+            progress: Math.min(maxLevelReached, 150),
+            target: 150,
+            isUnlocked: maxLevelReached >= 150,
+            points: 200,
+            color: 'text-cyan-200',
+            bg: 'bg-cyan-900/50',
+            border: 'border-cyan-300'
+        },
+        {
+            id: 'cosmetics_all',
+            title: 'Fashionista',
+            desc: 'Unlock all 6 cosmetic trails.',
+            icon: <Star className="w-8 h-8" />,
+            progress: Math.min(totalUnlockedCosmetics, 6),
+            target: 6,
+            isUnlocked: totalUnlockedCosmetics >= 6,
+            points: 100,
+            color: 'text-pink-400',
+            bg: 'bg-pink-900/50',
+            border: 'border-pink-500'
+        },
+        {
+            id: 'talents_15',
+            title: 'Skillful',
+            desc: 'Unlock 15 character talents.',
+            icon: <Star className="w-8 h-8" />,
+            progress: Math.min(totalUnlockedTalents, 15),
+            target: 15,
+            isUnlocked: totalUnlockedTalents >= 15,
+            points: 50,
+            color: 'text-indigo-400',
+            bg: 'bg-indigo-900/50',
+            border: 'border-indigo-500'
+        },
+        {
+            id: 'talents_30',
+            title: 'Omniscient',
+            desc: 'Unlock all 30 character talents.',
+            icon: <Star className="w-8 h-8" />,
+            progress: Math.min(totalUnlockedTalents, 30),
+            target: 30,
+            isUnlocked: totalUnlockedTalents >= 30,
+            points: 150,
+            color: 'text-violet-400',
+            bg: 'bg-violet-900/50',
+            border: 'border-violet-500'
         }
     ];
 
