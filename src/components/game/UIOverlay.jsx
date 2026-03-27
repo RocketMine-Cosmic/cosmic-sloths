@@ -38,11 +38,12 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
             <div>
                 <div className="flex justify-between items-end mb-1">
                     <span className="text-xl font-bold text-cyan-400">Level {level}</span>
+                    <span className="text-sm font-bold text-slate-300">{Math.floor(xp)} / {xpRequired} XP</span>
                 </div>
-                <div className="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
+                <div className="w-full bg-slate-900 h-3 md:h-4 rounded-full overflow-hidden border border-slate-700">
                     <div 
                         className="bg-cyan-500 h-full transition-all duration-200" 
-                        style={{ width: `${(xp / xpRequired) * 100}%` }}
+                        style={{ width: `${Math.min(100, (xp / xpRequired) * 100)}%` }}
                     />
                 </div>
             </div>
