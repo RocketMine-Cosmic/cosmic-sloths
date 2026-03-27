@@ -53,7 +53,7 @@ export default function Hub() {
         ];
 
         return (
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
                 {stats.map(stat => {
                     const level = save.permanentUpgrades[stat.id];
                     const cost = UPGRADE_COSTS[level];
@@ -62,16 +62,16 @@ export default function Hub() {
                     const Icon = stat.icon;
 
                     return (
-                        <div key={stat.id} className="bg-slate-800 p-4 rounded-lg flex items-center justify-between border border-slate-700">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-slate-700 rounded-lg text-cyan-400">
-                                    <Icon size={24} />
+                        <div key={stat.id} className="bg-slate-800 p-3 md:p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 border border-slate-700">
+                            <div className="flex items-center gap-3 md:gap-4">
+                                <div className="p-2 md:p-3 bg-slate-700 rounded-lg text-cyan-400 shrink-0">
+                                    <Icon size={20} className="md:w-6 md:h-6" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg text-white">{stat.name}</h3>
+                                    <h3 className="font-bold text-base md:text-lg text-white">{stat.name}</h3>
                                     <div className="flex gap-1 mt-1">
                                         {[...Array(5)].map((_, i) => (
-                                            <div key={i} className={`w-4 h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
+                                            <div key={i} className={`w-3 h-3 md:w-4 md:h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
                                         ))}
                                     </div>
                                 </div>
@@ -79,7 +79,7 @@ export default function Hub() {
                             <button
                                 onClick={() => handleBuyUpgrade(stat.id)}
                                 disabled={isMax || !canAfford}
-                                className={`px-6 py-2 rounded-lg font-bold transition-colors ${
+                                className={`w-full sm:w-auto px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
                                     isMax ? 'bg-slate-700 text-slate-500' :
                                     canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                     'bg-slate-700 text-slate-400 border border-slate-600'
@@ -95,7 +95,7 @@ export default function Hub() {
     };
 
     const renderCharacters = () => (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             {CHARACTERS.map(char => {
                 const isUnlocked = save.unlockedCharacters.includes(char.id);
                 const isSelected = selectedChar === char.id;
@@ -104,22 +104,22 @@ export default function Hub() {
                 return (
                     <div 
                         key={char.id} 
-                        className={`bg-slate-800 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                        className={`bg-slate-800 p-3 md:p-4 rounded-lg border-2 transition-all cursor-pointer flex flex-col h-full ${
                             isSelected ? 'border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'border-slate-700 hover:border-slate-500'
                         }`}
                         onClick={() => isUnlocked && setSelectedChar(char.id)}
                     >
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: char.color }}>
-                                <span className="text-2xl">🦥</span>
+                        <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
+                            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: char.color }}>
+                                <span className="text-xl md:text-2xl">🦥</span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-xl text-white">{char.name}</h3>
-                                <p className="text-slate-400 text-sm">{char.desc}</p>
+                                <h3 className="font-bold text-lg md:text-xl text-white leading-tight">{char.name}</h3>
+                                <p className="text-slate-400 text-xs md:text-sm mt-1">{char.desc}</p>
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2 text-sm mb-4 bg-slate-900 p-2 rounded">
+                        <div className="grid grid-cols-2 gap-1 md:gap-2 text-xs md:text-sm mb-3 md:mb-4 bg-slate-900 p-2 rounded mt-auto">
                             <div className="text-slate-300">HP: <span className="text-white">{char.hp}</span></div>
                             <div className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></div>
                             <div className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></div>
@@ -130,7 +130,7 @@ export default function Hub() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char); }}
                                 disabled={!canAfford}
-                                className={`w-full py-2 rounded-lg font-bold ${
+                                className={`w-full py-2 rounded-lg font-bold text-sm md:text-base ${
                                     canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-700 text-slate-500'
                                 }`}
                             >
@@ -138,7 +138,7 @@ export default function Hub() {
                             </button>
                         )}
                         {isUnlocked && (
-                            <div className="text-center text-cyan-400 font-bold py-2">
+                            <div className="text-center text-cyan-400 font-bold py-2 text-sm md:text-base">
                                 {isSelected ? 'SELECTED' : 'Click to Select'}
                             </div>
                         )}
@@ -149,7 +149,7 @@ export default function Hub() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 p-8 font-mono">
+        <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 font-mono">
             <div className="max-w-5xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
                     <div>
@@ -189,30 +189,30 @@ export default function Hub() {
                         {activeTab === 'deploy' && (
                             <div className="h-full flex flex-col justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-6">Mission Briefing</h2>
+                                    <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">Mission Briefing</h2>
                                     
-                                    <div className="mb-8">
-                                        <h3 className="text-slate-400 mb-2">Selected Operative</h3>
-                                        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full" style={{ backgroundColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}></div>
-                                            <span className="text-xl font-bold text-white">{CHARACTERS.find(c => c.id === selectedChar)?.name}</span>
+                                    <div className="mb-6 md:mb-8">
+                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Selected Operative</h3>
+                                        <div className="bg-slate-800 p-3 md:p-4 rounded-lg border border-slate-700 flex items-center gap-3 md:gap-4">
+                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full shrink-0" style={{ backgroundColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}></div>
+                                            <span className="text-lg md:text-xl font-bold text-white">{CHARACTERS.find(c => c.id === selectedChar)?.name}</span>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <h3 className="text-slate-400 mb-2">Select Arena</h3>
-                                        <div className="grid grid-cols-1 gap-3">
+                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Select Arena</h3>
+                                        <div className="grid grid-cols-1 gap-2 md:gap-3">
                                             {ARENAS.map(arena => (
                                                 <button
                                                     key={arena.id}
                                                     onClick={() => setSelectedArena(arena.id)}
-                                                    className={`p-4 rounded-lg border text-left transition-all ${
+                                                    className={`p-3 md:p-4 rounded-lg border text-left transition-all ${
                                                         selectedArena === arena.id 
                                                         ? 'bg-slate-800 border-cyan-500 text-cyan-400' 
                                                         : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
                                                     }`}
                                                 >
-                                                    <span className="font-bold text-lg">{arena.name}</span>
+                                                    <span className="font-bold text-base md:text-lg">{arena.name}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -221,9 +221,9 @@ export default function Hub() {
 
                                 <button
                                     onClick={startGame}
-                                    className="w-full mt-8 bg-cyan-600 hover:bg-cyan-500 text-white text-2xl font-bold py-6 rounded-xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.3)]"
+                                    className="w-full mt-6 md:mt-8 bg-cyan-600 hover:bg-cyan-500 text-white text-xl md:text-2xl font-bold py-4 md:py-6 rounded-xl flex items-center justify-center gap-2 md:gap-3 transition-all transform hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.3)]"
                                 >
-                                    LAUNCH MISSION <ArrowRight size={28} />
+                                    LAUNCH MISSION <ArrowRight className="w-6 h-6 md:w-7 md:h-7" />
                                 </button>
                             </div>
                         )}

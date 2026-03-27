@@ -27,12 +27,12 @@ export default function MainMenu() {
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 1 }}
-                className="z-10 text-center mb-16"
+                className="z-10 text-center mb-16 px-4"
             >
-                <h1 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter mb-4 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter mb-2 md:mb-4 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
                     COSMIC SLOTH
                 </h1>
-                <h2 className="text-3xl md:text-4xl font-bold text-white tracking-widest">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-widest">
                     SURVIVAL
                 </h2>
             </motion.div>
