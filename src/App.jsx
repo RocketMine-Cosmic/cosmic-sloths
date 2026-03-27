@@ -6,6 +6,9 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
+import MainMenu from './pages/MainMenu';
+import Hub from './pages/Hub';
+import Game from './pages/Game';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,7 +36,9 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route path="/" element={<MainMenu />} />
+      <Route path="/hub" element={<Hub />} />
+      <Route path="/game" element={<Game />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

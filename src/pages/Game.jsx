@@ -1,0 +1,104 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { GameEngine } from '../game/GameEngine';
+import { SaveManager } from '../game/SaveManager';
+import UIOverlay from '../components/game/UIOverlay';
+import LevelUpModal from '../components/game/LevelUpModal';
+import GameOverModal from '../components/game/GameOverModal';
+
+export default function Game() {
+    const canvasRef = useRef(null);
+    const engineRef = useRef(null);
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    const [gameState, setGameState] = useState({
+        hp: 100, maxHp: 100,
+        time: 0, level: 1,
+        xp: 0, xpRequired: 10,
+        gold: 0
+    });
+    
+    const [levelUpChoices, setLevelUpChoices] = useState(null);
+    const [gameOverStats, setGameOverStats] = useState(null);
+
+    useEffect(() => {
+        const { characterId, arenaId } = location.state || { characterId: 'rookie', arenaId: 'station' };
+        const saveStats = SaveManager.load().permanentUpgrades;
+        
+        const canvas = canvasRef.current;
+        const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const engine = new GameEngine(canvas, characterId, arenaId, saveStats, {
+            onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
+            onTimeChange: (time) => setGameState(s => ({ ...s, time })),
+            onGoldChange: (gold) => setGameState(s => ({ ...s, gold })),
+            onLevelUp: (choices) => {
+                setGameState(s => ({ ...s, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired }));
+                setLevelUpChoices(choices);
+            },
+            onGameOver: (stats) => {
+                const save = SaveManager.load();
+                save.gold += stats.gold;
+                SaveManager.save(save);
+                setGameOverStats(stats);
+            }
+        });
+        
+        engineRef.current = engine;
+        
+        setGameState({
+            hp: engine.player.hp, maxHp: engine.player.maxHp,
+            time: 0, level: 1, xp: 0, xpRequired: 10, gold: 0
+        });
+
+        return () => {
+            window.removeEventListener('resize', resizeCanvas);
+            engine.cleanup();
+        };
+    }, [location.state]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (engineRef.current && !engineRef.current.isPaused) {
+                setGameState(s => ({
+                    ...s,
+                    xp: engineRef.current.xp,
+                    xpRequired: engineRef.current.xpRequired
+                }));
+            }
+        }, 100);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleUpgradeSelect = (upgrade) => {
+        if (engineRef.current) {
+            engineRef.current.applyUpgrade(upgrade);
+        }
+        setLevelUpChoices(null);
+    };
+
+    return (
+        <div className="w-screen h-screen overflow-hidden bg-black relative select-none">
+            <canvas 
+                ref={canvasRef} 
+                className="absolute inset-0"
+            />
+            
+            <UIOverlay {...gameState} />
+            
+            {levelUpChoices && (
+                <LevelUpModal choices={levelUpChoices} onSelect={handleUpgradeSelect} />
+            )}
+            
+            {gameOverStats && (
+                <GameOverModal stats={gameOverStats} />
+            )}
+        </div>
+    );
+}
