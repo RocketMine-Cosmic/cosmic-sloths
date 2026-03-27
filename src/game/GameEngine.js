@@ -290,9 +290,11 @@ export class GameEngine {
             // Tier 1: Always available
             // Tier 2: Available after 60s
             // Tier 3: Available after 150s
+            // Tier 4: Available after 240s
             let maxTier = 1;
             if (this.time > 60) maxTier = 2;
             if (this.time > 150) maxTier = 3;
+            if (this.time > 240) maxTier = 4;
 
             let availableEnemies = ENEMIES.filter(e => 
                 !e.isBoss && 
