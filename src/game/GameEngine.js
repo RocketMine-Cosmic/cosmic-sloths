@@ -309,7 +309,7 @@ export class GameEngine {
             
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
-            const hpMult = (1.0 + (5.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
+            const hpMult = (1.0 + (3.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
             const dmgMult = (1.0 + (2.0 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
