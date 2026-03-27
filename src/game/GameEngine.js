@@ -973,8 +973,29 @@ export class GameEngine {
         });
 
         this.enemies.forEach(e => {
-            this.ctx.fillStyle = e.color;
-            this.ctx.beginPath(); this.ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); this.ctx.fill();
+            if (e.pixels) {
+                const pixelSize = (e.radius * 2) / e.pixels[0].length;
+                const startX = e.x - e.radius;
+                const startY = e.y - (e.pixels.length * pixelSize) / 2;
+                
+                for (let y = 0; y < e.pixels.length; y++) {
+                    for (let x = 0; x < e.pixels[y].length; x++) {
+                        const char = e.pixels[y][x];
+                        if (char !== ' ') {
+                            if (char === '1') this.ctx.fillStyle = e.color;
+                            else if (char === '2') this.ctx.fillStyle = '#ffffff';
+                            else if (char === '3') this.ctx.fillStyle = '#555555';
+                            else if (char === '0') this.ctx.fillStyle = '#000000';
+                            
+                            this.ctx.fillRect(startX + x * pixelSize, startY + y * pixelSize, pixelSize, pixelSize);
+                        }
+                    }
+                }
+            } else {
+                this.ctx.fillStyle = e.color;
+                this.ctx.beginPath(); this.ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); this.ctx.fill();
+            }
+            
             if (e.hp < e.maxHp) {
                 this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - 10, e.y - e.radius - 8, 20, 4);
                 this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - 10, e.y - e.radius - 8, 20 * (e.hp / e.maxHp), 4);

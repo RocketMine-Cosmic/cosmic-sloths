@@ -69,17 +69,114 @@ export const UPGRADES = [
 ];
 
 export const ENEMIES = [
-  { id: 'stardust_mite', name: 'Stardust Mite', hp: 10, speed: 2.2, damage: 5, color: '#e0ffff', radius: 6, xp: 1 },
-  { id: 'nebula_jelly', name: 'Nebula Jelly', hp: 20, speed: 1.2, damage: 8, color: '#ff00ff', radius: 12, xp: 2 },
-  { id: 'plasma_wraith', name: 'Plasma Wraith', hp: 35, speed: 1.5, damage: 12, color: '#00ffff', radius: 14, xp: 4 },
-  { id: 'asteroid_brute', name: 'Asteroid Brute', hp: 80, speed: 0.6, damage: 20, color: '#8b7355', radius: 18, xp: 6 },
-  { id: 'void_stalker', name: 'Void Stalker', hp: 45, speed: 2.0, damage: 15, color: '#4b0082', radius: 12, xp: 5 },
-  { id: 'solar_flare', name: 'Solar Flare', hp: 25, speed: 2.5, damage: 18, color: '#ff4500', radius: 10, xp: 4 },
-  { id: 'elite_dark_matter', name: 'Dark Matter Anomaly', hp: 300, speed: 1.2, damage: 25, color: '#191970', radius: 22, xp: 60 },
-  { id: 'elite_pulsar', name: 'Pulsar Sentinel', hp: 250, speed: 1.8, damage: 30, color: '#00ced1', radius: 20, xp: 60 },
-  { id: 'boss_nebula_lord', name: 'Nebula Overlord', hp: 6000, speed: 0.9, damage: 40, color: '#800080', radius: 45, xp: 600, isBoss: true },
-  { id: 'boss_supernova', name: 'Supernova Core', hp: 8000, speed: 0.7, damage: 50, color: '#ff8c00', radius: 50, xp: 800, isBoss: true },
-  { id: 'boss_blackhole', name: 'Event Horizon Entity', hp: 10000, speed: 0.5, damage: 80, color: '#000000', radius: 60, xp: 1000, isBoss: true }
+  { id: 'stardust_mite', name: 'Stardust Mite', hp: 10, speed: 2.2, damage: 5, color: '#e0ffff', radius: 10, xp: 1, pixels: [
+    " 11 ",
+    "1221",
+    "1111",
+    "1  1"
+  ]},
+  { id: 'nebula_jelly', name: 'Nebula Jelly', hp: 20, speed: 1.2, damage: 8, color: '#ff00ff', radius: 14, xp: 2, pixels: [
+    "  1111  ",
+    " 122221 ",
+    "11111111",
+    "11 11 11",
+    "1  1  1 "
+  ]},
+  { id: 'plasma_wraith', name: 'Plasma Wraith', hp: 35, speed: 1.5, damage: 12, color: '#00ffff', radius: 16, xp: 4, pixels: [
+    "  111  ",
+    " 12121 ",
+    " 11111 ",
+    "  111  ",
+    " 1   1 "
+  ]},
+  { id: 'asteroid_brute', name: 'Asteroid Brute', hp: 80, speed: 0.6, damage: 20, color: '#8b7355', radius: 20, xp: 6, pixels: [
+    "  1111  ",
+    " 131131 ",
+    "11111111",
+    "13111131",
+    " 113311 ",
+    "  1111  "
+  ]},
+  { id: 'void_stalker', name: 'Void Stalker', hp: 45, speed: 2.0, damage: 15, color: '#4b0082', radius: 16, xp: 5, pixels: [
+    "1    1",
+    "11  11",
+    " 1111 ",
+    " 1221 ",
+    "  11  "
+  ]},
+  { id: 'solar_flare', name: 'Solar Flare', hp: 25, speed: 2.5, damage: 18, color: '#ff4500', radius: 14, xp: 4, pixels: [
+    "  1  ",
+    " 121 ",
+    "12321",
+    " 121 ",
+    "  1  "
+  ]},
+  { id: 'elite_dark_matter', name: 'Dark Matter Anomaly', hp: 300, speed: 1.2, damage: 25, color: '#191970', radius: 26, xp: 60, pixels: [
+    "  111111  ",
+    " 13311331 ",
+    "1311111131",
+    "1112222111",
+    "1112222111",
+    "1311111131",
+    " 13311331 ",
+    "  111111  "
+  ]},
+  { id: 'elite_pulsar', name: 'Pulsar Sentinel', hp: 250, speed: 1.8, damage: 30, color: '#00ced1', radius: 24, xp: 60, pixels: [
+    "   11   ",
+    "  1221  ",
+    " 123321 ",
+    "12311321",
+    "12311321",
+    " 123321 ",
+    "  1221  ",
+    "   11   "
+  ]},
+  { id: 'boss_nebula_lord', name: 'Nebula Overlord', hp: 6000, speed: 0.9, damage: 40, color: '#800080', radius: 50, xp: 600, isBoss: true, pixels: [
+    "    111111    ",
+    "  1122222211  ",
+    " 122333333221 ",
+    "12331111113321",
+    "12312211221321",
+    "12312211221321",
+    "12331111113321",
+    " 122333333221 ",
+    "  1122222211  ",
+    "    111111    ",
+    "   11    11   ",
+    "  11      11  "
+  ]},
+  { id: 'boss_supernova', name: 'Supernova Core', hp: 8000, speed: 0.7, damage: 50, color: '#ff8c00', radius: 55, xp: 800, isBoss: true, pixels: [
+    "      11      ",
+    "    112211    ",
+    "   12233221   ",
+    "  1233333321  ",
+    " 123311113321 ",
+    " 123122221321 ",
+    "12331233213321",
+    "12331233213321",
+    " 123122221321 ",
+    " 123311113321 ",
+    "  1233333321  ",
+    "   12233221   ",
+    "    112211    ",
+    "      11      "
+  ]},
+  { id: 'boss_blackhole', name: 'Event Horizon Entity', hp: 10000, speed: 0.5, damage: 80, color: '#000000', radius: 65, xp: 1000, isBoss: true, pixels: [
+    "      3333      ",
+    "    33111133    ",
+    "   3113333113   ",
+    "  313300003313  ",
+    " 31300222200313 ",
+    " 31302000020313 ",
+    "3130200000020313",
+    "3130200000020313",
+    " 31302000020313 ",
+    " 31300222200313 ",
+    "  313300003313  ",
+    "   3113333113   ",
+    "    33111133    ",
+    "      3333      "
+  ]}
 ];
 
 export const CHARACTER_TALENTS = {
