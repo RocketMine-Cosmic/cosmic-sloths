@@ -1,14 +1,14 @@
 export const CHARACTERS = [
-  { id: 'neobyte', name: 'NeoByte', desc: 'Commander. Uses electrified claws and heavy armor.', hp: 150, speed: 1.4, armor: 3, regen: 0.2, cost: 0, color: '#4169E1' },
-  { id: 'pandypaws', name: 'Pandypaws', desc: 'Heavy Armor Mechanic. Frontline powerhouse in a mech suit.', hp: 250, speed: 1.0, armor: 6, regen: 0.5, cost: 500, color: '#FF69B4' },
-  { id: 'novabyte', name: 'NovaByte', desc: 'Comms & Demolitions. Specializes in controlled destruction.', hp: 100, speed: 1.6, armor: 1, regen: 0, cost: 1000, color: '#FF4500' },
-  { id: 'glitch', name: 'Glitch', desc: 'Stealth Assassin. Silent killer with energy daggers.', hp: 80, speed: 2.2, armor: 0, regen: 0, cost: 1500, color: '#8A2BE2' },
-  { id: 'holodrift', name: 'HoloDrift', desc: 'Engineer & Drone Specialist. Brilliant but awkward.', hp: 110, speed: 1.3, armor: 2, regen: 0.1, cost: 2000, color: '#20B2AA' },
-  { id: 'codebreaker', name: 'CodeBreaker', desc: 'Cyber Warfare Hacker. Aggressive digital manipulator.', hp: 90, speed: 1.5, armor: 1, regen: 0, cost: 2500, color: '#32CD32' },
-  { id: 'dataphantom', name: 'DataPhantom', desc: 'Strategic Hacker. Fights with kinetic pulse gloves.', hp: 120, speed: 1.6, armor: 2, regen: 0.2, cost: 3000, color: '#4682B4' },
-  { id: 'neonvortex', name: 'NeonVortex', desc: 'Elite Sniper. Long-range executioner.', hp: 70, speed: 1.8, armor: 0, regen: 0, cost: 3500, color: '#FFD700' },
-  { id: 'synthbeats', name: 'SynthBeats', desc: 'Diplomat & Spotter. Calm under pressure.', hp: 100, speed: 1.5, armor: 1, regen: 0.3, cost: 4000, color: '#FF8C00' },
-  { id: 'skybyte', name: 'SkyByte', desc: 'Ace Pilot. Precision, control, and dual laser blasters.', hp: 130, speed: 2.0, armor: 2, regen: 0, cost: 5000, color: '#00FFFF' }
+  { id: 'neobyte', name: 'NeoByte', desc: 'Commander. Uses electrified claws and heavy armor.', hp: 150, speed: 2.9, armor: 3, regen: 0.2, cost: 0, color: '#4169E1' },
+  { id: 'pandypaws', name: 'Pandypaws', desc: 'Heavy Armor Mechanic. Frontline powerhouse in a mech suit.', hp: 250, speed: 2.5, armor: 6, regen: 0.5, cost: 500, color: '#FF69B4' },
+  { id: 'novabyte', name: 'NovaByte', desc: 'Comms & Demolitions. Specializes in controlled destruction.', hp: 100, speed: 3.1, armor: 1, regen: 0, cost: 1000, color: '#FF4500' },
+  { id: 'glitch', name: 'Glitch', desc: 'Stealth Assassin. Silent killer with energy daggers.', hp: 80, speed: 3.7, armor: 0, regen: 0, cost: 1500, color: '#8A2BE2' },
+  { id: 'holodrift', name: 'HoloDrift', desc: 'Engineer & Drone Specialist. Brilliant but awkward.', hp: 110, speed: 2.8, armor: 2, regen: 0.1, cost: 2000, color: '#20B2AA' },
+  { id: 'codebreaker', name: 'CodeBreaker', desc: 'Cyber Warfare Hacker. Aggressive digital manipulator.', hp: 90, speed: 3.0, armor: 1, regen: 0, cost: 2500, color: '#32CD32' },
+  { id: 'dataphantom', name: 'DataPhantom', desc: 'Strategic Hacker. Fights with kinetic pulse gloves.', hp: 120, speed: 3.1, armor: 2, regen: 0.2, cost: 3000, color: '#4682B4' },
+  { id: 'neonvortex', name: 'NeonVortex', desc: 'Elite Sniper. Long-range executioner.', hp: 70, speed: 3.3, armor: 0, regen: 0, cost: 3500, color: '#FFD700' },
+  { id: 'synthbeats', name: 'SynthBeats', desc: 'Diplomat & Spotter. Calm under pressure.', hp: 100, speed: 3.0, armor: 1, regen: 0.3, cost: 4000, color: '#FF8C00' },
+  { id: 'skybyte', name: 'SkyByte', desc: 'Ace Pilot. Precision, control, and dual laser blasters.', hp: 130, speed: 3.5, armor: 2, regen: 0, cost: 5000, color: '#00FFFF' }
 ];
 
 export const ARENAS = [
