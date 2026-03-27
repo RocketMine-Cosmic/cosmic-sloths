@@ -18,16 +18,16 @@ export const DIFFICULTIES = [
 ];
 
 export const ARENAS = [
-  { id: 'station', name: 'Derelict Station', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', duration: 180 },
-  { id: 'asteroid', name: 'Asteroid Belt', bg: '#2d1b19', duration: 210 },
-  { id: 'nebula', name: 'Nebula Hall', bg: '#2b103a', duration: 240 },
-  { id: 'void', name: 'The Deep Void', bg: '#0a0a0a', duration: 270 },
-  { id: 'plasma', name: 'Plasma Core', bg: '#3a001e', duration: 300 },
-  { id: 'crystal', name: 'Crystal Caverns', bg: '#002222', duration: 330 },
-  { id: 'moon', name: 'Shattered Moon', bg: '#112233', duration: 360 },
-  { id: 'blackhole', name: 'Event Horizon', bg: '#000000', duration: 390 },
-  { id: 'mothership', name: 'Alien Mothership', bg: '#220022', duration: 420 },
-  { id: 'dimension', name: 'Dimension X', bg: '#110033', duration: 450 }
+  { id: 'station', name: 'Azure Expanse', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', duration: 180 },
+  { id: 'asteroid', name: 'Mystic Cosmos', bg: '#2d1b19', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/1f6fc6cad_Map11.png', duration: 210 },
+  { id: 'nebula', name: 'Ethereal Nebula', bg: '#2b103a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/888640bf8_Map13.png', duration: 240 },
+  { id: 'void', name: 'Crimson Void', bg: '#0a0a0a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/dca64fcac_Map14.png', duration: 270 },
+  { id: 'plasma', name: 'Solar Storm', bg: '#3a001e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/289f5cb1d_Map15.png', duration: 300 },
+  { id: 'crystal', name: 'Emerald Galaxy', bg: '#002222', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/a138bba7b_Map16.png', duration: 330 },
+  { id: 'moon', name: 'Shattered Core', bg: '#112233', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ef5a7f3ec_Map17.png', duration: 360 },
+  { id: 'blackhole', name: 'Abyssal Vortex', bg: '#000000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b29cf4702_map18.png', duration: 390 },
+  { id: 'mothership', name: 'Turquoise Drift', bg: '#220022', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b7bfbd6fe_Map19.png', duration: 420 },
+  { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450 }
 ];
 
 export const WEAPONS = {
