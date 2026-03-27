@@ -45,8 +45,15 @@ export class GameEngine {
         const baseChar = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
         
+        let playerImage = null;
+        if (baseChar.image) {
+            playerImage = new Image();
+            playerImage.src = baseChar.image;
+        }
+        
         this.player = {
             name: baseChar.name,
+            image: playerImage,
             x: 0, y: 0, radius: 16,
             maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
@@ -1067,10 +1074,19 @@ export class GameEngine {
             }
         }
 
-        this.ctx.fillStyle = this.player.color;
-        this.ctx.beginPath(); this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2); this.ctx.fill();
-        this.ctx.fillStyle = 'rgba(173, 216, 230, 0.5)';
-        this.ctx.beginPath(); this.ctx.arc(this.player.x, this.player.y - 4, this.player.radius - 2, 0, Math.PI * 2); this.ctx.fill();
+        if (this.player.image && this.player.image.complete) {
+            const size = this.player.radius * 3;
+            // Draw a subtle shadow/glow matching their color
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 10;
+            this.ctx.drawImage(this.player.image, this.player.x - size/2, this.player.y - size/2, size, size);
+            this.ctx.shadowBlur = 0;
+        } else {
+            this.ctx.fillStyle = this.player.color;
+            this.ctx.beginPath(); this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.fillStyle = 'rgba(173, 216, 230, 0.5)';
+            this.ctx.beginPath(); this.ctx.arc(this.player.x, this.player.y - 4, this.player.radius - 2, 0, Math.PI * 2); this.ctx.fill();
+        }
 
         this.ctx.font = '12px "Courier New", Courier, monospace';
         this.ctx.textAlign = 'center';
