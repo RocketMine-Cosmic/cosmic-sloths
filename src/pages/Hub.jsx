@@ -149,7 +149,7 @@ export default function Hub() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 font-mono">
+        <div className="min-h-screen bg-slate-950 text-slate-200 p-4 pb-24 md:p-8 font-mono">
             <div className="max-w-5xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
                     <div>

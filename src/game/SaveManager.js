@@ -8,7 +8,7 @@ export const SaveManager = {
     }
     return {
       gold: 0,
-      unlockedCharacters: ['neobyte'],
+      unlockedCharacters: ['neobyte', 'pandypaws', 'novabyte', 'glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'],
       unlockedArenas: ['station'],
       permanentUpgrades: {
         damage: 0,
