@@ -9,7 +9,24 @@ export class GameEngine {
         this.save = save;
         
         const saveStats = save.permanentUpgrades || {};
+        const weeklyStats = save.weeklyUpgrades || {};
+        const seasonalStats = save.seasonalUpgrades || {};
         
+        const getStatBonus = (stat) => {
+            const perm = (saveStats[stat] || 0);
+            const week = (weeklyStats[stat] || 0);
+            const season = (seasonalStats[stat] || 0);
+            
+            if (stat === 'health') return (perm * 5) + (week * 10) + (season * 20);
+            if (stat === 'speed') return (perm * 0.02) + (week * 0.05) + (season * 0.1);
+            if (stat === 'damage') return (perm * 0.02) + (week * 0.05) + (season * 0.1);
+            if (stat === 'magnet') return (perm * 5) + (week * 15) + (season * 30);
+            if (stat === 'regen') return (perm * 0.1) + (week * 0.2) + (season * 0.5);
+            if (stat === 'cooldown') return (perm * 0.02) + (week * 0.05) + (season * 0.1);
+            if (stat === 'luck') return (perm * 1) + (week * 2) + (season * 3);
+            return 0;
+        };
+
         const charTalents = save.unlockedTalents?.[characterId] || [];
         const talentsData = CHARACTER_TALENTS[characterId] || [];
         
@@ -30,21 +47,22 @@ export class GameEngine {
         this.player = {
             name: baseChar.name,
             x: 0, y: 0, radius: 16,
-            maxHp: baseChar.hp + (saveStats.health * 10) + (talentBonus.maxHp || 0),
-            hp: baseChar.hp + (saveStats.health * 10) + (talentBonus.maxHp || 0),
+            maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
+            hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
             speed: baseChar.speed,
-            speedMult: 1 + (saveStats.speed * 0.05) + (talentBonus.speedMult || 0),
-            damageMult: (baseChar.damageMult || 1) + (saveStats.damage * 0.05) + (talentBonus.damageMult || 0),
-            magnetRange: (baseChar.magnetRange || 60) + (saveStats.magnet * 15) + (talentBonus.magnetRange || 0),
-            regen: baseChar.regen + (saveStats.regen * 0.2) + (talentBonus.regen || 0),
+            speedMult: 1 + getStatBonus('speed') + (talentBonus.speedMult || 0),
+            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0),
+            magnetRange: (baseChar.magnetRange || 60) + getStatBonus('magnet') + (talentBonus.magnetRange || 0),
+            regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0),
             armor: baseChar.armor + (talentBonus.armor || 0),
             areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0),
-            cooldownMult: (baseChar.cooldownMult || 1) - ((saveStats.cooldown || 0) * 0.05) + (talentBonus.cooldownMult || 0),
+            cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0),
             projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0),
             goldMult: (baseChar.goldMult || 1) + (talentBonus.goldMult || 0),
             xpMult: (baseChar.xpMult || 1) + (talentBonus.xpMult || 0),
-            luck: (baseChar.luck || 0) + (saveStats.luck || 0) + (talentBonus.luck || 0),
+            luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0),
             color: baseChar.color,
+            trail: save.cosmetics?.trail || 'default',
             weapons: [{ ...WEAPONS.napBeam, level: 1, timer: 0 }],
             passives: []
         };
@@ -960,6 +978,19 @@ export class GameEngine {
                 this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - 10, e.y - e.radius - 8, 20 * (e.hp / e.maxHp), 4);
             }
         });
+
+        if (this.player.trail !== 'default' && this.frameCount % 3 === 0) {
+            const trailColors = {
+                'fire': '#ff4500',
+                'ice': '#00ffff',
+                'void': '#8a2be2',
+                'toxic': '#32cd32',
+                'gold': '#ffd700'
+            };
+            if (trailColors[this.player.trail]) {
+                this.addParticle(this.player.x, this.player.y, trailColors[this.player.trail], 1);
+            }
+        }
 
         this.ctx.fillStyle = this.player.color;
         this.ctx.beginPath(); this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2); this.ctx.fill();

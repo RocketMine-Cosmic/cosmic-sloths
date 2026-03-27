@@ -4,6 +4,7 @@ import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS } from '../game/Constants';
 import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, Timer, Sparkles, Crosshair, Trophy } from 'lucide-react';
 import Leaderboard from '../components/game/Leaderboard';
+import UpgradesTab from '../components/game/UpgradesTab';
 
 const UPGRADE_COSTS = [100, 300, 600, 1200, 2400];
 
@@ -14,25 +15,7 @@ export default function Hub() {
     const [selectedArena, setSelectedArena] = useState('station');
     const [activeTab, setActiveTab] = useState('deploy');
 
-    const handleBuyUpgrade = (stat, currency = 'gold') => {
-        const currentLevel = save.permanentUpgrades[stat] || 0;
-        if (currentLevel >= UPGRADE_COSTS.length) return;
-        
-        const cost = UPGRADE_COSTS[currentLevel];
-        const tokenCost = cost;
 
-        if (currency === 'gold' && save.gold >= cost) {
-            const newSave = { ...save, gold: save.gold - cost };
-            newSave.permanentUpgrades[stat] = currentLevel + 1;
-            SaveManager.save(newSave);
-            setSave(newSave);
-        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
-            newSave.permanentUpgrades[stat] = currentLevel + 1;
-            SaveManager.save(newSave);
-            setSave(newSave);
-        }
-    };
 
     const handleBuyCharacter = (char, currency = 'gold') => {
         if (save.unlockedCharacters.includes(char.id)) return;
@@ -199,73 +182,7 @@ export default function Hub() {
         );
     };
 
-    const renderUpgrades = () => {
-        const stats = [
-            { id: 'damage', name: 'Muscle Mass (Damage)', icon: Zap },
-            { id: 'health', name: 'Thick Fur (Max HP)', icon: Heart },
-            { id: 'speed', name: 'Morning Coffee (Speed)', icon: Coffee },
-            { id: 'magnet', name: 'Gravity Boots (Pickup)', icon: Magnet },
-            { id: 'regen', name: 'Photosynthesis (Regen)', icon: Shield },
-            { id: 'cooldown', name: 'Alarm Clock (Cooldown)', icon: Timer },
-            { id: 'luck', name: 'Four-Leaf Clover (Luck)', icon: Sparkles }
-        ];
 
-        return (
-            <div className="space-y-3 md:space-y-4">
-                {stats.map(stat => {
-                    const level = save.permanentUpgrades[stat.id] || 0;
-                    const cost = UPGRADE_COSTS[level];
-                    const isMax = level >= UPGRADE_COSTS.length;
-                    const canAfford = save.gold >= cost;
-                    const Icon = stat.icon;
-
-                    return (
-                        <div key={stat.id} className="bg-slate-800 p-3 md:p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 border border-slate-700">
-                            <div className="flex items-center gap-3 md:gap-4">
-                                <div className="p-2 md:p-3 bg-slate-700 rounded-lg text-cyan-400 shrink-0">
-                                    <Icon size={20} className="md:w-6 md:h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-base md:text-lg text-white">{stat.name}</h3>
-                                    <div className="flex gap-1 mt-1">
-                                        {[...Array(5)].map((_, i) => (
-                                            <div key={i} className={`w-3 h-3 md:w-4 md:h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                                <button
-                                    onClick={() => handleBuyUpgrade(stat.id, 'gold')}
-                                    disabled={isMax || !canAfford}
-                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
-                                        isMax ? 'bg-slate-700 text-slate-500' :
-                                        canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
-                                        'bg-slate-700 text-slate-400 border border-slate-600'
-                                    }`}
-                                >
-                                    {isMax ? 'MAX' : `🪙 ${cost}`}
-                                </button>
-                                {!isMax && (
-                                    <button
-                                        onClick={() => handleBuyUpgrade(stat.id, 'token')}
-                                        disabled={(save.cosmicTokens || 0) < cost}
-                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
-                                            (save.cosmicTokens || 0) >= cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                            'bg-slate-700 text-slate-400 border border-slate-600'
-                                        }`}
-                                        title="Buy with Cosmic Tokens"
-                                    >
-                                        💠 {cost}
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
 
     const renderCharacters = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -400,7 +317,7 @@ export default function Hub() {
                     </div>
 
                     <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
-                        {activeTab === 'upgrades' && renderUpgrades()}
+                        {activeTab === 'upgrades' && <UpgradesTab save={save} setSave={setSave} SaveManager={SaveManager} />}
                         {activeTab === 'armory' && renderArmory()}
                         {activeTab === 'characters' && renderCharacters()}
                         {activeTab === 'leaderboard' && <Leaderboard />}

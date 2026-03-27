@@ -1,6 +1,11 @@
+import moment from 'moment';
+
 export const SaveManager = {
   load: () => {
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
+    const currentWeek = moment().format('YYYY-[W]ww');
+    const currentSeason = `${moment().format('YYYY')}-S${Math.floor(moment().week() / 4) + 1}`;
+
     const defaultSave = {
       gold: 0,
       cosmicTokens: 0,
@@ -9,10 +14,12 @@ export const SaveManager = {
       foundCharacters: [],
       unlockedArenasByCharacter: {},
       unlockedTalents: {},
-      permanentUpgrades: {
-        damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0
-      },
-      weaponUpgrades: {}
+      permanentUpgrades: { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
+      weeklyUpgrades: { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
+      seasonalUpgrades: { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
+      weaponUpgrades: {},
+      cosmetics: { trail: 'default' },
+      unlockedCosmetics: ['default']
     };
 
     try {
@@ -36,9 +43,17 @@ export const SaveManager = {
             });
         }
 
-        if (!parsed.unlockedTalents) {
-            parsed.unlockedTalents = {};
+        if (!parsed.unlockedTalents) parsed.unlockedTalents = {};
+        if (!parsed.permanentUpgrades) parsed.permanentUpgrades = { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
+        
+        if (!parsed.weeklyUpgrades || parsed.weeklyUpgrades.weekId !== currentWeek) {
+            parsed.weeklyUpgrades = { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
         }
+        if (!parsed.seasonalUpgrades || parsed.seasonalUpgrades.seasonId !== currentSeason) {
+            parsed.seasonalUpgrades = { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
+        }
+        if (!parsed.cosmetics) parsed.cosmetics = { trail: 'default' };
+        if (!parsed.unlockedCosmetics) parsed.unlockedCosmetics = ['default'];
         
         return { ...defaultSave, ...parsed };
       }
