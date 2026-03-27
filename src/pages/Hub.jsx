@@ -13,21 +13,32 @@ export default function Hub() {
     const [selectedArena, setSelectedArena] = useState('station');
     const [activeTab, setActiveTab] = useState('deploy');
 
-    const handleBuyUpgrade = (stat) => {
+    const handleBuyUpgrade = (stat, currency = 'gold') => {
         const currentLevel = save.permanentUpgrades[stat] || 0;
         if (currentLevel >= UPGRADE_COSTS.length) return;
         
         const cost = UPGRADE_COSTS[currentLevel];
-        if (save.gold >= cost) {
+        const tokenCost = Math.max(1, Math.floor(cost / 10));
+
+        if (currency === 'gold' && save.gold >= cost) {
             const newSave = { ...save, gold: save.gold - cost };
+            newSave.permanentUpgrades[stat] = currentLevel + 1;
+            SaveManager.save(newSave);
+            setSave(newSave);
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
             newSave.permanentUpgrades[stat] = currentLevel + 1;
             SaveManager.save(newSave);
             setSave(newSave);
         }
     };
 
-    const handleBuyCharacter = (char) => {
-        if (save.gold >= char.cost && !save.unlockedCharacters.includes(char.id)) {
+    const handleBuyCharacter = (char, currency = 'gold') => {
+        if (save.unlockedCharacters.includes(char.id)) return;
+        
+        const tokenCost = Math.max(1, Math.floor(char.cost / 10));
+
+        if (currency === 'gold' && save.gold >= char.cost) {
             const newSave = { 
                 ...save, 
                 gold: save.gold - char.cost,
@@ -36,12 +47,31 @@ export default function Hub() {
             SaveManager.save(newSave);
             setSave(newSave);
             setSelectedChar(char.id);
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { 
+                ...save, 
+                cosmicTokens: (save.cosmicTokens || 0) - tokenCost,
+                unlockedCharacters: [...save.unlockedCharacters, char.id]
+            };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            setSelectedChar(char.id);
         }
     };
 
-    const handleBuyTalent = (talent) => {
-        if (save.gold >= talent.cost) {
+    const handleBuyTalent = (talent, currency = 'gold') => {
+        const tokenCost = Math.max(1, Math.floor(talent.cost / 10));
+
+        if (currency === 'gold' && save.gold >= talent.cost) {
             const newSave = { ...save, gold: save.gold - talent.cost };
+            if (!newSave.unlockedTalents[selectedChar]) {
+                newSave.unlockedTalents[selectedChar] = [];
+            }
+            newSave.unlockedTalents[selectedChar].push(talent.id);
+            SaveManager.save(newSave);
+            setSave(newSave);
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
             if (!newSave.unlockedTalents[selectedChar]) {
                 newSave.unlockedTalents[selectedChar] = [];
             }
@@ -90,17 +120,32 @@ export default function Hub() {
                                     </div>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => handleBuyUpgrade(stat.id)}
-                                disabled={isMax || !canAfford}
-                                className={`w-full sm:w-auto px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
-                                    isMax ? 'bg-slate-700 text-slate-500' :
-                                    canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
-                                    'bg-slate-700 text-slate-400 border border-slate-600'
-                                }`}
-                            >
-                                {isMax ? 'MAX' : `🪙 ${cost}`}
-                            </button>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <button
+                                    onClick={() => handleBuyUpgrade(stat.id, 'gold')}
+                                    disabled={isMax || !canAfford}
+                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                        isMax ? 'bg-slate-700 text-slate-500' :
+                                        canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                        'bg-slate-700 text-slate-400 border border-slate-600'
+                                    }`}
+                                >
+                                    {isMax ? 'MAX' : `🪙 ${cost}`}
+                                </button>
+                                {!isMax && (
+                                    <button
+                                        onClick={() => handleBuyUpgrade(stat.id, 'token')}
+                                        disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(cost / 10))}
+                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                            (save.cosmicTokens || 0) >= Math.max(1, Math.floor(cost / 10)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                            'bg-slate-700 text-slate-400 border border-slate-600'
+                                        }`}
+                                        title="Buy with Cosmic Tokens"
+                                    >
+                                        💠 {Math.max(1, Math.floor(cost / 10))}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     );
                 })}
@@ -142,15 +187,26 @@ export default function Hub() {
                         </div>
 
                         {!isUnlocked && !isFindable && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char); }}
-                                disabled={!canAfford}
-                                className={`w-full py-2 rounded-lg font-bold text-sm md:text-base ${
-                                    canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-700 text-slate-500'
-                                }`}
-                            >
-                                🪙 {char.cost} to Unlock
-                            </button>
+                            <div className="flex gap-2 w-full">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'gold'); }}
+                                    disabled={!canAfford}
+                                    className={`flex-1 py-2 rounded-lg font-bold text-sm md:text-base ${
+                                        canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-700 text-slate-500'
+                                    }`}
+                                >
+                                    🪙 {char.cost}
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'token'); }}
+                                    disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(char.cost / 10))}
+                                    className={`flex-1 py-2 rounded-lg font-bold text-sm md:text-base ${
+                                        (save.cosmicTokens || 0) >= Math.max(1, Math.floor(char.cost / 10)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
+                                    }`}
+                                >
+                                    💠 {Math.max(1, Math.floor(char.cost / 10))}
+                                </button>
+                            </div>
                         )}
                         {!isUnlocked && isFindable && (
                             <div className="w-full py-2 rounded-lg font-bold text-sm md:text-base bg-slate-700 text-slate-400 text-center border border-slate-600">
@@ -177,10 +233,13 @@ export default function Hub() {
                         <p className="text-slate-400 mt-1 text-sm md:text-base">Rest, upgrade, and prepare for the cosmic void.</p>
                     </div>
                     <div className="flex gap-2 md:gap-4">
-                        <div className="text-xl md:text-2xl font-bold text-purple-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg">
+                        <div className="text-xl md:text-2xl font-bold text-purple-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg" title="Reroll Tokens">
                             🎲 {save.rerollTokens || 0}
                         </div>
-                        <div className="text-xl md:text-2xl font-bold text-yellow-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg">
+                        <div className="text-xl md:text-2xl font-bold text-emerald-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
+                            💠 {save.cosmicTokens || 0}
+                        </div>
+                        <div className="text-xl md:text-2xl font-bold text-yellow-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg" title="Gold">
                             🪙 {save.gold}
                         </div>
                     </div>
@@ -242,17 +301,31 @@ export default function Hub() {
                                                     <h3 className={`font-bold text-lg ${isUnlocked ? 'text-cyan-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
                                                     <p className="text-slate-400 text-sm">{talent.desc}</p>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleBuyTalent(talent)}
-                                                    disabled={isUnlocked || !canUnlock || !canAfford}
-                                                    className={`px-4 py-2 rounded-lg font-bold transition-colors ${
-                                                        isUnlocked ? 'bg-cyan-900/50 text-cyan-500 border border-cyan-800' :
-                                                        canUnlock && canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
-                                                        'bg-slate-800 text-slate-600 border border-slate-700'
-                                                    }`}
-                                                >
-                                                    {isUnlocked ? 'UNLOCKED' : `🪙 ${talent.cost}`}
-                                                </button>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleBuyTalent(talent, 'gold')}
+                                                        disabled={isUnlocked || !canUnlock || !canAfford}
+                                                        className={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                                                            isUnlocked ? 'bg-cyan-900/50 text-cyan-500 border border-cyan-800' :
+                                                            canUnlock && canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                            'bg-slate-800 text-slate-600 border border-slate-700'
+                                                        }`}
+                                                    >
+                                                        {isUnlocked ? 'UNLOCKED' : `🪙 ${talent.cost}`}
+                                                    </button>
+                                                    {!isUnlocked && (
+                                                        <button
+                                                            onClick={() => handleBuyTalent(talent, 'token')}
+                                                            disabled={!canUnlock || (save.cosmicTokens || 0) < Math.max(1, Math.floor(talent.cost / 10))}
+                                                            className={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                                                                canUnlock && (save.cosmicTokens || 0) >= Math.max(1, Math.floor(talent.cost / 10)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                                'bg-slate-800 text-slate-600 border border-slate-700'
+                                                            }`}
+                                                        >
+                                                            💠 {Math.max(1, Math.floor(talent.cost / 10))}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })}

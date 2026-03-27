@@ -3,6 +3,7 @@ export const SaveManager = {
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
     const defaultSave = {
       gold: 0,
+      cosmicTokens: 0,
       rerollTokens: 0,
       unlockedCharacters: [...defaultChars],
       foundCharacters: [],

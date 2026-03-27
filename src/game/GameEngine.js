@@ -493,6 +493,7 @@ export class GameEngine {
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
                 if (e.isBoss) {
                     this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: 1, color: '#ff00ff' });
+                    this.pickups.push({ x: e.x + 20, y: e.y, type: 'token', value: 1, color: '#10b981' }); // Emerald color for crypto token
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                 } else if (Math.random() < 0.3 + (this.player.luck * 0.05)) {
                     const goldValue = 1 + Math.floor(this.time / 60);
@@ -560,6 +561,9 @@ export class GameEngine {
                 } else if (p.type === 'reroll') {
                     if (this.callbacks.onRerollFound) this.callbacks.onRerollFound();
                     this.addDamageText(this.player.x, this.player.y - 40, `+1 Reroll Token!`, '#ff00ff');
+                } else if (p.type === 'token') {
+                    if (this.callbacks.onTokenFound) this.callbacks.onTokenFound();
+                    this.addDamageText(this.player.x, this.player.y - 60, `+1 Cosmic Token!`, '#10b981');
                 }
                 return false;
             }

@@ -52,6 +52,12 @@ export default function Game() {
                 SaveManager.save(currentSave);
                 setGameState(s => ({ ...s, rerollTokens: currentSave.rerollTokens }));
             },
+            onTokenFound: () => {
+                const currentSave = SaveManager.load();
+                currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + 1;
+                SaveManager.save(currentSave);
+                setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
+            },
             onCharacterFound: (charId) => {
                 const currentSave = SaveManager.load();
                 if (!currentSave.foundCharacters.includes(charId)) {
