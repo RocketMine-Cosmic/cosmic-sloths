@@ -39,24 +39,24 @@ export default function Leaderboard() {
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Hall of Fame</h2>
-                <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-white">Hall of Fame</h2>
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <button 
                         onClick={() => setView('weekly')}
-                        className={`px-4 py-2 rounded-lg font-bold transition-colors ${view === 'weekly' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'weekly' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
                         Weekly
                     </button>
                     <button 
                         onClick={() => setView('seasonal')}
-                        className={`px-4 py-2 rounded-lg font-bold transition-colors ${view === 'seasonal' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'seasonal' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
                         Seasonal
                     </button>
                     <button 
                         onClick={() => setView('all_time')}
-                        className={`px-4 py-2 rounded-lg font-bold transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
                         All Time
                     </button>
@@ -64,16 +64,21 @@ export default function Leaderboard() {
             </div>
 
             <div className="flex-1 bg-slate-800 rounded-xl overflow-hidden border border-slate-700 flex flex-col">
-                <div className="grid grid-cols-12 gap-4 p-4 bg-slate-900 border-b border-slate-700 text-sm font-bold text-slate-400">
-                    <div className="col-span-1 text-center">Rank</div>
-                    <div className="col-span-3">Player</div>
-                    <div className="col-span-2 text-right">Score</div>
-                    <div className="col-span-2 text-center">Time</div>
-                    <div className="col-span-2 text-center">Level</div>
-                    <div className="col-span-2 text-center">Character</div>
+                <div className="overflow-x-auto">
+                    <div className="min-w-[600px]">
+                        <div className="grid grid-cols-12 gap-2 md:gap-4 p-3 md:p-4 bg-slate-900 border-b border-slate-700 text-xs md:text-sm font-bold text-slate-400">
+                            <div className="col-span-1 text-center">Rank</div>
+                            <div className="col-span-3">Player</div>
+                            <div className="col-span-2 text-right">Score</div>
+                            <div className="col-span-2 text-center">Time</div>
+                            <div className="col-span-2 text-center">Level</div>
+                            <div className="col-span-2 text-center">Character</div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto overflow-x-auto p-2">
+                    <div className="min-w-[600px] space-y-2">
                     {loading ? (
                         <div className="flex justify-center items-center h-32">
                             <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
@@ -83,11 +88,11 @@ export default function Leaderboard() {
                             No scores recorded yet. Be the first!
                         </div>
                     ) : (
-                        <div className="space-y-2">
+                        <>
                             {scores.map((score, index) => {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
                                 return (
-                                    <div key={score.id} className="grid grid-cols-12 gap-4 p-3 bg-slate-900/50 rounded-lg items-center text-sm md:text-base border border-slate-800 hover:border-slate-600 transition-colors">
+                                    <div key={score.id} className="grid grid-cols-12 gap-2 md:gap-4 p-2 md:p-3 bg-slate-900/50 rounded-lg items-center text-xs md:text-base border border-slate-800 hover:border-slate-600 transition-colors">
                                         <div className="col-span-1 text-center font-bold">
                                             {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                                         </div>
@@ -115,8 +120,9 @@ export default function Leaderboard() {
                                     </div>
                                 );
                             })}
-                        </div>
+                        </>
                     )}
+                    </div>
                 </div>
             </div>
         </div>
