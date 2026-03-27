@@ -286,11 +286,25 @@ export class GameEngine {
             const ex = this.player.x + Math.cos(angle) * dist;
             const ey = this.player.y + Math.sin(angle) * dist;
             
+            // Tier system: 
+            // Tier 1: Always available
+            // Tier 2: Available after 60s
+            // Tier 3: Available after 150s
+            let maxTier = 1;
+            if (this.time > 60) maxTier = 2;
+            if (this.time > 150) maxTier = 3;
+
             let availableEnemies = ENEMIES.filter(e => 
                 !e.isBoss && 
-                (!e.arenas || e.arenas.includes(this.arena.id))
+                (!e.arenas || e.arenas.includes(this.arena.id)) &&
+                (e.tier || 1) <= maxTier
             );
-            if (availableEnemies.length === 0) availableEnemies = ENEMIES.filter(e => !e.isBoss);
+            
+            if (availableEnemies.length === 0) {
+                // Fallback if no enemies match criteria (shouldn't happen if config is correct)
+                availableEnemies = ENEMIES.filter(e => !e.isBoss && (e.tier || 1) <= maxTier);
+            }
+            
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
             const hpMult = (1.0 + (5.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
