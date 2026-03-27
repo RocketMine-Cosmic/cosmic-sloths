@@ -62,6 +62,12 @@ export default function MainMenu() {
                     INFO
                 </button>
                 <button 
+                    onClick={() => navigate('/achievements')}
+                    className="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(202,138,4,0.4)]"
+                >
+                    ACHIEVEMENTS
+                </button>
+                <button 
                     onClick={() => navigate('/credits')}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
                 >

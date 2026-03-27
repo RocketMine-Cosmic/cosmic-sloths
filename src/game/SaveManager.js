@@ -19,7 +19,9 @@ export const SaveManager = {
       seasonalUpgrades: { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
       weaponUpgrades: {},
       cosmetics: { trail: 'default' },
-      unlockedCosmetics: ['default']
+      unlockedCosmetics: ['default'],
+      maxTimeSurvived: 0,
+      totalKills: 0
     };
 
     try {
@@ -54,6 +56,8 @@ export const SaveManager = {
         }
         if (!parsed.cosmetics) parsed.cosmetics = { trail: 'default' };
         if (!parsed.unlockedCosmetics) parsed.unlockedCosmetics = ['default'];
+        if (parsed.maxTimeSurvived === undefined) parsed.maxTimeSurvived = 0;
+        if (parsed.totalKills === undefined) parsed.totalKills = 0;
         
         return { ...defaultSave, ...parsed };
       }
