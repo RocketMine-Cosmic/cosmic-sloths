@@ -1,14 +1,14 @@
 export const CHARACTERS = [
-  { id: 'neobyte', name: 'NeoByte', desc: 'Commander. Uses electrified claws and heavy armor.', hp: 150, speed: 2.9, armor: 3, regen: 0.2, cost: 0, color: '#4169E1' },
-  { id: 'pandypaws', name: 'Pandypaws', desc: 'Heavy Armor Mechanic. Frontline powerhouse in a mech suit.', hp: 250, speed: 2.5, armor: 6, regen: 0.5, cost: 500, color: '#FF69B4' },
-  { id: 'novabyte', name: 'NovaByte', desc: 'Comms & Demolitions. Specializes in controlled destruction.', hp: 100, speed: 3.1, armor: 1, regen: 0, cost: 1000, color: '#FF4500' },
-  { id: 'glitch', name: 'Glitch', desc: 'Stealth Assassin. Silent killer with energy daggers.', hp: 80, speed: 3.7, armor: 0, regen: 0, cost: 1500, color: '#8A2BE2' },
-  { id: 'holodrift', name: 'HoloDrift', desc: 'Engineer & Drone Specialist. Brilliant but awkward.', hp: 110, speed: 2.8, armor: 2, regen: 0.1, cost: 2000, color: '#20B2AA' },
-  { id: 'codebreaker', name: 'CodeBreaker', desc: 'Cyber Warfare Hacker. Aggressive digital manipulator.', hp: 90, speed: 3.0, armor: 1, regen: 0, cost: 2500, color: '#32CD32' },
-  { id: 'dataphantom', name: 'DataPhantom', desc: 'Strategic Hacker. Fights with kinetic pulse gloves.', hp: 120, speed: 3.1, armor: 2, regen: 0.2, cost: 3000, color: '#4682B4' },
-  { id: 'neonvortex', name: 'NeonVortex', desc: 'Elite Sniper. Long-range executioner.', hp: 70, speed: 3.3, armor: 0, regen: 0, cost: 3500, color: '#FFD700' },
-  { id: 'synthbeats', name: 'SynthBeats', desc: 'Diplomat & Spotter. Calm under pressure.', hp: 100, speed: 3.0, armor: 1, regen: 0.3, cost: 4000, color: '#FF8C00' },
-  { id: 'skybyte', name: 'SkyByte', desc: 'Ace Pilot. Precision, control, and dual laser blasters.', hp: 130, speed: 3.5, armor: 2, regen: 0, cost: 5000, color: '#00FFFF' }
+  { id: 'neobyte', name: 'NeoByte', desc: 'Commander. Balanced all-rounder.', hp: 120, speed: 3.0, armor: 2, regen: 0.1, cost: 0, color: '#4169E1', damageMult: 1.0, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
+  { id: 'pandypaws', name: 'Pandypaws', desc: 'Heavy Armor Mechanic. Tanky but slow, low damage.', hp: 200, speed: 2.4, armor: 5, regen: 0.5, cost: 500, color: '#FF69B4', damageMult: 0.8, cooldownMult: 1.2, areaMult: 1.2, magnetRange: 50, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 0.8 },
+  { id: 'novabyte', name: 'NovaByte', desc: 'Comms & Demolitions. High area and damage, low HP.', hp: 80, speed: 3.0, armor: 0, regen: 0, cost: 1000, color: '#FF4500', damageMult: 1.3, cooldownMult: 1.1, areaMult: 1.5, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
+  { id: 'glitch', name: 'Glitch', desc: 'Stealth Assassin. Very fast, high damage, fragile.', hp: 60, speed: 3.6, armor: 0, regen: 0, cost: 1500, color: '#8A2BE2', damageMult: 1.4, cooldownMult: 0.8, areaMult: 0.8, magnetRange: 40, luck: 1, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.2 },
+  { id: 'holodrift', name: 'HoloDrift', desc: 'Engineer. High magnet range and XP gain.', hp: 100, speed: 2.9, armor: 1, regen: 0.1, cost: 2000, color: '#20B2AA', damageMult: 0.9, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 120, luck: 0, goldMult: 1.0, xpMult: 1.3, projSpeedMult: 1.0 },
+  { id: 'codebreaker', name: 'CodeBreaker', desc: 'Cyber Warfare Hacker. Fast cooldowns, high luck.', hp: 90, speed: 3.1, armor: 1, regen: 0, cost: 2500, color: '#32CD32', damageMult: 0.7, cooldownMult: 0.6, areaMult: 1.0, magnetRange: 60, luck: 3, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.0 },
+  { id: 'dataphantom', name: 'DataPhantom', desc: 'Strategic Hacker. High projectile speed, good armor.', hp: 110, speed: 3.0, armor: 3, regen: 0.2, cost: 3000, color: '#4682B4', damageMult: 1.0, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.5 },
+  { id: 'neonvortex', name: 'NeonVortex', desc: 'Elite Sniper. Extreme damage, very slow cooldowns.', hp: 50, speed: 3.2, armor: 0, regen: 0, cost: 3500, color: '#FFD700', damageMult: 2.0, cooldownMult: 1.5, areaMult: 0.7, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 2.0 },
+  { id: 'synthbeats', name: 'SynthBeats', desc: 'Diplomat. High gold gain and luck.', hp: 100, speed: 3.0, armor: 1, regen: 0.2, cost: 4000, color: '#FF8C00', damageMult: 0.9, cooldownMult: 1.0, areaMult: 1.0, magnetRange: 70, luck: 2, goldMult: 1.5, xpMult: 1.0, projSpeedMult: 1.0 },
+  { id: 'skybyte', name: 'SkyByte', desc: 'Ace Pilot. Very fast, good damage and area.', hp: 90, speed: 3.5, armor: 0, regen: 0, cost: 5000, color: '#00FFFF', damageMult: 1.2, cooldownMult: 0.9, areaMult: 1.2, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.3 }
 ];
 
 export const ARENAS = [
