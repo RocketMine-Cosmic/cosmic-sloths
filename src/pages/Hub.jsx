@@ -97,9 +97,9 @@ export default function Hub() {
     const renderArmory = () => {
         const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
         const upgradeTypes = [
-            { id: 'damage', name: 'Damage', icon: Zap },
-            { id: 'area', name: 'Area', icon: Sparkles },
-            { id: 'cooldown', name: 'Cooldown', icon: Timer }
+            { id: 'damage', name: 'Damage', icon: Zap, desc: '+10% per level' },
+            { id: 'area', name: 'Area', icon: Sparkles, desc: '+10% per level' },
+            { id: 'cooldown', name: 'Cooldown', icon: Timer, desc: '-5% per level' }
         ];
 
         return (
@@ -139,7 +139,10 @@ export default function Hub() {
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2 text-slate-300">
                                                 <Icon size={16} className="text-cyan-400" />
-                                                <span className="font-bold text-xs md:text-sm">{stat.name}</span>
+                                                <div>
+                                                    <div className="font-bold text-xs md:text-sm leading-tight">{stat.name}</div>
+                                                    <div className="text-[10px] text-slate-500 leading-tight">{stat.desc}</div>
+                                                </div>
                                             </div>
                                             <div className="flex gap-1">
                                                 {[...Array(5)].map((_, i) => (
