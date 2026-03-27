@@ -31,7 +31,7 @@ export default function Game() {
     const [isPaused, setIsPaused] = useState(false);
 
     useEffect(() => {
-        const { characterId, arenaId } = location.state || { characterId: 'neobyte', arenaId: 'station' };
+        const { characterId, arenaId, difficultyId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal' };
         const save = SaveManager.load();
         
         const canvas = canvasRef.current;
@@ -69,7 +69,7 @@ export default function Game() {
             }
         };
 
-        const engine = new GameEngine(canvas, characterId, arenaId, save, {
+        const engine = new GameEngine(canvas, characterId, arenaId, difficultyId, save, {
             onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
             onTimeChange: (time) => setGameState(s => ({ ...s, time })),
             onGoldChange: (gold) => setGameState(s => ({ ...s, gold })),

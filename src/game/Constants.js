@@ -11,6 +11,12 @@ export const CHARACTERS = [
   { id: 'skybyte', name: 'SkyByte', desc: 'Ace Pilot. Very fast, good damage and area.', hp: 90, speed: 3.5, armor: 0, regen: 0, cost: 25000, color: '#00FFFF', damageMult: 1.2, cooldownMult: 0.9, areaMult: 1.2, magnetRange: 60, luck: 0, goldMult: 1.0, xpMult: 1.0, projSpeedMult: 1.3 }
 ];
 
+export const DIFFICULTIES = [
+  { id: 'normal', name: 'Normal', desc: 'Standard cosmic experience.', xpMult: 1.0, goldMult: 1.0, enemyHpMult: 1.0, enemyDmgMult: 1.0, hazardChance: 0 },
+  { id: 'hard', name: 'Hard', desc: 'Tougher enemies. Occasional hazards. +50% XP & Gold.', xpMult: 1.5, goldMult: 1.5, enemyHpMult: 1.5, enemyDmgMult: 1.5, hazardChance: 0.05 },
+  { id: 'cosmic', name: 'Cosmic', desc: 'Extreme danger. Frequent hazards. +150% XP & Gold.', xpMult: 2.5, goldMult: 2.5, enemyHpMult: 2.5, enemyDmgMult: 2.5, hazardChance: 0.15 }
+];
+
 export const ARENAS = [
   { id: 'station', name: 'Derelict Station', bg: '#1a1a2e', duration: 180 },
   { id: 'asteroid', name: 'Asteroid Belt', bg: '#2d1b19', duration: 210 },

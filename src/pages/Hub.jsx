@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS } from '../game/Constants';
+import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS, DIFFICULTIES } from '../game/Constants';
 import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, ArrowLeft, Timer, Sparkles, Crosshair, Trophy } from 'lucide-react';
 import Leaderboard from '../components/game/Leaderboard';
 import UpgradesTab from '../components/game/UpgradesTab';
@@ -13,6 +13,7 @@ export default function Hub() {
     const [save, setSave] = useState(SaveManager.load());
     const [selectedChar, setSelectedChar] = useState('neobyte');
     const [selectedArena, setSelectedArena] = useState('station');
+    const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
     const [activeTab, setActiveTab] = useState('deploy');
 
 
@@ -91,7 +92,7 @@ export default function Hub() {
     };
 
     const startGame = () => {
-        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena } });
+        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty } });
     };
 
     const renderArmory = () => {
@@ -423,6 +424,26 @@ export default function Hub() {
                                                     {!isUnlocked && <span className="ml-2 text-xs">🔒 Locked</span>}
                                                 </button>
                                             )})}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 md:mt-8">
+                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Cosmic Difficulty</h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                                            {DIFFICULTIES.map(diff => (
+                                                <button
+                                                    key={diff.id}
+                                                    onClick={() => setSelectedDifficulty(diff.id)}
+                                                    className={`p-3 md:p-4 rounded-lg border text-left transition-all flex flex-col ${
+                                                        selectedDifficulty === diff.id 
+                                                        ? 'bg-slate-800 border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]' 
+                                                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                                                    }`}
+                                                >
+                                                    <span className="font-bold text-base md:text-lg mb-1">{diff.name}</span>
+                                                    <span className="text-xs text-slate-500">{diff.desc}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>

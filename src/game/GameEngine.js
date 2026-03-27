@@ -1,12 +1,13 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES } from './Constants';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, save, callbacks) {
+    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
         this.characterId = characterId;
         this.save = save;
+        this.difficulty = DIFFICULTIES.find(d => d.id === difficultyId) || DIFFICULTIES[0];
         
         const saveStats = save.permanentUpgrades || {};
         const weeklyStats = save.weeklyUpgrades || {};
@@ -58,8 +59,8 @@ export class GameEngine {
             areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0),
             cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0),
             projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0),
-            goldMult: (baseChar.goldMult || 1) + (talentBonus.goldMult || 0),
-            xpMult: (baseChar.xpMult || 1) + (talentBonus.xpMult || 0),
+            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0)) * this.difficulty.goldMult,
+            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0)) * this.difficulty.xpMult,
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0),
             color: baseChar.color,
             trail: save.cosmetics?.trail || 'default',
@@ -94,6 +95,7 @@ export class GameEngine {
         this.characterPickup = null;
         this.bossSpawned = false;
         this.enemyProjectiles = [];
+        this.hazards = [];
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -170,6 +172,7 @@ export class GameEngine {
         this.updateProjectiles(dt);
         this.updateEnemies(dt);
         this.updatePickups(dt);
+        this.updateHazards(dt);
         
         if (!this.characterPickupSpawned && this.lockedCharacters.length > 0) {
             if (this.characterSpawnRoll === undefined) {
@@ -234,8 +237,8 @@ export class GameEngine {
                 const dist = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
                 const ex = this.player.x + Math.cos(angle) * dist;
                 const ey = this.player.y + Math.sin(angle) * dist;
-                const bossHpMult = 5.0;
-                const bossDmgMult = 3.0;
+                const bossHpMult = 5.0 * this.difficulty.enemyHpMult;
+                const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult;
                 this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
                 this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
             }
@@ -253,8 +256,8 @@ export class GameEngine {
             const availableEnemies = ENEMIES.filter(e => !e.isBoss && (ENEMIES.indexOf(e) <= Math.floor(this.time / 60) || ENEMIES.indexOf(e) === 0));
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
-            const hpMult = 1.0 + (5.0 * Math.pow(progress, 2.0));
-            const dmgMult = 1.0 + (2.0 * Math.pow(progress, 1.5));
+            const hpMult = (1.0 + (5.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
+            const dmgMult = (1.0 + (2.0 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elites = ENEMIES.filter(e => e.id.startsWith('elite'));
@@ -267,6 +270,38 @@ export class GameEngine {
             
             this.enemies.push({ ...type, x: ex, y: ey, maxHp: type.hp * hpMult, hp: type.hp * hpMult, damage: type.damage * dmgMult });
         }
+    }
+
+    updateHazards(dt) {
+        if (this.difficulty.hazardChance > 0 && Math.random() < this.difficulty.hazardChance * dt) {
+            const hx = this.player.x + (Math.random() * 600 - 300);
+            const hy = this.player.y + (Math.random() * 600 - 300);
+            this.hazards.push({
+                x: hx, y: hy,
+                radius: 60,
+                damage: 30 * this.difficulty.enemyDmgMult,
+                timer: 2.0, // 2 seconds warning
+                active: false
+            });
+        }
+
+        this.hazards = this.hazards.filter(h => {
+            h.timer -= dt;
+            if (h.timer <= 0 && !h.active) {
+                h.active = true;
+                h.timer = 0.5; // active for 0.5 seconds
+                // Check collision
+                if (Math.hypot(this.player.x - h.x, this.player.y - h.y) < this.player.radius + h.radius) {
+                    const actualDmg = Math.max(1, h.damage - this.player.armor);
+                    this.player.hp -= actualDmg;
+                    this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                    this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                    if (this.player.hp <= 0) this.gameOver();
+                }
+                this.addParticle(h.x, h.y, '#ff4500', 20);
+            }
+            return h.timer > 0;
+        });
     }
 
     updateWeapons(dt) {
@@ -924,6 +959,23 @@ export class GameEngine {
             this.ctx.fillStyle = p.color;
             this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); this.ctx.fill();
         });
+
+        if (this.hazards) {
+            this.hazards.forEach(h => {
+                this.ctx.beginPath();
+                this.ctx.arc(h.x, h.y, h.radius, 0, Math.PI * 2);
+                if (h.active) {
+                    this.ctx.fillStyle = 'rgba(255, 69, 0, 0.8)';
+                    this.ctx.fill();
+                } else {
+                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + (2 - h.timer) * 0.2})`;
+                    this.ctx.fill();
+                    this.ctx.strokeStyle = '#ff0000';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
+                }
+            });
+        }
 
         if (this.enemyProjectiles) {
             this.enemyProjectiles.forEach(p => {
