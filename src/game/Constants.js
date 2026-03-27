@@ -18,16 +18,16 @@ export const DIFFICULTIES = [
 ];
 
 export const ARENAS = [
-  { id: 'station', name: 'Azure Expanse', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', duration: 180 },
-  { id: 'asteroid', name: 'Mystic Cosmos', bg: '#2d1b19', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/1f6fc6cad_Map11.png', duration: 210 },
-  { id: 'nebula', name: 'Ethereal Nebula', bg: '#2b103a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/888640bf8_Map13.png', duration: 240 },
-  { id: 'void', name: 'Crimson Void', bg: '#0a0a0a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/dca64fcac_Map14.png', duration: 270 },
-  { id: 'plasma', name: 'Solar Storm', bg: '#3a001e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/289f5cb1d_Map15.png', duration: 300 },
-  { id: 'crystal', name: 'Emerald Galaxy', bg: '#002222', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/a138bba7b_Map16.png', duration: 330 },
-  { id: 'moon', name: 'Shattered Core', bg: '#112233', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ef5a7f3ec_Map17.png', duration: 360 },
-  { id: 'blackhole', name: 'Abyssal Vortex', bg: '#000000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b29cf4702_map18.png', duration: 390 },
-  { id: 'mothership', name: 'Turquoise Drift', bg: '#220022', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b7bfbd6fe_Map19.png', duration: 420 },
-  { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450 }
+  { id: 'station', name: 'Azure Expanse', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', duration: 180, effect: 'neon_rain' },
+  { id: 'asteroid', name: 'Mystic Cosmos', bg: '#2d1b19', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/1f6fc6cad_Map11.png', duration: 210, effect: 'fog' },
+  { id: 'nebula', name: 'Ethereal Nebula', bg: '#2b103a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/888640bf8_Map13.png', duration: 240, effect: 'fog' },
+  { id: 'void', name: 'Crimson Void', bg: '#0a0a0a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/dca64fcac_Map14.png', duration: 270, effect: 'none' },
+  { id: 'plasma', name: 'Solar Storm', bg: '#3a001e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/289f5cb1d_Map15.png', duration: 300, effect: 'solar_flare' },
+  { id: 'crystal', name: 'Emerald Galaxy', bg: '#002222', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/a138bba7b_Map16.png', duration: 330, effect: 'neon_rain' },
+  { id: 'moon', name: 'Shattered Core', bg: '#112233', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ef5a7f3ec_Map17.png', duration: 360, effect: 'fog' },
+  { id: 'blackhole', name: 'Abyssal Vortex', bg: '#000000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b29cf4702_map18.png', duration: 390, effect: 'solar_flare' },
+  { id: 'mothership', name: 'Turquoise Drift', bg: '#220022', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b7bfbd6fe_Map19.png', duration: 420, effect: 'neon_rain' },
+  { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450, effect: 'solar_flare' }
 ];
 
 export const WEAPONS = {

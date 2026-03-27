@@ -46,6 +46,24 @@ export class GameEngine {
         const baseChar = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
         
+        this.envEffect = this.arena.effect || 'none';
+        this.envParticles = [];
+        this.envModifiers = {
+            playerSpeed: 1,
+            enemySpawnRate: 1,
+            enemySpeed: 1
+        };
+
+        if (this.envEffect === 'neon_rain') {
+            this.envModifiers.playerSpeed = 1.1;
+            this.envModifiers.enemySpeed = 1.1;
+        } else if (this.envEffect === 'fog') {
+            this.envModifiers.playerSpeed = 0.9;
+            this.envModifiers.enemySpawnRate = 0.9;
+        } else if (this.envEffect === 'solar_flare') {
+            this.envModifiers.enemySpawnRate = 1.2;
+        }
+
         this.arenaImage = null;
         if (this.arena.image) {
             this.arenaImage = new Image();
@@ -65,7 +83,7 @@ export class GameEngine {
             maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
             speed: baseChar.speed,
-            speedMult: 1 + getStatBonus('speed') + (talentBonus.speedMult || 0),
+            speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0)) * this.envModifiers.playerSpeed,
             damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0),
             magnetRange: (baseChar.magnetRange || 60) + getStatBonus('magnet') + (talentBonus.magnetRange || 0),
             regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0),
@@ -288,6 +306,49 @@ export class GameEngine {
             t.y -= 20 * dt;
             return t.life > 0;
         });
+
+        // Environmental Effects Update
+        if (this.envEffect === 'neon_rain') {
+            if (Math.random() < 0.5) {
+                this.envParticles.push({
+                    x: this.player.x + (Math.random() * this.canvas.width * 1.5 - this.canvas.width * 0.75),
+                    y: this.player.y - this.canvas.height/2 - 50,
+                    vx: 100,
+                    vy: 600 + Math.random() * 300,
+                    life: 2,
+                    color: Math.random() > 0.5 ? '#00ffff' : '#ff00ff',
+                    length: 20 + Math.random() * 20
+                });
+            }
+        } else if (this.envEffect === 'fog') {
+            if (Math.random() < 0.05) {
+                this.envParticles.push({
+                    x: this.player.x + (Math.random() * this.canvas.width * 2 - this.canvas.width),
+                    y: this.player.y + (Math.random() * this.canvas.height * 2 - this.canvas.height),
+                    vx: 20 + Math.random() * 30,
+                    vy: 10 + Math.random() * 20,
+                    life: 10,
+                    size: 200 + Math.random() * 300
+                });
+            }
+        } else if (this.envEffect === 'solar_flare') {
+            if (Math.random() < 0.02) {
+                this.envParticles.push({
+                    x: this.player.x + (Math.random() * this.canvas.width - this.canvas.width/2),
+                    y: this.player.y + (Math.random() * this.canvas.height - this.canvas.height/2),
+                    life: 1.5,
+                    maxLife: 1.5,
+                    size: 50 + Math.random() * 100
+                });
+            }
+        }
+
+        this.envParticles = this.envParticles.filter(p => {
+            p.life -= dt;
+            if (p.vx) p.x += p.vx * dt;
+            if (p.vy) p.y += p.vy * dt;
+            return p.life > 0;
+        });
     }
 
     spawnEnemies(dt) {
@@ -308,7 +369,7 @@ export class GameEngine {
         }
 
         const progress = Math.min(1, this.time / this.arena.duration);
-        const spawnRate = 2.5 - (2.45 * Math.pow(progress, 1.5)); // Slower start
+        const spawnRate = (2.5 - (2.45 * Math.pow(progress, 1.5))) / this.envModifiers.enemySpawnRate; // Slower start
         
         if (Math.random() < dt / Math.max(0.05, spawnRate)) {
             const angle = Math.random() * Math.PI * 2;
@@ -887,7 +948,7 @@ export class GameEngine {
             // Movement
             if (dist > 0 && !e.latched && !e.burrowed) {
                 const baseSpeed = e.speedMult ? e.speed * e.speedMult : e.speed;
-                const currentSpeed = e.slowTimer > 0 ? baseSpeed * 0.5 : baseSpeed;
+                const currentSpeed = (e.slowTimer > 0 ? baseSpeed * 0.5 : baseSpeed) * this.envModifiers.enemySpeed;
                 e.x += (dx / dist) * currentSpeed * 60 * dt;
                 e.y += (dy / dist) * currentSpeed * 60 * dt;
             }
@@ -1552,6 +1613,44 @@ export class GameEngine {
             this.ctx.fillText(t.text, t.x, t.y);
             this.ctx.globalAlpha = 1.0;
         });
+
+        // Draw Environmental Effects
+        if (this.envEffect === 'neon_rain') {
+            this.envParticles.forEach(p => {
+                this.ctx.strokeStyle = p.color;
+                this.ctx.lineWidth = 2;
+                this.ctx.globalAlpha = p.life / 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(p.x, p.y);
+                this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05);
+                this.ctx.stroke();
+            });
+            this.ctx.globalAlpha = 1.0;
+        } else if (this.envEffect === 'fog') {
+            this.envParticles.forEach(p => {
+                const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                gradient.addColorStop(0, `rgba(200, 200, 220, ${0.15 * (p.life / 10)})`);
+                gradient.addColorStop(1, 'rgba(200, 200, 220, 0)');
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            });
+        } else if (this.envEffect === 'solar_flare') {
+            this.envParticles.forEach(p => {
+                const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.3;
+                const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                gradient.addColorStop(0, `rgba(255, 100, 0, ${alpha})`);
+                gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            });
+            // Global orange tint pulsing
+            this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.05 + 0.05})`;
+            this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width, this.canvas.height);
+        }
 
         this.ctx.restore();
     }
