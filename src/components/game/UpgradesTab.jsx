@@ -32,7 +32,8 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
     const handleBuyUpgrade = (stat, type) => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === type);
         const saveKey = type === 'permanent' ? 'permanentUpgrades' : type === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
-        const currentLevel = save[saveKey][stat] || 0;
+        const upgrades = save[saveKey] || {};
+        const currentLevel = upgrades[stat] || 0;
         
         if (currentLevel >= typeConfig.costs.length) return;
         
@@ -40,21 +41,23 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
 
         if (typeConfig.currency === 'gold' && save.gold >= cost) {
             const newSave = { ...save, gold: save.gold - cost };
-            newSave[saveKey][stat] = currentLevel + 1;
+            newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
             SaveManager.save(newSave);
             setSave(newSave);
         } else if (typeConfig.currency === 'token' && (save.cosmicTokens || 0) >= cost) {
             const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cost };
-            newSave[saveKey][stat] = currentLevel + 1;
+            newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
             SaveManager.save(newSave);
             setSave(newSave);
         }
     };
 
     const handleBuyCosmetic = (cosmetic) => {
-        if (save.unlockedCosmetics.includes(cosmetic.id)) {
-            const newSave = { ...save };
-            newSave.cosmetics.trail = cosmetic.id;
+        const unlocked = save.unlockedCosmetics || ['default'];
+        const cosmetics = save.cosmetics || { trail: 'default' };
+
+        if (unlocked.includes(cosmetic.id)) {
+            const newSave = { ...save, cosmetics: { ...cosmetics, trail: cosmetic.id } };
             SaveManager.save(newSave);
             setSave(newSave);
             return;
@@ -62,14 +65,14 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
 
         if (cosmetic.currency === 'gold' && save.gold >= cosmetic.cost) {
             const newSave = { ...save, gold: save.gold - cosmetic.cost };
-            newSave.unlockedCosmetics.push(cosmetic.id);
-            newSave.cosmetics.trail = cosmetic.id;
+            newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
+            newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
             SaveManager.save(newSave);
             setSave(newSave);
         } else if (cosmetic.currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.cost) {
             const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.cost };
-            newSave.unlockedCosmetics.push(cosmetic.id);
-            newSave.cosmetics.trail = cosmetic.id;
+            newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
+            newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
             SaveManager.save(newSave);
             setSave(newSave);
         }
@@ -104,7 +107,8 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
                     STATS.map(stat => {
                         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
                         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
-                        const level = save[saveKey][stat.id] || 0;
+                        const upgrades = save[saveKey] || {};
+                        const level = upgrades[stat.id] || 0;
                         const cost = typeConfig.costs[level];
                         const isMax = level >= typeConfig.costs.length;
                         
@@ -145,7 +149,8 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {COSMETICS.map(cosmetic => {
-                            const isUnlocked = save.unlockedCosmetics.includes(cosmetic.id);
+                            const unlocked = save.unlockedCosmetics || ['default'];
+                            const isUnlocked = unlocked.includes(cosmetic.id);
                             const isEquipped = save.cosmetics?.trail === cosmetic.id;
                             const canAfford = cosmetic.currency === 'gold' ? save.gold >= cosmetic.cost : (save.cosmicTokens || 0) >= cosmetic.cost;
 
