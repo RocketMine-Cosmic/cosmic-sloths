@@ -31,7 +31,17 @@ export const WEAPONS = {
   napalm: { id: 'napalm', name: 'Zero-G Napalm', type: 'weapon', desc: 'Leaves burning pools.', baseDamage: 3, baseCooldown: 90, baseArea: 1 },
   novaPulse: { id: 'novaPulse', name: 'Nova Pulse', type: 'weapon', desc: 'A massive expanding energy blast.', baseDamage: 25, baseCooldown: 180, baseArea: 1 },
   shieldBubble: { id: 'shieldBubble', name: 'Shield Bubble', type: 'weapon', desc: 'Pushes enemies away and damages them.', baseDamage: 10, baseCooldown: 240, baseArea: 1 },
+  // Synergies
+  burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 8, baseCooldown: 180, baseArea: 1.5, isSynergy: true },
+  laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 30, baseCooldown: 150, baseArea: 1.2, isSynergy: true },
+  thornySwarm: { id: 'thornySwarm', name: 'Thorny Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting sloths armed with vine whips.', baseDamage: 12, baseCooldown: 90, baseArea: 1.5, isSynergy: true },
 };
+
+export const SYNERGIES = [
+  { weapon1: 'napalm', weapon2: 'shieldBubble', result: 'burningBarrier' },
+  { weapon1: 'napBeam', weapon2: 'novaPulse', result: 'laserNova' },
+  { weapon1: 'vineWhip', weapon2: 'slothSwarm', result: 'thornySwarm' }
+];
 
 export const UPGRADES = [
   { id: 'dmg_up', name: 'Muscle Mass', desc: '+10% Damage', type: 'passive', stat: 'damageMult', value: 0.1 },

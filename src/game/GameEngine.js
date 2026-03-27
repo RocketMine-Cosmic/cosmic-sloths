@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES } from './Constants';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, saveStats, callbacks) {
@@ -262,6 +262,50 @@ export class GameEngine {
                 pushback: 250
             });
         }
+        else if (w.id === 'burningBarrier') {
+            this.projectiles.push({
+                x: this.player.x, y: this.player.y,
+                vx: 0, vy: 0,
+                radius: 100 * area,
+                damage: dmg,
+                pierce: 999,
+                life: 2.5,
+                color: 'rgba(255, 100, 0, 0.4)',
+                isAoe: true,
+                pushback: 150,
+                burn: true
+            });
+        }
+        else if (w.id === 'laserNova') {
+            const count = 8 + Math.floor(w.level);
+            for(let i=0; i<count; i++) {
+                const angle = (Math.PI * 2 / count) * i;
+                this.projectiles.push({
+                    x: this.player.x, y: this.player.y,
+                    vx: Math.cos(angle) * 400 * this.player.projSpeedMult,
+                    vy: Math.sin(angle) * 400 * this.player.projSpeedMult,
+                    radius: 8 * area,
+                    damage: dmg,
+                    pierce: 5,
+                    life: 2,
+                    color: '#ff00ff'
+                });
+            }
+        }
+        else if (w.id === 'thornySwarm') {
+            const count = 3 + Math.floor(w.level / 2);
+            for(let i=0; i<count; i++) {
+                const angle = (Math.PI * 2 / count) * i + this.time * 4;
+                const px = this.player.x + Math.cos(angle) * (80 * area);
+                const py = this.player.y + Math.sin(angle) * (80 * area);
+                this.enemies.forEach(e => {
+                    if (Math.hypot(e.x - px, e.y - py) < 40) {
+                        this.damageEnemy(e, dmg);
+                        this.addParticle(e.x, e.y, '#228B22', 5);
+                    }
+                });
+            }
+        }
     }
 
     updateProjectiles(dt) {
@@ -299,7 +343,10 @@ export class GameEngine {
                     this.enemies.forEach(e => {
                         const dist = Math.hypot(e.x - p.x, e.y - p.y);
                         if (dist < p.radius) {
-                            if (this.frameCount % 15 === 0) this.damageEnemy(e, p.damage);
+                            if (this.frameCount % 15 === 0) {
+                                this.damageEnemy(e, p.damage);
+                                if (p.burn) this.addParticle(e.x, e.y, '#ff4500', 3);
+                            }
                             const angle = Math.atan2(e.y - p.y, e.x - p.x);
                             e.x += Math.cos(angle) * p.pushback * dt;
                             e.y += Math.sin(angle) * p.pushback * dt;
@@ -466,10 +513,35 @@ export class GameEngine {
         } else if (upgrade.type === 'weapon') {
             const existing = this.player.weapons.find(w => w.id === upgrade.weaponId);
             const levelIncrement = upgrade.value || 1;
-            if (existing) existing.level += levelIncrement;
-            else this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: levelIncrement, timer: 0 });
+            if (existing) {
+                existing.level += levelIncrement;
+            } else {
+                this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: levelIncrement, timer: 0 });
+                this.checkSynergies();
+            }
         }
         this.isPaused = false;
+    }
+
+    checkSynergies() {
+        SYNERGIES.forEach(syn => {
+            const hasSynergy = this.player.weapons.find(w => w.id === syn.result);
+            if (!hasSynergy) {
+                const hasW1 = this.player.weapons.find(w => w.id === syn.weapon1);
+                const hasW2 = this.player.weapons.find(w => w.id === syn.weapon2);
+                if (hasW1 && hasW2) {
+                    this.player.weapons.push({ ...WEAPONS[syn.result], level: 1, timer: 0 });
+                    
+                    const idx1 = this.player.weapons.findIndex(w => w.id === syn.weapon1);
+                    if (idx1 !== -1) this.player.weapons.splice(idx1, 1);
+                    
+                    const idx2 = this.player.weapons.findIndex(w => w.id === syn.weapon2);
+                    if (idx2 !== -1) this.player.weapons.splice(idx2, 1);
+                    
+                    this.addDamageText(this.player.x, this.player.y - 40, `SYNERGY!`, '#ffaa00');
+                }
+            }
+        });
     }
 
     gameOver() {
@@ -533,6 +605,21 @@ export class GameEngine {
                 const py = this.player.y + Math.sin(angle) * (60 * area);
                 this.ctx.fillStyle = '#8B4513';
                 this.ctx.beginPath(); this.ctx.arc(px, py, 6, 0, Math.PI*2); this.ctx.fill();
+            }
+        }
+
+        const thornySwarm = this.player.weapons.find(w => w.id === 'thornySwarm');
+        if (thornySwarm) {
+            const count = 3 + Math.floor(thornySwarm.level / 2);
+            const area = thornySwarm.baseArea * this.player.areaMult * (1 + (thornySwarm.level-1)*0.1);
+            for(let i=0; i<count; i++) {
+                const angle = (Math.PI * 2 / count) * i + this.time * 4;
+                const px = this.player.x + Math.cos(angle) * (80 * area);
+                const py = this.player.y + Math.sin(angle) * (80 * area);
+                this.ctx.fillStyle = '#228B22';
+                this.ctx.beginPath(); this.ctx.arc(px, py, 8, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.beginPath(); this.ctx.arc(px, py, 4, 0, Math.PI*2); this.ctx.fill();
             }
         }
 
