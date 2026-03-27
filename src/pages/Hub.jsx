@@ -210,7 +210,7 @@ export default function Hub() {
                             onClick={() => setActiveTab('talents')}
                             className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
-                            🧬 Talents
+                            🧬 Skill Tree
                         </button>
                     </div>
 
