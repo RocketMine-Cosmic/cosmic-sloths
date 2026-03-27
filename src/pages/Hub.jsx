@@ -18,7 +18,7 @@ export default function Hub() {
         if (currentLevel >= UPGRADE_COSTS.length) return;
         
         const cost = UPGRADE_COSTS[currentLevel];
-        const tokenCost = Math.max(1, Math.floor(cost / 10));
+        const tokenCost = cost;
 
         if (currency === 'gold' && save.gold >= cost) {
             const newSave = { ...save, gold: save.gold - cost };
@@ -36,7 +36,7 @@ export default function Hub() {
     const handleBuyCharacter = (char, currency = 'gold') => {
         if (save.unlockedCharacters.includes(char.id)) return;
         
-        const tokenCost = Math.max(1, Math.floor(char.cost / 10));
+        const tokenCost = char.cost;
 
         if (currency === 'gold' && save.gold >= char.cost) {
             const newSave = { 
@@ -60,7 +60,7 @@ export default function Hub() {
     };
 
     const handleBuyTalent = (talent, currency = 'gold') => {
-        const tokenCost = Math.max(1, Math.floor(talent.cost / 10));
+        const tokenCost = talent.cost;
 
         if (currency === 'gold' && save.gold >= talent.cost) {
             const newSave = { ...save, gold: save.gold - talent.cost };
@@ -135,14 +135,14 @@ export default function Hub() {
                                 {!isMax && (
                                     <button
                                         onClick={() => handleBuyUpgrade(stat.id, 'token')}
-                                        disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(cost / 10))}
+                                        disabled={(save.cosmicTokens || 0) < cost}
                                         className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
-                                            (save.cosmicTokens || 0) >= Math.max(1, Math.floor(cost / 10)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                            (save.cosmicTokens || 0) >= cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                         }`}
                                         title="Buy with Cosmic Tokens"
                                     >
-                                        💠 {Math.max(1, Math.floor(cost / 10))}
+                                        💠 {cost}
                                     </button>
                                 )}
                             </div>
@@ -199,12 +199,12 @@ export default function Hub() {
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'token'); }}
-                                    disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(char.cost / 10))}
+                                    disabled={(save.cosmicTokens || 0) < char.cost}
                                     className={`flex-1 py-2 rounded-lg font-bold text-sm md:text-base ${
-                                        (save.cosmicTokens || 0) >= Math.max(1, Math.floor(char.cost / 10)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
+                                        (save.cosmicTokens || 0) >= char.cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
                                     }`}
                                 >
-                                    💠 {Math.max(1, Math.floor(char.cost / 10))}
+                                    💠 {char.cost}
                                 </button>
                             </div>
                         )}
@@ -316,13 +316,13 @@ export default function Hub() {
                                                     {!isUnlocked && (
                                                         <button
                                                             onClick={() => handleBuyTalent(talent, 'token')}
-                                                            disabled={!canUnlock || (save.cosmicTokens || 0) < Math.max(1, Math.floor(talent.cost / 10))}
+                                                            disabled={!canUnlock || (save.cosmicTokens || 0) < talent.cost}
                                                             className={`px-4 py-2 rounded-lg font-bold transition-colors ${
-                                                                canUnlock && (save.cosmicTokens || 0) >= Math.max(1, Math.floor(talent.cost / 10)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                                canUnlock && (save.cosmicTokens || 0) >= talent.cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                                             }`}
                                                         >
-                                                            💠 {Math.max(1, Math.floor(talent.cost / 10))}
+                                                            💠 {talent.cost}
                                                         </button>
                                                     )}
                                                 </div>
