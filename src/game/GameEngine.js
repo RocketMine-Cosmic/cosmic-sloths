@@ -1720,8 +1720,70 @@ export class GameEngine {
         }
 
         this.projectiles.forEach(p => {
-            this.ctx.fillStyle = p.color;
-            this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
+            if (p.vx || p.vy) {
+                this.ctx.rotate(Math.atan2(p.vy, p.vx));
+            }
+            
+            this.ctx.shadowColor = p.color;
+            this.ctx.shadowBlur = 10;
+            
+            if (p.type === 'beam' || p.type === 'dual_laser') {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(-p.radius, -p.radius/2, p.radius*2, p.radius);
+                this.ctx.fillStyle = p.color;
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.fillRect(-p.radius*1.5, -p.radius, p.radius*3, p.radius*2);
+            } else if (p.type === 'lightning') {
+                this.ctx.strokeStyle = p.color;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(-p.radius, 0);
+                this.ctx.lineTo(-p.radius/2, (Math.random()-0.5)*p.radius);
+                this.ctx.lineTo(0, (Math.random()-0.5)*p.radius);
+                this.ctx.lineTo(p.radius/2, (Math.random()-0.5)*p.radius);
+                this.ctx.lineTo(p.radius, 0);
+                this.ctx.stroke();
+            } else if (p.type === 'glitch_slash') {
+                this.ctx.fillStyle = p.color;
+                this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(-p.radius/2, -p.radius/8, p.radius, p.radius/4);
+            } else if (p.type === 'stomp') {
+                this.ctx.fillStyle = p.color;
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, 0, p.radius, p.radius*0.5, 0, 0, Math.PI*2);
+                this.ctx.fill();
+            } else if (p.type === 'repair_beam') {
+                this.ctx.strokeStyle = p.color;
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(-p.radius, 0);
+                this.ctx.lineTo(p.radius, 0);
+                this.ctx.stroke();
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.moveTo(-p.radius, 0);
+                this.ctx.lineTo(p.radius, 0);
+                this.ctx.stroke();
+            } else if (p.isAoe) {
+                this.ctx.fillStyle = p.color;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 2;
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2); this.ctx.stroke();
+            } else {
+                // Default projectile
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius*0.5, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.fillStyle = p.color;
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2); this.ctx.fill();
+            }
+            this.ctx.restore();
         });
 
         if (this.hazards) {
@@ -1743,8 +1805,33 @@ export class GameEngine {
 
         if (this.enemyProjectiles) {
             this.enemyProjectiles.forEach(p => {
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                if (p.vx || p.vy) {
+                    this.ctx.rotate(Math.atan2(p.vy, p.vx));
+                }
+                
+                this.ctx.shadowColor = p.color;
+                this.ctx.shadowBlur = 10;
+                
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.moveTo(p.radius, 0);
+                this.ctx.lineTo(-p.radius, p.radius*0.5);
+                this.ctx.lineTo(-p.radius*0.5, 0);
+                this.ctx.lineTo(-p.radius, -p.radius*0.5);
+                this.ctx.fill();
+                
                 this.ctx.fillStyle = p.color;
-                this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.beginPath();
+                this.ctx.moveTo(p.radius*1.5, 0);
+                this.ctx.lineTo(-p.radius*1.2, p.radius*0.8);
+                this.ctx.lineTo(-p.radius*0.8, 0);
+                this.ctx.lineTo(-p.radius*1.2, -p.radius*0.8);
+                this.ctx.fill();
+                
+                this.ctx.restore();
             });
         }
 
