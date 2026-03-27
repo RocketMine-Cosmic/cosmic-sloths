@@ -206,8 +206,12 @@ export default function Hub() {
                         onClick={() => isUnlocked && setSelectedChar(char.id)}
                     >
                         <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
-                            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: char.color }}>
-                                <span className="text-xl md:text-2xl">🦥</span>
+                            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-slate-600 bg-slate-900" style={{ borderColor: char.color }}>
+                                {char.image ? (
+                                    <img src={char.image} alt={char.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-xl md:text-2xl">🦥</span>
+                                )}
                             </div>
                             <div>
                                 <h3 className="font-bold text-lg md:text-xl text-white leading-tight">{char.name}</h3>
@@ -398,7 +402,13 @@ export default function Hub() {
                                     <div className="mb-6 md:mb-8">
                                         <h3 className="text-sm md:text-base text-slate-400 mb-2">Selected Operative</h3>
                                         <div className="bg-slate-800 p-3 md:p-4 rounded-lg border border-slate-700 flex items-center gap-3 md:gap-4">
-                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full shrink-0" style={{ backgroundColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}></div>
+                                            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full shrink-0 overflow-hidden border-2 border-slate-600 bg-slate-900" style={{ borderColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}>
+                                                {CHARACTERS.find(c => c.id === selectedChar)?.image ? (
+                                                    <img src={CHARACTERS.find(c => c.id === selectedChar)?.image} alt="Selected" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full" style={{ backgroundColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}></div>
+                                                )}
+                                            </div>
                                             <span className="text-lg md:text-xl font-bold text-white">{CHARACTERS.find(c => c.id === selectedChar)?.name}</span>
                                         </div>
                                     </div>
