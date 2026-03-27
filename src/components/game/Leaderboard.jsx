@@ -123,8 +123,12 @@ export default function Leaderboard() {
                                         </div>
                                         <div className="col-span-2 flex justify-center">
                                             {char ? (
-                                                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: char.color }} title={char.name}>
-                                                    <span className="text-xs">🦥</span>
+                                                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-slate-600 bg-slate-900" style={{ borderColor: char.color }} title={char.name}>
+                                                    {char.image ? (
+                                                        <img src={char.image} alt={char.name} className="w-full h-full object-cover object-top" />
+                                                    ) : (
+                                                        <span className="text-xs">🦥</span>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <span className="text-slate-500">-</span>
