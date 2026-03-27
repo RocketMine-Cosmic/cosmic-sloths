@@ -12,13 +12,13 @@ export const CHARACTERS = [
 ];
 
 export const ARENAS = [
-  { id: 'station', name: 'Derelict Station', bg: '#1a1a2e', duration: 300 },
-  { id: 'asteroid', name: 'Asteroid Belt', bg: '#2d1b19', duration: 300 },
-  { id: 'nebula', name: 'Nebula Hall', bg: '#2b103a', duration: 300 },
-  { id: 'void', name: 'The Deep Void', bg: '#0a0a0a', duration: 300 },
-  { id: 'plasma', name: 'Plasma Core', bg: '#3a001e', duration: 300 },
-  { id: 'crystal', name: 'Crystal Caverns', bg: '#002222', duration: 300 },
-  { id: 'moon', name: 'Shattered Moon', bg: '#112233', duration: 300 },
+  { id: 'station', name: 'Derelict Station', bg: '#1a1a2e', duration: 90 },
+  { id: 'asteroid', name: 'Asteroid Belt', bg: '#2d1b19', duration: 120 },
+  { id: 'nebula', name: 'Nebula Hall', bg: '#2b103a', duration: 150 },
+  { id: 'void', name: 'The Deep Void', bg: '#0a0a0a', duration: 180 },
+  { id: 'plasma', name: 'Plasma Core', bg: '#3a001e', duration: 210 },
+  { id: 'crystal', name: 'Crystal Caverns', bg: '#002222', duration: 240 },
+  { id: 'moon', name: 'Shattered Moon', bg: '#112233', duration: 270 },
   { id: 'blackhole', name: 'Event Horizon', bg: '#000000', duration: 300 },
   { id: 'mothership', name: 'Alien Mothership', bg: '#220022', duration: 300 },
   { id: 'dimension', name: 'Dimension X', bg: '#110033', duration: 300 }
