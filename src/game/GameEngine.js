@@ -170,6 +170,16 @@ export class GameEngine {
         const actualSpeed = this.player.speed * this.player.speedMult * 60 * dt;
         this.player.x += dx * actualSpeed;
         this.player.y += dy * actualSpeed;
+
+        this.player.isMoving = (dx !== 0 || dy !== 0);
+        if (dx < 0) this.player.facingLeft = true;
+        else if (dx > 0) this.player.facingLeft = false;
+        
+        if (this.player.isMoving) {
+            this.player.moveTimer = (this.player.moveTimer || 0) + dt * 15;
+        } else {
+            this.player.moveTimer = 0;
+        }
         
         this.camera.x = this.player.x - this.canvas.width / 2;
         this.camera.y = this.player.y - this.canvas.height / 2;
@@ -1076,11 +1086,26 @@ export class GameEngine {
 
         if (this.player.image && this.player.image.complete) {
             const size = this.player.radius * 3;
-            // Draw a subtle shadow/glow matching their color
+            
+            this.ctx.save();
+            this.ctx.translate(this.player.x, this.player.y);
+            
+            if (this.player.facingLeft) {
+                this.ctx.scale(-1, 1);
+            }
+            
+            if (this.player.isMoving) {
+                const bob = Math.sin(this.player.moveTimer) * 4;
+                const rot = Math.cos(this.player.moveTimer) * 0.15;
+                this.ctx.translate(0, bob);
+                this.ctx.rotate(rot);
+            }
+            
             this.ctx.shadowColor = this.player.color;
             this.ctx.shadowBlur = 10;
-            this.ctx.drawImage(this.player.image, this.player.x - size/2, this.player.y - size/2, size, size);
+            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
             this.ctx.shadowBlur = 0;
+            this.ctx.restore();
         } else {
             this.ctx.fillStyle = this.player.color;
             this.ctx.beginPath(); this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2); this.ctx.fill();
