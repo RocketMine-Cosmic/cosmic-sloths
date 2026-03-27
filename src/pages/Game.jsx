@@ -5,6 +5,7 @@ import { SaveManager } from '../game/SaveManager';
 import UIOverlay from '../components/game/UIOverlay';
 import LevelUpModal from '../components/game/LevelUpModal';
 import GameOverModal from '../components/game/GameOverModal';
+import VirtualJoystick from '../components/game/VirtualJoystick';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -83,12 +84,20 @@ export default function Game() {
         setLevelUpChoices(null);
     };
 
+    const handleJoystickChange = (pos) => {
+        if (engineRef.current) {
+            engineRef.current.joystick = pos;
+        }
+    };
+
     return (
         <div className="w-screen h-screen overflow-hidden bg-black relative select-none">
             <canvas 
                 ref={canvasRef} 
                 className="absolute inset-0"
             />
+            
+            <VirtualJoystick onChange={handleJoystickChange} />
             
             <UIOverlay {...gameState} />
             

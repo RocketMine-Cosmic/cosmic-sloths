@@ -151,39 +151,39 @@ export default function Hub() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 p-8 font-mono">
             <div className="max-w-5xl mx-auto">
-                <header className="flex justify-between items-end mb-8 border-b border-slate-800 pb-4">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
                     <div>
-                        <h1 className="text-4xl font-bold text-cyan-400 tracking-tight">SLOTH LOUNGE</h1>
-                        <p className="text-slate-400 mt-1">Rest, upgrade, and prepare for the cosmic void.</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 tracking-tight">SLOTH LOUNGE</h1>
+                        <p className="text-slate-400 mt-1 text-sm md:text-base">Rest, upgrade, and prepare for the cosmic void.</p>
                     </div>
-                    <div className="text-2xl font-bold text-yellow-400 bg-slate-900 px-6 py-3 rounded-xl border border-slate-700 shadow-lg">
+                    <div className="text-xl md:text-2xl font-bold text-yellow-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg">
                         🪙 {save.gold}
                     </div>
                 </header>
 
-                <div className="flex gap-8">
-                    <div className="w-64 space-y-2">
+                <div className="flex flex-col md:flex-row gap-8">
+                    <div className="w-full md:w-64 flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
                         <button 
                             onClick={() => setActiveTab('deploy')}
-                            className={`w-full text-left px-6 py-4 rounded-lg font-bold text-lg transition-colors ${activeTab === 'deploy' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'deploy' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🚀 Deploy
                         </button>
                         <button 
                             onClick={() => setActiveTab('upgrades')}
-                            className={`w-full text-left px-6 py-4 rounded-lg font-bold text-lg transition-colors ${activeTab === 'upgrades' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'upgrades' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             ⚙️ Upgrades
                         </button>
                         <button 
                             onClick={() => setActiveTab('characters')}
-                            className={`w-full text-left px-6 py-4 rounded-lg font-bold text-lg transition-colors ${activeTab === 'characters' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`flex-shrink-0 text-left px-4 md:px-6 py-3 md:py-4 rounded-lg font-bold text-sm md:text-lg transition-colors ${activeTab === 'characters' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🦥 Crew
                         </button>
                     </div>
 
-                    <div className="flex-1 bg-slate-900 rounded-2xl p-8 border border-slate-800 min-h-[600px]">
+                    <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
                         {activeTab === 'upgrades' && renderUpgrades()}
                         {activeTab === 'characters' && renderCharacters()}
                         {activeTab === 'deploy' && (

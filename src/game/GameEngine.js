@@ -30,6 +30,7 @@ export class GameEngine {
         };
         
         this.camera = { x: 0, y: 0 };
+        this.joystick = { x: 0, y: 0 };
         this.enemies = [];
         this.projectiles = [];
         this.pickups = [];
@@ -98,7 +99,10 @@ export class GameEngine {
         if (this.keys['a'] || this.keys['arrowleft']) dx -= 1;
         if (this.keys['d'] || this.keys['arrowright']) dx += 1;
         
-        if (dx !== 0 && dy !== 0) {
+        if (this.joystick.x !== 0 || this.joystick.y !== 0) {
+            dx = this.joystick.x;
+            dy = this.joystick.y;
+        } else if (dx !== 0 && dy !== 0) {
             const len = Math.sqrt(dx*dx + dy*dy);
             dx /= len; dy /= len;
         }
