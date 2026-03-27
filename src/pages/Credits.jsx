@@ -44,7 +44,7 @@ export default function Credits() {
                     <div className="space-y-12 text-slate-300">
                         <div>
                             <h2 className="text-2xl font-bold text-white mb-2">RocketMine(Sloths in Space)</h2>
-                            <p className="text-xl text-emerald-400">Game Development</p>
+                            <p className="text-xl text-emerald-400">Game Design and Development</p>
                         </div>
 
                         <div>

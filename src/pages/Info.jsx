@@ -53,8 +53,8 @@ export default function Info() {
                         <section>
                             <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">💎 In-Run Mechanics</h2>
                             <ul className="list-disc list-inside space-y-2 leading-relaxed">
-                                <li><strong className="text-emerald-400">XP Gems (Cyan):</strong> Dropped by defeated enemies. Collect them to fill your XP bar and level up.</li>
-                                <li><strong className="text-yellow-400">Gold Coins:</strong> Randomly dropped by enemies. Used in the Sloth Lounge for permanent upgrades.</li>
+                                <li><strong className="text-emerald-400">XP Gems (Cyan Diamonds):</strong> Dropped by defeated enemies. Collect them to fill your XP bar and level up.</li>
+                                <li><strong className="text-yellow-400">Gold Coins (Octagons):</strong> Randomly dropped by enemies. Used in the Sloth Lounge for permanent upgrades.</li>
                                 <li><strong className="text-purple-400">Reroll Tokens:</strong> Dropped by Bosses. Use them when leveling up to get a new set of upgrade choices.</li>
                                 <li><strong className="text-white">Leveling Up:</strong> Each level grants you a choice between 3 random weapons or passive stat boosts. Rarer upgrades provide larger bonuses!</li>
                             </ul>
