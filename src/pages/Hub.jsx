@@ -208,7 +208,7 @@ export default function Hub() {
                         <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
                             <div className="w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-slate-600 bg-slate-900" style={{ borderColor: char.color }}>
                                 {char.image ? (
-                                    <img src={char.image} alt={char.name} className="w-full h-full object-cover" />
+                                    <img src={char.image} alt={char.name} className="w-full h-full object-cover object-top" />
                                 ) : (
                                     <span className="text-xl md:text-2xl">🦥</span>
                                 )}
@@ -404,7 +404,7 @@ export default function Hub() {
                                         <div className="bg-slate-800 p-3 md:p-4 rounded-lg border border-slate-700 flex items-center gap-3 md:gap-4">
                                             <div className="w-12 h-12 md:w-16 md:h-16 rounded-full shrink-0 overflow-hidden border-2 border-slate-600 bg-slate-900" style={{ borderColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}>
                                                 {CHARACTERS.find(c => c.id === selectedChar)?.image ? (
-                                                    <img src={CHARACTERS.find(c => c.id === selectedChar)?.image} alt="Selected" className="w-full h-full object-cover" />
+                                                    <img src={CHARACTERS.find(c => c.id === selectedChar)?.image} alt="Selected" className="w-full h-full object-cover object-top" />
                                                 ) : (
                                                     <div className="w-full h-full" style={{ backgroundColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}></div>
                                                 )}
