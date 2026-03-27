@@ -280,7 +280,7 @@ export default function Hub() {
                             <div>
                                 <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">{CHARACTERS.find(c => c.id === selectedChar)?.name}'s Talents</h2>
                                 <div className="space-y-4 relative">
-                                    <div className="absolute left-6 md:left-8 top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
+                                    <div className="absolute left-[38px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
                                     
                                     {(CHARACTER_TALENTS[selectedChar] || []).map((talent, index) => {
                                         const unlocked = save.unlockedTalents[selectedChar] || [];
@@ -289,23 +289,25 @@ export default function Hub() {
                                         const canAfford = save.gold >= talent.cost;
                                         
                                         return (
-                                            <div key={talent.id} className="relative z-10 flex items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-700">
-                                                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-4 ${
-                                                    isUnlocked ? 'bg-cyan-900 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]' :
-                                                    canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
-                                                    'bg-slate-800 border-slate-700 text-slate-600'
-                                                }`}>
-                                                    {index + 1}
+                                            <div key={talent.id} className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 bg-slate-900 p-4 rounded-xl border border-slate-700">
+                                                <div className="flex items-center gap-3 md:gap-4">
+                                                    <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-4 ${
+                                                        isUnlocked ? 'bg-cyan-900 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]' :
+                                                        canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
+                                                        'bg-slate-800 border-slate-700 text-slate-600'
+                                                    }`}>
+                                                        {index + 1}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className={`font-bold text-base md:text-lg ${isUnlocked ? 'text-cyan-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
+                                                        <p className="text-slate-400 text-xs md:text-sm">{talent.desc}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1">
-                                                    <h3 className={`font-bold text-lg ${isUnlocked ? 'text-cyan-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
-                                                    <p className="text-slate-400 text-sm">{talent.desc}</p>
-                                                </div>
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-2 w-full sm:w-auto pl-[60px] sm:pl-0">
                                                     <button
                                                         onClick={() => handleBuyTalent(talent, 'gold')}
                                                         disabled={isUnlocked || !canUnlock || !canAfford}
-                                                        className={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
                                                             isUnlocked ? 'bg-cyan-900/50 text-cyan-500 border border-cyan-800' :
                                                             canUnlock && canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                                             'bg-slate-800 text-slate-600 border border-slate-700'
@@ -317,7 +319,7 @@ export default function Hub() {
                                                         <button
                                                             onClick={() => handleBuyTalent(talent, 'token')}
                                                             disabled={!canUnlock || (save.cosmicTokens || 0) < talent.cost}
-                                                            className={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
                                                                 canUnlock && (save.cosmicTokens || 0) >= talent.cost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                                             }`}
