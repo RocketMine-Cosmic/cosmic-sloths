@@ -392,7 +392,10 @@ export class GameEngine {
                 const px = this.player.x + Math.cos(angle) * (60 * area);
                 const py = this.player.y + Math.sin(angle) * (60 * area);
                 this.enemies.forEach(e => {
-                    if (Math.hypot(e.x - px, e.y - py) < 20) this.damageEnemy(e, dmg * 0.2);
+                    if (Math.hypot(e.x - px, e.y - py) < 20) {
+                        this.damageEnemy(e, dmg * 0.2);
+                        this.addParticle(e.x, e.y, isMastered ? '#FF0000' : '#8B4513', 2);
+                    }
                 });
                 
                 if (isMastered) {
@@ -561,6 +564,7 @@ export class GameEngine {
                         if (!p.hitList.has(e)) {
                             p.hitList.add(e);
                             this.damageEnemy(e, p.damage);
+                            this.addParticle(e.x, e.y, p.color, 3);
                             p.pierce--;
                             
                             if (p.isMastered && p.weaponId === 'napBeam') {
@@ -590,6 +594,7 @@ export class GameEngine {
                             if (!p.hitList.has(e)) {
                                 p.hitList.add(e);
                                 this.damageEnemy(e, p.damage);
+                                this.addParticle(e.x, e.y, p.color, 5);
                             }
                         }
                     });
@@ -633,6 +638,7 @@ export class GameEngine {
                         this.enemies.forEach(e => {
                             if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
                                 this.damageEnemy(e, p.damage);
+                                this.addParticle(e.x, e.y, p.weaponId === 'napalm' ? '#ff4500' : p.color, 2);
                                 if (p.isMastered && p.weaponId === 'napalm') {
                                     e.slowTimer = 0.5;
                                 }
