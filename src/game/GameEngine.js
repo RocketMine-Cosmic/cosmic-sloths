@@ -1090,7 +1090,7 @@ export class GameEngine {
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
             
-            if (this.player.facingLeft) {
+            if (!this.player.facingLeft) {
                 this.ctx.scale(-1, 1);
             }
             
