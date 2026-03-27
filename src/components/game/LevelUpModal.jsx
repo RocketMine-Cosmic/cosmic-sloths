@@ -1,34 +1,123 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HelpCircle } from 'lucide-react';
 
 export default function LevelUpModal({ choices, onSelect }) {
+    const [revealedIndex, setRevealedIndex] = useState(null);
+
+    const handleSelect = (index) => {
+        if (revealedIndex === null) {
+            setRevealedIndex(index);
+        }
+    };
+
+    const handleConfirm = () => {
+        if (revealedIndex !== null) {
+            onSelect(choices[revealedIndex]);
+        }
+    };
+
+    const rarityColors = {
+        'Common': 'text-slate-400 border-slate-500',
+        'Rare': 'text-blue-400 border-blue-500 shadow-[0_0_10px_rgba(96,165,250,0.5)]',
+        'Epic': 'text-purple-400 border-purple-500 shadow-[0_0_15px_rgba(192,132,252,0.6)]',
+        'Legendary': 'text-orange-400 border-orange-500 shadow-[0_0_20px_rgba(251,146,60,0.8)]'
+    };
+
+    const rarityBg = {
+        'Common': 'bg-slate-800',
+        'Rare': 'bg-blue-950',
+        'Epic': 'bg-purple-950',
+        'Legendary': 'bg-orange-950'
+    };
+
     return (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-slate-900 border-2 border-cyan-500 p-4 md:p-8 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-slate-900 border-2 border-cyan-500 p-4 md:p-8 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col items-center"
             >
-                <h2 className="text-2xl md:text-3xl font-bold text-center text-cyan-400 mb-4 md:mb-8 font-mono">LEVEL UP!</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                    {choices.map((choice, i) => (
-                        <button
-                            key={i}
-                            onClick={() => onSelect(choice)}
-                            className="bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-cyan-400 p-3 md:p-4 rounded-lg text-left transition-all group flex flex-col"
-                        >
-                            <div className="text-base md:text-lg font-bold text-white group-hover:text-cyan-300 mb-1 md:mb-2">
-                                {choice.name}
+                <h2 className="text-2xl md:text-3xl font-bold text-center text-cyan-400 mb-2 font-mono">
+                    {revealedIndex === null ? 'CHOOSE A MYSTERY UPGRADE' : 'UPGRADE REVEALED!'}
+                </h2>
+                <p className="text-slate-400 mb-6 md:mb-8 text-center text-sm md:text-base">
+                    {revealedIndex === null ? 'Select one to reveal its true power.' : 'A powerful addition to your arsenal.'}
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full mb-8">
+                    {choices.map((choice, i) => {
+                        const isRevealed = revealedIndex === i;
+                        const isHidden = revealedIndex !== null && revealedIndex !== i;
+                        
+                        if (isHidden) return (
+                            <div key={i} className="opacity-30 scale-95 transition-all duration-500 bg-slate-800 border border-slate-700 p-4 rounded-lg flex items-center justify-center min-h-[160px]">
+                                <span className="text-slate-600 font-bold">Discarded</span>
                             </div>
-                            <div className="text-xs md:text-sm text-slate-400 flex-1">
-                                {choice.desc}
-                            </div>
-                            <div className="mt-2 md:mt-4 text-[10px] md:text-xs font-mono text-cyan-500/50 uppercase">
-                                {choice.type}
-                            </div>
-                        </button>
-                    ))}
+                        );
+
+                        return (
+                            <motion.button
+                                key={i}
+                                layout
+                                onClick={() => handleSelect(i)}
+                                disabled={revealedIndex !== null}
+                                className={`relative p-4 md:p-6 rounded-xl text-left transition-all duration-500 flex flex-col min-h-[160px] border-2 ${
+                                    isRevealed 
+                                    ? `${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ')[1]} ${rarityColors[choice.rarity].split(' ')[2] || ''}` 
+                                    : 'bg-slate-800 border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer'
+                                }`}
+                            >
+                                <AnimatePresence mode="wait">
+                                    {!isRevealed ? (
+                                        <motion.div 
+                                            key="mystery"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="absolute inset-0 flex flex-col items-center justify-center text-cyan-500"
+                                        >
+                                            <HelpCircle className="w-12 h-12 mb-2 animate-pulse" />
+                                            <span className="font-bold font-mono">MYSTERY</span>
+                                            <span className={`mt-2 text-xs font-bold px-2 py-1 rounded bg-black/50 ${rarityColors[choice.rarity].split(' ')[0]}`}>
+                                                {choice.rarity}
+                                            </span>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="revealed"
+                                            initial={{ opacity: 0, rotateY: 180 }}
+                                            animate={{ opacity: 1, rotateY: 0 }}
+                                            transition={{ duration: 0.5 }}
+                                            className="flex flex-col h-full w-full"
+                                        >
+                                            <div className={`text-xs font-bold mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
+                                                {choice.rarity} {choice.type}
+                                            </div>
+                                            <div className="text-lg md:text-xl font-bold text-white mb-2 leading-tight">
+                                                {choice.name}
+                                            </div>
+                                            <div className="text-sm text-slate-300 flex-1">
+                                                {choice.desc}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.button>
+                        );
+                    })}
                 </div>
+
+                {revealedIndex !== null && (
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={handleConfirm}
+                        className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                    >
+                        Accept Upgrade
+                    </motion.button>
+                )}
             </motion.div>
         </div>
     );

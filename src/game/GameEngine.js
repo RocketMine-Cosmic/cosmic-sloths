@@ -10,6 +10,7 @@ export class GameEngine {
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
         
         this.player = {
+            name: baseChar.name,
             x: 0, y: 0, radius: 16,
             maxHp: baseChar.hp + (saveStats.health * 10),
             hp: baseChar.hp + (saveStats.health * 10),
@@ -401,13 +402,55 @@ export class GameEngine {
         this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
         this.isPaused = true;
         
+        const rarities = [
+            { name: 'Common', mult: 1, weight: 60 },
+            { name: 'Rare', mult: 1.5, weight: 25 },
+            { name: 'Epic', mult: 2, weight: 10 },
+            { name: 'Legendary', mult: 3, weight: 5 }
+        ];
+
+        const getRarity = () => {
+            const roll = Math.random() * 100;
+            let sum = 0;
+            for (const r of rarities) {
+                sum += r.weight;
+                if (roll <= sum) return r;
+            }
+            return rarities[0];
+        };
+
         const choices = [];
         const pool = [...UPGRADES];
         for(let i=0; i<3; i++) {
             if (pool.length === 0) break;
             const idx = Math.floor(Math.random() * pool.length);
-            choices.push(pool[idx]);
+            const baseUpgrade = pool[idx];
             pool.splice(idx, 1);
+            
+            const rarity = getRarity();
+            const uniqueName = `${this.player.name}'s ${baseUpgrade.name}`;
+            
+            let newValue = baseUpgrade.value;
+            let newDesc = baseUpgrade.desc;
+            
+            if (baseUpgrade.type === 'passive') {
+                newValue = baseUpgrade.value * rarity.mult;
+                newDesc = baseUpgrade.desc.replace(/[0-9]+(\.[0-9]+)?/, (match) => {
+                    const num = parseFloat(match);
+                    return Number.isInteger(num * rarity.mult) ? (num * rarity.mult).toString() : (num * rarity.mult).toFixed(1);
+                });
+            } else if (baseUpgrade.type === 'weapon') {
+                newValue = rarity.mult;
+                newDesc = `${baseUpgrade.desc} (+${rarity.mult} Levels)`;
+            }
+            
+            choices.push({
+                ...baseUpgrade,
+                name: uniqueName,
+                desc: newDesc,
+                value: newValue,
+                rarity: rarity.name
+            });
         }
         this.callbacks.onLevelUp(choices);
     }
@@ -422,8 +465,9 @@ export class GameEngine {
             this.player.passives.push(upgrade);
         } else if (upgrade.type === 'weapon') {
             const existing = this.player.weapons.find(w => w.id === upgrade.weaponId);
-            if (existing) existing.level++;
-            else this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: 1, timer: 0 });
+            const levelIncrement = upgrade.value || 1;
+            if (existing) existing.level += levelIncrement;
+            else this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: levelIncrement, timer: 0 });
         }
         this.isPaused = false;
     }
