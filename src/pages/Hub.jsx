@@ -391,7 +391,7 @@ export default function Hub() {
                                                 return (
                                                     <>
                                                         <div 
-                                                            className="absolute inset-0 opacity-40 bg-cover bg-center transition-all duration-500"
+                                                            className="absolute inset-0 opacity-40 bg-contain bg-center bg-no-repeat transition-all duration-500"
                                                             style={{ backgroundImage: char.image ? `url(${char.image})` : 'none' }}
                                                         />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/70 to-transparent" />
