@@ -6,7 +6,7 @@ import { Pencil, Check, X } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SettingsModal from '../components/game/SettingsModal';
 
-export default function MainMenu() {
+export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isEditingName, setIsEditingName] = useState(false);
@@ -47,7 +47,7 @@ export default function MainMenu() {
 
     return (
         <div 
-            className="min-h-screen bg-slate-950 flex flex-col items-center justify-end pb-16 relative overflow-hidden font-mono bg-cover bg-top bg-no-repeat"
+            className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 flex flex-col items-center justify-end pb-16 relative overflow-hidden font-mono bg-cover bg-top bg-no-repeat`}
             style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: 'contain' }}
         >
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700 backdrop-blur-sm">
@@ -85,7 +85,7 @@ export default function MainMenu() {
                 className="z-10 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 w-full max-w-3xl px-4"
             >
                 <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/play'); }}
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); onNavigateToPlay ? onNavigateToPlay() : navigate('/play'); }}
                     className="col-span-full w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/30"
                 >
                     PLAY

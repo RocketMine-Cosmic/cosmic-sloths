@@ -42,11 +42,10 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/" element={<MainMenu />} />
+      <Route path="/" element={<PlayCarousel />} />
       <Route path="/hub" element={<Hub />} />
       <Route path="/upgrades" element={<Upgrades />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
-      <Route path="/play" element={<PlayCarousel />} />
       <Route path="/game" element={<Game />} />
       <Route path="/info" element={<Info />} />
       <Route path="/credits" element={<Credits />} />
