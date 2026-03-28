@@ -46,8 +46,11 @@ export default function MainMenu() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden font-mono">
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700">
+        <div 
+            className="min-h-screen bg-slate-950 flex flex-col items-center justify-end pb-16 relative overflow-hidden font-mono bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')` }}
+        >
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700 backdrop-blur-sm">
                 {isEditingName ? (
                     <div className="flex items-center gap-2">
                         <input 
@@ -73,80 +76,53 @@ export default function MainMenu() {
                 )}
             </div>
 
-            <div className="absolute inset-0 opacity-30">
-                {[...Array(30)].map((_, i) => (
-                    <div 
-                        key={i}
-                        className="absolute bg-white rounded-full"
-                        style={{
-                            width: Math.random() * 2 + 1 + 'px',
-                            height: Math.random() * 2 + 1 + 'px',
-                            top: Math.random() * 100 + '%',
-                            left: Math.random() * 100 + '%',
-                            animation: `twinkle ${Math.random() * 3 + 2}s infinite`
-                        }}
-                    />
-                ))}
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none"></div>
 
             <motion.div 
-                initial={{ y: -30, opacity: 0 }}
+                initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1 }}
-                className="z-10 mb-6 px-4"
-            >
-                <img 
-                    src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png"
-                    alt="Cosmic Sloth Survival"
-                    className="w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto drop-shadow-[0_0_30px_rgba(6,182,212,0.4)]"
-                />
-            </motion.div>
-
-            <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="z-10 flex flex-col gap-4 w-full max-w-md px-6"
+                transition={{ delay: 0.2 }}
+                className="z-10 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full max-w-3xl px-4"
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/hub'); }}
-                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+                    className="w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
                 >
                     PLAY
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
-                    className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                    className="w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30"
                 >
                     INFO
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/achievements'); }}
-                    className="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(202,138,4,0.4)]"
+                    className="w-full bg-yellow-600/90 backdrop-blur-sm hover:bg-yellow-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(202,138,4,0.4)] border border-yellow-400/30"
                 >
                     ACHIEVEMENTS
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/credits'); }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                    className="w-full bg-emerald-600/90 backdrop-blur-sm hover:bg-emerald-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] border border-emerald-400/30"
                 >
                     CREDITS
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); setShowSettings(true); }}
-                    className="w-full bg-slate-700 hover:bg-slate-600 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(51,65,85,0.4)]"
+                    className="w-full bg-slate-700/90 backdrop-blur-sm hover:bg-slate-600 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(51,65,85,0.4)] border border-slate-500/30"
                 >
                     SETTINGS
                 </button>
                 <button 
                     onClick={handleExit}
-                    className="w-full bg-red-600 hover:bg-red-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
+                    className="w-full bg-red-600/90 backdrop-blur-sm hover:bg-red-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-400/30"
                 >
                     EXIT
                 </button>
             </motion.div>
             
-            <div className="absolute bottom-8 text-slate-500 text-sm z-10">
+            <div className="absolute bottom-4 text-slate-400 text-xs md:text-sm z-10">
                 v1.0.0 - Lazy but Devastating
             </div>
 
