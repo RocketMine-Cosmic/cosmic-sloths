@@ -245,7 +245,7 @@ export class GameEngine {
         if (this.player.isMoving) {
             this.player.moveTimer = (this.player.moveTimer || 0) + dt * 15;
             if (this.player.spriteSheet) {
-                this.player.animTimer += dt * 30; // Animation speed
+                this.player.animTimer += dt * 15; // Animation speed
                 if (this.player.animTimer > 1) {
                     this.player.animTimer = 0;
                     this.player.frameX++;
@@ -1560,7 +1560,7 @@ export class GameEngine {
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
             
-            if (!this.player.facingLeft) {
+            if (this.player.facingLeft) {
                 this.ctx.scale(-1, 1);
             }
             
@@ -1590,7 +1590,7 @@ export class GameEngine {
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
             
-            if (!this.player.facingLeft) {
+            if (this.player.facingLeft) {
                 this.ctx.scale(-1, 1);
             }
             
