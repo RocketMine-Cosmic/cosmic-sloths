@@ -1,0 +1,31 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+
+Deno.serve(async (req) => {
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
+        if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+        const { amount, week_id, season_id } = await req.json();
+
+        // Update Weekly Pool
+        const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+        if (weeklyPools.length > 0) {
+            await base44.asServiceRole.entities.TokenPool.update(weeklyPools[0].id, { total_spent: weeklyPools[0].total_spent + amount });
+        } else {
+            await base44.asServiceRole.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: amount, distributed: false });
+        }
+
+        // Update Seasonal Pool
+        const seasonalPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+        if (seasonalPools.length > 0) {
+            await base44.asServiceRole.entities.TokenPool.update(seasonalPools[0].id, { total_spent: seasonalPools[0].total_spent + amount });
+        } else {
+            await base44.asServiceRole.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: amount, distributed: false });
+        }
+
+        return Response.json({ success: true });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
+    }
+});

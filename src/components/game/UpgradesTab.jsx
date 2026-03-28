@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Coffee, Shield, Zap, Heart, Magnet, Timer, Sparkles } from 'lucide-react';
 import moment from 'moment';
+import { base44 } from '@/api/base44Client';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent (Weak)', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [250, 500, 1000, 2000, 4000] },
@@ -54,6 +55,13 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
         return () => clearInterval(interval);
     }, [activeCategory]);
 
+    const recordTokenSpend = (amount) => {
+        const week_id = moment().format('YYYY-[W]ww');
+        const seasonNum = Math.floor(moment().week() / 4) + 1;
+        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+        base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
+    };
+
     const handleBuyUpgrade = (stat, type, currency) => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === type);
         const saveKey = type === 'permanent' ? 'permanentUpgrades' : type === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
@@ -75,6 +83,7 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
             newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
             SaveManager.save(newSave);
             setSave(newSave);
+            recordTokenSpend(tokenCost);
         }
     };
 
@@ -101,6 +110,7 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
             newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
             SaveManager.save(newSave);
             setSave(newSave);
+            recordTokenSpend(cosmetic.tokenCost);
         }
     };
 

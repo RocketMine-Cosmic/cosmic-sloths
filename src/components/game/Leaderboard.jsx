@@ -8,6 +8,26 @@ export default function Leaderboard() {
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState('weekly'); // 'weekly', 'seasonal', or 'all_time'
     const [timeLeft, setTimeLeft] = useState('');
+    const [currentPool, setCurrentPool] = useState(0);
+
+    const getWeeklyReward = (rank, pool) => {
+        if (rank === 1) return pool * 0.20;
+        if (rank === 2) return pool * 0.15;
+        if (rank === 3) return pool * 0.10;
+        if (rank >= 4 && rank <= 10) return pool * 0.05;
+        if (rank >= 11 && rank <= 20) return pool * 0.02;
+        return 0;
+    };
+
+    const getSeasonalReward = (rank, pool) => {
+        if (rank === 1) return pool * 0.15;
+        if (rank === 2) return pool * 0.10;
+        if (rank === 3) return pool * 0.08;
+        if (rank >= 4 && rank <= 10) return pool * 0.04;
+        if (rank >= 11 && rank <= 20) return pool * 0.024;
+        if (rank >= 21 && rank <= 30) return pool * 0.015;
+        return 0;
+    };
 
     useEffect(() => {
         const updateTimer = () => {
@@ -48,6 +68,16 @@ export default function Leaderboard() {
             
             // Fetch top scores (fetch more to allow deduplication)
             const data = await base44.entities.RunScore.filter(filter, '-score', 300);
+            
+            if (view === 'weekly') {
+                const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+                setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
+            } else if (view === 'seasonal') {
+                const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+                setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
+            } else {
+                setCurrentPool(0);
+            }
             
             // Deduplicate by player_name, keeping the highest score
             const uniqueScores = [];
@@ -111,8 +141,9 @@ export default function Leaderboard() {
                             <div className="col-span-3">Player</div>
                             <div className="col-span-2 text-right">Score</div>
                             <div className="col-span-2 text-center">Time</div>
-                            <div className="col-span-2 text-center">Level</div>
-                            <div className="col-span-2 text-center">Character</div>
+                            <div className="col-span-1 text-center">Lvl</div>
+                            <div className="col-span-2 text-center">Reward</div>
+                            <div className="col-span-1 text-center">Char</div>
                         </div>
                     </div>
                 </div>
@@ -145,10 +176,14 @@ export default function Leaderboard() {
                                         <div className="col-span-2 text-center text-slate-300">
                                             {formatTime(score.time_survived)}
                                         </div>
-                                        <div className="col-span-2 text-center text-slate-300">
+                                        <div className="col-span-1 text-center text-slate-300">
                                             {score.level}
                                         </div>
-                                        <div className="col-span-2 flex justify-center">
+                                        <div className="col-span-2 text-center text-emerald-400 font-bold">
+                                            {view === 'weekly' && index < 20 ? `💠 ${Math.floor(getWeeklyReward(index + 1, currentPool * 0.30))}` : 
+                                             view === 'seasonal' && index < 30 ? `💠 ${Math.floor(getSeasonalReward(index + 1, currentPool * 0.40))}` : '-'}
+                                        </div>
+                                        <div className="col-span-1 flex justify-center">
                                             {char ? (
                                                 <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-slate-600 bg-slate-900" style={{ borderColor: char.color }} title={char.name}>
                                                     {char.image ? (

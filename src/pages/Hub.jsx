@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS, DIFFICULTIES } from '../game/Constants';
 import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, ArrowLeft, Timer, Sparkles, Crosshair, Trophy } from 'lucide-react';
 import Leaderboard from '../components/game/Leaderboard';
 import UpgradesTab from '../components/game/UpgradesTab';
+import { base44 } from '@/api/base44Client';
+import { useToast } from "@/components/ui/use-toast";
+import moment from 'moment';
 
 const UPGRADE_COSTS = [500, 1000, 2000, 4000, 8000];
 
@@ -15,8 +18,41 @@ export default function Hub() {
     const [selectedArena, setSelectedArena] = useState('station');
     const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
     const [activeTab, setActiveTab] = useState('deploy');
+    const { toast } = useToast();
 
+    React.useEffect(() => {
+        const claimRewards = async () => {
+            try {
+                const user = await base44.auth.me();
+                if (!user) return;
+                const pending = await base44.entities.PendingReward.filter({ player_name: user.full_name, claimed: false });
+                if (pending.length > 0) {
+                    let totalAmount = 0;
+                    for (const reward of pending) {
+                        totalAmount += reward.amount;
+                        await base44.entities.PendingReward.update(reward.id, { claimed: true });
+                    }
+                    const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) + totalAmount };
+                    SaveManager.save(newSave);
+                    setSave(newSave);
+                    toast({
+                        title: "Rewards Claimed!",
+                        description: `You received ${totalAmount} Cosmic Tokens from leaderboards!`,
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        claimRewards();
+    }, []);
 
+    const recordTokenSpend = (amount) => {
+        const week_id = moment().format('YYYY-[W]ww');
+        const seasonNum = Math.floor(moment().week() / 4) + 1;
+        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+        base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
+    };
 
     const handleBuyCharacter = (char, currency = 'gold') => {
         if (save.unlockedCharacters.includes(char.id)) return;
@@ -41,6 +77,7 @@ export default function Hub() {
             SaveManager.save(newSave);
             setSave(newSave);
             setSelectedChar(char.id);
+            recordTokenSpend(tokenCost);
         }
     };
 
@@ -66,6 +103,7 @@ export default function Hub() {
             newSave.weaponUpgrades[weaponId][stat] = currentLevel + 1;
             SaveManager.save(newSave);
             setSave(newSave);
+            recordTokenSpend(tokenCost);
         }
     };
 
@@ -88,6 +126,7 @@ export default function Hub() {
             newSave.unlockedTalents[selectedChar].push(talent.id);
             SaveManager.save(newSave);
             setSave(newSave);
+            recordTokenSpend(tokenCost);
         }
     };
 

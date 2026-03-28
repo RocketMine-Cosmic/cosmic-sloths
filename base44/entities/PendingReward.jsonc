@@ -1,0 +1,28 @@
+{
+  "name": "PendingReward",
+  "type": "object",
+  "properties": {
+    "player_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "period_id": {
+      "type": "string"
+    },
+    "claimed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "player_name",
+    "amount",
+    "reason",
+    "period_id"
+  ]
+}
