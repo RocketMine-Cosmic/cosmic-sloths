@@ -529,8 +529,16 @@ export default function Hub() {
 
                                     <div className="mt-6 md:mt-8">
                                         <h3 className="text-sm md:text-base text-slate-400 mb-2">Cosmic Difficulty</h3>
+                                        {(() => {
+                                            const diffColors = {
+                                                normal: { border: 'border-cyan-400', text: 'text-cyan-400', shadow: 'shadow-[0_0_15px_rgba(34,211,238,0.4)]' },
+                                                hard: { border: 'border-pink-500', text: 'text-pink-400', shadow: 'shadow-[0_0_15px_rgba(236,72,153,0.4)]' },
+                                                cosmic: { border: 'border-violet-500', text: 'text-violet-400', shadow: 'shadow-[0_0_15px_rgba(139,92,246,0.5)]' }
+                                            };
+                                            const currentColors = diffColors[selectedDifficulty] || diffColors.normal;
+                                            return (
                                         <div 
-                                            className="relative bg-slate-800 rounded-xl border border-purple-500 overflow-hidden shadow-[0_0_15px_rgba(168,85,247,0.3)] select-none touch-pan-y"
+                                            className={`relative bg-slate-800 rounded-xl border ${currentColors.border} overflow-hidden ${currentColors.shadow} select-none touch-pan-y transition-all duration-300`}
                                             onTouchStart={(e) => {
                                                 touchStartX.current = e.changedTouches[0].screenX;
                                             }}
@@ -566,7 +574,7 @@ export default function Hub() {
                                                 </button>
                                                 
                                                 <div className="text-center z-10 flex-1 px-4">
-                                                    <h4 className="text-xl md:text-2xl font-bold text-purple-400 mb-1 drop-shadow-md">
+                                                    <h4 className={`text-xl md:text-2xl font-bold ${currentColors.text} mb-1 drop-shadow-md transition-colors duration-300`}>
                                                         {DIFFICULTIES.find(d => d.id === selectedDifficulty)?.name}
                                                     </h4>
                                                     <p className="text-sm text-slate-300">
@@ -587,6 +595,8 @@ export default function Hub() {
                                                 </button>
                                             </div>
                                         </div>
+                                        );
+                                        })}
                                     </div>
                                 </div>
 
