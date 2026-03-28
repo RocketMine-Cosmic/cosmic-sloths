@@ -1,6 +1,7 @@
 import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
+import { ParticleManager } from './ParticleManager';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks) {
@@ -106,7 +107,7 @@ export class GameEngine {
         this.enemies = [];
         this.projectiles = [];
         this.pickups = [];
-        this.particles = [];
+        this.particleManager = new ParticleManager();
         this.damageTexts = [];
         
         this.stars = [];
@@ -286,21 +287,7 @@ export class GameEngine {
         }
 
         // Particles & Text
-        this.particles = this.particles.filter(p => {
-            p.life -= dt;
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            if (p.rotation !== undefined) p.rotation += (p.rotSpeed || 0) * dt;
-            if (p.type === 'smoke') {
-                p.size += dt * 10;
-                p.vx *= 0.95;
-                p.vy *= 0.95;
-            } else if (p.type === 'spark') {
-                p.vx *= 0.9;
-                p.vy *= 0.9;
-            }
-            return p.life > 0;
-        });
+        this.particleManager.update(dt);
         
         this.damageTexts = this.damageTexts.filter(t => {
             t.life -= dt;
@@ -742,8 +729,7 @@ export class GameEngine {
                             // Impact Effects
                             this.shake(0.1);
                             this.hitStopTimer = 0.02;
-                            this.addParticle(e.x, e.y, p.color, 15, 'spark', 1.5);
-                            this.addParticle(e.x, e.y, '#ffffff', 5, 'glow', 2);
+                            this.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
                             
                             if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'glow', 2);
                             if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'smoke', 2);
@@ -863,9 +849,7 @@ export class GameEngine {
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
                 
                 // Death Splatter
-                this.addParticle(e.x, e.y, e.color, e.isBoss ? 100 : 25, 'spark', e.isBoss ? 3 : 1.5);
-                this.addParticle(e.x, e.y, '#ffffff', e.isBoss ? 20 : 5, 'glow', e.isBoss ? 4 : 2);
-                this.addParticle(e.x, e.y, e.color, e.isBoss ? 30 : 10, 'smoke', 2);
+                this.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 3 : 1);
                 this.shake(e.isBoss ? 0.5 : 0.05);
 
                 if (e.isBoss) {
@@ -1033,7 +1017,7 @@ export class GameEngine {
             }
             const dist = Math.hypot(this.player.x - p.x, this.player.y - p.y);
             if (dist < this.player.radius + 10) {
-                this.addParticle(p.x, p.y, p.color, 5, 'circle', 1); // Collection burst
+                this.particleManager.createPickup(p.x, p.y, p.color); // Collection burst
                 if (p.type === 'xp') {
                     SoundManager.playPickup();
                     this.xp += p.value * this.player.xpMult;
@@ -1073,22 +1057,7 @@ export class GameEngine {
     }
 
     addParticle(x, y, color, count, type = 'spark', sizeMult = 1) {
-        for(let i=0; i<count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 150 * sizeMult + 50;
-            this.particles.push({
-                x, y, 
-                vx: Math.cos(angle) * speed, 
-                vy: Math.sin(angle) * speed,
-                life: Math.random() * 0.5 + 0.2, 
-                maxLife: 0.7,
-                color,
-                type,
-                size: (Math.random() * 4 + 2) * sizeMult,
-                rotation: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 10
-            });
-        }
+        this.particleManager.addParticle(x, y, color, count, type, sizeMult);
     }
 
     addDamageText(x, y, text, color) {
@@ -1101,6 +1070,7 @@ export class GameEngine {
         this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
         this.isPaused = true;
         SoundManager.playLevelUp();
+        this.particleManager.createLevelUp(this.player.x, this.player.y);
         
         const rarities = [
             { name: 'Common', mult: 1, weight: 60 },
@@ -1528,38 +1498,7 @@ export class GameEngine {
             }
         }
 
-        this.ctx.globalCompositeOperation = 'screen';
-        this.particles.forEach(p => {
-            this.ctx.globalAlpha = Math.max(0, p.life / (p.maxLife || 1));
-            this.ctx.fillStyle = p.color;
-            
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            this.ctx.rotate(p.rotation || 0);
-
-            if (p.type === 'spark') {
-                this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-            } else if (p.type === 'glow') {
-                this.ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
-            } else if (p.type === 'slash') {
-                this.ctx.fillRect(-p.size*2, -p.size/4, p.size*4, p.size/2);
-            } else if (p.type === 'smoke') {
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-            } else if (p.type === 'glitch') {
-                this.ctx.fillRect(-p.size, -p.size/2, p.size*2, p.size);
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
-            } else if (p.type === 'circle') {
-                this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-            } else {
-                const s = p.size ? p.size : 4;
-                this.ctx.fillRect(-s/2, -s/2, s, s);
-            }
-            this.ctx.restore();
-        });
-        this.ctx.globalCompositeOperation = 'source-over';
-        this.ctx.globalAlpha = 1.0;
+        this.particleManager.draw(this.ctx);
 
         this.enemies.forEach(e => {
             if (!e.burrowed) {
