@@ -78,9 +78,19 @@ export class GameEngine {
             playerImage.src = baseChar.image;
         }
         
+        let playerSpriteSheet = null;
+        if (baseChar.spriteSheet) {
+            playerSpriteSheet = new Image();
+            playerSpriteSheet.src = baseChar.spriteSheet;
+        }
+        
         this.player = {
             name: baseChar.name,
             image: playerImage,
+            spriteSheet: playerSpriteSheet,
+            frameX: 0,
+            frameY: 0,
+            animTimer: 0,
             x: 0, y: 0, radius: 16,
             maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
@@ -234,8 +244,24 @@ export class GameEngine {
         
         if (this.player.isMoving) {
             this.player.moveTimer = (this.player.moveTimer || 0) + dt * 15;
+            if (this.player.spriteSheet) {
+                this.player.animTimer += dt * 30; // Animation speed
+                if (this.player.animTimer > 1) {
+                    this.player.animTimer = 0;
+                    this.player.frameX++;
+                    if (this.player.frameX >= 4) {
+                        this.player.frameX = 0;
+                        this.player.frameY++;
+                        if (this.player.frameY >= 4) {
+                            this.player.frameY = 0;
+                        }
+                    }
+                }
+            }
         } else {
             this.player.moveTimer = 0;
+            this.player.frameX = 0;
+            this.player.frameY = 0;
         }
         
         this.camera.x = this.player.x - this.canvas.width / 2;
@@ -1528,7 +1554,37 @@ export class GameEngine {
             }
         }
 
-        if (this.player.image && this.player.image.complete) {
+        if (this.player.spriteSheet && this.player.spriteSheet.complete) {
+            const size = this.player.radius * 4.5; // Slightly larger to fit the sprite
+            
+            this.ctx.save();
+            this.ctx.translate(this.player.x, this.player.y);
+            
+            if (!this.player.facingLeft) {
+                this.ctx.scale(-1, 1);
+            }
+            
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 10;
+            
+            const frameWidth = this.player.spriteSheet.width / 4;
+            const frameHeight = this.player.spriteSheet.height / 4;
+            
+            this.ctx.drawImage(
+                this.player.spriteSheet,
+                this.player.frameX * frameWidth,
+                this.player.frameY * frameHeight,
+                frameWidth,
+                frameHeight,
+                -size/2,
+                -size/2,
+                size,
+                size
+            );
+            
+            this.ctx.shadowBlur = 0;
+            this.ctx.restore();
+        } else if (this.player.image && this.player.image.complete) {
             const size = this.player.radius * 3;
             
             this.ctx.save();
