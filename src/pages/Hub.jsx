@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS, DIFFICULTIES } from '../game/Constants';
@@ -231,81 +231,6 @@ export default function Hub() {
 
 
 
-    const renderCharacters = () => (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {CHARACTERS.map(char => {
-                const isUnlocked = save.unlockedCharacters.includes(char.id);
-                const isSelected = selectedChar === char.id;
-                const canAfford = save.gold >= char.cost;
-                const isFindable = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'].includes(char.id);
-
-                return (
-                    <div 
-                        key={char.id} 
-                        className={`bg-slate-800 p-3 md:p-4 rounded-lg border-2 transition-all cursor-pointer flex flex-col h-full ${
-                            isSelected ? 'border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'border-slate-700 hover:border-slate-500'
-                        }`}
-                        onClick={() => isUnlocked && setSelectedChar(char.id)}
-                    >
-                        <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
-                            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-slate-600 bg-slate-900" style={{ borderColor: char.color }}>
-                                {char.image ? (
-                                    <img src={char.image} alt={char.name} className="w-full h-full object-cover object-top" />
-                                ) : (
-                                    <span className="text-xl md:text-2xl">🦥</span>
-                                )}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg md:text-xl text-white leading-tight">{char.name}</h3>
-                                <p className="text-slate-400 text-xs md:text-sm mt-1">{char.desc}</p>
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-1 md:gap-2 text-xs md:text-sm mb-3 md:mb-4 bg-slate-900 p-2 rounded mt-auto">
-                            <div className="text-slate-300">HP: <span className="text-white">{char.hp}</span></div>
-                            <div className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></div>
-                            <div className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></div>
-                            <div className="text-slate-300">REG: <span className="text-white">{char.regen}</span></div>
-                        </div>
-
-                        {!isUnlocked && !isFindable && (
-                            <div className="flex gap-2 w-full">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'gold'); }}
-                                    disabled={!canAfford}
-                                    className={`flex-1 py-2 rounded-lg font-bold text-sm md:text-base ${
-                                        canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-700 text-slate-500'
-                                    }`}
-                                >
-                                    🪙 {char.cost}
-                                </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'token'); }}
-                                    disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(char.cost / 4))}
-                                    className={`flex-1 py-2 rounded-lg font-bold text-sm md:text-base ${
-                                        (save.cosmicTokens || 0) >= Math.max(1, Math.floor(char.cost / 4)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
-                                    }`}
-                                >
-                                    💠 {Math.max(1, Math.floor(char.cost / 4))}
-                                </button>
-                            </div>
-                        )}
-                        {!isUnlocked && isFindable && (
-                            <div className="w-full py-2 rounded-lg font-bold text-sm md:text-base bg-slate-700 text-slate-400 text-center border border-slate-600">
-                                🔍 Find in Maps
-                            </div>
-                        )}
-                        {isUnlocked && (
-                            <div className="text-center text-cyan-400 font-bold py-2 text-sm md:text-base">
-                                {isSelected ? 'SELECTED' : 'Click to Select'}
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
-        </div>
-    );
-
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 p-4 pb-24 md:p-8 font-mono">
             <div className="max-w-5xl mx-auto">
@@ -348,12 +273,6 @@ export default function Hub() {
                             ⚙️ Upgrades
                         </button>
                         <button 
-                            onClick={() => { SoundManager.playUIClick(); setActiveTab('characters'); }}
-                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'characters' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
-                        >
-                            🦥 Crew
-                        </button>
-                        <button 
                             onClick={() => { SoundManager.playUIClick(); setActiveTab('talents'); }}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
@@ -376,7 +295,6 @@ export default function Hub() {
                     <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
                         {activeTab === 'upgrades' && <UpgradesTab save={save} setSave={setSave} SaveManager={SaveManager} />}
                         {activeTab === 'armory' && renderArmory()}
-                        {activeTab === 'characters' && renderCharacters()}
                         {activeTab === 'leaderboard' && <Leaderboard />}
                         {activeTab === 'talents' && (
                             <div>
@@ -442,16 +360,120 @@ export default function Hub() {
                                     <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">Mission Briefing</h2>
                                     
                                     <div className="mb-6 md:mb-8">
-                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Selected Operative</h3>
-                                        <div className="bg-slate-800 p-3 md:p-4 rounded-lg border border-slate-700 flex items-center gap-3 md:gap-4">
-                                            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full shrink-0 overflow-hidden border-2 border-slate-600 bg-slate-900" style={{ borderColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}>
-                                                {CHARACTERS.find(c => c.id === selectedChar)?.image ? (
-                                                    <img src={CHARACTERS.find(c => c.id === selectedChar)?.image} alt="Selected" className="w-full h-full object-cover object-top" />
-                                                ) : (
-                                                    <div className="w-full h-full" style={{ backgroundColor: CHARACTERS.find(c => c.id === selectedChar)?.color }}></div>
-                                                )}
-                                            </div>
-                                            <span className="text-lg md:text-xl font-bold text-white">{CHARACTERS.find(c => c.id === selectedChar)?.name}</span>
+                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Select Operative</h3>
+                                        <div 
+                                            className="relative bg-slate-800 rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.3)] select-none touch-pan-y"
+                                            onTouchStart={(e) => {
+                                                touchStartX.current = e.changedTouches[0].screenX;
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                if (touchStartX.current === null) return;
+                                                const touchEndX = e.changedTouches[0].screenX;
+                                                const diff = touchStartX.current - touchEndX;
+                                                if (diff > 50) {
+                                                    const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
+                                                    setSelectedChar(CHARACTERS[idx >= CHARACTERS.length - 1 ? 0 : idx + 1].id);
+                                                    SoundManager.playUIClick();
+                                                } else if (diff < -50) {
+                                                    const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
+                                                    setSelectedChar(CHARACTERS[idx <= 0 ? CHARACTERS.length - 1 : idx - 1].id);
+                                                    SoundManager.playUIClick();
+                                                }
+                                                touchStartX.current = null;
+                                            }}
+                                        >
+                                            {(() => {
+                                                const char = CHARACTERS.find(c => c.id === selectedChar);
+                                                const isUnlocked = save.unlockedCharacters.includes(char.id);
+                                                const canAfford = save.gold >= char.cost;
+                                                const isFindable = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'].includes(char.id);
+                                                
+                                                return (
+                                                    <>
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-slate-800/50" />
+                                                        
+                                                        <div className="relative flex items-center justify-between p-4 min-h-[140px]">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
+                                                                    const newIdx = idx <= 0 ? CHARACTERS.length - 1 : idx - 1;
+                                                                    setSelectedChar(CHARACTERS[newIdx].id);
+                                                                    SoundManager.playUIClick();
+                                                                }}
+                                                                className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                            >
+                                                                <ChevronLeft className="w-6 h-6" />
+                                                            </button>
+                                                            
+                                                            <div className="text-center z-10 flex-1 px-2 flex flex-col items-center">
+                                                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 mb-2 bg-slate-900" style={{ borderColor: char.color }}>
+                                                                    {char.image ? (
+                                                                        <img src={char.image} alt={char.name} className="w-full h-full object-cover object-top" />
+                                                                    ) : (
+                                                                        <span className="text-xl md:text-2xl">🦥</span>
+                                                                    )}
+                                                                </div>
+                                                                <h4 className="text-xl md:text-2xl font-bold text-white mb-1 drop-shadow-md" style={{ color: char.color }}>
+                                                                    {char.name}
+                                                                </h4>
+                                                                <p className="text-xs text-slate-300 mb-2">
+                                                                    {char.desc}
+                                                                </p>
+                                                                <div className="flex gap-2 text-[10px] md:text-xs mb-2 bg-slate-900/50 px-2 py-1 rounded">
+                                                                    <span className="text-slate-300">HP: <span className="text-white">{char.hp}</span></span>
+                                                                    <span className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></span>
+                                                                    <span className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></span>
+                                                                </div>
+                                                                
+                                                                {!isUnlocked && !isFindable && (
+                                                                    <div className="flex gap-2 mt-1">
+                                                                        <button
+                                                                            onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'gold'); }}
+                                                                            disabled={!canAfford}
+                                                                            className={`px-3 py-1 rounded font-bold text-xs ${
+                                                                                canAfford ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-700 text-slate-500'
+                                                                            }`}
+                                                                        >
+                                                                            🪙 {char.cost}
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'token'); }}
+                                                                            disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(char.cost / 4))}
+                                                                            className={`px-3 py-1 rounded font-bold text-xs ${
+                                                                                (save.cosmicTokens || 0) >= Math.max(1, Math.floor(char.cost / 4)) ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
+                                                                            }`}
+                                                                        >
+                                                                            💠 {Math.max(1, Math.floor(char.cost / 4))}
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                                {!isUnlocked && isFindable && (
+                                                                    <div className="px-3 py-1 rounded font-bold text-xs bg-slate-700 text-slate-400 border border-slate-600 mt-1">
+                                                                        🔍 Find in Maps
+                                                                    </div>
+                                                                )}
+                                                                {isUnlocked && (
+                                                                    <span className="inline-flex items-center gap-1 text-cyan-400 font-bold text-xs bg-slate-900/80 px-2 py-1 rounded border border-cyan-500/50 backdrop-blur-sm mt-1">
+                                                                        ✓ UNLOCKED
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
+                                                                    const newIdx = idx >= CHARACTERS.length - 1 ? 0 : idx + 1;
+                                                                    setSelectedChar(CHARACTERS[newIdx].id);
+                                                                    SoundManager.playUIClick();
+                                                                }}
+                                                                className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                            >
+                                                                <ChevronRight className="w-6 h-6" />
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 
@@ -600,21 +622,31 @@ export default function Hub() {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={startGame}
-                                    disabled={!(save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena)}
-                                    className={`w-full mt-6 md:mt-8 text-white text-xl md:text-2xl font-bold py-4 md:py-6 rounded-xl flex items-center justify-center gap-2 md:gap-3 transition-all transform ${
-                                        (save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena)
-                                        ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.3)]'
-                                        : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                    }`}
-                                >
-                                    {(save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena) ? (
-                                        <>LAUNCH MISSION <ArrowRight className="w-6 h-6 md:w-7 md:h-7" /></>
-                                    ) : (
-                                        <>ARENA LOCKED</>
-                                    )}
-                                </button>
+                                {(() => {
+                                    const isCharUnlocked = save.unlockedCharacters.includes(selectedChar);
+                                    const isArenaUnlocked = (save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena);
+                                    const canLaunch = isCharUnlocked && isArenaUnlocked;
+                                    
+                                    return (
+                                        <button
+                                            onClick={startGame}
+                                            disabled={!canLaunch}
+                                            className={`w-full mt-6 md:mt-8 text-white text-xl md:text-2xl font-bold py-4 md:py-6 rounded-xl flex items-center justify-center gap-2 md:gap-3 transition-all transform ${
+                                                canLaunch
+                                                ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.3)]'
+                                                : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                            }`}
+                                        >
+                                            {!isCharUnlocked ? (
+                                                <>OPERATIVE LOCKED</>
+                                            ) : !isArenaUnlocked ? (
+                                                <>ARENA LOCKED</>
+                                            ) : (
+                                                <>LAUNCH MISSION <ArrowRight className="w-6 h-6 md:w-7 md:h-7" /></>
+                                            )}
+                                        </button>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>
