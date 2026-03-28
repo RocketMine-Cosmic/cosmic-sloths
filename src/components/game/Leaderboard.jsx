@@ -134,22 +134,8 @@ export default function Leaderboard() {
             </div>
 
             <div className="flex-1 bg-slate-800 rounded-xl overflow-hidden border border-slate-700 flex flex-col">
-                <div className="overflow-x-auto">
-                    <div className="min-w-[600px]">
-                        <div className="grid grid-cols-12 gap-2 md:gap-4 p-3 md:p-4 bg-slate-900 border-b border-slate-700 text-xs md:text-sm font-bold text-slate-400">
-                            <div className="col-span-1 text-center">Rank</div>
-                            <div className="col-span-3">Player</div>
-                            <div className="col-span-2 text-right">Score</div>
-                            <div className="col-span-2 text-center">Time</div>
-                            <div className="col-span-1 text-center">Lvl</div>
-                            <div className="col-span-2 text-center">Reward</div>
-                            <div className="col-span-1 text-center">Char</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto overflow-x-auto p-2">
-                    <div className="min-w-[600px] space-y-2">
+                <div className="flex-1 overflow-y-auto p-2 md:p-4">
+                    <div className="space-y-3">
                     {loading ? (
                         <div className="flex justify-center items-center h-32">
                             <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
@@ -162,39 +148,58 @@ export default function Leaderboard() {
                         <>
                             {scores.map((score, index) => {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
+                                const isEligibleForReward = (view === 'weekly' && index < 20) || (view === 'seasonal' && index < 30);
+                                const rewardAmount = view === 'weekly' ? Math.floor(getWeeklyReward(index + 1, currentPool * 0.30)) : Math.floor(getSeasonalReward(index + 1, currentPool * 0.40));
+
                                 return (
-                                    <div key={score.id} className="grid grid-cols-12 gap-2 md:gap-4 p-2 md:p-3 bg-slate-900/50 rounded-lg items-center text-xs md:text-base border border-slate-800 hover:border-slate-600 transition-colors">
-                                        <div className="col-span-1 text-center font-bold">
-                                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                    <div key={score.id} className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/50 rounded-lg items-center border border-slate-800 hover:border-slate-600 transition-colors">
+                                        
+                                        {/* Rank & Reward */}
+                                        <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto sm:min-w-[180px]">
+                                            <div className="text-xl md:text-2xl font-bold w-10 text-center">
+                                                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                            </div>
+                                            {isEligibleForReward ? (
+                                                <div className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-3 py-1.5 rounded-md font-bold text-sm flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.15)]">
+                                                    💠 {rewardAmount}
+                                                </div>
+                                            ) : (
+                                                <div className="hidden sm:block w-[80px]"></div>
+                                            )}
                                         </div>
-                                        <div className="col-span-3 font-bold text-white truncate" title={score.player_name}>
-                                            {score.player_name}
-                                        </div>
-                                        <div className="col-span-2 text-right font-mono text-cyan-400 font-bold">
-                                            {score.score.toLocaleString()}
-                                        </div>
-                                        <div className="col-span-2 text-center text-slate-300">
-                                            {formatTime(score.time_survived)}
-                                        </div>
-                                        <div className="col-span-1 text-center text-slate-300">
-                                            {score.level}
-                                        </div>
-                                        <div className="col-span-2 text-center text-emerald-400 font-bold">
-                                            {view === 'weekly' && index < 20 ? `💠 ${Math.floor(getWeeklyReward(index + 1, currentPool * 0.30))}` : 
-                                             view === 'seasonal' && index < 30 ? `💠 ${Math.floor(getSeasonalReward(index + 1, currentPool * 0.40))}` : '-'}
-                                        </div>
-                                        <div className="col-span-1 flex justify-center">
+
+                                        {/* Player Info */}
+                                        <div className="flex items-center gap-3 flex-1 w-full sm:w-auto bg-slate-950/30 p-2 rounded-lg sm:bg-transparent sm:p-0">
                                             {char ? (
-                                                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-slate-600 bg-slate-900" style={{ borderColor: char.color }} title={char.name}>
+                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 bg-slate-900" style={{ borderColor: char.color }} title={char.name}>
                                                     {char.image ? (
                                                         <img src={char.image} alt={char.name} className="w-full h-full object-cover object-top" />
                                                     ) : (
-                                                        <span className="text-xs">🦥</span>
+                                                        <span className="text-sm">🦥</span>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-500">-</span>
+                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 border-slate-700 shrink-0"></div>
                                             )}
+                                            <div className="font-bold text-white text-lg md:text-xl truncate" title={score.player_name}>
+                                                {score.player_name}
+                                            </div>
+                                        </div>
+
+                                        {/* Stats */}
+                                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto text-sm bg-slate-950/50 p-3 rounded-lg sm:bg-transparent sm:p-0">
+                                            <div className="text-center sm:text-right">
+                                                <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Score</div>
+                                                <div className="font-mono text-cyan-400 font-bold text-lg md:text-xl">{score.score.toLocaleString()}</div>
+                                            </div>
+                                            <div className="text-center sm:text-right">
+                                                <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Time</div>
+                                                <div className="text-slate-300 font-mono text-base md:text-lg">{formatTime(score.time_survived)}</div>
+                                            </div>
+                                            <div className="text-center sm:text-right">
+                                                <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Level</div>
+                                                <div className="text-slate-300 font-mono text-base md:text-lg">Lv.{score.level}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 );
