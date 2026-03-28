@@ -529,21 +529,63 @@ export default function Hub() {
 
                                     <div className="mt-6 md:mt-8">
                                         <h3 className="text-sm md:text-base text-slate-400 mb-2">Cosmic Difficulty</h3>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
-                                            {DIFFICULTIES.map(diff => (
-                                                <button
-                                                    key={diff.id}
-                                                    onClick={() => setSelectedDifficulty(diff.id)}
-                                                    className={`p-3 md:p-4 rounded-lg border text-left transition-all flex flex-col ${
-                                                        selectedDifficulty === diff.id 
-                                                        ? 'bg-slate-800 border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]' 
-                                                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
-                                                    }`}
+                                        <div 
+                                            className="relative bg-slate-800 rounded-xl border border-purple-500 overflow-hidden shadow-[0_0_15px_rgba(168,85,247,0.3)] select-none touch-pan-y"
+                                            onTouchStart={(e) => {
+                                                touchStartX.current = e.changedTouches[0].screenX;
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                if (touchStartX.current === null) return;
+                                                const touchEndX = e.changedTouches[0].screenX;
+                                                const diff = touchStartX.current - touchEndX;
+                                                if (diff > 50) {
+                                                    const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
+                                                    setSelectedDifficulty(DIFFICULTIES[idx >= DIFFICULTIES.length - 1 ? 0 : idx + 1].id);
+                                                    SoundManager.playUIClick();
+                                                } else if (diff < -50) {
+                                                    const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
+                                                    setSelectedDifficulty(DIFFICULTIES[idx <= 0 ? DIFFICULTIES.length - 1 : idx - 1].id);
+                                                    SoundManager.playUIClick();
+                                                }
+                                                touchStartX.current = null;
+                                            }}
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
+                                            
+                                            <div className="relative flex items-center justify-between p-4 min-h-[120px]">
+                                                <button 
+                                                    onClick={() => {
+                                                        const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
+                                                        const newIdx = idx <= 0 ? DIFFICULTIES.length - 1 : idx - 1;
+                                                        setSelectedDifficulty(DIFFICULTIES[newIdx].id);
+                                                        SoundManager.playUIClick();
+                                                    }}
+                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
                                                 >
-                                                    <span className="font-bold text-base md:text-lg mb-1">{diff.name}</span>
-                                                    <span className="text-xs text-slate-500">{diff.desc}</span>
+                                                    <ChevronLeft className="w-6 h-6" />
                                                 </button>
-                                            ))}
+                                                
+                                                <div className="text-center z-10 flex-1 px-4">
+                                                    <h4 className="text-xl md:text-2xl font-bold text-purple-400 mb-1 drop-shadow-md">
+                                                        {DIFFICULTIES.find(d => d.id === selectedDifficulty)?.name}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-300">
+                                                        {DIFFICULTIES.find(d => d.id === selectedDifficulty)?.desc}
+                                                    </p>
+                                                </div>
+
+                                                <button 
+                                                    onClick={() => {
+                                                        const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
+                                                        const newIdx = idx >= DIFFICULTIES.length - 1 ? 0 : idx + 1;
+                                                        setSelectedDifficulty(DIFFICULTIES[newIdx].id);
+                                                        SoundManager.playUIClick();
+                                                    }}
+                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                >
+                                                    <ChevronRight className="w-6 h-6" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
