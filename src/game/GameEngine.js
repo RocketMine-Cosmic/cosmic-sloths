@@ -88,6 +88,8 @@ export class GameEngine {
             name: baseChar.name,
             image: playerImage,
             spriteSheet: playerSpriteSheet,
+            spriteFramesX: baseChar.spriteFramesX || 4,
+            spriteFramesY: baseChar.spriteFramesY || 4,
             frameX: 0,
             frameY: 0,
             animTimer: 0,
@@ -245,17 +247,21 @@ export class GameEngine {
         if (this.player.isMoving) {
             this.player.moveTimer = (this.player.moveTimer || 0) + dt * 15;
             if (this.player.spriteSheet) {
-                this.player.animTimer += dt * 12; // Animation speed
+                const totalFrames = this.player.spriteFramesX * this.player.spriteFramesY;
+                const speedMult = totalFrames / 16;
+                this.player.animTimer += dt * 12 * speedMult; // Animation speed
+                
                 if (this.player.frameIndex === undefined) this.player.frameIndex = 0;
                 
+                const loopFrames = totalFrames === 16 ? 15 : totalFrames;
+
                 while (this.player.animTimer > 1) {
                     this.player.animTimer -= 1;
-                    // Skip frame 15 as it's usually a duplicate of frame 0 in these sprite sheets
-                    this.player.frameIndex = (this.player.frameIndex + 1) % 15;
+                    this.player.frameIndex = (this.player.frameIndex + 1) % loopFrames;
                 }
                 
-                this.player.frameX = this.player.frameIndex % 4;
-                this.player.frameY = Math.floor(this.player.frameIndex / 4);
+                this.player.frameX = this.player.frameIndex % this.player.spriteFramesX;
+                this.player.frameY = Math.floor(this.player.frameIndex / this.player.spriteFramesX);
             }
         } else {
             this.player.moveTimer = 0;
@@ -1570,8 +1576,8 @@ export class GameEngine {
             this.ctx.shadowColor = this.player.color;
             this.ctx.shadowBlur = 10;
             
-            const frameWidth = this.player.spriteSheet.width / 4;
-            const frameHeight = this.player.spriteSheet.height / 4;
+            const frameWidth = this.player.spriteSheet.width / this.player.spriteFramesX;
+            const frameHeight = this.player.spriteSheet.height / this.player.spriteFramesY;
             
             this.ctx.drawImage(
                 this.player.spriteSheet,
