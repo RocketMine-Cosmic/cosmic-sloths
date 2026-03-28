@@ -14,7 +14,7 @@ export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
     const [activeTab, setActiveTab] = useState('upgrades');
-    const [selectedChar, setSelectedChar] = useState(save.unlockedCharacters[0] || 'neobyte');
+    const [selectedChar, setSelectedChar] = useState((save.unlockedCharacters && save.unlockedCharacters.length > 0) ? save.unlockedCharacters[0] : 'neobyte');
 
     const recordTokenSpend = (amount) => {
         const week_id = moment().format('YYYY-[W]ww');
@@ -218,7 +218,7 @@ export default function Upgrades({ isCarousel }) {
                         {activeTab === 'talents' && (
                             <div>
                                 <div className="flex items-center gap-4 mb-4 md:mb-6 overflow-x-auto pb-2">
-                                    {save.unlockedCharacters.map(charId => {
+                                    {(save.unlockedCharacters || ['neobyte']).map(charId => {
                                         const char = CHARACTERS.find(c => c.id === charId);
                                         if (!char) return null;
                                         return (
@@ -232,14 +232,14 @@ export default function Upgrades({ isCarousel }) {
                                         );
                                     })}
                                 </div>
-                                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">{CHARACTERS.find(c => c.id === selectedChar)?.name}'s Talents</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">{CHARACTERS.find(c => c.id === (selectedChar || 'neobyte'))?.name}'s Talents</h2>
                                 <div className="space-y-3 md:space-y-4 relative">
                                     <div className="absolute left-[26px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
                                     
-                                    {(CHARACTER_TALENTS[selectedChar] || []).map((talent, index) => {
-                                        const unlocked = save.unlockedTalents[selectedChar] || [];
+                                    {(CHARACTER_TALENTS[selectedChar || 'neobyte'] || []).map((talent, index) => {
+                                        const unlocked = save.unlockedTalents[selectedChar || 'neobyte'] || [];
                                         const isUnlocked = unlocked.includes(talent.id);
-                                        const canUnlock = !isUnlocked && (index === 0 || unlocked.includes(CHARACTER_TALENTS[selectedChar][index-1].id));
+                                        const canUnlock = !isUnlocked && (index === 0 || unlocked.includes(CHARACTER_TALENTS[selectedChar || 'neobyte'][index-1].id));
                                         const canAfford = save.gold >= talent.cost;
                                         
                                         return (
