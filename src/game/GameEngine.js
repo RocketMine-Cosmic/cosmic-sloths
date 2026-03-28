@@ -1064,6 +1064,7 @@ export class GameEngine {
     damageEnemy(enemy, amount) {
         enemy.hp -= amount;
         this.addDamageText(enemy.x, enemy.y - 10, Math.floor(amount), '#ffffff');
+        SoundManager.playEnemyHit();
     }
 
     shake(amount) {
@@ -1098,6 +1099,7 @@ export class GameEngine {
         this.level++;
         this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
         this.isPaused = true;
+        SoundManager.playLevelUp();
         
         const rarities = [
             { name: 'Common', mult: 1, weight: 60 },
@@ -1214,6 +1216,7 @@ export class GameEngine {
 
     gameOver() {
         this.isGameOver = true;
+        SoundManager.playGameOver();
         this.callbacks.onGameOver({
             time: Math.floor(this.time),
             level: this.level,
@@ -1224,6 +1227,7 @@ export class GameEngine {
 
     victory() {
         this.isVictory = true;
+        SoundManager.playVictory();
         this.callbacks.onVictory({
             time: Math.floor(this.time),
             level: this.level,
