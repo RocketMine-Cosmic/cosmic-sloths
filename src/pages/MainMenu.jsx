@@ -85,22 +85,10 @@ export default function MainMenu() {
                 className="z-10 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full max-w-3xl px-4"
             >
                 <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/hub'); }}
-                    className="col-span-full md:col-span-1 w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/play'); }}
+                    className="col-span-full w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
                 >
-                    DEPLOY
-                </button>
-                <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/upgrades'); }}
-                    className="col-span-full md:col-span-1 w-full bg-pink-600/90 backdrop-blur-sm hover:bg-pink-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(236,72,153,0.4)] border border-pink-400/30"
-                >
-                    UPGRADES
-                </button>
-                <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/leaderboard'); }}
-                    className="col-span-full md:col-span-1 w-full bg-yellow-600/90 backdrop-blur-sm hover:bg-yellow-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(202,138,4,0.4)] border border-yellow-400/30"
-                >
-                    HALL OF FAME
+                    PLAY
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}

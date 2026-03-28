@@ -10,7 +10,7 @@ import { SoundManager } from '../game/SoundManager';
 
 const UPGRADE_COSTS = [500, 1000, 2000, 4000, 8000];
 
-export default function Upgrades() {
+export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
     const [activeTab, setActiveTab] = useState('upgrades');
@@ -165,16 +165,18 @@ export default function Upgrades() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 p-4 pb-24 md:p-8 font-mono">
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-4 pb-24 md:p-8 font-mono`}>
             <div className="max-w-5xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
                     <div>
-                        <button 
-                            onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
-                            className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 w-fit"
-                        >
-                            <ArrowLeft className="w-4 h-4" /> Main Menu
-                        </button>
+                        {!isCarousel && (
+                            <button 
+                                onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
+                                className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 w-fit"
+                            >
+                                <ArrowLeft className="w-4 h-4" /> Main Menu
+                            </button>
+                        )}
                         <h1 className="text-3xl md:text-4xl font-bold text-pink-400 tracking-tight">UPGRADE LOUNGE</h1>
                         <p className="text-slate-400 mt-1 text-sm md:text-base">Enhance your operatives and arsenal.</p>
                     </div>

@@ -10,6 +10,7 @@ import MainMenu from './pages/MainMenu';
 import Hub from './pages/Hub';
 import Upgrades from './pages/Upgrades';
 import LeaderboardPage from './pages/LeaderboardPage';
+import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
 import Info from './pages/Info';
 import Credits from './pages/Credits';
@@ -45,6 +46,7 @@ const AuthenticatedApp = () => {
       <Route path="/hub" element={<Hub />} />
       <Route path="/upgrades" element={<Upgrades />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
+      <Route path="/play" element={<PlayCarousel />} />
       <Route path="/game" element={<Game />} />
       <Route path="/info" element={<Info />} />
       <Route path="/credits" element={<Credits />} />
