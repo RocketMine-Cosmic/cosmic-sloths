@@ -23,10 +23,10 @@ export default function PlayCarousel() {
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col">
-            <div className="p-4 border-b border-slate-800 bg-slate-950 flex flex-col md:flex-row justify-between items-center gap-4 z-10 relative">
+            <div className="p-2 md:p-4 border-b border-slate-800 bg-slate-950 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4 z-10 relative">
                 <button 
                     onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
-                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 w-full md:w-auto justify-center"
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-full md:w-auto justify-center"
                 >
                     <ArrowLeft className="w-4 h-4" /> Main Menu
                 </button>

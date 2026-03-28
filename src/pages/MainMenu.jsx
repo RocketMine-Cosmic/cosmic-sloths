@@ -82,41 +82,41 @@ export default function MainMenu() {
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="z-10 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full max-w-3xl px-4"
+                className="z-10 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 w-full max-w-3xl px-4"
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/play'); }}
-                    className="col-span-full w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
+                    className="col-span-full w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/30"
                 >
                     PLAY
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
-                    className="w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30"
+                    className="w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)] border border-purple-400/30"
                 >
                     INFO
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/achievements'); }}
-                    className="w-full bg-emerald-600/90 backdrop-blur-sm hover:bg-emerald-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] border border-emerald-400/30"
+                    className="w-full bg-emerald-600/90 backdrop-blur-sm hover:bg-emerald-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.4)] border border-emerald-400/30"
                 >
                     ACHIEVEMENTS
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/credits'); }}
-                    className="w-full bg-indigo-600/90 backdrop-blur-sm hover:bg-indigo-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(79,70,229,0.4)] border border-indigo-400/30"
+                    className="w-full bg-indigo-600/90 backdrop-blur-sm hover:bg-indigo-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(79,70,229,0.4)] border border-indigo-400/30"
                 >
                     CREDITS
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); setShowSettings(true); }}
-                    className="w-full bg-slate-700/90 backdrop-blur-sm hover:bg-slate-600 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(51,65,85,0.4)] border border-slate-500/30"
+                    className="w-full bg-slate-700/90 backdrop-blur-sm hover:bg-slate-600 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(51,65,85,0.4)] border border-slate-500/30"
                 >
                     SETTINGS
                 </button>
                 <button 
                     onClick={handleExit}
-                    className="col-span-full md:col-span-2 w-full bg-red-600/90 backdrop-blur-sm hover:bg-red-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-400/30"
+                    className="col-span-full md:col-span-2 w-full bg-red-600/90 backdrop-blur-sm hover:bg-red-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(220,38,38,0.4)] border border-red-400/30"
                 >
                     EXIT
                 </button>

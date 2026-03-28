@@ -86,44 +86,44 @@ export default function Hub({ isCarousel }) {
 
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-4 pb-24 md:p-8 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
             <div className="max-w-5xl mx-auto">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4">
                     <div>
                         {!isCarousel && (
                             <button 
                                 onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
-                                className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 w-fit"
+                                className="mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
                             >
-                                <ArrowLeft className="w-4 h-4" /> Main Menu
+                                <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
                             </button>
                         )}
-                        <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 tracking-tight">SLOTH LOUNGE</h1>
-                        <p className="text-slate-400 mt-1 text-sm md:text-base">Rest, upgrade, and prepare for the cosmic void.</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-cyan-400 tracking-tight">SLOTH LOUNGE</h1>
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Rest, upgrade, and prepare for the cosmic void.</p>
                     </div>
-                    <div className="flex gap-2 md:gap-4">
-                        <div className="text-base md:text-lg font-bold text-purple-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Reroll Tokens">
+                    <div className="flex gap-1.5 md:gap-4">
+                        <div className="text-sm md:text-lg font-bold text-purple-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Reroll Tokens">
                             🎲 {save.rerollTokens || 0}
                         </div>
-                        <div className="text-base md:text-lg font-bold text-emerald-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
+                        <div className="text-sm md:text-lg font-bold text-emerald-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
                             💠 {save.cosmicTokens || 0}
                         </div>
-                        <div className="text-base md:text-lg font-bold text-yellow-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Gold">
+                        <div className="text-sm md:text-lg font-bold text-yellow-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Gold">
                             🪙 {save.gold}
                         </div>
                     </div>
                 </header>
 
-                <div className="flex flex-col gap-8">
-                    <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
+                <div className="flex flex-col gap-4 md:gap-8">
+                    <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
                         <div className="h-full flex flex-col justify-between">
                                 <div>
-                                    <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">Mission Briefing</h2>
+                                    <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">Mission Briefing</h2>
                                     
-                                    <div className="mb-6 md:mb-8">
-                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Select Operative</h3>
+                                    <div className="mb-4 md:mb-6">
+                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Operative</h3>
                                         <div 
-                                            className="relative bg-slate-800 rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.3)] select-none touch-pan-y"
+                                            className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none touch-pan-y"
                                             onTouchStart={(e) => {
                                                 touchStartX.current = e.changedTouches[0].screenX;
                                             }}
@@ -157,7 +157,7 @@ export default function Hub({ isCarousel }) {
                                                         />
                                                         <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-transparent" />
                                                         
-                                                        <div className="relative flex items-center justify-between p-4 min-h-[140px]">
+                                                        <div className="relative flex items-center justify-between p-2 md:p-4 min-h-[100px] md:min-h-[140px]">
                                                             <button 
                                                                 onClick={() => {
                                                                     const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
@@ -165,19 +165,19 @@ export default function Hub({ isCarousel }) {
                                                                     setSelectedChar(CHARACTERS[newIdx].id);
                                                                     SoundManager.playUIClick();
                                                                 }}
-                                                                className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                                className="p-1.5 md:p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
                                                             >
-                                                                <ChevronLeft className="w-6 h-6" />
+                                                                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                                             </button>
                                                             
-                                                            <div className="text-left z-10 flex-1 px-4 flex flex-col items-start">
-                                                                <h4 className="text-xl md:text-2xl font-bold text-white mb-1 drop-shadow-md" style={{ color: char.color }}>
+                                                            <div className="text-left z-10 flex-1 px-2 md:px-4 flex flex-col items-start">
+                                                                <h4 className="text-lg md:text-xl font-bold text-white mb-0.5 drop-shadow-md" style={{ color: char.color }}>
                                                                     {char.name}
                                                                 </h4>
-                                                                <p className="text-xs text-slate-300 mb-2 max-w-[70%]">
+                                                                <p className="text-[10px] md:text-xs text-slate-300 mb-1 max-w-[80%] leading-tight">
                                                                     {char.desc}
                                                                 </p>
-                                                                <div className="flex gap-2 text-[10px] md:text-xs mb-2 bg-slate-900/80 px-2 py-1 rounded border border-slate-700/50">
+                                                                <div className="flex gap-1.5 md:gap-2 text-[9px] md:text-[10px] mb-1 bg-slate-900/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-slate-700/50">
                                                                     <span className="text-slate-300">HP: <span className="text-white">{char.hp}</span></span>
                                                                     <span className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></span>
                                                                     <span className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></span>
@@ -236,9 +236,9 @@ export default function Hub({ isCarousel }) {
                                     </div>
 
                                     <div>
-                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Select Arena</h3>
+                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Arena</h3>
                                         <div 
-                                            className="relative bg-slate-800 rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.3)] select-none touch-pan-y"
+                                            className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none touch-pan-y"
                                             onTouchStart={(e) => {
                                                 touchStartX.current = e.changedTouches[0].screenX;
                                             }}
@@ -264,7 +264,7 @@ export default function Hub({ isCarousel }) {
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
                                             
-                                            <div className="relative flex items-center justify-between p-4 min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-2 md:p-4 min-h-[80px] md:min-h-[120px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = ARENAS.findIndex(a => a.id === selectedArena);
@@ -272,21 +272,21 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedArena(ARENAS[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                    className="p-1.5 md:p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
                                                 >
-                                                    <ChevronLeft className="w-6 h-6" />
+                                                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
                                                 
-                                                <div className="text-center z-10 flex-1 px-4">
-                                                    <h4 className="text-xl md:text-2xl font-bold text-white mb-1 drop-shadow-md">
+                                                <div className="text-center z-10 flex-1 px-2 md:px-4">
+                                                    <h4 className="text-lg md:text-xl font-bold text-white mb-0.5 md:mb-1 drop-shadow-md">
                                                         {ARENAS.find(a => a.id === selectedArena)?.name}
                                                     </h4>
                                                     {!(save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena) ? (
-                                                        <span className="inline-flex items-center gap-1 text-red-400 font-bold text-sm bg-red-900/80 px-2 py-1 rounded border border-red-500/50 backdrop-blur-sm">
+                                                        <span className="inline-flex items-center gap-1 text-red-400 font-bold text-[10px] md:text-xs bg-red-900/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-red-500/50 backdrop-blur-sm">
                                                             🔒 LOCKED
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 text-cyan-400 font-bold text-sm bg-slate-900/80 px-2 py-1 rounded border border-cyan-500/50 backdrop-blur-sm">
+                                                        <span className="inline-flex items-center gap-1 text-cyan-400 font-bold text-[10px] md:text-xs bg-slate-900/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/50 backdrop-blur-sm">
                                                             ✓ UNLOCKED
                                                         </span>
                                                     )}
@@ -299,16 +299,16 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedArena(ARENAS[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                    className="p-1.5 md:p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
                                                 >
-                                                    <ChevronRight className="w-6 h-6" />
+                                                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 md:mt-8">
-                                        <h3 className="text-sm md:text-base text-slate-400 mb-2">Cosmic Difficulty</h3>
+                                    <div className="mt-4 md:mt-6">
+                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Cosmic Difficulty</h3>
                                         {(() => {
                                             const diffColors = {
                                                 normal: { border: 'border-cyan-400', text: 'text-cyan-400', shadow: 'shadow-[0_0_15px_rgba(34,211,238,0.4)]' },
@@ -318,7 +318,7 @@ export default function Hub({ isCarousel }) {
                                             const currentColors = diffColors[selectedDifficulty] || diffColors.normal;
                                             return (
                                         <div 
-                                            className={`relative bg-slate-800 rounded-xl border ${currentColors.border} overflow-hidden ${currentColors.shadow} select-none touch-pan-y transition-all duration-300`}
+                                            className={`relative bg-slate-800 rounded-lg md:rounded-xl border ${currentColors.border} overflow-hidden ${currentColors.shadow} select-none touch-pan-y transition-all duration-300`}
                                             onTouchStart={(e) => {
                                                 touchStartX.current = e.changedTouches[0].screenX;
                                             }}
@@ -340,7 +340,7 @@ export default function Hub({ isCarousel }) {
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
                                             
-                                            <div className="relative flex items-center justify-between p-4 min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-2 md:p-4 min-h-[80px] md:min-h-[120px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
@@ -348,16 +348,16 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedDifficulty(DIFFICULTIES[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                    className="p-1.5 md:p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
                                                 >
-                                                    <ChevronLeft className="w-6 h-6" />
+                                                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
                                                 
-                                                <div className="text-center z-10 flex-1 px-4">
-                                                    <h4 className={`text-xl md:text-2xl font-bold ${currentColors.text} mb-1 drop-shadow-md transition-colors duration-300`}>
+                                                <div className="text-center z-10 flex-1 px-2 md:px-4">
+                                                    <h4 className={`text-lg md:text-xl font-bold ${currentColors.text} mb-0.5 md:mb-1 drop-shadow-md transition-colors duration-300`}>
                                                         {DIFFICULTIES.find(d => d.id === selectedDifficulty)?.name}
                                                     </h4>
-                                                    <p className="text-sm text-slate-300">
+                                                    <p className="text-[10px] md:text-xs text-slate-300">
                                                         {DIFFICULTIES.find(d => d.id === selectedDifficulty)?.desc}
                                                     </p>
                                                 </div>
@@ -369,9 +369,9 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedDifficulty(DIFFICULTIES[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                    className="p-1.5 md:p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
                                                 >
-                                                    <ChevronRight className="w-6 h-6" />
+                                                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
                                             </div>
                                         </div>
@@ -389,9 +389,9 @@ export default function Hub({ isCarousel }) {
                                         <button
                                             onClick={startGame}
                                             disabled={!canLaunch}
-                                            className={`w-full mt-6 md:mt-8 text-white text-xl md:text-2xl font-bold py-4 md:py-6 rounded-xl flex items-center justify-center gap-2 md:gap-3 transition-all transform ${
+                                            className={`w-full mt-4 md:mt-6 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
                                                 canLaunch
-                                                ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.3)]'
+                                                ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
                                                 : 'bg-slate-700 text-slate-500 cursor-not-allowed'
                                             }`}
                                         >
@@ -400,7 +400,7 @@ export default function Hub({ isCarousel }) {
                                             ) : !isArenaUnlocked ? (
                                                 <>ARENA LOCKED</>
                                             ) : (
-                                                <>LAUNCH MISSION <ArrowRight className="w-6 h-6 md:w-7 md:h-7" /></>
+                                                <>LAUNCH MISSION <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
                                             )}
                                         </button>
                                     );

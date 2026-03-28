@@ -165,54 +165,54 @@ export default function Upgrades({ isCarousel }) {
     };
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-4 pb-24 md:p-8 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
             <div className="max-w-5xl mx-auto">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4">
                     <div>
                         {!isCarousel && (
                             <button 
                                 onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
-                                className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 w-fit"
+                                className="mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
                             >
-                                <ArrowLeft className="w-4 h-4" /> Main Menu
+                                <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
                             </button>
                         )}
-                        <h1 className="text-3xl md:text-4xl font-bold text-pink-400 tracking-tight">UPGRADE LOUNGE</h1>
-                        <p className="text-slate-400 mt-1 text-sm md:text-base">Enhance your operatives and arsenal.</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-pink-400 tracking-tight">UPGRADE LOUNGE</h1>
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Enhance your operatives and arsenal.</p>
                     </div>
-                    <div className="flex gap-2 md:gap-4">
-                        <div className="text-base md:text-lg font-bold text-emerald-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
+                    <div className="flex gap-1.5 md:gap-4">
+                        <div className="text-sm md:text-lg font-bold text-emerald-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
                             💠 {save.cosmicTokens || 0}
                         </div>
-                        <div className="text-base md:text-lg font-bold text-yellow-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Gold">
+                        <div className="text-sm md:text-lg font-bold text-yellow-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Gold">
                             🪙 {save.gold}
                         </div>
                     </div>
                 </header>
 
-                <div className="flex flex-col md:flex-row gap-8">
-                    <div className="w-full md:w-64 grid grid-cols-3 sm:grid-cols-3 md:flex md:flex-col gap-2 pb-2 md:pb-0">
+                <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+                    <div className="w-full md:w-64 grid grid-cols-3 sm:grid-cols-3 md:flex md:flex-col gap-1.5 md:gap-2 pb-2 md:pb-0">
                         <button 
                             onClick={() => { SoundManager.playUIClick(); setActiveTab('upgrades'); }}
-                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'upgrades' ? 'bg-pink-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`text-center md:text-left px-1.5 md:px-6 py-2 md:py-4 rounded-md md:rounded-lg font-bold text-[10px] sm:text-xs md:text-lg transition-colors ${activeTab === 'upgrades' ? 'bg-pink-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             ⚙️ Upgrades
                         </button>
                         <button 
                             onClick={() => { SoundManager.playUIClick(); setActiveTab('talents'); }}
-                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-pink-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`text-center md:text-left px-1.5 md:px-6 py-2 md:py-4 rounded-md md:rounded-lg font-bold text-[10px] sm:text-xs md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-pink-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🧬 Skill Tree
                         </button>
                         <button 
                             onClick={() => { SoundManager.playUIClick(); setActiveTab('armory'); }}
-                            className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'armory' ? 'bg-pink-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
+                            className={`text-center md:text-left px-1.5 md:px-6 py-2 md:py-4 rounded-md md:rounded-lg font-bold text-[10px] sm:text-xs md:text-lg transition-colors ${activeTab === 'armory' ? 'bg-pink-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             ⚔️ Armory
                         </button>
                     </div>
 
-                    <div className="flex-1 bg-slate-900 rounded-2xl p-4 md:p-8 border border-slate-800 min-h-[500px] md:min-h-[600px]">
+                    <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
                         {activeTab === 'upgrades' && <UpgradesTab save={save} setSave={setSave} SaveManager={SaveManager} />}
                         {activeTab === 'armory' && renderArmory()}
                         {activeTab === 'talents' && (
@@ -233,8 +233,8 @@ export default function Upgrades({ isCarousel }) {
                                     })}
                                 </div>
                                 <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">{CHARACTERS.find(c => c.id === selectedChar)?.name}'s Talents</h2>
-                                <div className="space-y-4 relative">
-                                    <div className="absolute left-[38px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
+                                <div className="space-y-3 md:space-y-4 relative">
+                                    <div className="absolute left-[26px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
                                     
                                     {(CHARACTER_TALENTS[selectedChar] || []).map((talent, index) => {
                                         const unlocked = save.unlockedTalents[selectedChar] || [];
@@ -243,18 +243,18 @@ export default function Upgrades({ isCarousel }) {
                                         const canAfford = save.gold >= talent.cost;
                                         
                                         return (
-                                            <div key={talent.id} className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 bg-slate-900 p-4 rounded-xl border border-slate-700">
-                                                <div className="flex items-center gap-3 md:gap-4">
-                                                    <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-4 ${
-                                                        isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.5)]' :
+                                            <div key={talent.id} className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-700">
+                                                <div className="flex items-center gap-2 md:gap-4">
+                                                    <div className={`w-10 h-10 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
+                                                        isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
                                                         canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
                                                         'bg-slate-800 border-slate-700 text-slate-600'
                                                     }`}>
                                                         {index + 1}
                                                     </div>
                                                     <div>
-                                                        <h3 className={`font-bold text-base md:text-lg ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
-                                                        <p className="text-slate-400 text-xs md:text-sm">{talent.desc}</p>
+                                                        <h3 className={`font-bold text-sm md:text-lg ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
+                                                        <p className="text-slate-400 text-[10px] md:text-sm leading-tight">{talent.desc}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2 w-full sm:w-auto pl-[60px] sm:pl-0">
