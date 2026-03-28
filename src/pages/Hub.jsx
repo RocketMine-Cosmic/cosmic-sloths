@@ -390,9 +390,13 @@ export default function Hub() {
                                                 
                                                 return (
                                                     <>
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-slate-800/50" />
+                                                        <div 
+                                                            className="absolute inset-0 opacity-40 bg-cover bg-center transition-all duration-500"
+                                                            style={{ backgroundImage: char.image ? `url(${char.image})` : 'none' }}
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/70 to-transparent" />
                                                         
-                                                        <div className="relative flex items-center justify-between p-4 min-h-[140px]">
+                                                        <div className="relative flex items-center justify-between p-4 min-h-[100px]">
                                                             <button 
                                                                 onClick={() => {
                                                                     const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
@@ -406,13 +410,6 @@ export default function Hub() {
                                                             </button>
                                                             
                                                             <div className="text-center z-10 flex-1 px-2 flex flex-col items-center">
-                                                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 mb-2 bg-slate-900" style={{ borderColor: char.color }}>
-                                                                    {char.image ? (
-                                                                        <img src={char.image} alt={char.name} className="w-full h-full object-cover object-top" />
-                                                                    ) : (
-                                                                        <span className="text-xl md:text-2xl">🦥</span>
-                                                                    )}
-                                                                </div>
                                                                 <h4 className="text-xl md:text-2xl font-bold text-white mb-1 drop-shadow-md" style={{ color: char.color }}>
                                                                     {char.name}
                                                                 </h4>
