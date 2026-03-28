@@ -89,9 +89,22 @@ export default function Info() {
                             </p>
                             <ul className="list-disc list-inside space-y-2 leading-relaxed">
                                 <li><strong className="text-white">Characters:</strong> Unlock new sloths, each with unique base stats and exclusive Talent Trees.</li>
-                                <li><strong className="text-white">Upgrades:</strong> Buy Permanent, Weekly, and Seasonal stat boosts to give yourself an edge.</li>
+                                <li><strong className="text-white">Upgrades:</strong> Buy Permanent (weak but keep forever), Weekly (medium, resets weekly), and Seasonal (strong, resets every 4 weeks) stat boosts to give yourself an edge.</li>
                                 <li><strong className="text-white">Armory:</strong> Permanently increase the base stats (Damage, Area, Cooldown) of specific weapons. Master a weapon to unlock its ultimate form!</li>
                                 <li><strong className="text-white">Cosmetics:</strong> Buy flashy trails to show off your wealth.</li>
+                            </ul>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">🏆 Leaderboards & Seasons</h2>
+                            <p className="leading-relaxed mb-4">
+                                Compete against other players for glory and <strong className="text-emerald-400">Cosmic Tokens</strong>! The game features both Weekly and Seasonal cycles:
+                            </p>
+                            <ul className="list-disc list-inside space-y-2 leading-relaxed">
+                                <li><strong className="text-white">Weekly Cycle:</strong> Resets every week. The top 20 players on the Weekly Leaderboard split 30% of all tokens spent that week. Weekly Upgrades also reset, so you'll need to buy them again!</li>
+                                <li><strong className="text-white">Seasonal Cycle:</strong> Lasts for 4 weeks. The top 30 players on the Seasonal Leaderboard split 40% of all tokens spent during the season. Seasonal Upgrades are powerful but reset at the end of the season.</li>
+                                <li><strong className="text-white">Cosmic Tokens:</strong> Earned by placing high on the leaderboards or finding them rarely in-game. Use them to buy powerful upgrades or unlock characters faster.</li>
+                                <li><strong className="text-white">Claiming Rewards:</strong> Rewards are automatically distributed and claimed when you visit the Sloth Lounge after a cycle ends.</li>
                             </ul>
                         </section>
 
