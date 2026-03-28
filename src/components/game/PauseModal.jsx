@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-export default function PauseModal({ onResume, onRestart }) {
+export default function PauseModal({ onResume }) {
     const navigate = useNavigate();
 
     return (
@@ -20,12 +20,6 @@ export default function PauseModal({ onResume, onRestart }) {
                         className="w-full bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                     >
                         Resume
-                    </button>
-                    <button
-                        onClick={onRestart}
-                        className="w-full bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors"
-                    >
-                        Restart
                     </button>
                     <button
                         onClick={() => navigate('/hub')}

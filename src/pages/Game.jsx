@@ -200,10 +200,6 @@ export default function Game() {
         }
     };
 
-    const handleRestart = () => {
-        window.location.reload();
-    };
-
     return (
         <div className="w-screen h-screen overflow-hidden bg-black relative select-none">
             <canvas 
@@ -216,7 +212,7 @@ export default function Game() {
             <UIOverlay {...gameState} onPause={handlePause} />
             
             {isPaused && (
-                <PauseModal onResume={handleResume} onRestart={handleRestart} />
+                <PauseModal onResume={handleResume} />
             )}
 
             {levelUpChoices && (
