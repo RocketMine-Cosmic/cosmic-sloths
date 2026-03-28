@@ -37,44 +37,14 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
         }
     };
 
-    const handleExit = () => {
-        SoundManager.init();
-        SoundManager.playUIClick();
-        if (window.confirm("Are you sure you want to exit?")) {
-            window.close();
-        }
-    };
+
 
     return (
         <div 
             className={`${isCarousel ? 'min-h-[calc(100vh-80px)]' : 'min-h-screen'} w-full bg-slate-950 flex flex-col items-center justify-end pb-8 md:pb-16 relative overflow-hidden font-mono bg-no-repeat`}
             style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: 'cover', backgroundPosition: 'center top' }}
         >
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700 backdrop-blur-sm">
-                {isEditingName ? (
-                    <div className="flex items-center gap-2">
-                        <input 
-                            type="text" 
-                            value={newName} 
-                            onChange={(e) => setNewName(e.target.value)}
-                            className="bg-slate-800 text-white px-2 py-1 rounded border border-slate-600 outline-none text-sm w-32"
-                            autoFocus
-                            onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                        />
-                        <button onClick={handleSaveName} className="text-green-400 hover:text-green-300"><Check size={16} /></button>
-                        <button onClick={() => { setIsEditingName(false); setNewName(user?.full_name || ''); }} className="text-red-400 hover:text-red-300"><X size={16} /></button>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-2 text-slate-300 text-sm">
-                        <span>Pilot: <strong className="text-cyan-400">{user?.full_name || 'Loading...'}</strong></span>
-                        {user && (
-                            <button onClick={() => setIsEditingName(true)} className="text-slate-400 hover:text-white transition-colors">
-                                <Pencil size={14} />
-                            </button>
-                        )}
-                    </div>
-                )}
-            </div>
+
 
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none"></div>
 
@@ -84,12 +54,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 transition={{ delay: 0.2 }}
                 className="z-10 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 w-full max-w-3xl px-4"
             >
-                <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); onNavigateToPlay ? onNavigateToPlay() : navigate('/play'); }}
-                    className="col-span-full w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/30"
-                >
-                    PLAY
-                </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
                     className="w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)] border border-purple-400/30"
@@ -114,12 +78,31 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 >
                     SETTINGS
                 </button>
-                <button 
-                    onClick={handleExit}
-                    className="col-span-full md:col-span-2 w-full bg-red-600/90 backdrop-blur-sm hover:bg-red-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(220,38,38,0.4)] border border-red-400/30"
-                >
-                    EXIT
-                </button>
+                <div className="col-span-full md:col-span-2 w-full bg-slate-800/90 backdrop-blur-sm flex items-center justify-center gap-2 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl border border-slate-600/30">
+                    {isEditingName ? (
+                        <div className="flex items-center gap-2">
+                            <input 
+                                type="text" 
+                                value={newName} 
+                                onChange={(e) => setNewName(e.target.value)}
+                                className="bg-slate-700 text-white px-2 py-1 rounded border border-slate-500 outline-none text-sm md:text-base w-32 md:w-48"
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                            />
+                            <button onClick={handleSaveName} className="text-green-400 hover:text-green-300"><Check size={20} /></button>
+                            <button onClick={() => { setIsEditingName(false); setNewName(user?.full_name || ''); }} className="text-red-400 hover:text-red-300"><X size={20} /></button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <span>Pilot: <strong className="text-cyan-400">{user?.full_name || 'Loading...'}</strong></span>
+                            {user && (
+                                <button onClick={() => setIsEditingName(true)} className="text-slate-400 hover:text-white transition-colors">
+                                    <Pencil size={18} />
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </motion.div>
             
             <div className="absolute bottom-4 text-slate-400 text-xs md:text-sm z-10">
