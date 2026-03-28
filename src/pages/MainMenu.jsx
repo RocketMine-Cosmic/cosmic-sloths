@@ -86,13 +86,13 @@ export default function MainMenu() {
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/hub'); }}
-                    className="w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
+                    className="col-span-full w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
                 >
                     PLAY
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
-                    className="w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30"
+                    className="col-span-full w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30"
                 >
                     INFO
                 </button>
