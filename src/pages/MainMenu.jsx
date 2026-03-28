@@ -73,14 +73,14 @@ export default function MainMenu() {
                 )}
             </div>
 
-            <div className="absolute inset-0 opacity-50">
-                {[...Array(50)].map((_, i) => (
+            <div className="absolute inset-0 opacity-30">
+                {[...Array(30)].map((_, i) => (
                     <div 
                         key={i}
                         className="absolute bg-white rounded-full"
                         style={{
-                            width: Math.random() * 3 + 1 + 'px',
-                            height: Math.random() * 3 + 1 + 'px',
+                            width: Math.random() * 2 + 1 + 'px',
+                            height: Math.random() * 2 + 1 + 'px',
                             top: Math.random() * 100 + '%',
                             left: Math.random() * 100 + '%',
                             animation: `twinkle ${Math.random() * 3 + 2}s infinite`
@@ -90,17 +90,16 @@ export default function MainMenu() {
             </div>
 
             <motion.div 
-                initial={{ y: -50, opacity: 0 }}
+                initial={{ y: -30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 1 }}
-                className="z-10 text-center mb-16 px-4"
+                className="z-10 mb-6 px-4"
             >
-                <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter mb-2 md:mb-4 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-                    COSMIC SLOTH
-                </h1>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-widest">
-                    SURVIVAL
-                </h2>
+                <img 
+                    src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png"
+                    alt="Cosmic Sloth Survival"
+                    className="w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto drop-shadow-[0_0_30px_rgba(6,182,212,0.4)]"
+                />
             </motion.div>
 
             <motion.div 
