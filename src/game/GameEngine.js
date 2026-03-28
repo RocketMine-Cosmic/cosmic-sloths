@@ -245,25 +245,16 @@ export class GameEngine {
         if (this.player.isMoving) {
             this.player.moveTimer = (this.player.moveTimer || 0) + dt * 15;
             if (this.player.spriteSheet) {
-                this.player.animTimer += dt * 15; // Animation speed
-                if (this.player.animTimer > 1) {
+                this.player.animTimer += dt * 20; // Animation speed
+                if (this.player.frameIndex === undefined) this.player.frameIndex = 0;
+                
+                while (this.player.animTimer > 1) {
                     this.player.animTimer -= 1;
-                    
-                    if (this.player.animDir === undefined) this.player.animDir = 1;
-                    if (this.player.frameIndex === undefined) this.player.frameIndex = 0;
-                    
-                    this.player.frameIndex += this.player.animDir;
-                    if (this.player.frameIndex >= 15) {
-                        this.player.frameIndex = 15;
-                        this.player.animDir = -1;
-                    } else if (this.player.frameIndex <= 0) {
-                        this.player.frameIndex = 0;
-                        this.player.animDir = 1;
-                    }
-                    
-                    this.player.frameX = this.player.frameIndex % 4;
-                    this.player.frameY = Math.floor(this.player.frameIndex / 4);
+                    this.player.frameIndex = (this.player.frameIndex + 1) % 16;
                 }
+                
+                this.player.frameX = this.player.frameIndex % 4;
+                this.player.frameY = Math.floor(this.player.frameIndex / 4);
             }
         } else {
             this.player.moveTimer = 0;
@@ -271,7 +262,6 @@ export class GameEngine {
                 this.player.frameIndex = 0;
                 this.player.frameX = 0;
                 this.player.frameY = 0;
-                this.player.animDir = 1;
             }
         }
         
@@ -1578,15 +1568,15 @@ export class GameEngine {
             this.ctx.shadowColor = this.player.color;
             this.ctx.shadowBlur = 10;
             
-            const frameWidth = Math.floor(this.player.spriteSheet.width / 4);
-            const frameHeight = Math.floor(this.player.spriteSheet.height / 4);
+            const frameWidth = this.player.spriteSheet.width / 4;
+            const frameHeight = this.player.spriteSheet.height / 4;
             
             this.ctx.drawImage(
                 this.player.spriteSheet,
-                this.player.frameX * frameWidth,
-                this.player.frameY * frameHeight,
-                frameWidth,
-                frameHeight,
+                Math.floor(this.player.frameX * frameWidth),
+                Math.floor(this.player.frameY * frameHeight),
+                Math.floor(frameWidth),
+                Math.floor(frameHeight),
                 -size/2,
                 -size/2,
                 size,
