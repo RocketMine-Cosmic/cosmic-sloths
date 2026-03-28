@@ -4,12 +4,14 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Pencil, Check, X } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
+import SettingsModal from '../components/game/SettingsModal';
 
 export default function MainMenu() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState('');
+    const [showSettings, setShowSettings] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -132,6 +134,12 @@ export default function MainMenu() {
                     CREDITS
                 </button>
                 <button 
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); setShowSettings(true); }}
+                    className="w-full bg-slate-700 hover:bg-slate-600 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(51,65,85,0.4)]"
+                >
+                    SETTINGS
+                </button>
+                <button 
                     onClick={handleExit}
                     className="w-full bg-red-600 hover:bg-red-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
                 >
@@ -142,6 +150,8 @@ export default function MainMenu() {
             <div className="absolute bottom-8 text-slate-500 text-sm z-10">
                 v1.0.0 - Lazy but Devastating
             </div>
+
+            {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
         </div>
     );
 }

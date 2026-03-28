@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import SettingsModal from './SettingsModal';
 
 export default function PauseModal({ onResume }) {
     const navigate = useNavigate();
+    const [showSettings, setShowSettings] = useState(false);
 
     return (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -22,6 +24,12 @@ export default function PauseModal({ onResume }) {
                         Resume
                     </button>
                     <button
+                        onClick={() => setShowSettings(true)}
+                        className="w-full bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors shadow-[0_0_15px_rgba(51,65,85,0.4)]"
+                    >
+                        Settings
+                    </button>
+                    <button
                         onClick={() => navigate('/hub')}
                         className="w-full bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors border border-slate-600"
                     >
@@ -29,6 +37,8 @@ export default function PauseModal({ onResume }) {
                     </button>
                 </div>
             </motion.div>
+
+            {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
         </div>
     );
 }

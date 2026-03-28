@@ -3,12 +3,17 @@ class SoundManagerClass {
         this.audioContext = null;
         this.bgm = new Audio();
         this.bgm.loop = true;
-        this.bgm.volume = 0.25;
         // Space-themed 8-bit background music
         this.bgm.src = 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=8-bit-background-music-for-arcade-game-come-on-mario-164702.mp3';
         
-        this.sfxVolume = 0.15;
-        this.enabled = true;
+        let savedSettings = {};
+        try {
+            savedSettings = JSON.parse(localStorage.getItem('cosmic_sloth_settings') || '{}');
+        } catch (e) {}
+
+        this.bgm.volume = savedSettings.bgmVolume !== undefined ? savedSettings.bgmVolume : 0.25;
+        this.sfxVolume = savedSettings.sfxVolume !== undefined ? savedSettings.sfxVolume : 0.15;
+        this.enabled = savedSettings.enabled !== undefined ? savedSettings.enabled : true;
         this.initialized = false;
         
         // Throttle maps to prevent audio overload
@@ -35,6 +40,26 @@ class SoundManagerClass {
         this.bgm.currentTime = 0;
     }
 
+    saveSettings() {
+        try {
+            localStorage.setItem('cosmic_sloth_settings', JSON.stringify({
+                bgmVolume: this.bgm.volume,
+                sfxVolume: this.sfxVolume,
+                enabled: this.enabled
+            }));
+        } catch (e) {}
+    }
+
+    setBgmVolume(vol) {
+        this.bgm.volume = vol;
+        this.saveSettings();
+    }
+
+    setSfxVolume(vol) {
+        this.sfxVolume = vol;
+        this.saveSettings();
+    }
+
     toggleMute() {
         this.enabled = !this.enabled;
         if (!this.enabled) {
@@ -42,6 +67,7 @@ class SoundManagerClass {
         } else {
             this.bgm.play().catch(e => console.log("Audio play failed:", e));
         }
+        this.saveSettings();
         return this.enabled;
     }
 
