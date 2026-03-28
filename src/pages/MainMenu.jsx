@@ -47,8 +47,8 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
 
     return (
         <div 
-            className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 flex flex-col items-center justify-end pb-16 relative overflow-hidden font-mono bg-cover bg-top bg-no-repeat`}
-            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: 'contain' }}
+            className={`${isCarousel ? 'min-h-[calc(100vh-80px)]' : 'min-h-screen'} w-full bg-slate-950 flex flex-col items-center justify-end pb-8 md:pb-16 relative overflow-hidden font-mono bg-no-repeat`}
+            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: 'cover', backgroundPosition: 'center top' }}
         >
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700 backdrop-blur-sm">
                 {isEditingName ? (
