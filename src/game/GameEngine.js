@@ -254,7 +254,7 @@ export class GameEngine {
                 
                 if (this.player.frameIndex === undefined) this.player.frameIndex = 0;
                 
-                const loopFrames = totalFrames === 16 ? 15 : totalFrames;
+                const loopFrames = baseChar.spriteLoopFrames || (totalFrames === 16 ? 15 : totalFrames);
 
                 while (this.player.animTimer > 1) {
                     this.player.animTimer -= 1;
