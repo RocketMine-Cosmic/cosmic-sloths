@@ -8,6 +8,8 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
 import MainMenu from './pages/MainMenu';
 import Hub from './pages/Hub';
+import Upgrades from './pages/Upgrades';
+import LeaderboardPage from './pages/LeaderboardPage';
 import Game from './pages/Game';
 import Info from './pages/Info';
 import Credits from './pages/Credits';
@@ -41,6 +43,8 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route path="/" element={<MainMenu />} />
       <Route path="/hub" element={<Hub />} />
+      <Route path="/upgrades" element={<Upgrades />} />
+      <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/game" element={<Game />} />
       <Route path="/info" element={<Info />} />
       <Route path="/credits" element={<Credits />} />

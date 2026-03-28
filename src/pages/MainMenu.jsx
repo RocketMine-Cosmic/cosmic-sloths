@@ -86,25 +86,37 @@ export default function MainMenu() {
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/hub'); }}
-                    className="col-span-full w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
+                    className="col-span-full md:col-span-1 w-full bg-cyan-600/90 backdrop-blur-sm hover:bg-cyan-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/30"
                 >
-                    PLAY
+                    DEPLOY
+                </button>
+                <button 
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/upgrades'); }}
+                    className="col-span-full md:col-span-1 w-full bg-pink-600/90 backdrop-blur-sm hover:bg-pink-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(236,72,153,0.4)] border border-pink-400/30"
+                >
+                    UPGRADES
+                </button>
+                <button 
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/leaderboard'); }}
+                    className="col-span-full md:col-span-1 w-full bg-yellow-600/90 backdrop-blur-sm hover:bg-yellow-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(202,138,4,0.4)] border border-yellow-400/30"
+                >
+                    HALL OF FAME
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
-                    className="col-span-full w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30"
+                    className="w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30"
                 >
                     INFO
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/achievements'); }}
-                    className="w-full bg-yellow-600/90 backdrop-blur-sm hover:bg-yellow-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(202,138,4,0.4)] border border-yellow-400/30"
+                    className="w-full bg-emerald-600/90 backdrop-blur-sm hover:bg-emerald-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] border border-emerald-400/30"
                 >
                     ACHIEVEMENTS
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/credits'); }}
-                    className="w-full bg-emerald-600/90 backdrop-blur-sm hover:bg-emerald-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] border border-emerald-400/30"
+                    className="w-full bg-indigo-600/90 backdrop-blur-sm hover:bg-indigo-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(79,70,229,0.4)] border border-indigo-400/30"
                 >
                     CREDITS
                 </button>
@@ -116,7 +128,7 @@ export default function MainMenu() {
                 </button>
                 <button 
                     onClick={handleExit}
-                    className="w-full bg-red-600/90 backdrop-blur-sm hover:bg-red-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-400/30"
+                    className="col-span-full md:col-span-2 w-full bg-red-600/90 backdrop-blur-sm hover:bg-red-500 text-white text-lg md:text-xl font-bold py-2 md:py-3 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-400/30"
                 >
                     EXIT
                 </button>
