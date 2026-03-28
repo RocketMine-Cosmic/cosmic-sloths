@@ -90,6 +90,7 @@ export class GameEngine {
             spriteSheet: playerSpriteSheet,
             spriteFramesX: baseChar.spriteFramesX || 4,
             spriteFramesY: baseChar.spriteFramesY || 4,
+            spriteScale: baseChar.spriteScale || 1,
             frameX: 0,
             frameY: 0,
             animTimer: 0,
@@ -1564,7 +1565,7 @@ export class GameEngine {
         }
 
         if (this.player.spriteSheet && this.player.spriteSheet.complete) {
-            const size = this.player.radius * 4.5; // Slightly larger to fit the sprite
+            const size = this.player.radius * 4.5 * this.player.spriteScale; // Slightly larger to fit the sprite
             
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
