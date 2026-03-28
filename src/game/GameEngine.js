@@ -245,12 +245,13 @@ export class GameEngine {
         if (this.player.isMoving) {
             this.player.moveTimer = (this.player.moveTimer || 0) + dt * 15;
             if (this.player.spriteSheet) {
-                this.player.animTimer += dt * 20; // Animation speed
+                this.player.animTimer += dt * 12; // Animation speed
                 if (this.player.frameIndex === undefined) this.player.frameIndex = 0;
                 
                 while (this.player.animTimer > 1) {
                     this.player.animTimer -= 1;
-                    this.player.frameIndex = (this.player.frameIndex + 1) % 16;
+                    // Skip frame 15 as it's usually a duplicate of frame 0 in these sprite sheets
+                    this.player.frameIndex = (this.player.frameIndex + 1) % 15;
                 }
                 
                 this.player.frameX = this.player.frameIndex % 4;
