@@ -7,6 +7,30 @@ export default function Leaderboard() {
     const [scores, setScores] = useState([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState('weekly'); // 'weekly', 'seasonal', or 'all_time'
+    const [timeLeft, setTimeLeft] = useState('');
+
+    useEffect(() => {
+        const updateTimer = () => {
+            if (view === 'weekly') {
+                const endOfWeek = moment().endOf('week');
+                const duration = moment.duration(endOfWeek.diff(moment()));
+                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+            } else if (view === 'seasonal') {
+                const weekNum = moment().week();
+                const seasonNum = Math.floor(weekNum / 4) + 1;
+                const lastWeekOfSeason = seasonNum * 4 - 1;
+                const endOfSeason = moment().week(lastWeekOfSeason).endOf('week');
+                const duration = moment.duration(endOfSeason.diff(moment()));
+                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+            } else {
+                setTimeLeft('');
+            }
+        };
+        
+        updateTimer();
+        const interval = setInterval(updateTimer, 60000);
+        return () => clearInterval(interval);
+    }, [view]);
 
     useEffect(() => {
         fetchScores();
@@ -53,7 +77,10 @@ export default function Leaderboard() {
     return (
         <div className="flex flex-col h-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-white">Hall of Fame</h2>
+                <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-white">Hall of Fame</h2>
+                    {timeLeft && <div className="text-sm text-cyan-400 mt-1 font-bold">Resets in: {timeLeft}</div>}
+                </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <button 
                         onClick={() => setView('weekly')}

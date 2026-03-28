@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Coffee, Shield, Zap, Heart, Magnet, Timer, Sparkles } from 'lucide-react';
+import moment from 'moment';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent (Weak)', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [250, 500, 1000, 2000, 4000] },
@@ -28,6 +29,30 @@ const COSMETICS = [
 
 export default function UpgradesTab({ save, setSave, SaveManager }) {
     const [activeCategory, setActiveCategory] = useState('permanent');
+    const [timeLeft, setTimeLeft] = useState('');
+
+    useEffect(() => {
+        const updateTimer = () => {
+            if (activeCategory === 'weekly') {
+                const endOfWeek = moment().endOf('week');
+                const duration = moment.duration(endOfWeek.diff(moment()));
+                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+            } else if (activeCategory === 'seasonal') {
+                const weekNum = moment().week();
+                const seasonNum = Math.floor(weekNum / 4) + 1;
+                const lastWeekOfSeason = seasonNum * 4 - 1;
+                const endOfSeason = moment().week(lastWeekOfSeason).endOf('week');
+                const duration = moment.duration(endOfSeason.diff(moment()));
+                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+            } else {
+                setTimeLeft('');
+            }
+        };
+        
+        updateTimer();
+        const interval = setInterval(updateTimer, 60000);
+        return () => clearInterval(interval);
+    }, [activeCategory]);
 
     const handleBuyUpgrade = (stat, type, currency) => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === type);
@@ -102,6 +127,12 @@ export default function UpgradesTab({ save, setSave, SaveManager }) {
                     Cosmetics
                 </button>
             </div>
+
+            {timeLeft && (
+                <div className="mb-4 text-sm font-bold text-cyan-400 bg-slate-800/50 p-2 rounded-lg border border-slate-700 inline-block">
+                    Resets in: {timeLeft}
+                </div>
+            )}
 
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 md:space-y-4">
                 {activeCategory !== 'cosmetics' ? (
