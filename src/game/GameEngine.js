@@ -91,6 +91,7 @@ export class GameEngine {
             spriteFramesX: baseChar.spriteFramesX || 4,
             spriteFramesY: baseChar.spriteFramesY || 4,
             spriteScale: baseChar.spriteScale || 1,
+            spriteLoopFrames: baseChar.spriteLoopFrames,
             frameX: 0,
             frameY: 0,
             animTimer: 0,
@@ -254,7 +255,7 @@ export class GameEngine {
                 
                 if (this.player.frameIndex === undefined) this.player.frameIndex = 0;
                 
-                const loopFrames = baseChar.spriteLoopFrames || (totalFrames === 16 ? 15 : totalFrames);
+                const loopFrames = this.player.spriteLoopFrames || (totalFrames === 16 ? 15 : totalFrames);
 
                 while (this.player.animTimer > 1) {
                     this.player.animTimer -= 1;
