@@ -11,21 +11,21 @@ export default function Leaderboard() {
     const [currentPool, setCurrentPool] = useState(0);
 
     const getWeeklyReward = (rank, pool) => {
-        if (rank === 1) return pool * 0.20;
-        if (rank === 2) return pool * 0.15;
-        if (rank === 3) return pool * 0.10;
-        if (rank >= 4 && rank <= 10) return pool * 0.05;
-        if (rank >= 11 && rank <= 20) return pool * 0.02;
+        if (rank === 1) return pool * 0.15;
+        if (rank === 2) return pool * 0.12;
+        if (rank === 3) return pool * 0.09;
+        if (rank >= 4 && rank <= 10) return pool * 0.06;
+        if (rank >= 11 && rank <= 20) return pool * 0.022;
         return 0;
     };
 
     const getSeasonalReward = (rank, pool) => {
-        if (rank === 1) return pool * 0.15;
-        if (rank === 2) return pool * 0.10;
-        if (rank === 3) return pool * 0.08;
-        if (rank >= 4 && rank <= 10) return pool * 0.04;
-        if (rank >= 11 && rank <= 20) return pool * 0.024;
-        if (rank >= 21 && rank <= 30) return pool * 0.015;
+        if (rank === 1) return pool * 0.12;
+        if (rank === 2) return pool * 0.09;
+        if (rank === 3) return pool * 0.07;
+        if (rank >= 4 && rank <= 10) return pool * 0.045;
+        if (rank >= 11 && rank <= 20) return pool * 0.025;
+        if (rank >= 21 && rank <= 30) return pool * 0.0155;
         return 0;
     };
 
