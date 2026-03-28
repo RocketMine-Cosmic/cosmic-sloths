@@ -78,23 +78,9 @@ export class GameEngine {
             playerImage.src = baseChar.image;
         }
         
-        let playerSpriteSheet = null;
-        if (baseChar.spriteSheet) {
-            playerSpriteSheet = new Image();
-            playerSpriteSheet.src = baseChar.spriteSheet;
-        }
-        
         this.player = {
             name: baseChar.name,
             image: playerImage,
-            spriteSheet: playerSpriteSheet,
-            spriteFramesX: baseChar.spriteFramesX || 4,
-            spriteFramesY: baseChar.spriteFramesY || 4,
-            spriteScale: baseChar.spriteScale || 1,
-            spriteLoopFrames: baseChar.spriteLoopFrames,
-            frameX: 0,
-            frameY: 0,
-            animTimer: 0,
             x: 0, y: 0, radius: 16,
             maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
@@ -248,30 +234,8 @@ export class GameEngine {
         
         if (this.player.isMoving) {
             this.player.moveTimer = (this.player.moveTimer || 0) + dt * 15;
-            if (this.player.spriteSheet) {
-                const totalFrames = this.player.spriteFramesX * this.player.spriteFramesY;
-                const speedMult = totalFrames / 16;
-                this.player.animTimer += dt * 12 * speedMult; // Animation speed
-                
-                if (this.player.frameIndex === undefined) this.player.frameIndex = 0;
-                
-                const loopFrames = this.player.spriteLoopFrames || (totalFrames === 16 ? 15 : totalFrames);
-
-                while (this.player.animTimer > 1) {
-                    this.player.animTimer -= 1;
-                    this.player.frameIndex = (this.player.frameIndex + 1) % loopFrames;
-                }
-                
-                this.player.frameX = this.player.frameIndex % this.player.spriteFramesX;
-                this.player.frameY = Math.floor(this.player.frameIndex / this.player.spriteFramesX);
-            }
         } else {
             this.player.moveTimer = 0;
-            if (this.player.spriteSheet) {
-                this.player.frameIndex = 0;
-                this.player.frameX = 0;
-                this.player.frameY = 0;
-            }
         }
         
         this.camera.x = this.player.x - this.canvas.width / 2;
@@ -1565,37 +1529,7 @@ export class GameEngine {
             }
         }
 
-        if (this.player.spriteSheet && this.player.spriteSheet.complete) {
-            const size = this.player.radius * 4.5 * this.player.spriteScale; // Slightly larger to fit the sprite
-            
-            this.ctx.save();
-            this.ctx.translate(this.player.x, this.player.y);
-            
-            if (this.player.facingLeft) {
-                this.ctx.scale(-1, 1);
-            }
-            
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 10;
-            
-            const frameWidth = this.player.spriteSheet.width / this.player.spriteFramesX;
-            const frameHeight = this.player.spriteSheet.height / this.player.spriteFramesY;
-            
-            this.ctx.drawImage(
-                this.player.spriteSheet,
-                Math.floor(this.player.frameX * frameWidth),
-                Math.floor(this.player.frameY * frameHeight),
-                Math.floor(frameWidth),
-                Math.floor(frameHeight),
-                -size/2,
-                -size/2,
-                size,
-                size
-            );
-            
-            this.ctx.shadowBlur = 0;
-            this.ctx.restore();
-        } else if (this.player.image && this.player.image.complete) {
+        if (this.player.image && this.player.image.complete) {
             const size = this.player.radius * 3;
             
             this.ctx.save();
