@@ -1089,7 +1089,8 @@ export class GameEngine {
     }
 
     addDamageText(x, y, text, color) {
-        this.damageTexts.push({ x, y, text, color, life: 0.8 });
+        const offsetX = (Math.random() - 0.5) * 20;
+        this.damageTexts.push({ x: x + offsetX, y, text, color, life: 0.8 });
     }
 
     levelUp() {
@@ -1619,11 +1620,14 @@ export class GameEngine {
             this.ctx.fill();
         }
 
-        this.ctx.font = '12px "Courier New", Courier, monospace';
+        this.ctx.font = 'bold 14px "Courier New", Courier, monospace';
         this.ctx.textAlign = 'center';
         this.damageTexts.forEach(t => {
+            this.ctx.globalAlpha = Math.max(0, t.life);
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeText(t.text, t.x, t.y);
             this.ctx.fillStyle = t.color;
-            this.ctx.globalAlpha = t.life;
             this.ctx.fillText(t.text, t.x, t.y);
             this.ctx.globalAlpha = 1.0;
         });
