@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import Hub from './Hub';
 import Upgrades from './Upgrades';
 import LeaderboardPage from './LeaderboardPage';
@@ -30,24 +30,31 @@ export default function PlayCarousel() {
                 >
                     <ArrowLeft className="w-4 h-4" /> Main Menu
                 </button>
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <div className="flex items-center justify-between w-full md:w-72 bg-slate-900 rounded-xl border border-slate-700 p-1 shadow-inner">
                     <button 
-                        onClick={() => { SoundManager.playUIClick(); emblaApi?.scrollTo(0); }}
-                        className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors border ${selectedIndex === 0 ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800'}`}
+                        onClick={() => { 
+                            SoundManager.playUIClick(); 
+                            const newIdx = selectedIndex <= 0 ? 2 : selectedIndex - 1;
+                            emblaApi?.scrollTo(newIdx); 
+                        }}
+                        className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
                     >
-                        Sloth Lounge
+                        <ChevronLeft className="w-5 h-5" />
                     </button>
+                    <div className="flex-1 text-center font-bold text-base select-none">
+                        {selectedIndex === 0 && <span className="text-cyan-400">Sloth Lounge</span>}
+                        {selectedIndex === 1 && <span className="text-pink-400">Upgrade Lounge</span>}
+                        {selectedIndex === 2 && <span className="text-yellow-400">Hall of Fame</span>}
+                    </div>
                     <button 
-                        onClick={() => { SoundManager.playUIClick(); emblaApi?.scrollTo(1); }}
-                        className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors border ${selectedIndex === 1 ? 'bg-pink-600 text-white border-pink-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800'}`}
+                        onClick={() => { 
+                            SoundManager.playUIClick(); 
+                            const newIdx = selectedIndex >= 2 ? 0 : selectedIndex + 1;
+                            emblaApi?.scrollTo(newIdx); 
+                        }}
+                        className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
                     >
-                        Upgrade Lounge
-                    </button>
-                    <button 
-                        onClick={() => { SoundManager.playUIClick(); emblaApi?.scrollTo(2); }}
-                        className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors border ${selectedIndex === 2 ? 'bg-yellow-600 text-white border-yellow-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800'}`}
-                    >
-                        Hall of Fame
+                        <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
             </div>
