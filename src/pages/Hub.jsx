@@ -102,13 +102,13 @@ export default function Hub({ isCarousel }) {
                         <p className="text-slate-400 mt-1 text-sm md:text-base">Rest, upgrade, and prepare for the cosmic void.</p>
                     </div>
                     <div className="flex gap-2 md:gap-4">
-                        <div className="text-xl md:text-2xl font-bold text-purple-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg" title="Reroll Tokens">
+                        <div className="text-base md:text-lg font-bold text-purple-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Reroll Tokens">
                             🎲 {save.rerollTokens || 0}
                         </div>
-                        <div className="text-xl md:text-2xl font-bold text-emerald-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
+                        <div className="text-base md:text-lg font-bold text-emerald-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
                             💠 {save.cosmicTokens || 0}
                         </div>
-                        <div className="text-xl md:text-2xl font-bold text-yellow-400 bg-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-slate-700 shadow-lg" title="Gold">
+                        <div className="text-base md:text-lg font-bold text-yellow-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg" title="Gold">
                             🪙 {save.gold}
                         </div>
                     </div>
