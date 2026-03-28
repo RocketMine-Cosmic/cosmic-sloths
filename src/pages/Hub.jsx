@@ -391,12 +391,12 @@ export default function Hub() {
                                                 return (
                                                     <>
                                                         <div 
-                                                            className="absolute inset-0 opacity-40 bg-contain bg-center bg-no-repeat transition-all duration-500"
-                                                            style={{ backgroundImage: char.image ? `url(${char.image})` : 'none' }}
+                                                            className="absolute inset-0 opacity-80 bg-contain bg-no-repeat transition-all duration-500"
+                                                            style={{ backgroundImage: char.image ? `url(${char.image})` : 'none', backgroundPosition: '85% center' }}
                                                         />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/70 to-transparent" />
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-transparent" />
                                                         
-                                                        <div className="relative flex items-center justify-between p-4 min-h-[100px]">
+                                                        <div className="relative flex items-center justify-between p-4 min-h-[140px]">
                                                             <button 
                                                                 onClick={() => {
                                                                     const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
@@ -409,14 +409,14 @@ export default function Hub() {
                                                                 <ChevronLeft className="w-6 h-6" />
                                                             </button>
                                                             
-                                                            <div className="text-center z-10 flex-1 px-2 flex flex-col items-center">
+                                                            <div className="text-left z-10 flex-1 px-4 flex flex-col items-start">
                                                                 <h4 className="text-xl md:text-2xl font-bold text-white mb-1 drop-shadow-md" style={{ color: char.color }}>
                                                                     {char.name}
                                                                 </h4>
-                                                                <p className="text-xs text-slate-300 mb-2">
+                                                                <p className="text-xs text-slate-300 mb-2 max-w-[70%]">
                                                                     {char.desc}
                                                                 </p>
-                                                                <div className="flex gap-2 text-[10px] md:text-xs mb-2 bg-slate-900/50 px-2 py-1 rounded">
+                                                                <div className="flex gap-2 text-[10px] md:text-xs mb-2 bg-slate-900/80 px-2 py-1 rounded border border-slate-700/50">
                                                                     <span className="text-slate-300">HP: <span className="text-white">{char.hp}</span></span>
                                                                     <span className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></span>
                                                                     <span className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></span>
