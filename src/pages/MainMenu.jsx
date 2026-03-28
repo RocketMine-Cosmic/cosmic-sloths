@@ -50,7 +50,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     return (
         <div 
             className={`${isCarousel ? 'min-h-[calc(100vh-80px)]' : 'min-h-screen'} w-full flex flex-col items-center justify-end pb-20 md:pb-28 relative overflow-hidden font-mono bg-no-repeat`}
-            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: '100% 100%', backgroundPosition: 'center top', backgroundColor: theme.colors.bg }}
+            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: 'cover', backgroundPosition: 'center top', backgroundColor: theme.colors.bg }}
         >
 
 
