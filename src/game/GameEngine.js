@@ -1,5 +1,6 @@
 import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
+import { SoundManager } from './SoundManager';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks) {
@@ -365,6 +366,7 @@ export class GameEngine {
                 const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult;
                 this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
                 this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
+                SoundManager.playBossSpawn();
             }
         }
 
@@ -405,6 +407,7 @@ export class GameEngine {
                 if (elites.length > 0) {
                     const elite = elites[Math.floor(Math.random() * elites.length)];
                     this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult, radius: elite.radius * 1.5 });
+                    SoundManager.playEnemySpawn();
                     return;
                 }
             }
@@ -437,6 +440,7 @@ export class GameEngine {
                     this.player.hp -= actualDmg;
                     this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
                     this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                    SoundManager.playPlayerHit();
                     if (this.player.hp <= 0) this.gameOver();
                 }
                 this.addParticle(h.x, h.y, '#ff4500', 20);
@@ -461,6 +465,7 @@ export class GameEngine {
     }
 
     fireWeapon(w) {
+        SoundManager.playWeaponFire(w.id);
         const wUpgrades = this.save.weaponUpgrades?.[w.id] || {};
         const dmgUpgradeLevel = wUpgrades.damage || 0;
         const areaUpgradeLevel = wUpgrades.area || 0;
@@ -840,6 +845,7 @@ export class GameEngine {
                     this.player.hp -= actualDmg;
                     this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
                     this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                    SoundManager.playPlayerHit();
                     if (this.player.hp <= 0) this.gameOver();
                     return false;
                 }
@@ -851,6 +857,7 @@ export class GameEngine {
     updateEnemies(dt) {
         this.enemies = this.enemies.filter(e => {
             if (e.hp <= 0) {
+                SoundManager.playEnemyDeath();
                 this.kills++;
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
                 
@@ -960,6 +967,7 @@ export class GameEngine {
                     this.player.hp -= actualDmg;
                     this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
                     this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                    SoundManager.playPlayerHit();
                     e.attackTimer = 1.0;
                     if (this.player.hp <= 0) this.gameOver();
                 }
@@ -1026,15 +1034,19 @@ export class GameEngine {
             if (dist < this.player.radius + 10) {
                 this.addParticle(p.x, p.y, p.color, 5, 'circle', 1); // Collection burst
                 if (p.type === 'xp') {
+                    SoundManager.playPickup();
                     this.xp += p.value * this.player.xpMult;
                     if (this.xp >= this.xpRequired) this.levelUp();
                 } else if (p.type === 'gold') {
+                    SoundManager.playGoldPickup();
                     this.gold += Math.floor(p.value * this.player.goldMult);
                     this.callbacks.onGoldChange(this.gold);
                 } else if (p.type === 'reroll') {
+                    SoundManager.playGoldPickup();
                     if (this.callbacks.onRerollFound) this.callbacks.onRerollFound();
                     this.addDamageText(this.player.x, this.player.y - 40, `+1 Reroll Token!`, '#ff00ff');
                 } else if (p.type === 'token') {
+                    SoundManager.playGoldPickup();
                     if (this.callbacks.onTokenFound) this.callbacks.onTokenFound();
                     this.addDamageText(this.player.x, this.player.y - 60, `+1 Cosmic Token!`, '#10b981');
                 }

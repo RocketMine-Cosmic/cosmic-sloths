@@ -8,6 +8,7 @@ import UpgradesTab from '../components/game/UpgradesTab';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
+import { SoundManager } from '../game/SoundManager';
 
 const UPGRADE_COSTS = [500, 1000, 2000, 4000, 8000];
 
@@ -131,6 +132,7 @@ export default function Hub() {
     };
 
     const startGame = () => {
+        SoundManager.playUIClick();
         navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty } });
     };
 
@@ -309,7 +311,7 @@ export default function Hub() {
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b border-slate-800 pb-4">
                     <div>
                         <button 
-                            onClick={() => navigate('/')}
+                            onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
                             className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 w-fit"
                         >
                             <ArrowLeft className="w-4 h-4" /> Main Menu
@@ -333,37 +335,37 @@ export default function Hub() {
                 <div className="flex flex-col md:flex-row gap-8">
                     <div className="w-full md:w-64 grid grid-cols-2 sm:grid-cols-5 md:flex md:flex-col gap-2 pb-2 md:pb-0">
                         <button 
-                            onClick={() => setActiveTab('deploy')}
+                            onClick={() => { SoundManager.playUIClick(); setActiveTab('deploy'); }}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'deploy' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🚀 Deploy
                         </button>
                         <button 
-                            onClick={() => setActiveTab('upgrades')}
+                            onClick={() => { SoundManager.playUIClick(); setActiveTab('upgrades'); }}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'upgrades' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             ⚙️ Upgrades
                         </button>
                         <button 
-                            onClick={() => setActiveTab('characters')}
+                            onClick={() => { SoundManager.playUIClick(); setActiveTab('characters'); }}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'characters' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🦥 Crew
                         </button>
                         <button 
-                            onClick={() => setActiveTab('talents')}
+                            onClick={() => { SoundManager.playUIClick(); setActiveTab('talents'); }}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'talents' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🧬 Skill Tree
                         </button>
                         <button 
-                            onClick={() => setActiveTab('armory')}
+                            onClick={() => { SoundManager.playUIClick(); setActiveTab('armory'); }}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'armory' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             ⚔️ Armory
                         </button>
                         <button 
-                            onClick={() => setActiveTab('leaderboard')}
+                            onClick={() => { SoundManager.playUIClick(); setActiveTab('leaderboard'); }}
                             className={`text-center md:text-left px-2 md:px-6 py-2 md:py-4 rounded-lg font-bold text-xs sm:text-sm md:text-lg transition-colors ${activeTab === 'leaderboard' ? 'bg-cyan-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
                         >
                             🏆 Leaderboard

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Pencil, Check, X } from 'lucide-react';
+import { SoundManager } from '../game/SoundManager';
 
 export default function MainMenu() {
     const navigate = useNavigate();
@@ -35,6 +36,8 @@ export default function MainMenu() {
     };
 
     const handleExit = () => {
+        SoundManager.init();
+        SoundManager.playUIClick();
         if (window.confirm("Are you sure you want to exit?")) {
             window.close();
         }
@@ -105,25 +108,25 @@ export default function MainMenu() {
                 className="z-10 flex flex-col gap-4 w-full max-w-md px-6"
             >
                 <button 
-                    onClick={() => navigate('/hub')}
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/hub'); }}
                     className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
                 >
                     PLAY
                 </button>
                 <button 
-                    onClick={() => navigate('/info')}
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
                     className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
                 >
                     INFO
                 </button>
                 <button 
-                    onClick={() => navigate('/achievements')}
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/achievements'); }}
                     className="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(202,138,4,0.4)]"
                 >
                     ACHIEVEMENTS
                 </button>
                 <button 
-                    onClick={() => navigate('/credits')}
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/credits'); }}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
                 >
                     CREDITS

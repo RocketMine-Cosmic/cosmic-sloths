@@ -11,6 +11,7 @@ import VirtualJoystick from '../components/game/VirtualJoystick';
 import PauseModal from '../components/game/PauseModal';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
+import { SoundManager } from '../game/SoundManager';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -140,10 +141,14 @@ export default function Game() {
             time: 0, duration: engine.arena.duration, level: 1, xp: 0, xpRequired: 10, gold: 0,
             rerollTokens: save.rerollTokens || 0
         });
+        
+        SoundManager.init();
+        SoundManager.playBGM();
 
         return () => {
             window.removeEventListener('resize', resizeCanvas);
             engine.cleanup();
+            SoundManager.stopBGM();
         };
     }, [location.state]);
 

@@ -1,7 +1,14 @@
-import React from 'react';
-import { Pause } from 'lucide-react';
+import React, { useState } from 'react';
+import { Pause, Volume2, VolumeX } from 'lucide-react';
+import { SoundManager } from '../../game/SoundManager';
 
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, onPause }) {
+    const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
+    
+    const toggleMute = () => {
+        SoundManager.toggleMute();
+        setIsMuted(SoundManager.isMuted());
+    };
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -35,6 +42,12 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     <div className="bg-slate-800/80 p-2 rounded-lg border border-slate-600 text-right min-w-[70px] md:min-w-[100px]">
                         <div className="text-yellow-400 font-bold text-sm md:text-base">🪙 {gold}</div>
                     </div>
+                    <button 
+                        onClick={toggleMute}
+                        className="pointer-events-auto bg-slate-800/80 p-2 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center"
+                    >
+                        {isMuted ? <VolumeX className="w-5 h-5 md:w-6 md:h-6 text-slate-400" /> : <Volume2 className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" />}
+                    </button>
                     <button 
                         onClick={onPause}
                         className="pointer-events-auto bg-slate-800/80 p-2 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center"
