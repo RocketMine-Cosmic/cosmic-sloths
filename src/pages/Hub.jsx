@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, CHARACTER_TALENTS, WEAPONS, DIFFICULTIES } from '../game/Constants';
-import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, ArrowLeft, Timer, Sparkles, Crosshair, Trophy } from 'lucide-react';
+import { Coffee, Shield, Zap, Heart, Magnet, ArrowRight, ArrowLeft, Timer, Sparkles, Crosshair, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
 import Leaderboard from '../components/game/Leaderboard';
 import UpgradesTab from '../components/game/UpgradesTab';
 import { base44 } from '@/api/base44Client';
@@ -20,6 +20,7 @@ export default function Hub() {
     const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
     const [activeTab, setActiveTab] = useState('deploy');
     const { toast } = useToast();
+    const touchStartX = React.useRef(null);
 
     React.useEffect(() => {
         const claimRewards = async () => {
@@ -456,25 +457,73 @@ export default function Hub() {
 
                                     <div>
                                         <h3 className="text-sm md:text-base text-slate-400 mb-2">Select Arena</h3>
-                                        <div className="grid grid-cols-1 gap-2 md:gap-3">
-                                            {ARENAS.map(arena => {
-                                                const charArenas = save.unlockedArenasByCharacter[selectedChar] || ['station'];
-                                                const isUnlocked = charArenas.includes(arena.id);
-                                                return (
-                                                <button
-                                                    key={arena.id}
-                                                    onClick={() => isUnlocked && setSelectedArena(arena.id)}
-                                                    className={`p-3 md:p-4 rounded-lg border text-left transition-all ${
-                                                        !isUnlocked ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed' :
-                                                        selectedArena === arena.id 
-                                                        ? 'bg-slate-800 border-cyan-500 text-cyan-400' 
-                                                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
-                                                    }`}
+                                        <div 
+                                            className="relative bg-slate-800 rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.3)] select-none touch-pan-y"
+                                            onTouchStart={(e) => {
+                                                touchStartX.current = e.changedTouches[0].screenX;
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                if (touchStartX.current === null) return;
+                                                const touchEndX = e.changedTouches[0].screenX;
+                                                const diff = touchStartX.current - touchEndX;
+                                                if (diff > 50) {
+                                                    const idx = ARENAS.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(ARENAS[idx >= ARENAS.length - 1 ? 0 : idx + 1].id);
+                                                    SoundManager.playUIClick();
+                                                } else if (diff < -50) {
+                                                    const idx = ARENAS.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(ARENAS[idx <= 0 ? ARENAS.length - 1 : idx - 1].id);
+                                                    SoundManager.playUIClick();
+                                                }
+                                                touchStartX.current = null;
+                                            }}
+                                        >
+                                            <div 
+                                                className="absolute inset-0 opacity-40 bg-cover bg-center transition-all duration-500"
+                                                style={{ backgroundImage: `url(${ARENAS.find(a => a.id === selectedArena)?.image})` }}
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
+                                            
+                                            <div className="relative flex items-center justify-between p-4 min-h-[120px]">
+                                                <button 
+                                                    onClick={() => {
+                                                        const idx = ARENAS.findIndex(a => a.id === selectedArena);
+                                                        const newIdx = idx <= 0 ? ARENAS.length - 1 : idx - 1;
+                                                        setSelectedArena(ARENAS[newIdx].id);
+                                                        SoundManager.playUIClick();
+                                                    }}
+                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
                                                 >
-                                                    <span className="font-bold text-base md:text-lg">{arena.name}</span>
-                                                    {!isUnlocked && <span className="ml-2 text-xs">🔒 Locked</span>}
+                                                    <ChevronLeft className="w-6 h-6" />
                                                 </button>
-                                            )})}
+                                                
+                                                <div className="text-center z-10 flex-1 px-4">
+                                                    <h4 className="text-xl md:text-2xl font-bold text-white mb-1 drop-shadow-md">
+                                                        {ARENAS.find(a => a.id === selectedArena)?.name}
+                                                    </h4>
+                                                    {!(save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena) ? (
+                                                        <span className="inline-flex items-center gap-1 text-red-400 font-bold text-sm bg-red-900/80 px-2 py-1 rounded border border-red-500/50 backdrop-blur-sm">
+                                                            🔒 LOCKED
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 text-cyan-400 font-bold text-sm bg-slate-900/80 px-2 py-1 rounded border border-cyan-500/50 backdrop-blur-sm">
+                                                            ✓ UNLOCKED
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <button 
+                                                    onClick={() => {
+                                                        const idx = ARENAS.findIndex(a => a.id === selectedArena);
+                                                        const newIdx = idx >= ARENAS.length - 1 ? 0 : idx + 1;
+                                                        setSelectedArena(ARENAS[newIdx].id);
+                                                        SoundManager.playUIClick();
+                                                    }}
+                                                    className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                >
+                                                    <ChevronRight className="w-6 h-6" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -501,9 +550,18 @@ export default function Hub() {
 
                                 <button
                                     onClick={startGame}
-                                    className="w-full mt-6 md:mt-8 bg-cyan-600 hover:bg-cyan-500 text-white text-xl md:text-2xl font-bold py-4 md:py-6 rounded-xl flex items-center justify-center gap-2 md:gap-3 transition-all transform hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.3)]"
+                                    disabled={!(save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena)}
+                                    className={`w-full mt-6 md:mt-8 text-white text-xl md:text-2xl font-bold py-4 md:py-6 rounded-xl flex items-center justify-center gap-2 md:gap-3 transition-all transform ${
+                                        (save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena)
+                                        ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.3)]'
+                                        : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                    }`}
                                 >
-                                    LAUNCH MISSION <ArrowRight className="w-6 h-6 md:w-7 md:h-7" />
+                                    {(save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena) ? (
+                                        <>LAUNCH MISSION <ArrowRight className="w-6 h-6 md:w-7 md:h-7" /></>
+                                    ) : (
+                                        <>ARENA LOCKED</>
+                                    )}
                                 </button>
                             </div>
                         )}
