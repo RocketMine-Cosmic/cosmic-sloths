@@ -794,9 +794,10 @@ export class GameEngine {
                                     this.addParticle(e.x, e.y, '#ff4500', 3);
                                 }
                             }
+                            const pushResist = e.isTank ? 0.2 : 1;
                             const angle = Math.atan2(e.y - p.y, e.x - p.x);
-                            e.x += Math.cos(angle) * p.pushback * dt;
-                            e.y += Math.sin(angle) * p.pushback * dt;
+                            e.x += Math.cos(angle) * p.pushback * pushResist * dt;
+                            e.y += Math.sin(angle) * p.pushback * pushResist * dt;
                         }
                     });
                     
@@ -976,7 +977,7 @@ export class GameEngine {
 
             // Projectile attacks
             if (!e.burrowed) {
-                if (e.id === 'nebula_serpent' || e.id === 'asteroid_kraken' || e.id === 'solar_mantis' || e.id === 'starspine_urchin' || e.id === 'cryo_wraith' || e.id === 'pulsar_anglerfish' || e.id === 'ion_stingray' || e.id === 'elite_solar_drake') {
+                if (e.isRanged || e.id === 'nebula_serpent' || e.id === 'asteroid_kraken' || e.id === 'solar_mantis' || e.id === 'starspine_urchin' || e.id === 'cryo_wraith' || e.id === 'pulsar_anglerfish' || e.id === 'ion_stingray' || e.id === 'elite_solar_drake') {
                     if (!e.shootTimer) e.shootTimer = 2 + Math.random() * 2;
                     e.shootTimer -= dt;
                     if (e.shootTimer <= 0 && dist < 500) {

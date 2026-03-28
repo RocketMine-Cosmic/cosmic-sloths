@@ -88,6 +88,8 @@ export const ENEMIES = [
   { id: 't2_eye', name: 'Wandering Eye', hp: 20, speed: 1.6, damage: 12, color: '#ffffff', radius: 14, xp: 2, emoji: '👁️', tier: 2 },
   { id: 't2_flare', name: 'Ember Flare', hp: 18, speed: 2.4, damage: 15, color: '#ff4500', radius: 14, xp: 2, emoji: '☄️', tier: 2 },
   { id: 't2_scout', name: 'Recon Fish', hp: 22, speed: 2.2, damage: 11, color: '#c0c0c0', radius: 16, xp: 2, emoji: '🛸', tier: 2 },
+  { id: 't2_sniper', name: 'Void Sniper', hp: 14, speed: 1.0, damage: 8, color: '#00ffcc', radius: 12, xp: 2, emoji: '🎯', tier: 2, isRanged: true },
+  { id: 't2_tank', name: 'Ironclad Beetle', hp: 50, speed: 0.6, damage: 15, color: '#888888', radius: 20, xp: 3, emoji: '🪲', tier: 2, isTank: true },
 
   // Tier 3
   { id: 't3_turret', name: 'Auto Turret', hp: 35, speed: 0.6, damage: 18, color: '#aaaaaa', radius: 16, xp: 3, emoji: '🔫', tier: 3 },
@@ -102,6 +104,8 @@ export const ENEMIES = [
   { id: 't4_entity', name: 'Glitch Entity', hp: 38, speed: 2.3, damage: 17, color: '#00fa9a', radius: 14, xp: 4, emoji: '👾', tier: 4 },
   { id: 't4_elemental', name: 'Fire Elemental', hp: 50, speed: 1.3, damage: 22, color: '#ff0000', radius: 18, xp: 4, emoji: '🔥', tier: 4 },
   { id: 't4_spawn', name: 'Dark Spawn', hp: 55, speed: 1.8, damage: 20, color: '#483d8b', radius: 15, xp: 4, emoji: '🌀', tier: 4 },
+  { id: 't4_artillery', name: 'Plasma Artillery', hp: 35, speed: 0.8, damage: 15, color: '#ff00ff', radius: 16, xp: 4, emoji: '☄️', tier: 4, isRanged: true },
+  { id: 't4_juggernaut', name: 'Cosmic Juggernaut', hp: 120, speed: 0.5, damage: 25, color: '#555555', radius: 25, xp: 5, emoji: '🛡️', tier: 4, isTank: true },
 
   // Tier 5
   { id: 't5_brute', name: 'Asteroid Brute', hp: 70, speed: 0.8, damage: 25, color: '#8b7355', radius: 20, xp: 5, emoji: '🦍', tier: 5 },
@@ -116,6 +120,8 @@ export const ENEMIES = [
   { id: 't6_slug', name: 'Gravity Slug', hp: 130, speed: 1.0, damage: 38, color: '#483d8b', radius: 22, xp: 6, emoji: '🐌', tier: 6 },
   { id: 't6_wasp', name: 'Nebula Wasp', hp: 90, speed: 2.5, damage: 30, color: '#00ff00', radius: 18, xp: 6, emoji: '🐝', tier: 6 },
   { id: 't6_ray', name: 'Cosmic Ray', hp: 100, speed: 2.2, damage: 28, color: '#ff1493', radius: 20, xp: 6, emoji: '🪼', tier: 6 },
+  { id: 't6_launcher', name: 'Missile Silo', hp: 80, speed: 0.4, damage: 40, color: '#ffaa00', radius: 22, xp: 6, emoji: '🚀', tier: 6, isRanged: true },
+  { id: 't6_goliath', name: 'Void Goliath', hp: 300, speed: 0.4, damage: 45, color: '#222222', radius: 35, xp: 8, emoji: '🧱', tier: 6, isTank: true },
 
   // Tier 7
   { id: 't7_behemoth', name: 'Iron Behemoth', hp: 160, speed: 0.7, damage: 45, color: '#2f4f4f', radius: 26, xp: 7, emoji: '🦏', tier: 7 },

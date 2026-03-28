@@ -450,6 +450,54 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
+        case 't2_sniper':
+        case 't4_artillery':
+        case 't6_launcher':
+            // Ranged enemy: sleek body with a long barrel
+            ctx.fillStyle = e.color;
+            ctx.beginPath(); ctx.ellipse(0, 0, e.radius * 0.8, e.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+            // Barrel
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(e.radius * 0.5, -3, e.radius * 1.2, 6);
+            // Scope dot
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath(); ctx.arc(e.radius * 1.6, 0, 3 + Math.sin(t * 4) * 1, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 8;
+            ctx.beginPath(); ctx.arc(e.radius * 1.6, 0, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+            break;
+
+        case 't2_tank':
+        case 't4_juggernaut':
+        case 't6_goliath':
+            // Tank enemy: heavy armored shell
+            ctx.fillStyle = '#333333';
+            ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill();
+            // Armor plates
+            ctx.strokeStyle = '#666666';
+            ctx.lineWidth = 4;
+            for (let i = 0; i < 4; i++) {
+                const a = (Math.PI * 2 / 4) * i + t * 0.2;
+                ctx.beginPath();
+                ctx.arc(0, 0, e.radius * 0.85, a, a + Math.PI * 0.4);
+                ctx.stroke();
+            }
+            // Glowing core
+            ctx.fillStyle = `rgba(255, 50, 50, ${0.6 + pulse * 0.3})`;
+            ctx.beginPath(); ctx.arc(0, 0, e.radius * 0.3, 0, Math.PI * 2); ctx.fill();
+            // Spikes
+            ctx.fillStyle = '#888888';
+            for (let i = 0; i < 6; i++) {
+                const a = (Math.PI * 2 / 6) * i;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(a) * e.radius, Math.sin(a) * e.radius);
+                ctx.lineTo(Math.cos(a) * (e.radius + 6), Math.sin(a) * (e.radius + 6));
+                ctx.lineTo(Math.cos(a + 0.15) * e.radius, Math.sin(a + 0.15) * e.radius);
+                ctx.fill();
+            }
+            break;
+
         default:
             // Fallback circle
             ctx.fillStyle = e.color;
