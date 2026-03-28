@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Pencil, Check, X } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
+import { ThemeManager } from '../game/ThemeManager';
 import SettingsModal from '../components/game/SettingsModal';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
@@ -12,6 +13,13 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState('');
     const [showSettings, setShowSettings] = useState(false);
+    const [theme, setTheme] = useState(ThemeManager.getTheme());
+
+    useEffect(() => {
+        const onThemeChange = () => setTheme(ThemeManager.getTheme());
+        window.addEventListener('themechange', onThemeChange);
+        return () => window.removeEventListener('themechange', onThemeChange);
+    }, []);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -41,8 +49,8 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
 
     return (
         <div 
-            className={`${isCarousel ? 'min-h-[calc(100vh-80px)]' : 'min-h-screen'} w-full bg-slate-950 flex flex-col items-center justify-end pb-20 md:pb-28 relative overflow-hidden font-mono bg-no-repeat`}
-            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: '100% 100%', backgroundPosition: 'center top' }}
+            className={`${isCarousel ? 'min-h-[calc(100vh-80px)]' : 'min-h-screen'} w-full flex flex-col items-center justify-end pb-20 md:pb-28 relative overflow-hidden font-mono bg-no-repeat`}
+            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/8a82d41fd_Gemini_Generated_Image_n8cz52n8cz52n8cz.png')`, backgroundSize: '100% 100%', backgroundPosition: 'center top', backgroundColor: theme.colors.bg }}
         >
 
 
@@ -56,19 +64,22 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
-                    className="w-full bg-purple-600/90 backdrop-blur-sm hover:bg-purple-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)] border border-purple-400/30"
+                    style={{ boxShadow: `0 0 15px ${theme.colors.primary}66`, borderColor: `${theme.colors.primary}4d`, backgroundColor: `${theme.colors.primary}cc` }}
+                    className="w-full backdrop-blur-sm text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 border"
                 >
                     INFO
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/achievements'); }}
-                    className="w-full bg-emerald-600/90 backdrop-blur-sm hover:bg-emerald-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.4)] border border-emerald-400/30"
+                    style={{ boxShadow: `0 0 15px ${theme.colors.primary}66`, borderColor: `${theme.colors.primary}4d`, backgroundColor: `${theme.colors.primary}cc` }}
+                    className="w-full backdrop-blur-sm text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 border"
                 >
                     ACHIEVEMENTS
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/credits'); }}
-                    className="w-full bg-indigo-600/90 backdrop-blur-sm hover:bg-indigo-500 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(79,70,229,0.4)] border border-indigo-400/30"
+                    style={{ boxShadow: `0 0 15px ${theme.colors.primary}66`, borderColor: `${theme.colors.primary}4d`, backgroundColor: `${theme.colors.primary}cc` }}
+                    className="w-full backdrop-blur-sm text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 border"
                 >
                     CREDITS
                 </button>

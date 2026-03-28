@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SoundManager } from '../../game/SoundManager';
+import { ThemeManager, THEMES } from '../../game/ThemeManager';
 import { X, Volume2, VolumeX } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
     const [bgmVol, setBgmVol] = useState(SoundManager.bgm.volume);
     const [sfxVol, setSfxVol] = useState(SoundManager.sfxVolume);
     const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
+    const [selectedTheme, setSelectedTheme] = useState(ThemeManager.getCurrentId());
+
+    const handleThemeChange = (themeId) => {
+        setSelectedTheme(themeId);
+        ThemeManager.setTheme(themeId);
+    };
 
     const handleBgmChange = (e) => {
         const val = parseFloat(e.target.value);
@@ -91,9 +98,29 @@ export default function SettingsModal({ onClose }) {
                     </div>
                 </div>
                 
+                <div>
+                    <div className="font-bold text-slate-300 mb-3">Interface Theme</div>
+                    <div className="grid grid-cols-3 gap-2">
+                        {THEMES.map(theme => (
+                            <button
+                                key={theme.id}
+                                onClick={() => handleThemeChange(theme.id)}
+                                className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all text-xs font-bold ${
+                                    selectedTheme === theme.id
+                                        ? 'border-white bg-slate-700 text-white'
+                                        : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500'
+                                }`}
+                            >
+                                <span className="text-xl">{theme.emoji}</span>
+                                <span>{theme.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <button
                     onClick={onClose}
-                    className="w-full mt-8 bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-3 rounded-lg font-bold text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                    className="w-full mt-4 bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-3 rounded-lg font-bold text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                 >
                     Done
                 </button>
