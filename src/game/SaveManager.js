@@ -8,7 +8,8 @@ export const SaveManager = {
 
     const defaultSave = {
       gold: 0,
-      cosmicTokens: 0,
+      cosmicTokens: 20000,
+      receivedTestTokens: true,
       rerollTokens: 0,
       unlockedCharacters: [...defaultChars],
       foundCharacters: [],
@@ -62,6 +63,12 @@ export const SaveManager = {
         if (parsed.totalKills === undefined) parsed.totalKills = 0;
         if (parsed.totalGoldEarned === undefined) parsed.totalGoldEarned = 0;
         if (parsed.maxLevelReached === undefined) parsed.maxLevelReached = 0;
+        
+        if (!parsed.receivedTestTokens) {
+            parsed.cosmicTokens = (parsed.cosmicTokens || 0) + 20000;
+            parsed.receivedTestTokens = true;
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+        }
         
         return { ...defaultSave, ...parsed };
       }
