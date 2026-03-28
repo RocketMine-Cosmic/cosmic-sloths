@@ -75,9 +75,9 @@ export default function Upgrades({ isCarousel }) {
     const renderArmory = () => {
         const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
         const upgradeTypes = [
-            { id: 'damage', name: 'Damage', icon: Zap, desc: '+10% per level' },
-            { id: 'area', name: 'Area', icon: Sparkles, desc: '+10% per level' },
-            { id: 'cooldown', name: 'Cooldown', icon: Timer, desc: '-5% per level' }
+            { id: 'damage', name: 'Plasma Output', icon: Zap, desc: '+10% per level' },
+            { id: 'area', name: 'Blast Radius', icon: Sparkles, desc: '+10% per level' },
+            { id: 'cooldown', name: 'Cooling Rate', icon: Timer, desc: '-5% per level' }
         ];
 
         return (

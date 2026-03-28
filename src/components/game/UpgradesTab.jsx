@@ -10,13 +10,13 @@ const UPGRADE_TYPES = [
 ];
 
 const STATS = [
-    { id: 'damage', name: 'Damage', icon: Zap, perm: '+2%', week: '+5%', season: '+10%' },
-    { id: 'health', name: 'Max HP', icon: Heart, perm: '+5', week: '+10', season: '+20' },
-    { id: 'speed', name: 'Speed', icon: Coffee, perm: '+2%', week: '+5%', season: '+10%' },
-    { id: 'magnet', name: 'Pickup', icon: Magnet, perm: '+5', week: '+15', season: '+30' },
-    { id: 'regen', name: 'Regen', icon: Shield, perm: '+0.1', week: '+0.2', season: '+0.5' },
-    { id: 'cooldown', name: 'Cooldown', icon: Timer, perm: '-2%', week: '-5%', season: '-10%' },
-    { id: 'luck', name: 'Luck', icon: Sparkles, perm: '+1', week: '+2', season: '+3' }
+    { id: 'damage', name: 'Plasma Output', icon: Zap, perm: '+2%', week: '+5%', season: '+10%' },
+    { id: 'health', name: 'Hull Integrity', icon: Heart, perm: '+5', week: '+10', season: '+20' },
+    { id: 'speed', name: 'Thruster Speed', icon: Coffee, perm: '+2%', week: '+5%', season: '+10%' },
+    { id: 'magnet', name: 'Tractor Range', icon: Magnet, perm: '+5', week: '+15', season: '+30' },
+    { id: 'regen', name: 'Nano-Repair', icon: Shield, perm: '+0.1', week: '+0.2', season: '+0.5' },
+    { id: 'cooldown', name: 'System Cooling', icon: Timer, perm: '-2%', week: '-5%', season: '-10%' },
+    { id: 'luck', name: 'Cosmic Fortune', icon: Sparkles, perm: '+1', week: '+2', season: '+3' }
 ];
 
 const COSMETICS = [

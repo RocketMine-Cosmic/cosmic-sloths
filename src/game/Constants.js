@@ -32,15 +32,15 @@ export const ARENAS = [
 
 export const WEAPONS = {
   napBeam: { id: 'napBeam', name: 'Cosmic Nap Beam', type: 'weapon', desc: 'Fires a piercing beam.', masteryDesc: 'MASTERY: Beam chains to nearby enemies. (Blue Beam)', baseDamage: 10, baseCooldown: 60, baseArea: 1 },
-  vineWhip: { id: 'vineWhip', name: 'Vine Whip', type: 'weapon', desc: 'Swipes nearby enemies.', masteryDesc: 'MASTERY: Heals player for 5% of damage dealt. (Red Whip)', baseDamage: 15, baseCooldown: 45, baseArea: 1 },
-  slothSwarm: { id: 'slothSwarm', name: 'Sloth Swarm', type: 'weapon', desc: 'Orbiting baby sloths.', masteryDesc: 'MASTERY: Sloths move faster and shoot lasers. (Red Sloths)', baseDamage: 5, baseCooldown: 120, baseArea: 1 },
+  vineWhip: { id: 'vineWhip', name: 'Plasma Whip', type: 'weapon', desc: 'Swipes nearby enemies.', masteryDesc: 'MASTERY: Heals player for 5% of damage dealt. (Red Whip)', baseDamage: 15, baseCooldown: 45, baseArea: 1 },
+  slothSwarm: { id: 'slothSwarm', name: 'Orbital Drones', type: 'weapon', desc: 'Orbiting defense drones.', masteryDesc: 'MASTERY: Drones move faster and shoot lasers. (Red Drones)', baseDamage: 5, baseCooldown: 120, baseArea: 1 },
   napalm: { id: 'napalm', name: 'Zero-G Napalm', type: 'weapon', desc: 'Leaves burning pools.', masteryDesc: 'MASTERY: Blue fire that slows enemies by 50%.', baseDamage: 3, baseCooldown: 90, baseArea: 1 },
   novaPulse: { id: 'novaPulse', name: 'Nova Pulse', type: 'weapon', desc: 'A massive expanding energy blast.', masteryDesc: 'MASTERY: Triggers a second echo pulse. (Purple Blast)', baseDamage: 25, baseCooldown: 180, baseArea: 1 },
   shieldBubble: { id: 'shieldBubble', name: 'Shield Bubble', type: 'weapon', desc: 'Pushes enemies away and damages them.', masteryDesc: 'MASTERY: Fires retaliatory lasers at enemies. (Golden Shield)', baseDamage: 10, baseCooldown: 240, baseArea: 1 },
   // Synergies
   burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 8, baseCooldown: 180, baseArea: 1.5, isSynergy: true },
   laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 30, baseCooldown: 150, baseArea: 1.2, isSynergy: true },
-  thornySwarm: { id: 'thornySwarm', name: 'Thorny Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting sloths armed with vine whips.', baseDamage: 12, baseCooldown: 90, baseArea: 1.5, isSynergy: true },
+  thornySwarm: { id: 'thornySwarm', name: 'Plasma Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting drones armed with plasma whips.', baseDamage: 12, baseCooldown: 90, baseArea: 1.5, isSynergy: true },
 };
 
 export const SYNERGIES = [
@@ -50,25 +50,25 @@ export const SYNERGIES = [
 ];
 
 export const UPGRADES = [
-  { id: 'dmg_up', name: 'Muscle Mass', desc: '+10% Damage', type: 'passive', stat: 'damageMult', value: 0.1 },
-  { id: 'spd_up', name: 'Morning Coffee', desc: '+10% Move Speed', type: 'passive', stat: 'speedMult', value: 0.1 },
-  { id: 'hp_up', name: 'Thick Fur', desc: '+20 Max HP', type: 'passive', stat: 'maxHp', value: 20 },
-  { id: 'area_up', name: 'Wide Reach', desc: '+10% Area of Effect', type: 'passive', stat: 'areaMult', value: 0.1 },
-  { id: 'cd_down', name: 'Quick Naps', desc: '-5% Cooldowns', type: 'passive', stat: 'cooldownMult', value: -0.05 },
-  { id: 'magnet_up', name: 'Gravity Boots', desc: '+25% Pickup Range', type: 'passive', stat: 'magnetRange', value: 25 },
-  { id: 'regen_up', name: 'Photosynthesis', desc: '+0.5 HP/sec', type: 'passive', stat: 'regen', value: 0.5 },
-  { id: 'armor_up', name: 'Titanium Helmet', desc: '+2 Armor', type: 'passive', stat: 'armor', value: 2 },
-  { id: 'gold_up', name: 'Bounty Hunter', desc: '+20% Gold Drops', type: 'passive', stat: 'goldMult', value: 0.2 },
-  { id: 'proj_spd', name: 'Thrusters', desc: '+15% Projectile Speed', type: 'passive', stat: 'projSpeedMult', value: 0.15 },
-  { id: 'xp_up', name: 'Fast Learner', desc: '+15% XP Gain', type: 'passive', stat: 'xpMult', value: 0.15 },
-  { id: 'dmg_up2', name: 'Protein Shake', desc: '+15% Damage', type: 'passive', stat: 'damageMult', value: 0.15 },
-  { id: 'spd_up2', name: 'Energy Drink', desc: '+15% Move Speed', type: 'passive', stat: 'speedMult', value: 0.15 },
-  { id: 'area_up2', name: 'Long Arms', desc: '+15% Area of Effect', type: 'passive', stat: 'areaMult', value: 0.15 },
-  { id: 'cd_down2', name: 'Alarm Clock', desc: '-10% Cooldowns', type: 'passive', stat: 'cooldownMult', value: -0.1 },
-  { id: 'magnet_up2', name: 'Black Hole Pocket', desc: '+50% Pickup Range', type: 'passive', stat: 'magnetRange', value: 50 },
+  { id: 'dmg_up', name: 'Plasma Core', desc: '+10% Damage', type: 'passive', stat: 'damageMult', value: 0.1 },
+  { id: 'spd_up', name: 'Hyperdrive Fuel', desc: '+10% Move Speed', type: 'passive', stat: 'speedMult', value: 0.1 },
+  { id: 'hp_up', name: 'Exosuit Plating', desc: '+20 Max HP', type: 'passive', stat: 'maxHp', value: 20 },
+  { id: 'area_up', name: 'Spatial Expander', desc: '+10% Area of Effect', type: 'passive', stat: 'areaMult', value: 0.1 },
+  { id: 'cd_down', name: 'Quantum Accelerator', desc: '-5% Cooldowns', type: 'passive', stat: 'cooldownMult', value: -0.05 },
+  { id: 'magnet_up', name: 'Tractor Beam', desc: '+25% Pickup Range', type: 'passive', stat: 'magnetRange', value: 25 },
+  { id: 'regen_up', name: 'Nano-Repair Bots', desc: '+0.5 HP/sec', type: 'passive', stat: 'regen', value: 0.5 },
+  { id: 'armor_up', name: 'Deflector Shield', desc: '+2 Armor', type: 'passive', stat: 'armor', value: 2 },
+  { id: 'gold_up', name: 'Asteroid Miner', desc: '+20% Gold Drops', type: 'passive', stat: 'goldMult', value: 0.2 },
+  { id: 'proj_spd', name: 'Ion Thrusters', desc: '+15% Projectile Speed', type: 'passive', stat: 'projSpeedMult', value: 0.15 },
+  { id: 'xp_up', name: 'Neural Implant', desc: '+15% XP Gain', type: 'passive', stat: 'xpMult', value: 0.15 },
+  { id: 'dmg_up2', name: 'Dark Matter Core', desc: '+15% Damage', type: 'passive', stat: 'damageMult', value: 0.15 },
+  { id: 'spd_up2', name: 'Warp Drive', desc: '+15% Move Speed', type: 'passive', stat: 'speedMult', value: 0.15 },
+  { id: 'area_up2', name: 'Gravitational Anomaly', desc: '+15% Area of Effect', type: 'passive', stat: 'areaMult', value: 0.15 },
+  { id: 'cd_down2', name: 'Time Dilation Field', desc: '-10% Cooldowns', type: 'passive', stat: 'cooldownMult', value: -0.1 },
+  { id: 'magnet_up2', name: 'Event Horizon', desc: '+50% Pickup Range', type: 'passive', stat: 'magnetRange', value: 50 },
   { id: 'w_napBeam', name: 'Cosmic Nap Beam', desc: 'Fires a piercing beam.', type: 'weapon', weaponId: 'napBeam' },
-  { id: 'w_vineWhip', name: 'Vine Whip', desc: 'Swipes nearby enemies.', type: 'weapon', weaponId: 'vineWhip' },
-  { id: 'w_slothSwarm', name: 'Sloth Swarm', desc: 'Orbiting baby sloths.', type: 'weapon', weaponId: 'slothSwarm' },
+  { id: 'w_vineWhip', name: 'Plasma Whip', desc: 'Swipes nearby enemies.', type: 'weapon', weaponId: 'vineWhip' },
+  { id: 'w_slothSwarm', name: 'Orbital Drones', desc: 'Orbiting defense drones.', type: 'weapon', weaponId: 'slothSwarm' },
   { id: 'w_napalm', name: 'Zero-G Napalm', desc: 'Leaves burning pools.', type: 'weapon', weaponId: 'napalm' },
   { id: 'w_novaPulse', name: 'Nova Pulse', desc: 'A massive expanding energy blast.', type: 'weapon', weaponId: 'novaPulse' },
   { id: 'w_shieldBubble', name: 'Shield Bubble', desc: 'Pushes enemies away and damages them.', type: 'weapon', weaponId: 'shieldBubble' },
@@ -160,53 +160,53 @@ export const ENEMIES = [
 
 export const CHARACTER_TALENTS = {
   neobyte: [
-    { id: 'neo_1', name: 'Commander Aura', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
-    { id: 'neo_2', name: 'Tactical Reload', desc: '-10% Cooldown', cost: 2500, stat: 'cooldownMult', value: -0.1 },
-    { id: 'neo_3', name: 'Orbital Strike', desc: '+25% Damage', cost: 5000, stat: 'damageMult', value: 0.25 }
+    { id: 'neo_1', name: 'Fleet Command', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
+    { id: 'neo_2', name: 'Rapid Ordnance', desc: '-10% Cooldown', cost: 2500, stat: 'cooldownMult', value: -0.1 },
+    { id: 'neo_3', name: 'Orbital Bombardment', desc: '+25% Damage', cost: 5000, stat: 'damageMult', value: 0.25 }
   ],
   pandypaws: [
-    { id: 'pan_1', name: 'Extra Plating', desc: '+3 Armor', cost: 1000, stat: 'armor', value: 3 },
-    { id: 'pan_2', name: 'Bear Hug', desc: '+20% Area', cost: 2500, stat: 'areaMult', value: 0.2 },
-    { id: 'pan_3', name: 'Juggernaut', desc: '+50 Max HP', cost: 5000, stat: 'maxHp', value: 50 }
+    { id: 'pan_1', name: 'Titanium Alloy', desc: '+3 Armor', cost: 1000, stat: 'armor', value: 3 },
+    { id: 'pan_2', name: 'Gravity Crush', desc: '+20% Area', cost: 2500, stat: 'areaMult', value: 0.2 },
+    { id: 'pan_3', name: 'Dreadnought Chassis', desc: '+50 Max HP', cost: 5000, stat: 'maxHp', value: 50 }
   ],
   novabyte: [
-    { id: 'nova_1', name: 'Blast Shield', desc: '+20 Max HP', cost: 1000, stat: 'maxHp', value: 20 },
-    { id: 'nova_2', name: 'Volatile Mix', desc: '+15% Damage', cost: 2500, stat: 'damageMult', value: 0.15 },
-    { id: 'nova_3', name: 'Chain Reaction', desc: '+30% Area', cost: 5000, stat: 'areaMult', value: 0.3 }
+    { id: 'nova_1', name: 'Reactive Armor', desc: '+20 Max HP', cost: 1000, stat: 'maxHp', value: 20 },
+    { id: 'nova_2', name: 'Antimatter Charges', desc: '+15% Damage', cost: 2500, stat: 'damageMult', value: 0.15 },
+    { id: 'nova_3', name: 'Supernova Detonation', desc: '+30% Area', cost: 5000, stat: 'areaMult', value: 0.3 }
   ],
   glitch: [
-    { id: 'gli_1', name: 'Overclock', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
-    { id: 'gli_2', name: 'Critical Error', desc: '+1 Luck', cost: 2500, stat: 'luck', value: 1 },
-    { id: 'gli_3', name: 'System Wipe', desc: '+30% Damage', cost: 5000, stat: 'damageMult', value: 0.3 }
+    { id: 'gli_1', name: 'Neural Overclock', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
+    { id: 'gli_2', name: 'Quantum Probability', desc: '+1 Luck', cost: 2500, stat: 'luck', value: 1 },
+    { id: 'gli_3', name: 'Total Annihilation', desc: '+30% Damage', cost: 5000, stat: 'damageMult', value: 0.3 }
   ],
   holodrift: [
-    { id: 'holo_1', name: 'Data Mining', desc: '+10% XP', cost: 1000, stat: 'xpMult', value: 0.1 },
-    { id: 'holo_2', name: 'Wider Net', desc: '+30 Magnet', cost: 2500, stat: 'magnetRange', value: 30 },
-    { id: 'holo_3', name: 'Holographic Decoy', desc: '+20% Speed', cost: 5000, stat: 'speedMult', value: 0.2 }
+    { id: 'holo_1', name: 'Salvage Drones', desc: '+10% XP', cost: 1000, stat: 'xpMult', value: 0.1 },
+    { id: 'holo_2', name: 'Magnetic Field Emitter', desc: '+30 Magnet', cost: 2500, stat: 'magnetRange', value: 30 },
+    { id: 'holo_3', name: 'Light-Bending Mirage', desc: '+20% Speed', cost: 5000, stat: 'speedMult', value: 0.2 }
   ],
   codebreaker: [
-    { id: 'code_1', name: 'Bypass', desc: '-5% Cooldown', cost: 1000, stat: 'cooldownMult', value: -0.05 },
-    { id: 'code_2', name: 'Root Access', desc: '+15% Gold', cost: 2500, stat: 'goldMult', value: 0.15 },
-    { id: 'code_3', name: 'God Mode', desc: '+2 Luck', cost: 5000, stat: 'luck', value: 2 }
+    { id: 'code_1', name: 'Subroutine Bypass', desc: '-5% Cooldown', cost: 1000, stat: 'cooldownMult', value: -0.05 },
+    { id: 'code_2', name: 'Crypto Mining', desc: '+15% Gold', cost: 2500, stat: 'goldMult', value: 0.15 },
+    { id: 'code_3', name: 'Omniscience Protocol', desc: '+2 Luck', cost: 5000, stat: 'luck', value: 2 }
   ],
   dataphantom: [
-    { id: 'data_1', name: 'Ghost Protocol', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
-    { id: 'data_2', name: 'Firewall', desc: '+2 Armor', cost: 2500, stat: 'armor', value: 2 },
-    { id: 'data_3', name: 'DDoS', desc: '+20% Proj Speed', cost: 5000, stat: 'projSpeedMult', value: 0.2 }
+    { id: 'data_1', name: 'Phase Shift', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
+    { id: 'data_2', name: 'Energy Shielding', desc: '+2 Armor', cost: 2500, stat: 'armor', value: 2 },
+    { id: 'data_3', name: 'Particle Accelerator', desc: '+20% Proj Speed', cost: 5000, stat: 'projSpeedMult', value: 0.2 }
   ],
   neonvortex: [
-    { id: 'neon_1', name: 'Focus', desc: '+10% Proj Speed', cost: 1000, stat: 'projSpeedMult', value: 0.1 },
-    { id: 'neon_2', name: 'Dead Eye', desc: '+20% Damage', cost: 2500, stat: 'damageMult', value: 0.2 },
-    { id: 'neon_3', name: 'Singularity', desc: '+30% Area', cost: 5000, stat: 'areaMult', value: 0.3 }
+    { id: 'neon_1', name: 'Targeting Optics', desc: '+10% Proj Speed', cost: 1000, stat: 'projSpeedMult', value: 0.1 },
+    { id: 'neon_2', name: 'Railgun Calibration', desc: '+20% Damage', cost: 2500, stat: 'damageMult', value: 0.2 },
+    { id: 'neon_3', name: 'Micro-Blackhole', desc: '+30% Area', cost: 5000, stat: 'areaMult', value: 0.3 }
   ],
   synthbeats: [
-    { id: 'syn_1', name: 'Crowd Control', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
-    { id: 'syn_2', name: 'Merch Sales', desc: '+20% Gold', cost: 2500, stat: 'goldMult', value: 0.2 },
-    { id: 'syn_3', name: 'Encore', desc: '-15% Cooldown', cost: 5000, stat: 'cooldownMult', value: -0.15 }
+    { id: 'syn_1', name: 'Sonic Pacifier', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
+    { id: 'syn_2', name: 'Intergalactic Trade', desc: '+20% Gold', cost: 2500, stat: 'goldMult', value: 0.2 },
+    { id: 'syn_3', name: 'Temporal Rewind', desc: '-15% Cooldown', cost: 5000, stat: 'cooldownMult', value: -0.15 }
   ],
   skybyte: [
-    { id: 'sky_1', name: 'Aerodynamics', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
-    { id: 'sky_2', name: 'Evasive Maneuvers', desc: '+2 Armor', cost: 2500, stat: 'armor', value: 2 },
-    { id: 'sky_3', name: 'Carpet Bomb', desc: '+25% Area', cost: 5000, stat: 'areaMult', value: 0.25 }
+    { id: 'sky_1', name: 'Slipstream Thrusters', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
+    { id: 'sky_2', name: 'Barrel Roll', desc: '+2 Armor', cost: 2500, stat: 'armor', value: 2 },
+    { id: 'sky_3', name: 'Meteor Shower', desc: '+25% Area', cost: 5000, stat: 'areaMult', value: 0.25 }
   ]
 };
