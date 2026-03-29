@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, CHARACTER_TALENTS, WEAPONS } from '../game/Constants';
-import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet } from 'lucide-react';
+import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
@@ -292,21 +292,41 @@ export default function Upgrades({ isCarousel }) {
         const cdLevel = getWeaponUpgrade(weapon.id, 'cooldown');
         const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
 
+        const currentIndex = baseWeapons.findIndex(w => w.id === selectedWeapon);
+        const handlePrevWeapon = () => {
+            SoundManager.playUIClick();
+            const newIndex = currentIndex > 0 ? currentIndex - 1 : baseWeapons.length - 1;
+            setSelectedWeapon(baseWeapons[newIndex].id);
+        };
+        const handleNextWeapon = () => {
+            SoundManager.playUIClick();
+            const newIndex = currentIndex < baseWeapons.length - 1 ? currentIndex + 1 : 0;
+            setSelectedWeapon(baseWeapons[newIndex].id);
+        };
+
         return (
             <div className="space-y-4 md:space-y-6">
                 <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Armory</h2>
-                <div className="flex items-center gap-2 mb-4 md:mb-6 overflow-x-auto pb-2">
-                    {baseWeapons.map(w => (
-                        <button
-                            key={w.id}
-                            onClick={() => { SoundManager.playUIClick(); setSelectedWeapon(w.id); }}
-                            className={`shrink-0 px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap ${
-                                selectedWeapon === w.id ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                            }`}
-                        >
-                            {w.name}
-                        </button>
-                    ))}
+                
+                <div className="flex items-center justify-between bg-slate-800 p-2 rounded-xl mb-4 md:mb-6 border border-slate-700">
+                    <button 
+                        onClick={handlePrevWeapon}
+                        className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <div className="text-center font-bold text-cyan-400 text-lg">
+                        {weapon.name}
+                        <div className="text-xs text-slate-500 font-normal mt-0.5">
+                            {currentIndex + 1} / {baseWeapons.length}
+                        </div>
+                    </div>
+                    <button 
+                        onClick={handleNextWeapon}
+                        className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                    >
+                        <ChevronRight className="w-6 h-6" />
+                    </button>
                 </div>
                 
                 <div className={`bg-slate-800 p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
