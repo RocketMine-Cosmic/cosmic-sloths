@@ -6,6 +6,34 @@ export function drawEnemy(ctx, e, time, playerX) {
         ctx.scale(-1, 1);
     }
 
+    if (e.spriteImage && e.spriteImage.complete && e.spriteImage.naturalWidth > 0) {
+        const SPRITE_FRAMES = e.frameCount || 16;
+        const speed = e.animationSpeed || 0.15;
+        const frame = Math.floor(time / speed) % SPRITE_FRAMES;
+        
+        const col = frame % 4;
+        const row = Math.floor(frame / 4);
+        
+        const frameWidth = e.spriteImage.width / 4;
+        const frameHeight = e.spriteImage.height / 4;
+        
+        const drawSize = e.radius * 3.5;
+        const bob = Math.sin(time * 3 + e.id.length) * (e.radius * 0.1);
+        
+        ctx.shadowColor = e.color || '#ff00ff';
+        ctx.shadowBlur = 15;
+        
+        ctx.drawImage(
+            e.spriteImage,
+            col * frameWidth, row * frameHeight, frameWidth, frameHeight,
+            -drawSize/2, -drawSize/2 + bob, drawSize, drawSize
+        );
+        
+        ctx.shadowBlur = 0;
+        ctx.restore();
+        return;
+    }
+
     const t = time * 5 + e.x * 0.01;
     const pulse = Math.sin(t) * 0.1 + 1;
     const wiggle = Math.sin(t * 2) * 0.1;

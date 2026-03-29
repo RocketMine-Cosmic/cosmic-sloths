@@ -74,88 +74,73 @@ export const UPGRADES = [
   { id: 'w_shieldBubble', name: 'Shield Bubble', desc: 'Pushes enemies away and damages them.', type: 'weapon', weaponId: 'shieldBubble' },
 ];
 
+const loadSprite = (filename) => {
+    if (typeof window !== 'undefined') {
+        const img = new Image();
+        img.src = `https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/${filename}`;
+        return img;
+    }
+    return null;
+};
+
 export const ENEMIES = [
   // Tier 1
-  { id: 't1_drone', name: 'Scrap Drone', hp: 8, speed: 2.2, damage: 5, color: '#e0ffff', radius: 12, xp: 1, emoji: '🛸', tier: 1 },
-  { id: 't1_mite', name: 'Dust Mite', hp: 10, speed: 2.0, damage: 6, color: '#8b7355', radius: 10, xp: 1, emoji: '🪨', tier: 1 },
-  { id: 't1_tick', name: 'Space Tick', hp: 12, speed: 2.5, damage: 8, color: '#dddddd', radius: 10, xp: 1, emoji: '🕷️', tier: 1 },
-  { id: 't1_bat', name: 'Cave Bat', hp: 10, speed: 2.6, damage: 7, color: '#ff00ff', radius: 12, xp: 1, emoji: '🦇', tier: 1 },
-  { id: 't1_parasite', name: 'Hull Parasite', hp: 14, speed: 1.8, damage: 8, color: '#ff1493', radius: 12, xp: 1, emoji: '🦟', tier: 1 },
+  { id: 't1_void_glow', name: 'Void Glow Orb', hp: 10, speed: 2.2, damage: 6, color: '#a855f7', radius: 12, xp: 1, tier: 1, spriteImage: loadSprite('ffb4f7068_void_glow_orb_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't1_nebula_jelly', name: 'Nebula Jelly', hp: 8, speed: 2.0, damage: 5, color: '#06b6d4', radius: 12, xp: 1, tier: 1, spriteImage: loadSprite('eb5805fe1_nebula_jelly_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't1_probe', name: 'Mini Probe Drone', hp: 12, speed: 2.5, damage: 8, color: '#84cc16', radius: 10, xp: 1, tier: 1, spriteImage: loadSprite('45cfb9820_mini_probe_drone_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't1_floater', name: 'Crystal Floater', hp: 14, speed: 1.8, damage: 7, color: '#ec4899', radius: 14, xp: 1, tier: 1, spriteImage: loadSprite('a70ff7ac4_crystal_floater_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 2
-  { id: 't2_cyborg', name: 'Broken Cyborg', hp: 18, speed: 1.5, damage: 10, color: '#ff00ff', radius: 14, xp: 2, emoji: '🤖', tier: 2 },
-  { id: 't2_jelly', name: 'Plasma Jelly', hp: 16, speed: 1.2, damage: 9, color: '#00ffff', radius: 14, xp: 2, emoji: '🦑', tier: 2 },
-  { id: 't2_eye', name: 'Wandering Eye', hp: 20, speed: 1.6, damage: 12, color: '#ffffff', radius: 14, xp: 2, emoji: '👁️', tier: 2 },
-  { id: 't2_flare', name: 'Ember Flare', hp: 18, speed: 2.4, damage: 15, color: '#ff4500', radius: 14, xp: 2, emoji: '☄️', tier: 2 },
-  { id: 't2_scout', name: 'Recon Fish', hp: 22, speed: 2.2, damage: 11, color: '#c0c0c0', radius: 16, xp: 2, emoji: '🛸', tier: 2 },
-  { id: 't2_sniper', name: 'Void Sniper', hp: 14, speed: 1.0, damage: 8, color: '#00ffcc', radius: 12, xp: 2, emoji: '🎯', tier: 2, isRanged: true },
-  { id: 't2_tank', name: 'Ironclad Beetle', hp: 50, speed: 0.6, damage: 15, color: '#888888', radius: 20, xp: 3, emoji: '🪲', tier: 2, isTank: true },
+  { id: 't2_serpent', name: 'Plasma Serpent', hp: 18, speed: 2.4, damage: 12, color: '#f97316', radius: 14, xp: 2, tier: 2, spriteImage: loadSprite('7baf81106_plasma_serpent_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_eye_tentacle', name: 'Eye Tentacle', hp: 22, speed: 1.5, damage: 15, color: '#d946ef', radius: 16, xp: 2, tier: 2, spriteImage: loadSprite('e1e15823a_eye_tentacle_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_spore_wasp', name: 'Spore Wasp', hp: 15, speed: 2.6, damage: 10, color: '#84cc16', radius: 12, xp: 2, tier: 2, spriteImage: loadSprite('3b545ef7a_spore_wasp_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_rock', name: 'Rock Fragment', hp: 35, speed: 0.8, damage: 14, color: '#f97316', radius: 18, xp: 2, tier: 2, isTank: true, spriteImage: loadSprite('0452ce6df_rock_fragment_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 3
-  { id: 't3_turret', name: 'Auto Turret', hp: 35, speed: 0.6, damage: 18, color: '#aaaaaa', radius: 16, xp: 3, emoji: '🔫', tier: 3 },
-  { id: 't3_crawler', name: 'Crystal Crawler', hp: 30, speed: 1.3, damage: 14, color: '#00ffff', radius: 15, xp: 3, emoji: '🦂', tier: 3 },
-  { id: 't3_floater', name: 'Toxic Floater', hp: 28, speed: 1.1, damage: 16, color: '#dda0dd', radius: 18, xp: 3, emoji: '🐡', tier: 3 },
-  { id: 't3_stalker', name: 'Void Stalker', hp: 32, speed: 2.1, damage: 18, color: '#4b0082', radius: 16, xp: 3, emoji: '👾', tier: 3 },
-  { id: 't3_wraith', name: 'Frost Wraith', hp: 26, speed: 1.6, damage: 15, color: '#add8e6', radius: 16, xp: 3, emoji: '👻', tier: 3 },
+  { id: 't3_manta', name: 'Void Manta', hp: 30, speed: 2.0, damage: 16, color: '#8b5cf6', radius: 18, xp: 3, tier: 3, spriteImage: loadSprite('9842135cf_void_mantra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_energy_phantom', name: 'Energy Phantom', hp: 28, speed: 1.8, damage: 15, color: '#0ea5e9', radius: 16, xp: 3, tier: 3, spriteImage: loadSprite('74d31fdc0_energy_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_starfish', name: 'Stellar Starfish', hp: 35, speed: 1.2, damage: 18, color: '#eab308', radius: 16, xp: 3, tier: 3, spriteImage: loadSprite('bdcbfb6bd_stellar_starfish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_angler', name: 'Angler Lantern', hp: 32, speed: 1.5, damage: 17, color: '#3b82f6', radius: 18, xp: 3, tier: 3, spriteImage: loadSprite('b00d8e25b_angler_lantern_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 4
-  { id: 't4_worm', name: 'Crater Worm', hp: 45, speed: 1.6, damage: 20, color: '#aaaaaa', radius: 16, xp: 4, emoji: '🐛', tier: 4 },
-  { id: 't4_grunt', name: 'Alien Grunt', hp: 40, speed: 1.9, damage: 18, color: '#32cd32', radius: 14, xp: 4, emoji: '👽', tier: 4 },
-  { id: 't4_entity', name: 'Glitch Entity', hp: 38, speed: 2.3, damage: 17, color: '#00fa9a', radius: 14, xp: 4, emoji: '👾', tier: 4 },
-  { id: 't4_elemental', name: 'Fire Elemental', hp: 50, speed: 1.3, damage: 22, color: '#ff0000', radius: 18, xp: 4, emoji: '🔥', tier: 4 },
-  { id: 't4_spawn', name: 'Dark Spawn', hp: 55, speed: 1.8, damage: 20, color: '#483d8b', radius: 15, xp: 4, emoji: '🌀', tier: 4 },
-  { id: 't4_artillery', name: 'Plasma Artillery', hp: 35, speed: 0.8, damage: 15, color: '#ff00ff', radius: 16, xp: 4, emoji: '☄️', tier: 4, isRanged: true },
-  { id: 't4_juggernaut', name: 'Cosmic Juggernaut', hp: 120, speed: 0.5, damage: 25, color: '#555555', radius: 25, xp: 5, emoji: '🛡️', tier: 4, isTank: true },
+  { id: 't4_spinner', name: 'Quantum Spinner', hp: 45, speed: 2.2, damage: 20, color: '#06b6d4', radius: 18, xp: 4, tier: 4, spriteImage: loadSprite('a2df90068_quantum_spinner_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_ribbon', name: 'Ribbon Phantom', hp: 40, speed: 1.9, damage: 22, color: '#d946ef', radius: 16, xp: 4, tier: 4, spriteImage: loadSprite('06dc947b3_ribbon_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_vortex', name: 'Vortex Drifter', hp: 55, speed: 1.4, damage: 25, color: '#ec4899', radius: 20, xp: 4, tier: 4, spriteImage: loadSprite('28251fe02_vortex_drifter_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_mothra', name: 'Neon Mothra', hp: 38, speed: 2.4, damage: 18, color: '#14b8a6', radius: 16, xp: 4, tier: 4, spriteImage: loadSprite('23d933892_neon_mothra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 5
-  { id: 't5_brute', name: 'Asteroid Brute', hp: 70, speed: 0.8, damage: 25, color: '#8b7355', radius: 20, xp: 5, emoji: '🦍', tier: 5 },
-  { id: 't5_fiend', name: 'Shadow Fiend', hp: 65, speed: 1.9, damage: 24, color: '#191970', radius: 18, xp: 5, emoji: '🦇', tier: 5 },
-  { id: 't5_shambler', name: 'Dimension Shambler', hp: 60, speed: 1.6, damage: 26, color: '#ff00ff', radius: 16, xp: 5, emoji: '🐙', tier: 5 },
-  { id: 't5_golem', name: 'Shard Golem', hp: 75, speed: 0.9, damage: 28, color: '#00ffff', radius: 22, xp: 5, emoji: '🧊', tier: 5 },
-  { id: 't5_horror', name: 'Event Horror', hp: 85, speed: 1.1, damage: 30, color: '#800080', radius: 20, xp: 5, emoji: '👁️‍🗨️', tier: 5 },
+  { id: 't5_spike_virus', name: 'Spike Virus', hp: 65, speed: 1.8, damage: 28, color: '#a855f7', radius: 20, xp: 5, tier: 5, spriteImage: loadSprite('9b4da0034_spike_virus_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't5_coral', name: 'Coral Bloom', hp: 80, speed: 1.2, damage: 25, color: '#f43f5e', radius: 22, xp: 5, tier: 5, spriteImage: loadSprite('c045ec43a_coral_bloom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't5_blade', name: 'Blade Arrowhead', hp: 60, speed: 2.5, damage: 30, color: '#94a3b8', radius: 18, xp: 5, tier: 5, isRanged: true, spriteImage: loadSprite('e573c6ccc_blade_arrowhead_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 6
-  { id: 't6_dragon', name: 'Space Dragon', hp: 110, speed: 1.6, damage: 35, color: '#ff4500', radius: 25, xp: 6, emoji: '🐉', tier: 6 },
-  { id: 't6_whale', name: 'Pulsar Whale', hp: 120, speed: 1.4, damage: 32, color: '#e0ffff', radius: 24, xp: 6, emoji: '🐋', tier: 6 },
-  { id: 't6_slug', name: 'Gravity Slug', hp: 130, speed: 1.0, damage: 38, color: '#483d8b', radius: 22, xp: 6, emoji: '🐌', tier: 6 },
-  { id: 't6_wasp', name: 'Nebula Wasp', hp: 90, speed: 2.5, damage: 30, color: '#00ff00', radius: 18, xp: 6, emoji: '🐝', tier: 6 },
-  { id: 't6_ray', name: 'Cosmic Ray', hp: 100, speed: 2.2, damage: 28, color: '#ff1493', radius: 20, xp: 6, emoji: '🪼', tier: 6 },
-  { id: 't6_launcher', name: 'Missile Silo', hp: 80, speed: 0.4, damage: 40, color: '#ffaa00', radius: 22, xp: 6, emoji: '🚀', tier: 6, isRanged: true },
-  { id: 't6_goliath', name: 'Void Goliath', hp: 300, speed: 0.4, damage: 45, color: '#222222', radius: 35, xp: 8, emoji: '🧱', tier: 6, isTank: true },
+  { id: 't6_chain_eye', name: 'Chain Eye', hp: 100, speed: 1.6, damage: 35, color: '#d946ef', radius: 24, xp: 6, tier: 6, isRanged: true, spriteImage: loadSprite('65ffb3fae_chain_eye_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't6_frost_wyrm', name: 'Frost Wyrm', hp: 120, speed: 1.8, damage: 38, color: '#38bdf8', radius: 26, xp: 6, tier: 6, spriteImage: loadSprite('ab422464d_frost_wyrm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't6_flame_wyrm', name: 'Flame Wyrmling', hp: 90, speed: 2.2, damage: 42, color: '#ef4444', radius: 22, xp: 6, tier: 6, spriteImage: loadSprite('906ceba81_flame_wyrmling_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 7
-  { id: 't7_behemoth', name: 'Iron Behemoth', hp: 160, speed: 0.7, damage: 45, color: '#2f4f4f', radius: 26, xp: 7, emoji: '🦏', tier: 7 },
-  { id: 't7_phantom', name: 'Ice Phantom', hp: 140, speed: 1.7, damage: 40, color: '#add8e6', radius: 22, xp: 7, emoji: '👻', tier: 7 },
-  { id: 't7_seraph', name: 'Solar Seraph', hp: 150, speed: 2.0, damage: 48, color: '#ffd700', radius: 24, xp: 7, emoji: '👼', tier: 7 },
-  { id: 't7_weaver', name: 'Reality Weaver', hp: 135, speed: 1.8, damage: 42, color: '#ff00ff', radius: 20, xp: 7, emoji: '🕷️', tier: 7 },
-  { id: 't7_kraken', name: 'Star Kraken', hp: 170, speed: 1.2, damage: 50, color: '#8b7355', radius: 28, xp: 7, emoji: '🦑', tier: 7 },
+  { id: 't7_frost_specter', name: 'Frost Specter', hp: 150, speed: 1.7, damage: 48, color: '#0ea5e9', radius: 26, xp: 7, tier: 7, spriteImage: loadSprite('f6ad447be_frost_specter_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't7_thunder', name: 'Thunder Sphere', hp: 140, speed: 2.1, damage: 52, color: '#eab308', radius: 24, xp: 7, tier: 7, isRanged: true, spriteImage: loadSprite('5cbd6ac67_thunder_sphere_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't7_gear_swarm', name: 'Nano Gear Swarm', hp: 160, speed: 1.4, damage: 45, color: '#94a3b8', radius: 28, xp: 7, tier: 7, spriteImage: loadSprite('0987d4652_nano_gear_swarm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 8
-  { id: 't8_titan', name: 'Obsidian Titan', hp: 220, speed: 0.6, damage: 60, color: '#000000', radius: 30, xp: 8, emoji: '🗿', tier: 8 },
-  { id: 't8_leviathan', name: 'Void Leviathan', hp: 200, speed: 1.5, damage: 55, color: '#1a0033', radius: 28, xp: 8, emoji: '🦕', tier: 8 },
-  { id: 't8_wyrm', name: 'Abyssal Wyrm', hp: 190, speed: 1.9, damage: 58, color: '#1a0b2e', radius: 26, xp: 8, emoji: '🐍', tier: 8 },
-  { id: 't8_overlord', name: 'Shadow Overlord', hp: 180, speed: 2.2, damage: 65, color: '#191970', radius: 24, xp: 8, emoji: '👑', tier: 8 },
-  { id: 't8_monolith', name: 'Crystal Monolith', hp: 250, speed: 0.5, damage: 70, color: '#00ced1', radius: 32, xp: 8, emoji: '💎', tier: 8 },
+  { id: 't8_whisper', name: 'Whispering Void', hp: 200, speed: 1.5, damage: 60, color: '#7e22ce', radius: 30, xp: 8, tier: 8, spriteImage: loadSprite('0438a0ffd_whispering_void_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't8_bio_bloom', name: 'Bio Bloom Pod', hp: 240, speed: 1.0, damage: 55, color: '#22c55e', radius: 32, xp: 8, tier: 8, spriteImage: loadSprite('578d7e2aa_bio_bloom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't8_ray_fish', name: 'Cosmic Ray Fish', hp: 180, speed: 2.3, damage: 65, color: '#38bdf8', radius: 28, xp: 8, tier: 8, spriteImage: loadSprite('bcd99f449_cosmic_ray_fish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 9
-  { id: 't9_apex_drone', name: 'Apex Drone', hp: 260, speed: 2.6, damage: 75, color: '#00ff00', radius: 22, xp: 9, emoji: '🛸', tier: 9 },
-  { id: 't9_apex_fiend', name: 'Apex Fiend', hp: 280, speed: 2.1, damage: 80, color: '#000000', radius: 26, xp: 9, emoji: '🦇', tier: 9 },
-  { id: 't9_apex_horror', name: 'Apex Horror', hp: 320, speed: 1.4, damage: 90, color: '#800080', radius: 30, xp: 9, emoji: '👁️‍🗨️', tier: 9 },
-  { id: 't9_apex_dragon', name: 'Apex Dragon', hp: 300, speed: 1.8, damage: 85, color: '#ff4500', radius: 34, xp: 9, emoji: '🐉', tier: 9 },
-  { id: 't9_apex_elemental', name: 'Apex Elemental', hp: 290, speed: 1.6, damage: 88, color: '#ff0000', radius: 28, xp: 9, emoji: '🔥', tier: 9 },
+  { id: 't9_lava_blob', name: 'Lava Rock Blob', hp: 300, speed: 1.2, damage: 85, color: '#ef4444', radius: 34, xp: 9, tier: 9, isTank: true, spriteImage: loadSprite('f01e56245_lava_rock_blob_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't9_jelly_swarm', name: 'Plasma Jelly Swarm', hp: 260, speed: 1.9, damage: 80, color: '#06b6d4', radius: 30, xp: 9, tier: 9, spriteImage: loadSprite('70f1f9342_plasma_jelly_swarm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 10
-  { id: 't10_god', name: 'Cosmic God', hp: 450, speed: 1.5, damage: 120, color: '#ffffff', radius: 36, xp: 10, emoji: '✨', tier: 10 },
-  { id: 't10_terror', name: 'Void Terror', hp: 500, speed: 1.2, damage: 130, color: '#000000', radius: 40, xp: 10, emoji: '🕳️', tier: 10 },
-  { id: 't10_eater', name: 'Star Eater', hp: 480, speed: 1.4, damage: 125, color: '#e0ffff', radius: 38, xp: 10, emoji: '🌌', tier: 10 },
-  { id: 't10_ripper', name: 'Dimension Ripper', hp: 420, speed: 1.8, damage: 140, color: '#ff00ff', radius: 32, xp: 10, emoji: '⚡', tier: 10 },
-  { id: 't10_swarm', name: 'Omega Swarm', hp: 400, speed: 2.8, damage: 110, color: '#32cd32', radius: 28, xp: 10, emoji: '🦠', tier: 10 },
+  { id: 't10_shadow', name: 'Shadow Stalker', hp: 420, speed: 2.2, damage: 120, color: '#1e293b', radius: 36, xp: 10, tier: 10, spriteImage: loadSprite('9199eef7e_shadow_stalker_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't10_crystal_vortex', name: 'Crystal Vortex', hp: 480, speed: 1.6, damage: 130, color: '#d946ef', radius: 38, xp: 10, tier: 10, isRanged: true, spriteImage: loadSprite('703e0a56e_crystal_vortex_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Bosses (spawn anywhere at the end)
-  { id: 'boss_nebula_lord', name: 'Nebula Overlord', hp: 6000, speed: 0.9, damage: 40, color: '#800080', radius: 50, xp: 600, isBoss: true, emoji: '🦑' },
-  { id: 'boss_supernova', name: 'Supernova Core', hp: 8000, speed: 0.7, damage: 50, color: '#ff8c00', radius: 55, xp: 800, isBoss: true, emoji: '🌞' },
-  { id: 'boss_blackhole', name: 'Event Horizon Entity', hp: 10000, speed: 0.5, damage: 80, color: '#000000', radius: 65, xp: 1000, isBoss: true, emoji: '🕳️' },
-  { id: 'boss_alien_queen', name: 'Alien Queen', hp: 7000, speed: 0.8, damage: 45, color: '#32cd32', radius: 60, xp: 700, isBoss: true, emoji: '👑' }
+  { id: 'boss_shard_leviathan', name: 'Shard Leviathan', hp: 8000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 55, xp: 800, isBoss: true, spriteImage: loadSprite('005d73c1a_shard_leviathan_mini_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 'boss_horror_eye', name: 'Horror Eye Cluster', hp: 7000, speed: 0.6, damage: 70, color: '#ef4444', radius: 50, xp: 700, isBoss: true, spriteImage: loadSprite('a892b6caf_horror_eye_cluster_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 'boss_ink_shadow', name: 'Ink Shadow', hp: 9000, speed: 1.0, damage: 55, color: '#0f172a', radius: 60, xp: 900, isBoss: true, spriteImage: loadSprite('630af54e6_ink_shadow_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 'boss_star_eater', name: 'Star Eater', hp: 10000, speed: 0.5, damage: 80, color: '#f59e0b', radius: 65, xp: 1000, isBoss: true, spriteImage: loadSprite('34b7afc8e_star_eater_sheet.png'), frameCount: 16, animationSpeed: 0.15 }
 ];
 
 export const CHARACTER_TALENTS = {
