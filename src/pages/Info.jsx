@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
+import { ENEMIES } from '../game/Constants';
 
 export default function Info() {
     const navigate = useNavigate();
@@ -115,6 +116,35 @@ export default function Info() {
                                 <br/><br/>
                                 <em className="text-slate-400">Hint: Try combining the Zero-G Napalm with the Shield Bubble, or the Cosmic Nap Beam with the Nova Pulse...</em>
                             </p>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">👾 Bestiary (Monsters)</h2>
+                            <p className="leading-relaxed mb-4">
+                                Known threats in the cosmic void. Bosses only appear at the end of a run.
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                                {ENEMIES.map(enemy => (
+                                    <div key={enemy.id} className={`p-3 rounded-xl border flex items-center gap-3 ${enemy.isBoss ? 'bg-red-950/30 border-red-900/50' : 'bg-slate-800/50 border-slate-700'}`}>
+                                        <div className="text-3xl" style={{ textShadow: `0 0 10px ${enemy.color}` }}>
+                                            {enemy.emoji}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className={`font-bold text-sm leading-tight ${enemy.isBoss ? 'text-red-400' : 'text-white'}`}>
+                                                    {enemy.name} {enemy.isBoss && '(BOSS)'}
+                                                </h3>
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5">
+                                                <span>HP: {enemy.hp}</span>
+                                                <span>DMG: {enemy.damage}</span>
+                                                <span>SPD: {enemy.speed}</span>
+                                                {!enemy.isBoss && <span>Tier: {enemy.tier}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </section>
                     </div>
                 </motion.div>
