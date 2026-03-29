@@ -1571,7 +1571,9 @@ export class GameEngine {
             
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
-            if (this.player.facingLeft) this.ctx.scale(-1, 1);
+            // The base sprite sheets are drawn facing left. 
+            // So if we are facing right (!facingLeft), we need to mirror them.
+            if (!this.player.facingLeft) this.ctx.scale(-1, 1);
             this.ctx.shadowColor = this.player.color;
             this.ctx.shadowBlur = 10;
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
