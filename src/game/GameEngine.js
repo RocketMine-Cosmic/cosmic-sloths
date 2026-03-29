@@ -1563,14 +1563,17 @@ export class GameEngine {
         if (spriteSheet) {
             const size = this.player.radius * 5;
             const frame = this.player.currentFrame;
-            const sx = frame * SPRITE_SIZE;
+            const col = frame % 4;
+            const row = Math.floor(frame / 4);
+            const sx = col * SPRITE_SIZE;
+            const sy = row * SPRITE_SIZE;
             
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
             if (this.player.facingLeft) this.ctx.scale(-1, 1);
             this.ctx.shadowColor = this.player.color;
             this.ctx.shadowBlur = 10;
-            this.ctx.drawImage(spriteSheet, sx, 0, SPRITE_SIZE, SPRITE_SIZE, -size/2, -size/2, size, size);
+            this.ctx.drawImage(spriteSheet, sx, sy, SPRITE_SIZE, SPRITE_SIZE, -size/2, -size/2, size, size);
             this.ctx.shadowBlur = 0;
             this.ctx.restore();
         } else if (this.player.image && this.player.image.complete) {
