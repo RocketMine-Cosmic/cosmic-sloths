@@ -139,7 +139,8 @@ export default function Game() {
         setGameState({
             hp: engine.player.hp, maxHp: engine.player.maxHp,
             time: 0, duration: engine.arena.duration, level: 1, xp: 0, xpRequired: 10, gold: 0,
-            rerollTokens: save.rerollTokens || 0
+            rerollTokens: save.rerollTokens || 0,
+            cosmicTokens: save.cosmicTokens || 0
         });
         
         SoundManager.init();
@@ -174,13 +175,19 @@ export default function Game() {
 
     const handleReroll = () => {
         const currentSave = SaveManager.load();
-        if (currentSave.rerollTokens > 0) {
-            currentSave.rerollTokens -= 1;
+        const REROLL_COST = 10;
+        if ((currentSave.cosmicTokens || 0) >= REROLL_COST) {
+            currentSave.cosmicTokens -= REROLL_COST;
             SaveManager.save(currentSave);
-            setGameState(s => ({ ...s, rerollTokens: currentSave.rerollTokens }));
+            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
+            
+            const week_id = moment().format('YYYY-[W]ww');
+            const seasonNum = Math.floor(moment().week() / 4) + 1;
+            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            base44.functions.invoke('recordTokenSpend', { amount: REROLL_COST, week_id, season_id }).catch(console.error);
+
             if (engineRef.current) {
-                engineRef.current.isPaused = false; // Temporarily unpause to allow levelUp to pause again
-                engineRef.current.levelUp();
+                engineRef.current.rerollChoices();
             }
         }
     };
@@ -221,7 +228,7 @@ export default function Game() {
             )}
 
             {levelUpChoices && (
-                <LevelUpModal choices={levelUpChoices} onSelect={handleUpgradeSelect} rerollTokens={gameState.rerollTokens} onReroll={handleReroll} />
+                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={gameState.cosmicTokens} onReroll={handleReroll} />
             )}
             
             {gameOverStats && (

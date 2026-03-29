@@ -1108,6 +1108,14 @@ export class GameEngine {
         SoundManager.playLevelUp();
         this.particleManager.createLevelUp(this.player.x, this.player.y);
         
+        this.callbacks.onLevelUp(this.generateChoices());
+    }
+
+    rerollChoices() {
+        this.callbacks.onLevelUp(this.generateChoices());
+    }
+
+    generateChoices() {
         const rarities = [
             { name: 'Common', mult: 1, weight: 60 },
             { name: 'Rare', mult: 1.5, weight: 25 },
@@ -1158,7 +1166,7 @@ export class GameEngine {
                 rarity: rarity.name
             });
         }
-        this.callbacks.onLevelUp(choices);
+        return choices;
     }
 
     applyUpgrade(upgrade) {

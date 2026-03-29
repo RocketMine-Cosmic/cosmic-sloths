@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
 
-export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll }) {
+export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll }) {
     const [revealedIndex, setRevealedIndex] = useState(null);
+    const [hasRerolled, setHasRerolled] = useState(false);
+
+    React.useEffect(() => {
+        setHasRerolled(false);
+    }, [level]);
 
     const handleSelect = (index) => {
         if (revealedIndex === null) {
@@ -119,17 +124,18 @@ export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll
                     </motion.button>
                 )}
 
-                {revealedIndex === null && rerollTokens > 0 && (
+                {revealedIndex === null && !hasRerolled && (cosmicTokens || 0) >= 10 && (
                     <motion.button
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         onClick={() => {
                             setRevealedIndex(null);
+                            setHasRerolled(true);
                             onReroll();
                         }}
                         className="mt-2 md:mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-1.5 md:py-2 px-4 md:px-6 rounded-lg transition-colors border border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)] text-sm md:text-base"
                     >
-                        Reroll Synergies ({rerollTokens} left)
+                        Reroll Choices (Cost: 10 💠)
                     </motion.button>
                 )}
             </motion.div>
