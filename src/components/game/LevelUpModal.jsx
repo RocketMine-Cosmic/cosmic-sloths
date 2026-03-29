@@ -36,23 +36,23 @@ export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll
             <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-slate-900 border-2 border-cyan-500 p-4 md:p-8 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col items-center"
+                className="bg-slate-900 border-2 border-cyan-500 p-3 md:p-8 rounded-xl max-w-3xl w-full max-h-[95vh] overflow-y-auto flex flex-col items-center"
             >
-                <h2 className="text-2xl md:text-3xl font-bold text-center text-cyan-400 mb-2 font-mono">
+                <h2 className="text-xl md:text-3xl font-bold text-center text-cyan-400 mb-1 md:mb-2 font-mono">
                     {revealedIndex === null ? 'CHOOSE A MYSTERY UPGRADE' : 'UPGRADE REVEALED!'}
                 </h2>
-                <p className="text-slate-400 mb-6 md:mb-8 text-center text-sm md:text-base">
+                <p className="text-slate-400 mb-2 md:mb-8 text-center text-xs md:text-base">
                     {revealedIndex === null ? 'Select one to reveal its true power.' : 'A powerful addition to your arsenal.'}
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 w-full mb-4 md:mb-8">
                     {choices.map((choice, i) => {
                         const isRevealed = revealedIndex === i;
                         const isHidden = revealedIndex !== null && revealedIndex !== i;
                         
                         if (isHidden) return (
-                            <div key={i} className="opacity-30 scale-95 transition-all duration-500 bg-slate-800 border border-slate-700 p-4 rounded-lg flex items-center justify-center min-h-[160px]">
-                                <span className="text-slate-600 font-bold">Discarded</span>
+                            <div key={i} className="opacity-30 scale-95 transition-all duration-500 bg-slate-800 border border-slate-700 p-3 md:p-4 rounded-lg flex items-center justify-center min-h-[90px] md:min-h-[160px]">
+                                <span className="text-slate-600 font-bold text-xs md:text-base">Discarded</span>
                             </div>
                         );
 
@@ -62,7 +62,7 @@ export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll
                                 layout
                                 onClick={() => handleSelect(i)}
                                 disabled={revealedIndex !== null}
-                                className={`relative p-4 md:p-6 rounded-xl text-left transition-all duration-500 flex flex-col min-h-[160px] border-2 ${
+                                className={`relative p-3 md:p-6 rounded-xl text-left transition-all duration-500 flex flex-col min-h-[90px] md:min-h-[160px] border-2 ${
                                     isRevealed 
                                     ? `${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ')[1]} ${rarityColors[choice.rarity].split(' ')[2] || ''}` 
                                     : 'bg-slate-800 border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer'
@@ -77,9 +77,9 @@ export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll
                                             exit={{ opacity: 0 }}
                                             className="absolute inset-0 flex flex-col items-center justify-center text-cyan-500"
                                         >
-                                            <HelpCircle className="w-12 h-12 mb-2 animate-pulse" />
-                                            <span className="font-bold font-mono">MYSTERY</span>
-                                            <span className={`mt-2 text-xs font-bold px-2 py-1 rounded bg-black/50 ${rarityColors[choice.rarity].split(' ')[0]}`}>
+                                            <HelpCircle className="w-8 h-8 md:w-12 md:h-12 mb-1 md:mb-2 animate-pulse" />
+                                            <span className="font-bold font-mono text-sm md:text-base">MYSTERY</span>
+                                            <span className={`mt-1 md:mt-2 text-[10px] md:text-xs font-bold px-2 py-0.5 md:py-1 rounded bg-black/50 ${rarityColors[choice.rarity].split(' ')[0]}`}>
                                                 {choice.rarity}
                                             </span>
                                         </motion.div>
@@ -91,13 +91,13 @@ export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll
                                             transition={{ duration: 0.5 }}
                                             className="flex flex-col h-full w-full"
                                         >
-                                            <div className={`text-xs font-bold mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
+                                            <div className={`text-[10px] md:text-xs font-bold mb-1 md:mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
                                                 {choice.rarity} {choice.type}
                                             </div>
-                                            <div className="text-lg md:text-xl font-bold text-white mb-2 leading-tight">
+                                            <div className="text-base md:text-xl font-bold text-white mb-1 md:mb-2 leading-tight">
                                                 {choice.name}
                                             </div>
-                                            <div className="text-sm text-slate-300 flex-1">
+                                            <div className="text-xs md:text-sm text-slate-300 flex-1">
                                                 {choice.desc}
                                             </div>
                                         </motion.div>
@@ -113,7 +113,7 @@ export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         onClick={handleConfirm}
-                        className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                        className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg text-base md:text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                     >
                         Accept Upgrade
                     </motion.button>
@@ -127,7 +127,7 @@ export default function LevelUpModal({ choices, onSelect, rerollTokens, onReroll
                             setRevealedIndex(null);
                             onReroll();
                         }}
-                        className="mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-6 rounded-lg transition-colors border border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]"
+                        className="mt-2 md:mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-1.5 md:py-2 px-4 md:px-6 rounded-lg transition-colors border border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)] text-sm md:text-base"
                     >
                         Reroll Synergies ({rerollTokens} left)
                     </motion.button>
