@@ -161,6 +161,7 @@ export class GameEngine {
         this.shakeY = 0;
         this.shakeTimer = 0;
         this.hitStopTimer = 0;
+        this.zoom = window.innerWidth < 768 ? 0.65 : 1;
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -255,8 +256,9 @@ export class GameEngine {
             this.player.moveTimer = 0;
         }
         
-        this.camera.x = this.player.x - this.canvas.width / 2;
-        this.camera.y = this.player.y - this.canvas.height / 2;
+        this.zoom = window.innerWidth < 768 ? 0.65 : 1;
+        this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
+        this.camera.y = this.player.y - (this.canvas.height / this.zoom) / 2;
 
         this.spawnEnemies(dt);
         this.updateWeapons(dt);
@@ -313,11 +315,14 @@ export class GameEngine {
         });
 
         // Environmental Effects Update
+        const vWidth = this.canvas.width / this.zoom;
+        const vHeight = this.canvas.height / this.zoom;
+        
         if (this.envEffect === 'neon_rain') {
             if (Math.random() < 0.5) {
                 this.envParticles.push({
-                    x: this.player.x + (Math.random() * this.canvas.width * 1.5 - this.canvas.width * 0.75),
-                    y: this.player.y - this.canvas.height/2 - 50,
+                    x: this.player.x + (Math.random() * vWidth * 1.5 - vWidth * 0.75),
+                    y: this.player.y - vHeight/2 - 50,
                     vx: 100,
                     vy: 600 + Math.random() * 300,
                     life: 2,
@@ -328,8 +333,8 @@ export class GameEngine {
         } else if (this.envEffect === 'fog') {
             if (Math.random() < 0.05) {
                 this.envParticles.push({
-                    x: this.player.x + (Math.random() * this.canvas.width * 2 - this.canvas.width),
-                    y: this.player.y + (Math.random() * this.canvas.height * 2 - this.canvas.height),
+                    x: this.player.x + (Math.random() * vWidth * 2 - vWidth),
+                    y: this.player.y + (Math.random() * vHeight * 2 - vHeight),
                     vx: 20 + Math.random() * 30,
                     vy: 10 + Math.random() * 20,
                     life: 10,
@@ -339,8 +344,8 @@ export class GameEngine {
         } else if (this.envEffect === 'solar_flare') {
             if (Math.random() < 0.02) {
                 this.envParticles.push({
-                    x: this.player.x + (Math.random() * this.canvas.width - this.canvas.width/2),
-                    y: this.player.y + (Math.random() * this.canvas.height - this.canvas.height/2),
+                    x: this.player.x + (Math.random() * vWidth - vWidth/2),
+                    y: this.player.y + (Math.random() * vHeight - vHeight/2),
                     life: 1.5,
                     maxLife: 1.5,
                     size: 50 + Math.random() * 100
@@ -363,7 +368,7 @@ export class GameEngine {
             if (bosses.length > 0) {
                 const boss = bosses[Math.floor(Math.random() * bosses.length)];
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
+                const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
                 const ex = this.player.x + Math.cos(angle) * dist;
                 const ey = this.player.y + Math.sin(angle) * dist;
                 const bossHpMult = 5.0 * this.difficulty.enemyHpMult;
@@ -379,7 +384,7 @@ export class GameEngine {
         
         if (Math.random() < dt / Math.max(0.05, spawnRate)) {
             const angle = Math.random() * Math.PI * 2;
-            const dist = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
+            const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
             const ex = this.player.x + Math.cos(angle) * dist;
             const ey = this.player.y + Math.sin(angle) * dist;
             
@@ -1258,6 +1263,7 @@ export class GameEngine {
         this.ctx.globalAlpha = 1.0;
 
         this.ctx.save();
+        this.ctx.scale(this.zoom, this.zoom);
         this.ctx.translate(-this.camera.x + this.shakeX, -this.camera.y + this.shakeY);
 
         this.pickups.forEach(p => {
@@ -1296,9 +1302,9 @@ export class GameEngine {
             const dx = this.characterPickup.x - this.player.x;
             const dy = this.characterPickup.y - this.player.y;
             const dist = Math.hypot(dx, dy);
-            if (dist > Math.min(this.canvas.width, this.canvas.height) / 2 - 50) {
+            if (dist > Math.min(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 - 50) {
                 const angle = Math.atan2(dy, dx);
-                const arrowDist = Math.min(this.canvas.width, this.canvas.height) / 2 - 50;
+                const arrowDist = Math.min(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 - 50;
                 const ax = this.player.x + Math.cos(angle) * arrowDist;
                 const ay = this.player.y + Math.sin(angle) * arrowDist;
                 
@@ -1652,7 +1658,7 @@ export class GameEngine {
             });
             // Global orange tint pulsing
             this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.05 + 0.05})`;
-            this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width, this.canvas.height);
+            this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width / this.zoom, this.canvas.height / this.zoom);
         }
 
         this.ctx.restore();
