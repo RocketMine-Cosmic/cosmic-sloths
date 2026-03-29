@@ -1238,11 +1238,15 @@ export class GameEngine {
         
         if (this.arenaImage && this.arenaImage.complete) {
             this.ctx.globalAlpha = 0.5;
-            const scale = Math.max(this.canvas.width / this.arenaImage.width, this.canvas.height / this.arenaImage.height);
+            // Scale up the image significantly so we don't need to tile it
+            const scale = Math.max(this.canvas.width / this.arenaImage.width, this.canvas.height / this.arenaImage.height) * 4;
             const drawW = this.arenaImage.width * scale;
             const drawH = this.arenaImage.height * scale;
-            const x = (this.canvas.width - drawW) / 2;
-            const y = (this.canvas.height - drawH) / 2;
+            
+            const parallax = 0.15;
+            const x = (this.canvas.width - drawW) / 2 - (this.camera.x * parallax);
+            const y = (this.canvas.height - drawH) / 2 - (this.camera.y * parallax);
+            
             this.ctx.drawImage(this.arenaImage, x, y, drawW, drawH);
             this.ctx.globalAlpha = 1.0;
         }
