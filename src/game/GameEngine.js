@@ -1549,7 +1549,7 @@ export class GameEngine {
         // Advance sprite animation frame
         const SPRITE_FRAMES = 16;
         const SPRITE_SIZE = 192;
-        const FRAME_DURATION = 1 / 24; // 24 fps
+        const FRAME_DURATION = 1 / 12; // 12 fps
         this.player.frameTimer += this.lastDt || 0;
         if (this.player.frameTimer >= FRAME_DURATION) {
             this.player.frameTimer -= FRAME_DURATION;
