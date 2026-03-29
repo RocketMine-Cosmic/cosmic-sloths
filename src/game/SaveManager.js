@@ -2,7 +2,7 @@ import moment from 'moment';
 
 export const SaveManager = {
   load: () => {
-    const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
+    const defaultChars = ['neobyte', 'pandypaws', 'novabyte', 'glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'];
     const currentWeek = moment().format('YYYY-[W]ww');
     const currentSeason = `${moment().format('YYYY')}-S${Math.floor(moment().week() / 4) + 1}`;
 
@@ -33,10 +33,9 @@ export const SaveManager = {
         const parsed = JSON.parse(data);
         if (!parsed.foundCharacters) parsed.foundCharacters = [];
         
-        const last7 = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'];
-        
         if (parsed.unlockedCharacters) {
-            parsed.unlockedCharacters = parsed.unlockedCharacters.filter(c => !last7.includes(c) || parsed.foundCharacters.includes(c));
+            // Unlock all characters for testing
+            parsed.unlockedCharacters = [...new Set([...parsed.unlockedCharacters, ...defaultChars])];
         } else {
             parsed.unlockedCharacters = [...defaultChars];
         }
