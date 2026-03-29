@@ -38,6 +38,7 @@ export default function Upgrades({ isCarousel }) {
     const [activeCategory, setActiveCategory] = useState('permanent');
     const [subCategory, setSubCategory] = useState('stats');
     const [selectedChar, setSelectedChar] = useState((save.unlockedCharacters && save.unlockedCharacters.length > 0) ? save.unlockedCharacters[0] : 'neobyte');
+    const [selectedWeapon, setSelectedWeapon] = useState('napBeam');
     const [timeLeft, setTimeLeft] = useState('');
 
     useEffect(() => {
@@ -278,96 +279,107 @@ export default function Upgrades({ isCarousel }) {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
 
+        const weapon = baseWeapons.find(w => w.id === selectedWeapon) || baseWeapons[0];
+        
+        const getWeaponUpgrade = (wId, stat) => {
+            const perm = save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
+            const week = save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
+            const season = save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
+            return perm + week + season;
+        };
+        const dmgLevel = getWeaponUpgrade(weapon.id, 'damage');
+        const areaLevel = getWeaponUpgrade(weapon.id, 'area');
+        const cdLevel = getWeaponUpgrade(weapon.id, 'cooldown');
+        const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
+
         return (
             <div className="space-y-4 md:space-y-6">
                 <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Armory</h2>
-                {baseWeapons.map(weapon => {
-                    // Check if mastered across all categories
-                    const getWeaponUpgrade = (wId, stat) => {
-                        const perm = save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
-                        const week = save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
-                        const season = save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
-                        return perm + week + season;
-                    };
-                    const dmgLevel = getWeaponUpgrade(weapon.id, 'damage');
-                    const areaLevel = getWeaponUpgrade(weapon.id, 'area');
-                    const cdLevel = getWeaponUpgrade(weapon.id, 'cooldown');
-                    const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
-
-                    return (
-                    <div key={weapon.id} className={`bg-slate-800 p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
-                        <div className="mb-4">
-                            <div className="flex justify-between items-start mb-1">
-                                <h3 className={`font-bold text-lg md:text-xl ${isMastered ? 'text-yellow-400' : 'text-white'}`}>{weapon.name}</h3>
-                                {isMastered && (
-                                    <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded border border-yellow-500/50">
-                                        MASTERED
-                                    </div>
-                                )}
-                            </div>
-                            <p className="text-slate-400 text-xs md:text-sm">{weapon.desc}</p>
+                <div className="flex items-center gap-2 mb-4 md:mb-6 overflow-x-auto pb-2">
+                    {baseWeapons.map(w => (
+                        <button
+                            key={w.id}
+                            onClick={() => { SoundManager.playUIClick(); setSelectedWeapon(w.id); }}
+                            className={`shrink-0 px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap ${
+                                selectedWeapon === w.id ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }`}
+                        >
+                            {w.name}
+                        </button>
+                    ))}
+                </div>
+                
+                <div className={`bg-slate-800 p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
+                    <div className="mb-4">
+                        <div className="flex justify-between items-start mb-1">
+                            <h3 className={`font-bold text-lg md:text-xl ${isMastered ? 'text-yellow-400' : 'text-white'}`}>{weapon.name}</h3>
                             {isMastered && (
-                                <p className="text-yellow-300 text-xs md:text-sm font-bold mt-2">✨ {weapon.masteryDesc}</p>
+                                <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded border border-yellow-500/50">
+                                    MASTERED
+                                </div>
                             )}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                            {upgradeTypes.map(stat => {
-                                const level = save[saveKey]?.[weapon.id]?.[stat.id] || 0;
-                                const cost = typeConfig.goldCosts[level];
-                                const tokenCost = typeConfig.tokenCosts[level];
-                                const isMax = level >= typeConfig.goldCosts.length;
-                                const canAffordGold = save.gold >= cost;
-                                const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
-                                const Icon = stat.icon;
+                        <p className="text-slate-400 text-xs md:text-sm">{weapon.desc}</p>
+                        {isMastered && (
+                            <p className="text-yellow-300 text-xs md:text-sm font-bold mt-2">✨ {weapon.masteryDesc}</p>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                        {upgradeTypes.map(stat => {
+                            const level = save[saveKey]?.[weapon.id]?.[stat.id] || 0;
+                            const cost = typeConfig.goldCosts[level];
+                            const tokenCost = typeConfig.tokenCosts[level];
+                            const isMax = level >= typeConfig.goldCosts.length;
+                            const canAffordGold = save.gold >= cost;
+                            const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
+                            const Icon = stat.icon;
 
-                                return (
-                                    <div key={stat.id} className="bg-slate-900 p-3 rounded-lg border border-slate-700 flex flex-col justify-between">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-2 text-slate-300">
-                                                <Icon size={16} className="text-cyan-400" />
-                                                <div>
-                                                    <div className="font-bold text-xs md:text-sm leading-tight">{stat.name}</div>
-                                                    <div className="text-[10px] text-slate-500 leading-tight">{stat.desc}</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <div key={i} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
-                                                ))}
+                            return (
+                                <div key={stat.id} className="bg-slate-900 p-3 rounded-lg border border-slate-700 flex flex-col justify-between">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2 text-slate-300">
+                                            <Icon size={16} className="text-cyan-400" />
+                                            <div>
+                                                <div className="font-bold text-xs md:text-sm leading-tight">{stat.name}</div>
+                                                <div className="text-[10px] text-slate-500 leading-tight">{stat.desc}</div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 w-full">
+                                        <div className="flex gap-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <div key={i} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 w-full">
+                                        <button
+                                            onClick={() => handleBuyWeapon(weapon.id, stat.id, 'gold')}
+                                            disabled={isMax || !canAffordGold}
+                                            className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
+                                                isMax ? 'bg-slate-800 text-slate-600' :
+                                                canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                'bg-slate-800 text-slate-500 border border-slate-700'
+                                            }`}
+                                        >
+                                            {isMax ? 'MAX' : `🪙 ${cost}`}
+                                        </button>
+                                        {!isMax && (
                                             <button
-                                                onClick={() => handleBuyWeapon(weapon.id, stat.id, 'gold')}
-                                                disabled={isMax || !canAffordGold}
+                                                onClick={() => handleBuyWeapon(weapon.id, stat.id, 'token')}
+                                                disabled={!canAffordToken}
                                                 className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
-                                                    isMax ? 'bg-slate-800 text-slate-600' :
-                                                    canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                    canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {isMax ? 'MAX' : `🪙 ${cost}`}
+                                                💠 {tokenCost}
                                             </button>
-                                            {!isMax && (
-                                                <button
-                                                    onClick={() => handleBuyWeapon(weapon.id, stat.id, 'token')}
-                                                    disabled={!canAffordToken}
-                                                    className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
-                                                        canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                                        'bg-slate-800 text-slate-500 border border-slate-700'
-                                                    }`}
-                                                >
-                                                    💠 {tokenCost}
-                                                </button>
-                                            )}
-                                        </div>
+                                        )}
                                     </div>
-                                );
-                            })}
-                        </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                    );
-                })}
+                </div>
             </div>
         );
     };
