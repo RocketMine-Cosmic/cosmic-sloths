@@ -8,7 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
 import MainMenu from './pages/MainMenu';
 import Hub from './pages/Hub';
-import Upgrades from './pages/Upgrades';
+import Upgrades from './pages/Upgrades.jsx';
 import LeaderboardPage from './pages/LeaderboardPage';
 import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';

@@ -31,7 +31,10 @@ export class GameEngine {
             return 0;
         };
 
-        const charTalents = save.unlockedTalents?.[characterId] || [];
+        const permTalents = save.permanentTalents?.[characterId] || [];
+        const weekTalents = save.weeklyTalents?.[characterId] || [];
+        const seasonTalents = save.seasonalTalents?.[characterId] || [];
+        const charTalents = [...new Set([...permTalents, ...weekTalents, ...seasonTalents])];
         const talentsData = CHARACTER_TALENTS[characterId] || [];
         
         let talentBonus = {
@@ -464,8 +467,13 @@ export class GameEngine {
             if (w.timer <= 0) {
                 this.fireWeapon(w);
                 
-                const wUpgrades = this.save.weaponUpgrades?.[w.id] || {};
-                const cdUpgradeLevel = wUpgrades.cooldown || 0;
+                const getWeaponUpgrade = (wId, stat) => {
+                    const perm = this.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
+                    const week = this.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
+                    const season = this.save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
+                    return perm + week + season;
+                };
+                const cdUpgradeLevel = getWeaponUpgrade(w.id, 'cooldown');
                 const cdMultiplier = 1 - (cdUpgradeLevel * 0.05); // -5% per level
                 
                 w.timer = (w.baseCooldown / 60) * Math.max(0.2, this.player.cooldownMult) * cdMultiplier;
@@ -475,10 +483,15 @@ export class GameEngine {
 
     fireWeapon(w) {
         SoundManager.playWeaponFire(w.id);
-        const wUpgrades = this.save.weaponUpgrades?.[w.id] || {};
-        const dmgUpgradeLevel = wUpgrades.damage || 0;
-        const areaUpgradeLevel = wUpgrades.area || 0;
-        const cdUpgradeLevel = wUpgrades.cooldown || 0;
+        const getWeaponUpgrade = (wId, stat) => {
+            const perm = this.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
+            const week = this.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
+            const season = this.save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
+            return perm + week + season;
+        };
+        const dmgUpgradeLevel = getWeaponUpgrade(w.id, 'damage');
+        const areaUpgradeLevel = getWeaponUpgrade(w.id, 'area');
+        const cdUpgradeLevel = getWeaponUpgrade(w.id, 'cooldown');
         
         const isMastered = dmgUpgradeLevel >= 5 && areaUpgradeLevel >= 5 && cdUpgradeLevel >= 5;
         
@@ -879,7 +892,7 @@ export class GameEngine {
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                 } else {
                     if (Math.random() < 0.50 + (this.player.luck * 0.05)) {
-                        const goldValue = 1 + Math.floor(this.time / 30);
+                        const goldValue = 5 + Math.floor(this.time / 15);
                         this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
                     }
                 }
@@ -1460,11 +1473,19 @@ export class GameEngine {
 
         const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
         if (swarm) {
-            const wUpgrades = this.save.weaponUpgrades?.['slothSwarm'] || {};
-            const isMastered = (wUpgrades.damage || 0) >= 5 && (wUpgrades.area || 0) >= 5 && (wUpgrades.cooldown || 0) >= 5;
+            const getWeaponUpgrade = (wId, stat) => {
+                const perm = this.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
+                const week = this.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
+                const season = this.save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
+                return perm + week + season;
+            };
+            const dmgLevel = getWeaponUpgrade('slothSwarm', 'damage');
+            const areaLevel = getWeaponUpgrade('slothSwarm', 'area');
+            const cdLevel = getWeaponUpgrade('slothSwarm', 'cooldown');
+            const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
             
             const count = 1 + Math.floor(swarm.level / 2);
-            const area = swarm.baseArea * this.player.areaMult * (1 + (swarm.level-1)*0.1) * (1 + (wUpgrades.area || 0) * 0.1);
+            const area = swarm.baseArea * this.player.areaMult * (1 + (swarm.level-1)*0.1) * (1 + areaLevel * 0.1);
             const speedMult = isMastered ? 6 : 3;
             for(let i=0; i<count; i++) {
                 const angle = (Math.PI * 2 / count) * i + this.time * speedMult;

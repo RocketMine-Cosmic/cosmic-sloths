@@ -18,7 +18,12 @@ export const SaveManager = {
       permanentUpgrades: { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
       weeklyUpgrades: { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
       seasonalUpgrades: { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
-      weaponUpgrades: {},
+      permanentWeaponUpgrades: {},
+      weeklyWeaponUpgrades: { weekId: currentWeek },
+      seasonalWeaponUpgrades: { seasonId: currentSeason },
+      permanentTalents: {},
+      weeklyTalents: { weekId: currentWeek },
+      seasonalTalents: { seasonId: currentSeason },
       cosmetics: { trail: 'default' },
       unlockedCosmetics: ['default'],
       maxTimeSurvived: 0,
@@ -48,14 +53,28 @@ export const SaveManager = {
             });
         }
 
-        if (!parsed.unlockedTalents) parsed.unlockedTalents = {};
         if (!parsed.permanentUpgrades) parsed.permanentUpgrades = { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
-        
         if (!parsed.weeklyUpgrades || parsed.weeklyUpgrades.weekId !== currentWeek) {
             parsed.weeklyUpgrades = { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
         }
         if (!parsed.seasonalUpgrades || parsed.seasonalUpgrades.seasonId !== currentSeason) {
             parsed.seasonalUpgrades = { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
+        }
+        
+        if (!parsed.permanentWeaponUpgrades) parsed.permanentWeaponUpgrades = parsed.weaponUpgrades || {};
+        if (!parsed.weeklyWeaponUpgrades || parsed.weeklyWeaponUpgrades.weekId !== currentWeek) {
+            parsed.weeklyWeaponUpgrades = { weekId: currentWeek };
+        }
+        if (!parsed.seasonalWeaponUpgrades || parsed.seasonalWeaponUpgrades.seasonId !== currentSeason) {
+            parsed.seasonalWeaponUpgrades = { seasonId: currentSeason };
+        }
+        
+        if (!parsed.permanentTalents) parsed.permanentTalents = parsed.unlockedTalents || {};
+        if (!parsed.weeklyTalents || parsed.weeklyTalents.weekId !== currentWeek) {
+            parsed.weeklyTalents = { weekId: currentWeek };
+        }
+        if (!parsed.seasonalTalents || parsed.seasonalTalents.seasonId !== currentSeason) {
+            parsed.seasonalTalents = { seasonId: currentSeason };
         }
         if (!parsed.cosmetics) parsed.cosmetics = { trail: 'default' };
         if (!parsed.unlockedCosmetics) parsed.unlockedCosmetics = ['default'];
