@@ -101,8 +101,8 @@ export default function Info() {
                                 Compete against other players for glory and <strong className="text-emerald-400">Cosmic Tokens</strong>! The game features both Weekly and Seasonal cycles:
                             </p>
                             <ul className="list-disc list-inside space-y-2 leading-relaxed">
-                                <li><strong className="text-white">Weekly Cycle:</strong> Resets every week. The top 20 players on the Weekly Leaderboard split 30% of all tokens spent that week. Weekly Upgrades also reset, so you'll need to buy them again!</li>
-                                <li><strong className="text-white">Seasonal Cycle:</strong> Lasts for 4 weeks. The top 30 players on the Seasonal Leaderboard split 40% of all tokens spent during the season. Seasonal Upgrades are powerful but reset at the end of the season.</li>
+                                <li><strong className="text-white">Weekly Cycle:</strong> Resets every week. The top 20 players on the Weekly Leaderboard earn Cosmic Tokens. Weekly Upgrades also reset, so you'll need to buy them again!</li>
+                                <li><strong className="text-white">Seasonal Cycle:</strong> Lasts for 4 weeks. The top 30 players on the Seasonal Leaderboard earn Cosmic Tokens. Seasonal Upgrades are powerful but reset at the end of the season.</li>
                                 <li><strong className="text-white">Cosmic Tokens:</strong> Earned by placing high on the leaderboards. Use them to buy powerful upgrades or unlock characters faster.</li>
                                 <li><strong className="text-white">Claiming Rewards:</strong> Rewards are automatically distributed and claimed when you visit the Sloth Lounge after a cycle ends.</li>
                             </ul>
