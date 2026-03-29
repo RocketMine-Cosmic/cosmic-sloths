@@ -453,7 +453,10 @@ export class GameEngine {
                     this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
                     this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
                     SoundManager.playPlayerHit();
-                    if (this.player.hp <= 0) this.gameOver();
+                    if (this.player.hp <= 0) {
+                        this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
+                        this.gameOver();
+                    }
                 }
                 this.addParticle(h.x, h.y, '#ff4500', 20);
             }
@@ -868,7 +871,10 @@ export class GameEngine {
                     this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
                     this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
                     SoundManager.playPlayerHit();
-                    if (this.player.hp <= 0) this.gameOver();
+                    if (this.player.hp <= 0) {
+                        this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
+                        this.gameOver();
+                    }
                     return false;
                 }
                 return p.life > 0;
@@ -884,7 +890,7 @@ export class GameEngine {
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
                 
                 // Death Splatter
-                this.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 3 : 1);
+                this.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 3 : 1, e.id);
                 this.shake(e.isBoss ? 0.5 : 0.05);
 
                 if (e.isBoss) {
@@ -989,7 +995,10 @@ export class GameEngine {
                     this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
                     SoundManager.playPlayerHit();
                     e.attackTimer = 1.0;
-                    if (this.player.hp <= 0) this.gameOver();
+                    if (this.player.hp <= 0) {
+                        this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
+                        this.gameOver();
+                    }
                 }
             }
             if (e.attackTimer > 0) e.attackTimer -= dt;

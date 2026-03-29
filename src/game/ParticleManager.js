@@ -132,7 +132,16 @@ export class ParticleManager {
         }
     }
 
-    createExplosion(x, y, color, scale = 1) {
+    createExplosion(x, y, color, scale = 1, sourceId = '') {
+        const id = sourceId.toLowerCase();
+        // Determine theme based on entity descriptions/IDs
+        const isVoid = id.includes('void') || id.includes('shadow') || id.includes('blackhole');
+        const isRock = id.includes('rock') || id.includes('shard') || id.includes('titan');
+        const isTech = id.includes('drone') || id.includes('gear') || id.includes('probe') || id.includes('byte') || id.includes('glitch');
+        const isPlasma = id.includes('plasma') || id.includes('flare') || id.includes('nova') || id.includes('star');
+        const isIce = id.includes('frost') || id.includes('cryo') || id.includes('ice');
+        const isBio = id.includes('spore') || id.includes('bloom') || id.includes('virus') || id.includes('swarm');
+
         // Core flash
         this.addParticle(x, y, '#ffffff', 1, 'glow', 10 * scale, { lifeBonus: 0.2 });
         this.addParticle(x, y, color, 2, 'glow', 15 * scale, { lifeBonus: 0.3 });
@@ -145,15 +154,33 @@ export class ParticleManager {
             size: 10 * scale, growthRate: 800 * scale, lineWidth: 5 * scale
         });
 
-        // Sparks
-        this.addParticle(x, y, color, 30 * scale, 'spark', 2 * scale, { gravity: true, speed: Math.random() * 400 * scale + 100 });
-        this.addParticle(x, y, '#ffffff', 15 * scale, 'spark', 1.5 * scale, { gravity: true, speed: Math.random() * 500 * scale + 200 });
-        
-        // Shatter pieces
-        this.addParticle(x, y, color, 10 * scale, 'shatter', 3 * scale, { gravity: true, speed: Math.random() * 300 * scale + 50 });
-        
-        // Smoke
-        this.addParticle(x, y, '#333333', 15 * scale, 'smoke', 3 * scale, { lifeBonus: 0.5 });
+        if (isVoid) {
+            this.addParticle(x, y, color, 40 * scale, 'circle', 2 * scale, { speed: Math.random() * 200 * scale + 50 });
+            this.addParticle(x, y, '#110033', 20 * scale, 'smoke', 4 * scale, { lifeBonus: 1.0 });
+            this.addParticle(x, y, '#a855f7', 10 * scale, 'glow', 3 * scale, { speed: Math.random() * 150 * scale });
+        } else if (isRock) {
+            this.addParticle(x, y, color, 40 * scale, 'shatter', 4 * scale, { gravity: true, speed: Math.random() * 400 * scale + 100 });
+            this.addParticle(x, y, '#555555', 25 * scale, 'smoke', 4 * scale, { lifeBonus: 0.8 });
+        } else if (isTech) {
+            this.addParticle(x, y, color, 30 * scale, 'glitch', 3 * scale, { speed: Math.random() * 600 * scale + 100 });
+            this.addParticle(x, y, '#ffffff', 20 * scale, 'spark', 2 * scale, { speed: Math.random() * 700 * scale + 200 });
+            this.addParticle(x, y, color, 10 * scale, 'slash', 2 * scale, { speed: Math.random() * 400 * scale + 100 });
+        } else if (isPlasma) {
+            this.addParticle(x, y, color, 35 * scale, 'glow', 2 * scale, { speed: Math.random() * 400 * scale + 100 });
+            this.addParticle(x, y, '#ffffff', 25 * scale, 'spark', 1.5 * scale, { speed: Math.random() * 600 * scale + 200 });
+        } else if (isIce) {
+            this.addParticle(x, y, color, 45 * scale, 'shatter', 2 * scale, { speed: Math.random() * 300 * scale + 50 });
+            this.addParticle(x, y, '#ffffff', 25 * scale, 'circle', 1.5 * scale, { speed: Math.random() * 200 * scale + 50 });
+        } else if (isBio) {
+            this.addParticle(x, y, color, 30 * scale, 'circle', 2.5 * scale, { speed: Math.random() * 200 * scale + 50, lifeBonus: 0.5 });
+            this.addParticle(x, y, '#22c55e', 15 * scale, 'smoke', 3 * scale, { lifeBonus: 0.5 });
+        } else {
+            // Default
+            this.addParticle(x, y, color, 30 * scale, 'spark', 2 * scale, { gravity: true, speed: Math.random() * 400 * scale + 100 });
+            this.addParticle(x, y, '#ffffff', 15 * scale, 'spark', 1.5 * scale, { gravity: true, speed: Math.random() * 500 * scale + 200 });
+            this.addParticle(x, y, color, 10 * scale, 'shatter', 3 * scale, { gravity: true, speed: Math.random() * 300 * scale + 50 });
+            this.addParticle(x, y, '#333333', 15 * scale, 'smoke', 3 * scale, { lifeBonus: 0.5 });
+        }
     }
 
     createHitEffect(x, y, color, angle, scale = 1) {
