@@ -78,9 +78,25 @@ export class GameEngine {
             playerImage.src = baseChar.image;
         }
         
+        let idleImage = null;
+        if (baseChar.idleSprite) {
+            idleImage = new Image();
+            idleImage.src = baseChar.idleSprite;
+        }
+        
+        let walkImage = null;
+        if (baseChar.walkSprite) {
+            walkImage = new Image();
+            walkImage.src = baseChar.walkSprite;
+        }
+        
         this.player = {
             name: baseChar.name,
             image: playerImage,
+            idleImage: idleImage,
+            walkImage: walkImage,
+            frameTimer: 0,
+            currentFrame: 0,
             x: 0, y: 0, radius: 16,
             maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
@@ -176,6 +192,7 @@ export class GameEngine {
 
     update(dt) {
         if (dt > 0.1) dt = 0.1; // Cap dt to prevent huge jumps
+        this.lastDt = dt;
         
         if (this.hitStopTimer > 0) {
             this.hitStopTimer -= dt;
@@ -1529,7 +1546,34 @@ export class GameEngine {
             }
         }
 
-        if (this.player.image && this.player.image.complete) {
+        // Advance sprite animation frame
+        const SPRITE_FRAMES = 16;
+        const SPRITE_SIZE = 192;
+        const FRAME_DURATION = 1 / 12; // 12 fps
+        this.player.frameTimer += this.lastDt || 0;
+        if (this.player.frameTimer >= FRAME_DURATION) {
+            this.player.frameTimer -= FRAME_DURATION;
+            this.player.currentFrame = (this.player.currentFrame + 1) % SPRITE_FRAMES;
+        }
+
+        const spriteSheet = this.player.isMoving
+            ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
+            : (this.player.idleImage && this.player.idleImage.complete ? this.player.idleImage : null);
+
+        if (spriteSheet) {
+            const size = this.player.radius * 5;
+            const frame = this.player.currentFrame;
+            const sx = frame * SPRITE_SIZE;
+            
+            this.ctx.save();
+            this.ctx.translate(this.player.x, this.player.y);
+            if (this.player.facingLeft) this.ctx.scale(-1, 1);
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 10;
+            this.ctx.drawImage(spriteSheet, sx, 0, SPRITE_SIZE, SPRITE_SIZE, -size/2, -size/2, size, size);
+            this.ctx.shadowBlur = 0;
+            this.ctx.restore();
+        } else if (this.player.image && this.player.image.complete) {
             const size = this.player.radius * 3;
             
             this.ctx.save();
@@ -1537,13 +1581,6 @@ export class GameEngine {
             
             if (this.player.facingLeft) {
                 this.ctx.scale(-1, 1);
-            }
-            
-            if (this.player.isMoving) {
-                const bob = Math.sin(this.player.moveTimer) * 4;
-                const rot = Math.cos(this.player.moveTimer) * 0.15;
-                this.ctx.translate(0, bob);
-                this.ctx.rotate(rot);
             }
             
             this.ctx.shadowColor = this.player.color;
