@@ -113,31 +113,33 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                     })}
                 </div>
 
-                {revealedIndex !== null && (
-                    <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        onClick={handleConfirm}
-                        className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg text-base md:text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                    >
-                        Accept Upgrade
-                    </motion.button>
-                )}
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-6 mt-2 md:mt-4">
+                    {revealedIndex !== null && (
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            onClick={handleConfirm}
+                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg text-base md:text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                        >
+                            Accept Upgrade
+                        </motion.button>
+                    )}
 
-                {revealedIndex === null && !hasRerolled && (cosmicTokens || 0) >= 10 && (
-                    <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        onClick={() => {
-                            setRevealedIndex(null);
-                            setHasRerolled(true);
-                            onReroll();
-                        }}
-                        className="mt-2 md:mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-1.5 md:py-2 px-4 md:px-6 rounded-lg transition-colors border border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)] text-sm md:text-base"
-                    >
-                        Reroll Choices (Cost: 10 💠)
-                    </motion.button>
-                )}
+                    {!hasRerolled && (cosmicTokens || 0) >= 10 && (
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            onClick={() => {
+                                setRevealedIndex(null);
+                                setHasRerolled(true);
+                                onReroll();
+                            }}
+                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)] text-base md:text-lg"
+                        >
+                            Reroll Choices (10 💠)
+                        </motion.button>
+                    )}
+                </div>
             </motion.div>
         </div>
     );
