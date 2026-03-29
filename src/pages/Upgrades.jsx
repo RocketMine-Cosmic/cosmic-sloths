@@ -408,25 +408,50 @@ export default function Upgrades({ isCarousel }) {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
 
+        const unlockedChars = save.unlockedCharacters || ['neobyte'];
+        const currentCharIndex = unlockedChars.indexOf(selectedChar) !== -1 ? unlockedChars.indexOf(selectedChar) : 0;
+        const currentCharData = CHARACTERS.find(c => c.id === unlockedChars[currentCharIndex]) || CHARACTERS[0];
+        
+        const handlePrevChar = () => {
+            SoundManager.playUIClick();
+            const newIndex = currentCharIndex > 0 ? currentCharIndex - 1 : unlockedChars.length - 1;
+            setSelectedChar(unlockedChars[newIndex]);
+        };
+        const handleNextChar = () => {
+            SoundManager.playUIClick();
+            const newIndex = currentCharIndex < unlockedChars.length - 1 ? currentCharIndex + 1 : 0;
+            setSelectedChar(unlockedChars[newIndex]);
+        };
+
         return (
             <div>
                 <h2 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">Skill Tree</h2>
-                <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-4 overflow-x-auto pb-1 md:pb-2">
-                    {(save.unlockedCharacters || ['neobyte']).map(charId => {
-                        const char = CHARACTERS.find(c => c.id === charId);
-                        if (!char) return null;
-                        return (
-                            <button
-                                key={char.id}
-                                onClick={() => setSelectedChar(char.id)}
-                                className={`shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full border-2 overflow-hidden ${selectedChar === char.id ? 'border-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]' : 'border-slate-700 opacity-50 hover:opacity-100'}`}
-                            >
-                                {char.image ? <img src={char.image} alt={char.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800" />}
-                            </button>
-                        );
-                    })}
+                
+                <div className="flex items-center justify-between bg-slate-800 p-1.5 md:p-2 rounded-xl mb-4 border border-slate-700">
+                    <button 
+                        onClick={handlePrevChar}
+                        className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-pink-500 overflow-hidden shadow-[0_0_10px_rgba(236,72,153,0.5)]">
+                            {currentCharData.image ? <img src={currentCharData.image} alt={currentCharData.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800" />}
+                        </div>
+                        <div className="text-center font-bold text-pink-400 text-lg">
+                            {currentCharData.name}
+                            <div className="text-xs text-slate-500 font-normal mt-0.5">
+                                {currentCharIndex + 1} / {unlockedChars.length}
+                            </div>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={handleNextChar}
+                        className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                    >
+                        <ChevronRight className="w-6 h-6" />
+                    </button>
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-slate-300 mb-2 md:mb-4">{CHARACTERS.find(c => c.id === (selectedChar || 'neobyte'))?.name}'s Talents</h3>
                 <div className="space-y-2 md:space-y-4 relative">
                     <div className="absolute left-[26px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
                     
