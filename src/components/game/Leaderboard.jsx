@@ -10,22 +10,22 @@ export default function Leaderboard() {
     const [timeLeft, setTimeLeft] = useState('');
     const [currentPool, setCurrentPool] = useState(0);
 
-    const getWeeklyReward = (rank, pool) => {
-        if (rank === 1) return pool * 0.15;
-        if (rank === 2) return pool * 0.12;
-        if (rank === 3) return pool * 0.09;
-        if (rank >= 4 && rank <= 10) return pool * 0.06;
-        if (rank >= 11 && rank <= 20) return pool * 0.022;
+    const getWeeklyRewardPercentage = (rank) => {
+        if (rank === 1) return 0.15;
+        if (rank === 2) return 0.12;
+        if (rank === 3) return 0.09;
+        if (rank >= 4 && rank <= 10) return 0.06;
+        if (rank >= 11 && rank <= 20) return 0.022;
         return 0;
     };
 
-    const getSeasonalReward = (rank, pool) => {
-        if (rank === 1) return pool * 0.12;
-        if (rank === 2) return pool * 0.09;
-        if (rank === 3) return pool * 0.07;
-        if (rank >= 4 && rank <= 10) return pool * 0.045;
-        if (rank >= 11 && rank <= 20) return pool * 0.025;
-        if (rank >= 21 && rank <= 30) return pool * 0.0155;
+    const getSeasonalRewardPercentage = (rank) => {
+        if (rank === 1) return 0.12;
+        if (rank === 2) return 0.09;
+        if (rank === 3) return 0.07;
+        if (rank >= 4 && rank <= 10) return 0.045;
+        if (rank >= 11 && rank <= 20) return 0.025;
+        if (rank >= 21 && rank <= 30) return 0.0155;
         return 0;
     };
 
@@ -104,6 +104,22 @@ export default function Leaderboard() {
         return `${m}:${sec.toString().padStart(2, '0')}`;
     };
 
+    let totalWeeklyPercentage = 0;
+    let totalSeasonalPercentage = 0;
+    
+    if (view === 'weekly') {
+        for (let i = 0; i < Math.min(scores.length, 20); i++) {
+            totalWeeklyPercentage += getWeeklyRewardPercentage(i + 1);
+        }
+    } else if (view === 'seasonal') {
+        for (let i = 0; i < Math.min(scores.length, 30); i++) {
+            totalSeasonalPercentage += getSeasonalRewardPercentage(i + 1);
+        }
+    }
+    
+    const weeklyMultiplier = totalWeeklyPercentage > 0 ? 1 / totalWeeklyPercentage : 1;
+    const seasonalMultiplier = totalSeasonalPercentage > 0 ? 1 / totalSeasonalPercentage : 1;
+
     return (
         <div className="flex flex-col h-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -149,7 +165,9 @@ export default function Leaderboard() {
                             {scores.map((score, index) => {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
                                 const isEligibleForReward = (view === 'weekly' && index < 20) || (view === 'seasonal' && index < 30);
-                                const rewardAmount = view === 'weekly' ? Math.floor(getWeeklyReward(index + 1, currentPool * 0.30)) : Math.floor(getSeasonalReward(index + 1, currentPool * 0.40));
+                                const rewardAmount = view === 'weekly' 
+                                    ? Math.floor((currentPool * 0.30) * getWeeklyRewardPercentage(index + 1) * weeklyMultiplier) 
+                                    : Math.floor((currentPool * 0.40) * getSeasonalRewardPercentage(index + 1) * seasonalMultiplier);
 
                                 return (
                                     <div key={score.id} className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/50 rounded-lg items-center border border-slate-800 hover:border-slate-600 transition-colors">
