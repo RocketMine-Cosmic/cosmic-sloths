@@ -39,25 +39,33 @@ async function distributeWeekly(base44, pool) {
         if (uniqueScores.length >= 20) break;
     }
     
-    const getReward = (rank, p) => {
-        if (rank === 1) return p * 0.15;
-        if (rank === 2) return p * 0.12;
-        if (rank === 3) return p * 0.09;
-        if (rank >= 4 && rank <= 10) return p * 0.06;
-        if (rank >= 11 && rank <= 20) return p * 0.022;
+    const getRewardPercentage = (rank) => {
+        if (rank === 1) return 0.15;
+        if (rank === 2) return 0.12;
+        if (rank === 3) return 0.09;
+        if (rank >= 4 && rank <= 10) return 0.06;
+        if (rank >= 11 && rank <= 20) return 0.022;
         return 0;
     };
     
+    let totalPercentage = 0;
     for (let i = 0; i < uniqueScores.length; i++) {
-        const amount = Math.floor(getReward(i + 1, rewardPool));
-        if (amount > 0) {
-            await base44.asServiceRole.entities.PendingReward.create({
-                player_name: uniqueScores[i].player_name,
-                amount: amount,
-                reason: `Weekly Leaderboard Rank ${i + 1}`,
-                period_id: pool.period_id,
-                claimed: false
-            });
+        totalPercentage += getRewardPercentage(i + 1);
+    }
+    
+    if (uniqueScores.length > 0 && totalPercentage > 0) {
+        const multiplier = 1 / totalPercentage;
+        for (let i = 0; i < uniqueScores.length; i++) {
+            const amount = Math.floor(rewardPool * getRewardPercentage(i + 1) * multiplier);
+            if (amount > 0) {
+                await base44.asServiceRole.entities.PendingReward.create({
+                    player_name: uniqueScores[i].player_name,
+                    amount: amount,
+                    reason: `Weekly Leaderboard Rank ${i + 1}`,
+                    period_id: pool.period_id,
+                    claimed: false
+                });
+            }
         }
     }
     
@@ -78,26 +86,34 @@ async function distributeSeasonal(base44, pool) {
         if (uniqueScores.length >= 30) break;
     }
     
-    const getReward = (rank, p) => {
-        if (rank === 1) return p * 0.12;
-        if (rank === 2) return p * 0.09;
-        if (rank === 3) return p * 0.07;
-        if (rank >= 4 && rank <= 10) return p * 0.045;
-        if (rank >= 11 && rank <= 20) return p * 0.025;
-        if (rank >= 21 && rank <= 30) return p * 0.0155;
+    const getRewardPercentage = (rank) => {
+        if (rank === 1) return 0.12;
+        if (rank === 2) return 0.09;
+        if (rank === 3) return 0.07;
+        if (rank >= 4 && rank <= 10) return 0.045;
+        if (rank >= 11 && rank <= 20) return 0.025;
+        if (rank >= 21 && rank <= 30) return 0.0155;
         return 0;
     };
     
+    let totalPercentage = 0;
     for (let i = 0; i < uniqueScores.length; i++) {
-        const amount = Math.floor(getReward(i + 1, rewardPool));
-        if (amount > 0) {
-            await base44.asServiceRole.entities.PendingReward.create({
-                player_name: uniqueScores[i].player_name,
-                amount: amount,
-                reason: `Seasonal Leaderboard Rank ${i + 1}`,
-                period_id: pool.period_id,
-                claimed: false
-            });
+        totalPercentage += getRewardPercentage(i + 1);
+    }
+    
+    if (uniqueScores.length > 0 && totalPercentage > 0) {
+        const multiplier = 1 / totalPercentage;
+        for (let i = 0; i < uniqueScores.length; i++) {
+            const amount = Math.floor(rewardPool * getRewardPercentage(i + 1) * multiplier);
+            if (amount > 0) {
+                await base44.asServiceRole.entities.PendingReward.create({
+                    player_name: uniqueScores[i].player_name,
+                    amount: amount,
+                    reason: `Seasonal Leaderboard Rank ${i + 1}`,
+                    period_id: pool.period_id,
+                    claimed: false
+                });
+            }
         }
     }
     
