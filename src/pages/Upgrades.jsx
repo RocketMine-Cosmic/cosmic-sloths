@@ -1,0 +1,608 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { SaveManager } from '../game/SaveManager';
+import { CHARACTERS, CHARACTER_TALENTS, WEAPONS } from '../game/Constants';
+import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import moment from 'moment';
+import { SoundManager } from '../game/SoundManager';
+
+const UPGRADE_TYPES = [
+    { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [100, 200, 400, 800, 1600] },
+    { id: 'weekly', name: 'Weekly', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [50, 100, 200, 400, 800] },
+    { id: 'seasonal', name: 'Seasonal', goldCosts: [1500, 3000, 6000, 12000, 24000], tokenCosts: [150, 300, 600, 1200, 2400] }
+];
+
+const STATS = [
+    { id: 'damage', name: 'Plasma Output', icon: Zap, perm: '+2%', week: '+5%', season: '+10%' },
+    { id: 'health', name: 'Hull Integrity', icon: Heart, perm: '+5', week: '+10', season: '+20' },
+    { id: 'speed', name: 'Thruster Speed', icon: Coffee, perm: '+2%', week: '+5%', season: '+10%' },
+    { id: 'magnet', name: 'Tractor Range', icon: Magnet, perm: '+5', week: '+15', season: '+30' },
+    { id: 'regen', name: 'Nano-Repair', icon: Shield, perm: '+0.1', week: '+0.2', season: '+0.5' },
+    { id: 'cooldown', name: 'System Cooling', icon: Timer, perm: '-2%', week: '-5%', season: '-10%' },
+    { id: 'luck', name: 'Cosmic Fortune', icon: Sparkles, perm: '+1', week: '+2', season: '+3' }
+];
+
+const COSMETICS = [
+    { id: 'default', name: 'None', goldCost: 0, tokenCost: 0, icon: '⚪' },
+    { id: 'fire', name: 'Fire Trail', goldCost: 2500, tokenCost: 250, icon: '🔥' },
+    { id: 'ice', name: 'Ice Trail', goldCost: 2500, tokenCost: 250, icon: '❄️' },
+    { id: 'toxic', name: 'Toxic Trail', goldCost: 2500, tokenCost: 250, icon: '🧪' },
+    { id: 'void', name: 'Void Trail', goldCost: 12500, tokenCost: 1250, icon: '🌌' },
+    { id: 'gold', name: 'Golden Trail', goldCost: 25000, tokenCost: 2500, icon: '✨' }
+];
+
+export default function Upgrades({ isCarousel }) {
+    const navigate = useNavigate();
+    const [save, setSave] = useState(SaveManager.load());
+    const [activeCategory, setActiveCategory] = useState('permanent');
+    const [subCategory, setSubCategory] = useState('stats');
+    const [selectedChar, setSelectedChar] = useState((save.unlockedCharacters && save.unlockedCharacters.length > 0) ? save.unlockedCharacters[0] : 'neobyte');
+    const [timeLeft, setTimeLeft] = useState('');
+
+    useEffect(() => {
+        const updateTimer = () => {
+            if (activeCategory === 'weekly') {
+                const endOfWeek = moment().endOf('week');
+                const duration = moment.duration(endOfWeek.diff(moment()));
+                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+            } else if (activeCategory === 'seasonal') {
+                const weekNum = moment().week();
+                const seasonNum = Math.floor(weekNum / 4) + 1;
+                const lastWeekOfSeason = seasonNum * 4 - 1;
+                const endOfSeason = moment().week(lastWeekOfSeason).endOf('week');
+                const duration = moment.duration(endOfSeason.diff(moment()));
+                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+            } else {
+                setTimeLeft('');
+            }
+        };
+        
+        updateTimer();
+        const interval = setInterval(updateTimer, 60000);
+        return () => clearInterval(interval);
+    }, [activeCategory]);
+
+    const recordTokenSpend = (amount) => {
+        const week_id = moment().format('YYYY-[W]ww');
+        const seasonNum = Math.floor(moment().week() / 4) + 1;
+        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+        base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
+    };
+
+    const handleBuyStat = (stat, currency) => {
+        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
+        const upgrades = save[saveKey] || {};
+        const currentLevel = upgrades[stat] || 0;
+        
+        if (currentLevel >= typeConfig.goldCosts.length) return;
+        
+        const goldCost = typeConfig.goldCosts[currentLevel];
+        const tokenCost = typeConfig.tokenCosts[currentLevel];
+
+        if (currency === 'gold' && save.gold >= goldCost) {
+            const newSave = { ...save, gold: save.gold - goldCost };
+            newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SoundManager.playUIClick();
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
+            newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            recordTokenSpend(tokenCost);
+            SoundManager.playUIClick();
+        }
+    };
+
+    const handleBuyWeapon = (weaponId, stat, currency) => {
+        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
+        
+        const weaponData = save[saveKey]?.[weaponId] || {};
+        const currentLevel = weaponData[stat] || 0;
+        
+        if (currentLevel >= typeConfig.goldCosts.length) return;
+        
+        const goldCost = typeConfig.goldCosts[currentLevel];
+        const tokenCost = typeConfig.tokenCosts[currentLevel];
+        
+        if (currency === 'gold' && save.gold >= goldCost) {
+            const newSave = { ...save, gold: save.gold - goldCost };
+            if (!newSave[saveKey]) newSave[saveKey] = {};
+            if (!newSave[saveKey][weaponId]) newSave[saveKey][weaponId] = {};
+            newSave[saveKey][weaponId][stat] = currentLevel + 1;
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SoundManager.playUIClick();
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
+            if (!newSave[saveKey]) newSave[saveKey] = {};
+            if (!newSave[saveKey][weaponId]) newSave[saveKey][weaponId] = {};
+            newSave[saveKey][weaponId][stat] = currentLevel + 1;
+            SaveManager.save(newSave);
+            setSave(newSave);
+            recordTokenSpend(tokenCost);
+            SoundManager.playUIClick();
+        }
+    };
+
+    const handleBuyTalent = (talent, currency) => {
+        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
+        
+        const unlocked = save[saveKey]?.[selectedChar] || [];
+        if (unlocked.includes(talent.id)) return;
+        
+        // Find talent index to determine cost tier (0, 1, 2)
+        const charTalents = CHARACTER_TALENTS[selectedChar] || [];
+        const tIndex = charTalents.findIndex(t => t.id === talent.id);
+        if (tIndex === -1) return;
+        
+        // Map talent index 0,1,2 to upgrade cost tiers 0, 2, 4
+        const costTier = tIndex * 2;
+        const goldCost = typeConfig.goldCosts[costTier];
+        const tokenCost = typeConfig.tokenCosts[costTier];
+
+        if (currency === 'gold' && save.gold >= goldCost) {
+            const newSave = { ...save, gold: save.gold - goldCost };
+            if (!newSave[saveKey]) newSave[saveKey] = {};
+            if (!newSave[saveKey][selectedChar]) newSave[saveKey][selectedChar] = [];
+            newSave[saveKey][selectedChar].push(talent.id);
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SoundManager.playUIClick();
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
+            if (!newSave[saveKey]) newSave[saveKey] = {};
+            if (!newSave[saveKey][selectedChar]) newSave[saveKey][selectedChar] = [];
+            newSave[saveKey][selectedChar].push(talent.id);
+            SaveManager.save(newSave);
+            setSave(newSave);
+            recordTokenSpend(tokenCost);
+            SoundManager.playUIClick();
+        }
+    };
+
+    const handleBuyCosmetic = (cosmetic, currency) => {
+        const unlocked = save.unlockedCosmetics || ['default'];
+        const cosmetics = save.cosmetics || { trail: 'default' };
+
+        if (unlocked.includes(cosmetic.id)) {
+            const newSave = { ...save, cosmetics: { ...cosmetics, trail: cosmetic.id } };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SoundManager.playUIClick();
+            return;
+        }
+
+        if (currency === 'gold' && save.gold >= cosmetic.goldCost) {
+            const newSave = { ...save, gold: save.gold - cosmetic.goldCost };
+            newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
+            newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SoundManager.playUIClick();
+        } else if (currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.tokenCost) {
+            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.tokenCost };
+            newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
+            newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            recordTokenSpend(cosmetic.tokenCost);
+            SoundManager.playUIClick();
+        }
+    };
+
+    const renderStats = () => {
+        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
+        
+        return (
+            <div className="space-y-2 md:space-y-4">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Base Stats</h2>
+                {STATS.map(stat => {
+                    const upgrades = save[saveKey] || {};
+                    const level = upgrades[stat.id] || 0;
+                    const isMax = level >= typeConfig.goldCosts.length;
+                    
+                    const goldCost = isMax ? 0 : typeConfig.goldCosts[level];
+                    const tokenCost = isMax ? 0 : typeConfig.tokenCosts[level];
+                    
+                    const canAffordGold = save.gold >= goldCost;
+                    const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
+                    const Icon = stat.icon;
+
+                    return (
+                        <div key={stat.id} className="bg-slate-800 p-2 md:p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 border border-slate-700">
+                            <div className="flex items-center gap-2 md:gap-4">
+                                <div className="p-1.5 md:p-3 bg-slate-700 rounded-md md:rounded-lg text-cyan-400 shrink-0">
+                                    <Icon size={16} className="md:w-6 md:h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-sm md:text-lg text-white">{stat.name}</h3>
+                                    <div className="text-[10px] md:text-xs text-slate-400 mb-0.5 md:mb-1">
+                                        {activeCategory === 'permanent' && `${stat.perm} per level`}
+                                        {activeCategory === 'weekly' && `${stat.week} per level`}
+                                        {activeCategory === 'seasonal' && `${stat.season} per level`}
+                                    </div>
+                                    <div className="flex gap-1 mt-1">
+                                        {[...Array(5)].map((_, i) => (
+                                            <div key={i} className={`w-2 h-2 md:w-4 md:h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <button
+                                    onClick={() => handleBuyStat(stat.id, 'gold')}
+                                    disabled={isMax || !canAffordGold}
+                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                        isMax ? 'bg-slate-700 text-slate-500' :
+                                        canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                        'bg-slate-700 text-slate-400 border border-slate-600'
+                                    }`}
+                                >
+                                    {isMax ? 'MAX' : `🪙 ${goldCost}`}
+                                </button>
+                                {!isMax && (
+                                    <button
+                                        onClick={() => handleBuyStat(stat.id, 'token')}
+                                        disabled={!canAffordToken}
+                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                            canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                            'bg-slate-700 text-slate-400 border border-slate-600'
+                                        }`}
+                                    >
+                                        💠 {tokenCost}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    const renderArmory = () => {
+        const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
+        const upgradeTypes = [
+            { id: 'damage', name: 'Plasma Output', icon: Zap, desc: '+10% per level' },
+            { id: 'area', name: 'Blast Radius', icon: Sparkles, desc: '+10% per level' },
+            { id: 'cooldown', name: 'Cooling Rate', icon: Timer, desc: '-5% per level' }
+        ];
+        
+        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
+
+        return (
+            <div className="space-y-4 md:space-y-6">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Armory</h2>
+                {baseWeapons.map(weapon => {
+                    // Check if mastered across all categories
+                    const getWeaponUpgrade = (wId, stat) => {
+                        const perm = save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
+                        const week = save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
+                        const season = save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
+                        return perm + week + season;
+                    };
+                    const dmgLevel = getWeaponUpgrade(weapon.id, 'damage');
+                    const areaLevel = getWeaponUpgrade(weapon.id, 'area');
+                    const cdLevel = getWeaponUpgrade(weapon.id, 'cooldown');
+                    const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
+
+                    return (
+                    <div key={weapon.id} className={`bg-slate-800 p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
+                        <div className="mb-4">
+                            <div className="flex justify-between items-start mb-1">
+                                <h3 className={`font-bold text-lg md:text-xl ${isMastered ? 'text-yellow-400' : 'text-white'}`}>{weapon.name}</h3>
+                                {isMastered && (
+                                    <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded border border-yellow-500/50">
+                                        MASTERED
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-slate-400 text-xs md:text-sm">{weapon.desc}</p>
+                            {isMastered && (
+                                <p className="text-yellow-300 text-xs md:text-sm font-bold mt-2">✨ {weapon.masteryDesc}</p>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                            {upgradeTypes.map(stat => {
+                                const level = save[saveKey]?.[weapon.id]?.[stat.id] || 0;
+                                const cost = typeConfig.goldCosts[level];
+                                const tokenCost = typeConfig.tokenCosts[level];
+                                const isMax = level >= typeConfig.goldCosts.length;
+                                const canAffordGold = save.gold >= cost;
+                                const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
+                                const Icon = stat.icon;
+
+                                return (
+                                    <div key={stat.id} className="bg-slate-900 p-3 rounded-lg border border-slate-700 flex flex-col justify-between">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2 text-slate-300">
+                                                <Icon size={16} className="text-cyan-400" />
+                                                <div>
+                                                    <div className="font-bold text-xs md:text-sm leading-tight">{stat.name}</div>
+                                                    <div className="text-[10px] text-slate-500 leading-tight">{stat.desc}</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-1">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <div key={i} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 w-full">
+                                            <button
+                                                onClick={() => handleBuyWeapon(weapon.id, stat.id, 'gold')}
+                                                disabled={isMax || !canAffordGold}
+                                                className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
+                                                    isMax ? 'bg-slate-800 text-slate-600' :
+                                                    canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                    'bg-slate-800 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                {isMax ? 'MAX' : `🪙 ${cost}`}
+                                            </button>
+                                            {!isMax && (
+                                                <button
+                                                    onClick={() => handleBuyWeapon(weapon.id, stat.id, 'token')}
+                                                    disabled={!canAffordToken}
+                                                    className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
+                                                        canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                        'bg-slate-800 text-slate-500 border border-slate-700'
+                                                    }`}
+                                                >
+                                                    💠 {tokenCost}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    const renderTalents = () => {
+        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
+
+        return (
+            <div>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Skill Tree</h2>
+                <div className="flex items-center gap-4 mb-4 md:mb-6 overflow-x-auto pb-2">
+                    {(save.unlockedCharacters || ['neobyte']).map(charId => {
+                        const char = CHARACTERS.find(c => c.id === charId);
+                        if (!char) return null;
+                        return (
+                            <button
+                                key={char.id}
+                                onClick={() => setSelectedChar(char.id)}
+                                className={`shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full border-2 overflow-hidden ${selectedChar === char.id ? 'border-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]' : 'border-slate-700 opacity-50 hover:opacity-100'}`}
+                            >
+                                {char.image ? <img src={char.image} alt={char.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800" />}
+                            </button>
+                        );
+                    })}
+                </div>
+                <h3 className="text-lg md:text-xl font-bold text-slate-300 mb-4 md:mb-6">{CHARACTERS.find(c => c.id === (selectedChar || 'neobyte'))?.name}'s Talents</h3>
+                <div className="space-y-3 md:space-y-4 relative">
+                    <div className="absolute left-[26px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
+                    
+                    {(CHARACTER_TALENTS[selectedChar || 'neobyte'] || []).map((talent, index) => {
+                        const unlocked = save[saveKey]?.[selectedChar || 'neobyte'] || [];
+                        const isUnlocked = unlocked.includes(talent.id);
+                        
+                        // To unlock tier 2, you need tier 1 from ANY category (perm, week, season)
+                        const getUnlockedTalents = (char) => {
+                            const perm = save.permanentTalents?.[char] || [];
+                            const week = save.weeklyTalents?.[char] || [];
+                            const season = save.seasonalTalents?.[char] || [];
+                            return [...new Set([...perm, ...week, ...season])];
+                        };
+                        const allUnlocked = getUnlockedTalents(selectedChar || 'neobyte');
+                        
+                        const canUnlock = !isUnlocked && (index === 0 || allUnlocked.includes(CHARACTER_TALENTS[selectedChar || 'neobyte'][index-1].id));
+                        
+                        const costTier = index * 2;
+                        const goldCost = typeConfig.goldCosts[costTier];
+                        const tokenCost = typeConfig.tokenCosts[costTier];
+                        const canAffordGold = save.gold >= goldCost;
+                        const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
+                        
+                        return (
+                            <div key={talent.id} className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-700">
+                                <div className="flex items-center gap-2 md:gap-4">
+                                    <div className={`w-10 h-10 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
+                                        isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
+                                        canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
+                                        'bg-slate-800 border-slate-700 text-slate-600'
+                                    }`}>
+                                        {index + 1}
+                                    </div>
+                                    <div>
+                                        <h3 className={`font-bold text-sm md:text-lg ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
+                                        <p className="text-slate-400 text-[10px] md:text-sm leading-tight">{talent.desc}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 w-full sm:w-auto pl-[60px] sm:pl-0">
+                                    <button
+                                        onClick={() => handleBuyTalent(talent, 'gold')}
+                                        disabled={isUnlocked || !canUnlock || !canAffordGold}
+                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                            isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
+                                            canUnlock && canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                            'bg-slate-800 text-slate-600 border border-slate-700'
+                                        }`}
+                                    >
+                                        {isUnlocked ? 'UNLOCKED' : `🪙 ${goldCost}`}
+                                    </button>
+                                    {!isUnlocked && (
+                                        <button
+                                            onClick={() => handleBuyTalent(talent, 'token')}
+                                            disabled={!canUnlock || !canAffordToken}
+                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                                canUnlock && canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                'bg-slate-800 text-slate-600 border border-slate-700'
+                                            }`}
+                                        >
+                                            💠 {tokenCost}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    const renderCosmetics = () => {
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {COSMETICS.map(cosmetic => {
+                    const unlocked = save.unlockedCosmetics || ['default'];
+                    const isUnlocked = unlocked.includes(cosmetic.id);
+                    const isEquipped = save.cosmetics?.trail === cosmetic.id;
+                    const canAffordGold = save.gold >= cosmetic.goldCost;
+                    const canAffordToken = (save.cosmicTokens || 0) >= cosmetic.tokenCost;
+
+                    return (
+                        <div key={cosmetic.id} className={`bg-slate-800 p-4 rounded-lg border-2 flex flex-col items-center text-center gap-3 ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700'}`}>
+                            <div className="text-4xl">{cosmetic.icon}</div>
+                            <h3 className="font-bold text-lg text-white">{cosmetic.name}</h3>
+                            
+                            {isEquipped || isUnlocked ? (
+                                <button
+                                    onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
+                                    disabled={isEquipped}
+                                    className={`w-full py-2 rounded-lg font-bold transition-colors text-sm ${
+                                        isEquipped ? 'bg-pink-600 text-white' :
+                                        'bg-slate-700 text-white hover:bg-slate-600'
+                                    }`}
+                                >
+                                    {isEquipped ? 'EQUIPPED' : 'EQUIP'}
+                                </button>
+                            ) : (
+                                <div className="flex gap-2 w-full">
+                                    <button
+                                        onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
+                                        disabled={!canAffordGold}
+                                        className={`flex-1 py-2 rounded-lg font-bold transition-colors text-sm ${
+                                            canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                            'bg-slate-800 text-slate-500 border border-slate-700'
+                                        }`}
+                                    >
+                                        🪙 {cosmetic.goldCost}
+                                    </button>
+                                    <button
+                                        onClick={() => handleBuyCosmetic(cosmetic, 'token')}
+                                        disabled={!canAffordToken}
+                                        className={`flex-1 py-2 rounded-lg font-bold transition-colors text-sm ${
+                                            canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                            'bg-slate-800 text-slate-500 border border-slate-700'
+                                        }`}
+                                    >
+                                        💠 {cosmetic.tokenCost}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    return (
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+            <div className="max-w-5xl mx-auto">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4">
+                    <div>
+                        {!isCarousel && (
+                            <button 
+                                onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
+                                className="mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
+                            >
+                                <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
+                            </button>
+                        )}
+                        <h1 className="text-2xl md:text-3xl font-bold text-pink-400 tracking-tight">UPGRADE LOUNGE</h1>
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Enhance your operatives and arsenal.</p>
+                    </div>
+                    <div className="flex gap-1.5 md:gap-4">
+                        <div className="text-sm md:text-lg font-bold text-emerald-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
+                            💠 {save.cosmicTokens || 0}
+                        </div>
+                        <div className="text-sm md:text-lg font-bold text-yellow-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Gold">
+                            🪙 {save.gold}
+                        </div>
+                    </div>
+                </header>
+
+                <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-6">
+                    {UPGRADE_TYPES.map(type => (
+                        <button
+                            key={type.id}
+                            onClick={() => { SoundManager.playUIClick(); setActiveCategory(type.id); }}
+                            className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
+                                activeCategory === type.id ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }`}
+                        >
+                            {type.name}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setActiveCategory('cosmetics'); }}
+                        className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
+                            activeCategory === 'cosmetics' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                    >
+                        Cosmetics
+                    </button>
+                </div>
+
+                {timeLeft && (
+                    <div className="mb-3 md:mb-4 text-xs md:text-sm font-bold text-cyan-400 bg-slate-800/50 p-1.5 md:p-2 rounded-md md:rounded-lg border border-slate-700 inline-block">
+                        Resets in: {timeLeft}
+                    </div>
+                )}
+
+                <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
+                    {activeCategory !== 'cosmetics' ? (
+                        <>
+                            <div className="flex gap-2 mb-6 border-b border-slate-800 pb-4 overflow-x-auto">
+                                {['stats', 'armory', 'talents'].map(sub => (
+                                    <button
+                                        key={sub}
+                                        onClick={() => { SoundManager.playUIClick(); setSubCategory(sub); }}
+                                        className={`px-4 py-2 rounded-lg font-bold text-sm md:text-base capitalize transition-colors whitespace-nowrap ${
+                                            subCategory === sub ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        {sub}
+                                    </button>
+                                ))}
+                            </div>
+                            {subCategory === 'stats' && renderStats()}
+                            {subCategory === 'armory' && renderArmory()}
+                            {subCategory === 'talents' && renderTalents()}
+                        </>
+                    ) : (
+                        renderCosmetics()
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
