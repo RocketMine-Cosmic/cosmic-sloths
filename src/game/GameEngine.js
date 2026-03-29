@@ -161,7 +161,7 @@ export class GameEngine {
         this.shakeY = 0;
         this.shakeTimer = 0;
         this.hitStopTimer = 0;
-        this.zoom = window.innerWidth < 768 ? 0.65 : 1;
+        this.zoom = window.innerWidth < 768 ? 0.55 : 1;
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -256,7 +256,7 @@ export class GameEngine {
             this.player.moveTimer = 0;
         }
         
-        this.zoom = window.innerWidth < 768 ? 0.65 : 1;
+        this.zoom = window.innerWidth < 768 ? 0.55 : 1;
         this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
         this.camera.y = this.player.y - (this.canvas.height / this.zoom) / 2;
 
