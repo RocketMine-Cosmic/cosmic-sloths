@@ -85,62 +85,62 @@ const loadSprite = (filename) => {
 
 export const ENEMIES = [
   // Tier 1
-  { id: 't1_void_glow', name: 'Void Glow Orb', hp: 10, speed: 2.2, damage: 6, color: '#a855f7', radius: 24, xp: 1, tier: 1, spriteImage: loadSprite('ffb4f7068_void_glow_orb_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't1_nebula_jelly', name: 'Nebula Jelly', hp: 8, speed: 2.0, damage: 5, color: '#06b6d4', radius: 24, xp: 1, tier: 1, spriteImage: loadSprite('eb5805fe1_nebula_jelly_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't1_probe', name: 'Mini Probe Drone', hp: 12, speed: 2.5, damage: 8, color: '#84cc16', radius: 20, xp: 1, tier: 1, spriteImage: loadSprite('45cfb9820_mini_probe_drone_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't1_floater', name: 'Crystal Floater', hp: 14, speed: 1.8, damage: 7, color: '#ec4899', radius: 28, xp: 1, tier: 1, spriteImage: loadSprite('a70ff7ac4_crystal_floater_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't1_void_glow', name: 'Void Glow Orb', hp: 10, speed: 2.2, damage: 6, color: '#a855f7', radius: 36, xp: 1, tier: 1, spriteImage: loadSprite('ffb4f7068_void_glow_orb_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't1_nebula_jelly', name: 'Nebula Jelly', hp: 8, speed: 2.0, damage: 5, color: '#06b6d4', radius: 36, xp: 1, tier: 1, spriteImage: loadSprite('eb5805fe1_nebula_jelly_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't1_probe', name: 'Mini Probe Drone', hp: 12, speed: 2.5, damage: 8, color: '#84cc16', radius: 30, xp: 1, tier: 1, spriteImage: loadSprite('45cfb9820_mini_probe_drone_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't1_floater', name: 'Crystal Floater', hp: 14, speed: 1.8, damage: 7, color: '#ec4899', radius: 42, xp: 1, tier: 1, spriteImage: loadSprite('a70ff7ac4_crystal_floater_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 2
-  { id: 't2_serpent', name: 'Plasma Serpent', hp: 18, speed: 2.4, damage: 12, color: '#f97316', radius: 28, xp: 2, tier: 2, spriteImage: loadSprite('7baf81106_plasma_serpent_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't2_eye_tentacle', name: 'Eye Tentacle', hp: 22, speed: 1.5, damage: 15, color: '#d946ef', radius: 32, xp: 2, tier: 2, spriteImage: loadSprite('e1e15823a_eye_tentacle_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't2_spore_wasp', name: 'Spore Wasp', hp: 15, speed: 2.6, damage: 10, color: '#84cc16', radius: 24, xp: 2, tier: 2, spriteImage: loadSprite('3b545ef7a_spore_wasp_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't2_rock', name: 'Rock Fragment', hp: 35, speed: 0.8, damage: 14, color: '#f97316', radius: 36, xp: 2, tier: 2, isTank: true, spriteImage: loadSprite('0452ce6df_rock_fragment_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_serpent', name: 'Plasma Serpent', hp: 18, speed: 2.4, damage: 12, color: '#f97316', radius: 42, xp: 2, tier: 2, spriteImage: loadSprite('7baf81106_plasma_serpent_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_eye_tentacle', name: 'Eye Tentacle', hp: 22, speed: 1.5, damage: 15, color: '#d946ef', radius: 48, xp: 2, tier: 2, spriteImage: loadSprite('e1e15823a_eye_tentacle_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_spore_wasp', name: 'Spore Wasp', hp: 15, speed: 2.6, damage: 10, color: '#84cc16', radius: 36, xp: 2, tier: 2, spriteImage: loadSprite('3b545ef7a_spore_wasp_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_rock', name: 'Rock Fragment', hp: 35, speed: 0.8, damage: 14, color: '#f97316', radius: 54, xp: 2, tier: 2, isTank: true, spriteImage: loadSprite('0452ce6df_rock_fragment_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 3
-  { id: 't3_manta', name: 'Void Manta', hp: 30, speed: 2.0, damage: 16, color: '#8b5cf6', radius: 36, xp: 3, tier: 3, spriteImage: loadSprite('9842135cf_void_mantra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't3_energy_phantom', name: 'Energy Phantom', hp: 28, speed: 1.8, damage: 15, color: '#0ea5e9', radius: 32, xp: 3, tier: 3, spriteImage: loadSprite('74d31fdc0_energy_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't3_starfish', name: 'Stellar Starfish', hp: 35, speed: 1.2, damage: 18, color: '#eab308', radius: 32, xp: 3, tier: 3, spriteImage: loadSprite('bdcbfb6bd_stellar_starfish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't3_angler', name: 'Angler Lantern', hp: 32, speed: 1.5, damage: 17, color: '#3b82f6', radius: 36, xp: 3, tier: 3, spriteImage: loadSprite('b00d8e25b_angler_lantern_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_manta', name: 'Void Manta', hp: 30, speed: 2.0, damage: 16, color: '#8b5cf6', radius: 54, xp: 3, tier: 3, spriteImage: loadSprite('9842135cf_void_mantra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_energy_phantom', name: 'Energy Phantom', hp: 28, speed: 1.8, damage: 15, color: '#0ea5e9', radius: 48, xp: 3, tier: 3, spriteImage: loadSprite('74d31fdc0_energy_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_starfish', name: 'Stellar Starfish', hp: 35, speed: 1.2, damage: 18, color: '#eab308', radius: 48, xp: 3, tier: 3, spriteImage: loadSprite('bdcbfb6bd_stellar_starfish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_angler', name: 'Angler Lantern', hp: 32, speed: 1.5, damage: 17, color: '#3b82f6', radius: 54, xp: 3, tier: 3, spriteImage: loadSprite('b00d8e25b_angler_lantern_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 4
-  { id: 't4_spinner', name: 'Quantum Spinner', hp: 45, speed: 2.2, damage: 20, color: '#06b6d4', radius: 36, xp: 4, tier: 4, spriteImage: loadSprite('a2df90068_quantum_spinner_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't4_ribbon', name: 'Ribbon Phantom', hp: 40, speed: 1.9, damage: 22, color: '#d946ef', radius: 32, xp: 4, tier: 4, spriteImage: loadSprite('06dc947b3_ribbon_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't4_vortex', name: 'Vortex Drifter', hp: 55, speed: 1.4, damage: 25, color: '#ec4899', radius: 40, xp: 4, tier: 4, spriteImage: loadSprite('28251fe02_vortex_drifter_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't4_mothra', name: 'Neon Mothra', hp: 38, speed: 2.4, damage: 18, color: '#14b8a6', radius: 32, xp: 4, tier: 4, spriteImage: loadSprite('23d933892_neon_mothra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_spinner', name: 'Quantum Spinner', hp: 45, speed: 2.2, damage: 20, color: '#06b6d4', radius: 54, xp: 4, tier: 4, spriteImage: loadSprite('a2df90068_quantum_spinner_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_ribbon', name: 'Ribbon Phantom', hp: 40, speed: 1.9, damage: 22, color: '#d946ef', radius: 48, xp: 4, tier: 4, spriteImage: loadSprite('06dc947b3_ribbon_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_vortex', name: 'Vortex Drifter', hp: 55, speed: 1.4, damage: 25, color: '#ec4899', radius: 60, xp: 4, tier: 4, spriteImage: loadSprite('28251fe02_vortex_drifter_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_mothra', name: 'Neon Mothra', hp: 38, speed: 2.4, damage: 18, color: '#14b8a6', radius: 48, xp: 4, tier: 4, spriteImage: loadSprite('23d933892_neon_mothra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 5
-  { id: 't5_spike_virus', name: 'Spike Virus', hp: 65, speed: 1.8, damage: 28, color: '#a855f7', radius: 40, xp: 5, tier: 5, spriteImage: loadSprite('9b4da0034_spike_virus_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't5_coral', name: 'Coral Bloom', hp: 80, speed: 1.2, damage: 25, color: '#f43f5e', radius: 44, xp: 5, tier: 5, spriteImage: loadSprite('c045ec43a_coral_bloom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't5_blade', name: 'Blade Arrowhead', hp: 60, speed: 2.5, damage: 30, color: '#94a3b8', radius: 36, xp: 5, tier: 5, isRanged: true, spriteImage: loadSprite('e573c6ccc_blade_arrowhead_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't5_spike_virus', name: 'Spike Virus', hp: 65, speed: 1.8, damage: 28, color: '#a855f7', radius: 60, xp: 5, tier: 5, spriteImage: loadSprite('9b4da0034_spike_virus_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't5_coral', name: 'Coral Bloom', hp: 80, speed: 1.2, damage: 25, color: '#f43f5e', radius: 66, xp: 5, tier: 5, spriteImage: loadSprite('c045ec43a_coral_bloom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't5_blade', name: 'Blade Arrowhead', hp: 60, speed: 2.5, damage: 30, color: '#94a3b8', radius: 54, xp: 5, tier: 5, isRanged: true, spriteImage: loadSprite('e573c6ccc_blade_arrowhead_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 6
-  { id: 't6_chain_eye', name: 'Chain Eye', hp: 100, speed: 1.6, damage: 35, color: '#d946ef', radius: 48, xp: 6, tier: 6, isRanged: true, spriteImage: loadSprite('65ffb3fae_chain_eye_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't6_frost_wyrm', name: 'Frost Wyrm', hp: 120, speed: 1.8, damage: 38, color: '#38bdf8', radius: 52, xp: 6, tier: 6, spriteImage: loadSprite('ab422464d_frost_wyrm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't6_flame_wyrm', name: 'Flame Wyrmling', hp: 90, speed: 2.2, damage: 42, color: '#ef4444', radius: 44, xp: 6, tier: 6, spriteImage: loadSprite('906ceba81_flame_wyrmling_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't6_chain_eye', name: 'Chain Eye', hp: 100, speed: 1.6, damage: 35, color: '#d946ef', radius: 72, xp: 6, tier: 6, isRanged: true, spriteImage: loadSprite('65ffb3fae_chain_eye_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't6_frost_wyrm', name: 'Frost Wyrm', hp: 120, speed: 1.8, damage: 38, color: '#38bdf8', radius: 78, xp: 6, tier: 6, spriteImage: loadSprite('ab422464d_frost_wyrm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't6_flame_wyrm', name: 'Flame Wyrmling', hp: 90, speed: 2.2, damage: 42, color: '#ef4444', radius: 66, xp: 6, tier: 6, spriteImage: loadSprite('906ceba81_flame_wyrmling_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 7
-  { id: 't7_frost_specter', name: 'Frost Specter', hp: 150, speed: 1.7, damage: 48, color: '#0ea5e9', radius: 52, xp: 7, tier: 7, spriteImage: loadSprite('f6ad447be_frost_specter_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't7_thunder', name: 'Thunder Sphere', hp: 140, speed: 2.1, damage: 52, color: '#eab308', radius: 48, xp: 7, tier: 7, isRanged: true, spriteImage: loadSprite('5cbd6ac67_thunder_sphere_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't7_gear_swarm', name: 'Nano Gear Swarm', hp: 160, speed: 1.4, damage: 45, color: '#94a3b8', radius: 56, xp: 7, tier: 7, spriteImage: loadSprite('0987d4652_nano_gear_swarm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't7_frost_specter', name: 'Frost Specter', hp: 150, speed: 1.7, damage: 48, color: '#0ea5e9', radius: 78, xp: 7, tier: 7, spriteImage: loadSprite('f6ad447be_frost_specter_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't7_thunder', name: 'Thunder Sphere', hp: 140, speed: 2.1, damage: 52, color: '#eab308', radius: 72, xp: 7, tier: 7, isRanged: true, spriteImage: loadSprite('5cbd6ac67_thunder_sphere_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't7_gear_swarm', name: 'Nano Gear Swarm', hp: 160, speed: 1.4, damage: 45, color: '#94a3b8', radius: 84, xp: 7, tier: 7, spriteImage: loadSprite('0987d4652_nano_gear_swarm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 8
-  { id: 't8_whisper', name: 'Whispering Void', hp: 200, speed: 1.5, damage: 60, color: '#7e22ce', radius: 60, xp: 8, tier: 8, spriteImage: loadSprite('0438a0ffd_whispering_void_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't8_bio_bloom', name: 'Bio Bloom Pod', hp: 240, speed: 1.0, damage: 55, color: '#22c55e', radius: 64, xp: 8, tier: 8, spriteImage: loadSprite('578d7e2aa_bio_bloom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't8_ray_fish', name: 'Cosmic Ray Fish', hp: 180, speed: 2.3, damage: 65, color: '#38bdf8', radius: 56, xp: 8, tier: 8, spriteImage: loadSprite('bcd99f449_cosmic_ray_fish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't8_whisper', name: 'Whispering Void', hp: 200, speed: 1.5, damage: 60, color: '#7e22ce', radius: 90, xp: 8, tier: 8, spriteImage: loadSprite('0438a0ffd_whispering_void_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't8_bio_bloom', name: 'Bio Bloom Pod', hp: 240, speed: 1.0, damage: 55, color: '#22c55e', radius: 96, xp: 8, tier: 8, spriteImage: loadSprite('578d7e2aa_bio_bloom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't8_ray_fish', name: 'Cosmic Ray Fish', hp: 180, speed: 2.3, damage: 65, color: '#38bdf8', radius: 84, xp: 8, tier: 8, spriteImage: loadSprite('bcd99f449_cosmic_ray_fish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 9
-  { id: 't9_lava_blob', name: 'Lava Rock Blob', hp: 300, speed: 1.2, damage: 85, color: '#ef4444', radius: 68, xp: 9, tier: 9, isTank: true, spriteImage: loadSprite('f01e56245_lava_rock_blob_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't9_jelly_swarm', name: 'Plasma Jelly Swarm', hp: 260, speed: 1.9, damage: 80, color: '#06b6d4', radius: 60, xp: 9, tier: 9, spriteImage: loadSprite('70f1f9342_plasma_jelly_swarm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't9_lava_blob', name: 'Lava Rock Blob', hp: 300, speed: 1.2, damage: 85, color: '#ef4444', radius: 102, xp: 9, tier: 9, isTank: true, spriteImage: loadSprite('f01e56245_lava_rock_blob_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't9_jelly_swarm', name: 'Plasma Jelly Swarm', hp: 260, speed: 1.9, damage: 80, color: '#06b6d4', radius: 90, xp: 9, tier: 9, spriteImage: loadSprite('70f1f9342_plasma_jelly_swarm_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 10
-  { id: 't10_shadow', name: 'Shadow Stalker', hp: 420, speed: 2.2, damage: 120, color: '#1e293b', radius: 72, xp: 10, tier: 10, spriteImage: loadSprite('9199eef7e_shadow_stalker_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't10_crystal_vortex', name: 'Crystal Vortex', hp: 480, speed: 1.6, damage: 130, color: '#d946ef', radius: 76, xp: 10, tier: 10, isRanged: true, spriteImage: loadSprite('703e0a56e_crystal_vortex_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't10_shadow', name: 'Shadow Stalker', hp: 420, speed: 2.2, damage: 120, color: '#1e293b', radius: 108, xp: 10, tier: 10, spriteImage: loadSprite('9199eef7e_shadow_stalker_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't10_crystal_vortex', name: 'Crystal Vortex', hp: 480, speed: 1.6, damage: 130, color: '#d946ef', radius: 114, xp: 10, tier: 10, isRanged: true, spriteImage: loadSprite('703e0a56e_crystal_vortex_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Bosses (spawn anywhere at the end)
-  { id: 'boss_shard_leviathan', name: 'Shard Leviathan', hp: 8000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 110, xp: 800, isBoss: true, spriteImage: loadSprite('005d73c1a_shard_leviathan_mini_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 'boss_horror_eye', name: 'Horror Eye Cluster', hp: 7000, speed: 0.6, damage: 70, color: '#ef4444', radius: 100, xp: 700, isBoss: true, spriteImage: loadSprite('a892b6caf_horror_eye_cluster_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 'boss_ink_shadow', name: 'Ink Shadow', hp: 9000, speed: 1.0, damage: 55, color: '#0f172a', radius: 120, xp: 900, isBoss: true, spriteImage: loadSprite('630af54e6_ink_shadow_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 'boss_star_eater', name: 'Star Eater', hp: 10000, speed: 0.5, damage: 80, color: '#f59e0b', radius: 130, xp: 1000, isBoss: true, spriteImage: loadSprite('34b7afc8e_star_eater_sheet.png'), frameCount: 16, animationSpeed: 0.15 }
+  { id: 'boss_shard_leviathan', name: 'Shard Leviathan', hp: 8000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 165, xp: 800, isBoss: true, spriteImage: loadSprite('005d73c1a_shard_leviathan_mini_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 'boss_horror_eye', name: 'Horror Eye Cluster', hp: 7000, speed: 0.6, damage: 70, color: '#ef4444', radius: 150, xp: 700, isBoss: true, spriteImage: loadSprite('a892b6caf_horror_eye_cluster_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 'boss_ink_shadow', name: 'Ink Shadow', hp: 9000, speed: 1.0, damage: 55, color: '#0f172a', radius: 180, xp: 900, isBoss: true, spriteImage: loadSprite('630af54e6_ink_shadow_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 'boss_star_eater', name: 'Star Eater', hp: 10000, speed: 0.5, damage: 80, color: '#f59e0b', radius: 195, xp: 1000, isBoss: true, spriteImage: loadSprite('34b7afc8e_star_eater_sheet.png'), frameCount: 16, animationSpeed: 0.15 }
 ];
 
 export const CHARACTER_TALENTS = {
