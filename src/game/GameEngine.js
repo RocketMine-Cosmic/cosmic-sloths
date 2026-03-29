@@ -1546,8 +1546,15 @@ export class GameEngine {
             }
         }
 
+        // Advance sprite animation frame
         const SPRITE_FRAMES = 16;
         const SPRITE_SIZE = 192;
+        const FRAME_DURATION = 1 / 12; // 12 fps
+        this.player.frameTimer += this.lastDt || 0;
+        if (this.player.frameTimer >= FRAME_DURATION) {
+            this.player.frameTimer -= FRAME_DURATION;
+            this.player.currentFrame = (this.player.currentFrame + 1) % SPRITE_FRAMES;
+        }
 
         const spriteSheet = this.player.isMoving
             ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
@@ -1555,25 +1562,18 @@ export class GameEngine {
 
         if (spriteSheet) {
             const size = this.player.radius * 5;
+            const frame = this.player.currentFrame;
+            const col = frame % 4;
+            const row = Math.floor(frame / 4);
+            const sx = col * SPRITE_SIZE;
+            const sy = row * SPRITE_SIZE;
             
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
-            
-            // The new sprites face left by default, so we mirror them when facing right
-            if (!this.player.facingLeft) this.ctx.scale(-1, 1);
-            
+            if (this.player.facingLeft) this.ctx.scale(-1, 1);
             this.ctx.shadowColor = this.player.color;
             this.ctx.shadowBlur = 10;
-            
-            // Draw all 16 layers on top of each other
-            for (let i = 0; i < SPRITE_FRAMES; i++) {
-                const col = i % 4;
-                const row = Math.floor(i / 4);
-                const sx = col * SPRITE_SIZE;
-                const sy = row * SPRITE_SIZE;
-                this.ctx.drawImage(spriteSheet, sx, sy, SPRITE_SIZE, SPRITE_SIZE, -size/2, -size/2, size, size);
-            }
-            
+            this.ctx.drawImage(spriteSheet, sx, sy, SPRITE_SIZE, SPRITE_SIZE, -size/2, -size/2, size, size);
             this.ctx.shadowBlur = 0;
             this.ctx.restore();
         } else if (this.player.image && this.player.image.complete) {
