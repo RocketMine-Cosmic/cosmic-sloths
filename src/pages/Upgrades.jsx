@@ -137,13 +137,7 @@ export default function Upgrades({ isCarousel }) {
         const unlocked = save[saveKey]?.[selectedChar] || [];
         if (unlocked.includes(talent.id)) return;
         
-        // Find talent index to determine cost tier (0, 1, 2)
-        const charTalents = CHARACTER_TALENTS[selectedChar] || [];
-        const tIndex = charTalents.findIndex(t => t.id === talent.id);
-        if (tIndex === -1) return;
-        
-        // Map talent index 0,1,2 to upgrade cost tiers 0, 2, 4
-        const costTier = tIndex * 2;
+        const costTier = (talent.tier - 1) * 2;
         const goldCost = typeConfig.goldCosts[costTier];
         const tokenCost = typeConfig.tokenCosts[costTier];
 
@@ -423,9 +417,42 @@ export default function Upgrades({ isCarousel }) {
             setSelectedChar(unlockedChars[newIndex]);
         };
 
+        const handleRespecTalents = () => {
+            const unlocked = save[saveKey]?.[selectedChar] || [];
+            if (unlocked.length === 0) return;
+            
+            let refundedGold = 0;
+            const charTalents = CHARACTER_TALENTS[selectedChar] || [];
+            
+            unlocked.forEach(tId => {
+                const talent = charTalents.find(t => t.id === tId);
+                if (talent) {
+                    const costTier = (talent.tier - 1) * 2;
+                    refundedGold += typeConfig.goldCosts[costTier];
+                }
+            });
+            
+            const newSave = { ...save, gold: save.gold + refundedGold };
+            if (newSave[saveKey]) {
+                newSave[saveKey][selectedChar] = [];
+            }
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SoundManager.playUIClick();
+        };
+
         return (
             <div>
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">Skill Tree</h2>
+                <div className="flex items-center justify-between mb-2 md:mb-4">
+                    <h2 className="text-xl md:text-2xl font-bold text-white">Skill Tree</h2>
+                    <button 
+                        onClick={handleRespecTalents}
+                        disabled={(save[saveKey]?.[selectedChar] || []).length === 0}
+                        className="px-3 py-1.5 bg-red-900/50 hover:bg-red-800/80 text-red-400 border border-red-800 rounded-lg font-bold text-xs md:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Respec (Refunds Gold)
+                    </button>
+                </div>
                 
                 <div className="flex items-center justify-between bg-slate-800 p-1.5 md:p-2 rounded-xl mb-4 border border-slate-700">
                     <button 
@@ -468,26 +495,35 @@ export default function Upgrades({ isCarousel }) {
                         };
                         const allUnlocked = getUnlockedTalents(selectedChar || 'neobyte');
                         
-                        const canUnlock = !isUnlocked && (index === 0 || allUnlocked.includes(CHARACTER_TALENTS[selectedChar || 'neobyte'][index-1].id));
+                        const canUnlock = !isUnlocked && (
+                            talent.tier === 1 || 
+                            (talent.requires && allUnlocked.includes(talent.requires) && (!talent.excludes || !allUnlocked.includes(talent.excludes)))
+                        );
                         
-                        const costTier = index * 2;
+                        const costTier = (talent.tier - 1) * 2;
                         const goldCost = typeConfig.goldCosts[costTier];
                         const tokenCost = typeConfig.tokenCosts[costTier];
                         const canAffordGold = save.gold >= goldCost;
                         const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
                         
+                        // Determine branch visual
+                        const isBranchA = talent.id.endsWith('a');
+                        const isBranchB = talent.id.endsWith('b');
+                        
                         return (
-                            <div key={talent.id} className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700">
+                            <div key={talent.id} className={`relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700 ${isBranchA ? 'ml-0 sm:ml-8 border-l-4 border-l-blue-500' : isBranchB ? 'ml-0 sm:ml-8 border-l-4 border-l-purple-500' : ''}`}>
                                 <div className="flex items-center gap-2 md:gap-4">
                                     <div className={`w-10 h-10 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
                                         isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
                                         canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
                                         'bg-slate-800 border-slate-700 text-slate-600'
                                     }`}>
-                                        {index + 1}
+                                        {talent.tier}
                                     </div>
                                     <div>
-                                        <h3 className={`font-bold text-sm md:text-lg ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>{talent.name}</h3>
+                                        <h3 className={`font-bold text-sm md:text-lg ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>
+                                            {talent.name} {isBranchA ? '(Path A)' : isBranchB ? '(Path B)' : ''}
+                                        </h3>
                                         <p className="text-slate-400 text-[10px] md:text-sm leading-tight">{talent.desc}</p>
                                     </div>
                                 </div>

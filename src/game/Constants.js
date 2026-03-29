@@ -160,53 +160,73 @@ export const ENEMIES = [
 
 export const CHARACTER_TALENTS = {
   neobyte: [
-    { id: 'neo_1', name: 'Fleet Command', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
-    { id: 'neo_2', name: 'Rapid Ordnance', desc: '-10% Cooldown', cost: 2500, stat: 'cooldownMult', value: -0.1 },
-    { id: 'neo_3', name: 'Orbital Bombardment', desc: '+25% Damage', cost: 5000, stat: 'damageMult', value: 0.25 }
+    { id: 'neo_1', name: 'Fleet Command', desc: '+10% Area', stat: 'areaMult', value: 0.1, tier: 1 },
+    { id: 'neo_2a', name: 'Rapid Ordnance', desc: '-10% Cooldown', stat: 'cooldownMult', value: -0.1, tier: 2, requires: 'neo_1', excludes: 'neo_2b' },
+    { id: 'neo_2b', name: 'Reinforced Hull', desc: '+30 Max HP', stat: 'maxHp', value: 30, tier: 2, requires: 'neo_1', excludes: 'neo_2a' },
+    { id: 'neo_3a', name: 'Orbital Bombardment', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'neo_2a' },
+    { id: 'neo_3b', name: 'Aegis Shield', desc: '+5 Armor', stat: 'armor', value: 5, tier: 3, requires: 'neo_2b' }
   ],
   pandypaws: [
-    { id: 'pan_1', name: 'Titanium Alloy', desc: '+3 Armor', cost: 1000, stat: 'armor', value: 3 },
-    { id: 'pan_2', name: 'Gravity Crush', desc: '+20% Area', cost: 2500, stat: 'areaMult', value: 0.2 },
-    { id: 'pan_3', name: 'Dreadnought Chassis', desc: '+50 Max HP', cost: 5000, stat: 'maxHp', value: 50 }
+    { id: 'pan_1', name: 'Titanium Alloy', desc: '+3 Armor', stat: 'armor', value: 3, tier: 1 },
+    { id: 'pan_2a', name: 'Gravity Crush', desc: '+20% Area', stat: 'areaMult', value: 0.2, tier: 2, requires: 'pan_1', excludes: 'pan_2b' },
+    { id: 'pan_2b', name: 'Nanite Repair', desc: '+0.5 Regen', stat: 'regen', value: 0.5, tier: 2, requires: 'pan_1', excludes: 'pan_2a' },
+    { id: 'pan_3a', name: 'Seismic Shock', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'pan_2a' },
+    { id: 'pan_3b', name: 'Dreadnought Chassis', desc: '+50 Max HP', stat: 'maxHp', value: 50, tier: 3, requires: 'pan_2b' }
   ],
   novabyte: [
-    { id: 'nova_1', name: 'Reactive Armor', desc: '+20 Max HP', cost: 1000, stat: 'maxHp', value: 20 },
-    { id: 'nova_2', name: 'Antimatter Charges', desc: '+15% Damage', cost: 2500, stat: 'damageMult', value: 0.15 },
-    { id: 'nova_3', name: 'Supernova Detonation', desc: '+30% Area', cost: 5000, stat: 'areaMult', value: 0.3 }
+    { id: 'nova_1', name: 'Reactive Armor', desc: '+20 Max HP', stat: 'maxHp', value: 20, tier: 1 },
+    { id: 'nova_2a', name: 'Antimatter Charges', desc: '+15% Damage', stat: 'damageMult', value: 0.15, tier: 2, requires: 'nova_1', excludes: 'nova_2b' },
+    { id: 'nova_2b', name: 'Lightweight Frame', desc: '+15% Speed', stat: 'speedMult', value: 0.15, tier: 2, requires: 'nova_1', excludes: 'nova_2a' },
+    { id: 'nova_3a', name: 'Supernova Detonation', desc: '+30% Area', stat: 'areaMult', value: 0.3, tier: 3, requires: 'nova_2a' },
+    { id: 'nova_3b', name: 'Evasion Thrusters', desc: '-15% Cooldown', stat: 'cooldownMult', value: -0.15, tier: 3, requires: 'nova_2b' }
   ],
   glitch: [
-    { id: 'gli_1', name: 'Neural Overclock', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
-    { id: 'gli_2', name: 'Quantum Probability', desc: '+1 Luck', cost: 2500, stat: 'luck', value: 1 },
-    { id: 'gli_3', name: 'Total Annihilation', desc: '+30% Damage', cost: 5000, stat: 'damageMult', value: 0.3 }
+    { id: 'gli_1', name: 'Neural Overclock', desc: '+10% Speed', stat: 'speedMult', value: 0.1, tier: 1 },
+    { id: 'gli_2a', name: 'Total Annihilation', desc: '+20% Damage', stat: 'damageMult', value: 0.2, tier: 2, requires: 'gli_1', excludes: 'gli_2b' },
+    { id: 'gli_2b', name: 'Quantum Probability', desc: '+1 Luck', stat: 'luck', value: 1, tier: 2, requires: 'gli_1', excludes: 'gli_2a' },
+    { id: 'gli_3a', name: 'Fatal Error', desc: '+30% Damage', stat: 'damageMult', value: 0.3, tier: 3, requires: 'gli_2a' },
+    { id: 'gli_3b', name: 'Lucky Strike', desc: '+2 Luck', stat: 'luck', value: 2, tier: 3, requires: 'gli_2b' }
   ],
   holodrift: [
-    { id: 'holo_1', name: 'Salvage Drones', desc: '+10% XP', cost: 1000, stat: 'xpMult', value: 0.1 },
-    { id: 'holo_2', name: 'Magnetic Field Emitter', desc: '+30 Magnet', cost: 2500, stat: 'magnetRange', value: 30 },
-    { id: 'holo_3', name: 'Light-Bending Mirage', desc: '+20% Speed', cost: 5000, stat: 'speedMult', value: 0.2 }
+    { id: 'holo_1', name: 'Salvage Drones', desc: '+10% XP', stat: 'xpMult', value: 0.1, tier: 1 },
+    { id: 'holo_2a', name: 'Magnetic Field Emitter', desc: '+30 Magnet', stat: 'magnetRange', value: 30, tier: 2, requires: 'holo_1', excludes: 'holo_2b' },
+    { id: 'holo_2b', name: 'Light-Bending Mirage', desc: '+20% Speed', stat: 'speedMult', value: 0.2, tier: 2, requires: 'holo_1', excludes: 'holo_2a' },
+    { id: 'holo_3a', name: 'Greed Protocol', desc: '+30% Gold', stat: 'goldMult', value: 0.3, tier: 3, requires: 'holo_2a' },
+    { id: 'holo_3b', name: 'Holographic Decoy', desc: '+3 Armor', stat: 'armor', value: 3, tier: 3, requires: 'holo_2b' }
   ],
   codebreaker: [
-    { id: 'code_1', name: 'Subroutine Bypass', desc: '-5% Cooldown', cost: 1000, stat: 'cooldownMult', value: -0.05 },
-    { id: 'code_2', name: 'Crypto Mining', desc: '+15% Gold', cost: 2500, stat: 'goldMult', value: 0.15 },
-    { id: 'code_3', name: 'Omniscience Protocol', desc: '+2 Luck', cost: 5000, stat: 'luck', value: 2 }
+    { id: 'code_1', name: 'Subroutine Bypass', desc: '-5% Cooldown', stat: 'cooldownMult', value: -0.05, tier: 1 },
+    { id: 'code_2a', name: 'Crypto Mining', desc: '+15% Gold', stat: 'goldMult', value: 0.15, tier: 2, requires: 'code_1', excludes: 'code_2b' },
+    { id: 'code_2b', name: 'Overclocked CPU', desc: '+15% Proj Speed', stat: 'projSpeedMult', value: 0.15, tier: 2, requires: 'code_1', excludes: 'code_2a' },
+    { id: 'code_3a', name: 'Omniscience Protocol', desc: '+2 Luck', stat: 'luck', value: 2, tier: 3, requires: 'code_2a' },
+    { id: 'code_3b', name: 'Infinite Loop', desc: '-15% Cooldown', stat: 'cooldownMult', value: -0.15, tier: 3, requires: 'code_2b' }
   ],
   dataphantom: [
-    { id: 'data_1', name: 'Phase Shift', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
-    { id: 'data_2', name: 'Energy Shielding', desc: '+2 Armor', cost: 2500, stat: 'armor', value: 2 },
-    { id: 'data_3', name: 'Particle Accelerator', desc: '+20% Proj Speed', cost: 5000, stat: 'projSpeedMult', value: 0.2 }
+    { id: 'data_1', name: 'Phase Shift', desc: '+10% Speed', stat: 'speedMult', value: 0.1, tier: 1 },
+    { id: 'data_2a', name: 'Particle Accelerator', desc: '+20% Proj Speed', stat: 'projSpeedMult', value: 0.2, tier: 2, requires: 'data_1', excludes: 'data_2b' },
+    { id: 'data_2b', name: 'Energy Shielding', desc: '+2 Armor', stat: 'armor', value: 2, tier: 2, requires: 'data_1', excludes: 'data_2a' },
+    { id: 'data_3a', name: 'Data Corruption', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'data_2a' },
+    { id: 'data_3b', name: 'Ghost Protocol', desc: '+40 Max HP', stat: 'maxHp', value: 40, tier: 3, requires: 'data_2b' }
   ],
   neonvortex: [
-    { id: 'neon_1', name: 'Targeting Optics', desc: '+10% Proj Speed', cost: 1000, stat: 'projSpeedMult', value: 0.1 },
-    { id: 'neon_2', name: 'Railgun Calibration', desc: '+20% Damage', cost: 2500, stat: 'damageMult', value: 0.2 },
-    { id: 'neon_3', name: 'Micro-Blackhole', desc: '+30% Area', cost: 5000, stat: 'areaMult', value: 0.3 }
+    { id: 'neon_1', name: 'Targeting Optics', desc: '+10% Proj Speed', stat: 'projSpeedMult', value: 0.1, tier: 1 },
+    { id: 'neon_2a', name: 'Railgun Calibration', desc: '+20% Damage', stat: 'damageMult', value: 0.2, tier: 2, requires: 'neon_1', excludes: 'neon_2b' },
+    { id: 'neon_2b', name: 'Micro-Blackhole', desc: '+30% Area', stat: 'areaMult', value: 0.3, tier: 2, requires: 'neon_1', excludes: 'neon_2a' },
+    { id: 'neon_3a', name: 'Singularity Shot', desc: '+30% Damage', stat: 'damageMult', value: 0.3, tier: 3, requires: 'neon_2a' },
+    { id: 'neon_3b', name: 'Event Horizon', desc: '+50 Magnet', stat: 'magnetRange', value: 50, tier: 3, requires: 'neon_2b' }
   ],
   synthbeats: [
-    { id: 'syn_1', name: 'Sonic Pacifier', desc: '+10% Area', cost: 1000, stat: 'areaMult', value: 0.1 },
-    { id: 'syn_2', name: 'Intergalactic Trade', desc: '+20% Gold', cost: 2500, stat: 'goldMult', value: 0.2 },
-    { id: 'syn_3', name: 'Temporal Rewind', desc: '-15% Cooldown', cost: 5000, stat: 'cooldownMult', value: -0.15 }
+    { id: 'syn_1', name: 'Sonic Pacifier', desc: '+10% Area', stat: 'areaMult', value: 0.1, tier: 1 },
+    { id: 'syn_2a', name: 'Intergalactic Trade', desc: '+20% Gold', stat: 'goldMult', value: 0.2, tier: 2, requires: 'syn_1', excludes: 'syn_2b' },
+    { id: 'syn_2b', name: 'Temporal Rewind', desc: '-15% Cooldown', stat: 'cooldownMult', value: -0.15, tier: 2, requires: 'syn_1', excludes: 'syn_2a' },
+    { id: 'syn_3a', name: 'Billionaire Club', desc: '+30% Gold', stat: 'goldMult', value: 0.3, tier: 3, requires: 'syn_2a' },
+    { id: 'syn_3b', name: 'Bass Drop', desc: '+30% Area', stat: 'areaMult', value: 0.3, tier: 3, requires: 'syn_2b' }
   ],
   skybyte: [
-    { id: 'sky_1', name: 'Slipstream Thrusters', desc: '+10% Speed', cost: 1000, stat: 'speedMult', value: 0.1 },
-    { id: 'sky_2', name: 'Barrel Roll', desc: '+2 Armor', cost: 2500, stat: 'armor', value: 2 },
-    { id: 'sky_3', name: 'Meteor Shower', desc: '+25% Area', cost: 5000, stat: 'areaMult', value: 0.25 }
+    { id: 'sky_1', name: 'Slipstream Thrusters', desc: '+10% Speed', stat: 'speedMult', value: 0.1, tier: 1 },
+    { id: 'sky_2a', name: 'Meteor Shower', desc: '+25% Area', stat: 'areaMult', value: 0.25, tier: 2, requires: 'sky_1', excludes: 'sky_2b' },
+    { id: 'sky_2b', name: 'Barrel Roll', desc: '+2 Armor', stat: 'armor', value: 2, tier: 2, requires: 'sky_1', excludes: 'sky_2a' },
+    { id: 'sky_3a', name: 'Carpet Bombing', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'sky_2a' },
+    { id: 'sky_3b', name: 'Evasive Maneuvers', desc: '+20% Speed', stat: 'speedMult', value: 0.2, tier: 3, requires: 'sky_2b' }
   ]
 };
