@@ -203,7 +203,7 @@ export default function Upgrades({ isCarousel }) {
         
         return (
             <div className="space-y-2 md:space-y-4">
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Base Stats</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">Base Stats</h2>
                 {STATS.map(stat => {
                     const upgrades = save[saveKey] || {};
                     const level = upgrades[stat.id] || 0;
@@ -217,7 +217,7 @@ export default function Upgrades({ isCarousel }) {
                     const Icon = stat.icon;
 
                     return (
-                        <div key={stat.id} className="bg-slate-800 p-2 md:p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 border border-slate-700">
+                        <div key={stat.id} className="bg-slate-800 p-1.5 md:p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 border border-slate-700">
                             <div className="flex items-center gap-2 md:gap-4">
                                 <div className="p-1.5 md:p-3 bg-slate-700 rounded-md md:rounded-lg text-cyan-400 shrink-0">
                                     <Icon size={16} className="md:w-6 md:h-6" />
@@ -305,10 +305,10 @@ export default function Upgrades({ isCarousel }) {
         };
 
         return (
-            <div className="space-y-4 md:space-y-6">
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Armory</h2>
+            <div className="space-y-2 md:space-y-4">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">Armory</h2>
                 
-                <div className="flex items-center justify-between bg-slate-800 p-2 rounded-xl mb-4 md:mb-6 border border-slate-700">
+                <div className="flex items-center justify-between bg-slate-800 p-1.5 md:p-2 rounded-xl mb-2 md:mb-4 border border-slate-700">
                     <button 
                         onClick={handlePrevWeapon}
                         className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
@@ -329,8 +329,8 @@ export default function Upgrades({ isCarousel }) {
                     </button>
                 </div>
                 
-                <div className={`bg-slate-800 p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
-                    <div className="mb-4">
+                <div className={`bg-slate-800 p-2 md:p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
+                    <div className="mb-2 md:mb-4">
                         <div className="flex justify-between items-start mb-1">
                             <h3 className={`font-bold text-lg md:text-xl ${isMastered ? 'text-yellow-400' : 'text-white'}`}>{weapon.name}</h3>
                             {isMastered && (
@@ -355,8 +355,8 @@ export default function Upgrades({ isCarousel }) {
                             const Icon = stat.icon;
 
                             return (
-                                <div key={stat.id} className="bg-slate-900 p-3 rounded-lg border border-slate-700 flex flex-col justify-between">
-                                    <div className="flex items-center justify-between mb-3">
+                                <div key={stat.id} className="bg-slate-900 p-2 md:p-3 rounded-lg border border-slate-700 flex flex-col justify-between">
+                                    <div className="flex items-center justify-between mb-2 md:mb-3">
                                         <div className="flex items-center gap-2 text-slate-300">
                                             <Icon size={16} className="text-cyan-400" />
                                             <div>
@@ -410,8 +410,8 @@ export default function Upgrades({ isCarousel }) {
 
         return (
             <div>
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Skill Tree</h2>
-                <div className="flex items-center gap-4 mb-4 md:mb-6 overflow-x-auto pb-2">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">Skill Tree</h2>
+                <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-4 overflow-x-auto pb-1 md:pb-2">
                     {(save.unlockedCharacters || ['neobyte']).map(charId => {
                         const char = CHARACTERS.find(c => c.id === charId);
                         if (!char) return null;
@@ -426,8 +426,8 @@ export default function Upgrades({ isCarousel }) {
                         );
                     })}
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-slate-300 mb-4 md:mb-6">{CHARACTERS.find(c => c.id === (selectedChar || 'neobyte'))?.name}'s Talents</h3>
-                <div className="space-y-3 md:space-y-4 relative">
+                <h3 className="text-lg md:text-xl font-bold text-slate-300 mb-2 md:mb-4">{CHARACTERS.find(c => c.id === (selectedChar || 'neobyte'))?.name}'s Talents</h3>
+                <div className="space-y-2 md:space-y-4 relative">
                     <div className="absolute left-[26px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
                     
                     {(CHARACTER_TALENTS[selectedChar || 'neobyte'] || []).map((talent, index) => {
@@ -452,7 +452,7 @@ export default function Upgrades({ isCarousel }) {
                         const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
                         
                         return (
-                            <div key={talent.id} className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-700">
+                            <div key={talent.id} className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700">
                                 <div className="flex items-center gap-2 md:gap-4">
                                     <div className={`w-10 h-10 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
                                         isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
@@ -610,10 +610,10 @@ export default function Upgrades({ isCarousel }) {
                     </div>
                 )}
 
-                <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
+                <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-2 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
                     {activeCategory !== 'cosmetics' ? (
                         <>
-                            <div className="flex gap-2 mb-6 border-b border-slate-800 pb-4 overflow-x-auto">
+                            <div className="flex gap-2 mb-3 border-b border-slate-800 pb-2 overflow-x-auto">
                                 {['stats', 'armory', 'talents'].map(sub => (
                                     <button
                                         key={sub}
