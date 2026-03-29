@@ -519,10 +519,15 @@ export class GameEngine {
             
             // Character specific flair
             if (this.characterId === 'skybyte') { projColor = '#00ffff'; projType = 'dual_laser'; }
-            if (this.characterId === 'neobyte') { projColor = '#4169E1'; projType = 'lightning'; }
-            if (this.characterId === 'glitch') { projColor = '#8a2be2'; projType = 'glitch_slash'; }
-            if (this.characterId === 'pandypaws') { projColor = '#ff69b4'; projType = 'stomp'; }
-            if (this.characterId === 'holodrift') { projColor = '#20b2aa'; projType = 'repair_beam'; }
+            else if (this.characterId === 'neobyte') { projColor = '#4169E1'; projType = 'lightning'; }
+            else if (this.characterId === 'glitch') { projColor = '#8a2be2'; projType = 'glitch_slash'; }
+            else if (this.characterId === 'pandypaws') { projColor = '#ff69b4'; projType = 'stomp'; }
+            else if (this.characterId === 'holodrift') { projColor = '#20b2aa'; projType = 'repair_beam'; }
+            else if (this.characterId === 'novabyte') { projColor = '#FF4500'; projType = 'missile'; }
+            else if (this.characterId === 'codebreaker') { projColor = '#32CD32'; projType = 'data_pulse'; }
+            else if (this.characterId === 'dataphantom') { projColor = '#4682B4'; projType = 'phantom_orb'; }
+            else if (this.characterId === 'neonvortex') { projColor = '#FFD700'; projType = 'railgun'; }
+            else if (this.characterId === 'synthbeats') { projColor = '#FF8C00'; projType = 'sonic_wave'; }
 
             this.addParticle(this.player.x, this.player.y, projColor, 10, 'glow', 1.5); // Muzzle flash
 
@@ -549,10 +554,12 @@ export class GameEngine {
             }
         }
         else if (w.id === 'vineWhip') {
+            const charColor = this.player.color;
+            this.addParticle(this.player.x, this.player.y, isMastered ? '#FF0000' : charColor, 15, 'slash', 2 * area);
             this.enemies.forEach(e => {
                 if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < 100 * area) {
                     this.damageEnemy(e, dmg);
-                    this.addParticle(e.x, e.y, isMastered ? '#FF0000' : '#228B22', 10);
+                    this.addParticle(e.x, e.y, isMastered ? '#FF0000' : charColor, 10, 'glitch', 1.5);
                     if (isMastered) {
                         this.player.hp = Math.min(this.player.maxHp, this.player.hp + (dmg * 0.05));
                         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
@@ -604,7 +611,7 @@ export class GameEngine {
                 damage: dmg * 0.5,
                 pierce: 999,
                 life: 3 + w.level,
-                color: isMastered ? 'rgba(0, 191, 255, 0.5)' : 'rgba(255, 69, 0, 0.5)',
+                color: isMastered ? 'rgba(0, 191, 255, 0.5)' : this.player.color + '80',
                 isAoe: true,
                 isMastered: isMastered,
                 weaponId: 'napalm'
@@ -618,7 +625,7 @@ export class GameEngine {
                 damage: dmg,
                 pierce: 999,
                 life: 0.5,
-                color: isMastered ? 'rgba(138, 43, 226, 0.6)' : 'rgba(0, 255, 255, 0.6)',
+                color: isMastered ? 'rgba(138, 43, 226, 0.6)' : this.player.color + '99',
                 isAoe: true,
                 pulse: true
             });
@@ -647,7 +654,7 @@ export class GameEngine {
                 damage: dmg,
                 pierce: 999,
                 life: 2.0,
-                color: isMastered ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+                color: isMastered ? 'rgba(255, 215, 0, 0.3)' : this.player.color + '4D',
                 isAoe: true,
                 pushback: 250,
                 isMastered: isMastered,
@@ -738,6 +745,11 @@ export class GameEngine {
                 else if (p.type === 'lightning') this.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'spark', 0.8);
                 else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 2, 'glitch', 1.0);
                 else if (p.type === 'repair_beam') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 0.5);
+                else if (p.type === 'missile') this.addParticle(p.x, p.y, '#ff4500', 3, 'smoke', 1.0);
+                else if (p.type === 'data_pulse') this.addParticle(p.x, p.y, p.color, 1, 'glitch', 0.5);
+                else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 2, 'glow', 0.8);
+                else if (p.type === 'railgun') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 1.2);
+                else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'circle', 0.5);
                 else this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
             }
 
@@ -772,6 +784,11 @@ export class GameEngine {
                             if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'glow', 2);
                             if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'smoke', 2);
                             if (p.type === 'glitch_slash') this.addParticle(e.x, e.y, p.color, 8, 'glitch', 2);
+                            if (p.type === 'missile') this.particleManager.createExplosion(e.x, e.y, '#ff4500', 1.0, 'drone');
+                            if (p.type === 'data_pulse') this.addParticle(e.x, e.y, p.color, 10, 'glitch', 2);
+                            if (p.type === 'phantom_orb') this.addParticle(e.x, e.y, p.color, 15, 'glow', 1.5);
+                            if (p.type === 'railgun') this.addParticle(e.x, e.y, '#ffffff', 20, 'spark', 3);
+                            if (p.type === 'sonic_wave') this.addParticle(e.x, e.y, p.color, 10, 'circle', 2);
 
                             p.pierce--;
                             
@@ -1404,6 +1421,46 @@ export class GameEngine {
                 this.ctx.beginPath();
                 this.ctx.moveTo(-p.radius, 0);
                 this.ctx.lineTo(p.radius, 0);
+                this.ctx.stroke();
+            } else if (p.type === 'missile') {
+                this.ctx.fillStyle = '#cccccc';
+                this.ctx.fillRect(-p.radius, -p.radius*0.3, p.radius*1.5, p.radius*0.6);
+                this.ctx.fillStyle = '#ff4500';
+                this.ctx.beginPath();
+                this.ctx.moveTo(p.radius*0.5, -p.radius*0.3);
+                this.ctx.lineTo(p.radius*1.2, 0);
+                this.ctx.lineTo(p.radius*0.5, p.radius*0.3);
+                this.ctx.fill();
+            } else if (p.type === 'data_pulse') {
+                this.ctx.fillStyle = p.color;
+                this.ctx.fillRect(-p.radius*0.8, -p.radius*0.8, p.radius*1.6, p.radius*1.6);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(-p.radius*0.4, -p.radius*0.4, p.radius*0.8, p.radius*0.8);
+            } else if (p.type === 'phantom_orb') {
+                this.ctx.fillStyle = p.color;
+                this.ctx.globalAlpha = 0.7;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.globalAlpha = 1.0;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius*0.4, 0, Math.PI*2); this.ctx.fill();
+            } else if (p.type === 'railgun') {
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(-p.radius*2, 0);
+                this.ctx.lineTo(p.radius*2, 0);
+                this.ctx.stroke();
+                this.ctx.fillStyle = p.color;
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.fillRect(-p.radius*2, -2, p.radius*4, 4);
+            } else if (p.type === 'sonic_wave') {
+                this.ctx.strokeStyle = p.color;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
+                this.ctx.stroke();
+                this.ctx.beginPath();
+                this.ctx.arc(p.radius*0.5, 0, p.radius*1.5, -Math.PI/3, Math.PI/3);
                 this.ctx.stroke();
             } else if (p.isAoe) {
                 this.ctx.fillStyle = p.color;
