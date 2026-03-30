@@ -408,19 +408,6 @@ export class GameEngine {
     }
 
     spawnEnemies(dt) {
-        // DEBUG: Spawn a boss immediately for testing size
-        if (this.time > 2 && !this.debugBossSpawned) {
-            this.debugBossSpawned = true;
-            this.isBossActive = true;
-            this.enemies = [];
-            const bosses = ENEMIES.filter(e => e.isBoss);
-            const boss = bosses[0]; // Spawn Nebula Devourer
-            const ex = this.player.x;
-            const ey = this.player.y - 250;
-            this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp, hp: boss.hp, damage: boss.damage });
-            this.addDamageText(this.player.x, this.player.y - 60, `TEST SPAWN: ${boss.name}`, '#ff0000');
-        }
-
         if (this.arena.duration === Infinity) {
             if (!this.lastBossSpawnTime) this.lastBossSpawnTime = 0;
             if (this.time > 0 && this.time - this.lastBossSpawnTime >= 180) { // Every 3 minutes
