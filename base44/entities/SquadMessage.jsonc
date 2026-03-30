@@ -20,5 +20,42 @@
     "user_id",
     "player_name",
     "content"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$and": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "data.player_name": "{{user.full_name}}"
+        },
+        {
+          "data.squad_id": "{{user.data.squad_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.squad_id": "{{user.data.squad_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
