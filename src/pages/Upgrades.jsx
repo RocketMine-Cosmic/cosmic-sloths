@@ -562,7 +562,7 @@ export default function Upgrades({ isCarousel }) {
 
     const renderCosmetics = () => {
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
                 {COSMETICS.map(cosmetic => {
                     const unlocked = save.unlockedCosmetics || ['default'];
                     const isUnlocked = unlocked.includes(cosmetic.id);
@@ -571,15 +571,15 @@ export default function Upgrades({ isCarousel }) {
                     const canAffordToken = (save.cosmicTokens || 0) >= cosmetic.tokenCost;
 
                     return (
-                        <div key={cosmetic.id} className={`bg-slate-800 p-4 rounded-lg border-2 flex flex-col items-center text-center gap-3 ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700'}`}>
-                            <div className="text-4xl">{cosmetic.icon}</div>
-                            <h3 className="font-bold text-lg text-white">{cosmetic.name}</h3>
+                        <div key={cosmetic.id} className={`bg-slate-800 p-2 md:p-4 rounded-lg border-2 flex flex-col items-center text-center gap-2 md:gap-3 ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700'}`}>
+                            <div className="text-3xl md:text-4xl">{cosmetic.icon}</div>
+                            <h3 className="font-bold text-sm md:text-lg text-white">{cosmetic.name}</h3>
                             
                             {isEquipped || isUnlocked ? (
                                 <button
                                     onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
                                     disabled={isEquipped}
-                                    className={`w-full py-2 rounded-lg font-bold transition-colors text-sm ${
+                                    className={`w-full py-1.5 md:py-2 rounded-lg font-bold transition-colors text-xs md:text-sm ${
                                         isEquipped ? 'bg-pink-600 text-white' :
                                         'bg-slate-700 text-white hover:bg-slate-600'
                                     }`}
@@ -587,11 +587,11 @@ export default function Upgrades({ isCarousel }) {
                                     {isEquipped ? 'EQUIPPED' : 'EQUIP'}
                                 </button>
                             ) : (
-                                <div className="flex gap-2 w-full">
+                                <div className="flex flex-col xl:flex-row gap-1.5 md:gap-2 w-full">
                                     <button
                                         onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
                                         disabled={!canAffordGold}
-                                        className={`flex-1 py-2 rounded-lg font-bold transition-colors text-sm ${
+                                        className={`flex-1 py-1.5 md:py-2 rounded-lg font-bold transition-colors text-xs ${
                                             canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                             'bg-slate-800 text-slate-500 border border-slate-700'
                                         }`}
@@ -601,7 +601,7 @@ export default function Upgrades({ isCarousel }) {
                                     <button
                                         onClick={() => handleBuyCosmetic(cosmetic, 'token')}
                                         disabled={!canAffordToken}
-                                        className={`flex-1 py-2 rounded-lg font-bold transition-colors text-sm ${
+                                        className={`flex-1 py-1.5 md:py-2 rounded-lg font-bold transition-colors text-xs ${
                                             canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                             'bg-slate-800 text-slate-500 border border-slate-700'
                                         }`}

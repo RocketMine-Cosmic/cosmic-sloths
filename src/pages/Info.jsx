@@ -52,60 +52,100 @@ export default function Info() {
 
                         <section>
                             <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">💎 In-Run Mechanics</h2>
-                            <ul className="list-disc list-inside space-y-2 leading-relaxed">
-                                <li><strong className="text-emerald-400">XP Gems (Cyan Diamonds):</strong> Dropped by defeated enemies. Collect them to fill your XP bar and level up.</li>
-                                <li><strong className="text-yellow-400">Gold Coins (Octagons):</strong> Randomly dropped by enemies. Used in the Sloth Lounge for permanent upgrades.</li>
-                                <li><strong className="text-purple-400">Reroll Tokens:</strong> Dropped by Bosses. Use them when leveling up to get a new set of upgrade choices.</li>
-                                <li><strong className="text-white">Active Pickups:</strong> Rarely dropped by enemies. ☢️ Screen Nuke, 🧲 Magnet Surge, and 🛡️ Shield Overcharge.</li>
-                                <li><strong className="text-white">Leveling Up:</strong> Each level grants you a choice between 3 random weapons or passive stat boosts. Rarer upgrades provide larger bonuses!</li>
-                            </ul>
-                        </section>
-
-                        <section>
-                            <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">📊 Character Stats</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <ul className="space-y-2">
-                                        <li><strong className="text-red-400">HP & Regen:</strong> Your health pool and how much you heal over time.</li>
-                                        <li><strong className="text-blue-400">Speed:</strong> How fast your sloth moves.</li>
-                                        <li><strong className="text-slate-400">Armor:</strong> Reduces incoming damage by a flat amount.</li>
-                                        <li><strong className="text-yellow-500">Damage:</strong> Multiplier for all your weapons.</li>
-                                    </ul>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                                <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+                                    <span className="text-2xl">💠</span>
+                                    <div>
+                                        <strong className="text-emerald-400 block mb-1">XP Gems</strong>
+                                        <p className="text-xs md:text-sm text-slate-300">Dropped by defeated enemies. Collect them to fill your XP bar and level up.</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <ul className="space-y-2">
-                                        <li><strong className="text-purple-400">Cooldown:</strong> Reduces the time between weapon attacks.</li>
-                                        <li><strong className="text-green-400">Area:</strong> Increases the size of your attacks.</li>
-                                        <li><strong className="text-pink-400">Magnet:</strong> How far away you can suck in XP and Gold.</li>
-                                        <li><strong className="text-amber-300">Luck:</strong> Increases the chance of finding Gold and rare upgrades.</li>
-                                    </ul>
+                                <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+                                    <span className="text-2xl">🪙</span>
+                                    <div>
+                                        <strong className="text-yellow-400 block mb-1">Gold Coins</strong>
+                                        <p className="text-xs md:text-sm text-slate-300">Randomly dropped. Used in the Sloth Lounge for upgrades and unlocks.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+                                    <span className="text-2xl">🎲</span>
+                                    <div>
+                                        <strong className="text-purple-400 block mb-1">Reroll Tokens</strong>
+                                        <p className="text-xs md:text-sm text-slate-300">Dropped by Bosses. Use them when leveling up to get new choices.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+                                    <span className="text-2xl">🎁</span>
+                                    <div>
+                                        <strong className="text-white block mb-1">Active Pickups</strong>
+                                        <p className="text-xs md:text-sm text-slate-300">Rare drops: ☢️ Nuke, 🧲 Magnet, and 🛡️ Shield Overcharge.</p>
+                                    </div>
                                 </div>
                             </div>
                         </section>
 
                         <section>
+                            <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">📊 Character Stats</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                                <div className="text-sm md:text-base"><strong className="text-red-400">HP & Regen:</strong> Health pool and healing rate.</div>
+                                <div className="text-sm md:text-base"><strong className="text-blue-400">Speed:</strong> How fast your sloth moves.</div>
+                                <div className="text-sm md:text-base"><strong className="text-slate-400">Armor:</strong> Flat incoming damage reduction.</div>
+                                <div className="text-sm md:text-base"><strong className="text-yellow-500">Damage:</strong> Multiplier for all weapons.</div>
+                                <div className="text-sm md:text-base"><strong className="text-purple-400">Cooldown:</strong> Time between weapon attacks.</div>
+                                <div className="text-sm md:text-base"><strong className="text-green-400">Area:</strong> Size of your attacks.</div>
+                                <div className="text-sm md:text-base"><strong className="text-pink-400">Magnet:</strong> Range to suck in XP and Gold.</div>
+                                <div className="text-sm md:text-base"><strong className="text-amber-300">Luck:</strong> Chance for Gold and rare upgrades.</div>
+                            </div>
+                        </section>
+
+                        <section>
                             <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">⚙️ Sloth Lounge (Meta Progression)</h2>
-                            <p className="leading-relaxed mb-4">
+                            <p className="leading-relaxed mb-4 text-sm md:text-base">
                                 Between runs, visit the Sloth Lounge to spend your hard-earned Gold and Cosmic Tokens:
                             </p>
-                            <ul className="list-disc list-inside space-y-2 leading-relaxed">
-                                <li><strong className="text-white">Characters:</strong> Unlock new sloths, each with unique base stats and exclusive Talent Trees.</li>
-                                <li><strong className="text-white">Upgrades:</strong> Buy Permanent (weak but keep forever), Weekly (medium, resets weekly), and Seasonal (strong, resets every 4 weeks) stat boosts to give yourself an edge.</li>
-                                <li><strong className="text-white">Armory:</strong> Permanently increase the base stats (Damage, Area, Cooldown) of specific weapons. Master a weapon to unlock its ultimate form!</li>
-                                <li><strong className="text-white">Cosmetics:</strong> Buy flashy trails to show off your wealth.</li>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                    <h3 className="font-bold text-white mb-2 flex items-center gap-2">👤 Characters</h3>
+                                    <p className="text-sm">Unlock new sloths, each with unique base stats and exclusive Talent Trees.</p>
+                                </div>
+                                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                    <h3 className="font-bold text-white mb-2 flex items-center gap-2">⬆️ Upgrades</h3>
+                                    <p className="text-sm">Buy Permanent (weak but keep forever), Weekly (medium, resets weekly), and Seasonal (strong, resets every 4 weeks) stat boosts.</p>
+                                </div>
+                                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                    <h3 className="font-bold text-white mb-2 flex items-center gap-2">🔫 Armory</h3>
+                                    <p className="text-sm">Permanently increase the base stats (Damage, Area, Cooldown) of specific weapons. Master a weapon to unlock its ultimate form!</p>
+                                </div>
+                                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                    <h3 className="font-bold text-white mb-2 flex items-center gap-2">✨ Cosmetics</h3>
+                                    <p className="text-sm">Buy flashy trails to show off your wealth.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">🎯 Bounties & Missions</h2>
+                            <p className="leading-relaxed mb-4 text-sm md:text-base">
+                                Complete tasks to earn extra rewards:
+                            </p>
+                            <ul className="list-disc list-inside space-y-2 leading-relaxed text-sm md:text-base">
+                                <li><strong className="text-white">Daily Bounties:</strong> 3 random tasks every day that reward Gold, Cosmic Tokens, or Reroll Tokens.</li>
+                                <li><strong className="text-purple-400">Daily Mission:</strong> A harder daily task that rewards <strong className="text-yellow-400">Seasonal Points</strong>.</li>
+                                <li><strong className="text-white">Seasonal Skins:</strong> Collect 100 Seasonal Points to unlock exclusive cosmetic character skins!</li>
                             </ul>
                         </section>
 
                         <section>
                             <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">🏆 Leaderboards & Seasons</h2>
-                            <p className="leading-relaxed mb-4">
+                            <p className="leading-relaxed mb-4 text-sm md:text-base">
                                 Compete against other players for glory and <strong className="text-emerald-400">Cosmic Tokens</strong>! The game features both Weekly and Seasonal cycles:
                             </p>
-                            <ul className="list-disc list-inside space-y-2 leading-relaxed">
-                                <li><strong className="text-white">Weekly Cycle:</strong> Resets every week. The top 20 players on the Weekly Leaderboard earn Cosmic Tokens. Weekly Upgrades also reset, so you'll need to buy them again!</li>
-                                <li><strong className="text-white">Seasonal Cycle:</strong> Lasts for 4 weeks. The top 30 players on the Seasonal Leaderboard earn Cosmic Tokens. Seasonal Upgrades are powerful but reset at the end of the season.</li>
-                                <li><strong className="text-white">Cosmic Tokens:</strong> Earned by placing high on the leaderboards. Use them to buy powerful upgrades or unlock characters faster.</li>
-                                <li><strong className="text-white">Claiming Rewards:</strong> Rewards are automatically distributed and claimed when you visit the Sloth Lounge after a cycle ends.</li>
+                            <ul className="list-disc list-inside space-y-2 leading-relaxed text-sm md:text-base bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                                <li><strong className="text-white">Weekly Cycle:</strong> Resets every week. The top 20 players earn Cosmic Tokens. Weekly Upgrades reset!</li>
+                                <li><strong className="text-white">Seasonal Cycle:</strong> Lasts for 4 weeks. The top 30 players earn Cosmic Tokens. Seasonal Upgrades reset!</li>
+                                <li><strong className="text-white">Cosmic Tokens:</strong> Earned from leaderboards. Used for powerful upgrades and characters.</li>
+                                <li><strong className="text-white">Endless Void:</strong> A special, infinitely scaling arena with its own dedicated all-time leaderboard!</li>
+                                <li><strong className="text-white">Claiming Rewards:</strong> Automatically distributed when you visit the Sloth Lounge after a cycle ends.</li>
                             </ul>
                         </section>
 
