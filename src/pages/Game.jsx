@@ -97,7 +97,12 @@ export default function Game() {
                         console.error('Failed to update squad kills', err);
                     }
                 }
-                const score = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20 + (isVictory ? 5000 : 0);
+                
+                const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
+                const arenaMultiplier = isEndless ? 3.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
+                const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20 + (isVictory ? 5000 : 0);
+                const score = Math.floor(baseScore * arenaMultiplier);
+                
                 const week_id = moment().format('YYYY-[W]ww');
                 
                 const weekNum = moment().week();
