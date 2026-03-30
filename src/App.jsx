@@ -18,12 +18,23 @@ import Achievements from './pages/Achievements';
 import Squads from './pages/Squads';
 import Bestiary from './pages/Bestiary';
 import Profile from './pages/Profile';
+import { SaveManager } from './game/SaveManager';
+import React, { useState, useEffect } from 'react';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const [saveInitialized, setSaveInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!isLoadingAuth && !authError) {
+      SaveManager.initialize().then(() => setSaveInitialized(true));
+    } else if (authError) {
+      setSaveInitialized(true);
+    }
+  }, [isLoadingAuth, authError]);
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (isLoadingPublicSettings || isLoadingAuth || (!saveInitialized && !authError)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>

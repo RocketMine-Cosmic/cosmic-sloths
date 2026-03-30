@@ -1,7 +1,64 @@
 import moment from 'moment';
 import { BOUNTIES_POOL, DAILY_MISSIONS_POOL } from './Constants';
+import { base44 } from '@/api/base44Client';
 
 export const SaveManager = {
+  _saveId: null,
+  _userId: null,
+  _syncTimeout: null,
+
+  initialize: async () => {
+    try {
+      const user = await base44.auth.me();
+      if (!user) return;
+      SaveManager._userId = user.id;
+      const saves = await base44.entities.PlayerSave.filter({ user_id: user.id });
+      if (saves.length > 0) {
+        SaveManager._saveId = saves[0].id;
+        const backendSave = saves[0].save_data;
+        const localDataRaw = localStorage.getItem('cosmic_sloth_save');
+        let localData = null;
+        if (localDataRaw) {
+          try { localData = JSON.parse(localDataRaw); } catch(e) {}
+        }
+        
+        const backendTime = saves[0].updated_at || 0;
+        const localTime = localData ? (localData.updated_at || 0) : 0;
+        
+        if (backendSave && backendTime >= localTime) {
+          localStorage.setItem('cosmic_sloth_save', JSON.stringify(backendSave));
+        } else if (localData && localTime > backendTime) {
+          SaveManager._syncToBackend(localData);
+        }
+      } else {
+          const localDataRaw = localStorage.getItem('cosmic_sloth_save');
+          if (localDataRaw) {
+             SaveManager._syncToBackend(JSON.parse(localDataRaw));
+          }
+      }
+    } catch(e) {
+      console.error('Failed to initialize save sync', e);
+    }
+  },
+
+  _syncToBackend: (data) => {
+    if (!SaveManager._userId) return;
+    if (SaveManager._syncTimeout) clearTimeout(SaveManager._syncTimeout);
+    
+    SaveManager._syncTimeout = setTimeout(async () => {
+      try {
+        if (SaveManager._saveId) {
+          await base44.entities.PlayerSave.update(SaveManager._saveId, { save_data: data, updated_at: data.updated_at || Date.now() });
+        } else {
+          const res = await base44.entities.PlayerSave.create({ user_id: SaveManager._userId, save_data: data, updated_at: data.updated_at || Date.now() });
+          SaveManager._saveId = res.id;
+        }
+      } catch (e) {
+        console.error('Backend save sync failed', e);
+      }
+    }, 2000);
+  },
+
   load: () => {
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
     const currentWeek = moment().format('YYYY-[W]ww');
@@ -133,7 +190,9 @@ export const SaveManager = {
   },
   save: (data) => {
     try {
+      data.updated_at = Date.now();
       localStorage.setItem('cosmic_sloth_save', JSON.stringify(data));
+      SaveManager._syncToBackend(data);
     } catch (e) {
       console.error('Failed to save', e);
     }
