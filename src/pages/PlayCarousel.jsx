@@ -7,11 +7,12 @@ import Hub from './Hub';
 import Upgrades from './Upgrades';
 import LeaderboardPage from './LeaderboardPage';
 import Squads from './Squads';
+import Profile from './Profile';
 import { SoundManager } from '../game/SoundManager';
 
 export default function PlayCarousel() {
     const navigate = useNavigate();
-    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     useEffect(() => {
@@ -30,8 +31,7 @@ export default function PlayCarousel() {
                     <button 
                         onClick={() => { 
                             SoundManager.playUIClick(); 
-                            const newIdx = selectedIndex <= 0 ? 4 : selectedIndex - 1;
-                            emblaApi?.scrollTo(newIdx); 
+                            emblaApi?.scrollPrev();
                         }}
                         className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
                     >
@@ -43,12 +43,12 @@ export default function PlayCarousel() {
                         {selectedIndex === 2 && <span className="text-pink-400">Upgrade Lounge</span>}
                         {selectedIndex === 3 && <span className="text-yellow-400">Hall of Fame</span>}
                         {selectedIndex === 4 && <span className="text-orange-400">Sloth Squads</span>}
+                        {selectedIndex === 5 && <span className="text-purple-400">Pilot Profile</span>}
                     </div>
                     <button 
                         onClick={() => { 
                             SoundManager.playUIClick(); 
-                            const newIdx = selectedIndex >= 4 ? 0 : selectedIndex + 1;
-                            emblaApi?.scrollTo(newIdx); 
+                            emblaApi?.scrollNext();
                         }}
                         className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
                     >
@@ -73,6 +73,9 @@ export default function PlayCarousel() {
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Squads isCarousel={true} />
+                    </div>
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
+                        <Profile isCarousel={true} />
                     </div>
                 </div>
             </div>
