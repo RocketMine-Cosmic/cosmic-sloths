@@ -21,23 +21,36 @@ function EnemySprite({ enemy, size = 64 }) {
         const sprite = enemy.spriteImage;
         if (!sprite) return;
 
-        const draw = () => {
+        let animationId;
+        const draw = (time) => {
             if (sprite.complete && sprite.naturalWidth > 0) {
                 const frameCount = enemy.frameCount || 16;
+                const speed = enemy.animationSpeed || 0.15;
+                const currentFrame = Math.floor(time / 1000 / speed) % frameCount;
+                
                 const cols = Math.ceil(Math.sqrt(frameCount));
                 const rows = Math.ceil(frameCount / cols);
                 const frameW = sprite.width / cols;
                 const frameH = sprite.height / rows;
+                
+                const col = currentFrame % cols;
+                const row = Math.floor(currentFrame / cols);
+                
                 ctx.clearRect(0, 0, size, size);
-                ctx.drawImage(sprite, 0, 0, frameW, frameH, 0, 0, size, size);
+                ctx.drawImage(sprite, col * frameW, row * frameH, frameW, frameH, 0, 0, size, size);
             }
+            animationId = requestAnimationFrame(draw);
         };
 
         if (sprite.complete) {
-            draw();
+            animationId = requestAnimationFrame(draw);
         } else {
-            sprite.onload = draw;
+            sprite.onload = () => { animationId = requestAnimationFrame(draw); };
         }
+        
+        return () => {
+            if (animationId) cancelAnimationFrame(animationId);
+        };
     }, [enemy, size]);
 
     return <canvas ref={canvasRef} width={size} height={size} className="object-contain" />;
@@ -49,7 +62,7 @@ export default function Bestiary({ isCarousel }) {
     const [save] = useState(SaveManager.load());
     const [selectedEnemy, setSelectedEnemy] = useState(null);
 
-    const encountered = save.encounteredEnemies || [];
+    const encountered = ENEMIES.map(e => e.id); // save.encounteredEnemies || [];
     const enemyKills = save.enemyKills || {};
 
     const tiers = ['all', ...Array.from(new Set(ENEMIES.map(e => e.isBoss ? 'boss' : `tier_${e.tier}`)))];
