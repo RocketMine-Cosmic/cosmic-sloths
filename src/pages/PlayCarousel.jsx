@@ -7,6 +7,7 @@ import Hub from './Hub';
 import Upgrades from './Upgrades';
 import LeaderboardPage from './LeaderboardPage';
 import Squads from './Squads';
+import Bestiary from './Bestiary';
 import Profile from './Profile';
 import { SoundManager } from '../game/SoundManager';
 
@@ -43,7 +44,8 @@ export default function PlayCarousel() {
                         {selectedIndex === 2 && <span className="text-pink-400">Upgrade Lounge</span>}
                         {selectedIndex === 3 && <span className="text-yellow-400">Hall of Fame</span>}
                         {selectedIndex === 4 && <span className="text-orange-400">Sloth Squads</span>}
-                        {selectedIndex === 5 && <span className="text-purple-400">Pilot Profile</span>}
+                        {selectedIndex === 5 && <span className="text-rose-400">Cosmic Codex</span>}
+                        {selectedIndex === 6 && <span className="text-purple-400">Pilot Profile</span>}
                     </div>
                     <button 
                         onClick={() => { 
@@ -73,6 +75,9 @@ export default function PlayCarousel() {
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Squads isCarousel={true} />
+                    </div>
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
+                        <Bestiary isCarousel={true} />
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Profile isCarousel={true} />

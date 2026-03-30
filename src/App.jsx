@@ -16,6 +16,7 @@ import Info from './pages/Info';
 import Credits from './pages/Credits';
 import Achievements from './pages/Achievements';
 import Squads from './pages/Squads';
+import Bestiary from './pages/Bestiary';
 import Profile from './pages/Profile';
 
 const AuthenticatedApp = () => {
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
       <Route path="/credits" element={<Credits />} />
       <Route path="/achievements" element={<Achievements />} />
       <Route path="/squads" element={<Squads />} />
+      <Route path="/bestiary" element={<Bestiary />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
