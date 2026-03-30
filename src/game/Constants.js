@@ -53,6 +53,14 @@ export const BOUNTIES_POOL = [
   { id: 'play_3', desc: 'Play 3 runs', type: 'play', target: 3, reward: 100, currency: 'gold' }
 ];
 
+export const DAILY_MISSIONS_POOL = [
+  { id: 'dm_survive_600', desc: 'Survive for 10 mins (Single run)', type: 'survive', target: 600, reward: 10 },
+  { id: 'dm_level_30', desc: 'Reach Level 30 (Single run)', type: 'level', target: 30, reward: 10 },
+  { id: 'dm_kills_2000', desc: 'Defeat 2000 enemies (Total)', type: 'kills', target: 2000, reward: 10 },
+  { id: 'dm_gold_500', desc: 'Earn 500 gold (Single run)', type: 'gold', target: 500, reward: 10 },
+  { id: 'dm_play_5', desc: 'Play 5 runs', type: 'play', target: 5, reward: 10 }
+];
+
 export const SYNERGIES = [
   { weapon1: 'napalm', weapon2: 'shieldBubble', result: 'burningBarrier' },
   { weapon1: 'napBeam', weapon2: 'novaPulse', result: 'laserNova' },

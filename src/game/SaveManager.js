@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { BOUNTIES_POOL } from './Constants';
+import { BOUNTIES_POOL, DAILY_MISSIONS_POOL } from './Constants';
 
 export const SaveManager = {
   load: () => {
@@ -31,7 +31,8 @@ export const SaveManager = {
       totalKills: 0,
       totalGoldEarned: 0,
       maxLevelReached: 0,
-      bounties: { date: '', active: [] }
+      bounties: { date: '', active: [], dailyMission: null },
+      seasonalPoints: 0
     };
 
     try {
@@ -93,16 +94,23 @@ export const SaveManager = {
         if (parsed.maxLevelReached === undefined) parsed.maxLevelReached = 0;
         
         if (!parsed.bounties) {
-            parsed.bounties = { date: '', active: [] };
+            parsed.bounties = { date: '', active: [], dailyMission: null };
         }
+        if (parsed.seasonalPoints === undefined) parsed.seasonalPoints = 0;
         
         const today = moment().format('YYYY-MM-DD');
         if (parsed.bounties.date !== today) {
             const shuffled = [...BOUNTIES_POOL].sort(() => 0.5 - Math.random());
+            const shuffledMissions = [...DAILY_MISSIONS_POOL].sort(() => 0.5 - Math.random());
             parsed.bounties = {
                 date: today,
-                active: shuffled.slice(0, 3).map(b => ({ ...b, progress: 0, claimed: false }))
+                active: shuffled.slice(0, 3).map(b => ({ ...b, progress: 0, claimed: false })),
+                dailyMission: { ...shuffledMissions[0], progress: 0, claimed: false }
             };
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+        } else if (!parsed.bounties.dailyMission) {
+            const shuffledMissions = [...DAILY_MISSIONS_POOL].sort(() => 0.5 - Math.random());
+            parsed.bounties.dailyMission = { ...shuffledMissions[0], progress: 0, claimed: false };
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
         }
         

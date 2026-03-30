@@ -65,6 +65,14 @@ export default function Game() {
                     }
                 });
             }
+            if (currentSave.bounties && currentSave.bounties.dailyMission) {
+                const mission = currentSave.bounties.dailyMission;
+                if (mission.type === 'kills') mission.progress += stats.kills;
+                else if (mission.type === 'survive') { if (stats.time > mission.progress) mission.progress = stats.time; }
+                else if (mission.type === 'gold') { if (stats.gold > mission.progress) mission.progress = stats.gold; }
+                else if (mission.type === 'level') { if (stats.level > mission.progress) mission.progress = stats.level; }
+                else if (mission.type === 'play') mission.progress += 1;
+            }
         };
 
         const saveScore = async (stats, isVictory) => {
