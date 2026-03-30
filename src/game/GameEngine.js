@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
@@ -122,7 +122,8 @@ export class GameEngine {
             color: baseChar.color,
             trail: save.cosmetics?.trail || 'default',
             weapons: [{ ...WEAPONS.napBeam, level: 1, timer: 0 }],
-            passives: []
+            passives: [],
+            passiveLevels: {}
         };
         
         this.camera = { x: 0, y: 0 };
@@ -175,6 +176,38 @@ export class GameEngine {
         this.bindEvents();
         this.lastTime = performance.now();
         this.animationId = requestAnimationFrame(this.loop.bind(this));
+    }
+
+    takeDamage(amount) {
+        if (this.player.invincibleTimer > 0) return;
+        const actualDmg = Math.max(1, amount - this.player.armor);
+        this.player.hp -= actualDmg;
+        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+        this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+        SoundManager.playPlayerHit();
+        
+        const aegis = this.player.weapons.find(w => w.id === 'aegisMatrix');
+        if (aegis && Math.random() < 0.5) {
+            for(let i=0; i<5; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                this.projectiles.push({
+                    x: this.player.x, y: this.player.y,
+                    vx: Math.cos(angle) * 500,
+                    vy: Math.sin(angle) * 500,
+                    radius: 10,
+                    damage: aegis.baseDamage * this.player.damageMult * 2,
+                    pierce: 1,
+                    life: 2,
+                    color: '#00ff66',
+                    type: 'missile'
+                });
+            }
+        }
+
+        if (this.player.hp <= 0) {
+            this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
+            this.gameOver();
+        }
     }
 
     bindEvents() {
@@ -483,17 +516,7 @@ export class GameEngine {
                 h.timer = 0.5; // active for 0.5 seconds
                 // Check collision
                 if (Math.hypot(this.player.x - h.x, this.player.y - h.y) < this.player.radius + h.radius) {
-                    if (!(this.player.invincibleTimer > 0)) {
-                        const actualDmg = Math.max(1, h.damage - this.player.armor);
-                        this.player.hp -= actualDmg;
-                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
-                        this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
-                        SoundManager.playPlayerHit();
-                        if (this.player.hp <= 0) {
-                            this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
-                            this.gameOver();
-                        }
-                    }
+                    this.takeDamage(h.damage);
                 }
                 this.addParticle(h.x, h.y, '#ff4500', 20);
             }
@@ -920,17 +943,7 @@ export class GameEngine {
                 p.life -= dt;
                 
                 if (Math.hypot(this.player.x - p.x, this.player.y - p.y) < this.player.radius + p.radius) {
-                    if (!(this.player.invincibleTimer > 0)) {
-                        const actualDmg = Math.max(1, p.damage - this.player.armor);
-                        this.player.hp -= actualDmg;
-                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
-                        this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
-                        SoundManager.playPlayerHit();
-                        if (this.player.hp <= 0) {
-                            this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
-                            this.gameOver();
-                        }
-                    }
+                    this.takeDamage(p.damage);
                     return false;
                 }
                 return p.life > 0;
@@ -1020,8 +1033,7 @@ export class GameEngine {
                     e.y = this.player.y;
                     e.radius += dt * 2; // grow
                     if (this.frameCount % 30 === 0) {
-                        this.player.hp -= 2;
-                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                        this.takeDamage(2 + this.player.armor);
                     }
                 }
             }
@@ -1055,17 +1067,7 @@ export class GameEngine {
             
             if (dist < this.player.radius + e.radius && !e.burrowed) {
                 if (!e.attackTimer || e.attackTimer <= 0) {
-                    if (!(this.player.invincibleTimer > 0)) {
-                        const actualDmg = Math.max(1, e.damage - this.player.armor);
-                        this.player.hp -= actualDmg;
-                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
-                        this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
-                        SoundManager.playPlayerHit();
-                        if (this.player.hp <= 0) {
-                            this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
-                            this.gameOver();
-                        }
-                    }
+                    this.takeDamage(e.damage);
                     e.attackTimer = 1.0;
                 }
             }

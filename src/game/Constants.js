@@ -42,6 +42,12 @@ export const WEAPONS = {
   burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 8, baseCooldown: 180, baseArea: 1.5, isSynergy: true },
   laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 30, baseCooldown: 150, baseArea: 1.2, isSynergy: true },
   thornySwarm: { id: 'thornySwarm', name: 'Plasma Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting drones armed with plasma whips.', baseDamage: 12, baseCooldown: 90, baseArea: 1.5, isSynergy: true },
+  supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 40, baseCooldown: 40, baseArea: 2, isEvolution: true },
+  vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals massively and covers screen.', baseDamage: 30, baseCooldown: 30, baseArea: 3, isEvolution: true },
+  orbitalDefense: { id: 'orbitalDefense', name: 'Orbital Defense Network', type: 'weapon', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.', baseDamage: 20, baseCooldown: 60, baseArea: 2, isEvolution: true },
+  hellfire: { id: 'hellfire', name: 'Hellfire', type: 'weapon', desc: 'EVOLVED: Blue flames that persist and melt everything.', baseDamage: 15, baseCooldown: 90, baseArea: 2, isEvolution: true },
+  quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Constant rapid pulses of dark energy.', baseDamage: 50, baseCooldown: 90, baseArea: 2, isEvolution: true },
+  aegisMatrix: { id: 'aegisMatrix', name: 'Aegis Matrix', type: 'weapon', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.', baseDamage: 30, baseCooldown: 120, baseArea: 2, isEvolution: true },
 };
 
 export const BOUNTIES_POOL = [
@@ -65,6 +71,15 @@ export const SYNERGIES = [
   { weapon1: 'napalm', weapon2: 'shieldBubble', result: 'burningBarrier' },
   { weapon1: 'napBeam', weapon2: 'novaPulse', result: 'laserNova' },
   { weapon1: 'vineWhip', weapon2: 'slothSwarm', result: 'thornySwarm' }
+];
+
+export const EVOLUTIONS = [
+    { baseWeapon: 'napBeam', passive: 'area_up', evolvedWeapon: 'supernovaBeam', name: 'Supernova Beam', desc: 'EVOLVED: Massive piercing beam that explodes on impact.' },
+    { baseWeapon: 'vineWhip', passive: 'regen_up', evolvedWeapon: 'vampiricLash', name: 'Vampiric Lash', desc: 'EVOLVED: Heals massively and covers screen.' },
+    { baseWeapon: 'slothSwarm', passive: 'spd_up', evolvedWeapon: 'orbitalDefense', name: 'Orbital Defense Network', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.' },
+    { baseWeapon: 'napalm', passive: 'dmg_up', evolvedWeapon: 'hellfire', name: 'Hellfire', desc: 'EVOLVED: Blue flames that persist and melt everything.' },
+    { baseWeapon: 'novaPulse', passive: 'cd_down', evolvedWeapon: 'quantumCollapse', name: 'Quantum Collapse', desc: 'EVOLVED: Constant rapid pulses of dark energy.' },
+    { baseWeapon: 'shieldBubble', passive: 'hp_up', evolvedWeapon: 'aegisMatrix', name: 'Aegis Matrix', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.' }
 ];
 
 export const UPGRADES = [

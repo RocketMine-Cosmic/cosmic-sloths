@@ -26,14 +26,16 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
         'Common': 'text-slate-400 border-slate-500',
         'Rare': 'text-blue-400 border-blue-500 shadow-[0_0_10px_rgba(96,165,250,0.5)]',
         'Epic': 'text-purple-400 border-purple-500 shadow-[0_0_15px_rgba(192,132,252,0.6)]',
-        'Legendary': 'text-orange-400 border-orange-500 shadow-[0_0_20px_rgba(251,146,60,0.8)]'
+        'Legendary': 'text-orange-400 border-orange-500 shadow-[0_0_20px_rgba(251,146,60,0.8)]',
+        'Evolution': 'text-red-400 border-red-500 shadow-[0_0_25px_rgba(239,68,68,0.9)]'
     };
 
     const rarityBg = {
         'Common': 'bg-slate-800',
         'Rare': 'bg-blue-950',
         'Epic': 'bg-purple-950',
-        'Legendary': 'bg-orange-950'
+        'Legendary': 'bg-orange-950',
+        'Evolution': 'bg-red-950'
     };
 
     return (
