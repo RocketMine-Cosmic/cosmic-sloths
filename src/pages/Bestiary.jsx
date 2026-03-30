@@ -23,8 +23,11 @@ function EnemySprite({ enemy, size = 64 }) {
 
         const draw = () => {
             if (sprite.complete && sprite.naturalWidth > 0) {
-                const frameW = sprite.width / 4;
-                const frameH = sprite.height / 4;
+                const frameCount = enemy.frameCount || 16;
+                const cols = Math.ceil(Math.sqrt(frameCount));
+                const rows = Math.ceil(frameCount / cols);
+                const frameW = sprite.width / cols;
+                const frameH = sprite.height / rows;
                 ctx.clearRect(0, 0, size, size);
                 ctx.drawImage(sprite, 0, 0, frameW, frameH, 0, 0, size, size);
             }

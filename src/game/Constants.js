@@ -170,10 +170,12 @@ export const ENEMIES = [
   { id: 't10_crystal_vortex', name: 'Crystal Vortex', hp: 480, speed: 1.6, damage: 130, color: '#d946ef', radius: 86, xp: 10, tier: 10, isRanged: true, spriteImage: loadSprite('703e0a56e_crystal_vortex_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Bosses (spawn anywhere at the end)
-  { id: 'boss_shard_leviathan', name: 'Shard Leviathan', hp: 8000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 124, xp: 800, isBoss: true, spriteImage: loadSprite('005d73c1a_shard_leviathan_mini_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 'boss_horror_eye', name: 'Horror Eye Cluster', hp: 7000, speed: 0.6, damage: 70, color: '#ef4444', radius: 113, xp: 700, isBoss: true, spriteImage: loadSprite('a892b6caf_horror_eye_cluster_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 'boss_ink_shadow', name: 'Ink Shadow', hp: 9000, speed: 1.0, damage: 55, color: '#0f172a', radius: 135, xp: 900, isBoss: true, spriteImage: loadSprite('630af54e6_ink_shadow_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 'boss_star_eater', name: 'Star Eater', hp: 10000, speed: 0.5, damage: 80, color: '#f59e0b', radius: 146, xp: 1000, isBoss: true, spriteImage: loadSprite('34b7afc8e_star_eater_sheet.png'), frameCount: 16, animationSpeed: 0.15 }
+  { id: 'boss_nebula_devourer', name: 'Nebula Devourer', hp: 8000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 124, xp: 800, isBoss: true, spriteImage: loadSprite('34fdca1a0_nebula_devourer_sheet.png'), frameCount: 25, animationSpeed: 0.12 },
+  { id: 'boss_plasma_kraken', name: 'Plasma Kraken', hp: 7000, speed: 0.6, damage: 70, color: '#ef4444', radius: 113, xp: 700, isBoss: true, spriteImage: loadSprite('7464748bb_plasma_kraken_sheet.png'), frameCount: 25, animationSpeed: 0.12 },
+  { id: 'boss_stellar_colossus', name: 'Stellar Colossus', hp: 9000, speed: 1.0, damage: 55, color: '#f59e0b', radius: 135, xp: 900, isBoss: true, spriteImage: loadSprite('d39368909_stellar_colossus_sheet.png'), frameCount: 25, animationSpeed: 0.12 },
+  { id: 'boss_cosmic_wyrm', name: 'Cosmic Wyrm Lord', hp: 10000, speed: 0.9, damage: 80, color: '#0ea5e9', radius: 146, xp: 1000, isBoss: true, spriteImage: loadSprite('88e8a0d84_cosmic_wyrm_lord_sheet.png'), frameCount: 25, animationSpeed: 0.12 },
+  { id: 'boss_supernova_empress', name: 'Supernova Empress', hp: 11000, speed: 1.2, damage: 90, color: '#ec4899', radius: 110, xp: 1200, isBoss: true, spriteImage: loadSprite('4d3a1f090_supernova_empress_sheet.png'), frameCount: 25, animationSpeed: 0.12 },
+  { id: 'boss_nexus_annihilator', name: 'Nexus Annihilator', hp: 15000, speed: 0.5, damage: 120, color: '#1e293b', radius: 160, xp: 1500, isBoss: true, spriteImage: loadSprite('29ea7426c_nexus_annihilator_sheet.png'), frameCount: 25, animationSpeed: 0.12 }
 ];
 
 export const CHARACTER_TALENTS = {

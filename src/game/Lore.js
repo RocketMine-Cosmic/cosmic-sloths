@@ -41,8 +41,10 @@ export const ENEMY_LORE = {
     't10_shadow': "A creature native to the space between dimensions. It attacks from blind spots and drains the life force of its victims.",
     't10_crystal_vortex': "A raging storm of razor-sharp geometric shards. It shreds armor plating in seconds.",
 
-    'boss_shard_leviathan': "A mythical beast composed of indestructible cosmic shards. It slumbers for millennia, only awakening to consume entire fleets.",
-    'boss_horror_eye': "The core observer. An eldritch nightmare that sees all timelines simultaneously. It wishes only to close them.",
-    'boss_ink_shadow': "A primordial darkness that existed before the stars were born. It seeks to return the universe to a state of absolute nothingness.",
-    'boss_star_eater': "A cosmic anomaly that devours celestial bodies. Your ship is nothing but an appetizer to this absolute unit."
+    'boss_nebula_devourer': "Massive floating purple nebula cloud with a ravenous glowing maw and swirling energy tentacles.",
+    'boss_plasma_kraken': "Giant orange-red energy squid with long glowing tentacles and a fiery core.",
+    'boss_stellar_colossus': "Enormous glowing yellow-orange crystal star with rotating arms and a blazing central eye.",
+    'boss_cosmic_wyrm': "Enormous glowing teal serpentine dragon with blazing aura and crystal fins.",
+    'boss_supernova_empress': "Radiant pink-gold exploding star queen with flowing energy wings and crown of flames.",
+    'boss_nexus_annihilator': "Colossal dark cosmic entity with glowing purple energy core, rotating metallic rings and massive energy tendrils."
 };

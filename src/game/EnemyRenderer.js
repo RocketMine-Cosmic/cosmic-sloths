@@ -11,11 +11,13 @@ export function drawEnemy(ctx, e, time, playerX) {
         const speed = e.animationSpeed || 0.15;
         const frame = Math.floor(time / speed) % SPRITE_FRAMES;
         
-        const col = frame % 4;
-        const row = Math.floor(frame / 4);
+        const cols = Math.ceil(Math.sqrt(SPRITE_FRAMES));
+        const rows = Math.ceil(SPRITE_FRAMES / cols);
+        const col = frame % cols;
+        const row = Math.floor(frame / cols);
         
-        const frameWidth = e.spriteImage.width / 4;
-        const frameHeight = e.spriteImage.height / 4;
+        const frameWidth = e.spriteImage.width / cols;
+        const frameHeight = e.spriteImage.height / rows;
         
         const drawSize = e.radius * 3.5;
         const bob = Math.sin(time * 3 + e.id.length) * (e.radius * 0.1);
