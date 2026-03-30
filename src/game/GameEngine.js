@@ -1184,10 +1184,18 @@ export class GameEngine {
         if (pastKills >= masteryReq) {
             damageMult = 1.05; // +5% damage against mastered enemies
         }
-        const finalDamage = amount * damageMult;
+        let finalDamage = amount * damageMult;
+        let isCrit = false;
+
+        const critChance = 0.05 + (this.player.luck * 0.02); // 5% base + 2% per luck
+        if (Math.random() < critChance) {
+            isCrit = true;
+            finalDamage *= 1.5;
+        }
         
         enemy.hp -= finalDamage;
-        this.addDamageText(enemy.x, enemy.y - 10, Math.floor(finalDamage), pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
+        const color = isCrit ? '#ff4444' : (pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
+        this.addDamageText(enemy.x, enemy.y - 10, Math.floor(finalDamage), color, isCrit);
         SoundManager.playEnemyHit();
     }
 
@@ -1199,9 +1207,9 @@ export class GameEngine {
         this.particleManager.addParticle(x, y, color, count, type, sizeMult);
     }
 
-    addDamageText(x, y, text, color) {
+    addDamageText(x, y, text, color, isCrit = false) {
         const offsetX = (Math.random() - 0.5) * 20;
-        this.damageTexts.push({ x: x + offsetX, y, text, color, life: 0.8 });
+        this.damageTexts.push({ x: x + offsetX, y, text, color, life: 0.8, isCrit });
     }
 
     levelUp() {
@@ -1807,15 +1815,17 @@ export class GameEngine {
             this.ctx.fill();
         }
 
-        this.ctx.font = 'bold 14px "Courier New", Courier, monospace';
         this.ctx.textAlign = 'center';
         this.damageTexts.forEach(t => {
             this.ctx.globalAlpha = Math.max(0, t.life);
             this.ctx.strokeStyle = '#000000';
-            this.ctx.lineWidth = 3;
-            this.ctx.strokeText(t.text, t.x, t.y);
+            this.ctx.lineWidth = t.isCrit ? 4 : 3;
+            this.ctx.font = t.isCrit ? 'bold 20px "Courier New", Courier, monospace' : 'bold 14px "Courier New", Courier, monospace';
+            const displayY = t.isCrit ? t.y - 10 * (1 - t.life) : t.y;
+            const textToDraw = t.text + (t.isCrit ? '!' : '');
+            this.ctx.strokeText(textToDraw, t.x, displayY);
             this.ctx.fillStyle = t.color;
-            this.ctx.fillText(t.text, t.x, t.y);
+            this.ctx.fillText(textToDraw, t.x, displayY);
             this.ctx.globalAlpha = 1.0;
         });
 
@@ -1855,6 +1865,84 @@ export class GameEngine {
             // Global orange tint pulsing
             this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.05 + 0.05})`;
             this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width / this.zoom, this.canvas.height / this.zoom);
+        }
+
+        this.ctx.restore();
+
+        // --- Radar / Minimap ---
+        this.ctx.save();
+        const mapSize = window.innerWidth < 768 ? 80 : 120;
+        const mapX = this.canvas.width - mapSize - 20;
+        const mapY = 80;
+        
+        // Radar Background
+        this.ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+        this.ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(mapX + mapSize/2, mapY + mapSize/2, mapSize/2, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        // Scanner line
+        this.ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
+        this.ctx.beginPath();
+        this.ctx.moveTo(mapX + mapSize/2, mapY + mapSize/2);
+        this.ctx.lineTo(mapX + mapSize/2 + Math.cos(this.time * 2) * mapSize/2, mapY + mapSize/2 + Math.sin(this.time * 2) * mapSize/2);
+        this.ctx.stroke();
+
+        // Clipping path
+        this.ctx.beginPath();
+        this.ctx.arc(mapX + mapSize/2, mapY + mapSize/2, mapSize/2, 0, Math.PI * 2);
+        this.ctx.clip();
+
+        const radarScale = 0.02; // World to map scale
+
+        // Player Center
+        this.ctx.fillStyle = '#00ffff';
+        this.ctx.beginPath();
+        this.ctx.arc(mapX + mapSize/2, mapY + mapSize/2, 2, 0, Math.PI*2);
+        this.ctx.fill();
+
+        // Hazards
+        this.hazards.forEach(h => {
+            const hx = mapX + mapSize/2 + (h.x - this.player.x) * radarScale;
+            const hy = mapY + mapSize/2 + (h.y - this.player.y) * radarScale;
+            this.ctx.fillStyle = 'rgba(255, 69, 0, 0.5)';
+            this.ctx.beginPath();
+            this.ctx.arc(hx, hy, h.radius * radarScale, 0, Math.PI*2);
+            this.ctx.fill();
+        });
+
+        // Bosses
+        this.enemies.filter(e => e.isBoss).forEach(boss => {
+            const bx = mapX + mapSize/2 + (boss.x - this.player.x) * radarScale;
+            const by = mapY + mapSize/2 + (boss.y - this.player.y) * radarScale;
+            this.ctx.fillStyle = '#ff0000';
+            this.ctx.beginPath();
+            this.ctx.arc(bx, by, 4, 0, Math.PI*2);
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = '#ff0000';
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            this.ctx.arc(bx, by, 4 + Math.sin(this.time * 5) * 2, 0, Math.PI*2);
+            this.ctx.stroke();
+        });
+
+        // Unlock Pod
+        if (this.characterPickup) {
+            const px = mapX + mapSize/2 + (this.characterPickup.x - this.player.x) * radarScale;
+            const py = mapY + mapSize/2 + (this.characterPickup.y - this.player.y) * radarScale;
+            this.ctx.fillStyle = this.characterPickup.color;
+            this.ctx.beginPath();
+            this.ctx.arc(px, py, 3, 0, Math.PI*2);
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.beginPath();
+            this.ctx.arc(px, py, 4 + Math.sin(this.time * 8) * 2, 0, Math.PI*2);
+            this.ctx.stroke();
         }
 
         this.ctx.restore();
