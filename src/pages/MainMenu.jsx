@@ -60,7 +60,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="z-10 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 w-full max-w-3xl px-4"
+                className="z-10 grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-4 w-full max-w-2xl px-4"
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
@@ -88,12 +88,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                     className="w-full bg-slate-700/90 backdrop-blur-sm hover:bg-slate-600 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(51,65,85,0.4)] border border-slate-500/30"
                 >
                     SETTINGS
-                </button>
-                <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/profile'); }}
-                    className="col-span-full md:col-span-2 w-full bg-slate-800/90 backdrop-blur-sm hover:bg-slate-700 flex items-center justify-center gap-2 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl border border-slate-600/30 transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(51,65,85,0.4)]"
-                >
-                    PILOT PROFILE
                 </button>
             </motion.div>
             
