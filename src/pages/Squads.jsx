@@ -208,17 +208,32 @@ export default function Squads({ isCarousel }) {
         
         const content = newMessage.trim();
         setNewMessage('');
+        SoundManager.playUIClick();
+
+        // Optimistically add to local state immediately
+        const optimisticMsg = {
+            id: `optimistic-${Date.now()}`,
+            squad_id: mySquad.id,
+            user_id: user.id,
+            player_name: user.full_name,
+            content: content,
+            created_date: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, optimisticMsg]);
         
         try {
-            SoundManager.playUIClick();
-            await base44.entities.SquadMessage.create({
+            const saved = await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
                 user_id: user.id,
                 player_name: user.full_name,
                 content: content
             });
+            // Replace optimistic message with real one
+            setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? saved : m));
         } catch (e) {
-            console.error(e);
+            console.error('[Squad] Failed to send message:', e);
+            // Remove optimistic message on failure
+            setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
         }
     };
 
