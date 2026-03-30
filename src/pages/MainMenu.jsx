@@ -89,31 +89,12 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 >
                     SETTINGS
                 </button>
-                <div className="col-span-full md:col-span-2 w-full bg-slate-800/90 backdrop-blur-sm flex items-center justify-center gap-2 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl border border-slate-600/30">
-                    {isEditingName ? (
-                        <div className="flex items-center gap-2">
-                            <input 
-                                type="text" 
-                                value={newName} 
-                                onChange={(e) => setNewName(e.target.value)}
-                                className="bg-slate-700 text-white px-2 py-1 rounded border border-slate-500 outline-none text-sm md:text-base w-32 md:w-48"
-                                autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                            />
-                            <button onClick={handleSaveName} className="text-green-400 hover:text-green-300"><Check size={20} /></button>
-                            <button onClick={() => { setIsEditingName(false); setNewName(user?.full_name || ''); }} className="text-red-400 hover:text-red-300"><X size={20} /></button>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2">
-                            <span>Pilot: <strong className="text-cyan-400">{user?.full_name || 'Loading...'}</strong></span>
-                            {user && (
-                                <button onClick={() => setIsEditingName(true)} className="text-slate-400 hover:text-white transition-colors">
-                                    <Pencil size={18} />
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
+                <button 
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/profile'); }}
+                    className="col-span-full md:col-span-2 w-full bg-slate-800/90 backdrop-blur-sm hover:bg-slate-700 flex items-center justify-center gap-2 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl border border-slate-600/30 transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(51,65,85,0.4)]"
+                >
+                    PILOT PROFILE
+                </button>
             </motion.div>
             
             <div className="absolute bottom-4 text-slate-400 text-xs md:text-sm z-10">
