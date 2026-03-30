@@ -124,8 +124,25 @@ export default function Hub({ isCarousel }) {
                                     <div className="mb-4 md:mb-6">
                                         <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Operative</h3>
                                         <div 
-                                            className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none"
-
+                                            className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none touch-pan-y"
+                                            onTouchStart={(e) => {
+                                                touchStartX.current = e.changedTouches[0].screenX;
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                if (touchStartX.current === null) return;
+                                                const touchEndX = e.changedTouches[0].screenX;
+                                                const diff = touchStartX.current - touchEndX;
+                                                if (diff > 50) {
+                                                    const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
+                                                    setSelectedChar(CHARACTERS[idx >= CHARACTERS.length - 1 ? 0 : idx + 1].id);
+                                                    SoundManager.playUIClick();
+                                                } else if (diff < -50) {
+                                                    const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
+                                                    setSelectedChar(CHARACTERS[idx <= 0 ? CHARACTERS.length - 1 : idx - 1].id);
+                                                    SoundManager.playUIClick();
+                                                }
+                                                touchStartX.current = null;
+                                            }}
                                         >
                                             {(() => {
                                                 const char = CHARACTERS.find(c => c.id === selectedChar);
@@ -222,8 +239,25 @@ export default function Hub({ isCarousel }) {
                                     <div>
                                         <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Arena</h3>
                                         <div 
-                                            className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none"
-
+                                            className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none touch-pan-y"
+                                            onTouchStart={(e) => {
+                                                touchStartX.current = e.changedTouches[0].screenX;
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                if (touchStartX.current === null) return;
+                                                const touchEndX = e.changedTouches[0].screenX;
+                                                const diff = touchStartX.current - touchEndX;
+                                                if (diff > 50) {
+                                                    const idx = ARENAS.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(ARENAS[idx >= ARENAS.length - 1 ? 0 : idx + 1].id);
+                                                    SoundManager.playUIClick();
+                                                } else if (diff < -50) {
+                                                    const idx = ARENAS.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(ARENAS[idx <= 0 ? ARENAS.length - 1 : idx - 1].id);
+                                                    SoundManager.playUIClick();
+                                                }
+                                                touchStartX.current = null;
+                                            }}
                                         >
                                             <div 
                                                 className="absolute inset-0 opacity-40 bg-cover bg-center transition-all duration-500"
@@ -285,8 +319,25 @@ export default function Hub({ isCarousel }) {
                                             const currentColors = diffColors[selectedDifficulty] || diffColors.normal;
                                             return (
                                         <div 
-                                            className={`relative bg-slate-800 rounded-lg md:rounded-xl border ${currentColors.border} overflow-hidden ${currentColors.shadow} select-none transition-all duration-300`}
-
+                                            className={`relative bg-slate-800 rounded-lg md:rounded-xl border ${currentColors.border} overflow-hidden ${currentColors.shadow} select-none touch-pan-y transition-all duration-300`}
+                                            onTouchStart={(e) => {
+                                                touchStartX.current = e.changedTouches[0].screenX;
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                if (touchStartX.current === null) return;
+                                                const touchEndX = e.changedTouches[0].screenX;
+                                                const diff = touchStartX.current - touchEndX;
+                                                if (diff > 50) {
+                                                    const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
+                                                    setSelectedDifficulty(DIFFICULTIES[idx >= DIFFICULTIES.length - 1 ? 0 : idx + 1].id);
+                                                    SoundManager.playUIClick();
+                                                } else if (diff < -50) {
+                                                    const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
+                                                    setSelectedDifficulty(DIFFICULTIES[idx <= 0 ? DIFFICULTIES.length - 1 : idx - 1].id);
+                                                    SoundManager.playUIClick();
+                                                }
+                                                touchStartX.current = null;
+                                            }}
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
                                             

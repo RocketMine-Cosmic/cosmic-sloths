@@ -11,7 +11,7 @@ import { SoundManager } from '../game/SoundManager';
 
 export default function PlayCarousel() {
     const navigate = useNavigate();
-    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, skipSnaps: false, watchDrag: true });
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     useEffect(() => {
@@ -58,20 +58,20 @@ export default function PlayCarousel() {
             </div>
 
             <div className="flex-1 overflow-hidden" ref={emblaRef}>
-                <div className="flex h-full">
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                <div className="flex h-full touch-pan-y">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Hub isCarousel={true} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Upgrades isCarousel={true} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <LeaderboardPage isCarousel={true} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Squads isCarousel={true} />
                     </div>
                 </div>
