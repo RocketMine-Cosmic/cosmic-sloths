@@ -166,6 +166,12 @@ export default function Game() {
                 if (stats.encountered) {
                     currentSave.encounteredEnemies = [...new Set([...(currentSave.encounteredEnemies || []), ...stats.encountered])];
                 }
+                if (stats.enemyKills) {
+                    if (!currentSave.enemyKills) currentSave.enemyKills = {};
+                    for (const [id, count] of Object.entries(stats.enemyKills)) {
+                        currentSave.enemyKills[id] = (currentSave.enemyKills[id] || 0) + count;
+                    }
+                }
                 SaveManager.save(currentSave);
                 setGameOverStats(stats);
                 saveScore(stats, false);
@@ -180,6 +186,12 @@ export default function Game() {
                 updateBounties(currentSave, stats);
                 if (stats.encountered) {
                     currentSave.encounteredEnemies = [...new Set([...(currentSave.encounteredEnemies || []), ...stats.encountered])];
+                }
+                if (stats.enemyKills) {
+                    if (!currentSave.enemyKills) currentSave.enemyKills = {};
+                    for (const [id, count] of Object.entries(stats.enemyKills)) {
+                        currentSave.enemyKills[id] = (currentSave.enemyKills[id] || 0) + count;
+                    }
                 }
                 const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 if (currentIndex >= 0 && currentIndex < ARENAS.length - 1) {

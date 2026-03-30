@@ -1,23 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ENEMIES } from '../game/Constants';
-import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity } from 'lucide-react';
+import { ENEMY_LORE } from '../game/Lore';
+import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity, Swords, Star } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
+
+const MASTERY_KILLS = (enemy) => enemy.isBoss ? 10 : 100;
+
+function EnemySprite({ enemy, size = 64 }) {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, size, size);
+
+        const sprite = enemy.spriteImage;
+        if (!sprite) return;
+
+        const draw = () => {
+            if (sprite.complete && sprite.naturalWidth > 0) {
+                const frameW = sprite.width / 4;
+                const frameH = sprite.height / 4;
+                ctx.clearRect(0, 0, size, size);
+                ctx.drawImage(sprite, 0, 0, frameW, frameH, 0, 0, size, size);
+            }
+        };
+
+        if (sprite.complete) {
+            draw();
+        } else {
+            sprite.onload = draw;
+        }
+    }, [enemy, size]);
+
+    return <canvas ref={canvasRef} width={size} height={size} className="object-contain" />;
+}
 
 export default function Bestiary({ isCarousel }) {
     const navigate = useNavigate();
     const [selectedTier, setSelectedTier] = useState('all');
     const [save] = useState(SaveManager.load());
-    const encountered = save.encounteredEnemies || [];
+    const [selectedEnemy, setSelectedEnemy] = useState(null);
 
-    // Group enemies by tier
+    const encountered = save.encounteredEnemies || [];
+    const enemyKills = save.enemyKills || {};
+
     const tiers = ['all', ...Array.from(new Set(ENEMIES.map(e => e.isBoss ? 'boss' : `tier_${e.tier}`)))];
 
-    const filteredEnemies = selectedTier === 'all' 
-        ? ENEMIES 
+    const filteredEnemies = selectedTier === 'all'
+        ? ENEMIES
         : ENEMIES.filter(e => selectedTier === 'boss' ? e.isBoss : `tier_${e.tier}` === selectedTier);
+
+    const encounteredCount = ENEMIES.filter(e => encountered.includes(e.id)).length;
 
     return (
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
@@ -25,7 +63,7 @@ export default function Bestiary({ isCarousel }) {
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>
                         {!isCarousel && (
-                            <button 
+                            <button
                                 onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
                                 className="mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
                             >
@@ -35,96 +73,147 @@ export default function Bestiary({ isCarousel }) {
                         <h1 className="text-2xl md:text-3xl font-bold text-rose-400 tracking-tight flex items-center gap-2">
                             <BookOpen className="w-6 h-6 md:w-8 md:h-8" /> COSMIC CODEX
                         </h1>
-                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Know your enemy. Study their weaknesses.</p>
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">
+                            {encounteredCount} / {ENEMIES.length} encountered
+                        </p>
+                    </div>
+                    <div className="text-right text-xs text-slate-500">
+                        <div className="text-fuchsia-400 font-bold">⚡ Mastered = +20% DMG</div>
+                        <div>vs that enemy type</div>
                     </div>
                 </header>
 
-                <div className="flex overflow-x-auto gap-2 mb-4 pb-2 hide-scrollbar shrink-0">
+                <div className="flex overflow-x-auto gap-2 mb-4 pb-2 shrink-0">
                     {tiers.map(tier => (
                         <button
                             key={tier}
                             onClick={() => { SoundManager.playUIClick(); setSelectedTier(tier); }}
                             className={`px-3 py-1.5 rounded-lg font-bold text-xs md:text-sm whitespace-nowrap transition-colors ${
-                                selectedTier === tier 
-                                    ? 'bg-rose-600 text-white' 
+                                selectedTier === tier
+                                    ? 'bg-rose-600 text-white'
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                             }`}
                         >
-                            {tier === 'all' ? 'All Threats' : tier === 'boss' ? 'Leviathans (Bosses)' : `Tier ${tier.split('_')[1]}`}
+                            {tier === 'all' ? 'All Threats' : tier === 'boss' ? '👑 Leviathans' : `Tier ${tier.split('_')[1]}`}
                         </button>
                     ))}
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-2">
+                <div className="flex-1 overflow-y-auto pr-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredEnemies.map(enemy => {
                             const isEncountered = encountered.includes(enemy.id);
+                            const kills = enemyKills[enemy.id] || 0;
+                            const masteryReq = MASTERY_KILLS(enemy);
+                            const isMastered = kills >= masteryReq;
+                            const progress = Math.min(kills / masteryReq, 1);
+                            const isSelected = selectedEnemy?.id === enemy.id;
+
                             return (
-                                <motion.div 
+                                <motion.div
                                     key={enemy.id}
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className={`bg-slate-900 rounded-xl p-4 border flex flex-col ${
-                                        isEncountered 
-                                            ? (enemy.isBoss ? 'border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-slate-800')
-                                            : 'border-slate-800 opacity-50 grayscale'
+                                    onClick={() => { SoundManager.playUIClick(); setSelectedEnemy(isSelected ? null : enemy); }}
+                                    className={`bg-slate-900 rounded-xl p-4 border flex flex-col cursor-pointer transition-all ${
+                                        !isEncountered ? 'opacity-40 grayscale border-slate-800' :
+                                        isMastered ? 'border-fuchsia-500 shadow-[0_0_15px_rgba(217,70,239,0.25)]' :
+                                        enemy.isBoss ? 'border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.1)]' :
+                                        'border-slate-800 hover:border-slate-600'
                                     }`}
                                 >
-                                    <div className="flex items-start gap-4 mb-4">
-                                        <div 
-                                            className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-700 bg-slate-950"
-                                        >
-                                            <div className="absolute inset-0 opacity-20" style={{ backgroundColor: isEncountered ? enemy.color : '#64748b' }}></div>
-                                            <span className="text-2xl font-black" style={{ color: isEncountered ? enemy.color : '#64748b' }}>
-                                                {isEncountered ? enemy.name.charAt(0) : '?'}
-                                            </span>
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-slate-950 border border-slate-700">
+                                            {isEncountered ? (
+                                                <EnemySprite enemy={enemy} size={56} />
+                                            ) : (
+                                                <span className="text-2xl text-slate-600">?</span>
+                                            )}
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-bold text-white leading-tight">{isEncountered ? enemy.name : 'Unknown Threat'}</h3>
-                                                {enemy.isBoss ? (
-                                                    <span className="text-[10px] bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded border border-rose-900 font-bold">BOSS</span>
-                                                ) : (
-                                                    <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 font-bold">T{enemy.tier}</span>
-                                                )}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start gap-1">
+                                                <h3 className="font-bold text-white text-sm leading-tight truncate">
+                                                    {isEncountered ? enemy.name : 'Unknown Threat'}
+                                                </h3>
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    {isMastered && <Star className="w-3 h-3 text-fuchsia-400 fill-fuchsia-400" />}
+                                                    {enemy.isBoss ? (
+                                                        <span className="text-[9px] bg-rose-950 text-rose-400 px-1 py-0.5 rounded border border-rose-900 font-bold">BOSS</span>
+                                                    ) : (
+                                                        <span className="text-[9px] bg-slate-800 text-slate-400 px-1 py-0.5 rounded border border-slate-700 font-bold">T{enemy.tier}</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="text-xs text-slate-400 mt-1 flex gap-2">
+                                            <div className="text-[10px] text-slate-400 mt-0.5 flex gap-2">
                                                 {isEncountered && enemy.isTank && <span className="text-amber-400">Tank</span>}
                                                 {isEncountered && enemy.isRanged && <span className="text-cyan-400">Ranged</span>}
+                                                {isMastered && <span className="text-fuchsia-400 font-bold">MASTERED</span>}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2 mt-auto">
-                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                            <Activity className="w-4 h-4 text-emerald-400" />
-                                            <div>
-                                                <div className="text-[10px] text-slate-500 font-bold">HP</div>
-                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.hp.toLocaleString() : '?'}</div>
+                                    {isEncountered && (
+                                        <>
+                                            <div className="grid grid-cols-2 gap-1.5 mb-3">
+                                                <div className="bg-slate-950/50 p-1.5 rounded-lg border border-slate-800/50 flex items-center gap-1.5">
+                                                    <Activity className="w-3 h-3 text-emerald-400 shrink-0" />
+                                                    <div>
+                                                        <div className="text-[9px] text-slate-500 font-bold">HP</div>
+                                                        <div className="text-xs text-white font-mono">{enemy.hp.toLocaleString()}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-slate-950/50 p-1.5 rounded-lg border border-slate-800/50 flex items-center gap-1.5">
+                                                    <Skull className="w-3 h-3 text-rose-400 shrink-0" />
+                                                    <div>
+                                                        <div className="text-[9px] text-slate-500 font-bold">DMG</div>
+                                                        <div className="text-xs text-white font-mono">{enemy.damage}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-slate-950/50 p-1.5 rounded-lg border border-slate-800/50 flex items-center gap-1.5">
+                                                    <Zap className="w-3 h-3 text-yellow-400 shrink-0" />
+                                                    <div>
+                                                        <div className="text-[9px] text-slate-500 font-bold">Speed</div>
+                                                        <div className="text-xs text-white font-mono">{enemy.speed}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-slate-950/50 p-1.5 rounded-lg border border-slate-800/50 flex items-center gap-1.5">
+                                                    <Swords className="w-3 h-3 text-blue-400 shrink-0" />
+                                                    <div>
+                                                        <div className="text-[9px] text-slate-500 font-bold">Kills</div>
+                                                        <div className="text-xs text-white font-mono">{kills.toLocaleString()}</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                            <Skull className="w-4 h-4 text-rose-400" />
-                                            <div>
-                                                <div className="text-[10px] text-slate-500 font-bold">Damage</div>
-                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.damage : '?'}</div>
+
+                                            {/* Mastery Progress */}
+                                            <div className="mb-3">
+                                                <div className="flex justify-between text-[10px] font-bold mb-1">
+                                                    <span className="text-slate-500">Mastery</span>
+                                                    <span className={isMastered ? 'text-fuchsia-400' : 'text-slate-400'}>{Math.min(kills, masteryReq)} / {masteryReq}</span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all ${isMastered ? 'bg-fuchsia-500' : 'bg-slate-500'}`}
+                                                        style={{ width: `${progress * 100}%` }}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                            <Zap className="w-4 h-4 text-yellow-400" />
-                                            <div>
-                                                <div className="text-[10px] text-slate-500 font-bold">Speed</div>
-                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.speed : '?'}</div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                            <Shield className="w-4 h-4 text-blue-400" />
-                                            <div>
-                                                <div className="text-[10px] text-slate-500 font-bold">XP Drop</div>
-                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.xp : '?'}</div>
-                                            </div>
-                                        </div>
-                                    </div>
+
+                                            {/* Lore - shown when selected */}
+                                            {isSelected && ENEMY_LORE[enemy.id] && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    className="text-[11px] text-slate-400 italic border-t border-slate-800 pt-2 leading-relaxed"
+                                                >
+                                                    "{ENEMY_LORE[enemy.id]}"
+                                                </motion.div>
+                                            )}
+                                            {!isSelected && (
+                                                <div className="text-[10px] text-slate-600 text-center">tap for lore</div>
+                                            )}
+                                        </>
+                                    )}
                                 </motion.div>
                             );
                         })}

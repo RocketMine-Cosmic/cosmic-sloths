@@ -156,6 +156,7 @@ export class GameEngine {
         this.isGameOver = false;
         this.isVictory = false;
         this.encounteredEnemies = new Set();
+        this.enemyKills = {};
         
         this.lockedCharacters = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte']
             .filter(id => !(save.foundCharacters || []).includes(id));
@@ -942,6 +943,7 @@ export class GameEngine {
             if (e.hp <= 0) {
                 SoundManager.playEnemyDeath();
                 this.kills++;
+                this.enemyKills[e.id] = (this.enemyKills[e.id] || 0) + 1;
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
                 
                 // Death Splatter
@@ -1176,8 +1178,16 @@ export class GameEngine {
     }
 
     damageEnemy(enemy, amount) {
-        enemy.hp -= amount;
-        this.addDamageText(enemy.x, enemy.y - 10, Math.floor(amount), '#ffffff');
+        let damageMult = 1.0;
+        const pastKills = this.save.enemyKills?.[enemy.id] || 0;
+        const masteryReq = enemy.isBoss ? 10 : 100;
+        if (pastKills >= masteryReq) {
+            damageMult = 1.2; // +20% damage against mastered enemies
+        }
+        const finalDamage = amount * damageMult;
+        
+        enemy.hp -= finalDamage;
+        this.addDamageText(enemy.x, enemy.y - 10, Math.floor(finalDamage), pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
         SoundManager.playEnemyHit();
     }
 
@@ -1331,7 +1341,8 @@ export class GameEngine {
             level: this.level,
             kills: this.kills,
             gold: this.gold,
-            encountered: Array.from(this.encounteredEnemies)
+            encountered: Array.from(this.encounteredEnemies),
+            enemyKills: this.enemyKills
         });
     }
 
@@ -1345,7 +1356,8 @@ export class GameEngine {
             gold: this.gold,
             arenaId: this.arena.id,
             characterId: this.characterId,
-            encountered: Array.from(this.encounteredEnemies)
+            encountered: Array.from(this.encounteredEnemies),
+            enemyKills: this.enemyKills
         });
     }
 
