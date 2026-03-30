@@ -163,6 +163,9 @@ export default function Game() {
                 currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
                 currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
                 updateBounties(currentSave, stats);
+                if (stats.encountered) {
+                    currentSave.encounteredEnemies = [...new Set([...(currentSave.encounteredEnemies || []), ...stats.encountered])];
+                }
                 SaveManager.save(currentSave);
                 setGameOverStats(stats);
                 saveScore(stats, false);
@@ -175,6 +178,9 @@ export default function Game() {
                 currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
                 currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
                 updateBounties(currentSave, stats);
+                if (stats.encountered) {
+                    currentSave.encounteredEnemies = [...new Set([...(currentSave.encounteredEnemies || []), ...stats.encountered])];
+                }
                 const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 if (currentIndex >= 0 && currentIndex < ARENAS.length - 1) {
                     const nextArena = ARENAS[currentIndex + 1];

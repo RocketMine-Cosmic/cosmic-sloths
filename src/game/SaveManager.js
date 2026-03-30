@@ -32,7 +32,8 @@ export const SaveManager = {
       totalGoldEarned: 0,
       maxLevelReached: 0,
       bounties: { date: '', active: [], dailyMission: null },
-      seasonalPoints: 0
+      seasonalPoints: 0,
+      encounteredEnemies: []
     };
 
     try {
@@ -97,6 +98,7 @@ export const SaveManager = {
             parsed.bounties = { date: '', active: [], dailyMission: null };
         }
         if (parsed.seasonalPoints === undefined) parsed.seasonalPoints = 0;
+        if (!parsed.encounteredEnemies) parsed.encounteredEnemies = [];
         
         const today = moment().format('YYYY-MM-DD');
         if (parsed.bounties.date !== today) {

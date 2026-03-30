@@ -155,6 +155,7 @@ export class GameEngine {
         this.isPaused = false;
         this.isGameOver = false;
         this.isVictory = false;
+        this.encounteredEnemies = new Set();
         
         this.lockedCharacters = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte']
             .filter(id => !(save.foundCharacters || []).includes(id));
@@ -388,6 +389,7 @@ export class GameEngine {
                     const bossHpMult = 5.0 * this.difficulty.enemyHpMult * (1.0 + progress);
                     const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5);
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
+                    this.encounteredEnemies.add(boss.id);
                     this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
                     SoundManager.playBossSpawn();
                 }
@@ -404,6 +406,7 @@ export class GameEngine {
                 const bossHpMult = 5.0 * this.difficulty.enemyHpMult;
                 const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult;
                 this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
+                this.encounteredEnemies.add(boss.id);
                 this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
                 SoundManager.playBossSpawn();
             }
@@ -448,12 +451,14 @@ export class GameEngine {
                 if (elites.length > 0) {
                     const elite = elites[Math.floor(Math.random() * elites.length)];
                     this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult, radius: elite.radius * 1.5 });
+                    this.encounteredEnemies.add(elite.id);
                     SoundManager.playEnemySpawn();
                     return;
                 }
             }
             
             this.enemies.push({ ...type, x: ex, y: ey, maxHp: type.hp * hpMult, hp: type.hp * hpMult, damage: type.damage * dmgMult });
+            this.encounteredEnemies.add(type.id);
         }
     }
 
@@ -1325,7 +1330,8 @@ export class GameEngine {
             time: Math.floor(this.time),
             level: this.level,
             kills: this.kills,
-            gold: this.gold
+            gold: this.gold,
+            encountered: Array.from(this.encounteredEnemies)
         });
     }
 
@@ -1338,7 +1344,8 @@ export class GameEngine {
             kills: this.kills,
             gold: this.gold,
             arenaId: this.arena.id,
-            characterId: this.characterId
+            characterId: this.characterId,
+            encountered: Array.from(this.encounteredEnemies)
         });
     }
 

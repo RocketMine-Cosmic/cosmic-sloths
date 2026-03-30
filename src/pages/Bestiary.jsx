@@ -4,10 +4,13 @@ import { motion } from 'framer-motion';
 import { ENEMIES } from '../game/Constants';
 import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
+import { SaveManager } from '../game/SaveManager';
 
 export default function Bestiary({ isCarousel }) {
     const navigate = useNavigate();
     const [selectedTier, setSelectedTier] = useState('all');
+    const [save] = useState(SaveManager.load());
+    const encountered = save.encounteredEnemies || [];
 
     // Group enemies by tier
     const tiers = ['all', ...Array.from(new Set(ENEMIES.map(e => e.isBoss ? 'boss' : `tier_${e.tier}`)))];
@@ -54,70 +57,77 @@ export default function Bestiary({ isCarousel }) {
 
                 <div className="flex-1 overflow-y-auto pr-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredEnemies.map(enemy => (
-                            <motion.div 
-                                key={enemy.id}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className={`bg-slate-900 rounded-xl p-4 border flex flex-col ${enemy.isBoss ? 'border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-slate-800'}`}
-                            >
-                                <div className="flex items-start gap-4 mb-4">
-                                    <div 
-                                        className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-700 bg-slate-950"
-                                    >
-                                        <div className="absolute inset-0 opacity-20" style={{ backgroundColor: enemy.color }}></div>
-                                        <span className="text-2xl font-black" style={{ color: enemy.color }}>
-                                            {enemy.name.charAt(0)}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-bold text-white leading-tight">{enemy.name}</h3>
-                                            {enemy.isBoss ? (
-                                                <span className="text-[10px] bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded border border-rose-900 font-bold">BOSS</span>
-                                            ) : (
-                                                <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 font-bold">T{enemy.tier}</span>
-                                            )}
+                        {filteredEnemies.map(enemy => {
+                            const isEncountered = encountered.includes(enemy.id);
+                            return (
+                                <motion.div 
+                                    key={enemy.id}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className={`bg-slate-900 rounded-xl p-4 border flex flex-col ${
+                                        isEncountered 
+                                            ? (enemy.isBoss ? 'border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-slate-800')
+                                            : 'border-slate-800 opacity-50 grayscale'
+                                    }`}
+                                >
+                                    <div className="flex items-start gap-4 mb-4">
+                                        <div 
+                                            className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-700 bg-slate-950"
+                                        >
+                                            <div className="absolute inset-0 opacity-20" style={{ backgroundColor: isEncountered ? enemy.color : '#64748b' }}></div>
+                                            <span className="text-2xl font-black" style={{ color: isEncountered ? enemy.color : '#64748b' }}>
+                                                {isEncountered ? enemy.name.charAt(0) : '?'}
+                                            </span>
                                         </div>
-                                        <div className="text-xs text-slate-400 mt-1 flex gap-2">
-                                            {enemy.isTank && <span className="text-amber-400">Tank</span>}
-                                            {enemy.isRanged && <span className="text-cyan-400">Ranged</span>}
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-bold text-white leading-tight">{isEncountered ? enemy.name : 'Unknown Threat'}</h3>
+                                                {enemy.isBoss ? (
+                                                    <span className="text-[10px] bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded border border-rose-900 font-bold">BOSS</span>
+                                                ) : (
+                                                    <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 font-bold">T{enemy.tier}</span>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-slate-400 mt-1 flex gap-2">
+                                                {isEncountered && enemy.isTank && <span className="text-amber-400">Tank</span>}
+                                                {isEncountered && enemy.isRanged && <span className="text-cyan-400">Ranged</span>}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-2 mt-auto">
-                                    <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-emerald-400" />
-                                        <div>
-                                            <div className="text-[10px] text-slate-500 font-bold">HP</div>
-                                            <div className="text-sm text-white font-mono">{enemy.hp.toLocaleString()}</div>
+                                    <div className="grid grid-cols-2 gap-2 mt-auto">
+                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
+                                            <Activity className="w-4 h-4 text-emerald-400" />
+                                            <div>
+                                                <div className="text-[10px] text-slate-500 font-bold">HP</div>
+                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.hp.toLocaleString() : '?'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
+                                            <Skull className="w-4 h-4 text-rose-400" />
+                                            <div>
+                                                <div className="text-[10px] text-slate-500 font-bold">Damage</div>
+                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.damage : '?'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
+                                            <Zap className="w-4 h-4 text-yellow-400" />
+                                            <div>
+                                                <div className="text-[10px] text-slate-500 font-bold">Speed</div>
+                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.speed : '?'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
+                                            <Shield className="w-4 h-4 text-blue-400" />
+                                            <div>
+                                                <div className="text-[10px] text-slate-500 font-bold">XP Drop</div>
+                                                <div className="text-sm text-white font-mono">{isEncountered ? enemy.xp : '?'}</div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                        <Skull className="w-4 h-4 text-rose-400" />
-                                        <div>
-                                            <div className="text-[10px] text-slate-500 font-bold">Damage</div>
-                                            <div className="text-sm text-white font-mono">{enemy.damage}</div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                        <Zap className="w-4 h-4 text-yellow-400" />
-                                        <div>
-                                            <div className="text-[10px] text-slate-500 font-bold">Speed</div>
-                                            <div className="text-sm text-white font-mono">{enemy.speed}</div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 flex items-center gap-2">
-                                        <Shield className="w-4 h-4 text-blue-400" />
-                                        <div>
-                                            <div className="text-[10px] text-slate-500 font-bold">XP Drop</div>
-                                            <div className="text-sm text-white font-mono">{enemy.xp}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
