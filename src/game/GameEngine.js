@@ -1777,7 +1777,7 @@ export class GameEngine {
         }
 
         // Advance sprite animation frame
-        const SPRITE_FRAMES = 16;
+        const SPRITE_FRAMES = 25;
         const FRAME_DURATION = 1 / 12; // 12 fps
         this.player.frameTimer += this.lastDt || 0;
         if (this.player.frameTimer >= FRAME_DURATION) {
@@ -1792,10 +1792,10 @@ export class GameEngine {
         if (spriteSheet) {
             const size = this.player.radius * 5;
             const frame = this.player.currentFrame;
-            const col = frame % 4;
-            const row = Math.floor(frame / 4);
-            const frameWidth = spriteSheet.width / 4;
-            const frameHeight = spriteSheet.height / 4;
+            const col = frame % 5;
+            const row = Math.floor(frame / 5);
+            const frameWidth = spriteSheet.width / 5;
+            const frameHeight = spriteSheet.height / 5;
             const sx = col * frameWidth;
             const sy = row * frameHeight;
             
