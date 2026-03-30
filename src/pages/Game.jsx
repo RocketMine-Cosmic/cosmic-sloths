@@ -288,7 +288,7 @@ export default function Game() {
     };
 
     return (
-        <div className="w-screen h-screen overflow-hidden bg-black relative select-none">
+        <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none">
             <canvas 
                 ref={canvasRef} 
                 className="absolute inset-0"

@@ -59,7 +59,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 </div>
             </div>
 
-            <div>
+            <div className="mb-12 md:mb-0">
                 <div className="flex justify-between items-end mb-1">
                     <span className="text-xl font-bold text-cyan-400">Level {level}</span>
                     <span className="text-sm font-bold text-slate-300">{Math.floor(xp)} / {xpRequired} XP</span>
