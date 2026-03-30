@@ -20,6 +20,10 @@
     },
     "current_week": {
       "type": "string"
+    },
+    "member_count": {
+      "type": "number",
+      "default": 1
     }
   },
   "required": [

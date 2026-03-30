@@ -9,8 +9,9 @@ import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 
 const WEEKLY_KILLS_TARGET = 10000;
-const REWARD_GOLD = 5000;
-const REWARD_REROLLS = 10;
+const REWARD_GOLD = 2500;
+const REWARD_REROLLS = 5;
+const MAX_SQUAD_MEMBERS = 10;
 
 export default function Squads({ isCarousel }) {
     const navigate = useNavigate();
@@ -114,7 +115,8 @@ export default function Squads({ isCarousel }) {
                 description: newSquadDesc,
                 owner_id: user.id,
                 weekly_kills: 0,
-                current_week: getCurrentWeek()
+                current_week: getCurrentWeek(),
+                member_count: 1
             });
             
             const member = await base44.entities.SquadMember.create({
@@ -137,6 +139,12 @@ export default function Squads({ isCarousel }) {
         if (!user) return;
         try {
             SoundManager.playUIClick();
+            const currentSquad = await base44.entities.Squad.get(squadId);
+            if ((currentSquad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
+                toast({ title: "Squad Full", description: "This squad has reached the maximum number of members." });
+                return;
+            }
+
             const member = await base44.entities.SquadMember.create({
                 squad_id: squadId,
                 user_id: user.id,
@@ -152,9 +160,11 @@ export default function Squads({ isCarousel }) {
                 content: `${user.full_name} has joined the squad!`
             });
             
-            const squad = await base44.entities.Squad.get(squadId);
+            const updatedSquad = await base44.entities.Squad.update(squadId, {
+                member_count: (currentSquad.member_count || 0) + 1
+            });
             setMyMemberRecord(member);
-            setMySquad(squad);
+            setMySquad(updatedSquad);
         } catch (e) {
             console.error(e);
             toast({ title: "Error", description: "Failed to join squad." });
@@ -174,6 +184,10 @@ export default function Squads({ isCarousel }) {
                 content: `${user.full_name} has left the squad.`
             });
             
+            await base44.entities.Squad.update(mySquad.id, {
+                member_count: Math.max(0, (mySquad.member_count || 1) - 1)
+            });
+
             setMyMemberRecord(null);
             setMySquad(null);
             const squads = await base44.entities.Squad.list('-created_date', 50);
@@ -324,12 +338,21 @@ export default function Squads({ isCarousel }) {
                                                         </span>
                                                     </div>
                                                     <div className="text-xs text-slate-400 mt-1">{squad.description || 'No description'}</div>
+                                                    <div className="text-xs text-slate-500 mt-0.5">
+                                                        <Users className="w-3 h-3 inline mr-1" />
+                                                        {squad.member_count || 1}/{MAX_SQUAD_MEMBERS} Members
+                                                    </div>
                                                 </div>
                                                 <button 
                                                     onClick={() => handleJoinSquad(squad.id)}
-                                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+                                                    disabled={(squad.member_count || 0) >= MAX_SQUAD_MEMBERS}
+                                                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                                                        (squad.member_count || 0) >= MAX_SQUAD_MEMBERS
+                                                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                                            : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                                                    }`}
                                                 >
-                                                    Join
+                                                    {(squad.member_count || 0) >= MAX_SQUAD_MEMBERS ? 'Full' : 'Join'}
                                                 </button>
                                             </div>
                                         ))
@@ -420,7 +443,7 @@ export default function Squads({ isCarousel }) {
                                     onClick={() => setActiveTab('members')}
                                     className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'members' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
                                 >
-                                    <Users className="w-4 h-4" /> Members ({squadMembers.length})
+                                    <Users className="w-4 h-4" /> Members ({squadMembers.length}/{MAX_SQUAD_MEMBERS})
                                 </button>
                             </div>
                             
