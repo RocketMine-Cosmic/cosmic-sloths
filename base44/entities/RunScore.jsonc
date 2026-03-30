@@ -44,5 +44,21 @@
     "score",
     "week_id",
     "season_id"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "data.player_name": "{{user.full_name}}"
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
