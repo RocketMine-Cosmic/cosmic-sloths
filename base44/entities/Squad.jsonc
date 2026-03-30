@@ -1,0 +1,29 @@
+{
+  "name": "Squad",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "weekly_kills": {
+      "type": "number",
+      "default": 0
+    },
+    "current_week": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "tag"
+  ]
+}

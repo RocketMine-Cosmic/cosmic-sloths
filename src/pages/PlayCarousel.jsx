@@ -6,6 +6,7 @@ import MainMenu from './MainMenu';
 import Hub from './Hub';
 import Upgrades from './Upgrades';
 import LeaderboardPage from './LeaderboardPage';
+import Squads from './Squads';
 import { SoundManager } from '../game/SoundManager';
 
 export default function PlayCarousel() {
@@ -29,7 +30,7 @@ export default function PlayCarousel() {
                     <button 
                         onClick={() => { 
                             SoundManager.playUIClick(); 
-                            const newIdx = selectedIndex <= 0 ? 3 : selectedIndex - 1;
+                            const newIdx = selectedIndex <= 0 ? 4 : selectedIndex - 1;
                             emblaApi?.scrollTo(newIdx); 
                         }}
                         className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
@@ -41,11 +42,12 @@ export default function PlayCarousel() {
                         {selectedIndex === 1 && <span className="text-cyan-400">Sloth Lounge</span>}
                         {selectedIndex === 2 && <span className="text-pink-400">Upgrade Lounge</span>}
                         {selectedIndex === 3 && <span className="text-yellow-400">Hall of Fame</span>}
+                        {selectedIndex === 4 && <span className="text-orange-400">Sloth Squads</span>}
                     </div>
                     <button 
                         onClick={() => { 
                             SoundManager.playUIClick(); 
-                            const newIdx = selectedIndex >= 3 ? 0 : selectedIndex + 1;
+                            const newIdx = selectedIndex >= 4 ? 0 : selectedIndex + 1;
                             emblaApi?.scrollTo(newIdx); 
                         }}
                         className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
@@ -68,6 +70,9 @@ export default function PlayCarousel() {
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
                         <LeaderboardPage isCarousel={true} />
+                    </div>
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                        <Squads isCarousel={true} />
                     </div>
                 </div>
             </div>

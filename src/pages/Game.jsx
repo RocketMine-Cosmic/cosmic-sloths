@@ -79,6 +79,24 @@ export default function Game() {
             try {
                 const user = await base44.auth.me();
                 const playerName = user ? user.full_name : 'Anonymous Sloth';
+                
+                // Add kills to squad if user is in one
+                if (user) {
+                    try {
+                        const memberships = await base44.entities.SquadMember.filter({ user_id: user.id });
+                        if (memberships.length > 0) {
+                            const squadId = memberships[0].squad_id;
+                            const squad = await base44.entities.Squad.get(squadId);
+                            if (squad) {
+                                await base44.entities.Squad.update(squad.id, {
+                                    weekly_kills: (squad.weekly_kills || 0) + stats.kills
+                                });
+                            }
+                        }
+                    } catch(err) {
+                        console.error('Failed to update squad kills', err);
+                    }
+                }
                 const score = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20 + (isVictory ? 5000 : 0);
                 const week_id = moment().format('YYYY-[W]ww');
                 

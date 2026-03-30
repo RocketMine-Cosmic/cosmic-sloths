@@ -15,6 +15,7 @@ import Game from './pages/Game';
 import Info from './pages/Info';
 import Credits from './pages/Credits';
 import Achievements from './pages/Achievements';
+import Squads from './pages/Squads';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
       <Route path="/info" element={<Info />} />
       <Route path="/credits" element={<Credits />} />
       <Route path="/achievements" element={<Achievements />} />
+      <Route path="/squads" element={<Squads />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

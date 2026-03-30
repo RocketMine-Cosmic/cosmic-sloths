@@ -1,0 +1,31 @@
+{
+  "name": "SquadMember",
+  "type": "object",
+  "properties": {
+    "squad_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "player_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "leader",
+        "member"
+      ],
+      "default": "member"
+    },
+    "last_payout_week": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "squad_id",
+    "user_id",
+    "player_name"
+  ]
+}
