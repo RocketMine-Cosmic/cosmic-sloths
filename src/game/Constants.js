@@ -47,9 +47,9 @@ export const WEAPONS = {
 export const BOUNTIES_POOL = [
   { id: 'kills_200', desc: 'Defeat 200 enemies (Total)', type: 'kills', target: 200, reward: 150, currency: 'gold' },
   { id: 'kills_500', desc: 'Defeat 500 enemies (Total)', type: 'kills', target: 500, reward: 300, currency: 'gold' },
-  { id: 'survive_300', desc: 'Survive for 5 mins (Single run)', type: 'survive', target: 300, reward: 10, currency: 'token' },
+  { id: 'survive_300', desc: 'Survive for 5 mins (Single run)', type: 'survive', target: 300, reward: 150, currency: 'gold' },
   { id: 'gold_100', desc: 'Earn 100 gold (Single run)', type: 'gold', target: 100, reward: 50, currency: 'gold' },
-  { id: 'level_15', desc: 'Reach Level 15 (Single run)', type: 'level', target: 15, reward: 5, currency: 'token' },
+  { id: 'level_15', desc: 'Reach Level 15 (Single run)', type: 'level', target: 15, reward: 100, currency: 'gold' },
   { id: 'play_3', desc: 'Play 3 runs', type: 'play', target: 3, reward: 100, currency: 'gold' }
 ];
 

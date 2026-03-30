@@ -1131,10 +1131,7 @@ export class GameEngine {
                     SoundManager.playGoldPickup();
                     if (this.callbacks.onRerollFound) this.callbacks.onRerollFound();
                     this.addDamageText(this.player.x, this.player.y - 40, `+1 Reroll Token!`, '#ff00ff');
-                } else if (p.type === 'token') {
-                    SoundManager.playGoldPickup();
-                    if (this.callbacks.onTokenFound) this.callbacks.onTokenFound();
-                    this.addDamageText(this.player.x, this.player.y - 60, `+1 Cosmic Token!`, '#10b981');
+
                 } else if (p.type === 'nuke') {
                     SoundManager.playWeaponFire('novaPulse');
                     this.enemies.forEach(e => {
