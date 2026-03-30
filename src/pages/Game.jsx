@@ -32,7 +32,7 @@ export default function Game() {
     const [isPaused, setIsPaused] = useState(false);
 
     useEffect(() => {
-        const { characterId, arenaId, difficultyId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal' };
+        const { characterId, arenaId, difficultyId, isEndless } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
         const save = SaveManager.load();
         
         const canvas = canvasRef.current;
@@ -85,7 +85,7 @@ export default function Game() {
                     level: stats.level,
                     kills: stats.kills,
                     character_id: stats.characterId || characterId,
-                    arena_id: stats.arenaId || arenaId,
+                    arena_id: isEndless ? 'endless' : (stats.arenaId || arenaId),
                     week_id: week_id,
                     season_id: season_id
                 });
@@ -158,7 +158,7 @@ export default function Game() {
                 setVictoryStats(stats);
                 saveScore(stats, true);
             }
-        });
+        }, isEndless);
         
         engineRef.current = engine;
         

@@ -409,17 +409,19 @@ export default function Hub({ isCarousel }) {
                                             <button
                                                 onClick={() => {
                                                     SoundManager.playUIClick();
-                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: 'endless', difficultyId: selectedDifficulty } });
+                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, isEndless: true } });
                                                 }}
-                                                disabled={!isCharUnlocked}
+                                                disabled={!canLaunch}
                                                 className={`w-full text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
-                                                    isCharUnlocked
+                                                    canLaunch
                                                     ? 'bg-purple-600 hover:bg-purple-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
                                                     : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
                                                 }`}
                                             >
                                                 {!isCharUnlocked ? (
                                                     <>OPERATIVE LOCKED</>
+                                                ) : !isArenaUnlocked ? (
+                                                    <>ARENA LOCKED</>
                                                 ) : (
                                                     <>LAUNCH ENDLESS VOID <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
                                                 )}

@@ -4,7 +4,7 @@ import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks) {
+    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
@@ -50,6 +50,10 @@ export class GameEngine {
 
         const baseChar = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
+        
+        if (isEndless) {
+            this.arena = { ...this.arena, duration: Infinity };
+        }
         
         this.envEffect = this.arena.effect || 'none';
         this.envParticles = [];
