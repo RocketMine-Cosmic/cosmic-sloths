@@ -44,16 +44,23 @@ export const SaveManager = {
         
         if (parsed.unlockedCharacters) {
             parsed.unlockedCharacters = parsed.unlockedCharacters.filter(c => !last7.includes(c) || parsed.foundCharacters.includes(c));
+            defaultChars.forEach(dc => {
+                if (!parsed.unlockedCharacters.includes(dc)) {
+                    parsed.unlockedCharacters.push(dc);
+                }
+            });
         } else {
             parsed.unlockedCharacters = [...defaultChars];
         }
 
         if (!parsed.unlockedArenasByCharacter) {
             parsed.unlockedArenasByCharacter = {};
-            parsed.unlockedCharacters.forEach(c => {
-                parsed.unlockedArenasByCharacter[c] = parsed.unlockedArenas || ['station'];
-            });
         }
+        parsed.unlockedCharacters.forEach(c => {
+            if (!parsed.unlockedArenasByCharacter[c]) {
+                parsed.unlockedArenasByCharacter[c] = parsed.unlockedArenas || ['station'];
+            }
+        });
 
         if (!parsed.permanentUpgrades) parsed.permanentUpgrades = { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
         if (!parsed.weeklyUpgrades || parsed.weeklyUpgrades.weekId !== currentWeek) {
