@@ -129,7 +129,7 @@ export default function Info() {
                                 Complete tasks to earn extra rewards:
                             </p>
                             <ul className="list-disc list-inside space-y-2 leading-relaxed text-sm md:text-base">
-                                <li><strong className="text-white">Daily Bounties:</strong> 3 random tasks every day that reward Gold, Cosmic Tokens, or Reroll Tokens.</li>
+                                <li><strong className="text-white">Daily Bounties:</strong> 3 random tasks every day that reward Gold or Reroll Tokens.</li>
                                 <li><strong className="text-purple-400">Daily Mission:</strong> A harder daily task that rewards <strong className="text-yellow-400">Seasonal Points</strong>.</li>
                                 <li><strong className="text-white">Seasonal Skins:</strong> Collect 100 Seasonal Points to unlock exclusive cosmetic character skins!</li>
                             </ul>
@@ -143,7 +143,7 @@ export default function Info() {
                             <ul className="list-disc list-inside space-y-2 leading-relaxed text-sm md:text-base bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
                                 <li><strong className="text-white">Weekly Cycle:</strong> Resets every week. The top 20 players earn Cosmic Tokens. Weekly Upgrades reset!</li>
                                 <li><strong className="text-white">Seasonal Cycle:</strong> Lasts for 4 weeks. The top 30 players earn Cosmic Tokens. Seasonal Upgrades reset!</li>
-                                <li><strong className="text-white">Cosmic Tokens:</strong> Earned from leaderboards. Used for powerful upgrades and characters.</li>
+                                <li><strong className="text-white">Cosmic Tokens:</strong> <strong className="text-emerald-400">Only earned by placing high on leaderboards.</strong> Used for powerful upgrades and characters.</li>
                                 <li><strong className="text-white">Endless Void:</strong> A special, infinitely scaling arena with its own dedicated all-time leaderboard!</li>
                                 <li><strong className="text-white">Claiming Rewards:</strong> Automatically distributed when you visit the Sloth Lounge after a cycle ends.</li>
                             </ul>
