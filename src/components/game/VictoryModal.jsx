@@ -42,7 +42,7 @@ export default function VictoryModal({ stats }) {
 
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
                     <button
-                        onClick={() => navigate('/hub')}
+                        onClick={() => navigate('/', { state: { slide: 1 } })}
                         className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
                     >
                         Return to Lounge

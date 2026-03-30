@@ -30,7 +30,7 @@ export default function PauseModal({ onResume }) {
                         Settings
                     </button>
                     <button
-                        onClick={() => navigate('/hub')}
+                        onClick={() => navigate('/', { state: { slide: 1 } })}
                         className="w-full bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors border border-slate-600"
                     >
                         Quit to Lounge

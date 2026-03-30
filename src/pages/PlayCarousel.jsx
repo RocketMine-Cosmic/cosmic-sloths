@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import MainMenu from './MainMenu';
 import Hub from './Hub';
@@ -13,8 +13,15 @@ import { SoundManager } from '../game/SoundManager';
 
 export default function PlayCarousel() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [selectedIndex, setSelectedIndex] = useState(0);
+
+    useEffect(() => {
+        if (emblaApi && location.state?.slide !== undefined) {
+            emblaApi.scrollTo(location.state.slide, true);
+        }
+    }, [emblaApi, location.state]);
 
     useEffect(() => {
         if (!emblaApi) return;
