@@ -11,7 +11,7 @@ import moment from 'moment';
 const WEEKLY_KILLS_TARGET = 10000;
 const REWARD_GOLD = 2500;
 const REWARD_REROLLS = 5;
-const MAX_SQUAD_MEMBERS = 10;
+const MAX_SQUAD_MEMBERS = 5;
 
 export default function Squads({ isCarousel }) {
     const navigate = useNavigate();
