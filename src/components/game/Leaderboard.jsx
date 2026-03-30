@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
-import { CHARACTERS } from '../../game/Constants';
+import { CHARACTERS, ARENAS } from '../../game/Constants';
 
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
@@ -184,6 +184,7 @@ export default function Leaderboard() {
                         <>
                             {scores.map((score, index) => {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
+                                const arena = ARENAS.find(a => a.id === score.arena_id);
                                 const isEligibleForReward = (view === 'weekly' && index < 20) || (view === 'seasonal' && index < 30);
                                 const rewardAmount = view === 'weekly' 
                                     ? Math.floor((currentPool * 0.30) * getWeeklyRewardPercentage(index + 1) * weeklyMultiplier) 
@@ -251,8 +252,15 @@ export default function Leaderboard() {
                                             ) : (
                                                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 border-slate-700 shrink-0"></div>
                                             )}
-                                            <div className="font-bold text-white text-lg md:text-xl truncate" title={score.player_name}>
-                                                {score.player_name}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-white text-lg md:text-xl truncate" title={score.player_name}>
+                                                    {score.player_name}
+                                                </div>
+                                                {arena && view !== 'endless' && (
+                                                    <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5">
+                                                        📍 {arena.name}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
