@@ -100,7 +100,12 @@ export default function Squads({ isCarousel }) {
     }, [mySquad]);
 
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (chatEndRef.current) {
+            const container = chatEndRef.current.parentElement;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
     }, [messages, activeTab]);
 
     const handleCreateSquad = async (e) => {
