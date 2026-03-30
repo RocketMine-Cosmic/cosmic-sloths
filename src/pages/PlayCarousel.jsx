@@ -9,6 +9,7 @@ import LeaderboardPage from './LeaderboardPage';
 import Squads from './Squads';
 import Bestiary from './Bestiary';
 import Profile from './Profile';
+import LeviathanTrials from './LeviathanTrials';
 import { SoundManager } from '../game/SoundManager';
 
 export default function PlayCarousel() {
@@ -53,6 +54,7 @@ export default function PlayCarousel() {
                         {selectedIndex === 4 && <span className="text-orange-400">Sloth Squads</span>}
                         {selectedIndex === 5 && <span className="text-rose-400">Cosmic Codex</span>}
                         {selectedIndex === 6 && <span className="text-purple-400">Pilot Profile</span>}
+                        {selectedIndex === 7 && <span className="text-red-500">Leviathan Trials</span>}
                     </div>
                     <button 
                         onClick={() => { 
@@ -88,6 +90,9 @@ export default function PlayCarousel() {
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Profile isCarousel={true} />
+                    </div>
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
+                        <LeviathanTrials isCarousel={true} />
                     </div>
                 </div>
             </div>

@@ -172,6 +172,7 @@ export class GameEngine {
         this.shakeTimer = 0;
         this.hitStopTimer = 0;
         this.zoom = window.innerWidth < 768 ? 0.55 : 1;
+        this.bossModifiers = save.bossModifiers || {};
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -422,9 +423,10 @@ export class GameEngine {
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
                     const progress = this.time / 300;
-                    const bossHpMult = 5.0 * this.difficulty.enemyHpMult * (1.0 + progress);
-                    const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5);
-                    this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
+                    const bossHpMult = 5.0 * this.difficulty.enemyHpMult * (1.0 + progress) * (this.bossModifiers.hide ? 2.0 : 1.0);
+                    const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5) * (this.bossModifiers.fury ? 1.5 : 1.0);
+                    const speedMult = this.bossModifiers.frenzy ? 1.5 : 1.0;
+                    this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
                     this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
                     SoundManager.playBossSpawn();
@@ -446,9 +448,10 @@ export class GameEngine {
                     const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
-                    const bossHpMult = 5.0 * this.difficulty.enemyHpMult;
-                    const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult;
-                    this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
+                    const bossHpMult = 5.0 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 2.0 : 1.0);
+                    const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.5 : 1.0);
+                    const speedMult = this.bossModifiers.frenzy ? 1.5 : 1.0;
+                    this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
                     this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
                     SoundManager.playBossSpawn();
@@ -969,14 +972,25 @@ export class GameEngine {
                 SoundManager.playEnemyDeath();
                 this.kills++;
                 this.enemyKills[e.id] = (this.enemyKills[e.id] || 0) + 1;
-                this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: e.xp, color: '#00ffcc' });
+                
+                let xpValue = e.xp;
+                if (e.isBoss && this.bossModifiers.hide) {
+                    xpValue *= 1.2;
+                }
+                this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc' });
                 
                 // Death Splatter
                 this.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 3 : 1, e.id);
                 this.shake(e.isBoss ? 0.5 : 0.05);
 
                 if (e.isBoss) {
-                    this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: 1, color: '#ff00ff' });
+                    const rerollReward = 1 + (this.bossModifiers.frenzy ? 1 : 0);
+                    this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: rerollReward, color: '#ff00ff' });
+                    
+                    if (this.bossModifiers.fury) {
+                        this.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: 50, color: '#ffd700' });
+                    }
+
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                     this.isBossActive = false;
                 } else {
@@ -1111,8 +1125,9 @@ export class GameEngine {
                     e.skillTimer -= dt;
                     if (e.skillTimer <= 0) {
                         e.skillTimer = 3.0;
-                        for(let i=0; i<8; i++) {
-                            const angle = (Math.PI * 2 / 8) * i;
+                        const projCount = this.bossModifiers.bullet_hell ? 16 : 8;
+                        for(let i=0; i<projCount; i++) {
+                            const angle = (Math.PI * 2 / projCount) * i;
                             this.enemyProjectiles.push({
                                 x: e.x, y: e.y,
                                 vx: Math.cos(angle) * 150,
