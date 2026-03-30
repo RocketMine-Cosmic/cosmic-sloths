@@ -24,7 +24,7 @@ export default function PlayCarousel() {
     }, [emblaApi]);
 
     return (
-        <div className="h-[100dvh] bg-slate-950 flex flex-col overflow-hidden">
+        <div className="h-[100dvh] bg-slate-950 flex flex-col overflow-hidden select-none">
             <div className="p-2 md:p-4 border-b border-slate-800 bg-slate-950 flex flex-col md:flex-row justify-center items-center gap-2 md:gap-4 z-10 relative shrink-0">
                 <div className="flex items-center justify-between w-full md:w-80 bg-slate-900 rounded-xl border border-slate-700 p-1 shadow-inner">
                     <button 
@@ -58,20 +58,20 @@ export default function PlayCarousel() {
             </div>
 
             <div className="flex-1 overflow-hidden" ref={emblaRef}>
-                <div className="flex h-full">
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                <div className="flex h-full touch-pan-y">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Hub isCarousel={true} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Upgrades isCarousel={true} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <LeaderboardPage isCarousel={true} />
                     </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Squads isCarousel={true} />
                     </div>
                 </div>

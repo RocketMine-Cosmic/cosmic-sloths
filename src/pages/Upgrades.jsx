@@ -674,7 +674,7 @@ export default function Upgrades({ isCarousel }) {
                 <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-2 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
                     {activeCategory !== 'cosmetics' ? (
                         <>
-                            <div className="flex gap-2 mb-3 border-b border-slate-800 pb-2 overflow-x-auto">
+                            <div className="flex flex-wrap gap-2 mb-3 border-b border-slate-800 pb-2">
                                 {['stats', 'armory', 'talents'].map(sub => (
                                     <button
                                         key={sub}
