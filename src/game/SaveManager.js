@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { BOUNTIES_POOL } from './Constants';
 
 export const SaveManager = {
   load: () => {
@@ -29,7 +30,8 @@ export const SaveManager = {
       maxTimeSurvived: 0,
       totalKills: 0,
       totalGoldEarned: 0,
-      maxLevelReached: 0
+      maxLevelReached: 0,
+      bounties: { date: '', active: [] }
     };
 
     try {
@@ -82,6 +84,20 @@ export const SaveManager = {
         if (parsed.totalKills === undefined) parsed.totalKills = 0;
         if (parsed.totalGoldEarned === undefined) parsed.totalGoldEarned = 0;
         if (parsed.maxLevelReached === undefined) parsed.maxLevelReached = 0;
+        
+        if (!parsed.bounties) {
+            parsed.bounties = { date: '', active: [] };
+        }
+        
+        const today = moment().format('YYYY-MM-DD');
+        if (parsed.bounties.date !== today) {
+            const shuffled = [...BOUNTIES_POOL].sort(() => 0.5 - Math.random());
+            parsed.bounties = {
+                date: today,
+                active: shuffled.slice(0, 3).map(b => ({ ...b, progress: 0, claimed: false }))
+            };
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+        }
         
         if (!parsed.receivedTestTokens) {
             parsed.cosmicTokens = (parsed.cosmicTokens || 0) + 20000;

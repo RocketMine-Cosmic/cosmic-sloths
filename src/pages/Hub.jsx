@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
+import BountiesPanel from '../components/game/BountiesPanel';
 
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
@@ -406,6 +407,10 @@ export default function Hub({ isCarousel }) {
                                     );
                                 })()}
                             </div>
+                    </div>
+                    
+                    <div className="w-full">
+                        <BountiesPanel save={save} setSave={setSave} />
                     </div>
                 </div>
             </div>

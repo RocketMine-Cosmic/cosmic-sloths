@@ -43,6 +43,30 @@ export default function Game() {
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
+        const updateBounties = (currentSave, stats) => {
+            if (currentSave.bounties && currentSave.bounties.active) {
+                currentSave.bounties.active.forEach(bounty => {
+                    if (bounty.type === 'kills') {
+                        bounty.progress += stats.kills;
+                    } else if (bounty.type === 'survive') {
+                        if (stats.time > bounty.progress) {
+                            bounty.progress = stats.time;
+                        }
+                    } else if (bounty.type === 'gold') {
+                        if (stats.gold > bounty.progress) {
+                            bounty.progress = stats.gold;
+                        }
+                    } else if (bounty.type === 'level') {
+                        if (stats.level > bounty.progress) {
+                            bounty.progress = stats.level;
+                        }
+                    } else if (bounty.type === 'play') {
+                        bounty.progress += 1;
+                    }
+                });
+            }
+        };
+
         const saveScore = async (stats, isVictory) => {
             try {
                 const user = await base44.auth.me();
@@ -107,6 +131,7 @@ export default function Game() {
                 currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
                 currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
                 currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
+                updateBounties(currentSave, stats);
                 SaveManager.save(currentSave);
                 setGameOverStats(stats);
                 saveScore(stats, false);
@@ -118,6 +143,7 @@ export default function Game() {
                 currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
                 currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
                 currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
+                updateBounties(currentSave, stats);
                 const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 if (currentIndex >= 0 && currentIndex < ARENAS.length - 1) {
                     const nextArena = ARENAS[currentIndex + 1];

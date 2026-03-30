@@ -44,6 +44,15 @@ export const WEAPONS = {
   thornySwarm: { id: 'thornySwarm', name: 'Plasma Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting drones armed with plasma whips.', baseDamage: 12, baseCooldown: 90, baseArea: 1.5, isSynergy: true },
 };
 
+export const BOUNTIES_POOL = [
+  { id: 'kills_200', desc: 'Defeat 200 enemies (Total)', type: 'kills', target: 200, reward: 150, currency: 'gold' },
+  { id: 'kills_500', desc: 'Defeat 500 enemies (Total)', type: 'kills', target: 500, reward: 300, currency: 'gold' },
+  { id: 'survive_300', desc: 'Survive for 5 mins (Single run)', type: 'survive', target: 300, reward: 10, currency: 'token' },
+  { id: 'gold_100', desc: 'Earn 100 gold (Single run)', type: 'gold', target: 100, reward: 50, currency: 'gold' },
+  { id: 'level_15', desc: 'Reach Level 15 (Single run)', type: 'level', target: 15, reward: 5, currency: 'token' },
+  { id: 'play_3', desc: 'Play 3 runs', type: 'play', target: 3, reward: 100, currency: 'gold' }
+];
+
 export const SYNERGIES = [
   { weapon1: 'napalm', weapon2: 'shieldBubble', result: 'burningBarrier' },
   { weapon1: 'napBeam', weapon2: 'novaPulse', result: 'laserNova' },
