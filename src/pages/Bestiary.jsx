@@ -78,7 +78,7 @@ export default function Bestiary({ isCarousel }) {
                         </p>
                     </div>
                     <div className="text-right text-xs text-slate-500">
-                        <div className="text-fuchsia-400 font-bold">⚡ Mastered = +20% DMG</div>
+                        <div className="text-fuchsia-400 font-bold">⚡ Mastered = +5% DMG</div>
                         <div>vs that enemy type</div>
                     </div>
                 </header>
