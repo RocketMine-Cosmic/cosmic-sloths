@@ -64,7 +64,7 @@ export default function Leaderboard() {
             const seasonNum = Math.floor(weekNum / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
 
-            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : {};
+            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless' } : {};
             
             // Fetch top scores (fetch more to allow deduplication)
             const data = await base44.entities.RunScore.filter(filter, '-score', 300);
@@ -145,6 +145,12 @@ export default function Leaderboard() {
                         className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
                         All Time
+                    </button>
+                    <button 
+                        onClick={() => setView('endless')}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'endless' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        Endless
                     </button>
                 </div>
             </div>

@@ -387,23 +387,44 @@ export default function Hub({ isCarousel }) {
                                     const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
                                     return (
-                                        <button
-                                            onClick={startGame}
-                                            disabled={!canLaunch}
-                                            className={`w-full mt-4 md:mt-6 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
-                                                canLaunch
-                                                ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
-                                                : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                            }`}
-                                        >
-                                            {!isCharUnlocked ? (
-                                                <>OPERATIVE LOCKED</>
-                                            ) : !isArenaUnlocked ? (
-                                                <>ARENA LOCKED</>
-                                            ) : (
-                                                <>LAUNCH MISSION <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
-                                            )}
-                                        </button>
+                                        <div className="flex flex-col gap-2 mt-4 md:mt-6">
+                                            <button
+                                                onClick={startGame}
+                                                disabled={!canLaunch}
+                                                className={`w-full text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
+                                                    canLaunch
+                                                    ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
+                                                    : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                                }`}
+                                            >
+                                                {!isCharUnlocked ? (
+                                                    <>OPERATIVE LOCKED</>
+                                                ) : !isArenaUnlocked ? (
+                                                    <>ARENA LOCKED</>
+                                                ) : (
+                                                    <>LAUNCH MISSION <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
+                                                )}
+                                            </button>
+                                            
+                                            <button
+                                                onClick={() => {
+                                                    SoundManager.playUIClick();
+                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: 'endless', difficultyId: selectedDifficulty } });
+                                                }}
+                                                disabled={!isCharUnlocked}
+                                                className={`w-full text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
+                                                    isCharUnlocked
+                                                    ? 'bg-purple-600 hover:bg-purple-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
+                                                    : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
+                                                }`}
+                                            >
+                                                {!isCharUnlocked ? (
+                                                    <>OPERATIVE LOCKED</>
+                                                ) : (
+                                                    <>LAUNCH ENDLESS VOID <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
+                                                )}
+                                            </button>
+                                        </div>
                                     );
                                 })()}
                             </div>
