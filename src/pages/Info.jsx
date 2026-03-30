@@ -46,7 +46,7 @@ export default function Info() {
                             <h2 className="text-2xl font-bold text-cyan-400 mb-3 border-b border-slate-700 pb-2">🎮 Controls & Basics</h2>
                             <p className="leading-relaxed mb-4">
                                 Take control of your cosmic sloth using <strong className="text-white">WASD</strong>, <strong className="text-white">Arrow Keys</strong>, or the <strong className="text-white">Virtual Joystick</strong> (on mobile). 
-                                Your weapons fire automatically at nearby enemies. Your primary goal is to survive the designated time limit for each arena against endless waves of alien threats!
+                                Your weapons fire automatically at nearby enemies. Your primary goal is to survive the designated time limit for each arena against endless waves of alien threats! (Unless you are playing the unlocked Endless Void, which scales infinitely).
                             </p>
                         </section>
 
@@ -56,6 +56,7 @@ export default function Info() {
                                 <li><strong className="text-emerald-400">XP Gems (Cyan Diamonds):</strong> Dropped by defeated enemies. Collect them to fill your XP bar and level up.</li>
                                 <li><strong className="text-yellow-400">Gold Coins (Octagons):</strong> Randomly dropped by enemies. Used in the Sloth Lounge for permanent upgrades.</li>
                                 <li><strong className="text-purple-400">Reroll Tokens:</strong> Dropped by Bosses. Use them when leveling up to get a new set of upgrade choices.</li>
+                                <li><strong className="text-white">Active Pickups:</strong> Rarely dropped by enemies. ☢️ Screen Nuke, 🧲 Magnet Surge, and 🛡️ Shield Overcharge.</li>
                                 <li><strong className="text-white">Leveling Up:</strong> Each level grants you a choice between 3 random weapons or passive stat boosts. Rarer upgrades provide larger bonuses!</li>
                             </ul>
                         </section>

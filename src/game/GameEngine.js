@@ -258,6 +258,10 @@ export class GameEngine {
         } else {
             this.player.moveTimer = 0;
         }
+
+        if (this.player.invincibleTimer > 0) {
+            this.player.invincibleTimer -= dt;
+        }
         
         this.zoom = window.innerWidth < 768 ? 0.55 : 1;
         this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
@@ -365,7 +369,26 @@ export class GameEngine {
     }
 
     spawnEnemies(dt) {
-        if (this.time >= this.arena.duration - 30 && !this.bossSpawned) {
+        if (this.arena.duration === Infinity) {
+            if (!this.lastBossSpawnTime) this.lastBossSpawnTime = 0;
+            if (this.time > 0 && this.time - this.lastBossSpawnTime >= 180) { // Every 3 minutes
+                this.lastBossSpawnTime = this.time;
+                const bosses = ENEMIES.filter(e => e.isBoss);
+                if (bosses.length > 0) {
+                    const boss = bosses[Math.floor(Math.random() * bosses.length)];
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
+                    const ex = this.player.x + Math.cos(angle) * dist;
+                    const ey = this.player.y + Math.sin(angle) * dist;
+                    const progress = this.time / 300;
+                    const bossHpMult = 5.0 * this.difficulty.enemyHpMult * (1.0 + progress);
+                    const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5);
+                    this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
+                    this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
+                    SoundManager.playBossSpawn();
+                }
+            }
+        } else if (this.time >= this.arena.duration - 30 && !this.bossSpawned) {
             this.bossSpawned = true;
             const bosses = ENEMIES.filter(e => e.isBoss);
             if (bosses.length > 0) {
@@ -382,21 +405,23 @@ export class GameEngine {
             }
         }
 
-        const progress = Math.min(1, this.time / this.arena.duration);
-        const spawnRate = (2.5 - (2.45 * Math.pow(progress, 1.5))) / this.envModifiers.enemySpawnRate; // Slower start
+        const progress = this.arena.duration === Infinity ? this.time / 300 : Math.min(1, this.time / this.arena.duration);
+        const effectiveProgress = Math.min(1, progress);
+        const spawnRate = Math.max(0.05, (2.5 - (2.45 * Math.pow(effectiveProgress, 1.5))) / this.envModifiers.enemySpawnRate);
         
-        if (Math.random() < dt / Math.max(0.05, spawnRate)) {
+        if (Math.random() < dt / spawnRate) {
             const angle = Math.random() * Math.PI * 2;
             const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
             const ex = this.player.x + Math.cos(angle) * dist;
             const ey = this.player.y + Math.sin(angle) * dist;
             
-            const arenaIndex = ARENAS.findIndex(a => a.id === this.arena.id);
+            const arenaIndex = this.arena.duration === Infinity ? Math.min(9, Math.floor(progress * 5)) : ARENAS.findIndex(a => a.id === this.arena.id);
             let minTier = Math.max(1, arenaIndex);
             let maxTier = arenaIndex + 1;
             
-            if (progress > 0.33) maxTier += 1;
-            if (progress > 0.66) maxTier += 1;
+            if (effectiveProgress > 0.33) maxTier += 1;
+            if (effectiveProgress > 0.66) maxTier += 1;
+            if (this.arena.duration === Infinity) maxTier += Math.floor(progress * 2);
             
             maxTier = Math.min(10, maxTier);
 
@@ -448,14 +473,16 @@ export class GameEngine {
                 h.timer = 0.5; // active for 0.5 seconds
                 // Check collision
                 if (Math.hypot(this.player.x - h.x, this.player.y - h.y) < this.player.radius + h.radius) {
-                    const actualDmg = Math.max(1, h.damage - this.player.armor);
-                    this.player.hp -= actualDmg;
-                    this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
-                    this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
-                    SoundManager.playPlayerHit();
-                    if (this.player.hp <= 0) {
-                        this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
-                        this.gameOver();
+                    if (!(this.player.invincibleTimer > 0)) {
+                        const actualDmg = Math.max(1, h.damage - this.player.armor);
+                        this.player.hp -= actualDmg;
+                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                        this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                        SoundManager.playPlayerHit();
+                        if (this.player.hp <= 0) {
+                            this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
+                            this.gameOver();
+                        }
                     }
                 }
                 this.addParticle(h.x, h.y, '#ff4500', 20);
@@ -883,14 +910,16 @@ export class GameEngine {
                 p.life -= dt;
                 
                 if (Math.hypot(this.player.x - p.x, this.player.y - p.y) < this.player.radius + p.radius) {
-                    const actualDmg = Math.max(1, p.damage - this.player.armor);
-                    this.player.hp -= actualDmg;
-                    this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
-                    this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
-                    SoundManager.playPlayerHit();
-                    if (this.player.hp <= 0) {
-                        this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
-                        this.gameOver();
+                    if (!(this.player.invincibleTimer > 0)) {
+                        const actualDmg = Math.max(1, p.damage - this.player.armor);
+                        this.player.hp -= actualDmg;
+                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                        this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                        SoundManager.playPlayerHit();
+                        if (this.player.hp <= 0) {
+                            this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
+                            this.gameOver();
+                        }
                     }
                     return false;
                 }
@@ -917,6 +946,15 @@ export class GameEngine {
                     if (Math.random() < 0.50 + (this.player.luck * 0.05)) {
                         const goldValue = 5 + Math.floor(this.time / 15);
                         this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
+                    }
+                    if (Math.random() < 0.005 + (this.player.luck * 0.001)) {
+                        const pickupTypes = [
+                            { type: 'nuke', color: '#ff0000', icon: '☢️' },
+                            { type: 'magnet_power', color: '#0000ff', icon: '🧲' },
+                            { type: 'shield_power', color: '#ffff00', icon: '🛡️' }
+                        ];
+                        const pt = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+                        this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: pt.type, color: pt.color, icon: pt.icon });
                     }
                 }
                 return false;
@@ -1006,16 +1044,18 @@ export class GameEngine {
             
             if (dist < this.player.radius + e.radius && !e.burrowed) {
                 if (!e.attackTimer || e.attackTimer <= 0) {
-                    const actualDmg = Math.max(1, e.damage - this.player.armor);
-                    this.player.hp -= actualDmg;
-                    this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
-                    this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
-                    SoundManager.playPlayerHit();
-                    e.attackTimer = 1.0;
-                    if (this.player.hp <= 0) {
-                        this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
-                        this.gameOver();
+                    if (!(this.player.invincibleTimer > 0)) {
+                        const actualDmg = Math.max(1, e.damage - this.player.armor);
+                        this.player.hp -= actualDmg;
+                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                        this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
+                        SoundManager.playPlayerHit();
+                        if (this.player.hp <= 0) {
+                            this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
+                            this.gameOver();
+                        }
                     }
+                    e.attackTimer = 1.0;
                 }
             }
             if (e.attackTimer > 0) e.attackTimer -= dt;
@@ -1095,6 +1135,28 @@ export class GameEngine {
                     SoundManager.playGoldPickup();
                     if (this.callbacks.onTokenFound) this.callbacks.onTokenFound();
                     this.addDamageText(this.player.x, this.player.y - 60, `+1 Cosmic Token!`, '#10b981');
+                } else if (p.type === 'nuke') {
+                    SoundManager.playWeaponFire('novaPulse');
+                    this.enemies.forEach(e => {
+                        if (!e.isBoss) {
+                            e.hp = 0;
+                        }
+                    });
+                    this.addDamageText(this.player.x, this.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
+                    this.shake(1.0);
+                } else if (p.type === 'magnet_power') {
+                    SoundManager.playLevelUp();
+                    this.pickups.forEach(otherP => {
+                        if (otherP.type === 'xp' || otherP.type === 'gold') {
+                            otherP.x = this.player.x;
+                            otherP.y = this.player.y;
+                        }
+                    });
+                    this.addDamageText(this.player.x, this.player.y - 60, `MAGNETIC SURGE`, '#0000ff');
+                } else if (p.type === 'shield_power') {
+                    SoundManager.playGoldPickup();
+                    this.player.invincibleTimer = 10;
+                    this.addDamageText(this.player.x, this.player.y - 60, `SHIELD OVERCHARGE`, '#ffff00');
                 }
                 return false;
             }
@@ -1324,17 +1386,26 @@ export class GameEngine {
                 this.ctx.lineTo(4, 0);
                 this.ctx.lineTo(0, 6);
                 this.ctx.lineTo(-4, 0);
+                this.ctx.closePath();
+                this.ctx.fill();
             } else if (p.type === 'gold') {
                 this.ctx.rotate(Math.sin(this.time * 5) * 0.2);
                 for (let i = 0; i < 8; i++) {
                     const a = (Math.PI / 4) * i;
                     this.ctx.lineTo(Math.cos(a) * 6, Math.sin(a) * 6);
                 }
+                this.ctx.closePath();
+                this.ctx.fill();
+            } else if (p.icon) {
+                this.ctx.font = '20px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(p.icon, 0, 0);
             } else {
                 this.ctx.rect(-4, -4, 8, 8);
+                this.ctx.closePath();
+                this.ctx.fill();
             }
-            this.ctx.closePath();
-            this.ctx.fill();
             this.ctx.restore();
         });
 
@@ -1703,6 +1774,16 @@ export class GameEngine {
             this.ctx.fillStyle = 'rgba(173, 216, 230, 0.5)';
             this.ctx.beginPath();
             this.ctx.roundRect(this.player.x - this.player.radius + 2, this.player.y - this.player.radius + 2, this.player.radius * 2 - 4, this.player.radius - 2, 4);
+            this.ctx.fill();
+        }
+
+        if (this.player.invincibleTimer > 0) {
+            this.ctx.strokeStyle = '#ffff00';
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, this.player.radius + 10 + Math.sin(this.time * 10) * 5, 0, Math.PI * 2);
+            this.ctx.stroke();
+            this.ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
             this.ctx.fill();
         }
 

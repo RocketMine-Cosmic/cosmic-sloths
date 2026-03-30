@@ -35,7 +35,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 
                 <div className="bg-slate-800/80 p-2 md:p-3 rounded-lg border border-slate-600 text-center min-w-[70px] md:min-w-[120px]">
                     <div className="text-[10px] md:text-sm text-slate-300">SURVIVE</div>
-                    <div className="text-lg md:text-2xl font-bold">{formatTime(time)} / {formatTime(duration || 300)}</div>
+                    <div className="text-lg md:text-2xl font-bold">
+                        {formatTime(time)} {duration === Infinity ? '' : `/ ${formatTime(duration || 300)}`}
+                    </div>
                 </div>
 
                 <div className="flex gap-2">
