@@ -100,7 +100,11 @@ export default function Bestiary({ isCarousel }) {
                     </div>
                 </header>
 
-                <div className="mb-4 shrink-0 px-8">
+                <div 
+                    className="mb-4 shrink-0 px-8"
+                    onPointerDownCapture={e => e.stopPropagation()}
+                    onTouchStartCapture={e => e.stopPropagation()}
+                >
                     <Carousel opts={{ align: 'start', dragFree: true }}>
                         <CarouselContent className="-ml-2">
                             {tiers.map(tier => (
