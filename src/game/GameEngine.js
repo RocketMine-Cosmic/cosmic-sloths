@@ -258,7 +258,7 @@ export class GameEngine {
             this.callbacks.onTimeChange(Math.floor(this.time));
         }
 
-        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory) {
+        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory && !this.isBossActive) {
             this.victory();
             return;
         }
@@ -414,6 +414,8 @@ export class GameEngine {
                 this.lastBossSpawnTime = this.time;
                 const bosses = ENEMIES.filter(e => e.isBoss);
                 if (bosses.length > 0) {
+                    this.isBossActive = true;
+                    this.enemies = []; // Clear all other enemies
                     const boss = bosses[Math.floor(Math.random() * bosses.length)];
                     const angle = Math.random() * Math.PI * 2;
                     const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
@@ -430,21 +432,31 @@ export class GameEngine {
             }
         } else if (this.time >= this.arena.duration - 30 && !this.bossSpawned) {
             this.bossSpawned = true;
-            const bosses = ENEMIES.filter(e => e.isBoss);
-            if (bosses.length > 0) {
-                const boss = bosses[Math.floor(Math.random() * bosses.length)];
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
-                const ex = this.player.x + Math.cos(angle) * dist;
-                const ey = this.player.y + Math.sin(angle) * dist;
-                const bossHpMult = 5.0 * this.difficulty.enemyHpMult;
-                const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult;
-                this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
-                this.encounteredEnemies.add(boss.id);
-                this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
-                SoundManager.playBossSpawn();
+            
+            const arenaIndex = ARENAS.findIndex(a => a.id === this.arena.id);
+            const isBossArena = [1, 3, 5, 7, 9].includes(arenaIndex); // Arenas 2, 4, 6, 8, 10
+            
+            if (isBossArena && Math.random() < 0.5) { // 50% chance for a boss encounter
+                this.isBossActive = true;
+                this.enemies = []; // Clear all other enemies
+                const bosses = ENEMIES.filter(e => e.isBoss);
+                if (bosses.length > 0) {
+                    const boss = bosses[Math.floor(Math.random() * bosses.length)];
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
+                    const ex = this.player.x + Math.cos(angle) * dist;
+                    const ey = this.player.y + Math.sin(angle) * dist;
+                    const bossHpMult = 5.0 * this.difficulty.enemyHpMult;
+                    const bossDmgMult = 3.0 * this.difficulty.enemyDmgMult;
+                    this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult });
+                    this.encounteredEnemies.add(boss.id);
+                    this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
+                    SoundManager.playBossSpawn();
+                }
             }
         }
+
+        if (this.isBossActive) return; // Prevent normal enemy spawns while boss is active
 
         const progress = this.arena.duration === Infinity ? this.time / 300 : Math.min(1, this.time / this.arena.duration);
         const effectiveProgress = Math.min(1, progress);
@@ -966,6 +978,7 @@ export class GameEngine {
                 if (e.isBoss) {
                     this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: 1, color: '#ff00ff' });
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
+                    this.isBossActive = false;
                 } else {
                     if (Math.random() < 0.50 + (this.player.luck * 0.05)) {
                         const goldValue = 5 + Math.floor(this.time / 15);
