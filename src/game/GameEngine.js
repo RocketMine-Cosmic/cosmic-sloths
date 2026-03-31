@@ -608,10 +608,10 @@ export class GameEngine {
             else if (this.characterId === 'neonvortex') { projColor = '#FFD700'; projType = 'railgun'; }
             else if (this.characterId === 'synthbeats') { projColor = '#FF8C00'; projType = 'sonic_wave'; }
 
-
-
+            const spawnOffset = this.player.radius + 5;
             this.projectiles.push({
-                x: this.player.x, y: this.player.y,
+                x: this.player.x + Math.cos(angle) * spawnOffset,
+                y: this.player.y + Math.sin(angle) * spawnOffset,
                 vx: Math.cos(angle) * 300 * this.player.projSpeedMult,
                 vy: Math.sin(angle) * 300 * this.player.projSpeedMult,
                 radius: 5 * area,
@@ -626,7 +626,8 @@ export class GameEngine {
             
             if (projType === 'dual_laser') {
                  this.projectiles.push({
-                    x: this.player.x + Math.cos(angle + Math.PI/2)*10, y: this.player.y + Math.sin(angle + Math.PI/2)*10,
+                    x: this.player.x + Math.cos(angle) * spawnOffset + Math.cos(angle + Math.PI/2)*10,
+                    y: this.player.y + Math.sin(angle) * spawnOffset + Math.sin(angle + Math.PI/2)*10,
                     vx: Math.cos(angle) * 300 * this.player.projSpeedMult, vy: Math.sin(angle) * 300 * this.player.projSpeedMult,
                     radius: 4 * area, damage: dmg, pierce: 2 + Math.floor(w.level/2), life: 2, color: projColor, type: projType, isMastered, weaponId: 'napBeam'
                 });
