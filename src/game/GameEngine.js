@@ -4,6 +4,7 @@ import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
 import { selectBossForArena, updateBossAbilities } from './BossSystem';
 import { drawUI } from './UIRenderer';
+import { drawPickups } from './PickupRenderer';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false) {
@@ -1457,42 +1458,7 @@ export class GameEngine {
         this.ctx.scale(this.zoom, this.zoom);
         this.ctx.translate(-this.camera.x + this.shakeX, -this.camera.y + this.shakeY);
 
-        this.pickups.forEach(p => {
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            this.ctx.fillStyle = p.color;
-            this.ctx.beginPath();
-            if (p.type === 'xp') {
-                this.ctx.rotate(this.time * 2);
-                this.ctx.moveTo(0, -10);
-                this.ctx.lineTo(7, 0);
-                this.ctx.lineTo(0, 10);
-                this.ctx.lineTo(-7, 0);
-                this.ctx.closePath();
-                this.ctx.fill();
-            } else if (p.type === 'gold') {
-                this.ctx.rotate(Math.sin(this.time * 5) * 0.2);
-                for (let i = 0; i < 8; i++) {
-                    const a = (Math.PI / 4) * i;
-                    this.ctx.lineTo(Math.cos(a) * 10, Math.sin(a) * 10);
-                }
-                this.ctx.closePath();
-                this.ctx.fill();
-            } else if (p.icon) {
-                this.ctx.font = '42px Arial';
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.shadowColor = '#ffffff';
-                this.ctx.shadowBlur = 16;
-                this.ctx.fillText(p.icon, 0, 0);
-                this.ctx.shadowBlur = 0;
-            } else {
-                this.ctx.rect(-7, -7, 14, 14);
-                this.ctx.closePath();
-                this.ctx.fill();
-            }
-            this.ctx.restore();
-        });
+        drawPickups(this.ctx, this.pickups, this.time);
 
         if (this.characterPickup) {
             this.ctx.fillStyle = this.characterPickup.color;
