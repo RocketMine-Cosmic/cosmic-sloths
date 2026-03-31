@@ -852,7 +852,7 @@ export class GameEngine {
                         if (!p.hitList) p.hitList = new Set();
                         if (!p.hitList.has(e)) {
                             p.hitList.add(e);
-                            this.damageEnemy(e, p.damage);
+                            this.damageEnemy(e, p.damage, p);
                             
                             // Impact Effects
                             this.shake(0.1);
@@ -1200,7 +1200,7 @@ export class GameEngine {
         });
     }
 
-    damageEnemy(enemy, amount) {
+    damageEnemy(enemy, amount, projectile = null) {
         let damageMult = 1.0;
         const pastKills = this.save.enemyKills?.[enemy.id] || 0;
         const masteryReq = enemy.isBoss ? 10 : 100;
@@ -1209,6 +1209,30 @@ export class GameEngine {
         }
         let finalDamage = amount * damageMult;
         let isCrit = false;
+        let isWeakHit = false;
+
+        // Check boss weak side
+        if (enemy.isBoss && enemy.weakSide && projectile) {
+            // Boss always faces the player — so boss "forward" angle = angle from boss to player
+            const bossForwardAngle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x);
+            // Projectile came from the direction opposite to its velocity
+            const hitAngle = Math.atan2(-projectile.vy, -projectile.vx);
+            // Angle between hit direction and boss forward
+            let diff = Math.abs(hitAngle - bossForwardAngle);
+            if (diff > Math.PI) diff = Math.PI * 2 - diff;
+
+            if (enemy.weakSide === 'back' && diff < Math.PI * 0.35) {
+                // Hit came from behind (same direction boss is facing = behind it)
+                isWeakHit = true;
+            } else if (enemy.weakSide === 'side' && diff > Math.PI * 0.3 && diff < Math.PI * 0.7) {
+                // Hit came from the sides
+                isWeakHit = true;
+            }
+
+            if (isWeakHit) {
+                finalDamage *= 2.0;
+            }
+        }
 
         const critChance = 0.05 + (this.player.luck * 0.02); // 5% base + 2% per luck
         if (Math.random() < critChance) {
@@ -1217,7 +1241,12 @@ export class GameEngine {
         }
         
         enemy.hp -= finalDamage;
-        const color = isCrit ? '#ff4444' : (pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
+
+        let color = isCrit ? '#ff4444' : (pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
+        if (isWeakHit) {
+            color = '#ffdd00';
+            this.addDamageText(enemy.x, enemy.y - 30, 'WEAK SPOT!', '#ffdd00', false);
+        }
         this.addDamageText(enemy.x, enemy.y - 10, Math.floor(finalDamage), color, isCrit);
         SoundManager.playEnemyHit();
     }
@@ -1743,8 +1772,15 @@ export class GameEngine {
                 drawEnemy(this.ctx, e, this.time, this.player.x);
                 
                 if (e.hp < e.maxHp) {
-                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - 10, e.y - e.radius - 8, 20, 4);
-                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - 10, e.y - e.radius - 8, 20 * (e.hp / e.maxHp), 4);
+                    const barW = e.isBoss ? 60 : 20;
+                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW, 4);
+                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW * (e.hp / e.maxHp), 4);
+                }
+                if (e.isBoss && e.weakSide && e.weakDesc) {
+                    this.ctx.fillStyle = '#ffdd00';
+                    this.ctx.font = 'bold 11px monospace';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 14);
                 }
             } else {
                 // Draw burrowed indicator
