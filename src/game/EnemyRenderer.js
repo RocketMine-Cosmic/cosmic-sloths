@@ -22,16 +22,12 @@ export function drawEnemy(ctx, e, time, playerX) {
         const drawSize = e.radius * 3.5;
         const bob = Math.sin(time * 3 + e.id.length) * (e.radius * 0.1);
         
-        ctx.shadowColor = e.color || '#ff00ff';
-        ctx.shadowBlur = 15;
-        
         ctx.drawImage(
             e.spriteImage,
             col * frameWidth, row * frameHeight, frameWidth, frameHeight,
             -drawSize/2, -drawSize/2 + bob, drawSize, drawSize
         );
         
-        ctx.shadowBlur = 0;
         ctx.restore();
         return;
     }
@@ -39,9 +35,6 @@ export function drawEnemy(ctx, e, time, playerX) {
     const t = time * 5 + e.x * 0.01;
     const pulse = Math.sin(t) * 0.1 + 1;
     const wiggle = Math.sin(t * 2) * 0.1;
-
-    ctx.shadowColor = e.color;
-    ctx.shadowBlur = 15;
 
     // Helper to draw tentacles
     const drawTentacle = (count, length, width, color, speed = 1) => {
@@ -318,10 +311,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(5, -5); ctx.quadraticCurveTo(15, -15, 20, -5); ctx.stroke();
             ctx.fillStyle = '#00ffff';
-            ctx.shadowColor = '#00ffff';
-            ctx.shadowBlur = 10;
             ctx.beginPath(); ctx.arc(20, -5, 3 + pulse, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 0;
             break;
 
         case 't3_floater':
@@ -492,10 +482,6 @@ export function drawEnemy(ctx, e, time, playerX) {
             // Scope dot
             ctx.fillStyle = '#ff0000';
             ctx.beginPath(); ctx.arc(e.radius * 1.6, 0, 3 + Math.sin(t * 4) * 1, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowColor = '#ff0000';
-            ctx.shadowBlur = 8;
-            ctx.beginPath(); ctx.arc(e.radius * 1.6, 0, 2, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
             break;
 
         case 't2_tank':
@@ -535,6 +521,5 @@ export function drawEnemy(ctx, e, time, playerX) {
             break;
     }
 
-    ctx.shadowBlur = 0;
     ctx.restore();
 }

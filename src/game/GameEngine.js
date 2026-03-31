@@ -1500,9 +1500,6 @@ export class GameEngine {
                 this.ctx.rotate(Math.atan2(p.vy, p.vx));
             }
             
-            this.ctx.shadowColor = p.color;
-            this.ctx.shadowBlur = 10;
-            
             if (p.type === 'beam' || p.type === 'dual_laser') {
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.fillRect(-p.radius, -p.radius/2, p.radius*2, p.radius);
@@ -1646,9 +1643,6 @@ export class GameEngine {
                     this.ctx.rotate(Math.atan2(p.vy, p.vx));
                 }
                 
-                this.ctx.shadowColor = p.color;
-                this.ctx.shadowBlur = 10;
-                
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.beginPath();
                 this.ctx.moveTo(p.radius, 0);
@@ -1791,10 +1785,7 @@ export class GameEngine {
             // The base sprite sheets are drawn facing left. 
             // So if we are facing right (!facingLeft), we need to mirror them.
             if (!this.player.facingLeft) this.ctx.scale(-1, 1);
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 10;
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-            this.ctx.shadowBlur = 0;
             this.ctx.restore();
         } else if (this.player.image && this.player.image.complete) {
             const size = this.player.radius * 3;
@@ -1806,10 +1797,7 @@ export class GameEngine {
                 this.ctx.scale(-1, 1);
             }
             
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 10;
             this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
-            this.ctx.shadowBlur = 0;
             this.ctx.restore();
         } else {
             this.ctx.fillStyle = this.player.color;

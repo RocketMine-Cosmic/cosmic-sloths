@@ -70,8 +70,6 @@ export class ParticleManager {
                 case 'star':
                 case 'spark': {
                     ctx.rotate(p.rotation || 0);
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 8;
                     const s = p.size || 8;
                     // 4-pointed star shape
                     ctx.fillStyle = color;
@@ -99,8 +97,6 @@ export class ParticleManager {
                 }
                 case 'circle': {
                     const r = p.size || 12;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 10;
                     ctx.strokeStyle = color;
                     ctx.lineWidth = 2;
                     ctx.beginPath();
@@ -110,8 +106,6 @@ export class ParticleManager {
                 }
                 case 'ring': {
                     const r = p.size || 12;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 12;
                     ctx.strokeStyle = color;
                     ctx.lineWidth = (p.lineWidth || 3);
                     ctx.beginPath();
@@ -120,8 +114,6 @@ export class ParticleManager {
                     break;
                 }
                 case 'shockwave': {
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 20;
                     ctx.strokeStyle = color;
                     ctx.lineWidth = p.lineWidth || 4;
                     ctx.beginPath();
@@ -144,8 +136,6 @@ export class ParticleManager {
                 case 'shatter': {
                     ctx.rotate(p.rotation || 0);
                     const s = (p.size || 8) * 0.5;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 6;
                     ctx.fillStyle = color;
                     // Triangle shard
                     ctx.beginPath();
@@ -159,8 +149,6 @@ export class ParticleManager {
                 case 'slash': {
                     ctx.rotate(p.rotation || 0);
                     const len = (p.size || 20);
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 12;
                     ctx.strokeStyle = color;
                     ctx.lineWidth = 3;
                     ctx.beginPath();
@@ -180,9 +168,6 @@ export class ParticleManager {
                 case 'explosion': {
                     ctx.rotate(p.rotation || 0);
                     const r = (p.size || 20) * 0.5;
-                    // Jagged explosion burst
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 16;
                     ctx.fillStyle = color;
                     ctx.beginPath();
                     const spikes = 8;
@@ -210,9 +195,6 @@ export class ParticleManager {
                 case 'implode': {
                     ctx.rotate(p.rotation || 0);
                     const r = (p.size || 10) * 0.5;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 14;
-                    // Diamond / inward burst
                     ctx.fillStyle = color;
                     ctx.beginPath();
                     ctx.moveTo(0, -r);
@@ -226,8 +208,6 @@ export class ParticleManager {
                 case 'blood': {
                     ctx.rotate(p.rotation || 0);
                     const r = (p.size || 10) * 0.5;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 8;
                     ctx.fillStyle = color;
                     ctx.beginPath();
                     ctx.arc(0, 0, r, 0, Math.PI * 2);
