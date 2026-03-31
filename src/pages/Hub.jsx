@@ -12,11 +12,22 @@ import BountiesPanel from '../components/game/BountiesPanel';
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const [selectedChar, setSelectedChar] = useState('neobyte');
-    const [selectedArena, setSelectedArena] = useState('station');
-    const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
+    const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');
+    const [selectedArena, setSelectedArena] = useState(save.lastSelectedArena || 'station');
+    const [selectedDifficulty, setSelectedDifficulty] = useState(save.lastSelectedDifficulty || 'normal');
     const { toast } = useToast();
     const touchStartX = React.useRef(null);
+
+    React.useEffect(() => {
+        setSave(prevSave => {
+            if (prevSave.lastSelectedChar !== selectedChar || prevSave.lastSelectedArena !== selectedArena || prevSave.lastSelectedDifficulty !== selectedDifficulty) {
+                const newSave = { ...prevSave, lastSelectedChar: selectedChar, lastSelectedArena: selectedArena, lastSelectedDifficulty: selectedDifficulty };
+                SaveManager.save(newSave);
+                return newSave;
+            }
+            return prevSave;
+        });
+    }, [selectedChar, selectedArena, selectedDifficulty]);
 
     React.useEffect(() => {
         const claimRewards = async () => {
