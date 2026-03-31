@@ -6,6 +6,7 @@ import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet, Chevron
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
+import CosmeticPreview from '../components/game/CosmeticPreview';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [100, 200, 400, 800, 1600] },
@@ -23,13 +24,25 @@ const STATS = [
     { id: 'luck', name: 'Cosmic Fortune', icon: Sparkles, perm: '+1', week: '+2', season: '+3' }
 ];
 
-const COSMETICS = [
-    { id: 'default', name: 'None', goldCost: 0, tokenCost: 0, icon: '⚪' },
-    { id: 'fire', name: 'Fire Trail', goldCost: 2500, tokenCost: 250, icon: '🔥' },
-    { id: 'ice', name: 'Ice Trail', goldCost: 2500, tokenCost: 250, icon: '❄️' },
-    { id: 'toxic', name: 'Toxic Trail', goldCost: 2500, tokenCost: 250, icon: '🧪' },
-    { id: 'void', name: 'Void Trail', goldCost: 12500, tokenCost: 1250, icon: '🌌' },
-    { id: 'gold', name: 'Golden Trail', goldCost: 25000, tokenCost: 2500, icon: '✨' }
+const TRAIL_COSMETICS = [
+    { id: 'default', name: 'No Trail',     goldCost: 0,     tokenCost: 0,    icon: '⚪', desc: 'Clean and simple.' },
+    { id: 'fire',    name: 'Fire Trail',   goldCost: 2500,  tokenCost: 250,  icon: '🔥', desc: 'A blazing inferno follows your every move.' },
+    { id: 'ice',     name: 'Ice Trail',    goldCost: 2500,  tokenCost: 250,  icon: '❄️', desc: 'Leaves a crystalline frost in your wake.' },
+    { id: 'toxic',   name: 'Toxic Trail',  goldCost: 2500,  tokenCost: 250,  icon: '🧪', desc: 'Neon green slime marks your path.' },
+    { id: 'plasma',  name: 'Plasma Trail', goldCost: 8000,  tokenCost: 800,  icon: '⚡', desc: 'Crackling cyan and magenta energy.' },
+    { id: 'void',    name: 'Void Trail',   goldCost: 12500, tokenCost: 1250, icon: '🌌', desc: 'Dark energy that bends space itself.' },
+    { id: 'shadow',  name: 'Shadow Trail', goldCost: 15000, tokenCost: 1500, icon: '🌑', desc: 'A shroud of absolute darkness.' },
+    { id: 'gold',    name: 'Golden Trail', goldCost: 25000, tokenCost: 2500, icon: '✨', desc: 'Pure wealth made visible.' },
+    { id: 'rainbow', name: 'Rainbow Trail',goldCost: 40000, tokenCost: 4000, icon: '🌈', desc: 'All colors at once. Maximum flex.' },
+];
+
+const KILL_COSMETICS = [
+    { id: 'none',      name: 'No Effect',     goldCost: 0,     tokenCost: 0,    icon: '⚫', desc: 'Enemies die quietly.' },
+    { id: 'explosion', name: 'Explosion',     goldCost: 3000,  tokenCost: 300,  icon: '💥', desc: 'Every kill bursts into flames.' },
+    { id: 'freeze',    name: 'Freeze Burst',  goldCost: 3000,  tokenCost: 300,  icon: '🧊', desc: 'Enemies shatter into icy shards.' },
+    { id: 'vaporize',  name: 'Vaporize',      goldCost: 3000,  tokenCost: 300,  icon: '☠️', desc: 'Enemies dissolve in toxic mist.' },
+    { id: 'implode',   name: 'Implode',       goldCost: 15000, tokenCost: 1500, icon: '🌀', desc: 'Enemies collapse into a void singularity.' },
+    { id: 'golden',    name: 'Gold Shatter',  goldCost: 30000, tokenCost: 3000, icon: '💰', desc: 'Enemies explode into golden coins.' },
 ];
 
 export default function Upgrades({ isCarousel }) {
@@ -40,6 +53,7 @@ export default function Upgrades({ isCarousel }) {
     const [selectedChar, setSelectedChar] = useState((save.unlockedCharacters && save.unlockedCharacters.length > 0) ? save.unlockedCharacters[0] : 'neobyte');
     const [selectedWeapon, setSelectedWeapon] = useState('napBeam');
     const [timeLeft, setTimeLeft] = useState('');
+    const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail' or 'kill'
 
     useEffect(() => {
         const updateTimer = () => {
@@ -161,12 +175,15 @@ export default function Upgrades({ isCarousel }) {
         }
     };
 
-    const handleBuyCosmetic = (cosmetic, currency) => {
-        const unlocked = save.unlockedCosmetics || ['default'];
-        const cosmetics = save.cosmetics || { trail: 'default' };
+    const handleBuyCosmetic = (cosmetic, slot, currency) => {
+        // slot: 'trail' or 'kill'
+        const unlockKey = slot === 'trail' ? 'unlockedCosmetics' : 'unlockedKillEffects';
+        const freeId = slot === 'trail' ? 'default' : 'none';
+        const unlocked = save[unlockKey] || [freeId];
+        const cosmetics = save.cosmetics || { trail: 'default', killEffect: 'none' };
 
         if (unlocked.includes(cosmetic.id)) {
-            const newSave = { ...save, cosmetics: { ...cosmetics, trail: cosmetic.id } };
+            const newSave = { ...save, cosmetics: { ...cosmetics, [slot === 'trail' ? 'trail' : 'killEffect']: cosmetic.id } };
             SaveManager.save(newSave);
             setSave(newSave);
             SoundManager.playUIClick();
@@ -175,15 +192,15 @@ export default function Upgrades({ isCarousel }) {
 
         if (currency === 'gold' && save.gold >= cosmetic.goldCost) {
             const newSave = { ...save, gold: save.gold - cosmetic.goldCost };
-            newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
-            newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
+            newSave[unlockKey] = [...unlocked, cosmetic.id];
+            newSave.cosmetics = { ...cosmetics, [slot === 'trail' ? 'trail' : 'killEffect']: cosmetic.id };
             SaveManager.save(newSave);
             setSave(newSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.tokenCost) {
             const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.tokenCost };
-            newSave.unlockedCosmetics = [...unlocked, cosmetic.id];
-            newSave.cosmetics = { ...cosmetics, trail: cosmetic.id };
+            newSave[unlockKey] = [...unlocked, cosmetic.id];
+            newSave.cosmetics = { ...cosmetics, [slot === 'trail' ? 'trail' : 'killEffect']: cosmetic.id };
             SaveManager.save(newSave);
             setSave(newSave);
             recordTokenSpend(cosmetic.tokenCost);
@@ -561,58 +578,103 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const renderCosmetics = () => {
-        return (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
-                {COSMETICS.map(cosmetic => {
-                    const unlocked = save.unlockedCosmetics || ['default'];
-                    const isUnlocked = unlocked.includes(cosmetic.id);
-                    const isEquipped = save.cosmetics?.trail === cosmetic.id;
-                    const canAffordGold = save.gold >= cosmetic.goldCost;
-                    const canAffordToken = (save.cosmicTokens || 0) >= cosmetic.tokenCost;
+        const isTrail = cosmeticTab === 'trail';
+        const list = isTrail ? TRAIL_COSMETICS : KILL_COSMETICS;
+        const unlockKey = isTrail ? 'unlockedCosmetics' : 'unlockedKillEffects';
+        const freeId = isTrail ? 'default' : 'none';
+        const equippedTrail = save.cosmetics?.trail || 'default';
+        const equippedKill = save.cosmetics?.killEffect || 'none';
 
-                    return (
-                        <div key={cosmetic.id} className={`bg-slate-800 p-2 md:p-4 rounded-lg border-2 flex flex-col items-center text-center gap-2 md:gap-3 ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700'}`}>
-                            <div className="text-3xl md:text-4xl">{cosmetic.icon}</div>
-                            <h3 className="font-bold text-sm md:text-lg text-white">{cosmetic.name}</h3>
-                            
-                            {isEquipped || isUnlocked ? (
-                                <button
-                                    onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
-                                    disabled={isEquipped}
-                                    className={`w-full py-1.5 md:py-2 rounded-lg font-bold transition-colors text-xs md:text-sm ${
-                                        isEquipped ? 'bg-pink-600 text-white' :
-                                        'bg-slate-700 text-white hover:bg-slate-600'
-                                    }`}
-                                >
-                                    {isEquipped ? 'EQUIPPED' : 'EQUIP'}
-                                </button>
-                            ) : (
-                                <div className="flex flex-col xl:flex-row gap-1.5 md:gap-2 w-full">
-                                    <button
-                                        onClick={() => handleBuyCosmetic(cosmetic, 'gold')}
-                                        disabled={!canAffordGold}
-                                        className={`flex-1 py-1.5 md:py-2 rounded-lg font-bold transition-colors text-xs ${
-                                            canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
-                                            'bg-slate-800 text-slate-500 border border-slate-700'
-                                        }`}
-                                    >
-                                        🪙 {cosmetic.goldCost}
-                                    </button>
-                                    <button
-                                        onClick={() => handleBuyCosmetic(cosmetic, 'token')}
-                                        disabled={!canAffordToken}
-                                        className={`flex-1 py-1.5 md:py-2 rounded-lg font-bold transition-colors text-xs ${
-                                            canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                            'bg-slate-800 text-slate-500 border border-slate-700'
-                                        }`}
-                                    >
-                                        💠 {cosmetic.tokenCost}
-                                    </button>
+        // Preview uses currently equipped values (both tabs always visible in preview)
+        const previewTrail = equippedTrail;
+        const previewKill = equippedKill;
+
+        return (
+            <div>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-3">Cosmetics</h2>
+
+                {/* Live Preview */}
+                <div className="mb-4">
+                    <CosmeticPreview trailId={previewTrail} killEffectId={previewKill} />
+                    <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center">
+                        <span>Trail: <strong className="text-pink-400">{TRAIL_COSMETICS.find(t => t.id === equippedTrail)?.name}</strong></span>
+                        <span>Kill Effect: <strong className="text-pink-400">{KILL_COSMETICS.find(k => k.id === equippedKill)?.name}</strong></span>
+                    </div>
+                </div>
+
+                {/* Tab switcher */}
+                <div className="flex gap-2 mb-4 border-b border-slate-800 pb-2">
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('trail'); }}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'trail' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        ✨ Trails
+                    </button>
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('kill'); }}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'kill' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        💥 Kill Effects
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                    {list.map(cosmetic => {
+                        const unlocked = save[unlockKey] || [freeId];
+                        const isUnlocked = unlocked.includes(cosmetic.id);
+                        const isEquipped = isTrail ? equippedTrail === cosmetic.id : equippedKill === cosmetic.id;
+                        const canAffordGold = save.gold >= cosmetic.goldCost;
+                        const canAffordToken = (save.cosmicTokens || 0) >= cosmetic.tokenCost;
+
+                        return (
+                            <div key={cosmetic.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl">{cosmetic.icon}</span>
+                                    <div>
+                                        <div className="font-bold text-sm text-white leading-tight">{cosmetic.name}</div>
+                                        {isEquipped && <div className="text-[10px] text-pink-400 font-bold">EQUIPPED</div>}
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
+                                <p className="text-[11px] text-slate-400 leading-snug">{cosmetic.desc}</p>
+
+                                {isEquipped || isUnlocked ? (
+                                    <button
+                                        onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'gold')}
+                                        disabled={isEquipped}
+                                        className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs ${
+                                            isEquipped ? 'bg-pink-700 text-pink-200 cursor-default' : 'bg-slate-700 text-white hover:bg-slate-600'
+                                        }`}
+                                    >
+                                        {isEquipped ? '✓ EQUIPPED' : 'EQUIP'}
+                                    </button>
+                                ) : (
+                                    <div className="flex gap-1.5 w-full">
+                                        <button
+                                            onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'gold')}
+                                            disabled={!canAffordGold}
+                                            className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${
+                                                canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                            }`}
+                                        >
+                                            🪙 {cosmetic.goldCost.toLocaleString()}
+                                        </button>
+                                        {cosmetic.tokenCost > 0 && (
+                                            <button
+                                                onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'token')}
+                                                disabled={!canAffordToken}
+                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${
+                                                    canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                💠 {cosmetic.tokenCost.toLocaleString()}
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         );
     };

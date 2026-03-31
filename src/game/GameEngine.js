@@ -98,6 +98,8 @@ export class GameEngine {
             walkImage.src = baseChar.walkSprite;
         }
         
+        this.killEffect = save.cosmetics?.killEffect || 'none';
+
         this.player = {
             name: baseChar.name,
             image: playerImage,
@@ -978,9 +980,24 @@ export class GameEngine {
                 }
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc' });
                 
-                // Death Splatter
+                // Death Splatter + Kill Effect cosmetic
                 this.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 3 : 1, e.id);
                 this.shake(e.isBoss ? 0.5 : 0.05);
+
+                const killEffectColors = {
+                    explosion: ['#ff4500', '#ff8800', '#ffdd00'],
+                    freeze:    ['#aaeeff', '#00cfff', '#ffffff'],
+                    vaporize:  ['#00ff88', '#39ff14', '#ffffff'],
+                    implode:   ['#8a2be2', '#ff00ff', '#1a1a2e'],
+                    golden:    ['#ffd700', '#fff4a0', '#ffaa00'],
+                };
+                const kfColors = killEffectColors[this.killEffect];
+                if (kfColors) {
+                    for (let ki = 0; ki < 8; ki++) {
+                        const kColor = kfColors[ki % kfColors.length];
+                        this.addParticle(e.x, e.y, kColor, 3, this.killEffect === 'implode' ? 'glow' : 'spark', 2);
+                    }
+                }
 
                 if (e.isBoss) {
                     const rerollReward = 1 + (this.bossModifiers.frenzy ? 1 : 0);
@@ -1752,14 +1769,19 @@ export class GameEngine {
 
         if (this.player.trail !== 'default' && this.frameCount % 3 === 0) {
             const trailColors = {
-                'fire': '#ff4500',
-                'ice': '#00ffff',
-                'void': '#8a2be2',
-                'toxic': '#32cd32',
-                'gold': '#ffd700'
+                'fire':    ['#ff4500', '#ff8800'],
+                'ice':     ['#00cfff', '#aaf0ff'],
+                'void':    ['#8a2be2', '#cc00ff'],
+                'toxic':   ['#39ff14', '#00ff88'],
+                'gold':    ['#ffd700', '#ffec6e'],
+                'plasma':  ['#00e5ff', '#ff00e5'],
+                'shadow':  ['#333355', '#0a0a20'],
+                'rainbow': ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'],
             };
-            if (trailColors[this.player.trail]) {
-                this.addParticle(this.player.x, this.player.y, trailColors[this.player.trail], 1);
+            const colors = trailColors[this.player.trail];
+            if (colors) {
+                const c = colors[this.frameCount % colors.length];
+                this.addParticle(this.player.x, this.player.y, c, this.player.trail === 'rainbow' ? 2 : 1);
             }
         }
 
