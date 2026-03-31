@@ -7,6 +7,7 @@ import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
+import { getSquadLevel, getNextSquadLevel, getSquadXpProgress } from '../game/SquadLevels';
 
 const WEEKLY_KILLS_TARGET = 10000;
 const REWARD_GOLD = 2500;
@@ -52,9 +53,15 @@ export default function Squads({ isCarousel }) {
                         // Check weekly reset
                         const currentWeek = getCurrentWeek();
                         if (squad.current_week !== currentWeek) {
+                            // Award XP from last week's kills before resetting
+                            const earnedXp = squad.weekly_kills || 0;
+                            const newXp = (squad.xp || 0) + earnedXp;
+                            const newLevelData = getSquadLevel(newXp);
                             const updatedSquad = await base44.entities.Squad.update(squad.id, {
                                 current_week: currentWeek,
-                                weekly_kills: 0
+                                weekly_kills: 0,
+                                xp: newXp,
+                                level: newLevelData.level
                             });
                             setMySquad(updatedSquad);
                         } else {
@@ -121,7 +128,9 @@ export default function Squads({ isCarousel }) {
                 owner_id: user.id,
                 weekly_kills: 0,
                 current_week: getCurrentWeek(),
-                member_count: 1
+                member_count: 1,
+                xp: 0,
+                level: 1
             });
             
             const member = await base44.entities.SquadMember.create({
@@ -348,14 +357,24 @@ export default function Squads({ isCarousel }) {
                                     {allSquads.length === 0 ? (
                                         <div className="text-center text-slate-500 py-8">No squads found. Be the first to create one!</div>
                                     ) : (
-                                        allSquads.map(squad => (
-                                            <div key={squad.id} className="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+                                        allSquads.map(squad => {
+                                            const lvl = getSquadLevel(squad.xp || 0);
+                                            return (
+                                            <div key={squad.id} className="bg-slate-800 p-3 rounded-lg flex justify-between items-center transition-colors"
+                                                style={{ border: `1px solid ${lvl.borderColor}50` }}
+                                            >
                                                 <div>
                                                     <div className="flex items-center gap-2">
+                                                        <span className="text-lg">{lvl.badge}</span>
                                                         <span className="font-bold text-white text-lg">{squad.name}</span>
-                                                        <span className="bg-slate-900 px-1.5 py-0.5 rounded text-xs text-orange-400 border border-orange-900">
-                                                            [{squad.tag}]
-                                                        </span>
+                                                        <span className="px-1.5 py-0.5 rounded text-xs border bg-slate-900"
+                                                            style={{ color: lvl.borderColor, borderColor: lvl.borderColor + '60' }}
+                                                        >[{squad.tag}]</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                            style={{ color: lvl.borderColor, background: lvl.glowColor }}
+                                                        >Lv.{lvl.level} {lvl.name}</span>
                                                     </div>
                                                     <div className="text-xs text-slate-400 mt-1">{squad.description || 'No description'}</div>
                                                     <div className="text-xs text-slate-500 mt-0.5">
@@ -375,7 +394,7 @@ export default function Squads({ isCarousel }) {
                                                     {(squad.member_count || 0) >= MAX_SQUAD_MEMBERS ? 'Full' : 'Join'}
                                                 </button>
                                             </div>
-                                        ))
+                                        )})
                                     )}
                                 </div>
                             )}
@@ -386,13 +405,27 @@ export default function Squads({ isCarousel }) {
                     <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
                         {/* LEFT PANEL: INFO & BOUNTY */}
                         <div className="w-full md:w-80 flex flex-col gap-4 shrink-0">
-                            <div className="bg-slate-900 border border-orange-500/50 rounded-xl p-4 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                            {(() => {
+                                const squadXp = mySquad.xp || 0;
+                                const lvlData = getSquadLevel(squadXp);
+                                const nextLvl = getNextSquadLevel(squadXp);
+                                const xpProgress = getSquadXpProgress(squadXp);
+                                return (
+                            <div className="bg-slate-900 rounded-xl p-4" style={{ border: `2px solid ${lvlData.borderColor}`, boxShadow: `0 0 20px ${lvlData.glowColor}` }}>
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
-                                        <h2 className="text-xl font-bold text-white">{mySquad.name}</h2>
-                                        <span className="bg-slate-800 px-1.5 py-0.5 rounded text-xs text-orange-400 border border-orange-900">
-                                            [{mySquad.tag}]
-                                        </span>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-2xl">{lvlData.badge}</span>
+                                            <h2 className="text-xl font-bold text-white">{mySquad.name}</h2>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-slate-800 px-1.5 py-0.5 rounded text-xs border" style={{ color: lvlData.borderColor, borderColor: lvlData.borderColor + '60' }}>
+                                                [{mySquad.tag}]
+                                            </span>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ color: lvlData.borderColor, background: lvlData.glowColor }}>
+                                                Lv.{lvlData.level} {lvlData.name}
+                                            </span>
+                                        </div>
                                     </div>
                                     <button 
                                         onClick={handleLeaveSquad}
@@ -401,7 +434,30 @@ export default function Squads({ isCarousel }) {
                                         Leave
                                     </button>
                                 </div>
-                                <p className="text-sm text-slate-400 mb-4">{mySquad.description}</p>
+                                <p className="text-sm text-slate-400 mb-3">{mySquad.description}</p>
+
+                                {/* XP Bar */}
+                                <div className="mb-4">
+                                    <div className="flex justify-between text-xs font-bold mb-1">
+                                        <span style={{ color: lvlData.borderColor }}>Squad XP</span>
+                                        {nextLvl ? (
+                                            <span className="text-slate-400">{squadXp.toLocaleString()} / {nextLvl.xpRequired.toLocaleString()}</span>
+                                        ) : (
+                                            <span className="text-yellow-400">MAX LEVEL</span>
+                                        )}
+                                    </div>
+                                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                                        <div 
+                                            className="h-full transition-all duration-700 rounded-full"
+                                            style={{ width: `${xpProgress}%`, background: `linear-gradient(to right, ${lvlData.borderColor}99, ${lvlData.borderColor})` }}
+                                        />
+                                    </div>
+                                    {nextLvl && (
+                                        <div className="text-[10px] text-slate-500 mt-1">
+                                            Next: {nextLvl.badge} {nextLvl.name} — earned at end of each week
+                                        </div>
+                                    )}
+                                </div>
                                 
                                 <div className="border-t border-slate-800 pt-4">
                                     <h3 className="text-sm font-bold text-yellow-400 mb-2 flex items-center gap-2">
@@ -448,6 +504,8 @@ export default function Squads({ isCarousel }) {
                                     })()}
                                 </div>
                             </div>
+                                );
+                            })()}
                         </div>
 
                         {/* RIGHT PANEL: CHAT & MEMBERS */}

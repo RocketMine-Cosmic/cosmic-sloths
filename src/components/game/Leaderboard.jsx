@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { CHARACTERS, ARENAS } from '../../game/Constants';
+import { getSquadLevel } from '../../game/SquadLevels';
 
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
@@ -194,8 +195,11 @@ export default function Leaderboard() {
                                     : Math.floor((currentPool * 0.40) * getSeasonalRewardPercentage(index + 1) * seasonalMultiplier);
 
                                 if (view === 'squads') {
+                                    const squadLvl = getSquadLevel(score.xp || 0);
                                     return (
-                                        <div key={score.id} className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/50 rounded-lg items-center border border-slate-800 hover:border-slate-600 transition-colors">
+                                        <div key={score.id} className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/50 rounded-lg items-center transition-colors"
+                                            style={{ border: `1px solid ${squadLvl.borderColor}60`, boxShadow: index < 3 ? `0 0 12px ${squadLvl.glowColor}` : 'none' }}
+                                        >
                                             <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto sm:min-w-[80px]">
                                                 <div className="text-xl md:text-2xl font-bold w-10 text-center">
                                                     {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
@@ -203,22 +207,31 @@ export default function Leaderboard() {
                                             </div>
                                             
                                             <div className="flex items-center gap-3 flex-1 w-full sm:w-auto bg-slate-950/30 p-2 rounded-lg sm:bg-transparent sm:p-0">
-                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 border-2 bg-slate-800 border-orange-500" title={score.name}>
-                                                    <span className="text-sm">🛡️</span>
+                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 border-2 bg-slate-800 text-xl"
+                                                    style={{ borderColor: squadLvl.borderColor }}
+                                                >
+                                                    {squadLvl.badge}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-white text-lg md:text-xl flex items-center gap-2">
-                                                        {score.name}
-                                                        <span className="text-[10px] md:text-xs bg-slate-800 px-1.5 py-0.5 rounded text-orange-400 border border-orange-900">[{score.tag}]</span>
+                                                        <span style={{ color: squadLvl.borderColor }}>{score.name}</span>
+                                                        <span className="text-[10px] md:text-xs bg-slate-800 px-1.5 py-0.5 rounded border"
+                                                            style={{ color: squadLvl.borderColor, borderColor: squadLvl.borderColor + '60' }}
+                                                        >[{score.tag}]</span>
                                                     </div>
-                                                    <div className="text-xs text-slate-400">{score.member_count || 1} Members</div>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                            style={{ color: squadLvl.borderColor, background: squadLvl.glowColor }}
+                                                        >Lv.{squadLvl.level} {squadLvl.name}</span>
+                                                        <span className="text-xs text-slate-400">{score.member_count || 1} Members</span>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center justify-end gap-4 w-full sm:w-auto text-sm bg-slate-950/50 p-3 rounded-lg sm:bg-transparent sm:p-0">
                                                 <div className="text-right">
                                                     <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">Weekly Kills</div>
-                                                    <div className="font-mono text-orange-400 font-bold text-lg md:text-xl">{(score.weekly_kills || 0).toLocaleString()}</div>
+                                                    <div className="font-mono font-bold text-lg md:text-xl" style={{ color: squadLvl.borderColor }}>{(score.weekly_kills || 0).toLocaleString()}</div>
                                                 </div>
                                             </div>
                                         </div>
