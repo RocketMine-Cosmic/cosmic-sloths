@@ -1652,7 +1652,6 @@ export class GameEngine {
 
         if (this.enemyProjectiles) {
             this.ctx.globalCompositeOperation = 'screen';
-            const texStar = this.particleManager?.textures?.star;
             this.enemyProjectiles.forEach(p => {
                 this.ctx.save();
                 this.ctx.translate(p.x, p.y);
@@ -1891,42 +1890,73 @@ export class GameEngine {
         });
 
         // Draw Environmental Effects
+        this.ctx.globalCompositeOperation = 'screen';
+        const texSmoke = this.particleManager?.textures?.smoke;
+
         if (this.envEffect === 'neon_rain') {
             this.envParticles.forEach(p => {
                 this.ctx.strokeStyle = p.color;
-                this.ctx.lineWidth = 2;
-                this.ctx.globalAlpha = p.life / 2;
+                this.ctx.lineWidth = 3;
+                this.ctx.globalAlpha = (p.life / 2) * 0.8;
                 this.ctx.beginPath();
                 this.ctx.moveTo(p.x, p.y);
                 this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05);
                 this.ctx.stroke();
+                
+                // Add a little glow at the tip
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                this.ctx.fill();
             });
             this.ctx.globalAlpha = 1.0;
         } else if (this.envEffect === 'fog') {
             this.envParticles.forEach(p => {
-                const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                gradient.addColorStop(0, `rgba(200, 200, 220, ${0.15 * (p.life / 10)})`);
-                gradient.addColorStop(1, 'rgba(200, 200, 220, 0)');
-                this.ctx.fillStyle = gradient;
-                this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.globalAlpha = 0.15 * (p.life / 10);
+                if (texSmoke && texSmoke.isReady) {
+                    this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+                } else {
+                    const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                    gradient.addColorStop(0, 'rgba(200, 200, 220, 1)');
+                    gradient.addColorStop(1, 'transparent');
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
             });
+            this.ctx.globalAlpha = 1.0;
         } else if (this.envEffect === 'solar_flare') {
             this.envParticles.forEach(p => {
-                const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.3;
-                const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                gradient.addColorStop(0, `rgba(255, 100, 0, ${alpha})`);
-                gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
-                this.ctx.fillStyle = gradient;
-                this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                this.ctx.fill();
+                const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.4;
+                this.ctx.globalAlpha = alpha;
+                
+                if (texSmoke && texSmoke.isReady) {
+                    // Tint the smoke orange
+                    this.ctx.fillStyle = '#ff6600';
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+                } else {
+                    const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                    gradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
+                    gradient.addColorStop(1, 'transparent');
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
             });
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.globalCompositeOperation = 'source-over';
+            
             // Global orange tint pulsing
             this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.05 + 0.05})`;
             this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width / this.zoom, this.canvas.height / this.zoom);
         }
+        this.ctx.globalCompositeOperation = 'source-over';
 
         this.ctx.restore();
 
