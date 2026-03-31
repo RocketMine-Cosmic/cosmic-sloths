@@ -4,12 +4,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import MainMenu from './MainMenu';
 import Hub from './Hub';
+import Dailys from './Dailys';
 import Upgrades from './Upgrades';
 import LeaderboardPage from './LeaderboardPage';
 import Squads from './Squads';
 import Bestiary from './Bestiary';
-import Profile from './Profile';
 import LeviathanTrials from './LeviathanTrials';
+import Profile from './Profile';
 import { SoundManager } from '../game/SoundManager';
 
 export default function PlayCarousel() {
@@ -49,12 +50,13 @@ export default function PlayCarousel() {
                     <div className="flex-1 text-center font-bold text-base select-none">
                         {selectedIndex === 0 && <span className="text-white">Main Menu</span>}
                         {selectedIndex === 1 && <span className="text-cyan-400">Sloth Lounge</span>}
-                        {selectedIndex === 2 && <span className="text-pink-400">Upgrade Lounge</span>}
-                        {selectedIndex === 3 && <span className="text-yellow-400">Hall of Fame</span>}
-                        {selectedIndex === 4 && <span className="text-orange-400">Sloth Squads</span>}
-                        {selectedIndex === 5 && <span className="text-rose-400">Cosmic Codex</span>}
-                        {selectedIndex === 6 && <span className="text-purple-400">Pilot Profile</span>}
+                        {selectedIndex === 2 && <span className="text-green-400">Mission Board</span>}
+                        {selectedIndex === 3 && <span className="text-pink-400">Upgrade Lounge</span>}
+                        {selectedIndex === 4 && <span className="text-yellow-400">Hall of Fame</span>}
+                        {selectedIndex === 5 && <span className="text-orange-400">Sloth Squads</span>}
+                        {selectedIndex === 6 && <span className="text-rose-400">Cosmic Codex</span>}
                         {selectedIndex === 7 && <span className="text-red-500">Leviathan Trials</span>}
+                        {selectedIndex === 8 && <span className="text-purple-400">Pilot Profile</span>}
                     </div>
                     <button 
                         onClick={() => { 
@@ -77,6 +79,9 @@ export default function PlayCarousel() {
                         <Hub isCarousel={true} />
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
+                        <Dailys isCarousel={true} />
+                    </div>
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Upgrades isCarousel={true} />
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
@@ -89,10 +94,10 @@ export default function PlayCarousel() {
                         <Bestiary isCarousel={true} />
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Profile isCarousel={true} />
+                        <LeviathanTrials isCarousel={true} />
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <LeviathanTrials isCarousel={true} />
+                        <Profile isCarousel={true} />
                     </div>
                 </div>
             </div>

@@ -19,6 +19,7 @@ import Squads from './pages/Squads';
 import Bestiary from './pages/Bestiary';
 import Profile from './pages/Profile';
 import LeviathanTrials from './pages/LeviathanTrials';
+import Dailys from './pages/Dailys';
 import { SaveManager } from './game/SaveManager';
 import React, { useState, useEffect } from 'react';
 
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
       <Route path="/bestiary" element={<Bestiary />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/trials" element={<LeviathanTrials />} />
+      <Route path="/dailys" element={<Dailys />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

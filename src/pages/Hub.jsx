@@ -432,9 +432,7 @@ export default function Hub({ isCarousel }) {
                             </div>
                     </div>
                     
-                    <div className="w-full">
-                        <BountiesPanel save={save} setSave={setSave} />
-                    </div>
+
                 </div>
             </div>
         </div>
