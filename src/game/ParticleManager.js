@@ -98,7 +98,7 @@ export class ParticleManager {
             ctx.globalAlpha = alpha * 0.4;
             const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, sBase * 2);
             grad.addColorStop(0, color);
-            grad.addColorStop(1, color + '00');
+            grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, sBase * 2, 0, Math.PI * 2);

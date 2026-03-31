@@ -160,7 +160,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.globalCompositeOperation = 'screen';
                 const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.5);
                 grad.addColorStop(0, p.color);
-                grad.addColorStop(1, p.color + '00');
+                grad.addColorStop(1, 'transparent');
                 ctx.fillStyle = grad;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
