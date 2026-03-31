@@ -271,15 +271,15 @@ export default function Leaderboard() {
                                         <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto text-sm bg-slate-950/50 p-3 rounded-lg sm:bg-transparent sm:p-0">
                                             <div className="text-center sm:text-right">
                                                 <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Score</div>
-                                                <div className="font-mono text-cyan-400 font-bold text-lg md:text-xl">{score.score.toLocaleString()}</div>
+                                                <div className="font-mono text-cyan-400 font-bold text-lg md:text-xl">{(score.score || 0).toLocaleString()}</div>
                                             </div>
                                             <div className="text-center sm:text-right">
                                                 <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Time</div>
-                                                <div className="text-slate-300 font-mono text-base md:text-lg">{formatTime(score.time_survived)}</div>
+                                                <div className="text-slate-300 font-mono text-base md:text-lg">{formatTime(score.time_survived || 0)}</div>
                                             </div>
                                             <div className="text-center sm:text-right">
                                                 <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Level</div>
-                                                <div className="text-slate-300 font-mono text-base md:text-lg">Lv.{score.level}</div>
+                                                <div className="text-slate-300 font-mono text-base md:text-lg">Lv.{score.level || 1}</div>
                                             </div>
                                         </div>
                                     </div>
