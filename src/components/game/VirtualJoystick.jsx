@@ -9,6 +9,8 @@ export default function VirtualJoystick({ onChange }) {
 
     const handleTouchStart = (e) => {
         if (active) return;
+        // Ignore touches that originate on interactive elements (buttons, etc.)
+        if (e.target.closest('button')) return;
         const touch = e.changedTouches[0];
         touchIdRef.current = touch.identifier;
         setOrigin({ x: touch.clientX, y: touch.clientY });

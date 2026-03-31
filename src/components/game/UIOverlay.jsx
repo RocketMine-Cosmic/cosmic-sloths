@@ -16,7 +16,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
     };
 
     return (
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between text-white font-mono drop-shadow-md z-10">
+        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between text-white font-mono drop-shadow-md" style={{ zIndex: 100 }}>
             <div className="flex justify-between items-start gap-2">
                 <div className="w-28 md:w-64">
                     <div className="bg-slate-800/80 p-2 rounded-lg border border-slate-600">
