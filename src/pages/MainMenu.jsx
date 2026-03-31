@@ -29,7 +29,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 const me = await base44.auth.me();
                 setUser(me);
                 setNewName(me?.full_name || '');
-                if (!me?.full_name) {
+                if (!me?.full_name || me.full_name.includes('@')) {
                     setNeedsProfileName(true);
                 }
             } catch (e) {
