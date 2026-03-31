@@ -38,6 +38,12 @@ export default function GameOverModal({ stats }) {
                         <span className="text-sm md:text-base text-slate-400">Gold Earned</span>
                         <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
                     </div>
+                    {stats.score != null && (
+                        <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                            <span className="text-sm md:text-base text-slate-400">Score Submitted</span>
+                            <span className="text-cyan-400 font-mono text-xl md:text-2xl font-bold">{stats.score.toLocaleString()}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
