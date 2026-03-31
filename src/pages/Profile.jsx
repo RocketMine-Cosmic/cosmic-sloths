@@ -70,9 +70,8 @@ export default function Profile({ isCarousel }) {
             setIsEditingName(false);
             
             // Sync the new name across past scores, rewards, and squads
-            if (oldName !== updatedName) {
-                base44.functions.invoke('syncProfileName', { oldName, newName: updatedName }).catch(console.error);
-            }
+            // Always invoke sync in case some old records were missed
+            base44.functions.invoke('syncProfileName', { oldName, newName: updatedName }).catch(console.error);
         } catch (e) {
             console.error(e);
         }
