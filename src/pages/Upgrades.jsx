@@ -83,6 +83,7 @@ export default function Upgrades({ isCarousel }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail', 'kill', or 'skin'
     const [skinCharIndex, setSkinCharIndex] = useState(0);
+    const [previewSkinColor, setPreviewSkinColor] = useState(null); // color being previewed (not yet purchased)
 
     useEffect(() => {
         const updateTimer = () => {
@@ -213,7 +214,7 @@ export default function Upgrades({ isCarousel }) {
             const charSkins = cosmetics.skins || {};
 
             if (currency === 'preview') {
-                setSave(prev => ({ ...prev, cosmetics: { ...prev.cosmetics, skins: { ...(prev.cosmetics?.skins || {}), [cosmetic.charId]: cosmetic.id } } }));
+                setPreviewSkinColor(skin => skin === cosmetic.color ? null : cosmetic.color);
                 SoundManager.playUIClick();
                 return;
             }
@@ -665,25 +666,27 @@ export default function Upgrades({ isCarousel }) {
             <div>
                 <h2 className="text-xl md:text-2xl font-bold text-white mb-3">Cosmetics</h2>
 
-                {/* Live Preview */}
-                <div className="mb-4">
-                    <CosmeticPreview trailId={previewTrail} killEffectId={previewKill} />
-                    <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center">
-                        <span>Trail: <strong className="text-pink-400">{TRAIL_COSMETICS.find(t => t.id === equippedTrail)?.name}</strong></span>
-                        <span>Kill Effect: <strong className="text-pink-400">{KILL_COSMETICS.find(k => k.id === equippedKill)?.name}</strong></span>
+                {/* Live Preview — hidden on skins tab */}
+                {cosmeticTab !== 'skin' && (
+                    <div className="mb-4">
+                        <CosmeticPreview trailId={previewTrail} killEffectId={previewKill} />
+                        <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center">
+                            <span>Trail: <strong className="text-pink-400">{TRAIL_COSMETICS.find(t => t.id === equippedTrail)?.name}</strong></span>
+                            <span>Kill Effect: <strong className="text-pink-400">{KILL_COSMETICS.find(k => k.id === equippedKill)?.name}</strong></span>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Tab switcher */}
                 <div className="flex gap-2 mb-4 border-b border-slate-800 pb-2 flex-wrap">
                     <button
-                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('trail'); }}
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('trail'); setPreviewSkinColor(null); }}
                         className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'trail' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
                         ✨ Trails
                     </button>
                     <button
-                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('kill'); }}
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('kill'); setPreviewSkinColor(null); }}
                         className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'kill' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
                         💥 Kill Effects
@@ -701,13 +704,40 @@ export default function Upgrades({ isCarousel }) {
                     const currentChar = CHARACTERS.find(c => c.id === unlockedChars[skinCharIndex % unlockedChars.length]) || CHARACTERS[0];
                     const charSkins = SKIN_COSMETICS.filter(s => s.charId === currentChar.id);
                     const equippedSkinId = save.cosmetics?.skins?.[currentChar.id] || `${currentChar.id}_default`;
+                    const equippedSkin = SKIN_COSMETICS.find(s => s.id === equippedSkinId) || charSkins[0];
+                    const displayColor = previewSkinColor || equippedSkin?.color || currentChar.color;
                     const unlockedSkins = save.unlockedSkins || [];
 
                     return (
                         <div>
+                            {/* Skin color preview */}
+                            <div className="mb-4 bg-slate-800/60 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
+                                <div className="relative shrink-0">
+                                    <div className="w-16 h-16 rounded-full border-4 border-slate-600 overflow-hidden bg-slate-900 flex items-center justify-center shadow-lg"
+                                        style={{ boxShadow: `0 0 20px ${displayColor}60` }}>
+                                        {currentChar.image
+                                            ? <img src={currentChar.image} alt={currentChar.name} className="w-full h-full object-cover" style={{ filter: `drop-shadow(0 0 6px ${displayColor})` }} />
+                                            : <div className="w-10 h-10 rounded-full" style={{ background: displayColor }} />
+                                        }
+                                    </div>
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-800" style={{ background: displayColor }} />
+                                </div>
+                                <div>
+                                    <div className="font-bold text-white text-sm">{currentChar.name}</div>
+                                    {previewSkinColor
+                                        ? <div className="text-xs text-amber-400 font-bold mt-0.5">👁 Previewing color</div>
+                                        : <div className="text-xs text-pink-400 font-bold mt-0.5">Equipped: {equippedSkin?.name || 'Default'}</div>
+                                    }
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <div className="w-3 h-3 rounded-full border border-slate-600" style={{ background: displayColor }} />
+                                        <span className="text-[10px] text-slate-500 font-mono">{displayColor}</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Character selector */}
                             <div className="flex items-center justify-between bg-slate-800 p-2 rounded-xl mb-4 border border-slate-700">
-                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i - 1 + unlockedChars.length) % unlockedChars.length); }}
+                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i - 1 + unlockedChars.length) % unlockedChars.length); setPreviewSkinColor(null); }}
                                     className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
                                     <ChevronLeft className="w-6 h-6" />
                                 </button>
@@ -719,7 +749,7 @@ export default function Upgrades({ isCarousel }) {
                                         <div className="text-xs text-slate-500 font-normal">{skinCharIndex % unlockedChars.length + 1} / {unlockedChars.length}</div>
                                     </div>
                                 </div>
-                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i + 1) % unlockedChars.length); }}
+                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i + 1) % unlockedChars.length); setPreviewSkinColor(null); }}
                                     className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
                                     <ChevronRight className="w-6 h-6" />
                                 </button>
@@ -749,8 +779,8 @@ export default function Upgrades({ isCarousel }) {
                                             ) : (
                                                 <div className="flex gap-1.5 w-full flex-col">
                                                     <button onClick={() => handleBuyCosmetic(skin, 'skin', 'preview')}
-                                                        className="w-full py-1 rounded-lg font-bold transition-colors text-xs bg-slate-700 text-slate-300 hover:bg-slate-600">
-                                                        👁 Preview
+                                                       className={`w-full py-1 rounded-lg font-bold transition-colors text-xs ${previewSkinColor === skin.color ? 'bg-amber-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                                                       {previewSkinColor === skin.color ? '👁 Previewing' : '👁 Preview'}
                                                     </button>
                                                     <div className="flex gap-1.5">
                                                         <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold}
