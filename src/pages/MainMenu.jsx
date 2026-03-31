@@ -41,13 +41,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
 
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none"></div>
 
-            <button
-                onClick={() => { SoundManager.init(); SoundManager.playUIClick(); base44.auth.logout(); }}
-                className="absolute top-4 right-4 z-20 bg-slate-900/80 hover:bg-red-900/80 text-red-400 p-2 md:px-4 md:py-2 rounded-lg font-bold text-sm transition-colors border border-slate-700 hover:border-red-500 flex items-center gap-2"
-            >
-                <LogOut size={16} /> <span className="hidden md:inline">Logout</span>
-            </button>
-
             <motion.div 
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -80,6 +73,12 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                     className="w-full bg-slate-700/90 backdrop-blur-sm hover:bg-slate-600 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(51,65,85,0.4)] border border-slate-500/30"
                 >
                     SETTINGS
+                </button>
+                <button 
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); base44.auth.logout(); }}
+                    className="col-span-2 w-full bg-red-900/80 backdrop-blur-sm hover:bg-red-800 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(153,27,27,0.4)] border border-red-500/30 flex items-center justify-center gap-2"
+                >
+                    <LogOut size={20} /> LOGOUT
                 </button>
             </motion.div>
             
