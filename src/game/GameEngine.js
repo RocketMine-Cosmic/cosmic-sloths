@@ -3,6 +3,7 @@ import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
 import { selectBossForArena, updateBossAbilities } from './BossSystem';
+import { drawUI } from './UIRenderer';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false) {
@@ -502,7 +503,7 @@ export class GameEngine {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
                 if (elites.length > 0) {
                     const elite = elites[Math.floor(Math.random() * elites.length)];
-                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult, radius: elite.radius * 1.5 });
+                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult, radius: elite.radius * 1.5, isElite: true });
                     this.encounteredEnemies.add(elite.id);
                     SoundManager.playEnemySpawn();
                     return;
@@ -1910,82 +1911,6 @@ export class GameEngine {
 
         this.ctx.restore();
 
-        // --- Radar / Minimap ---
-        this.ctx.save();
-        const mapSize = window.innerWidth < 768 ? 80 : 120;
-        const mapX = this.canvas.width - mapSize - 20;
-        const mapY = 80;
-        
-        // Radar Background
-        this.ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-        this.ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.arc(mapX + mapSize/2, mapY + mapSize/2, mapSize/2, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.stroke();
-
-        // Scanner line
-        this.ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
-        this.ctx.beginPath();
-        this.ctx.moveTo(mapX + mapSize/2, mapY + mapSize/2);
-        this.ctx.lineTo(mapX + mapSize/2 + Math.cos(this.time * 2) * mapSize/2, mapY + mapSize/2 + Math.sin(this.time * 2) * mapSize/2);
-        this.ctx.stroke();
-
-        // Clipping path
-        this.ctx.beginPath();
-        this.ctx.arc(mapX + mapSize/2, mapY + mapSize/2, mapSize/2, 0, Math.PI * 2);
-        this.ctx.clip();
-
-        const radarScale = 0.02; // World to map scale
-
-        // Player Center
-        this.ctx.fillStyle = '#00ffff';
-        this.ctx.beginPath();
-        this.ctx.arc(mapX + mapSize/2, mapY + mapSize/2, 2, 0, Math.PI*2);
-        this.ctx.fill();
-
-        // Hazards
-        this.hazards.forEach(h => {
-            const hx = mapX + mapSize/2 + (h.x - this.player.x) * radarScale;
-            const hy = mapY + mapSize/2 + (h.y - this.player.y) * radarScale;
-            this.ctx.fillStyle = 'rgba(255, 69, 0, 0.5)';
-            this.ctx.beginPath();
-            this.ctx.arc(hx, hy, h.radius * radarScale, 0, Math.PI*2);
-            this.ctx.fill();
-        });
-
-        // Bosses
-        this.enemies.filter(e => e.isBoss).forEach(boss => {
-            const bx = mapX + mapSize/2 + (boss.x - this.player.x) * radarScale;
-            const by = mapY + mapSize/2 + (boss.y - this.player.y) * radarScale;
-            this.ctx.fillStyle = '#ff0000';
-            this.ctx.beginPath();
-            this.ctx.arc(bx, by, 4, 0, Math.PI*2);
-            this.ctx.fill();
-            
-            this.ctx.strokeStyle = '#ff0000';
-            this.ctx.lineWidth = 1;
-            this.ctx.beginPath();
-            this.ctx.arc(bx, by, 4 + Math.sin(this.time * 5) * 2, 0, Math.PI*2);
-            this.ctx.stroke();
-        });
-
-        // Unlock Pod
-        if (this.characterPickup) {
-            const px = mapX + mapSize/2 + (this.characterPickup.x - this.player.x) * radarScale;
-            const py = mapY + mapSize/2 + (this.characterPickup.y - this.player.y) * radarScale;
-            this.ctx.fillStyle = this.characterPickup.color;
-            this.ctx.beginPath();
-            this.ctx.arc(px, py, 3, 0, Math.PI*2);
-            this.ctx.fill();
-            
-            this.ctx.strokeStyle = '#ffffff';
-            this.ctx.beginPath();
-            this.ctx.arc(px, py, 4 + Math.sin(this.time * 8) * 2, 0, Math.PI*2);
-            this.ctx.stroke();
-        }
-
-        this.ctx.restore();
+        drawUI(this.ctx, this.canvas, this.time, this.player, this.hazards, this.enemies, this.characterPickup, this.camera, this.zoom);
     }
 }
