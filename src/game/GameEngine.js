@@ -1387,11 +1387,11 @@ export class GameEngine {
         this.ctx.fillStyle = this.arena.bg;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        if (this.arenaImage && this.arenaImage.complete) {
+        if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
             this.ctx.globalAlpha = 0.5;
-            const scale = Math.max(this.canvas.width / this.arenaImage.width, this.canvas.height / this.arenaImage.height);
-            const drawW = this.arenaImage.width * scale;
-            const drawH = this.arenaImage.height * scale;
+            const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
+            const drawW = this.arenaImage.naturalWidth * scale;
+            const drawH = this.arenaImage.naturalHeight * scale;
             const x = (this.canvas.width - drawW) / 2;
             const y = (this.canvas.height - drawH) / 2;
             this.ctx.drawImage(this.arenaImage, x, y, drawW, drawH);
