@@ -502,129 +502,139 @@ export default function Squads({ isCarousel }) {
                     </div>
                 ) : (
                     // --- IN SQUAD VIEW ---
-                    <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
-                        {/* LEFT PANEL: INFO & BOUNTY */}
-                        <div className="w-full md:w-80 flex flex-col gap-4 shrink-0">
-                            {(() => {
-                                const squadXp = mySquad.xp || 0;
-                                const lvlData = getSquadLevel(squadXp);
-                                const nextLvl = getNextSquadLevel(squadXp);
-                                const xpProgress = getSquadXpProgress(squadXp);
-                                return (
-                            <div className="bg-slate-900 rounded-xl p-4" style={{ border: `2px solid ${lvlData.borderColor}`, boxShadow: `0 0 20px ${lvlData.glowColor}` }}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-2xl">{lvlData.badge}</span>
-                                            <h2 className="text-xl font-bold text-white">{mySquad.name}</h2>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="bg-slate-800 px-1.5 py-0.5 rounded text-xs border" style={{ color: lvlData.borderColor, borderColor: lvlData.borderColor + '60' }}>
-                                                [{mySquad.tag}]
-                                            </span>
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ color: lvlData.borderColor, background: lvlData.glowColor }}>
-                                                Lv.{lvlData.level} {lvlData.name}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={handleLeaveSquad}
-                                        className="text-xs text-red-400 hover:text-red-300 bg-red-950/30 px-2 py-1 rounded border border-red-900/50"
-                                    >
-                                        Leave
-                                    </button>
-                                </div>
-                                <p className="text-sm text-slate-400 mb-3">{mySquad.description}</p>
-
-                                {/* XP Bar */}
-                                <div className="mb-4">
-                                    <div className="flex justify-between text-xs font-bold mb-1">
-                                        <span style={{ color: lvlData.borderColor }}>Squad XP</span>
-                                        {nextLvl ? (
-                                            <span className="text-slate-400">{squadXp.toLocaleString()} / {nextLvl.xpRequired.toLocaleString()}</span>
-                                        ) : (
-                                            <span className="text-yellow-400">MAX LEVEL</span>
-                                        )}
-                                    </div>
-                                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
-                                        <div 
-                                            className="h-full transition-all duration-700 rounded-full"
-                                            style={{ width: `${xpProgress}%`, background: `linear-gradient(to right, ${lvlData.borderColor}99, ${lvlData.borderColor})` }}
-                                        />
-                                    </div>
-                                    {nextLvl && (
-                                        <div className="text-[10px] text-slate-500 mt-1">
-                                            Next: {nextLvl.badge} {nextLvl.name} — earned at end of each week
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {(() => {
-                                    const tier = getBountyTier(mySquad.level || 1);
-                                    const kills = mySquad.weekly_kills || 0;
-                                    const isComplete = kills >= tier.target;
-                                    const isClaimed = myMemberRecord?.last_payout_week === getCurrentWeek();
-                                    return (
-                                    <div className="border-t border-slate-800 pt-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <h3 className="text-sm font-bold text-yellow-400 flex items-center gap-2">
-                                                <Shield className="w-4 h-4" /> {tier.label}
-                                            </h3>
-                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: lvlData.borderColor, background: lvlData.glowColor }}>
-                                                Lv.{mySquad.level || 1}
-                                            </span>
-                                        </div>
-                                        <div className="text-xs text-slate-300 mb-2">
-                                            Defeat {tier.target.toLocaleString()} enemies together this week.
-                                        </div>
-
-                                        {/* Rewards preview */}
-                                        <div className="flex gap-2 mb-3">
-                                            <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                <div className="text-base">🪙</div>
-                                                <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()}</div>
-                                            </div>
-                                            <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                <div className="text-base">🎲</div>
-                                                <div className="text-xs font-bold text-purple-400">×{tier.rerolls}</div>
+                    <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 overflow-hidden">
+                        {/* MOBILE: Compact squad info bar — full LEFT PANEL on desktop */}
+                        {(() => {
+                            const squadXp = mySquad.xp || 0;
+                            const lvlData = getSquadLevel(squadXp);
+                            const nextLvl = getNextSquadLevel(squadXp);
+                            const xpProgress = getSquadXpProgress(squadXp);
+                            const tier = getBountyTier(mySquad.level || 1);
+                            const kills = mySquad.weekly_kills || 0;
+                            const isComplete = kills >= tier.target;
+                            const isClaimed = myMemberRecord?.last_payout_week === getCurrentWeek();
+                            return (
+                                <>
+                                {/* MOBILE compact strip */}
+                                <div className="md:hidden bg-slate-900 rounded-xl p-3 shrink-0" style={{ border: `2px solid ${lvlData.borderColor}`, boxShadow: `0 0 12px ${lvlData.glowColor}` }}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="text-xl shrink-0">{lvlData.badge}</span>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="font-bold text-white text-sm truncate">{mySquad.name}</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded border shrink-0" style={{ color: lvlData.borderColor, borderColor: lvlData.borderColor + '60', background: lvlData.glowColor }}>
+                                                        [{mySquad.tag}] Lv.{lvlData.level}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                        
-                                        <div className="flex justify-between text-xs font-bold mb-1">
-                                            <span className="text-slate-400">Progress</span>
-                                            <span className="text-white">
-                                                {Math.min(kills, tier.target).toLocaleString()} / {tier.target.toLocaleString()}
-                                            </span>
+                                        <button onClick={handleLeaveSquad} className="text-xs text-red-400 bg-red-950/30 px-2 py-1 rounded border border-red-900/50 shrink-0 ml-2">
+                                            Leave
+                                        </button>
+                                    </div>
+                                    {/* XP bar */}
+                                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
+                                        <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress}%`, background: lvlData.borderColor }} />
+                                    </div>
+                                    {/* Bounty progress row */}
+                                    <div className="flex items-center gap-2">
+                                        <Shield className="w-3 h-3 text-yellow-400 shrink-0" />
+                                        <span className="text-[10px] text-slate-400 flex-1 truncate">{tier.label}: {Math.min(kills, tier.target).toLocaleString()}/{tier.target.toLocaleString()}</span>
+                                        <div className="w-20 bg-slate-800 h-2 rounded-full overflow-hidden shrink-0">
+                                            <div className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full" style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }} />
                                         </div>
-                                        <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700 mb-3">
-                                            <div 
-                                                className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full transition-all duration-500" 
-                                                style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }}
-                                            />
-                                        </div>
-                                        
-                                        {isComplete && !isClaimed ? (
-                                            <button
-                                                onClick={handleClaimWeekly}
-                                                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]"
-                                            >
-                                                <Gift className="w-4 h-4" /> CLAIM WEEKLY PAYOUT
+                                        {isComplete && !isClaimed && (
+                                            <button onClick={handleClaimWeekly} className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold animate-pulse shrink-0">
+                                                CLAIM
                                             </button>
-                                        ) : isClaimed ? (
-                                            <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-2 rounded-lg border border-emerald-900/50">
-                                                ✓ PAYOUT CLAIMED FOR THIS WEEK
-                                            </div>
-                                        ) : null}
+                                        )}
+                                        {isClaimed && <span className="text-[10px] text-emerald-500 font-bold shrink-0">✓ Claimed</span>}
                                     </div>
-                                    );
-                                })()}
-                            </div>
-                                );
-                            })()}
-                        </div>
+                                </div>
+
+                                {/* DESKTOP full left panel */}
+                                <div className="hidden md:flex w-80 flex-col gap-4 shrink-0">
+                                    <div className="bg-slate-900 rounded-xl p-4" style={{ border: `2px solid ${lvlData.borderColor}`, boxShadow: `0 0 20px ${lvlData.glowColor}` }}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-2xl">{lvlData.badge}</span>
+                                                    <h2 className="text-xl font-bold text-white">{mySquad.name}</h2>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-slate-800 px-1.5 py-0.5 rounded text-xs border" style={{ color: lvlData.borderColor, borderColor: lvlData.borderColor + '60' }}>
+                                                        [{mySquad.tag}]
+                                                    </span>
+                                                    <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ color: lvlData.borderColor, background: lvlData.glowColor }}>
+                                                        Lv.{lvlData.level} {lvlData.name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button onClick={handleLeaveSquad} className="text-xs text-red-400 hover:text-red-300 bg-red-950/30 px-2 py-1 rounded border border-red-900/50">
+                                                Leave
+                                            </button>
+                                        </div>
+                                        <p className="text-sm text-slate-400 mb-3">{mySquad.description}</p>
+                                        <div className="mb-4">
+                                            <div className="flex justify-between text-xs font-bold mb-1">
+                                                <span style={{ color: lvlData.borderColor }}>Squad XP</span>
+                                                {nextLvl ? (
+                                                    <span className="text-slate-400">{squadXp.toLocaleString()} / {nextLvl.xpRequired.toLocaleString()}</span>
+                                                ) : (
+                                                    <span className="text-yellow-400">MAX LEVEL</span>
+                                                )}
+                                            </div>
+                                            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                                                <div className="h-full transition-all duration-700 rounded-full" style={{ width: `${xpProgress}%`, background: `linear-gradient(to right, ${lvlData.borderColor}99, ${lvlData.borderColor})` }} />
+                                            </div>
+                                            {nextLvl && <div className="text-[10px] text-slate-500 mt-1">Next: {nextLvl.badge} {nextLvl.name} — earned at end of each week</div>}
+                                        </div>
+                                        <div className="border-t border-slate-800 pt-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <h3 className="text-sm font-bold text-yellow-400 flex items-center gap-2">
+                                                    <Shield className="w-4 h-4" /> {tier.label}
+                                                </h3>
+                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: lvlData.borderColor, background: lvlData.glowColor }}>
+                                                    Lv.{mySquad.level || 1}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-slate-300 mb-2">Defeat {tier.target.toLocaleString()} enemies together this week.</div>
+                                            <div className="flex gap-2 mb-3">
+                                                <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                    <div className="text-base">🪙</div>
+                                                    <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()}</div>
+                                                </div>
+                                                <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                    <div className="text-base">🎲</div>
+                                                    <div className="text-xs font-bold text-purple-400">×{tier.rerolls}</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between text-xs font-bold mb-1">
+                                                <span className="text-slate-400">Progress</span>
+                                                <span className="text-white">{Math.min(kills, tier.target).toLocaleString()} / {tier.target.toLocaleString()}</span>
+                                            </div>
+                                            <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700 mb-3">
+                                                <div className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full transition-all duration-500" style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }} />
+                                            </div>
+                                            {isComplete && !isClaimed ? (
+                                                <button onClick={handleClaimWeekly} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                                    <Gift className="w-4 h-4" /> CLAIM WEEKLY PAYOUT
+                                                </button>
+                                            ) : isClaimed ? (
+                                                <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-2 rounded-lg border border-emerald-900/50">
+                                                    ✓ PAYOUT CLAIMED FOR THIS WEEK
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                </div>
+                                </>
+                            );
+                        })()}
 
                         {/* RIGHT PANEL: CHAT, MEMBERS & SETTINGS */}
-                        <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden min-h-[400px]">
+                        <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden" style={{ minHeight: '65vh' }}>
                             <div className="flex border-b border-slate-800 shrink-0">
                                 <button 
                                     onClick={() => setActiveTab('chat')}
