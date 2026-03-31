@@ -1524,6 +1524,11 @@ export class GameEngine {
             }
         }
 
+        this.ctx.globalCompositeOperation = 'screen';
+        const texStar = this.particleManager?.textures?.star;
+        const texSlash = this.particleManager?.textures?.slash;
+        const texShockwave = this.particleManager?.textures?.shockwave;
+
         this.projectiles.forEach(p => {
             this.ctx.save();
             this.ctx.translate(p.x, p.y);
@@ -1531,14 +1536,23 @@ export class GameEngine {
                 this.ctx.rotate(Math.atan2(p.vy, p.vx));
             }
             
+            // Glowing Aura
+            this.ctx.globalAlpha = 0.5;
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 2.5);
+            grad.addColorStop(0, p.color || '#ffffff');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1.0;
+
             if (p.type === 'beam' || p.type === 'dual_laser') {
                 this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius, -p.radius/2, p.radius*2, p.radius);
-                this.ctx.fillStyle = p.color;
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.fillRect(-p.radius*1.5, -p.radius, p.radius*3, p.radius*2);
+                this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2);
+                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*1.5, -p.radius, p.radius*3, p.radius*2);
             } else if (p.type === 'lightning') {
-                this.ctx.strokeStyle = p.color;
+                this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 2;
                 this.ctx.beginPath();
                 this.ctx.moveTo(-p.radius, 0);
@@ -1548,54 +1562,25 @@ export class GameEngine {
                 this.ctx.lineTo(p.radius, 0);
                 this.ctx.stroke();
             } else if (p.type === 'glitch_slash') {
-                this.ctx.fillStyle = p.color;
-                this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2);
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius/2, -p.radius/8, p.radius, p.radius/4);
+                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
+                else { this.ctx.fillStyle = '#ffffff'; this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2); }
             } else if (p.type === 'stomp') {
-                this.ctx.fillStyle = p.color;
-                this.ctx.beginPath();
-                for(let i=0; i<12; i++) {
-                    const a = (Math.PI * 2 / 12) * i;
-                    const r = p.radius * (i % 2 === 0 ? 1 : 0.8);
-                    this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r * 0.5);
-                }
-                this.ctx.closePath();
-                this.ctx.fill();
+                if (texShockwave && texShockwave.isReady) this.ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
             } else if (p.type === 'repair_beam') {
-                this.ctx.strokeStyle = p.color;
+                this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
                 this.ctx.moveTo(-p.radius, 0);
                 this.ctx.lineTo(p.radius, 0);
                 this.ctx.stroke();
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 1;
-                this.ctx.beginPath();
-                this.ctx.moveTo(-p.radius, 0);
-                this.ctx.lineTo(p.radius, 0);
-                this.ctx.stroke();
             } else if (p.type === 'missile') {
-                this.ctx.fillStyle = '#cccccc';
-                this.ctx.fillRect(-p.radius, -p.radius*0.3, p.radius*1.5, p.radius*0.6);
-                this.ctx.fillStyle = '#ff4500';
-                this.ctx.beginPath();
-                this.ctx.moveTo(p.radius*0.5, -p.radius*0.3);
-                this.ctx.lineTo(p.radius*1.2, 0);
-                this.ctx.lineTo(p.radius*0.5, p.radius*0.3);
-                this.ctx.fill();
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(-p.radius, -p.radius*0.2, p.radius*1.5, p.radius*0.4);
+                if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius, p.radius*2, p.radius*2);
             } else if (p.type === 'data_pulse') {
-                this.ctx.fillStyle = p.color;
-                this.ctx.fillRect(-p.radius*0.8, -p.radius*0.8, p.radius*1.6, p.radius*1.6);
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius*0.4, -p.radius*0.4, p.radius*0.8, p.radius*0.8);
+                if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
             } else if (p.type === 'phantom_orb') {
-                this.ctx.fillStyle = p.color;
-                this.ctx.globalAlpha = 0.7;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.globalAlpha = 1.0;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, p.radius*0.4, 0, Math.PI*2); this.ctx.fill();
+                if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
             } else if (p.type === 'railgun') {
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 2;
@@ -1603,41 +1588,40 @@ export class GameEngine {
                 this.ctx.moveTo(-p.radius*2, 0);
                 this.ctx.lineTo(p.radius*2, 0);
                 this.ctx.stroke();
-                this.ctx.fillStyle = p.color;
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.fillRect(-p.radius*2, -2, p.radius*4, 4);
+                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
             } else if (p.type === 'sonic_wave') {
-                this.ctx.strokeStyle = p.color;
+                this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
                 this.ctx.stroke();
-                this.ctx.beginPath();
-                this.ctx.arc(p.radius*0.5, 0, p.radius*1.5, -Math.PI/3, Math.PI/3);
-                this.ctx.stroke();
+                if (texShockwave && texShockwave.isReady) this.ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
             } else if (p.isAoe) {
-                this.ctx.fillStyle = p.color;
-                this.ctx.beginPath();
-                for (let i=0; i<16; i++) {
-                    const a = (Math.PI * 2 / 16) * i;
-                    this.ctx.lineTo(Math.cos(a) * p.radius, Math.sin(a) * p.radius);
+                if (texShockwave && texShockwave.isReady) {
+                    this.ctx.globalAlpha = 0.8;
+                    this.ctx.drawImage(texShockwave, -p.radius, -p.radius, p.radius*2, p.radius*2);
+                    this.ctx.globalAlpha = 1.0;
+                } else {
+                    this.ctx.strokeStyle = '#ffffff';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                    this.ctx.stroke();
                 }
-                this.ctx.closePath();
-                this.ctx.fill();
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.stroke();
             } else {
                 // Default projectile
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius*0.5, -p.radius*0.5, p.radius, p.radius);
-                this.ctx.fillStyle = p.color;
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.fillRect(-p.radius, -p.radius, p.radius*2, p.radius*2);
+                if (texStar && texStar.isReady) {
+                    this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+                } else {
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, p.radius*0.5, 0, Math.PI*2);
+                    this.ctx.fill();
+                }
             }
             this.ctx.restore();
         });
+        this.ctx.globalCompositeOperation = 'source-over';
 
         if (this.hazards) {
             this.hazards.forEach(h => {
@@ -1667,6 +1651,8 @@ export class GameEngine {
         }
 
         if (this.enemyProjectiles) {
+            this.ctx.globalCompositeOperation = 'screen';
+            const texStar = this.particleManager?.textures?.star;
             this.enemyProjectiles.forEach(p => {
                 this.ctx.save();
                 this.ctx.translate(p.x, p.y);
@@ -1674,25 +1660,30 @@ export class GameEngine {
                     this.ctx.rotate(Math.atan2(p.vy, p.vx));
                 }
                 
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath();
-                this.ctx.moveTo(p.radius, 0);
-                this.ctx.lineTo(-p.radius, p.radius*0.5);
-                this.ctx.lineTo(-p.radius*0.5, 0);
-                this.ctx.lineTo(-p.radius, -p.radius*0.5);
-                this.ctx.fill();
-                
-                this.ctx.fillStyle = p.color;
                 this.ctx.globalAlpha = 0.6;
+                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 2);
+                grad.addColorStop(0, p.color || '#ff0000');
+                grad.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = grad;
                 this.ctx.beginPath();
-                this.ctx.moveTo(p.radius*1.5, 0);
-                this.ctx.lineTo(-p.radius*1.2, p.radius*0.8);
-                this.ctx.lineTo(-p.radius*0.8, 0);
-                this.ctx.lineTo(-p.radius*1.2, -p.radius*0.8);
+                this.ctx.arc(0, 0, p.radius * 2, 0, Math.PI * 2);
                 this.ctx.fill();
-                
+                this.ctx.globalAlpha = 1.0;
+
+                if (texStar && texStar.isReady) {
+                    this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+                } else {
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(p.radius, 0);
+                    this.ctx.lineTo(-p.radius, p.radius*0.5);
+                    this.ctx.lineTo(-p.radius*0.5, 0);
+                    this.ctx.lineTo(-p.radius, -p.radius*0.5);
+                    this.ctx.fill();
+                }
                 this.ctx.restore();
             });
+            this.ctx.globalCompositeOperation = 'source-over';
         }
 
         const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
@@ -1719,6 +1710,20 @@ export class GameEngine {
                 this.ctx.save();
                 this.ctx.translate(px, py);
                 this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
+
+                // Add HD aura
+                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalAlpha = 0.5;
+                const auraCol = isMastered ? '#ff0000' : '#8B4513';
+                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+                grad.addColorStop(0, auraCol);
+                grad.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = grad;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.globalAlpha = 1.0;
                 
                 // Draw Sloth Head shape
                 this.ctx.fillStyle = isMastered ? '#FF0000' : '#8B4513';
@@ -1748,6 +1753,19 @@ export class GameEngine {
                 this.ctx.save();
                 this.ctx.translate(px, py);
                 this.ctx.rotate(this.time * 5); // Spin
+                
+                // Add HD aura
+                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalAlpha = 0.5;
+                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+                grad.addColorStop(0, '#32CD32');
+                grad.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = grad;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.globalAlpha = 1.0;
                 
                 // Spiky Ball
                 this.ctx.fillStyle = '#32CD32';
