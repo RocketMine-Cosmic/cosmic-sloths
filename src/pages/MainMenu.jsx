@@ -6,13 +6,10 @@ import { Pencil, Check, X, LogOut } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { ThemeManager } from '../game/ThemeManager';
 import SettingsModal from '../components/game/SettingsModal';
-import SetProfileNameModal from '../components/game/SetProfileNameModal';
-
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
-    const [needsProfileName, setNeedsProfileName] = useState(false);
     const [theme, setTheme] = useState(ThemeManager.getTheme());
 
     useEffect(() => {
@@ -26,9 +23,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             try {
                 const me = await base44.auth.me();
                 setUser(me);
-                if (!me?.full_name || me.full_name.includes('@')) {
-                    setNeedsProfileName(true);
-                }
             } catch (e) {
                 console.error(e);
             }
@@ -94,12 +88,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             </div>
 
             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-            {needsProfileName && (
-                <SetProfileNameModal onComplete={(name) => {
-                    setUser(prev => ({ ...prev, full_name: name }));
-                    setNeedsProfileName(false);
-                }} />
-            )}
         </div>
     );
 }

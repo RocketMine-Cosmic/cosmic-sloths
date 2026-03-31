@@ -21,19 +21,24 @@ import Profile from './pages/Profile';
 import LeviathanTrials from './pages/LeviathanTrials';
 import Dailys from './pages/Dailys';
 import { SaveManager } from './game/SaveManager';
+import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
   const [saveInitialized, setSaveInitialized] = useState(false);
+  const [needsProfileName, setNeedsProfileName] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAuth && !authError) {
       SaveManager.initialize().then(() => setSaveInitialized(true));
+      if (user && (!user.full_name || user.full_name.includes('@'))) {
+          setNeedsProfileName(true);
+      }
     } else if (authError) {
       setSaveInitialized(true);
     }
-  }, [isLoadingAuth, authError]);
+  }, [isLoadingAuth, authError, user]);
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth || (!saveInitialized && !authError)) {
@@ -57,6 +62,7 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
+    <>
     <Routes>
       <Route path="/" element={<PlayCarousel />} />
       <Route path="/hub" element={<Hub />} />
@@ -73,6 +79,12 @@ const AuthenticatedApp = () => {
       <Route path="/dailys" element={<Dailys />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    {needsProfileName && (
+      <SetProfileNameModal onComplete={() => {
+          setNeedsProfileName(false);
+      }} />
+    )}
+    </>
   );
 };
 
