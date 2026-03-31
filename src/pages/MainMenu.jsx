@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Pencil, Check, X } from 'lucide-react';
+import { Pencil, Check, X, LogOut } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { ThemeManager } from '../game/ThemeManager';
 import SettingsModal from '../components/game/SettingsModal';
@@ -11,8 +11,6 @@ import SetProfileNameModal from '../components/game/SetProfileNameModal';
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
-    const [isEditingName, setIsEditingName] = useState(false);
-    const [newName, setNewName] = useState('');
     const [showSettings, setShowSettings] = useState(false);
     const [needsProfileName, setNeedsProfileName] = useState(false);
     const [theme, setTheme] = useState(ThemeManager.getTheme());
@@ -28,7 +26,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             try {
                 const me = await base44.auth.me();
                 setUser(me);
-                setNewName(me?.full_name || '');
                 if (!me?.full_name || me.full_name.includes('@')) {
                     setNeedsProfileName(true);
                 }
@@ -38,17 +35,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
         };
         fetchUser();
     }, []);
-
-    const handleSaveName = async () => {
-        if (!newName.trim()) return;
-        try {
-            await base44.auth.updateMe({ full_name: newName.trim() });
-            setUser(prev => ({ ...prev, full_name: newName.trim() }));
-            setIsEditingName(false);
-        } catch (e) {
-            console.error(e);
-        }
-    };
 
 
 
@@ -60,6 +46,13 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
 
 
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none"></div>
+
+            <button
+                onClick={() => { SoundManager.init(); SoundManager.playUIClick(); base44.auth.logout(); }}
+                className="absolute top-4 right-4 z-20 bg-slate-900/80 hover:bg-red-900/80 text-red-400 p-2 md:px-4 md:py-2 rounded-lg font-bold text-sm transition-colors border border-slate-700 hover:border-red-500 flex items-center gap-2"
+            >
+                <LogOut size={16} /> <span className="hidden md:inline">Logout</span>
+            </button>
 
             <motion.div 
                 initial={{ y: 50, opacity: 0 }}
@@ -104,7 +97,6 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             {needsProfileName && (
                 <SetProfileNameModal onComplete={(name) => {
                     setUser(prev => ({ ...prev, full_name: name }));
-                    setNewName(name);
                     setNeedsProfileName(false);
                 }} />
             )}
