@@ -1,6 +1,45 @@
+const VFX_SPRITESHEET_URL = 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/83f1917f1_VFX_spritesheet.png';
+
+const SPRITE_MAP = {
+    // Row 0
+    spark_1: { x: 0, y: 0, w: 64, h: 64 },
+    spark_2: { x: 64, y: 0, w: 64, h: 64 },
+    spark_3: { x: 128, y: 0, w: 64, h: 64 },
+    smoke_1: { x: 192, y: 0, w: 64, h: 64 },
+    smoke_2: { x: 256, y: 0, w: 64, h: 64 },
+    // Row 1
+    flash: { x: 0, y: 64, w: 64, h: 64 },
+    ring: { x: 64, y: 64, w: 64, h: 64 },
+    circle: { x: 128, y: 64, w: 64, h: 64 },
+    slash: { x: 192, y: 64, w: 64, h: 64 },
+    fragment_1: { x: 256, y: 64, w: 64, h: 64 },
+    // Row 2
+    fragment_2: { x: 0, y: 128, w: 64, h: 64 },
+    fragment_3: { x: 64, y: 128, w: 64, h: 64 },
+    implode: { x: 128, y: 128, w: 64, h: 64 },
+    muzzle_flash: { x: 192, y: 128, w: 64, h: 64 },
+    blood_1: { x: 256, y: 128, w: 64, h: 64 },
+};
+
 export class ParticleManager {
     constructor() {
         this.particles = [];
+        this.spriteSheet = null;
+        this.loadSpriteSheet();
+    }
+
+    loadSpriteSheet() {
+        if (typeof window !== 'undefined') {
+            this.spriteSheet = new Image();
+            this.spriteSheet.src = VFX_SPRITESHEET_URL;
+            this.spriteSheet.onload = () => {
+                console.log("VFX Spritesheet loaded.");
+            };
+            this.spriteSheet.onerror = () => {
+                console.error("Failed to load VFX spritesheet.");
+                this.spriteSheet = null;
+            };
+        }
     }
 
     update(dt) {
@@ -44,67 +83,35 @@ export class ParticleManager {
     }
 
     draw(ctx) {
-        ctx.save();
-        
-        // Draw normal particles
-        ctx.globalCompositeOperation = 'screen';
-        this.particles.forEach(p => {
-            if (p.type === 'smoke') return; // Draw smoke later with source-over
-            
-            ctx.globalAlpha = Math.max(0, p.life / (p.maxLife || 1));
-            ctx.fillStyle = p.color;
-            ctx.strokeStyle = p.color;
-            
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.rotation || 0);
+        if (!this.spriteSheet || !this.spriteSheet.complete) return;
 
-            if (p.type === 'spark') {
-                ctx.fillRect(-p.size/2, -p.size*2, p.size, p.size*4); // Stretched spark
-            } else if (p.type === 'glow') {
-                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
-                grad.addColorStop(0, p.color);
-                grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad;
-                ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
-            } else if (p.type === 'slash') {
-                ctx.fillRect(-p.size*2, -p.size/4, p.size*4, p.size/2);
-            } else if (p.type === 'glitch') {
-                ctx.fillRect(-p.size, -p.size/2, p.size*2, p.size);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
-            } else if (p.type === 'circle') {
-                ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill();
-            } else if (p.type === 'shatter') {
-                ctx.beginPath();
-                ctx.moveTo(0, -p.size);
-                ctx.lineTo(p.size, p.size);
-                ctx.lineTo(-p.size, p.size);
-                ctx.fill();
-            } else if (p.type === 'shockwave') {
-                ctx.beginPath();
-                ctx.arc(0, 0, p.size, 0, Math.PI*2);
-                ctx.lineWidth = p.lineWidth || 2;
-                ctx.stroke();
-            } else if (p.type === 'implode') {
-                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-            } else {
-                const s = p.size ? p.size : 4;
-                ctx.fillRect(-s/2, -s/2, s, s);
-            }
-            ctx.restore();
-        });
-        
-        // Draw smoke
-        ctx.globalCompositeOperation = 'source-over';
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+
         this.particles.forEach(p => {
-            if (p.type !== 'smoke') return;
-            ctx.globalAlpha = Math.max(0, p.life / (p.maxLife || 1)) * 0.5;
-            ctx.fillStyle = p.color;
+            if (!p.sprite) return;
+
+            const alpha = Math.max(0, p.life / (p.maxLife || 1));
+            if (alpha <= 0) return;
+
             ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.rotation || 0);
-            ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = alpha;
+            
+            if (p.tint) {
+                // This is a simple way to tint. For better performance, consider offscreen canvas tinting.
+                ctx.globalCompositeOperation = 'source-atop';
+                ctx.fillStyle = p.tint;
+                ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
+            }
+
+            const s = p.size || 32;
+            ctx.drawImage(
+                this.spriteSheet,
+                p.sprite.x, p.sprite.y, p.sprite.w, p.sprite.h,
+                -s / 2, -s / 2, s, s
+            );
             ctx.restore();
         });
 
@@ -112,18 +119,55 @@ export class ParticleManager {
     }
 
     addParticle(x, y, color, count, type = 'spark', sizeMult = 1, options = {}) {
-        for(let i=0; i<count; i++) {
-            const angle = options.angle !== undefined ? options.angle + (Math.random()-0.5)*0.5 : Math.random() * Math.PI * 2;
+        for (let i = 0; i < count; i++) {
+            const angle = options.angle !== undefined ? options.angle + (Math.random() - 0.5) * 0.5 : Math.random() * Math.PI * 2;
             const speed = options.speed !== undefined ? options.speed : Math.random() * 150 * sizeMult + 50;
+
+            let sprite = null;
+            switch (type) {
+                case 'spark':
+                    sprite = SPRITE_MAP[['spark_1', 'spark_2', 'spark_3'][Math.floor(Math.random() * 3)]];
+                    break;
+                case 'smoke':
+                    sprite = SPRITE_MAP[['smoke_1', 'smoke_2'][Math.floor(Math.random() * 2)]];
+                    break;
+                case 'glow':
+                case 'flash':
+                    sprite = SPRITE_MAP.flash;
+                    break;
+                case 'shatter':
+                case 'fragment':
+                    sprite = SPRITE_MAP[['fragment_1', 'fragment_2', 'fragment_3'][Math.floor(Math.random() * 3)]];
+                    break;
+                case 'slash':
+                    sprite = SPRITE_MAP.slash;
+                    break;
+                 case 'shockwave':
+                 case 'ring':
+                    sprite = SPRITE_MAP.ring;
+                    break;
+                case 'implode':
+                    sprite = SPRITE_MAP.implode;
+                    break;
+                case 'blood':
+                     sprite = SPRITE_MAP.blood_1;
+                     break;
+                case 'circle':
+                default:
+                    sprite = SPRITE_MAP.circle;
+                    break;
+            }
+
             this.particles.push({
-                x, y, 
-                vx: Math.cos(angle) * speed, 
+                x, y,
+                vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: Math.random() * 0.5 + 0.2 + (options.lifeBonus || 0), 
-                maxLife: 0.7 + (options.lifeBonus || 0),
-                color,
+                life: Math.random() * 0.5 + 0.3 + (options.lifeBonus || 0),
+                maxLife: 0.8 + (options.lifeBonus || 0),
+                tint: color, // Use for tinting the sprite
                 type,
-                size: (Math.random() * 4 + 2) * sizeMult,
+                sprite,
+                size: (Math.random() * 24 + 16) * sizeMult, // Sprites are 64x64, so size is larger
                 rotation: Math.random() * Math.PI * 2,
                 rotSpeed: (Math.random() - 0.5) * 15,
                 gravity: options.gravity || false,
