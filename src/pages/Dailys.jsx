@@ -4,6 +4,7 @@ import { ArrowLeft, Target } from 'lucide-react';
 import { SaveManager } from '../game/SaveManager';
 import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
+import DailyLoginPanel from '../components/game/DailyLoginPanel';
 
 export default function Dailys({ isCarousel }) {
     const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function Dailys({ isCarousel }) {
                 </header>
                 
                 <div className="flex-1 overflow-y-auto">
+                    <DailyLoginPanel save={save} setSave={setSave} />
                     <BountiesPanel save={save} setSave={setSave} />
                 </div>
             </div>
