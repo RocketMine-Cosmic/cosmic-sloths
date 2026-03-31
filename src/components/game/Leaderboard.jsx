@@ -264,8 +264,8 @@ export default function Leaderboard() {
                                         <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
                                             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 text-xl">🦥</div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-bold text-white text-lg md:text-xl truncate" title={score.player_name}>
-                                                    {score.player_name}
+                                                <div className="font-bold text-white text-lg md:text-xl truncate">
+                                                    {score.player_name?.includes('@') ? score.player_name.split('@')[0] : score.player_name}
                                                 </div>
                                                 {arena && view !== 'endless' && (
                                                     <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5">
