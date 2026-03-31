@@ -39,7 +39,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
     };
 
     return (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div className="absolute inset-0 bg-black/95 flex items-center justify-center z-50 p-4">
             <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -66,10 +66,9 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                         return (
                             <motion.button
                                 key={i}
-                                layout
                                 onClick={() => handleSelect(i)}
                                 disabled={revealedIndex !== null}
-                                className={`relative p-3 md:p-6 rounded-xl text-left transition-all duration-500 flex flex-col min-h-[90px] md:min-h-[160px] border-2 ${
+                                className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-300 flex flex-col min-h-[90px] md:min-h-[160px] border-2 ${
                                     isRevealed 
                                     ? `${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ')[1]} ${rarityColors[choice.rarity].split(' ')[2] || ''}` 
                                     : 'bg-slate-800 border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer'
@@ -93,9 +92,9 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                     ) : (
                                         <motion.div
                                             key="revealed"
-                                            initial={{ opacity: 0, rotateY: 180 }}
-                                            animate={{ opacity: 1, rotateY: 0 }}
-                                            transition={{ duration: 0.5 }}
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ duration: 0.3 }}
                                             className="flex flex-col h-full w-full"
                                         >
                                             <div className={`text-[10px] md:text-xs font-bold mb-1 md:mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
