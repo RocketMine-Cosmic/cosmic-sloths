@@ -83,7 +83,7 @@ export class ParticleManager {
     }
 
     draw(ctx) {
-        if (!this.spriteSheet || !this.spriteSheet.complete) return;
+        if (!this.spriteSheet || !this.spriteSheet.complete || this.spriteSheet.naturalWidth === 0) return;
 
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
@@ -107,11 +107,15 @@ export class ParticleManager {
             }
 
             const s = p.size || 32;
-            ctx.drawImage(
-                this.spriteSheet,
-                p.sprite.x, p.sprite.y, p.sprite.w, p.sprite.h,
-                -s / 2, -s / 2, s, s
-            );
+            try {
+                ctx.drawImage(
+                    this.spriteSheet,
+                    p.sprite.x, p.sprite.y, p.sprite.w, p.sprite.h,
+                    -s / 2, -s / 2, s, s
+                );
+            } catch (e) {
+                // Sprite sheet not ready yet, skip
+            }
             ctx.restore();
         });
 
