@@ -680,7 +680,7 @@ export default function Squads({ isCarousel }) {
                                                             {msg.content}
                                                         </div>
                                                     ) : (
-                                                        <div className={`max-w-[80%] rounded-lg p-2 md:p-3 ${
+                                                        <div className={`max-w-[70%] rounded-lg p-2 ${
                                                             msg.user_id === user.id 
                                                                 ? 'bg-cyan-900/50 text-white border border-cyan-800' 
                                                                 : 'bg-slate-800 text-slate-200 border border-slate-700'
@@ -688,7 +688,7 @@ export default function Squads({ isCarousel }) {
                                                             <div className="text-[10px] font-bold opacity-50 mb-0.5">
                                                                 {msg.player_name}
                                                             </div>
-                                                            <div className="text-sm md:text-base break-words">
+                                                            <div className="text-sm break-words">
                                                                 {msg.content}
                                                             </div>
                                                         </div>
