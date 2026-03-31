@@ -79,7 +79,8 @@ export default function Game() {
             try {
                 const user = await base44.auth.me();
                 if (!user) return;
-                if (!user.full_name) {
+                const displayName = user.data?.full_name || user.full_name;
+                if (!displayName) {
                     console.error('saveScore: user has no full_name, skipping.');
                     return;
                 }
@@ -122,7 +123,7 @@ export default function Game() {
 
                 const scoreData = {
                     user_id: user.id,
-                    player_name: user.full_name,
+                    player_name: displayName,
                     score,
                     time_survived: stats.time,
                     level: stats.level,
@@ -144,7 +145,7 @@ export default function Game() {
                         await base44.entities.RunScore.update(best.id, scoreData);
                     } else {
                         // Still update player_name in case it changed
-                        await base44.entities.RunScore.update(best.id, { player_name: user.full_name });
+                        await base44.entities.RunScore.update(best.id, { player_name: displayName });
                     }
                 } else {
                     await base44.entities.RunScore.create(scoreData);

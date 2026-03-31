@@ -34,7 +34,8 @@ export default function Hub({ isCarousel }) {
             try {
                 const user = await base44.auth.me();
                 if (!user) return;
-                const pending = await base44.entities.PendingReward.filter({ player_name: user.full_name, claimed: false });
+                const displayName = user.data?.full_name || user.full_name;
+                const pending = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: false });
                 if (pending.length > 0) {
                     let totalAmount = 0;
                     for (const reward of pending) {

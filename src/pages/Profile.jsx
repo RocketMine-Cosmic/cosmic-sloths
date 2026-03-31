@@ -25,11 +25,12 @@ export default function Profile({ isCarousel }) {
             try {
                 const me = await base44.auth.me();
                 setUser(me);
-                setNewName(me?.full_name || '');
+                const displayName = me?.data?.full_name || me?.full_name;
+                setNewName(displayName || '');
 
                 if (me) {
                     // Fetch Highest Score
-                    const topScore = await base44.entities.RunScore.filter({ player_name: me.full_name }, '-score', 1);
+                    const topScore = await base44.entities.RunScore.filter({ player_name: displayName }, '-score', 1);
                     const maxScore = topScore.length > 0 ? topScore[0].score : 0;
 
                     // Fetch total kills from local save
@@ -48,7 +49,7 @@ export default function Profile({ isCarousel }) {
                     }
 
                     // Fetch Rewards History
-                    const rewards = await base44.entities.PendingReward.filter({ player_name: me.full_name, claimed: true }, '-period_id', 50);
+                    const rewards = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: true }, '-period_id', 50);
                     setRewardsHistory(rewards);
                 }
             } catch (e) {
@@ -61,11 +62,11 @@ export default function Profile({ isCarousel }) {
 
     const handleSaveName = async () => {
         if (!newName.trim()) return;
-        const oldName = user.full_name;
+        const oldName = user?.data?.full_name || user?.full_name;
         const updatedName = newName.trim();
         try {
             await base44.auth.updateMe({ full_name: updatedName });
-            setUser(prev => ({ ...prev, full_name: updatedName }));
+            setUser(prev => ({ ...prev, data: { ...prev?.data, full_name: updatedName } }));
             setIsEditingName(false);
             
             // Sync the new name across past scores, rewards, and squads
@@ -123,13 +124,13 @@ export default function Profile({ isCarousel }) {
                                         <button onClick={handleSaveName} className="p-2 bg-green-900/30 text-green-400 hover:bg-green-900/50 rounded-lg transition-colors border border-green-500/30">
                                             <Check size={20} />
                                         </button>
-                                        <button onClick={() => { setIsEditingName(false); setNewName(user?.full_name || ''); }} className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-lg transition-colors border border-red-500/30">
+                                        <button onClick={() => { setIsEditingName(false); setNewName(user?.data?.full_name || user?.full_name || ''); }} className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-lg transition-colors border border-red-500/30">
                                             <X size={20} />
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-3">
-                                        <span className="text-2xl md:text-3xl font-bold text-white">{user?.full_name || 'Anonymous'}</span>
+                                        <span className="text-2xl md:text-3xl font-bold text-white">{user?.data?.full_name || user?.full_name || 'Anonymous'}</span>
                                         <button onClick={() => setIsEditingName(true)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-md transition-colors border border-slate-700 hover:border-slate-500">
                                             <Pencil size={16} />
                                         </button>

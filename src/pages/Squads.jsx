@@ -176,7 +176,7 @@ export default function Squads({ isCarousel }) {
             const member = await base44.entities.SquadMember.create({
                 squad_id: squad.id,
                 user_id: user.id,
-                player_name: user.full_name,
+                player_name: user.data?.full_name || user.full_name,
                 role: 'leader',
                 last_payout_week: ''
             });
@@ -202,7 +202,7 @@ export default function Squads({ isCarousel }) {
             const member = await base44.entities.SquadMember.create({
                 squad_id: squadId,
                 user_id: user.id,
-                player_name: user.full_name,
+                player_name: user.data?.full_name || user.full_name,
                 role: 'member',
                 last_payout_week: ''
             });
@@ -211,7 +211,7 @@ export default function Squads({ isCarousel }) {
                 squad_id: squadId,
                 user_id: 'system',
                 player_name: 'SYSTEM',
-                content: `${user.full_name} has joined the squad!`
+                content: `${user.data?.full_name || user.full_name} has joined the squad!`
             });
             
             const updatedSquad = await base44.entities.Squad.update(squadId, {
@@ -235,7 +235,7 @@ export default function Squads({ isCarousel }) {
                 squad_id: mySquad.id,
                 user_id: 'system',
                 player_name: 'SYSTEM',
-                content: `${user.full_name} has left the squad.`
+                content: `${user.data?.full_name || user.full_name} has left the squad.`
             });
             
             await base44.entities.Squad.update(mySquad.id, {
@@ -264,7 +264,7 @@ export default function Squads({ isCarousel }) {
             id: `optimistic-${Date.now()}`,
             squad_id: mySquad.id,
             user_id: user.id,
-            player_name: user.full_name,
+            player_name: user.data?.full_name || user.full_name,
             content: content,
             created_date: new Date().toISOString()
         };
@@ -274,7 +274,7 @@ export default function Squads({ isCarousel }) {
             const saved = await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
                 user_id: user.id,
-                player_name: user.full_name,
+                player_name: user.data?.full_name || user.full_name,
                 content: content
             });
             // Replace optimistic message with real one

@@ -35,9 +35,10 @@ const AuthenticatedApp = () => {
           setSaveInitialized(true);
           if (user) {
               const save = SaveManager.load();
-              if (!user.full_name || user.full_name.includes('@') || !save.hasSetProfileName) {
+              const displayName = user.data?.full_name || user.full_name;
+              if (!displayName || displayName.includes('@') || !save.hasSetProfileName) {
                   // If they have played before (e.g. have gold or kills) and have a valid name, grandfather them in
-                  if ((save.totalKills > 0 || save.gold > 0) && user.full_name && !user.full_name.includes('@') && !save.hasSetProfileName) {
+                  if ((save.totalKills > 0 || save.gold > 0) && displayName && !displayName.includes('@') && !save.hasSetProfileName) {
                       save.hasSetProfileName = true;
                       SaveManager.save(save);
                   } else {
