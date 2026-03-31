@@ -6,7 +6,7 @@ import { CHARACTERS, ARENAS } from '../../game/Constants';
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [view, setView] = useState('weekly'); // 'weekly', 'seasonal', 'all_time', or 'squads'
+    const [view, setView] = useState('weekly'); // 'weekly', 'seasonal', 'all_time', 'endless', or 'squads'
     const [timeLeft, setTimeLeft] = useState('');
     const [currentPool, setCurrentPool] = useState(0);
 
@@ -64,7 +64,7 @@ export default function Leaderboard() {
             const seasonNum = Math.floor(weekNum / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
 
-            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : {};
+            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless' } : {};
             
             if (view === 'squads') {
                 const squadsData = await base44.entities.Squad.filter({ current_week: week_id }, '-weekly_kills', 50);
@@ -88,10 +88,12 @@ export default function Leaderboard() {
             }
             
             // Deduplicate by player_name, keeping the highest score
+            // Exclude endless runs from weekly/seasonal/all_time views
             const uniqueScores = [];
             const seenPlayers = new Set();
             
             for (const score of data) {
+                if ((view === 'weekly' || view === 'seasonal' || view === 'all_time') && score.arena_id === 'endless') continue;
                 if (!seenPlayers.has(score.player_name)) {
                     seenPlayers.add(score.player_name);
                     uniqueScores.push(score);
@@ -155,6 +157,12 @@ export default function Leaderboard() {
                         All Time
                     </button>
 
+                    <button 
+                        onClick={() => setView('endless')}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'endless' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        Endless
+                    </button>
                     <button 
                         onClick={() => setView('squads')}
                         className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'squads' ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
