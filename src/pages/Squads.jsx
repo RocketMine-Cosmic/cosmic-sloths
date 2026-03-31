@@ -125,7 +125,16 @@ export default function Squads({ isCarousel }) {
             // Subscriptions
             const unsubMessages = base44.entities.SquadMessage.subscribe((event) => {
                 if (event.type === 'create' && event.data.squad_id === mySquad.id) {
-                    setMessages(prev => [...prev, event.data]);
+                    setMessages(prev => {
+                        // If this message is already in the list (e.g. from optimistic update), skip
+                        if (prev.some(m => m.id === event.data.id)) return prev;
+                        // Replace any optimistic message from the same user with same content
+                        const hasOptimistic = prev.some(m => m.id?.startsWith('optimistic-') && m.content === event.data.content && m.user_id === event.data.user_id);
+                        if (hasOptimistic) {
+                            return prev.map(m => (m.id?.startsWith('optimistic-') && m.content === event.data.content && m.user_id === event.data.user_id) ? event.data : m);
+                        }
+                        return [...prev, event.data];
+                    });
                 }
             });
             const unsubSquad = base44.entities.Squad.subscribe((event) => {
