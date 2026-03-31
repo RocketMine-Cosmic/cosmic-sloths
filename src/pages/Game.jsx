@@ -78,24 +78,29 @@ export default function Game() {
         const saveScore = async (stats, isVictory) => {
             try {
                 const user = await base44.auth.me();
-                const playerName = user ? user.full_name : 'Anonymous Sloth';
+                if (!user) {
+                    console.error('saveScore: No authenticated user found, skipping score save.');
+                    return;
+                }
+
+                // RLS requires player_name === user.full_name exactly
+                const playerName = user.full_name || user.email || 'Anonymous Sloth';
+                console.log('saveScore: saving for', playerName, '| isVictory:', isVictory, '| arenaId:', stats.arenaId || arenaId, '| isEndless:', isEndless);
                 
                 // Add kills to squad if user is in one
-                if (user) {
-                    try {
-                        const memberships = await base44.entities.SquadMember.filter({ user_id: user.id });
-                        if (memberships.length > 0) {
-                            const squadId = memberships[0].squad_id;
-                            const squad = await base44.entities.Squad.get(squadId);
-                            if (squad) {
-                                await base44.entities.Squad.update(squad.id, {
-                                    weekly_kills: (squad.weekly_kills || 0) + stats.kills
-                                });
-                            }
+                try {
+                    const memberships = await base44.entities.SquadMember.filter({ user_id: user.id });
+                    if (memberships.length > 0) {
+                        const squadId = memberships[0].squad_id;
+                        const squad = await base44.entities.Squad.get(squadId);
+                        if (squad) {
+                            await base44.entities.Squad.update(squad.id, {
+                                weekly_kills: (squad.weekly_kills || 0) + stats.kills
+                            });
                         }
-                    } catch(err) {
-                        console.error('Failed to update squad kills', err);
                     }
+                } catch(err) {
+                    console.error('Failed to update squad kills', err);
                 }
                 
                 const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
@@ -108,12 +113,13 @@ export default function Game() {
                 const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
                 
                 const week_id = moment().format('YYYY-[W]ww');
-                
                 const weekNum = moment().week();
                 const seasonNum = Math.floor(weekNum / 4) + 1;
                 const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+
+                console.log('saveScore: computed score =', score, '| week_id:', week_id, '| season_id:', season_id);
                 
-                await base44.entities.RunScore.create({
+                const result = await base44.entities.RunScore.create({
                     player_name: playerName,
                     score: score,
                     time_survived: stats.time,
@@ -124,8 +130,9 @@ export default function Game() {
                     week_id: week_id,
                     season_id: season_id
                 });
+                console.log('saveScore: SUCCESS, created RunScore id:', result?.id);
             } catch (e) {
-                console.error('Failed to save score', e);
+                console.error('saveScore: FAILED to save score:', e?.message || e, e?.response?.data || '');
             }
         };
 
