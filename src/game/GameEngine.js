@@ -607,7 +607,7 @@ export class GameEngine {
             else if (this.characterId === 'neonvortex') { projColor = '#FFD700'; projType = 'railgun'; }
             else if (this.characterId === 'synthbeats') { projColor = '#FF8C00'; projType = 'sonic_wave'; }
 
-            this.addParticle(this.player.x, this.player.y, projColor, 10, 'glow', 1.5); // Muzzle flash
+
 
             this.projectiles.push({
                 x: this.player.x, y: this.player.y,
