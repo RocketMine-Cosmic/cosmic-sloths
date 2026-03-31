@@ -1439,10 +1439,13 @@ export class GameEngine {
                 this.ctx.closePath();
                 this.ctx.fill();
             } else if (p.icon) {
-                this.ctx.font = '20px Arial';
+                this.ctx.font = '32px Arial';
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
+                this.ctx.shadowColor = '#ffffff';
+                this.ctx.shadowBlur = 16;
                 this.ctx.fillText(p.icon, 0, 0);
+                this.ctx.shadowBlur = 0;
             } else {
                 this.ctx.rect(-4, -4, 8, 8);
                 this.ctx.closePath();
