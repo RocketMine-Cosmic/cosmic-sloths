@@ -61,10 +61,17 @@ export default function Profile({ isCarousel }) {
 
     const handleSaveName = async () => {
         if (!newName.trim()) return;
+        const oldName = user.full_name;
+        const updatedName = newName.trim();
         try {
-            await base44.auth.updateMe({ full_name: newName.trim() });
-            setUser(prev => ({ ...prev, full_name: newName.trim() }));
+            await base44.auth.updateMe({ full_name: updatedName });
+            setUser(prev => ({ ...prev, full_name: updatedName }));
             setIsEditingName(false);
+            
+            // Sync the new name across past scores, rewards, and squads
+            if (oldName !== updatedName) {
+                base44.functions.invoke('syncProfileName', { oldName, newName: updatedName }).catch(console.error);
+            }
         } catch (e) {
             console.error(e);
         }
