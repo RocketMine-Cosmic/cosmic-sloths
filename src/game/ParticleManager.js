@@ -1,6 +1,32 @@
+const loadTexture = (url) => {
+    if (typeof window !== 'undefined') {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+            // Center crop and scale down to 128x128 for extreme performance
+            ctx.drawImage(img, 0, 0, 1024, 1024, 0, 0, 128, 128);
+            canvas.isReady = true;
+        };
+        img.src = url;
+        return canvas;
+    }
+    return { isReady: false };
+};
+
 export class ParticleManager {
     constructor() {
         this.particles = [];
+        this.textures = {
+            star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png'),
+            explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png'),
+            smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png'),
+            slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png'),
+            shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png'),
+        };
     }
 
     update(dt) {
@@ -63,167 +89,69 @@ export class ParticleManager {
             ctx.save();
             ctx.globalAlpha = alpha;
             ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation || 0);
 
             const color = p.color || p.tint || '#ffffff';
+            const sBase = p.size || 8;
 
-            switch (p.type) {
-                case 'star':
-                case 'spark': {
-                    ctx.rotate(p.rotation || 0);
-                    const s = p.size || 8;
-                    // 4-pointed star shape
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    for (let i = 0; i < 8; i++) {
-                        const a = (Math.PI / 4) * i;
-                        const r = i % 2 === 0 ? s * 0.5 : s * 0.2;
-                        i === 0 ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    break;
+            // DRAW BASE TINT (colorize the HD texture below)
+            ctx.globalAlpha = alpha * 0.4;
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, sBase * 2);
+            grad.addColorStop(0, color);
+            grad.addColorStop(1, color + '00');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, sBase * 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = alpha;
+
+            // DRAW HD TEXTURE
+            let tex = null;
+            let scaleMult = 2.5;
+
+            if (p.type === 'star' || p.type === 'spark') { tex = this.textures.star; scaleMult = 3.0; }
+            else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 3.5; }
+            else if (p.type === 'smoke' || p.type === 'blood' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 3.5; }
+            else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 4.0; }
+            else if (p.type === 'shockwave' || p.type === 'implode') { tex = this.textures.shockwave; scaleMult = 2.5; }
+            
+            // For simple geometry fallback
+            if (!tex || !tex.isReady) {
+                switch (p.type) {
+                    case 'circle':
+                    case 'ring':
+                    case 'shockwave':
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = p.lineWidth || 2;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, sBase * 0.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        break;
+                    case 'slash':
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(-sBase * 0.5, -sBase * 0.2);
+                        ctx.lineTo(sBase * 0.5, sBase * 0.2);
+                        ctx.stroke();
+                        break;
+                    default:
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, sBase * 0.5, 0, Math.PI * 2);
+                        ctx.fill();
                 }
-                case 'flash': {
-                    const r = p.size || 20;
-                    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-                    grad.addColorStop(0, color + 'ff');
-                    grad.addColorStop(0.4, color + 'aa');
-                    grad.addColorStop(1, color + '00');
-                    ctx.fillStyle = grad;
+            } else {
+                const ts = sBase * scaleMult; 
+                ctx.drawImage(tex, -ts/2, -ts/2, ts, ts);
+                
+                // Add a small solid core for impact
+                if (p.type === 'star' || p.type === 'explosion' || p.type === 'flash') {
+                    ctx.globalAlpha = alpha * 0.8;
+                    ctx.fillStyle = '#ffffff';
                     ctx.beginPath();
-                    ctx.arc(0, 0, r, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                }
-                case 'circle': {
-                    const r = p.size || 12;
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
-                    ctx.stroke();
-                    break;
-                }
-                case 'ring': {
-                    const r = p.size || 12;
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = (p.lineWidth || 3);
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
-                    ctx.stroke();
-                    break;
-                }
-                case 'shockwave': {
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = p.lineWidth || 4;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, p.size * 0.5, 0, Math.PI * 2);
-                    ctx.stroke();
-                    break;
-                }
-                case 'smoke': {
-                    const r = p.size || 20;
-                    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-                    grad.addColorStop(0, color + '55');
-                    grad.addColorStop(1, color + '00');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                }
-                case 'fragment':
-                case 'shatter': {
-                    ctx.rotate(p.rotation || 0);
-                    const s = (p.size || 8) * 0.5;
-                    ctx.fillStyle = color;
-                    // Triangle shard
-                    ctx.beginPath();
-                    ctx.moveTo(0, -s);
-                    ctx.lineTo(s * 0.6, s * 0.6);
-                    ctx.lineTo(-s * 0.6, s * 0.6);
-                    ctx.closePath();
-                    ctx.fill();
-                    break;
-                }
-                case 'slash': {
-                    ctx.rotate(p.rotation || 0);
-                    const len = (p.size || 20);
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.moveTo(-len * 0.5, -len * 0.2);
-                    ctx.lineTo(len * 0.5, len * 0.2);
-                    ctx.stroke();
-                    // White core
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 1;
-                    ctx.globalAlpha = alpha * 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(-len * 0.5, -len * 0.2);
-                    ctx.lineTo(len * 0.5, len * 0.2);
-                    ctx.stroke();
-                    break;
-                }
-                case 'explosion': {
-                    ctx.rotate(p.rotation || 0);
-                    const r = (p.size || 20) * 0.5;
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    const spikes = 8;
-                    for (let i = 0; i < spikes * 2; i++) {
-                        const a = (Math.PI * 2 / (spikes * 2)) * i;
-                        const rad = i % 2 === 0 ? r : r * 0.45;
-                        i === 0 ? ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad) : ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    break;
-                }
-                case 'flame': {
-                    const r = p.size || 14;
-                    const grad = ctx.createRadialGradient(0, r * 0.3, 0, 0, 0, r);
-                    grad.addColorStop(0, '#ffffff');
-                    grad.addColorStop(0.2, color);
-                    grad.addColorStop(1, color + '00');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, r * 0.5, r, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                }
-                case 'implode': {
-                    ctx.rotate(p.rotation || 0);
-                    const r = (p.size || 10) * 0.5;
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -r);
-                    ctx.lineTo(r * 0.5, 0);
-                    ctx.lineTo(0, r);
-                    ctx.lineTo(-r * 0.5, 0);
-                    ctx.closePath();
-                    ctx.fill();
-                    break;
-                }
-                case 'blood': {
-                    ctx.rotate(p.rotation || 0);
-                    const r = (p.size || 10) * 0.5;
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r, 0, Math.PI * 2);
-                    ctx.fill();
-                    // Streak tail
-                    ctx.fillStyle = color + '88';
-                    ctx.beginPath();
-                    ctx.ellipse(0, r * 0.8, r * 0.3, r * 0.8, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                }
-                default: {
-                    const r = p.size || 8;
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
+                    ctx.arc(0, 0, sBase * 0.2, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
