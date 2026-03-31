@@ -9,10 +9,27 @@ import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 import { getSquadLevel, getNextSquadLevel, getSquadXpProgress } from '../game/SquadLevels';
 
-const WEEKLY_KILLS_TARGET = 10000;
-const REWARD_GOLD = 2500;
-const REWARD_REROLLS = 5;
 const MAX_SQUAD_MEMBERS = 5;
+
+// Bounty tiers scale with squad level
+const BOUNTY_TIERS = [
+    { minLevel: 1, target: 2000,  gold: 500,   rerolls: 1, label: 'Rookie Bounty' },
+    { minLevel: 2, target: 5000,  gold: 1200,  rerolls: 2, label: 'Drifter Bounty' },
+    { minLevel: 3, target: 10000, gold: 2500,  rerolls: 3, label: 'Hunter Bounty' },
+    { minLevel: 4, target: 18000, gold: 4000,  rerolls: 4, label: 'Vanguard Bounty' },
+    { minLevel: 5, target: 30000, gold: 6500,  rerolls: 5, label: 'Reaper Bounty' },
+    { minLevel: 6, target: 50000, gold: 10000, rerolls: 7, label: 'Legend Bounty' },
+    { minLevel: 7, target: 75000, gold: 15000, rerolls: 10, label: 'Cosmic Bounty' },
+];
+
+function getBountyTier(level) {
+    // Find the highest tier available for this level
+    let tier = BOUNTY_TIERS[0];
+    for (const t of BOUNTY_TIERS) {
+        if (level >= t.minLevel) tier = t;
+    }
+    return tier;
+}
 
 export default function Squads({ isCarousel }) {
     const navigate = useNavigate();
@@ -249,15 +266,16 @@ export default function Squads({ isCarousel }) {
     const handleClaimWeekly = async () => {
         if (!mySquad || !myMemberRecord) return;
         const currentWeek = getCurrentWeek();
+        const tier = getBountyTier(mySquad.level || 1);
         
-        if (mySquad.weekly_kills >= WEEKLY_KILLS_TARGET && myMemberRecord.last_payout_week !== currentWeek) {
+        if ((mySquad.weekly_kills || 0) >= tier.target && myMemberRecord.last_payout_week !== currentWeek) {
             try {
                 SoundManager.playLevelUp();
                 
                 // Update local save
                 const currentSave = SaveManager.load();
-                currentSave.gold += REWARD_GOLD;
-                currentSave.rerollTokens = (currentSave.rerollTokens || 0) + REWARD_REROLLS;
+                currentSave.gold += tier.gold;
+                currentSave.rerollTokens = (currentSave.rerollTokens || 0) + tier.rerolls;
                 SaveManager.save(currentSave);
                 
                 // Update member record
@@ -268,7 +286,7 @@ export default function Squads({ isCarousel }) {
                 
                 toast({
                     title: "Weekly Bounty Claimed!",
-                    description: `You received ${REWARD_GOLD} Gold and ${REWARD_REROLLS} Reroll Tokens!`,
+                    description: `You received ${tier.gold.toLocaleString()} Gold and ${tier.rerolls} Reroll Tokens!`,
                 });
             } catch (e) {
                 console.error(e);
@@ -459,50 +477,65 @@ export default function Squads({ isCarousel }) {
                                     )}
                                 </div>
                                 
-                                <div className="border-t border-slate-800 pt-4">
-                                    <h3 className="text-sm font-bold text-yellow-400 mb-2 flex items-center gap-2">
-                                        <Shield className="w-4 h-4" /> Weekly Squad Bounty
-                                    </h3>
-                                    <div className="text-xs text-slate-300 mb-2">
-                                        Defeat {WEEKLY_KILLS_TARGET.toLocaleString()} enemies together this week.
-                                    </div>
-                                    
-                                    <div className="flex justify-between text-xs font-bold mb-1">
-                                        <span className="text-slate-400">Progress</span>
-                                        <span className="text-white">
-                                            {Math.min(mySquad.weekly_kills || 0, WEEKLY_KILLS_TARGET).toLocaleString()} / {WEEKLY_KILLS_TARGET.toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700 mb-3">
-                                        <div 
-                                            className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full transition-all duration-500" 
-                                            style={{ width: `${Math.min(100, ((mySquad.weekly_kills || 0) / WEEKLY_KILLS_TARGET) * 100)}%` }}
-                                        />
-                                    </div>
-                                    
-                                    {(() => {
-                                        const isComplete = (mySquad.weekly_kills || 0) >= WEEKLY_KILLS_TARGET;
-                                        const isClaimed = myMemberRecord?.last_payout_week === getCurrentWeek();
+                                {(() => {
+                                    const tier = getBountyTier(mySquad.level || 1);
+                                    const kills = mySquad.weekly_kills || 0;
+                                    const isComplete = kills >= tier.target;
+                                    const isClaimed = myMemberRecord?.last_payout_week === getCurrentWeek();
+                                    return (
+                                    <div className="border-t border-slate-800 pt-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h3 className="text-sm font-bold text-yellow-400 flex items-center gap-2">
+                                                <Shield className="w-4 h-4" /> {tier.label}
+                                            </h3>
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: lvlData.borderColor, background: lvlData.glowColor }}>
+                                                Lv.{mySquad.level || 1}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-slate-300 mb-2">
+                                            Defeat {tier.target.toLocaleString()} enemies together this week.
+                                        </div>
+
+                                        {/* Rewards preview */}
+                                        <div className="flex gap-2 mb-3">
+                                            <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                <div className="text-base">🪙</div>
+                                                <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()}</div>
+                                            </div>
+                                            <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                <div className="text-base">🎲</div>
+                                                <div className="text-xs font-bold text-purple-400">×{tier.rerolls}</div>
+                                            </div>
+                                        </div>
                                         
-                                        if (isComplete && !isClaimed) {
-                                            return (
-                                                <button
-                                                    onClick={handleClaimWeekly}
-                                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]"
-                                                >
-                                                    <Gift className="w-4 h-4" /> CLAIM WEEKLY PAYOUT
-                                                </button>
-                                            );
-                                        } else if (isClaimed) {
-                                            return (
-                                                <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-2 rounded-lg border border-emerald-900/50">
-                                                    ✓ PAYOUT CLAIMED FOR THIS WEEK
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-                                </div>
+                                        <div className="flex justify-between text-xs font-bold mb-1">
+                                            <span className="text-slate-400">Progress</span>
+                                            <span className="text-white">
+                                                {Math.min(kills, tier.target).toLocaleString()} / {tier.target.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700 mb-3">
+                                            <div 
+                                                className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full transition-all duration-500" 
+                                                style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }}
+                                            />
+                                        </div>
+                                        
+                                        {isComplete && !isClaimed ? (
+                                            <button
+                                                onClick={handleClaimWeekly}
+                                                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+                                            >
+                                                <Gift className="w-4 h-4" /> CLAIM WEEKLY PAYOUT
+                                            </button>
+                                        ) : isClaimed ? (
+                                            <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-2 rounded-lg border border-emerald-900/50">
+                                                ✓ PAYOUT CLAIMED FOR THIS WEEK
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                    );
+                                })()}
                             </div>
                                 );
                             })()}
