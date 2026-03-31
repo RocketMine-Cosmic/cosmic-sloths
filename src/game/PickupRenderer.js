@@ -1,5 +1,9 @@
 export function drawPickups(ctx, pickups, time) {
-    pickups.forEach(p => {
+    const sorted = [...pickups].sort((a, b) => {
+        const order = { gold: 0, reroll: 1, xp: 2 };
+        return (order[a.type] ?? 1) - (order[b.type] ?? 1);
+    });
+    sorted.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
         
