@@ -15,9 +15,14 @@ Deno.serve(async (req) => {
              return Response.json({ error: 'newName required' }, { status: 400 });
         }
 
-        // Update RunScore (match by user_id, it is 100% reliable)
-        const runScores = await base44.asServiceRole.entities.RunScore.filter({ user_id: user.id });
-        for (const score of runScores) {
+        // Update RunScore (match by user_id AND created_by to catch older records)
+        const runScoresById = await base44.asServiceRole.entities.RunScore.filter({ user_id: user.id });
+        const runScoresByEmail = await base44.asServiceRole.entities.RunScore.filter({ created_by: user.email });
+        
+        const allRunScores = new Map();
+        [...runScoresById, ...runScoresByEmail].forEach(s => allRunScores.set(s.id, s));
+        
+        for (const score of allRunScores.values()) {
             if (score.player_name !== newName) {
                 await base44.asServiceRole.entities.RunScore.update(score.id, { 
                     player_name: newName,
