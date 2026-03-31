@@ -116,11 +116,11 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 particles.push({
                     x: px + (Math.random() - 0.5) * 4,
                     y: py + (Math.random() - 0.5) * 4,
-                    vx: (Math.random() - 0.5) * 20,
-                    vy: (Math.random() - 0.5) * 20,
-                    life: 0.5 + Math.random() * 0.3,
-                    maxLife: 0.8,
-                    size: 3 + Math.random() * 4,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0 + Math.random() * 0.5,
+                    maxLife: 1.5,
+                    size: 2 + Math.random() * 3,
                     color: trailColors[frame % trailColors.length],
                     isKill: false
                 });
@@ -172,9 +172,6 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
 
                 if (p.isKill) {
                     tex = TEXTURES.explosion;
-                    scaleMult = 3.0;
-                } else if (trailId === 'toxic' || trailId === 'shadow') {
-                    tex = TEXTURES.smoke;
                     scaleMult = 3.0;
                 } else {
                     tex = TEXTURES.star;
