@@ -1195,7 +1195,9 @@ export class GameEngine {
                 return false;
             }
             if (dist < this.player.magnetRange) {
-                const speed = 200 * dt;
+                // Ensure pickups always move faster than the player
+                const playerMaxSpeed = this.player.speed * (this.player.speedMult || 1) * 60;
+                const speed = Math.max(800, playerMaxSpeed * 2) * dt;
                 p.x += ((this.player.x - p.x) / dist) * speed;
                 p.y += ((this.player.y - p.y) / dist) * speed;
             }
