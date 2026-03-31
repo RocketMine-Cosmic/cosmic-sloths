@@ -270,4 +270,61 @@ export class ParticleManager {
             size: 5, growthRate: 300, lineWidth: 2
         });
     }
+
+    createKillEffect(x, y, effectId) {
+        switch (effectId) {
+            case 'explosion':
+                this.addParticle(x, y, '#ff4500', 15, 'spark', 2.5, { speed: 400 });
+                this.addParticle(x, y, '#ffdd00', 10, 'glow', 3, { speed: 200 });
+                this.addParticle(x, y, '#333333', 5, 'smoke', 4, { lifeBonus: 0.5 });
+                break;
+            case 'freeze':
+                this.addParticle(x, y, '#aaeeff', 20, 'shatter', 2, { speed: 300 });
+                this.addParticle(x, y, '#ffffff', 10, 'spark', 1.5, { speed: 200 });
+                break;
+            case 'vaporize':
+                this.addParticle(x, y, '#39ff14', 25, 'smoke', 3, { lifeBonus: 0.8, speed: 100 });
+                this.addParticle(x, y, '#aaff00', 15, 'circle', 1.5, { speed: 150 });
+                break;
+            case 'implode':
+                 for(let i=0; i<30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 50 + Math.random() * 50;
+                    this.particles.push({
+                        x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist,
+                        vx: 0, vy: 0,
+                        targetX: x, targetY: y,
+                        life: 0.6, maxLife: 0.6,
+                        tint: ['#8a2be2', '#ff00ff'][i%2],
+                        type: 'implode',
+                        sprite: SPRITE_MAP.implode,
+                        size: Math.random() * 10 + 5,
+                    });
+                }
+                this.addParticle(x, y, '#ffffff', 1, 'shockwave', 1, { lifeBonus: -0.2, growthRate: 300, lineWidth: 5 });
+                break;
+            case 'golden':
+                this.addParticle(x, y, '#ffd700', 20, 'spark', 3, { speed: 350, gravity: true });
+                this.addParticle(x, y, '#fff4a0', 15, 'glow', 2, { speed: 200 });
+                break;
+        }
+    }
+
+    createTrail(x, y, trailId, frameCount) {
+        const trailConfigs = {
+            'fire':    { colors: ['#ff4500', '#ff8800'], type: 'spark', count: 1, size: 1.5 },
+            'ice':     { colors: ['#00cfff', '#aaf0ff'], type: 'shatter', count: 1, size: 1.2 },
+            'void':    { colors: ['#8a2be2', '#cc00ff'], type: 'implode', count: 1, size: 1 },
+            'toxic':   { colors: ['#39ff14', '#00ff88'], type: 'smoke', count: 1, size: 2 },
+            'gold':    { colors: ['#ffd700', '#ffec6e'], type: 'spark', count: 1, size: 1.8 },
+            'plasma':  { colors: ['#00e5ff', '#ff00e5'], type: 'spark', count: 2, size: 1.5 },
+            'shadow':  { colors: ['#333355', '#0a0a20'], type: 'smoke', count: 2, size: 2.5 },
+            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'spark', count: 2, size: 1.5 },
+        };
+        const config = trailConfigs[trailId];
+        if (config) {
+            const color = config.colors[frameCount % config.colors.length];
+            this.addParticle(x, y, color, config.count, config.type, config.size, { speed: 50, lifeBonus: -0.2 });
+        }
+    }
 }
