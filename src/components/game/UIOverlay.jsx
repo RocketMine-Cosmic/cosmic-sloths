@@ -45,15 +45,16 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         <div className="text-yellow-400 font-bold text-sm md:text-base">🪙 {gold}</div>
                     </div>
                     <button 
-                        onClick={toggleMute}
-                        className="pointer-events-auto bg-slate-800/80 p-2 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center"
+                        onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); toggleMute(); }}
+                        className="pointer-events-auto bg-slate-800/80 p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center touch-none"
+                        style={{ touchAction: 'none', zIndex: 9999, position: 'relative' }}
                     >
                         {isMuted ? <VolumeX className="w-5 h-5 md:w-6 md:h-6 text-slate-400" /> : <Volume2 className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" />}
                     </button>
                     <button 
-                        onClick={onPause}
-                        onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
-                        className="pointer-events-auto bg-slate-800/80 p-2 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center"
+                        onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
+                        className="pointer-events-auto bg-slate-800/80 p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center touch-none"
+                        style={{ touchAction: 'none', zIndex: 9999, position: 'relative' }}
                     >
                         <Pause className="w-5 h-5 md:w-6 md:h-6 text-white" />
                     </button>
