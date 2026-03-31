@@ -1443,22 +1443,22 @@ export class GameEngine {
             this.ctx.beginPath();
             if (p.type === 'xp') {
                 this.ctx.rotate(this.time * 2);
-                this.ctx.moveTo(0, -6);
-                this.ctx.lineTo(4, 0);
-                this.ctx.lineTo(0, 6);
-                this.ctx.lineTo(-4, 0);
+                this.ctx.moveTo(0, -10);
+                this.ctx.lineTo(7, 0);
+                this.ctx.lineTo(0, 10);
+                this.ctx.lineTo(-7, 0);
                 this.ctx.closePath();
                 this.ctx.fill();
             } else if (p.type === 'gold') {
                 this.ctx.rotate(Math.sin(this.time * 5) * 0.2);
                 for (let i = 0; i < 8; i++) {
                     const a = (Math.PI / 4) * i;
-                    this.ctx.lineTo(Math.cos(a) * 6, Math.sin(a) * 6);
+                    this.ctx.lineTo(Math.cos(a) * 10, Math.sin(a) * 10);
                 }
                 this.ctx.closePath();
                 this.ctx.fill();
             } else if (p.icon) {
-                this.ctx.font = '32px Arial';
+                this.ctx.font = '42px Arial';
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.shadowColor = '#ffffff';
@@ -1466,7 +1466,7 @@ export class GameEngine {
                 this.ctx.fillText(p.icon, 0, 0);
                 this.ctx.shadowBlur = 0;
             } else {
-                this.ctx.rect(-4, -4, 8, 8);
+                this.ctx.rect(-7, -7, 14, 14);
                 this.ctx.closePath();
                 this.ctx.fill();
             }
