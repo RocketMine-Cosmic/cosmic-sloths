@@ -462,7 +462,7 @@ export class GameEngine {
 
         const progress = this.arena.duration === Infinity ? this.time / 300 : Math.min(1, this.time / this.arena.duration);
         const effectiveProgress = Math.min(1, progress);
-        const spawnRate = Math.max(0.05, (2.5 - (2.45 * Math.pow(effectiveProgress, 1.5))) / this.envModifiers.enemySpawnRate);
+        const spawnRate = Math.max(0.12, (2.5 - (2.2 * Math.pow(effectiveProgress, 1.5))) / this.envModifiers.enemySpawnRate);
         
         if (Math.random() < dt / spawnRate) {
             const angle = Math.random() * Math.PI * 2;
@@ -491,8 +491,8 @@ export class GameEngine {
             
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
-            const hpMult = (1.0 + (3.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
-            const dmgMult = (1.0 + (2.0 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
+            const hpMult = (1.0 + (2.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
+            const dmgMult = (1.0 + (1.4 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
