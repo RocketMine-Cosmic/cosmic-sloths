@@ -621,7 +621,7 @@ export default function Upgrades({ isCarousel }) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                     {list.map(cosmetic => {
                         const unlocked = save[unlockKey] || [freeId];
-                        const isUnlocked = unlocked.includes(cosmetic.id);
+                        const isUnlocked = true;
                         const isEquipped = isTrail ? equippedTrail === cosmetic.id : equippedKill === cosmetic.id;
                         const canAffordGold = save.gold >= cosmetic.goldCost;
                         const canAffordToken = (save.cosmicTokens || 0) >= cosmetic.tokenCost;
