@@ -2,6 +2,7 @@ import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TA
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
+import { selectBossForArena, updateBossAbilities } from './BossSystem';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false) {
@@ -413,11 +414,10 @@ export class GameEngine {
             if (!this.lastBossSpawnTime) this.lastBossSpawnTime = 0;
             if (this.time > 0 && this.time - this.lastBossSpawnTime >= 180) { // Every 3 minutes
                 this.lastBossSpawnTime = this.time;
-                const bosses = ENEMIES.filter(e => e.isBoss);
-                if (bosses.length > 0) {
+                const boss = selectBossForArena(this.arena.id);
+                if (boss) {
                     this.isBossActive = true;
                     this.enemies = []; // Clear all other enemies
-                    const boss = bosses[Math.floor(Math.random() * bosses.length)];
                     const angle = Math.random() * Math.PI * 2;
                     const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
                     const ex = this.player.x + Math.cos(angle) * dist;
@@ -441,9 +441,8 @@ export class GameEngine {
             if (isBossArena && Math.random() < 0.5) { // 50% chance for a boss encounter
                 this.isBossActive = true;
                 this.enemies = []; // Clear all other enemies
-                const bosses = ENEMIES.filter(e => e.isBoss);
-                if (bosses.length > 0) {
-                    const boss = bosses[Math.floor(Math.random() * bosses.length)];
+                const boss = selectBossForArena(this.arena.id);
+                if (boss) {
                     const angle = Math.random() * Math.PI * 2;
                     const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
                     const ex = this.player.x + Math.cos(angle) * dist;
@@ -1121,30 +1120,15 @@ export class GameEngine {
                 }
                 
                 if (e.isBoss) {
-                    if (!e.skillTimer) e.skillTimer = 0;
-                    e.skillTimer -= dt;
-                    if (e.skillTimer <= 0) {
-                        e.skillTimer = 3.0;
-                        const projCount = this.bossModifiers.bullet_hell ? 16 : 8;
-                        for(let i=0; i<projCount; i++) {
-                            const angle = (Math.PI * 2 / projCount) * i;
-                            this.enemyProjectiles.push({
-                                x: e.x, y: e.y,
-                                vx: Math.cos(angle) * 150,
-                                vy: Math.sin(angle) * 150,
-                                radius: 5,
-                                damage: e.damage * 0.5,
-                                life: 3,
-                                color: '#ff0000'
-                            });
-                        }
-                        if (e.id === 'boss_phantom_leviathan') {
-                            // summon minions
-                            for(let i=0; i<3; i++) {
-                                this.enemies.push({ ...ENEMIES.find(en => en.id === 'cryo_wraith'), x: e.x + Math.random()*100-50, y: e.y + Math.random()*100-50 });
-                            }
-                        }
-                    }
+                    updateBossAbilities(
+                        e, dt, this.player, this.enemyProjectiles, 
+                        this.addParticle.bind(this), 
+                        this.addDamageText.bind(this), 
+                        this.takeDamage.bind(this), 
+                        this.enemies, 
+                        this.frameCount,
+                        this.arena.id
+                    );
                 }
             }
 
