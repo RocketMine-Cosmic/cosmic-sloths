@@ -84,7 +84,11 @@ export default function Game() {
                 }
 
                 // RLS requires player_name === user.full_name exactly
-                const playerName = user.full_name || user.email || 'Anonymous Sloth';
+                const playerName = user.full_name;
+                if (!playerName) {
+                    console.error('saveScore: user has no full_name, skipping score save.');
+                    return;
+                }
                 console.log('saveScore: saving for', playerName, '| isVictory:', isVictory, '| arenaId:', stats.arenaId || arenaId, '| isEndless:', isEndless);
                 
                 // Add kills to squad if user is in one
