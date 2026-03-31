@@ -14,7 +14,7 @@ export default function SetProfileNameModal({ onComplete }) {
         if (trimmed.length > 20) { setError('Name must be 20 characters or less.'); return; }
         setSaving(true);
         try {
-            await base44.auth.updateMe({ full_name: trimmed });
+            await base44.auth.updateMe({ player_name: trimmed });
             onComplete(trimmed);
         } catch (e) {
             setError('Failed to save name. Please try again.');

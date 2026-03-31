@@ -79,7 +79,7 @@ export default function Game() {
             try {
                 const user = await base44.auth.me();
                 if (!user) return;
-                const displayName = user.data?.full_name || user.full_name;
+                const displayName = user.data?.player_name || user.data?.full_name || user.full_name;
                 if (!displayName) {
                     console.error('saveScore: user has no full_name, skipping.');
                     return;
