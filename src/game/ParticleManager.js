@@ -108,13 +108,13 @@ export class ParticleManager {
 
             // DRAW HD TEXTURE
             let tex = null;
-            let scaleMult = 2.5;
+            let scaleMult = 1.5;
 
-            if (p.type === 'star' || p.type === 'spark') { tex = this.textures.star; scaleMult = 3.0; }
-            else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 3.5; }
-            else if (p.type === 'smoke' || p.type === 'blood' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 3.5; }
-            else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 4.0; }
-            else if (p.type === 'shockwave' || p.type === 'implode') { tex = this.textures.shockwave; scaleMult = 2.5; }
+            if (p.type === 'star' || p.type === 'spark') { tex = this.textures.star; scaleMult = 2.0; }
+            else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 2.2; }
+            else if (p.type === 'smoke' || p.type === 'blood' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 2.2; }
+            else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 2.5; }
+            else if (p.type === 'shockwave' || p.type === 'implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
             
             // For simple geometry fallback
             if (!tex || !tex.isReady) {
@@ -258,8 +258,8 @@ export class ParticleManager {
         }
 
         setTimeout(() => {
-            this.createExplosion(x, y, '#00ffff', 2);
-            this.createExplosion(x, y, '#ff00ff', 1.5);
+            this.createExplosion(x, y, '#00ffff', 1.2);
+            this.createExplosion(x, y, '#ff00ff', 0.8);
         }, 900);
     }
 
@@ -270,40 +270,40 @@ export class ParticleManager {
     createKillEffect(x, y, effectId) {
         switch (effectId) {
             case 'explosion':
-                this.addParticle(x, y, '#ff4500', 8, 'explosion', 2, { speed: 350 });
-                this.addParticle(x, y, '#ffdd00', 4, 'flame', 2, { speed: 120 });
-                this.addParticle(x, y, '#333333', 4, 'smoke', 3, { lifeBonus: 0.5, speed: 50 });
-                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.3, maxLife: 0.3, color: '#ff6600', tint: '#ff6600', type: 'shockwave', size: 8, growthRate: 480, lineWidth: 4 });
+                this.addParticle(x, y, '#ff4500', 6, 'explosion', 1.5, { speed: 250 });
+                this.addParticle(x, y, '#ffdd00', 3, 'flame', 1.5, { speed: 100 });
+                this.addParticle(x, y, '#333333', 3, 'smoke', 2, { lifeBonus: 0.5, speed: 40 });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.3, maxLife: 0.3, color: '#ff6600', tint: '#ff6600', type: 'shockwave', size: 6, growthRate: 350, lineWidth: 3 });
                 break;
             case 'freeze':
-                this.addParticle(x, y, '#aaeeff', 10, 'fragment', 2, { speed: 300 });
-                this.addParticle(x, y, '#ffffff', 5, 'star', 1.5, { speed: 180 });
-                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#00cfff', tint: '#00cfff', type: 'shockwave', size: 8, growthRate: 400, lineWidth: 3 });
+                this.addParticle(x, y, '#aaeeff', 8, 'fragment', 1.5, { speed: 220 });
+                this.addParticle(x, y, '#ffffff', 4, 'star', 1.2, { speed: 130 });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#00cfff', tint: '#00cfff', type: 'shockwave', size: 6, growthRate: 300, lineWidth: 3 });
                 break;
             case 'vaporize':
-                this.addParticle(x, y, '#39ff14', 10, 'smoke', 2.5, { lifeBonus: 0.6, speed: 90 });
-                this.addParticle(x, y, '#aaff00', 5, 'circle', 1.5, { speed: 140 });
-                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.4, maxLife: 0.4, color: '#39ff14', tint: '#39ff14', type: 'shockwave', size: 5, growthRate: 320, lineWidth: 3 });
+                this.addParticle(x, y, '#39ff14', 8, 'smoke', 1.8, { lifeBonus: 0.6, speed: 70 });
+                this.addParticle(x, y, '#aaff00', 4, 'circle', 1.2, { speed: 110 });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.4, maxLife: 0.4, color: '#39ff14', tint: '#39ff14', type: 'shockwave', size: 4, growthRate: 240, lineWidth: 3 });
                 break;
             case 'implode':
-                for (let i = 0; i < 14; i++) {
+                for (let i = 0; i < 10; i++) {
                     const angle = Math.random() * Math.PI * 2;
-                    const dist = 55 + Math.random() * 40;
+                    const dist = 35 + Math.random() * 25;
                     const c = ['#8a2be2', '#ff00ff'][i % 2];
                     this.particles.push({
                         x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist,
                         vx: 0, vy: 0, targetX: x, targetY: y,
-                        life: 0.6, maxLife: 0.6, color: c, tint: c,
-                        type: 'implode', size: Math.random() * 12 + 5,
-                        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 10
+                        life: 0.5, maxLife: 0.5, color: c, tint: c,
+                        type: 'implode', size: Math.random() * 8 + 4,
+                        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 8
                     });
                 }
-                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.25, maxLife: 0.25, color: '#ffffff', tint: '#ffffff', type: 'shockwave', size: 5, growthRate: 320, lineWidth: 4 });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.25, maxLife: 0.25, color: '#ffffff', tint: '#ffffff', type: 'shockwave', size: 4, growthRate: 240, lineWidth: 3 });
                 break;
             case 'golden':
-                this.addParticle(x, y, '#ffd700', 10, 'star', 2.5, { speed: 300, gravity: true });
-                this.addParticle(x, y, '#fff4a0', 6, 'fragment', 1.8, { speed: 240, gravity: true });
-                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#ffd700', tint: '#ffd700', type: 'shockwave', size: 6, growthRate: 420, lineWidth: 3 });
+                this.addParticle(x, y, '#ffd700', 8, 'star', 1.8, { speed: 200, gravity: true });
+                this.addParticle(x, y, '#fff4a0', 4, 'fragment', 1.4, { speed: 160, gravity: true });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#ffd700', tint: '#ffd700', type: 'shockwave', size: 5, growthRate: 300, lineWidth: 3 });
                 break;
         }
     }

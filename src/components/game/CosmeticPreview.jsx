@@ -1,5 +1,29 @@
 import React, { useEffect, useRef } from 'react';
 
+const loadTexture = (url) => {
+    if (typeof window !== 'undefined') {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, 1024, 1024, 0, 0, 128, 128);
+            canvas.isReady = true;
+        };
+        img.src = url;
+        return canvas;
+    }
+    return { isReady: false };
+};
+
+const TEXTURES = {
+    star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png'),
+    explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png'),
+    smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png')
+};
+
 const TRAIL_COLORS = {
     default: null,
     fire:    ['#ff4500', '#ff7700', '#ffaa00'],
@@ -55,8 +79,9 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     life: 0.8, maxLife: 0.8,
-                    size: 1.5 + Math.random() * 2.5,
+                    size: 4 + Math.random() * 4,
                     color: killColors[Math.floor(Math.random() * killColors.length)],
+                    isKill: true
                 });
             }
         };
@@ -95,8 +120,9 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                     vy: (Math.random() - 0.5) * 20,
                     life: 0.5 + Math.random() * 0.3,
                     maxLife: 0.8,
-                    size: 2 + Math.random() * 3,
+                    size: 3 + Math.random() * 4,
                     color: trailColors[frame % trailColors.length],
+                    isKill: false
                 });
             }
 
@@ -127,13 +153,47 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             // Particles — NO shadowBlur
             particles.forEach(p => {
                 const alpha = Math.max(0, p.life / p.maxLife);
-                ctx.globalAlpha = alpha;
-                ctx.fillStyle = p.color;
+                ctx.save();
+                
+                // Base glow
+                ctx.globalAlpha = alpha * 0.5;
+                ctx.globalCompositeOperation = 'screen';
+                const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.5);
+                grad.addColorStop(0, p.color);
+                grad.addColorStop(1, p.color + '00');
+                ctx.fillStyle = grad;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
                 ctx.fill();
+
+                ctx.globalAlpha = alpha;
+                let tex = null;
+                let scaleMult = 2.0;
+
+                if (p.isKill) {
+                    tex = TEXTURES.explosion;
+                    scaleMult = 3.0;
+                } else if (trailId === 'toxic' || trailId === 'shadow') {
+                    tex = TEXTURES.smoke;
+                    scaleMult = 3.0;
+                } else {
+                    tex = TEXTURES.star;
+                    scaleMult = 2.5;
+                }
+
+                if (tex && tex.isReady) {
+                    const ts = p.size * scaleMult;
+                    ctx.drawImage(tex, p.x - ts/2, p.y - ts/2, ts, ts);
+                } else {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
             });
             ctx.globalAlpha = 1;
+            ctx.globalCompositeOperation = 'source-over';
 
             // Dummies
             dummies.forEach(d => {
