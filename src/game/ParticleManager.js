@@ -271,8 +271,14 @@ export class ParticleManager {
 
         const s = Math.min(scale, 2); // cap scale to limit particle count
 
-        // Core flash
+        // Core flash + shockwave
         this.addParticle(x, y, '#ffffff', 1, 'flash', 8 * s, { lifeBonus: 0.1, speed: 0 });
+        this.particles.push({
+            x, y, vx: 0, vy: 0,
+            life: 0.35, maxLife: 0.35,
+            color, tint: color, type: 'shockwave',
+            size: 10 * s, growthRate: 600 * s, lineWidth: 4 * s
+        });
 
         if (isVoid) {
             this.addParticle(x, y, color, 8 * s, 'implode', 2 * s, { speed: 180 * s });
@@ -339,17 +345,17 @@ export class ParticleManager {
                 this.addParticle(x, y, '#ff4500', 8, 'explosion', 2, { speed: 350 });
                 this.addParticle(x, y, '#ffdd00', 4, 'flame', 2, { speed: 120 });
                 this.addParticle(x, y, '#333333', 4, 'smoke', 3, { lifeBonus: 0.5, speed: 50 });
-
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.3, maxLife: 0.3, color: '#ff6600', tint: '#ff6600', type: 'shockwave', size: 8, growthRate: 480, lineWidth: 4 });
                 break;
             case 'freeze':
                 this.addParticle(x, y, '#aaeeff', 10, 'fragment', 2, { speed: 300 });
                 this.addParticle(x, y, '#ffffff', 5, 'star', 1.5, { speed: 180 });
-
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#00cfff', tint: '#00cfff', type: 'shockwave', size: 8, growthRate: 400, lineWidth: 3 });
                 break;
             case 'vaporize':
                 this.addParticle(x, y, '#39ff14', 10, 'smoke', 2.5, { lifeBonus: 0.6, speed: 90 });
                 this.addParticle(x, y, '#aaff00', 5, 'circle', 1.5, { speed: 140 });
-
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.4, maxLife: 0.4, color: '#39ff14', tint: '#39ff14', type: 'shockwave', size: 5, growthRate: 320, lineWidth: 3 });
                 break;
             case 'implode':
                 for (let i = 0; i < 14; i++) {
@@ -364,12 +370,12 @@ export class ParticleManager {
                         rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 10
                     });
                 }
-
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.25, maxLife: 0.25, color: '#ffffff', tint: '#ffffff', type: 'shockwave', size: 5, growthRate: 320, lineWidth: 4 });
                 break;
             case 'golden':
                 this.addParticle(x, y, '#ffd700', 10, 'star', 2.5, { speed: 300, gravity: true });
                 this.addParticle(x, y, '#fff4a0', 6, 'fragment', 1.8, { speed: 240, gravity: true });
-
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#ffd700', tint: '#ffd700', type: 'shockwave', size: 6, growthRate: 420, lineWidth: 3 });
                 break;
         }
     }
