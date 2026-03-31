@@ -75,7 +75,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                     SETTINGS
                 </button>
                 <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); base44.auth.logout(); }}
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
                     className="col-span-2 w-full bg-red-900/80 backdrop-blur-sm hover:bg-red-800 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(153,27,27,0.4)] border border-red-500/30 flex items-center justify-center gap-2"
                 >
                     <LogOut size={20} /> LOGOUT

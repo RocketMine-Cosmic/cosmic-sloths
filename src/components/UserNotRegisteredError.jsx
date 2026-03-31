@@ -1,4 +1,5 @@
 import React from 'react';
+import { base44 } from '@/api/base44Client';
 
 const UserNotRegisteredError = () => {
   return (
@@ -21,6 +22,12 @@ const UserNotRegisteredError = () => {
               <li>Contact the app administrator for access</li>
               <li>Try logging out and back in again</li>
             </ul>
+            <button 
+                className="mt-4 px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors w-full"
+                onClick={() => { localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
+            >
+                Log Out
+            </button>
           </div>
         </div>
       </div>
