@@ -52,6 +52,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     </button>
                     <button 
                         onClick={onPause}
+                        onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
                         className="pointer-events-auto bg-slate-800/80 p-2 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors flex items-center justify-center"
                     >
                         <Pause className="w-5 h-5 md:w-6 md:h-6 text-white" />
