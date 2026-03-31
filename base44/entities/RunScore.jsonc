@@ -46,10 +46,10 @@
     "season_id"
   ],
   "rls": {
+    "read": {},
     "create": {
       "data.player_name": "{{user.full_name}}"
     },
-    "read": {},
     "update": {
       "user_condition": {
         "role": "admin"

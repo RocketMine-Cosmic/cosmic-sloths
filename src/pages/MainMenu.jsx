@@ -6,6 +6,7 @@ import { Pencil, Check, X } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { ThemeManager } from '../game/ThemeManager';
 import SettingsModal from '../components/game/SettingsModal';
+import SetProfileNameModal from '../components/game/SetProfileNameModal';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState('');
     const [showSettings, setShowSettings] = useState(false);
+    const [needsProfileName, setNeedsProfileName] = useState(false);
     const [theme, setTheme] = useState(ThemeManager.getTheme());
 
     useEffect(() => {
