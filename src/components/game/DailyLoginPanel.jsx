@@ -6,13 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 
 const DAILY_REWARDS = [
-    { day: 1, reward: 200,   currency: 'gold',  icon: '🪙' },
-    { day: 2, reward: 400,   currency: 'gold',  icon: '🪙' },
-    { day: 3, reward: 500,   currency: 'gold',  icon: '🪙' },
+    { day: 1, reward: 400,   currency: 'gold',  icon: '🪙' },
+    { day: 2, reward: 800,   currency: 'gold',  icon: '🪙' },
+    { day: 3, reward: 1000,  currency: 'gold',  icon: '🪙' },
     { day: 4, reward: 1,     currency: 'reroll', icon: '🎲' },
-    { day: 5, reward: 1000,  currency: 'gold',  icon: '🪙' },
+    { day: 5, reward: 2000,  currency: 'gold',  icon: '🪙' },
     { day: 6, reward: 2,     currency: 'reroll', icon: '🎲' },
-    { day: 7, reward: 2000,  currency: 'gold',  icon: '🪙', bonus: true },
+    { day: 7, reward: 4000,  currency: 'gold',  icon: '🪙', bonus: true },
 ];
 
 export default function DailyLoginPanel({ save, setSave }) {
