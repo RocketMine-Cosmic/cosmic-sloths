@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 
 const TABS = [
@@ -9,6 +9,7 @@ const TABS = [
     { id: 'progression',label: 'Progression',  icon: Star },
     { id: 'missions',   label: 'Missions',     icon: Target },
     { id: 'compete',    label: 'Compete',      icon: Trophy },
+    { id: 'squads',     label: 'Squads',       icon: Users },
     { id: 'combat',     label: 'Combat',       icon: Zap },
 ];
 
@@ -250,8 +251,110 @@ const TABS_CONTENT = {
             </SectionCard>
 
             <SectionCard title="👥 Sloth Squads" color="orange">
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                    Create or join a squad of up to <strong className="text-orange-400">5 players</strong>. Every kill you make in any run automatically contributes to your squad's weekly kill total.
+                </p>
+                <div className="space-y-2 mb-3">
+                    <div className="bg-slate-900/60 rounded-lg p-3 border border-orange-900/40">
+                        <div className="font-bold text-orange-300 text-sm mb-1">📈 Squad Levels & XP</div>
+                        <p className="text-xs text-slate-400">Squads earn XP equal to their weekly kills at the end of each week. Level up through 7 tiers — from <strong className="text-white">Recruits</strong> all the way to <strong className="text-pink-400">Cosmic Elite</strong> — unlocking harder bounties and bigger rewards.</p>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-lg p-3 border border-yellow-900/40">
+                        <div className="font-bold text-yellow-300 text-sm mb-1">🛡️ Weekly Bounty</div>
+                        <p className="text-xs text-slate-400">Each week your squad has a kill target that scales with your squad level. Hit the target and every member can <strong className="text-white">individually claim</strong> Gold and Reroll Tokens as their reward.</p>
+                        <div className="grid grid-cols-2 gap-1.5 mt-2 text-[10px]">
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.1 Rookie</div><div className="text-yellow-400 font-bold">2,000 kills → 🪙500 + 🎲×1</div></div>
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.3 Hunters</div><div className="text-yellow-400 font-bold">10,000 kills → 🪙2,500 + 🎲×3</div></div>
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.5 Reapers</div><div className="text-yellow-400 font-bold">30,000 kills → 🪙6,500 + 🎲×5</div></div>
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.7 Cosmic Elite</div><div className="text-pink-400 font-bold">75,000 kills → 🪙15k + 🎲×10</div></div>
+                        </div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-lg p-3 border border-slate-700/50">
+                        <div className="font-bold text-slate-200 text-sm mb-1">⚙️ Squad Management</div>
+                        <p className="text-xs text-slate-400">The squad <strong className="text-white">Leader</strong> can edit the squad name, tag, and description, kick members, or transfer leadership. Use the in-squad <strong className="text-cyan-400">Chat</strong> to coordinate with your team.</p>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-lg p-3 border border-slate-700/50">
+                        <div className="font-bold text-slate-200 text-sm mb-1">🏆 Squad Leaderboard</div>
+                        <p className="text-xs text-slate-400">The top squads by weekly kills are ranked on the <strong className="text-white">Squads Leaderboard</strong> tab in the Hall of Fame. Compete to be the most lethal squad this week!</p>
+                    </div>
+                </div>
+            </SectionCard>
+        </div>
+    ),
+
+    squads: (
+        <div className="space-y-4">
+            <SectionCard title="👥 What are Squads?" color="orange">
                 <p className="text-sm text-slate-300 leading-relaxed">
-                    Create or join a squad of up to <strong className="text-orange-400">5 players</strong>. Your kill counts from every run contribute to your squad's weekly total. Chat with your squadmates and claim the weekly bounty together.
+                    Squads are persistent teams of up to <strong className="text-orange-400">5 players</strong>. Every kill you score in any run automatically contributes to your squad's weekly total — no extra steps needed. Find the Squads page from the main carousel.
+                </p>
+            </SectionCard>
+
+            <SectionCard title="📈 Squad Levels & XP" color="cyan">
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">At the end of each week, your squad earns XP equal to its total weekly kills. Level up through 7 tiers to unlock bigger bounties.</p>
+                <div className="space-y-1.5">
+                    {[
+                        { badge: '🦥', name: 'Recruits',     level: 1, color: 'text-slate-400' },
+                        { badge: '⭐', name: 'Drifters',     level: 2, color: 'text-blue-400' },
+                        { badge: '🔥', name: 'Hunters',      level: 3, color: 'text-emerald-400' },
+                        { badge: '⚡', name: 'Vanguards',    level: 4, color: 'text-amber-400' },
+                        { badge: '💀', name: 'Reapers',      level: 5, color: 'text-red-400' },
+                        { badge: '👑', name: 'Legends',      level: 6, color: 'text-purple-400' },
+                        { badge: '🌌', name: 'Cosmic Elite', level: 7, color: 'text-pink-400' },
+                    ].map(t => (
+                        <div key={t.level} className="flex items-center gap-3 bg-slate-900/60 rounded-lg px-3 py-2 border border-slate-700/50">
+                            <span className="text-lg w-7 text-center">{t.badge}</span>
+                            <span className={`font-bold text-sm ${t.color} w-28`}>Lv.{t.level} {t.name}</span>
+                            <span className="text-xs text-slate-400">higher bounty rewards unlocked</span>
+                        </div>
+                    ))}
+                </div>
+            </SectionCard>
+
+            <SectionCard title="🛡️ Weekly Bounty" color="amber">
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                    Each week your squad has a kill target based on its level. Hit the target and <strong className="text-white">every member</strong> can individually claim their reward — Gold and Reroll Tokens.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.1 — Rookie Bounty</div><div className="text-slate-400">2,000 kills → 🪙 500 + 🎲×1</div></div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.2 — Drifter Bounty</div><div className="text-slate-400">5,000 kills → 🪙 1,200 + 🎲×2</div></div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.3 — Hunter Bounty</div><div className="text-slate-400">10,000 kills → 🪙 2,500 + 🎲×3</div></div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.4 — Vanguard Bounty</div><div className="text-slate-400">18,000 kills → 🪙 4,000 + 🎲×4</div></div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.5 — Reaper Bounty</div><div className="text-slate-400">30,000 kills → 🪙 6,500 + 🎲×5</div></div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.6 — Legend Bounty</div><div className="text-slate-400">50,000 kills → 🪙 10,000 + 🎲×7</div></div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-pink-900/40 sm:col-span-2"><div className="font-bold text-pink-400 mb-0.5">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400">75,000 kills → 🪙 15,000 + 🎲×10</div></div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="⚙️ Roles & Management" color="purple">
+                <div className="space-y-2">
+                    <div className="flex gap-3 bg-slate-900/60 p-3 rounded-lg border border-yellow-900/30 items-start">
+                        <Crown className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
+                        <div>
+                            <div className="font-bold text-yellow-400 text-sm">Leader</div>
+                            <div className="text-xs text-slate-400">Can edit squad name, tag & description. Can kick members or transfer leadership to another member.</div>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 items-start">
+                        <Users className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                        <div>
+                            <div className="font-bold text-slate-200 text-sm">Member</div>
+                            <div className="text-xs text-slate-400">Contributes kills to the squad weekly total and can claim the weekly bounty once the target is met.</div>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 bg-slate-900/60 p-3 rounded-lg border border-cyan-900/30 items-start">
+                        <MessageSquare className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
+                        <div>
+                            <div className="font-bold text-cyan-400 text-sm">Squad Chat</div>
+                            <div className="text-xs text-slate-400">Real-time chat is available in the Squads page to coordinate with your teammates.</div>
+                        </div>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="🏆 Squad Leaderboard" color="green">
+                <p className="text-sm text-slate-300 leading-relaxed">
+                    The top squads by weekly kills are ranked on the <strong className="text-white">Squads tab</strong> in the Hall of Fame leaderboard. Your squad's level badge and total members are shown — compete to be the most dominant squad this week!
                 </p>
             </SectionCard>
         </div>
