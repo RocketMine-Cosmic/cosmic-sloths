@@ -129,6 +129,24 @@ export default function Game() {
             }
         };
 
+        // Inject skin color override into save so GameEngine can read it
+        const SKIN_COLORS = {
+            neobyte_crimson: '#DC143C', neobyte_gold: '#FFD700',
+            pandypaws_obsidian: '#222222', pandypaws_ice: '#00CFFF',
+            novabyte_void: '#8A2BE2', novabyte_neon: '#39FF14',
+            glitch_red: '#FF0000', glitch_white: '#FFFFFF',
+            holodrift_amber: '#FFA500',
+            codebreaker_pink: '#FF1493',
+            dataphantom_ghost: '#C0C0C0',
+            neonvortex_plasma: '#00E5FF',
+            synthbeats_violet: '#9400D3',
+            skybyte_solar: '#FF6600',
+        };
+        const equippedSkinId = save.cosmetics?.skins?.[characterId];
+        if (equippedSkinId && SKIN_COLORS[equippedSkinId]) {
+            save.skinColorOverride = SKIN_COLORS[equippedSkinId];
+        }
+
         const engine = new GameEngine(canvas, characterId, arenaId, difficultyId, save, {
             onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
             onTimeChange: (time) => setGameState(s => ({ ...s, time })),

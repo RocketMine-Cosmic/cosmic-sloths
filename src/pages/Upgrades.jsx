@@ -45,6 +45,34 @@ const KILL_COSMETICS = [
     { id: 'golden',    name: 'Gold Shatter',  goldCost: 30000, tokenCost: 3000, icon: '💰', desc: 'Enemies explode into golden coins.' },
 ];
 
+// Character skins: alternate color tints applied to the player sprite
+const SKIN_COSMETICS = [
+    { charId: 'neobyte',     id: 'neobyte_default',    name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#4169E1', icon: '🔵', desc: 'Classic NeoByte blue.' },
+    { charId: 'neobyte',     id: 'neobyte_crimson',    name: 'Crimson',       goldCost: 5000,  tokenCost: 500,  color: '#DC143C', icon: '🔴', desc: 'Blood-red battle variant.' },
+    { charId: 'neobyte',     id: 'neobyte_gold',       name: 'Gold Edition',  goldCost: 20000, tokenCost: 2000, color: '#FFD700', icon: '🟡', desc: 'Gleaming prestige skin.' },
+    { charId: 'pandypaws',   id: 'pandypaws_default',  name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FF69B4', icon: '🩷', desc: 'Classic pink armor.' },
+    { charId: 'pandypaws',   id: 'pandypaws_obsidian', name: 'Obsidian',      goldCost: 5000,  tokenCost: 500,  color: '#222222', icon: '⬛', desc: 'Dark armour plating.' },
+    { charId: 'pandypaws',   id: 'pandypaws_ice',      name: 'Cryo',          goldCost: 20000, tokenCost: 2000, color: '#00CFFF', icon: '🩵', desc: 'Frozen tundra variant.' },
+    { charId: 'novabyte',    id: 'novabyte_default',   name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FF4500', icon: '🟠', desc: 'Classic inferno orange.' },
+    { charId: 'novabyte',    id: 'novabyte_void',      name: 'Void',          goldCost: 5000,  tokenCost: 500,  color: '#8A2BE2', icon: '🟣', desc: 'Corrupted by the void.' },
+    { charId: 'novabyte',    id: 'novabyte_neon',      name: 'Neon',          goldCost: 20000, tokenCost: 2000, color: '#39FF14', icon: '🟢', desc: 'Toxic neon glow.' },
+    { charId: 'glitch',      id: 'glitch_default',     name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#8A2BE2', icon: '🟣', desc: 'Classic glitch purple.' },
+    { charId: 'glitch',      id: 'glitch_red',         name: 'Fatal Error',   goldCost: 5000,  tokenCost: 500,  color: '#FF0000', icon: '🔴', desc: 'Corrupted red state.' },
+    { charId: 'glitch',      id: 'glitch_white',       name: 'Whitespace',    goldCost: 20000, tokenCost: 2000, color: '#FFFFFF', icon: '⬜', desc: 'Pure emptiness.' },
+    { charId: 'holodrift',   id: 'holodrift_default',  name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#20B2AA', icon: '🩵', desc: 'Classic teal holo.' },
+    { charId: 'holodrift',   id: 'holodrift_amber',    name: 'Amber',         goldCost: 5000,  tokenCost: 500,  color: '#FFA500', icon: '🟠', desc: 'Warm amber frequency.' },
+    { charId: 'codebreaker', id: 'codebreaker_default',name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#32CD32', icon: '🟢', desc: 'Classic hacker green.' },
+    { charId: 'codebreaker', id: 'codebreaker_pink',   name: 'Rootkit',       goldCost: 5000,  tokenCost: 500,  color: '#FF1493', icon: '🩷', desc: 'Stealth-mode pink.' },
+    { charId: 'dataphantom', id: 'dataphantom_default',name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#4682B4', icon: '🔵', desc: 'Classic steel blue.' },
+    { charId: 'dataphantom', id: 'dataphantom_ghost',  name: 'Ghost',         goldCost: 5000,  tokenCost: 500,  color: '#C0C0C0', icon: '🩶', desc: 'Ethereal silver form.' },
+    { charId: 'neonvortex',  id: 'neonvortex_default', name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FFD700', icon: '🟡', desc: 'Classic golden sniper.' },
+    { charId: 'neonvortex',  id: 'neonvortex_plasma',  name: 'Plasma',        goldCost: 5000,  tokenCost: 500,  color: '#00E5FF', icon: '🩵', desc: 'Crackling plasma skin.' },
+    { charId: 'synthbeats',  id: 'synthbeats_default', name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FF8C00', icon: '🟠', desc: 'Classic dark orange.' },
+    { charId: 'synthbeats',  id: 'synthbeats_violet',  name: 'Violet Drop',   goldCost: 5000,  tokenCost: 500,  color: '#9400D3', icon: '🟣', desc: 'Deep bass violet.' },
+    { charId: 'skybyte',     id: 'skybyte_default',    name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#00FFFF', icon: '🩵', desc: 'Classic ace cyan.' },
+    { charId: 'skybyte',     id: 'skybyte_solar',      name: 'Solar Ace',     goldCost: 5000,  tokenCost: 500,  color: '#FF6600', icon: '🔶', desc: 'Blazing sunset variant.' },
+];
+
 export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
@@ -53,7 +81,8 @@ export default function Upgrades({ isCarousel }) {
     const [selectedChar, setSelectedChar] = useState((save.unlockedCharacters && save.unlockedCharacters.length > 0) ? save.unlockedCharacters[0] : 'neobyte');
     const [selectedWeapon, setSelectedWeapon] = useState('napBeam');
     const [timeLeft, setTimeLeft] = useState('');
-    const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail' or 'kill'
+    const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail', 'kill', or 'skin'
+    const [skinCharIndex, setSkinCharIndex] = useState(0);
 
     useEffect(() => {
         const updateTimer = () => {
@@ -176,7 +205,42 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const handleBuyCosmetic = (cosmetic, slot, currency) => {
-        // slot: 'trail' or 'kill'
+        // slot: 'trail', 'kill', or 'skin'
+        if (slot === 'skin') {
+            const unlocked = save.unlockedSkins || [];
+            const isOwned = unlocked.includes(cosmetic.id) || cosmetic.goldCost === 0;
+            const cosmetics = save.cosmetics || {};
+            const charSkins = cosmetics.skins || {};
+
+            if (currency === 'preview') {
+                setSave(prev => ({ ...prev, cosmetics: { ...prev.cosmetics, skins: { ...(prev.cosmetics?.skins || {}), [cosmetic.charId]: cosmetic.id } } }));
+                SoundManager.playUIClick();
+                return;
+            }
+            if (isOwned) {
+                const newSave = { ...save, cosmetics: { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } } };
+                SaveManager.save(newSave);
+                setSave(newSave);
+                SoundManager.playUIClick();
+                return;
+            }
+            if (currency === 'gold' && save.gold >= cosmetic.goldCost) {
+                const newSave = { ...save, gold: save.gold - cosmetic.goldCost, unlockedSkins: [...unlocked, cosmetic.id] };
+                newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
+                SaveManager.save(newSave);
+                setSave(newSave);
+                SoundManager.playUIClick();
+            } else if (currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.tokenCost) {
+                const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.tokenCost, unlockedSkins: [...unlocked, cosmetic.id] };
+                newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
+                SaveManager.save(newSave);
+                setSave(newSave);
+                recordTokenSpend(cosmetic.tokenCost);
+                SoundManager.playUIClick();
+            }
+            return;
+        }
+
         const unlockKey = slot === 'trail' ? 'unlockedCosmetics' : 'unlockedKillEffects';
         const freeId = slot === 'trail' ? 'default' : 'none';
         const unlocked = save[unlockKey] || [freeId];
@@ -611,7 +675,7 @@ export default function Upgrades({ isCarousel }) {
                 </div>
 
                 {/* Tab switcher */}
-                <div className="flex gap-2 mb-4 border-b border-slate-800 pb-2">
+                <div className="flex gap-2 mb-4 border-b border-slate-800 pb-2 flex-wrap">
                     <button
                         onClick={() => { SoundManager.playUIClick(); setCosmeticTab('trail'); }}
                         className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'trail' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
@@ -624,8 +688,91 @@ export default function Upgrades({ isCarousel }) {
                     >
                         💥 Kill Effects
                     </button>
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('skin'); }}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'skin' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        🎨 Character Skins
+                    </button>
                 </div>
 
+                {cosmeticTab === 'skin' ? (() => {
+                    const unlockedChars = save.unlockedCharacters || ['neobyte'];
+                    const currentChar = CHARACTERS.find(c => c.id === unlockedChars[skinCharIndex % unlockedChars.length]) || CHARACTERS[0];
+                    const charSkins = SKIN_COSMETICS.filter(s => s.charId === currentChar.id);
+                    const equippedSkinId = save.cosmetics?.skins?.[currentChar.id] || `${currentChar.id}_default`;
+                    const unlockedSkins = save.unlockedSkins || [];
+
+                    return (
+                        <div>
+                            {/* Character selector */}
+                            <div className="flex items-center justify-between bg-slate-800 p-2 rounded-xl mb-4 border border-slate-700">
+                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i - 1 + unlockedChars.length) % unlockedChars.length); }}
+                                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
+                                    <ChevronLeft className="w-6 h-6" />
+                                </button>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-pink-500" style={{ borderColor: currentChar.color }}>
+                                        {currentChar.image ? <img src={currentChar.image} alt={currentChar.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800" />}
+                                    </div>
+                                    <div className="font-bold text-white">{currentChar.name}
+                                        <div className="text-xs text-slate-500 font-normal">{skinCharIndex % unlockedChars.length + 1} / {unlockedChars.length}</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i + 1) % unlockedChars.length); }}
+                                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
+                                    <ChevronRight className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                                {charSkins.map(skin => {
+                                    const isOwned = skin.goldCost === 0 || unlockedSkins.includes(skin.id);
+                                    const isEquipped = equippedSkinId === skin.id;
+                                    const canAffordGold = save.gold >= skin.goldCost;
+                                    const canAffordToken = (save.cosmicTokens || 0) >= skin.tokenCost;
+                                    return (
+                                        <div key={skin.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full border-2 shrink-0" style={{ background: skin.color, borderColor: skin.color + '80' }} />
+                                                <div>
+                                                    <div className="font-bold text-sm text-white leading-tight">{skin.name}</div>
+                                                    {isEquipped && <div className="text-[10px] text-pink-400 font-bold">EQUIPPED</div>}
+                                                    {!isOwned && <div className="text-[10px] text-slate-500 font-bold">LOCKED</div>}
+                                                </div>
+                                            </div>
+                                            <p className="text-[11px] text-slate-400 leading-snug">{skin.desc}</p>
+                                            {isOwned ? (
+                                                <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={isEquipped}
+                                                    className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs ${isEquipped ? 'bg-pink-700 text-pink-200 cursor-default' : 'bg-slate-700 text-white hover:bg-slate-600'}`}>
+                                                    {isEquipped ? '✓ EQUIPPED' : 'EQUIP'}
+                                                </button>
+                                            ) : (
+                                                <div className="flex gap-1.5 w-full flex-col">
+                                                    <button onClick={() => handleBuyCosmetic(skin, 'skin', 'preview')}
+                                                        className="w-full py-1 rounded-lg font-bold transition-colors text-xs bg-slate-700 text-slate-300 hover:bg-slate-600">
+                                                        👁 Preview
+                                                    </button>
+                                                    <div className="flex gap-1.5">
+                                                        <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold}
+                                                            className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                            🪙 {skin.goldCost.toLocaleString()}
+                                                        </button>
+                                                        {skin.tokenCost > 0 && (
+                                                            <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
+                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                💠 {skin.tokenCost.toLocaleString()}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })() : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                     {list.map(cosmetic => {
                         const unlocked = save[unlockKey] || [freeId];
@@ -692,6 +839,7 @@ export default function Upgrades({ isCarousel }) {
                         );
                     })}
                 </div>
+                )}
             </div>
         );
     };

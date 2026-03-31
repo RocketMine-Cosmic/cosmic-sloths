@@ -99,6 +99,9 @@ export class GameEngine {
         }
         
         this.killEffect = save.cosmetics?.killEffect || 'none';
+        if (save.skinColorOverride) {
+            baseChar = { ...baseChar, color: save.skinColorOverride };
+        }
 
         this.player = {
             name: baseChar.name,
