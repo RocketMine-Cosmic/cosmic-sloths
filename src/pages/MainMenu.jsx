@@ -29,6 +29,9 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 const me = await base44.auth.me();
                 setUser(me);
                 setNewName(me?.full_name || '');
+                if (!me?.full_name) {
+                    setNeedsProfileName(true);
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -98,6 +101,13 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             </div>
 
             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+            {needsProfileName && (
+                <SetProfileNameModal onComplete={(name) => {
+                    setUser(prev => ({ ...prev, full_name: name }));
+                    setNewName(name);
+                    setNeedsProfileName(false);
+                }} />
+            )}
         </div>
     );
 }
