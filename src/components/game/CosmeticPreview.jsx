@@ -47,15 +47,15 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
 
         const spawnKill = (cx, cy) => {
             if (!killColors) return;
-            for (let i = 0; i < 18; i++) {
-                const angle = (Math.PI * 2 / 18) * i;
-                const speed = 30 + Math.random() * 80;
+            for (let i = 0; i < 15; i++) {
+                const angle = (Math.PI * 2 / 15) * i;
+                const speed = 20 + Math.random() * 50;
                 particles.push({
                     x: cx, y: cy,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
-                    life: 1.0, maxLife: 1.0,
-                    size: 2 + Math.random() * 4,
+                    life: 0.8, maxLife: 0.8,
+                    size: 1.5 + Math.random() * 2.5,
                     color: killColors[Math.floor(Math.random() * killColors.length)],
                 });
             }
