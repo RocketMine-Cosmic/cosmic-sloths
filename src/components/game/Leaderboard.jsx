@@ -91,14 +91,19 @@ export default function Leaderboard() {
             // Deduplicate by player_name, keeping the highest score
             // Exclude endless runs from weekly/seasonal/all_time views
             const uniqueScores = [];
-            const seenUsers = new Set();
+            const seenIdentifiers = new Set();
 
             for (const score of data) {
                 if (view !== 'endless' && score.arena_id === 'endless') continue;
-                if (!seenUsers.has(score.user_id)) {
-                    seenUsers.add(score.user_id);
+                
+                // Use user_id for new scores, fallback to player_name for older records
+                const identifier = score.user_id || score.player_name;
+
+                if (identifier && !seenIdentifiers.has(identifier)) {
+                    seenIdentifiers.add(identifier);
                     uniqueScores.push(score);
                 }
+                
                 if (uniqueScores.length >= 50) break;
             }
             
