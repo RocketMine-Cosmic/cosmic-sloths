@@ -91,12 +91,12 @@ export default function Leaderboard() {
             // Deduplicate by player_name, keeping the highest score
             // Exclude endless runs from weekly/seasonal/all_time views
             const uniqueScores = [];
-            const seenPlayers = new Set();
-            
+            const seenUsers = new Set();
+
             for (const score of data) {
-                if ((view === 'weekly' || view === 'seasonal' || view === 'all_time') && score.arena_id === 'endless') continue;
-                if (!seenPlayers.has(score.player_name)) {
-                    seenPlayers.add(score.player_name);
+                if (view !== 'endless' && score.arena_id === 'endless') continue;
+                if (!seenUsers.has(score.user_id)) {
+                    seenUsers.add(score.user_id);
                     uniqueScores.push(score);
                 }
                 if (uniqueScores.length >= 50) break;
@@ -256,18 +256,8 @@ export default function Leaderboard() {
                                         </div>
 
                                         {/* Player Info */}
-                                        <div className="flex items-center gap-3 flex-1 w-full sm:w-auto bg-slate-950/30 p-2 rounded-lg sm:bg-transparent sm:p-0">
-                                            {char ? (
-                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 bg-slate-900" style={{ borderColor: char.color }} title={char.name}>
-                                                    {char.image ? (
-                                                        <img src={char.image} alt={char.name} className="w-full h-full object-cover object-top" />
-                                                    ) : (
-                                                        <span className="text-sm">🦥</span>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 border-slate-700 shrink-0"></div>
-                                            )}
+                                        <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
+                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 text-xl">🦥</div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold text-white text-lg md:text-xl truncate" title={score.player_name}>
                                                     {score.player_name}

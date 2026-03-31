@@ -2,6 +2,10 @@
   "name": "RunScore",
   "type": "object",
   "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user"
+    },
     "player_name": {
       "type": "string",
       "description": "Name of the player"
@@ -40,6 +44,7 @@
     }
   },
   "required": [
+    "user_id",
     "player_name",
     "score",
     "week_id",
@@ -48,17 +53,31 @@
   "rls": {
     "read": {},
     "create": {
-      "data.player_name": "{{user.full_name}}"
+      "data.user_id": "{{user.id}}"
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     }
   }
 }

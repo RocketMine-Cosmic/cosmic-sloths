@@ -78,25 +78,17 @@ export default function Game() {
         const saveScore = async (stats, isVictory) => {
             try {
                 const user = await base44.auth.me();
-                if (!user) {
-                    console.error('saveScore: No authenticated user found, skipping score save.');
+                if (!user) return;
+                if (!user.full_name) {
+                    console.error('saveScore: user has no full_name, skipping.');
                     return;
                 }
 
-                // RLS requires player_name === user.full_name exactly
-                const playerName = user.full_name;
-                if (!playerName) {
-                    console.error('saveScore: user has no full_name, skipping score save.');
-                    return;
-                }
-                console.log('saveScore: saving for', playerName, '| isVictory:', isVictory, '| arenaId:', stats.arenaId || arenaId, '| isEndless:', isEndless);
-                
-                // Add kills to squad if user is in one
+                // Update squad kills
                 try {
                     const memberships = await base44.entities.SquadMember.filter({ user_id: user.id });
                     if (memberships.length > 0) {
-                        const squadId = memberships[0].squad_id;
-                        const squad = await base44.entities.Squad.get(squadId);
+                        const squad = await base44.entities.Squad.get(memberships[0].squad_id);
                         if (squad) {
                             await base44.entities.Squad.update(squad.id, {
                                 weekly_kills: (squad.weekly_kills || 0) + stats.kills
@@ -106,37 +98,59 @@ export default function Game() {
                 } catch(err) {
                     console.error('Failed to update squad kills', err);
                 }
-                
+
                 const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
                 const arenaMultiplier = isEndless ? 3.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
                 const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20 + (isVictory ? 5000 : 0);
-                
                 const currentSaveForScore = SaveManager.load();
                 const bulletHellMult = (currentSaveForScore.bossModifiers && currentSaveForScore.bossModifiers.bullet_hell) ? 1.3 : 1.0;
-                
                 const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
-                
+
                 const week_id = moment().format('YYYY-[W]ww');
                 const weekNum = moment().week();
                 const seasonNum = Math.floor(weekNum / 4) + 1;
                 const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+                const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
 
-                console.log('saveScore: computed score =', score, '| week_id:', week_id, '| season_id:', season_id);
-                
-                const result = await base44.entities.RunScore.create({
-                    player_name: playerName,
-                    score: score,
+                // Determine which leaderboard bucket this score belongs to
+                const isEndlessRun = arena_id === 'endless';
+                const filter = isEndlessRun
+                    ? { user_id: user.id, arena_id: 'endless' }
+                    : { user_id: user.id, week_id: week_id };
+
+                const existing = await base44.entities.RunScore.filter(filter);
+
+                const scoreData = {
+                    user_id: user.id,
+                    player_name: user.full_name,
+                    score,
                     time_survived: stats.time,
                     level: stats.level,
                     kills: stats.kills,
                     character_id: stats.characterId || characterId,
-                    arena_id: isEndless ? 'endless' : (stats.arenaId || arenaId),
-                    week_id: week_id,
-                    season_id: season_id
-                });
-                console.log('saveScore: SUCCESS, created RunScore id:', result?.id);
+                    arena_id,
+                    week_id,
+                    season_id
+                };
+
+                if (existing.length > 0) {
+                    // Always update player_name (in case they changed it), only update stats if score is higher
+                    const best = existing.reduce((a, b) => (a.score > b.score ? a : b));
+                    // Delete duplicates
+                    for (const e of existing) {
+                        if (e.id !== best.id) await base44.entities.RunScore.delete(e.id);
+                    }
+                    if (score > best.score) {
+                        await base44.entities.RunScore.update(best.id, scoreData);
+                    } else {
+                        // Still update player_name in case it changed
+                        await base44.entities.RunScore.update(best.id, { player_name: user.full_name });
+                    }
+                } else {
+                    await base44.entities.RunScore.create(scoreData);
+                }
             } catch (e) {
-                console.error('saveScore: FAILED to save score:', e?.message || e, e?.response?.data || '');
+                console.error('saveScore: FAILED:', e?.message || e);
             }
         };
 
