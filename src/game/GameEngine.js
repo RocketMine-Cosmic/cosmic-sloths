@@ -983,7 +983,7 @@ export class GameEngine {
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc' });
                 
                 // Death Splatter + Kill Effect cosmetic
-                this.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 3 : 1, e.id);
+                this.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 2 : 0.6, e.id);
                 this.shake(e.isBoss ? 0.5 : 0.05);
 
 
