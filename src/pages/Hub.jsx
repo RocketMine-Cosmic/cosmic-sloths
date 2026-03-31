@@ -237,7 +237,10 @@ export default function Hub({ isCarousel }) {
                                     </div>
 
                                     <div>
-                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Arena</h3>
+                                        <div className="flex items-center gap-2 mb-1.5 md:mb-2">
+                                            <h3 className="text-sm md:text-base font-bold text-cyan-400 uppercase tracking-wider">Inner Galaxy</h3>
+                                            <span className="text-xs md:text-sm text-slate-400">- Select Sector</span>
+                                        </div>
                                         <div 
                                             className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none touch-pan-y"
                                             onTouchStart={(e) => {
@@ -400,7 +403,7 @@ export default function Hub({ isCarousel }) {
                                                 {!isCharUnlocked ? (
                                                     <>OPERATIVE LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                    <>ARENA LOCKED</>
+                                                    <>SECTOR LOCKED</>
                                                 ) : (
                                                     <>LAUNCH MISSION <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
                                                 )}
@@ -421,7 +424,7 @@ export default function Hub({ isCarousel }) {
                                                 {!isCharUnlocked ? (
                                                     <>OPERATIVE LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                    <>ARENA LOCKED</>
+                                                    <>SECTOR LOCKED</>
                                                 ) : (
                                                     <>LAUNCH ENDLESS VOID <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
                                                 )}

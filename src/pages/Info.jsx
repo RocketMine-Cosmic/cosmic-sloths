@@ -69,7 +69,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="🎯 Objective" color="green">
                 <p className="text-sm text-slate-300 leading-relaxed">
-                    Survive the full time limit of each arena to <strong className="text-green-400">win</strong>. As time progresses, enemies get stronger and more numerous. An optional <strong className="text-purple-400">Endless Void</strong> mode scales infinitely with boss fights every 3 minutes.
+                    Survive the full time limit of each sector to <strong className="text-green-400">win</strong>. As time progresses, enemies get stronger and more numerous. An optional <strong className="text-purple-400">Endless Void</strong> mode scales infinitely with boss fights every 3 minutes.
                 </p>
             </SectionCard>
 
@@ -259,9 +259,9 @@ const TABS_CONTENT = {
 
     combat: (
         <div className="space-y-4">
-            <SectionCard title="⚔️ Arenas" color="cyan">
+            <SectionCard title="⚔️ Sectors" color="cyan">
                 <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    Each arena has a unique environment, enemy pool, and difficulty. Unlock new arenas by completing runs with each character. Every arena has its own environmental effect:
+                    Each sector has a unique environment, enemy pool, and difficulty. Unlock new sectors by completing runs with each character. Every sector has its own environmental effect:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                     <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-700 text-center"><div className="text-cyan-400 font-bold">Neon Rain</div><div className="text-slate-400">+Speed for all</div></div>
@@ -285,7 +285,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="👑 Boss Encounters" color="rose">
                 <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    Bosses appear at the end of certain arenas or every 3 minutes in Endless mode. When a boss is active, normal enemy spawning stops.
+                    Bosses appear at the end of certain sectors or every 3 minutes in Endless mode. When a boss is active, normal enemy spawning stops.
                 </p>
                 <p className="text-sm text-slate-300 leading-relaxed">
                     Defeating a boss drops <strong className="text-purple-400">Reroll Tokens</strong> and rewards you with bonus gold. Boss difficulty scales with game time.
