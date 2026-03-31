@@ -49,7 +49,9 @@ export class GameEngine {
             }
         });
 
-        const baseChar = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
+        const baseCharRaw = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
+        const baseChar = save.skinColorOverride ? { ...baseCharRaw, color: save.skinColorOverride } : baseCharRaw;
+
         this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
         
         if (isEndless) {
@@ -99,9 +101,6 @@ export class GameEngine {
         }
         
         this.killEffect = save.cosmetics?.killEffect || 'none';
-        if (save.skinColorOverride) {
-            baseChar = { ...baseChar, color: save.skinColorOverride };
-        }
 
         this.player = {
             name: baseChar.name,
