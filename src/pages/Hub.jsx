@@ -426,7 +426,7 @@ export default function Hub({ isCarousel }) {
                                                 ) : !isArenaUnlocked ? (
                                                     <>SECTOR LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH ENDLESS VOID <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
+                                                    <>LAUNCH ENDLESS MODE <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
                                                 )}
                                             </button>
                                         </div>

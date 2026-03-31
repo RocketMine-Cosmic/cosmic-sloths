@@ -27,8 +27,7 @@ export const ARENAS = [
   { id: 'moon', name: 'Shattered Core', bg: '#112233', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ef5a7f3ec_Map17.png', duration: 360, effect: 'fog' },
   { id: 'blackhole', name: 'Abyssal Vortex', bg: '#000000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b29cf4702_map18.png', duration: 390, effect: 'solar_flare' },
   { id: 'mothership', name: 'Turquoise Drift', bg: '#220022', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b7bfbd6fe_Map19.png', duration: 420, effect: 'neon_rain' },
-  { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450, effect: 'solar_flare' },
-  { id: 'endless', name: 'Endless Void', bg: '#050010', image: '', duration: Infinity, effect: 'none' }
+  { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450, effect: 'solar_flare' }
 ];
 
 export const WEAPONS = {
