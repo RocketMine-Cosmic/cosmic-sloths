@@ -119,7 +119,10 @@ export default function Game() {
                     ? { user_id: user.id, arena_id: 'endless' }
                     : { user_id: user.id, week_id: week_id };
 
-                const existing = await base44.entities.RunScore.filter(filter);
+                const rawExisting = await base44.entities.RunScore.filter(filter);
+                const existing = isEndlessRun 
+                    ? rawExisting 
+                    : rawExisting.filter(e => e.arena_id !== 'endless');
 
                 const scoreData = {
                     user_id: user.id,
