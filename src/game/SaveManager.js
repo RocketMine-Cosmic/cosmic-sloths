@@ -120,7 +120,8 @@ export const SaveManager = {
       seasonalPoints: 0,
       encounteredEnemies: [],
       enemyKills: {},
-      bossModifiers: {}
+      bossModifiers: {},
+      hasSetProfileName: false
     };
 
     try {

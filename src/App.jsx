@@ -31,10 +31,21 @@ const AuthenticatedApp = () => {
 
   useEffect(() => {
     if (!isLoadingAuth && !authError) {
-      SaveManager.initialize().then(() => setSaveInitialized(true));
-      if (user && (!user.full_name || user.full_name.includes('@'))) {
-          setNeedsProfileName(true);
-      }
+      SaveManager.initialize().then(() => {
+          setSaveInitialized(true);
+          if (user) {
+              const save = SaveManager.load();
+              if (!user.full_name || user.full_name.includes('@') || !save.hasSetProfileName) {
+                  // If they have played before (e.g. have gold or kills) and have a valid name, grandfather them in
+                  if ((save.totalKills > 0 || save.gold > 0) && user.full_name && !user.full_name.includes('@') && !save.hasSetProfileName) {
+                      save.hasSetProfileName = true;
+                      SaveManager.save(save);
+                  } else {
+                      setNeedsProfileName(true);
+                  }
+              }
+          }
+      });
     } else if (authError) {
       setSaveInitialized(true);
     }
@@ -81,6 +92,9 @@ const AuthenticatedApp = () => {
     </Routes>
     {needsProfileName && (
       <SetProfileNameModal onComplete={() => {
+          const save = SaveManager.load();
+          save.hasSetProfileName = true;
+          SaveManager.save(save);
           setNeedsProfileName(false);
       }} />
     )}
