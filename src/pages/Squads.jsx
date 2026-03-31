@@ -624,29 +624,29 @@ export default function Squads({ isCarousel }) {
                         </div>
 
                         {/* RIGHT PANEL: CHAT, MEMBERS & SETTINGS */}
-                         <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden min-h-[400px]">
-                             <div className="flex border-b border-slate-800 shrink-0">
-                                 <button 
-                                     onClick={() => setActiveTab('chat')}
-                                     className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'chat' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
-                                 >
-                                     <MessageSquare className="w-4 h-4" /> Chat
-                                 </button>
-                                 <button 
-                                     onClick={() => setActiveTab('members')}
-                                     className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'members' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
-                                 >
-                                     <Users className="w-4 h-4" /> Members ({squadMembers.length}/{MAX_SQUAD_MEMBERS})
-                                 </button>
-                                 {isLeader && (
-                                     <button 
-                                         onClick={() => setActiveTab('settings')}
-                                         className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'settings' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
-                                     >
-                                         <Settings className="w-4 h-4" /> Settings
-                                     </button>
-                                 )}
-                             </div>
+                        <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden min-h-[400px]">
+                            <div className="flex border-b border-slate-800 shrink-0">
+                                <button 
+                                    onClick={() => setActiveTab('chat')}
+                                    className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'chat' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
+                                >
+                                    <MessageSquare className="w-4 h-4" /> Chat
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('members')}
+                                    className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'members' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
+                                >
+                                    <Users className="w-4 h-4" /> Members ({squadMembers.length}/{MAX_SQUAD_MEMBERS})
+                                </button>
+                                {isLeader && (
+                                    <button 
+                                        onClick={() => setActiveTab('settings')}
+                                        className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'settings' ? 'text-orange-400 border-b-2 border-orange-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
+                                    >
+                                        <Settings className="w-4 h-4" /> Settings
+                                    </button>
+                                )}
+                            </div>
                             
                             {activeTab === 'chat' ? (
                                 <>
@@ -698,81 +698,91 @@ export default function Squads({ isCarousel }) {
                                     </form>
                                 </>
                             ) : activeTab === 'members' ? (
-                                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                                     {squadMembers.map(member => (
-                                         <div key={member.id} className="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
-                                             <div className="flex items-center gap-3">
-                                                 <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400">
-                                                     {member.player_name.charAt(0).toUpperCase()}
-                                                 </div>
-                                                 <div>
-                                                     <div className="font-bold text-white flex items-center gap-2">
-                                                         {member.role === 'leader' && <Crown className="w-3 h-3 text-yellow-400" />}
-                                                         {member.player_name}
-                                                         {member.user_id === user.id && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 rounded">YOU</span>}
-                                                     </div>
-                                                     <div className="text-xs text-slate-400 capitalize">{member.role}</div>
-                                                 </div>
-                                             </div>
-                                             {isLeader && member.user_id !== user.id && (
-                                                 <div className="flex gap-2">
-                                                     <button
-                                                         onClick={() => handleTransferLeadership(member)}
-                                                         title="Transfer Leadership"
-                                                         className="p-1.5 bg-yellow-900/30 text-yellow-400 hover:bg-yellow-900/60 rounded border border-yellow-800/50 transition-colors"
-                                                     >
-                                                         <Crown className="w-3.5 h-3.5" />
-                                                     </button>
-                                                     <button
-                                                         onClick={() => handleKickMember(member)}
-                                                         title="Kick Member"
-                                                         className="p-1.5 bg-red-900/30 text-red-400 hover:bg-red-900/60 rounded border border-red-800/50 transition-colors"
-                                                     >
-                                                         <UserX className="w-3.5 h-3.5" />
-                                                     </button>
-                                                 </div>
-                                             )}
-                                         </div>
-                                     ))}
-                                 </div>
-                             ) : (
-                                 // Settings Tab (leader only)
-                                 <div className="flex-1 overflow-y-auto p-4">
-                                     <form onSubmit={handleSaveSettings} className="space-y-4">
-                                         <div>
-                                             <label className="block text-xs font-bold text-slate-400 mb-1">Squad Name</label>
-                                             <input
-                                                 required maxLength={20}
-                                                 value={editName} onChange={e => setEditName(e.target.value)}
-                                                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-orange-500 transition-colors"
-                                             />
-                                         </div>
-                                         <div>
-                                             <label className="block text-xs font-bold text-slate-400 mb-1">Tag (Max 4 chars)</label>
-                                             <input
-                                                 required maxLength={4}
-                                                 value={editTag} onChange={e => setEditTag(e.target.value.toUpperCase())}
-                                                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-orange-500 transition-colors uppercase"
-                                             />
-                                         </div>
-                                         <div>
-                                             <label className="block text-xs font-bold text-slate-400 mb-1">Description</label>
-                                             <input
-                                                 maxLength={50}
-                                                 value={editDesc} onChange={e => setEditDesc(e.target.value)}
-                                                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-orange-500 transition-colors"
-                                             />
-                                         </div>
-                                         <button
-                                             type="submit"
-                                             disabled={isSavingSettings}
-                                             className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg transition-colors"
-                                         >
-                                             {isSavingSettings ? 'Saving...' : 'Save Changes'}
-                                         </button>
-                                     </form>
-                                 </div>
-                             )}
+                                <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                                    {squadMembers.map(member => (
+                                        <div key={member.id} className="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400">
+                                                    {member.player_name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-white flex items-center gap-2">
+                                                        {member.role === 'leader' && <Crown className="w-3 h-3 text-yellow-400" />}
+                                                        {member.player_name}
+                                                        {member.user_id === user.id && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 rounded">YOU</span>}
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 capitalize">{member.role}</div>
+                                                </div>
+                                            </div>
+                                            {isLeader && member.user_id !== user.id && (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleTransferLeadership(member)}
+                                                        className="text-xs text-yellow-400 hover:text-yellow-300 bg-yellow-950/30 px-2 py-1 rounded border border-yellow-900/50 flex items-center gap-1"
+                                                        title="Transfer Leadership"
+                                                    >
+                                                        <Crown className="w-3 h-3" /> Promote
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleKickMember(member)}
+                                                        className="text-xs text-red-400 hover:text-red-300 bg-red-950/30 px-2 py-1 rounded border border-red-900/50 flex items-center gap-1"
+                                                        title="Kick Member"
+                                                    >
+                                                        <UserX className="w-3 h-3" /> Kick
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex-1 overflow-y-auto p-4">
+                                    <form onSubmit={handleSaveSettings} className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-400 mb-1">Squad Name</label>
+                                            <input
+                                                required maxLength={20}
+                                                value={editName} onChange={e => setEditName(e.target.value)}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-orange-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-400 mb-1">Tag (Max 4 chars)</label>
+                                            <input
+                                                required maxLength={4}
+                                                value={editTag} onChange={e => setEditTag(e.target.value.toUpperCase())}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-orange-500 uppercase"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-400 mb-1">Description</label>
+                                            <input
+                                                maxLength={50}
+                                                value={editDesc} onChange={e => setEditDesc(e.target.value)}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-orange-500"
+                                                placeholder="Squad description..."
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={isSavingSettings}
+                                            className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg transition-colors"
+                                        >
+                                            {isSavingSettings ? 'Saving...' : 'Save Changes'}
+                                        </button>
+                                        <div className="border-t border-slate-700 pt-4">
+                                            <h4 className="text-xs font-bold text-red-400 mb-2 uppercase tracking-wider">Danger Zone</h4>
+                                            <button
+                                                type="button"
+                                                onClick={handleLeaveSquad}
+                                                className="w-full bg-red-950/30 hover:bg-red-950/60 text-red-400 font-bold py-2.5 rounded-lg border border-red-900/50 transition-colors"
+                                            >
+                                                Disband / Leave Squad
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
