@@ -100,11 +100,33 @@ export default function GlobalRaid({ isCarousel }) {
 
     const todayDate = moment().format('YYYY-MM-DD');
     const runsToday = (save.raidRuns || {})[todayDate] || 0;
-    const MAX_RUNS_PER_DAY = 5;
+    const extraRuns = (save.extraRaidRuns || {})[todayDate] || 0;
+    const MAX_RUNS_PER_DAY = 5 + extraRuns;
+
+    const handleBuyMoreRuns = () => {
+        SoundManager.playUIClick();
+        const currentSave = SaveManager.load();
+        if ((currentSave.cosmicTokens || 0) < 5) {
+            toast({ title: 'Not enough tokens', description: 'You need 5 Cosmic Tokens to buy more runs.', variant: 'destructive' });
+            return;
+        }
+        currentSave.cosmicTokens -= 5;
+        if (!currentSave.extraRaidRuns) currentSave.extraRaidRuns = {};
+        currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
+        SaveManager.save(currentSave);
+        setSave(currentSave);
+
+        const week_id = moment().format('YYYY-[W]ww');
+        const seasonNum = Math.floor(moment().week() / 4) + 1;
+        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+        base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id }).catch(console.error);
+
+        toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
+    };
 
     const handleLaunchRaid = () => {
         if (runsToday >= MAX_RUNS_PER_DAY) {
-            toast({ title: 'Limit Reached', description: 'You can only run the Global Raid 5 times per day.' });
+            toast({ title: 'Limit Reached', description: 'You have reached your daily limit.' });
             return;
         }
         
@@ -248,14 +270,28 @@ export default function GlobalRaid({ isCarousel }) {
                             )}
                         </div>
 
-                        <button
-                            onClick={handleLaunchRaid}
-                            disabled={worldBossData?.is_defeated || !(save.unlockedCharacters || ['neobyte']).includes(selectedChar) || runsToday >= MAX_RUNS_PER_DAY}
-                            className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 md:py-4 rounded-xl font-bold text-sm md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
-                        >
-                            <Crosshair className="w-4 h-4 md:w-5 md:h-5" />
-                            {worldBossData?.is_defeated ? 'Boss Defeated' : runsToday >= MAX_RUNS_PER_DAY ? 'Daily Limit Reached' : `Launch Raid (${MAX_RUNS_PER_DAY - runsToday} left today)`}
-                        </button>
+                        {runsToday >= MAX_RUNS_PER_DAY && !worldBossData?.is_defeated ? (
+                            <button
+                                onClick={handleBuyMoreRuns}
+                                className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 md:py-4 rounded-xl font-bold text-sm md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex flex-col items-center justify-center gap-1"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Zap className="w-4 h-4 md:w-5 md:h-5" /> BUY 5 MORE RUNS
+                                </div>
+                                <span className="text-[10px] md:text-xs text-purple-200 flex items-center gap-1 font-normal tracking-normal normal-case">
+                                    Cost: 5 <span className="text-emerald-400 font-bold">💠 Cosmic Tokens</span>
+                                </span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleLaunchRaid}
+                                disabled={worldBossData?.is_defeated || !(save.unlockedCharacters || ['neobyte']).includes(selectedChar)}
+                                className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 md:py-4 rounded-xl font-bold text-sm md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
+                            >
+                                <Crosshair className="w-4 h-4 md:w-5 md:h-5" />
+                                {worldBossData?.is_defeated ? 'Boss Defeated' : `Launch Raid (${MAX_RUNS_PER_DAY - runsToday} left today)`}
+                            </button>
+                        )}
                             </>
                         )}
 
