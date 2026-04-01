@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 });
 
 async function distributeWeekly(base44, pool) {
-    const rewardPool = pool.total_spent * 0.30;
+    const rewardPool = pool.total_spent * 0.25;
     const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 200);
     
     const uniqueScores = [];
@@ -73,7 +73,7 @@ async function distributeWeekly(base44, pool) {
 }
 
 async function distributeSeasonal(base44, pool) {
-    const rewardPool = pool.total_spent * 0.40;
+    const rewardPool = pool.total_spent * 0.35;
     const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 300);
     
     const uniqueScores = [];
