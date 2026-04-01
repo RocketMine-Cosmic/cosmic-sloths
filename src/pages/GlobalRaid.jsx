@@ -8,6 +8,7 @@ import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import BossPreview from '../components/game/BossPreview';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 import { CHARACTERS } from '../game/Constants';
 
 export default function GlobalRaid({ isCarousel }) {
@@ -165,6 +166,7 @@ export default function GlobalRaid({ isCarousel }) {
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Join forces with all players globally.</p>
                     </div>
+                    <CurrencyHeader />
                 </header>
 
                 <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto pt-2 md:pt-4 pb-12">

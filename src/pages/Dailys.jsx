@@ -6,6 +6,7 @@ import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
 import DailyLoginPanel from '../components/game/DailyLoginPanel';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 export default function Dailys({ isCarousel }) {
     const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function Dailys({ isCarousel }) {
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Complete daily missions and bounties for rewards.</p>
                     </div>
+                    <CurrencyHeader />
                 </header>
                 
                 <div className="flex-1 overflow-y-auto">

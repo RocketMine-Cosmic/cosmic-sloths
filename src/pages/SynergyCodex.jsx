@@ -4,6 +4,7 @@ import { SaveManager } from '../game/SaveManager';
 import { SYNERGIES, WEAPONS } from '../game/Constants';
 import { ArrowLeft, BookOpen, Lock, Sparkles } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 import { SoundManager } from '../game/SoundManager';
 
 export default function SynergyCodex({ isCarousel }) {
@@ -39,6 +40,7 @@ export default function SynergyCodex({ isCarousel }) {
                             Discovered Synergies: <span className="text-rose-400 font-bold">{discovered.length} / {SYNERGIES.length}</span>
                         </p>
                     </div>
+                    <CurrencyHeader />
                 </header>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">

@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 import { getSquadLevel, getNextSquadLevel, getSquadXpProgress } from '../game/SquadLevels';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 const MAX_SQUAD_MEMBERS = 5;
 
@@ -412,6 +413,7 @@ export default function Squads({ isCarousel }) {
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Team up, slay together, earn rewards.</p>
                     </div>
+                    <CurrencyHeader />
                 </header>
 
                 {!mySquad ? (

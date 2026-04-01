@@ -10,6 +10,7 @@ import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
 import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
@@ -124,17 +125,7 @@ export default function Hub({ isCarousel }) {
                         <h1 className="text-xl md:text-4xl font-black tracking-widest uppercase" style={{ background: 'linear-gradient(90deg, #0CA7B8, #D946EF, #0CA7B8)', backgroundSize: '200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', dropShadow: '0 0 10px rgba(217,70,239,0.5)' }}>SLOTH LOUNGE</h1>
                         <p className="text-slate-500 mt-0 md:text-sm text-[10px] tracking-widest uppercase hidden md:block">⚡ Rest · Upgrade · Prepare for the Cosmic Void</p>
                     </div>
-                    <div className="flex gap-1.5 md:gap-4">
-                        <div className="text-sm md:text-lg font-bold text-purple-300 bg-purple-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-purple-700/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]" title="Reroll Tokens">
-                            🎲 {save.rerollTokens || 0}
-                        </div>
-                        <div className="text-sm md:text-lg font-bold text-emerald-300 bg-emerald-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-emerald-700/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]" title="Cosmic Tokens">
-                            💠 {save.cosmicTokens || 0}
-                        </div>
-                        <div className="text-sm md:text-lg font-bold text-yellow-300 bg-yellow-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-yellow-700/50 shadow-[0_0_10px_rgba(234,179,8,0.2)]" title="Gold">
-                            🪙 {save.gold}
-                        </div>
-                    </div>
+                    <CurrencyHeader />
                 </header>
 
                 <div className="flex flex-col gap-4 md:gap-8">

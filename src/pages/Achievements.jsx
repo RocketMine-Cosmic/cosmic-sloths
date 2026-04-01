@@ -5,6 +5,7 @@ import { ArrowLeft, Trophy, Clock, Skull, Users, Star, Coins, ArrowUpCircle } fr
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS } from '../game/Constants';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 export default function Achievements() {
     const navigate = useNavigate();
@@ -99,6 +100,7 @@ export default function Achievements() {
                     animate={{ y: 0, opacity: 1 }}
                     className="bg-[#0b0416]/60 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6 md:p-10 shadow-[0_0_50px_rgba(249,115,22,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]"
                 >
+                    <div className="flex flex-col items-end mb-4"><CurrencyHeader /></div>
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 border-b border-slate-800 pb-6">
                         <div className="flex items-center gap-4">
                             <Trophy className="w-10 h-10 text-yellow-400" />

@@ -6,6 +6,7 @@ import { Pencil, Check, X, LogOut } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
@@ -33,6 +34,10 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
         >
 
             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/20 to-transparent opacity-90 pointer-events-none z-0"></div>
+
+            <div className="absolute top-4 right-4 z-20">
+                <CurrencyHeader />
+            </div>
 
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}

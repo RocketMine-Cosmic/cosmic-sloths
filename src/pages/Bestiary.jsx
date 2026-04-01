@@ -8,6 +8,7 @@ import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 const MASTERY_KILLS = (enemy) => enemy.isBoss ? 20 : 200;
 
@@ -102,9 +103,12 @@ export default function Bestiary({ isCarousel }) {
                             {encounteredCount} / {ENEMIES.length} encountered
                         </p>
                     </div>
-                    <div className="text-right text-xs text-slate-500">
-                        <div className="text-fuchsia-400 font-bold">⚡ Mastered = +10% DMG</div>
-                        <div>vs that enemy type</div>
+                    <div className="flex flex-col items-end gap-2">
+                        <CurrencyHeader />
+                        <div className="text-right text-xs text-slate-500">
+                            <div className="text-fuchsia-400 font-bold">⚡ Mastered = +10% DMG</div>
+                            <div>vs that enemy type</div>
+                        </div>
                     </div>
                 </header>
 

@@ -9,6 +9,7 @@ import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import ForgePanel from '../components/game/ForgePanel';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [15, 30, 60, 120, 240] },
@@ -903,17 +904,7 @@ export default function Upgrades({ isCarousel }) {
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest" style={{ background: 'linear-gradient(90deg, #D946EF, #8B5CF6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(217,70,239,0.5))' }}>UPGRADE LOUNGE</h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Enhance your operatives and arsenal.</p>
                     </div>
-                    <div className="flex gap-1.5 md:gap-4">
-                        <div className="text-sm md:text-lg font-black text-yellow-300 bg-yellow-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]" title="Star Fragments">
-                            🌟 {save.starFragments || 0}
-                        </div>
-                        <div className="text-sm md:text-lg font-black text-emerald-300 bg-emerald-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]" title="Cosmic Tokens">
-                            💠 {save.cosmicTokens || 0}
-                        </div>
-                        <div className="text-sm md:text-lg font-black text-yellow-400 bg-amber-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]" title="Gold">
-                            🪙 {save.gold}
-                        </div>
-                    </div>
+                    <CurrencyHeader />
                 </header>
 
                 <div className="flex flex-wrap gap-2 md:gap-3 mb-4 md:mb-6">

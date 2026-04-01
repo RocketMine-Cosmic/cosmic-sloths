@@ -6,6 +6,7 @@ import { SaveManager } from '../game/SaveManager';
 import { ENEMIES } from '../game/Constants';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 
 const BOSS_MODIFIERS = [
     { id: 'fury', name: 'Leviathan\'s Fury', desc: 'Bosses deal +50% Damage', rewardDesc: '+500 Boss Gold Drop', icon: Swords, color: 'text-red-500' },
@@ -63,6 +64,7 @@ export default function LeviathanTrials({ isCarousel }) {
                             Total Leviathans Slain: <span className="text-red-400 font-bold">{totalLeviathanKills}</span>
                         </p>
                     </div>
+                    <CurrencyHeader />
                 </header>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">
