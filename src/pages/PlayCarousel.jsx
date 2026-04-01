@@ -39,18 +39,19 @@ export default function PlayCarousel() {
     return (
         <div className="h-[100dvh] bg-[#020408] flex flex-col overflow-hidden select-none relative">
             <SpaceBackground />
-            <div className="p-2 md:p-4 border-b border-slate-800/60 bg-slate-950/70 backdrop-blur-md flex flex-col md:flex-row justify-center items-center gap-2 md:gap-4 z-10 relative shrink-0">
-                <div className="flex items-center justify-between w-full md:w-[500px] bg-slate-900/80 backdrop-blur rounded-xl border border-slate-700/60 p-1 shadow-[0_0_20px_rgba(6,182,212,0.08),inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="p-3 md:p-6 flex flex-col md:flex-row justify-center items-center gap-2 z-10 relative shrink-0 pointer-events-none">
+                <div className="flex items-center justify-between w-full md:w-[600px] bg-[#050B14]/80 backdrop-blur-md rounded-full border border-[#0CA7B8]/40 p-1 md:p-2 shadow-[0_0_30px_rgba(12,167,184,0.15),inset_0_0_10px_rgba(12,167,184,0.1)] relative overflow-hidden pointer-events-auto">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0CA7B8]/5 to-transparent animate-pulse pointer-events-none" />
                     <button 
                         onClick={() => { 
                             SoundManager.playUIClick(); 
                             emblaApi?.scrollPrev();
                         }}
-                        className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                        className="p-2 md:p-3 hover:bg-[#0CA7B8]/20 rounded-full text-[#0CA7B8] hover:text-white transition-colors z-10"
                     >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
-                    <div className="flex-1 text-center font-bold text-base select-none">
+                    <div className="flex-1 text-center font-bold text-sm md:text-base tracking-widest uppercase select-none z-10">
                         {selectedIndex === 0 && <span className="text-white">Main Menu</span>}
                         {selectedIndex === 1 && <span className="text-cyan-400">Sloth Lounge</span>}
                         {selectedIndex === 2 && <span className="text-green-400">Mission Board</span>}
@@ -67,9 +68,9 @@ export default function PlayCarousel() {
                             SoundManager.playUIClick(); 
                             emblaApi?.scrollNext();
                         }}
-                        className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                        className="p-2 md:p-3 hover:bg-[#0CA7B8]/20 rounded-full text-[#0CA7B8] hover:text-white transition-colors z-10"
                     >
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
                 </div>
             </div>

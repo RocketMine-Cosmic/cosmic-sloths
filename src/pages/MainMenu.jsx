@@ -45,38 +45,35 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="z-10 grid grid-cols-2 gap-2 md:gap-4 w-full max-w-xl md:max-w-2xl px-4"
+                className="z-10 grid grid-cols-2 gap-3 w-full max-w-xl md:max-w-2xl px-4 font-sans"
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
-                    style={{ boxShadow: `0 0 15px ${theme.colors.primary}66`, borderColor: `${theme.colors.primary}4d`, backgroundColor: `${theme.colors.primary}cc` }}
-                    className="w-full backdrop-blur-sm text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 border"
+                    className="w-full bg-[#050B14]/80 hover:bg-[#0A1628]/90 backdrop-blur-md text-[#0CA7B8] hover:text-white text-sm md:text-lg font-bold tracking-widest uppercase py-4 md:py-5 transition-all border border-[#0CA7B8]/40 hover:border-[#0CA7B8] rounded-tl-2xl shadow-[0_0_15px_rgba(12,167,184,0.15)] hover:shadow-[0_0_25px_rgba(12,167,184,0.3)]"
                 >
                     INFO
                 </button>
                 <button 
+                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); setShowSettings(true); }}
+                    className="w-full bg-[#050B14]/80 hover:bg-[#0A1628]/90 backdrop-blur-md text-[#0CA7B8] hover:text-white text-sm md:text-lg font-bold tracking-widest uppercase py-4 md:py-5 transition-all border border-[#0CA7B8]/40 hover:border-[#0CA7B8] rounded-tr-2xl shadow-[0_0_15px_rgba(12,167,184,0.15)] hover:shadow-[0_0_25px_rgba(12,167,184,0.3)]"
+                >
+                    SETTINGS
+                </button>
+                <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/achievements'); }}
-                    style={{ boxShadow: `0 0 15px ${theme.colors.primary}66`, borderColor: `${theme.colors.primary}4d`, backgroundColor: `${theme.colors.primary}cc` }}
-                    className="w-full backdrop-blur-sm text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 border"
+                    className="w-full bg-[#0CA7B8]/20 hover:bg-[#0CA7B8]/30 backdrop-blur-md text-white text-sm md:text-lg font-bold tracking-widest uppercase py-4 md:py-5 transition-all border border-[#0CA7B8] shadow-[0_0_15px_rgba(12,167,184,0.2)] hover:shadow-[0_0_25px_rgba(12,167,184,0.4)]"
                 >
                     ACHIEVEMENTS
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/credits'); }}
-                    style={{ boxShadow: `0 0 15px ${theme.colors.primary}66`, borderColor: `${theme.colors.primary}4d`, backgroundColor: `${theme.colors.primary}cc` }}
-                    className="w-full backdrop-blur-sm text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 border"
+                    className="w-full bg-[#0CA7B8]/20 hover:bg-[#0CA7B8]/30 backdrop-blur-md text-white text-sm md:text-lg font-bold tracking-widest uppercase py-4 md:py-5 transition-all border border-[#0CA7B8] shadow-[0_0_15px_rgba(12,167,184,0.2)] hover:shadow-[0_0_25px_rgba(12,167,184,0.4)]"
                 >
                     CREDITS
                 </button>
                 <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); setShowSettings(true); }}
-                    className="w-full bg-slate-700/90 backdrop-blur-sm hover:bg-slate-600 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(51,65,85,0.4)] border border-slate-500/30"
-                >
-                    SETTINGS
-                </button>
-                <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
-                    className="col-span-2 w-full bg-red-900/80 backdrop-blur-sm hover:bg-red-800 text-white text-base md:text-xl font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(153,27,27,0.4)] border border-red-500/30 flex items-center justify-center gap-2"
+                    className="col-span-2 w-full bg-red-950/60 hover:bg-red-900/80 backdrop-blur-md text-red-400 hover:text-red-300 text-sm md:text-lg font-bold tracking-widest uppercase py-4 md:py-5 transition-all border border-red-500/40 hover:border-red-500 rounded-b-2xl shadow-[0_0_15px_rgba(239,68,68,0.15)] flex items-center justify-center gap-2"
                 >
                     <LogOut size={20} /> LOGOUT
                 </button>
