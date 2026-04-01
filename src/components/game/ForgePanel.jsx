@@ -4,7 +4,7 @@ import { CHARACTERS, WEAPONS } from '../../game/Constants';
 import { SoundManager } from '../../game/SoundManager';
 import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star } from 'lucide-react';
 
-const GOLD_PER_FRAGMENT = 1000;
+const GOLD_PER_FRAGMENT = 10000;
 const DAILY_CONVERT_CAP = 20; // max fragments from conversion per day
 
 // Weapon forge augments (stacks on top of existing upgrades, stored in save.forgeWeaponAugments)

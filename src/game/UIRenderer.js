@@ -62,7 +62,7 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
     ctx.save();
     const mapSize = window.innerWidth < 768 ? 80 : 120;
     const mapX = canvas.width - mapSize - 20;
-    const mapY = 80;
+    const mapY = window.innerWidth < 768 ? 140 : 180;
     
     // Radar Background
     ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
