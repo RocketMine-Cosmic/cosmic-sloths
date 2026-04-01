@@ -119,10 +119,13 @@ export default function Profile({ isCarousel }) {
                             <div className="relative">
                                 <button
                                     onClick={() => setShowIconPicker(v => !v)}
-                                    className="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-500 flex items-center justify-center text-2xl hover:border-cyan-300 transition-colors"
+                                    className="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-500 flex items-center justify-center text-2xl hover:border-cyan-300 transition-colors overflow-hidden"
                                     title="Change pilot icon"
                                 >
-                                    {user?.data?.pilot_icon || user?.pilot_icon || '🦥'}
+                                    {(() => {
+                                        const icon = user?.data?.pilot_icon || user?.pilot_icon || '🦥';
+                                        return icon.startsWith('http') ? <img src={icon} className="w-full h-full object-cover" alt="pilot" /> : icon;
+                                    })()}
                                 </button>
                                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-cyan-600 rounded-full flex items-center justify-center pointer-events-none">
                                     <Pencil size={10} className="text-white" />

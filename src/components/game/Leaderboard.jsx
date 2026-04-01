@@ -215,10 +215,10 @@ export default function Leaderboard() {
                                             </div>
                                             
                                             <div className="flex items-center gap-3 flex-1 w-full sm:w-auto bg-slate-950/30 p-2 rounded-lg sm:bg-transparent sm:p-0">
-                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 border-2 bg-slate-800 text-xl"
+                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 border-2 bg-slate-800 text-xl overflow-hidden"
                                                     style={{ borderColor: squadLvl.borderColor }}
                                                 >
-                                                    {score.icon || squadLvl.badge}
+                                                    {(score.icon || squadLvl.badge).startsWith('http') ? <img src={score.icon} className="w-full h-full object-cover" alt="squad" /> : (score.icon || squadLvl.badge)}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-white text-lg md:text-xl flex items-center gap-2">
@@ -265,7 +265,9 @@ export default function Leaderboard() {
 
                                         {/* Player Info */}
                                         <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
-                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 text-xl">{score.pilot_icon || '🦥'}</div>
+                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 text-xl overflow-hidden">
+                                                {score.pilot_icon?.startsWith('http') ? <img src={score.pilot_icon} className="w-full h-full object-cover" alt="pilot" /> : (score.pilot_icon || '🦥')}
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold text-white text-lg md:text-xl truncate">
                                                     {score.player_name?.includes('@') ? score.player_name.split('@')[0] : score.player_name}

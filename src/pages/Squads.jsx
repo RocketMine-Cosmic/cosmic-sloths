@@ -479,7 +479,9 @@ export default function Squads({ isCarousel }) {
                                             >
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-lg">{squad.icon || lvl.badge}</span>
+                                                        <span className="text-lg w-6 h-6 inline-flex items-center justify-center overflow-hidden rounded-md shrink-0">
+                                                            {(squad.icon || lvl.badge).startsWith('http') ? <img src={squad.icon} className="w-full h-full object-cover" alt="squad" /> : (squad.icon || lvl.badge)}
+                                                        </span>
                                                         <span className="font-bold text-white text-lg">{squad.name}</span>
                                                         <span className="px-1.5 py-0.5 rounded text-xs border bg-slate-900"
                                                             style={{ color: lvl.borderColor, borderColor: lvl.borderColor + '60' }}
@@ -533,7 +535,9 @@ export default function Squads({ isCarousel }) {
                                 <div className="md:hidden bg-slate-900 rounded-xl p-3 shrink-0" style={{ border: `2px solid ${lvlData.borderColor}`, boxShadow: `0 0 12px ${lvlData.glowColor}` }}>
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <span className="text-xl shrink-0">{mySquad.icon || lvlData.badge}</span>
+                                            <span className="text-xl shrink-0 w-8 h-8 inline-flex items-center justify-center overflow-hidden rounded-md">
+                                                {(mySquad.icon || lvlData.badge).startsWith('http') ? <img src={mySquad.icon} className="w-full h-full object-cover" alt="squad" /> : (mySquad.icon || lvlData.badge)}
+                                            </span>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                     <span className="font-bold text-white text-sm truncate">{mySquad.name}</span>
@@ -573,7 +577,9 @@ export default function Squads({ isCarousel }) {
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-2xl">{mySquad.icon || lvlData.badge}</span>
+                                                    <span className="text-2xl shrink-0 w-8 h-8 inline-flex items-center justify-center overflow-hidden rounded-md">
+                                                        {(mySquad.icon || lvlData.badge).startsWith('http') ? <img src={mySquad.icon} className="w-full h-full object-cover" alt="squad" /> : (mySquad.icon || lvlData.badge)}
+                                                    </span>
                                                     <h2 className="text-xl font-bold text-white">{mySquad.name}</h2>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -768,9 +774,9 @@ export default function Squads({ isCarousel }) {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowSquadIconPicker(v => !v)}
-                                                    className="w-14 h-14 bg-slate-800 border border-slate-700 hover:border-orange-500 rounded-xl text-3xl flex items-center justify-center transition-colors"
+                                                    className="w-14 h-14 bg-slate-800 border border-slate-700 hover:border-orange-500 rounded-xl text-3xl flex items-center justify-center transition-colors overflow-hidden"
                                                 >
-                                                    {editIcon}
+                                                    {editIcon?.startsWith('http') ? <img src={editIcon} className="w-full h-full object-cover" alt="squad" /> : editIcon}
                                                 </button>
                                                 {showSquadIconPicker && (
                                                     <EmojiPicker
