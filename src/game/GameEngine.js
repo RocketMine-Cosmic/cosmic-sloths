@@ -159,6 +159,17 @@ export class GameEngine {
         this.xpRequired = 10;
         this.gold = 0;
         this.kills = 0;
+
+        if (arenaId === 'world_boss_arena') {
+            this.level = 10;
+            for (let i = 0; i < 9; i++) {
+                const choices = this.generateChoices();
+                if (choices.length > 0) {
+                    this.applyUpgrade(choices[Math.floor(Math.random() * choices.length)]);
+                }
+            }
+            this.isPaused = false;
+        }
         
         this.isPaused = false;
         this.isGameOver = false;

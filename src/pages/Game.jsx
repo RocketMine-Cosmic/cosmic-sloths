@@ -290,7 +290,7 @@ export default function Game() {
         
         setGameState({
             hp: engine.player.hp, maxHp: engine.player.maxHp,
-            time: 0, duration: engine.arena.duration, level: 1, xp: 0, xpRequired: 10, gold: 0,
+            time: 0, duration: engine.arena.duration, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired, gold: 0,
             rerollTokens: save.rerollTokens || 0,
             cosmicTokens: save.cosmicTokens || 0
         });
