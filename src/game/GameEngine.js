@@ -320,12 +320,6 @@ export class GameEngine {
         this.player.x += dx * actualSpeed;
         this.player.y += dy * actualSpeed;
 
-        const ARENA_SIZE = 4000;
-        if (this.player.x < -ARENA_SIZE/2) this.player.x = -ARENA_SIZE/2;
-        if (this.player.x > ARENA_SIZE/2) this.player.x = ARENA_SIZE/2;
-        if (this.player.y < -ARENA_SIZE/2) this.player.y = -ARENA_SIZE/2;
-        if (this.player.y > ARENA_SIZE/2) this.player.y = ARENA_SIZE/2;
-
         this.player.isMoving = (dx !== 0 || dy !== 0);
         if (dx < 0) this.player.facingLeft = true;
         else if (dx > 0) this.player.facingLeft = false;
@@ -496,14 +490,8 @@ export class GameEngine {
         if (Math.random() < dt / spawnRate) {
             const angle = Math.random() * Math.PI * 2;
             const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
-            let ex = this.player.x + Math.cos(angle) * dist;
-            let ey = this.player.y + Math.sin(angle) * dist;
-            
-            const ARENA_SIZE = 4000;
-            if (ex < -ARENA_SIZE/2) ex = -ARENA_SIZE/2 + 50;
-            if (ex > ARENA_SIZE/2) ex = ARENA_SIZE/2 - 50;
-            if (ey < -ARENA_SIZE/2) ey = -ARENA_SIZE/2 + 50;
-            if (ey > ARENA_SIZE/2) ey = ARENA_SIZE/2 - 50;
+            const ex = this.player.x + Math.cos(angle) * dist;
+            const ey = this.player.y + Math.sin(angle) * dist;
             
             const arenaIndex = this.arena.duration === Infinity ? Math.min(9, Math.floor(progress * 5)) : ARENAS.findIndex(a => a.id === this.arena.id);
             let minTier = Math.max(1, arenaIndex);
@@ -910,12 +898,6 @@ export class GameEngine {
                 currentSpeed *= this.envModifiers.enemySpeed;
                 e.x += (dx / dist) * currentSpeed * 60 * dt;
                 e.y += (dy / dist) * currentSpeed * 60 * dt;
-                
-                const ARENA_SIZE = 4000;
-                if (e.x < -ARENA_SIZE/2) e.x = -ARENA_SIZE/2;
-                if (e.x > ARENA_SIZE/2) e.x = ARENA_SIZE/2;
-                if (e.y < -ARENA_SIZE/2) e.y = -ARENA_SIZE/2;
-                if (e.y > ARENA_SIZE/2) e.y = ARENA_SIZE/2;
             }
             if (e.slowTimer > 0) e.slowTimer -= dt;
             
@@ -1268,8 +1250,35 @@ export class GameEngine {
     }
 
     draw() {
-        this.ctx.fillStyle = '#020408';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
+            // Cache the rendered background to avoid expensive scaling and blending every frame
+            if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
+                this.cachedArenaImage = document.createElement('canvas');
+                this.cachedArenaImage.width = this.canvas.width;
+                this.cachedArenaImage.height = this.canvas.height;
+                const oCtx = this.cachedArenaImage.getContext('2d');
+                
+                // Draw base color
+                oCtx.fillStyle = this.arena.bg;
+                oCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw scaled image with opacity
+                const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
+                const drawW = this.arenaImage.naturalWidth * scale;
+                const drawH = this.arenaImage.naturalHeight * scale;
+                const x = (this.canvas.width - drawW) / 2;
+                const y = (this.canvas.height - drawH) / 2;
+                
+                oCtx.globalAlpha = 0.9;
+                oCtx.drawImage(this.arenaImage, x, y, drawW, drawH);
+                oCtx.globalAlpha = 1.0;
+            }
+            // Draw the pre-rendered, screen-sized background (extremely fast)
+            this.ctx.drawImage(this.cachedArenaImage, 0, 0);
+        } else {
+            this.ctx.fillStyle = this.arena.bg;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
 
         this.ctx.fillStyle = '#ffffff';
         this.stars.forEach(star => {
@@ -1289,25 +1298,6 @@ export class GameEngine {
         this.ctx.save();
         this.ctx.scale(this.zoom, this.zoom);
         this.ctx.translate(-this.camera.x + this.shakeX, -this.camera.y + this.shakeY);
-
-        const ARENA_SIZE = 4000;
-
-        if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
-            this.ctx.globalAlpha = 0.8;
-            this.ctx.drawImage(this.arenaImage, -ARENA_SIZE/2, -ARENA_SIZE/2, ARENA_SIZE, ARENA_SIZE);
-            this.ctx.globalAlpha = 1.0;
-        } else {
-            this.ctx.fillStyle = this.arena.bg;
-            this.ctx.fillRect(-ARENA_SIZE/2, -ARENA_SIZE/2, ARENA_SIZE, ARENA_SIZE);
-        }
-
-        this.ctx.strokeStyle = '#0CA7B8';
-        this.ctx.lineWidth = 10;
-        this.ctx.strokeRect(-ARENA_SIZE/2, -ARENA_SIZE/2, ARENA_SIZE, ARENA_SIZE);
-        
-        this.ctx.strokeStyle = 'rgba(12, 167, 184, 0.3)';
-        this.ctx.lineWidth = 30;
-        this.ctx.strokeRect(-ARENA_SIZE/2 - 10, -ARENA_SIZE/2 - 10, ARENA_SIZE + 20, ARENA_SIZE + 20);
 
         drawPickups(this.ctx, this.pickups, this.time);
 
