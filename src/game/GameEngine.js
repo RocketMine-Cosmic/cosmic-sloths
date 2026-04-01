@@ -58,10 +58,13 @@ export class GameEngine {
         const baseCharRaw = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         const baseChar = save.skinColorOverride ? { ...baseCharRaw, color: save.skinColorOverride } : baseCharRaw;
 
-        this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
-        
-        if (isEndless) {
-            this.arena = { ...this.arena, duration: Infinity };
+        if (arenaId === 'world_boss_arena') {
+            this.arena = { id: 'world_boss_arena', name: 'Global Raid', bg: '#1a0000', duration: Infinity, effect: 'solar_flare' };
+        } else {
+            this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
+            if (isEndless) {
+                this.arena = { ...this.arena, duration: Infinity };
+            }
         }
         
         this.envEffect = this.arena.effect || 'none';
