@@ -19,9 +19,8 @@ export const DIFFICULTIES = [
 
 export const ARENAS = [
   { id: 'station', name: 'Azure Expanse', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', layers: [
-    {src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/4390d8f51_background.png', speed: 0.05, isBackground: true, scale: 1.2}, 
-    {src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ec9ce8c48_Midground.png', speed: 0.15, scale: 1.5}, 
-    {src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0f86b1027_Forground.png', speed: 0.3, scale: 2.5, alpha: 0.8}
+    {src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/4390d8f51_background.png', speed: 0.05, isBackground: true, scale: 1.5}, 
+    {src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ec9ce8c48_Midground.png', speed: 0.15, scale: 2.0}
   ], duration: 180, effect: 'neon_rain' },
   { id: 'asteroid', name: 'Mystic Cosmos', bg: '#2d1b19', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/1f6fc6cad_Map11.png', duration: 210, effect: 'fog' },
   { id: 'nebula', name: 'Ethereal Nebula', bg: '#2b103a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/888640bf8_Map13.png', duration: 240, effect: 'fog' },
