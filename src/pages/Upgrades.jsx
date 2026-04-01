@@ -117,9 +117,10 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const handleBuyStat = (stat, currency) => {
+        const currentSave = SaveManager.load();
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
-        const upgrades = save[saveKey] || {};
+        const upgrades = currentSave[saveKey] || {};
         const currentLevel = upgrades[stat] || 0;
         
         if (currentLevel >= typeConfig.goldCosts.length) return;
@@ -127,27 +128,28 @@ export default function Upgrades({ isCarousel }) {
         const goldCost = typeConfig.goldCosts[currentLevel];
         const tokenCost = typeConfig.tokenCosts[currentLevel];
 
-        if (currency === 'gold' && save.gold >= goldCost) {
-            const newSave = { ...save, gold: save.gold - goldCost };
-            newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
-            SaveManager.save(newSave);
-            setSave(newSave);
+        if (currency === 'gold' && currentSave.gold >= goldCost) {
+            currentSave.gold -= goldCost;
+            currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             SoundManager.playUIClick();
-        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
-            newSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
-            SaveManager.save(newSave);
-            setSave(newSave);
+        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= tokenCost) {
+            currentSave.cosmicTokens -= tokenCost;
+            currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             recordTokenSpend(tokenCost);
             SoundManager.playUIClick();
         }
     };
 
     const handleBuyWeapon = (weaponId, stat, currency) => {
+        const currentSave = SaveManager.load();
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
         
-        const weaponData = save[saveKey]?.[weaponId] || {};
+        const weaponData = currentSave[saveKey]?.[weaponId] || {};
         const currentLevel = weaponData[stat] || 0;
         
         if (currentLevel >= typeConfig.goldCosts.length) return;
@@ -155,52 +157,53 @@ export default function Upgrades({ isCarousel }) {
         const goldCost = typeConfig.goldCosts[currentLevel];
         const tokenCost = typeConfig.tokenCosts[currentLevel];
         
-        if (currency === 'gold' && save.gold >= goldCost) {
-            const newSave = { ...save, gold: save.gold - goldCost };
-            if (!newSave[saveKey]) newSave[saveKey] = {};
-            if (!newSave[saveKey][weaponId]) newSave[saveKey][weaponId] = {};
-            newSave[saveKey][weaponId][stat] = currentLevel + 1;
-            SaveManager.save(newSave);
-            setSave(newSave);
+        if (currency === 'gold' && currentSave.gold >= goldCost) {
+            currentSave.gold -= goldCost;
+            if (!currentSave[saveKey]) currentSave[saveKey] = {};
+            if (!currentSave[saveKey][weaponId]) currentSave[saveKey][weaponId] = {};
+            currentSave[saveKey][weaponId][stat] = currentLevel + 1;
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             SoundManager.playUIClick();
-        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
-            if (!newSave[saveKey]) newSave[saveKey] = {};
-            if (!newSave[saveKey][weaponId]) newSave[saveKey][weaponId] = {};
-            newSave[saveKey][weaponId][stat] = currentLevel + 1;
-            SaveManager.save(newSave);
-            setSave(newSave);
+        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= tokenCost) {
+            currentSave.cosmicTokens -= tokenCost;
+            if (!currentSave[saveKey]) currentSave[saveKey] = {};
+            if (!currentSave[saveKey][weaponId]) currentSave[saveKey][weaponId] = {};
+            currentSave[saveKey][weaponId][stat] = currentLevel + 1;
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             recordTokenSpend(tokenCost);
             SoundManager.playUIClick();
         }
     };
 
     const handleBuyTalent = (talent, currency) => {
+        const currentSave = SaveManager.load();
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
         
-        const unlocked = save[saveKey]?.[selectedChar] || [];
+        const unlocked = currentSave[saveKey]?.[selectedChar] || [];
         if (unlocked.includes(talent.id)) return;
         
         const costTier = (talent.tier - 1) * 2;
         const goldCost = typeConfig.goldCosts[costTier];
         const tokenCost = typeConfig.tokenCosts[costTier];
 
-        if (currency === 'gold' && save.gold >= goldCost) {
-            const newSave = { ...save, gold: save.gold - goldCost };
-            if (!newSave[saveKey]) newSave[saveKey] = {};
-            if (!newSave[saveKey][selectedChar]) newSave[saveKey][selectedChar] = [];
-            newSave[saveKey][selectedChar].push(talent.id);
-            SaveManager.save(newSave);
-            setSave(newSave);
+        if (currency === 'gold' && currentSave.gold >= goldCost) {
+            currentSave.gold -= goldCost;
+            if (!currentSave[saveKey]) currentSave[saveKey] = {};
+            if (!currentSave[saveKey][selectedChar]) currentSave[saveKey][selectedChar] = [];
+            currentSave[saveKey][selectedChar].push(talent.id);
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             SoundManager.playUIClick();
-        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - tokenCost };
-            if (!newSave[saveKey]) newSave[saveKey] = {};
-            if (!newSave[saveKey][selectedChar]) newSave[saveKey][selectedChar] = [];
-            newSave[saveKey][selectedChar].push(talent.id);
-            SaveManager.save(newSave);
-            setSave(newSave);
+        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= tokenCost) {
+            currentSave.cosmicTokens -= tokenCost;
+            if (!currentSave[saveKey]) currentSave[saveKey] = {};
+            if (!currentSave[saveKey][selectedChar]) currentSave[saveKey][selectedChar] = [];
+            currentSave[saveKey][selectedChar].push(talent.id);
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             recordTokenSpend(tokenCost);
             SoundManager.playUIClick();
         }

@@ -29,24 +29,26 @@ export default function DailyLoginPanel({ save, setSave }) {
     const dayIndex = (streak % 7); // 0-6, which day in the 7-day cycle we're ON
 
     const handleClaim = () => {
-        if (alreadyClaimed) return;
+        const currentSave = SaveManager.load();
+        const currentLogin = currentSave.dailyLogin || { lastDate: '', streak: 0, claimed: false };
+        const isAlreadyClaimed = currentLogin.lastDate === today && currentLogin.claimed;
+        if (isAlreadyClaimed) return;
 
-        const newStreak = (login.lastDate === yesterday ? login.streak : 0) + 1;
+        const newStreak = (currentLogin.lastDate === yesterday ? currentLogin.streak : 0) + 1;
         const rewardDay = DAILY_REWARDS[(newStreak - 1) % 7];
 
-        const newSave = { ...save };
-        newSave.dailyLogin = { lastDate: today, streak: newStreak, claimed: true };
+        currentSave.dailyLogin = { lastDate: today, streak: newStreak, claimed: true };
 
         if (rewardDay.currency === 'gold') {
-            newSave.gold = (newSave.gold || 0) + rewardDay.reward;
+            currentSave.gold = (currentSave.gold || 0) + rewardDay.reward;
         } else if (rewardDay.currency === 'token') {
-            newSave.cosmicTokens = (newSave.cosmicTokens || 0) + rewardDay.reward;
+            currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + rewardDay.reward;
         } else if (rewardDay.currency === 'reroll') {
-            newSave.rerollTokens = (newSave.rerollTokens || 0) + rewardDay.reward;
+            currentSave.rerollTokens = (currentSave.rerollTokens || 0) + rewardDay.reward;
         }
 
-        SaveManager.save(newSave);
-        setSave(newSave);
+        SaveManager.save(currentSave);
+        setSave(currentSave);
         SoundManager.playGoldPickup();
 
         toast({

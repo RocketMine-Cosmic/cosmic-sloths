@@ -12,21 +12,21 @@ export default function BountiesPanel({ save, setSave }) {
     if (!save.bounties || !save.bounties.active) return null;
 
     const handleClaim = (bountyIndex) => {
-        const bounty = save.bounties.active[bountyIndex];
+        const currentSave = SaveManager.load();
+        const bounty = currentSave.bounties.active[bountyIndex];
         if (bounty.progress >= bounty.target && !bounty.claimed) {
-            const newSave = { ...save };
-            newSave.bounties.active[bountyIndex].claimed = true;
+            currentSave.bounties.active[bountyIndex].claimed = true;
             
             if (bounty.currency === 'gold') {
-                newSave.gold += bounty.reward;
+                currentSave.gold += bounty.reward;
             } else if (bounty.currency === 'token') {
-                newSave.cosmicTokens = (newSave.cosmicTokens || 0) + bounty.reward;
+                currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + bounty.reward;
             } else if (bounty.currency === 'reroll') {
-                newSave.rerollTokens = (newSave.rerollTokens || 0) + bounty.reward;
+                currentSave.rerollTokens = (currentSave.rerollTokens || 0) + bounty.reward;
             }
             
-            SaveManager.save(newSave);
-            setSave(newSave);
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             SoundManager.playGoldPickup();
             
             toast({
@@ -37,14 +37,14 @@ export default function BountiesPanel({ save, setSave }) {
     };
 
     const handleClaimDailyMission = () => {
-        const mission = save.bounties.dailyMission;
+        const currentSave = SaveManager.load();
+        const mission = currentSave.bounties.dailyMission;
         if (mission && mission.progress >= mission.target && !mission.claimed) {
-            const newSave = { ...save };
-            newSave.bounties.dailyMission.claimed = true;
-            newSave.seasonalPoints = (newSave.seasonalPoints || 0) + mission.reward;
+            currentSave.bounties.dailyMission.claimed = true;
+            currentSave.seasonalPoints = (currentSave.seasonalPoints || 0) + mission.reward;
             
-            SaveManager.save(newSave);
-            setSave(newSave);
+            SaveManager.save(currentSave);
+            setSave(currentSave);
             SoundManager.playGoldPickup();
             
             toast({
