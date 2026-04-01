@@ -36,9 +36,8 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     return (
         <div 
             className={`${isCarousel ? 'h-full' : 'h-[100dvh]'} w-full flex flex-col items-center justify-end pb-12 md:pb-20 relative overflow-hidden font-sans`}
-            style={{ backgroundColor: theme.colors.bg }}
+            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/20a4a9160_image-48.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundColor: theme.colors.bg }}
         >
-            {!isCarousel && <SpaceBackground />}
 
             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/20 to-transparent opacity-90 pointer-events-none z-0"></div>
 
