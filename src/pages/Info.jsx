@@ -123,7 +123,11 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700 sm:col-span-2">
                         <div className="font-bold text-white text-sm mb-1">✨ Cosmetics</div>
-                        <p className="text-xs text-slate-400">Buy flashy trails (Fire, Ice, Void, Gold...) to show off your style.</p>
+                        <p className="text-xs text-slate-400">Buy flashy trails, kill effects, and character skins. Preview before you buy!</p>
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-3 border border-yellow-700/40 sm:col-span-2">
+                        <div className="font-bold text-yellow-400 text-sm mb-1">🔨 The Forge</div>
+                        <p className="text-xs text-slate-400">Convert excess Gold into <strong className="text-yellow-300">Star Fragments 🌟</strong> (1,000 Gold = 1 🌟, up to 20/day). Use fragments to permanently enhance weapons beyond their normal cap, or unlock powerful passive augments for each character. Forge upgrades <strong className="text-white">never reset</strong>.</p>
                     </div>
                 </div>
             </SectionCard>
