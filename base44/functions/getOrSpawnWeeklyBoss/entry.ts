@@ -1,11 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.24';
 
-const REWARD_COSMETICS = [
-    { type: 'trail', id: 'nebula_dust', name: 'Nebula Dust Trail' },
-    { type: 'kill_effect', id: 'supernova', name: 'Supernova Kill Effect' },
-    { type: 'trail', id: 'plasma_wake', name: 'Plasma Wake Trail' }
-];
-
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -20,7 +14,7 @@ Deno.serve(async (req) => {
         
         let charCodeSum = 0;
         for (let i = 0; i < week_id.length; i++) charCodeSum += week_id.charCodeAt(i);
-        const reward = REWARD_COSMETICS[charCodeSum % REWARD_COSMETICS.length];
+        const reward = { type: 'gold', id: '25000' };
         
         const bossNames = ["The World Eater", "Cosmic Leviathan", "Star Devourer", "Void Sovereign"];
         const bossName = bossNames[charCodeSum % bossNames.length];

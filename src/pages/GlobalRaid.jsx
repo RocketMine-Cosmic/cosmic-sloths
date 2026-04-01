@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { ArrowLeft, Skull, Crosshair } from 'lucide-react';
+import { ArrowLeft, Skull, Crosshair, Trophy } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
@@ -16,6 +16,7 @@ export default function GlobalRaid({ isCarousel }) {
     
     const [worldBossData, setWorldBossData] = useState(null);
     const [worldBossContribution, setWorldBossContribution] = useState(null);
+    const [topContributors, setTopContributors] = useState([]);
     const [claimingReward, setClaimingReward] = useState(false);
     const [timeLeft, setTimeLeft] = useState('');
 
@@ -41,6 +42,9 @@ export default function GlobalRaid({ isCarousel }) {
                     setWorldBossData(res.data.boss);
                     const contribs = await base44.entities.GlobalBossContribution.filter({ week_id, user_id: user.id });
                     if (contribs.length > 0) setWorldBossContribution(contribs[0]);
+                    
+                    const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 10);
+                    setTopContributors(allContribs);
                 }
             } catch (e) { console.error('Failed to fetch world boss', e); }
         };
@@ -61,12 +65,18 @@ export default function GlobalRaid({ isCarousel }) {
                 
                 if (type === 'trail') {
                     if (!currentSave.cosmetics.unlocked.trails.includes(id)) currentSave.cosmetics.unlocked.trails.push(id);
+                    toast({ title: 'Reward Claimed!', description: `Unlocked limited cosmetic: ${id}` });
                 } else if (type === 'kill_effect') {
                     if (!currentSave.cosmetics.unlocked.killEffects.includes(id)) currentSave.cosmetics.unlocked.killEffects.push(id);
+                    toast({ title: 'Reward Claimed!', description: `Unlocked limited cosmetic: ${id}` });
+                } else if (type === 'gold') {
+                    const amount = parseInt(id, 10) || 10000;
+                    currentSave.gold = (currentSave.gold || 0) + amount;
+                    setSave(currentSave);
+                    toast({ title: 'Reward Claimed!', description: `Received ${amount.toLocaleString()} Gold!` });
                 }
                 SaveManager.save(currentSave);
                 setWorldBossContribution(prev => ({ ...prev, claimed: true }));
-                toast({ title: 'Reward Claimed!', description: `Unlocked limited cosmetic: ${id}` });
                 SoundManager.playLevelUp();
             } else {
                 toast({ title: 'Error', description: res.data.error || 'Failed to claim reward' });
@@ -136,7 +146,7 @@ export default function GlobalRaid({ isCarousel }) {
                         </div>
                         
                         <p className="text-slate-400 text-xs md:text-sm mb-4">
-                            If the community drains its health before the week ends, everyone who contributed damage earns a rare cosmetic reward!
+                            If the community drains its health before the week ends, everyone who contributed damage earns a huge Gold reward!
                         </p>
                         
                         {worldBossData ? (
@@ -204,6 +214,26 @@ export default function GlobalRaid({ isCarousel }) {
                         <p className="text-center text-slate-500 text-xs mt-3">
                             Currently selected operative: <span className="font-bold text-cyan-400 uppercase">{selectedChar}</span>
                         </p>
+
+                        {topContributors.length > 0 && (
+                            <div className="bg-slate-950/80 p-3 md:p-4 rounded-xl border border-slate-800 w-full mt-4 md:mt-6">
+                                <h4 className="text-cyan-400 font-bold mb-3 uppercase tracking-widest text-xs md:text-sm flex items-center gap-2">
+                                    <Trophy className="w-4 h-4" /> Top Contributors
+                                </h4>
+                                <div className="space-y-1.5 md:space-y-2 max-h-[300px] overflow-y-auto">
+                                    {topContributors.map((c, idx) => (
+                                        <div key={c.id} className="flex justify-between items-center bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-800/50">
+                                            <span className="text-slate-300 font-bold text-xs md:text-sm truncate mr-4">
+                                                <span className="text-slate-500 w-6 md:w-8 inline-block">#{idx + 1}</span> {c.player_name}
+                                            </span>
+                                            <span className="text-yellow-400 font-mono font-bold text-xs md:text-sm">
+                                                {c.damage.toLocaleString()} DMG
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
