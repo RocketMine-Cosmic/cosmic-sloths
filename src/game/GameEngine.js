@@ -1254,7 +1254,7 @@ export class GameEngine {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
-            this.ctx.globalAlpha = 0.5;
+            this.ctx.globalAlpha = 0.9; // Increased opacity for a crisper background
             const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
             const drawW = this.arenaImage.naturalWidth * scale;
             const drawH = this.arenaImage.naturalHeight * scale;
