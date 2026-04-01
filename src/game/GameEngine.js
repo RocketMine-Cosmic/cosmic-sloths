@@ -162,6 +162,17 @@ export class GameEngine {
 
         if (arenaId === 'world_boss_arena') {
             this.level = 10;
+            
+            // Apply 9 levels worth of stats
+            this.player.maxHp += 9 * 5;
+            this.player.damageMult += 9 * 0.02;
+            this.player.hp = this.player.maxHp;
+            
+            // Scale XP required for level 10
+            for (let i = 0; i < 9; i++) {
+                this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
+            }
+            
             for (let i = 0; i < 9; i++) {
                 const choices = this.generateChoices();
                 if (choices.length > 0) {
