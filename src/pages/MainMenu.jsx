@@ -45,7 +45,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="z-10 grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-4 w-full max-w-2xl px-4"
+                className="z-10 grid grid-cols-2 gap-2 md:gap-4 w-full max-w-xl md:max-w-2xl px-4"
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}

@@ -38,7 +38,7 @@ export default function PlayCarousel() {
     return (
         <div className="h-[100dvh] bg-slate-950 flex flex-col overflow-hidden select-none">
             <div className="p-2 md:p-4 border-b border-slate-800 bg-slate-950 flex flex-col md:flex-row justify-center items-center gap-2 md:gap-4 z-10 relative shrink-0">
-                <div className="flex items-center justify-between w-full md:w-80 bg-slate-900 rounded-xl border border-slate-700 p-1 shadow-inner">
+                <div className="flex items-center justify-between w-full md:w-96 bg-slate-900 rounded-xl border border-slate-700 p-1 shadow-inner">
                     <button 
                         onClick={() => { 
                             SoundManager.playUIClick(); 

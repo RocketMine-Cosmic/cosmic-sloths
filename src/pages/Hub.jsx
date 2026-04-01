@@ -101,7 +101,7 @@ export default function Hub({ isCarousel }) {
 
     return (
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-6xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4">
                     <div>
                         {!isCarousel && (
@@ -129,12 +129,13 @@ export default function Hub({ isCarousel }) {
                 </header>
 
                 <div className="flex flex-col gap-4 md:gap-8">
-                    <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
+                    <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-800">
                         <div className="h-full flex flex-col justify-between">
                                 <div>
                                     <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">Mission Briefing</h2>
                                     
-                                    <div className="mb-4 md:mb-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+                                        <div>
                                         <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Operative</h3>
                                         <div 
                                             className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none touch-pan-y"
@@ -247,13 +248,10 @@ export default function Hub({ isCarousel }) {
                                                 );
                                             })()}
                                         </div>
-                                    </div>
-
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1.5 md:mb-2">
-                                            <h3 className="text-sm md:text-base font-bold text-cyan-400 uppercase tracking-wider">Inner Galaxy</h3>
-                                            <span className="text-xs md:text-sm text-slate-400">- Select Sector</span>
                                         </div>
+
+                                        <div>
+                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Sector</h3>
                                         <div 
                                             className="relative bg-slate-800 rounded-lg md:rounded-xl border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] select-none touch-pan-y"
                                             onTouchStart={(e) => {
@@ -322,9 +320,9 @@ export default function Hub({ isCarousel }) {
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
+                                        </div>
 
-                                    <div className="mt-4 md:mt-6">
+                                        <div>
                                         <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Cosmic Difficulty</h3>
                                         {(() => {
                                             const diffColors = {
@@ -394,6 +392,7 @@ export default function Hub({ isCarousel }) {
                                         </div>
                                         );
                                         })()}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -403,11 +402,11 @@ export default function Hub({ isCarousel }) {
                                     const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
                                     return (
-                                        <div className="flex flex-col gap-2 mt-4 md:mt-6">
+                                        <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-4 md:mt-8 pt-4 md:pt-6 border-t border-slate-800">
                                             <button
                                                 onClick={startGame}
                                                 disabled={!canLaunch}
-                                                className={`w-full text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
+                                                className={`flex-1 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
                                                     canLaunch
                                                     ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
                                                     : 'bg-slate-700 text-slate-500 cursor-not-allowed'
@@ -428,7 +427,7 @@ export default function Hub({ isCarousel }) {
                                                     navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, isEndless: true } });
                                                 }}
                                                 disabled={!canLaunch}
-                                                className={`w-full text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
+                                                className={`flex-1 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
                                                     canLaunch
                                                     ? 'bg-purple-600 hover:bg-purple-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
                                                     : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
