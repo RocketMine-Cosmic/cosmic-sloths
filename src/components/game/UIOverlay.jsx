@@ -1,14 +1,7 @@
-import React, { useState } from 'react';
-import { Pause, Volume2, VolumeX, Heart, CircleDollarSign } from 'lucide-react';
-import { SoundManager } from '../../game/SoundManager';
+import React from 'react';
+import { Pause, Heart, CircleDollarSign } from 'lucide-react';
 
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, onPause }) {
-    const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
-    
-    const toggleMute = () => {
-        SoundManager.toggleMute();
-        setIsMuted(SoundManager.isMuted());
-    };
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -51,20 +44,13 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         </div>
                     </div>
                     
-                    <div className="flex flex-col gap-1 md:gap-2">
-                        <button 
-                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); toggleMute(); }}
-                            className="bg-[#0b0416]/90 p-1.5 md:p-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none"
-                            style={{ touchAction: 'none' }}
-                        >
-                            {isMuted ? <VolumeX className="w-3 h-3 md:w-5 md:h-5 text-slate-500" /> : <Volume2 className="w-3 h-3 md:w-5 md:h-5 text-cyan-400" />}
-                        </button>
+                    <div className="flex flex-col gap-1 md:gap-2 justify-center">
                         <button 
                             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
-                            className="bg-[#0b0416]/90 p-1.5 md:p-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none"
+                            className="bg-[#0b0416]/90 p-1.5 md:p-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none h-full"
                             style={{ touchAction: 'none' }}
                         >
-                            <Pause className="w-3 h-3 md:w-5 md:h-5 text-white" />
+                            <Pause className="w-4 h-4 md:w-6 md:h-6 text-white" />
                         </button>
                     </div>
                 </div>
