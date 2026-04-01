@@ -9,7 +9,7 @@ import { SaveManager } from '../game/SaveManager';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import SpaceBackground from '../components/game/SpaceBackground';
 
-const MASTERY_KILLS = (enemy) => enemy.isBoss ? 10 : 100;
+const MASTERY_KILLS = (enemy) => enemy.isBoss ? 20 : 200;
 
 function EnemySprite({ enemy, size = 64 }) {
     const canvasRef = useRef(null);
@@ -97,7 +97,7 @@ export default function Bestiary({ isCarousel }) {
                         </p>
                     </div>
                     <div className="text-right text-xs text-slate-500">
-                        <div className="text-fuchsia-400 font-bold">⚡ Mastered = +5% DMG</div>
+                        <div className="text-fuchsia-400 font-bold">⚡ Mastered = +10% DMG</div>
                         <div>vs that enemy type</div>
                     </div>
                 </header>
