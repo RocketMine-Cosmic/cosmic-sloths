@@ -446,8 +446,8 @@ export class GameEngine {
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
                     const progress = this.time / 300;
-                    const bossHpMult = 2.0 * this.difficulty.enemyHpMult * (1.0 + progress) * (this.bossModifiers.hide ? 2.0 : 1.0);
-                    const bossDmgMult = 2.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5) * (this.bossModifiers.fury ? 1.5 : 1.0);
+                    const bossHpMult = 1.5 * this.difficulty.enemyHpMult * (1.0 + progress) * (this.bossModifiers.hide ? 2.0 : 1.0);
+                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5) * (this.bossModifiers.fury ? 1.5 : 1.0);
                     const speedMult = this.bossModifiers.frenzy ? 1.5 : 1.0;
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
@@ -470,8 +470,8 @@ export class GameEngine {
                     const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
-                    const bossHpMult = 2.0 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 2.0 : 1.0);
-                    const bossDmgMult = 2.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.5 : 1.0);
+                    const bossHpMult = 1.5 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 2.0 : 1.0);
+                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.5 : 1.0);
                     const speedMult = this.bossModifiers.frenzy ? 1.5 : 1.0;
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
