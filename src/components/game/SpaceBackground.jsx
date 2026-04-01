@@ -21,10 +21,10 @@ export default function SpaceBackground() {
         }));
 
         const nebulae = [
-            { x: 0.15, y: 0.25, rx: 0.25, ry: 0.18, color: '99,102,241', opacity: 0.06 },
-            { x: 0.78, y: 0.65, rx: 0.30, ry: 0.20, color: '6,182,212', opacity: 0.05 },
-            { x: 0.50, y: 0.80, rx: 0.20, ry: 0.15, color: '168,85,247', opacity: 0.04 },
-            { x: 0.88, y: 0.12, rx: 0.18, ry: 0.14, color: '239,68,68', opacity: 0.035 },
+            { x: 0.15, y: 0.25, rx: 0.35, ry: 0.25, color: '99,102,241', opacity: 0.04 },
+            { x: 0.78, y: 0.65, rx: 0.40, ry: 0.28, color: '6,182,212', opacity: 0.035 },
+            { x: 0.50, y: 0.80, rx: 0.30, ry: 0.20, color: '168,85,247', opacity: 0.03 },
+            { x: 0.88, y: 0.12, rx: 0.25, ry: 0.18, color: '239,68,68', opacity: 0.025 },
         ];
 
         const resize = () => {
@@ -48,23 +48,40 @@ export default function SpaceBackground() {
             ctx.fillRect(0, 0, W, H);
 
             // Nebula blobs
+            ctx.globalCompositeOperation = 'lighter';
             nebulae.forEach(n => {
-                const pulse = 1 + Math.sin(time * 0.3 + n.x * 10) * 0.08;
-                const grd = ctx.createRadialGradient(
-                    n.x * W, n.y * H, 0,
-                    n.x * W, n.y * H, Math.max(n.rx * W, n.ry * H) * pulse
-                );
-                grd.addColorStop(0, `rgba(${n.color},${n.opacity * 2})`);
-                grd.addColorStop(0.5, `rgba(${n.color},${n.opacity})`);
-                grd.addColorStop(1, `rgba(${n.color},0)`);
                 ctx.save();
                 ctx.scale(1, n.ry / n.rx);
-                ctx.fillStyle = grd;
-                ctx.beginPath();
-                ctx.arc(n.x * W, (n.y * H) * (n.rx / n.ry), n.rx * W * pulse, 0, Math.PI * 2);
-                ctx.fill();
+                
+                const baseX = n.x * W;
+                const baseY = (n.y * H) * (n.rx / n.ry);
+                
+                // Draw multiple overlapping soft gradients to create a cloudy nebula structure
+                for (let i = 0; i < 6; i++) {
+                    const pulse = 1 + Math.sin(time * 0.15 + n.x * 10 + i) * 0.05;
+                    const angle = (i / 6) * Math.PI * 2 + (n.x * 10);
+                    // Scatter blobs around the center
+                    const dist = n.rx * W * 0.35 * Math.abs(Math.sin(i * 1234.5));
+                    
+                    const cx = baseX + Math.cos(angle) * dist;
+                    const cy = baseY + Math.sin(angle) * dist;
+                    
+                    const radius = n.rx * W * pulse * (0.5 + Math.abs(Math.cos(i * 5678)) * 0.4);
+                    
+                    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    // Core is slightly brighter, fading out softly
+                    grd.addColorStop(0, `rgba(${n.color},${n.opacity * 1.5})`);
+                    grd.addColorStop(0.4, `rgba(${n.color},${n.opacity * 0.8})`);
+                    grd.addColorStop(1, `rgba(${n.color},0)`);
+                    
+                    ctx.fillStyle = grd;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
             });
+            ctx.globalCompositeOperation = 'source-over';
 
             // Stars
             stars.forEach(s => {
