@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
         claimed_milestones.push(claim_level);
         await base44.asServiceRole.entities.GlobalBossContribution.update(cont.id, { claimed_milestones });
         
-        const goldReward = 5000 + (claim_level * 5000);
+        const goldReward = claim_level * 2500;
         return Response.json({ status: 'success', reward: { type: 'gold', id: goldReward.toString() } });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

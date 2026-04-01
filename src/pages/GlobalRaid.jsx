@@ -178,7 +178,7 @@ export default function GlobalRaid({ isCarousel }) {
                                                     const isReached = lvl < (worldBossData.level || 1);
                                                     const isClaimed = (worldBossContribution?.claimed_milestones || []).includes(lvl);
                                                     const canClaim = isReached && worldBossContribution && !isClaimed;
-                                                    const reward = 5000 + (lvl * 5000);
+                                                    const reward = lvl * 2500;
                                                     
                                                     return (
                                                         <div key={lvl} className={`p-2 rounded-lg border ${isReached ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/50'} flex flex-col items-center justify-center text-center gap-1`}>
