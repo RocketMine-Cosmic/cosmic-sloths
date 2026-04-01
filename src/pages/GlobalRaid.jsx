@@ -51,32 +51,34 @@ export default function GlobalRaid({ isCarousel }) {
         fetchBoss();
     }, []);
 
-    const handleClaimBossReward = async () => {
+    const MILESTONES = [
+        { pct: 25, reward: 5000 },
+        { pct: 50, reward: 10000 },
+        { pct: 75, reward: 15000 },
+        { pct: 100, reward: 25000 }
+    ];
+
+    const handleClaimBossReward = async (milestone) => {
         if (!worldBossData || claimingReward) return;
-        setClaimingReward(true);
+        setClaimingReward(milestone);
         try {
             const week_id = moment().format('YYYY-[W]ww');
-            const res = await base44.functions.invoke('claimBossReward', { week_id });
+            const res = await base44.functions.invoke('claimBossReward', { week_id, milestone });
             if (res.data.status === 'success') {
                 const { type, id } = res.data.reward;
                 const currentSave = SaveManager.load();
-                if (!currentSave.cosmetics) currentSave.cosmetics = { skins: {}, trail: 'default', killEffect: 'none', unlocked: { trails: [], killEffects: [] } };
-                if (!currentSave.cosmetics.unlocked) currentSave.cosmetics.unlocked = { trails: [], killEffects: [] };
                 
-                if (type === 'trail') {
-                    if (!currentSave.cosmetics.unlocked.trails.includes(id)) currentSave.cosmetics.unlocked.trails.push(id);
-                    toast({ title: 'Reward Claimed!', description: `Unlocked limited cosmetic: ${id}` });
-                } else if (type === 'kill_effect') {
-                    if (!currentSave.cosmetics.unlocked.killEffects.includes(id)) currentSave.cosmetics.unlocked.killEffects.push(id);
-                    toast({ title: 'Reward Claimed!', description: `Unlocked limited cosmetic: ${id}` });
-                } else if (type === 'gold') {
+                if (type === 'gold') {
                     const amount = parseInt(id, 10) || 10000;
                     currentSave.gold = (currentSave.gold || 0) + amount;
                     setSave(currentSave);
-                    toast({ title: 'Reward Claimed!', description: `Received ${amount.toLocaleString()} Gold!` });
+                    toast({ title: 'Milestone Claimed!', description: `Received ${amount.toLocaleString()} Gold!` });
                 }
                 SaveManager.save(currentSave);
-                setWorldBossContribution(prev => ({ ...prev, claimed: true }));
+                setWorldBossContribution(prev => ({ 
+                    ...prev, 
+                    claimed_milestones: [...(prev?.claimed_milestones || []), milestone] 
+                }));
                 SoundManager.playLevelUp();
             } else {
                 toast({ title: 'Error', description: res.data.error || 'Failed to claim reward' });
@@ -85,7 +87,7 @@ export default function GlobalRaid({ isCarousel }) {
             console.error(e);
             toast({ title: 'Error', description: 'Failed to claim reward' });
         }
-        setClaimingReward(false);
+        setClaimingReward(null);
     };
 
     const selectedChar = save.lastSelectedChar || 'neobyte';
@@ -146,7 +148,7 @@ export default function GlobalRaid({ isCarousel }) {
                         </div>
                         
                         <p className="text-slate-400 text-xs md:text-sm mb-4">
-                            If the community drains its health before the week ends, everyone who contributed damage earns a huge Gold reward!
+                            Work together with the community to drain the boss's health. Claim Gold rewards at 25%, 50%, 75%, and 100% damage milestones!
                         </p>
                         
                         {worldBossData ? (
@@ -169,30 +171,42 @@ export default function GlobalRaid({ isCarousel }) {
                                             ></div>
                                         </div>
                                         
-                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs md:text-sm gap-2 mt-2 md:mt-0">
-                                            <span className="text-slate-400">
-                                                Contribution: <span className="text-yellow-400 font-mono font-bold">{(worldBossContribution?.damage || 0).toLocaleString()}</span>
-                                            </span>
+                                        <div className="mt-4 border-t border-slate-800 pt-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-slate-400 text-xs md:text-sm">
+                                                    Your Contribution: <span className="text-yellow-400 font-mono font-bold">{(worldBossContribution?.damage || 0).toLocaleString()}</span>
+                                                </span>
+                                                {!worldBossData.is_defeated && <span className="text-red-400 font-bold text-xs animate-pulse">BOSS IS ACTIVE</span>}
+                                            </div>
                                             
-                                            {worldBossData.is_defeated ? (
-                                                worldBossContribution ? (
-                                                    worldBossContribution.claimed ? (
-                                                        <span className="text-emerald-500 font-bold bg-emerald-950/30 px-3 py-1.5 rounded">Reward Claimed ✓</span>
-                                                    ) : (
-                                                        <button 
-                                                            onClick={handleClaimBossReward}
-                                                            disabled={claimingReward}
-                                                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold transition-colors animate-pulse"
-                                                        >
-                                                            {claimingReward ? 'Claiming...' : 'Claim Reward!'}
-                                                        </button>
-                                                    )
-                                                ) : (
-                                                    <span className="text-slate-500 italic">You didn't participate this week.</span>
-                                                )
-                                            ) : (
-                                                <span className="text-red-400 font-bold animate-pulse">BOSS IS ACTIVE</span>
-                                            )}
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                {MILESTONES.map(({ pct, reward }) => {
+                                                    const percentDealt = 100 - (worldBossData.current_hp / worldBossData.max_hp * 100);
+                                                    const isReached = percentDealt >= pct || (pct === 100 && worldBossData.is_defeated);
+                                                    const isClaimed = (worldBossContribution?.claimed_milestones || []).includes(pct);
+                                                    const canClaim = isReached && worldBossContribution && !isClaimed;
+                                                    
+                                                    return (
+                                                        <div key={pct} className={`p-2 rounded-lg border ${isReached ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/50'} flex flex-col items-center justify-center text-center gap-1`}>
+                                                            <div className="text-xs font-bold text-slate-300">{pct}% Dead</div>
+                                                            <div className="text-yellow-400 text-xs font-mono mb-1">{reward} Gold</div>
+                                                            {isClaimed ? (
+                                                                <span className="text-emerald-500 text-[10px] font-bold uppercase">Claimed ✓</span>
+                                                            ) : canClaim ? (
+                                                                <button 
+                                                                    onClick={() => handleClaimBossReward(pct)}
+                                                                    disabled={claimingReward === pct}
+                                                                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] px-2 py-1 rounded font-bold transition-colors w-full"
+                                                                >
+                                                                    {claimingReward === pct ? '...' : 'CLAIM'}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-slate-600 text-[10px] uppercase font-bold">{isReached ? 'No Contrib' : 'Locked'}</span>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

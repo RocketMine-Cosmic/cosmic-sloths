@@ -17,6 +17,13 @@
     "claimed": {
       "type": "boolean",
       "default": false
+    },
+    "claimed_milestones": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": []
     }
   },
   "required": [
