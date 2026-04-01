@@ -284,6 +284,31 @@ export class ParticleManager {
                 this.addParticle(x, y, '#333333', 3, 'smoke', 2, { lifeBonus: 0.5, speed: 40 });
                 this.particles.push({ x, y, vx: 0, vy: 0, life: 0.3, maxLife: 0.3, color: '#ff6600', tint: '#ff6600', type: 'shockwave', size: 6, growthRate: 350, lineWidth: 3 });
                 break;
+            case 'pixel_burst':
+                this.addParticle(x, y, '#00ffff', 6, 'slash', 1.2, { speed: 300 });
+                this.addParticle(x, y, '#ff00ff', 6, 'star', 1.5, { speed: 200 });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.2, maxLife: 0.2, color: '#ffff00', tint: '#ffff00', type: 'shockwave', size: 4, growthRate: 400, lineWidth: 2 });
+                break;
+            case 'blood_splatter':
+                this.addParticle(x, y, '#ff0000', 12, 'smoke', 2, { gravity: true, speed: 150 });
+                this.addParticle(x, y, '#880000', 8, 'circle', 1, { gravity: true, speed: 100 });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.3, maxLife: 0.3, color: '#ff0000', tint: '#ff0000', type: 'shockwave', size: 4, growthRate: 200, lineWidth: 4 });
+                break;
+            case 'black_hole':
+                for (let i = 0; i < 15; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 50 + Math.random() * 30;
+                    this.particles.push({
+                        x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist,
+                        vx: 0, vy: 0, targetX: x, targetY: y,
+                        life: 0.6, maxLife: 0.6, color: '#000000', tint: '#000000',
+                        type: 'implode', size: Math.random() * 10 + 5,
+                        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 10
+                    });
+                }
+                this.addParticle(x, y, '#4b0082', 5, 'smoke', 2.5, { lifeBonus: 0.6, speed: 30 });
+                this.particles.push({ x, y, vx: 0, vy: 0, life: 0.4, maxLife: 0.4, color: '#111111', tint: '#111111', type: 'shockwave', size: 5, growthRate: 150, lineWidth: 5 });
+                break;
             case 'freeze':
                 this.addParticle(x, y, '#aaeeff', 8, 'fragment', 1.5, { speed: 220 });
                 this.addParticle(x, y, '#ffffff', 4, 'star', 1.2, { speed: 130 });
@@ -326,6 +351,9 @@ export class ParticleManager {
             'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 1, size: 1.6 },
             'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'star', count: 2, size: 1.3 },
             'shadow':  { colors: ['#222244', '#333355', '#0a0a20'], type: 'spark', count: 2, size: 2.2 },
+            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'circle', count: 2, size: 1.5 },
+            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 1, size: 1.2 },
+            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'star', count: 2, size: 1.5 },
             'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 2, size: 1.4 },
         };
         const config = trailConfigs[trailId];

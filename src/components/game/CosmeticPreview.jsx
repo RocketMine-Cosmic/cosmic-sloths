@@ -33,6 +33,9 @@ const TRAIL_COLORS = {
     gold:    ['#ffd700', '#ffec6e', '#fff4a0'],
     plasma:  ['#00e5ff', '#ff00e5', '#ffffff'],
     shadow:  ['#444466', '#222244', '#888899'],
+    blood:   ['#8a0303', '#ff0000', '#5c0000'],
+    pixel:   ['#00ffcc', '#ff00ff', '#ffff00'],
+    nebula:  ['#ff99cc', '#cc99ff', '#99ccff'],
     rainbow: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'],
 };
 
@@ -43,6 +46,9 @@ const KILL_COLORS = {
     vaporize:  ['#39ff14', '#00ff88', '#aaff00'],
     implode:   ['#8a2be2', '#ff00ff', '#cc44ff'],
     golden:    ['#ffd700', '#fff4a0', '#ffaa00'],
+    pixel_burst: ['#00ffff', '#ff00ff', '#ffff00'],
+    blood_splatter: ['#ff0000', '#880000', '#440000'],
+    black_hole: ['#111111', '#4b0082', '#000000'],
 };
 
 export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none' }) {

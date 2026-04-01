@@ -36,6 +36,9 @@ const TRAIL_COSMETICS = [
     { id: 'void',    name: 'Void Trail',   goldCost: 12500, tokenCost: 125,  icon: '🌌', desc: 'Dark energy that bends space itself.' },
     { id: 'shadow',  name: 'Shadow Trail', goldCost: 15000, tokenCost: 150, icon: '🌑', desc: 'A shroud of absolute darkness.' },
     { id: 'gold',    name: 'Golden Trail', goldCost: 25000, tokenCost: 250, icon: '✨', desc: 'Pure wealth made visible.' },
+    { id: 'blood',   name: 'Blood Trail',  goldCost: 30000, tokenCost: 300, icon: '🩸', desc: 'Leave a visceral red path.' },
+    { id: 'pixel',   name: 'Pixel Trail',  goldCost: 35000, tokenCost: 350, icon: '👾', desc: 'Retro 8-bit digital fragments.' },
+    { id: 'nebula',  name: 'Nebula Dust',  goldCost: 38000, tokenCost: 380, icon: '☄️', desc: 'Sprinkle cosmic stardust.' },
     { id: 'rainbow', name: 'Rainbow Trail',goldCost: 40000, tokenCost: 500, icon: '🌈', desc: 'All colors at once. Maximum flex.' },
 ];
 
@@ -44,7 +47,10 @@ const KILL_COSMETICS = [
     { id: 'explosion', name: 'Explosion',     goldCost: 3000,  tokenCost: 30,  icon: '💥', desc: 'Every kill bursts into flames.' },
     { id: 'freeze',    name: 'Freeze Burst',  goldCost: 3000,  tokenCost: 30,  icon: '🧊', desc: 'Enemies shatter into icy shards.' },
     { id: 'vaporize',  name: 'Vaporize',      goldCost: 3000,  tokenCost: 30,  icon: '☠️', desc: 'Enemies dissolve in toxic mist.' },
+    { id: 'pixel_burst',name: 'Pixel Burst',  goldCost: 8000,  tokenCost: 80,  icon: '👾', desc: 'Enemies break into retro pixels.' },
     { id: 'implode',   name: 'Implode',       goldCost: 15000, tokenCost: 150, icon: '🌀', desc: 'Enemies collapse into a void singularity.' },
+    { id: 'blood_splatter', name: 'Blood Splatter', goldCost: 20000, tokenCost: 200, icon: '🩸', desc: 'Messy biological destruction.' },
+    { id: 'black_hole',name: 'Black Hole',    goldCost: 25000, tokenCost: 250, icon: '🕳️', desc: 'Sucks enemies into oblivion.' },
     { id: 'golden',    name: 'Gold Shatter',  goldCost: 30000, tokenCost: 300, icon: '💰', desc: 'Enemies explode into golden coins.' },
 ];
 
