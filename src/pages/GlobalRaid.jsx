@@ -51,19 +51,12 @@ export default function GlobalRaid({ isCarousel }) {
         fetchBoss();
     }, []);
 
-    const MILESTONES = [
-        { pct: 25, reward: 5000 },
-        { pct: 50, reward: 10000 },
-        { pct: 75, reward: 15000 },
-        { pct: 100, reward: 25000 }
-    ];
-
-    const handleClaimBossReward = async (milestone) => {
+    const handleClaimBossReward = async (level) => {
         if (!worldBossData || claimingReward) return;
-        setClaimingReward(milestone);
+        setClaimingReward(level);
         try {
             const week_id = moment().format('YYYY-[W]ww');
-            const res = await base44.functions.invoke('claimBossReward', { week_id, milestone });
+            const res = await base44.functions.invoke('claimBossReward', { week_id, claim_level: level });
             if (res.data.status === 'success') {
                 const { type, id } = res.data.reward;
                 const currentSave = SaveManager.load();
@@ -72,12 +65,12 @@ export default function GlobalRaid({ isCarousel }) {
                     const amount = parseInt(id, 10) || 10000;
                     currentSave.gold = (currentSave.gold || 0) + amount;
                     setSave(currentSave);
-                    toast({ title: 'Milestone Claimed!', description: `Received ${amount.toLocaleString()} Gold!` });
+                    toast({ title: `Level ${level} Reward Claimed!`, description: `Received ${amount.toLocaleString()} Gold!` });
                 }
                 SaveManager.save(currentSave);
                 setWorldBossContribution(prev => ({ 
                     ...prev, 
-                    claimed_milestones: [...(prev?.claimed_milestones || []), milestone] 
+                    claimed_milestones: [...(prev?.claimed_milestones || []), level] 
                 }));
                 SoundManager.playLevelUp();
             } else {
@@ -148,7 +141,7 @@ export default function GlobalRaid({ isCarousel }) {
                         </div>
                         
                         <p className="text-slate-400 text-xs md:text-sm mb-4">
-                            Work together with the community to drain the boss's health. Claim Gold rewards at 25%, 50%, 75%, and 100% damage milestones!
+                            Work together with the community to drain the boss's health. The boss levels up each time it dies, granting increasing Gold rewards for every level defeated!
                         </p>
                         
                         {worldBossData ? (
@@ -160,8 +153,8 @@ export default function GlobalRaid({ isCarousel }) {
                                     </div>
                                     <div className="flex-1 w-full text-left">
                                         <h4 className="text-xl md:text-2xl font-bold text-white mb-1">{worldBossData.name}</h4>
-                                        <div className="text-red-400 text-xs md:text-sm mb-3 font-mono">
-                                            HP: {worldBossData.current_hp.toLocaleString()} / {worldBossData.max_hp.toLocaleString()}
+                                        <div className="text-red-400 text-xs md:text-sm mb-3 font-mono font-bold">
+                                            LVL {worldBossData.level || 1} &nbsp;|&nbsp; HP: {worldBossData.current_hp.toLocaleString()} / {worldBossData.max_hp.toLocaleString()}
                                         </div>
                                         
                                         <div className="w-full bg-slate-800 h-3 md:h-4 rounded-full overflow-hidden mb-4 border border-slate-700">
@@ -180,28 +173,29 @@ export default function GlobalRaid({ isCarousel }) {
                                             </div>
                                             
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                {MILESTONES.map(({ pct, reward }) => {
-                                                    const percentDealt = 100 - (worldBossData.current_hp / worldBossData.max_hp * 100);
-                                                    const isReached = percentDealt >= pct || (pct === 100 && worldBossData.is_defeated);
-                                                    const isClaimed = (worldBossContribution?.claimed_milestones || []).includes(pct);
+                                                {Array.from({length: (worldBossData.level || 1)}).map((_, i) => {
+                                                    const lvl = i + 1;
+                                                    const isReached = lvl < (worldBossData.level || 1);
+                                                    const isClaimed = (worldBossContribution?.claimed_milestones || []).includes(lvl);
                                                     const canClaim = isReached && worldBossContribution && !isClaimed;
+                                                    const reward = 5000 + (lvl * 5000);
                                                     
                                                     return (
-                                                        <div key={pct} className={`p-2 rounded-lg border ${isReached ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/50'} flex flex-col items-center justify-center text-center gap-1`}>
-                                                            <div className="text-xs font-bold text-slate-300">{pct}% Dead</div>
-                                                            <div className="text-yellow-400 text-xs font-mono mb-1">{reward} Gold</div>
+                                                        <div key={lvl} className={`p-2 rounded-lg border ${isReached ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/50'} flex flex-col items-center justify-center text-center gap-1`}>
+                                                            <div className="text-xs font-bold text-slate-300">Level {lvl}</div>
+                                                            <div className="text-yellow-400 text-xs font-mono mb-1">{reward.toLocaleString()} Gold</div>
                                                             {isClaimed ? (
                                                                 <span className="text-emerald-500 text-[10px] font-bold uppercase">Claimed ✓</span>
                                                             ) : canClaim ? (
                                                                 <button 
-                                                                    onClick={() => handleClaimBossReward(pct)}
-                                                                    disabled={claimingReward === pct}
+                                                                    onClick={() => handleClaimBossReward(lvl)}
+                                                                    disabled={claimingReward === lvl}
                                                                     className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] px-2 py-1 rounded font-bold transition-colors w-full"
                                                                 >
-                                                                    {claimingReward === pct ? '...' : 'CLAIM'}
+                                                                    {claimingReward === lvl ? '...' : 'CLAIM'}
                                                                 </button>
                                                             ) : (
-                                                                <span className="text-slate-600 text-[10px] uppercase font-bold">{isReached ? 'No Contrib' : 'Locked'}</span>
+                                                                <span className="text-slate-600 text-[10px] uppercase font-bold">{isReached ? 'No Contrib' : 'In Progress'}</span>
                                                             )}
                                                         </div>
                                                     );

@@ -26,6 +26,10 @@
     "is_defeated": {
       "type": "boolean",
       "default": false
+    },
+    "level": {
+      "type": "number",
+      "default": 1
     }
   },
   "required": [

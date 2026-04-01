@@ -28,7 +28,8 @@ Deno.serve(async (req) => {
             current_hp: bossHp,
             reward_type: reward.type,
             reward_id: reward.id,
-            is_defeated: false
+            is_defeated: false,
+            level: 1
         });
         
         return Response.json({ boss: newBoss });

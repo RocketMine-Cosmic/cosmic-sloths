@@ -15,17 +15,27 @@ Deno.serve(async (req) => {
         }
         
         const boss = bossRecords[0];
-        if (boss.is_defeated) {
-            return Response.json({ status: 'already_defeated', boss });
+        
+        let newHp = Math.max(0, boss.current_hp - damage);
+        let isDefeated = false;
+        
+        let updates = { current_hp: newHp };
+        
+        if (newHp === 0) {
+            const nextLevel = (boss.level || 1) + 1;
+            // 50% more HP each level
+            const nextMaxHp = Math.floor(boss.max_hp * 1.5);
+            updates = {
+                level: nextLevel,
+                max_hp: nextMaxHp,
+                current_hp: nextMaxHp,
+                is_defeated: false
+            };
+            newHp = nextMaxHp;
+            isDefeated = false; // it is alive again!
         }
         
-        const newHp = Math.max(0, boss.current_hp - damage);
-        const isDefeated = newHp === 0;
-        
-        await base44.asServiceRole.entities.GlobalBoss.update(boss.id, {
-            current_hp: newHp,
-            is_defeated: isDefeated
-        });
+        await base44.asServiceRole.entities.GlobalBoss.update(boss.id, updates);
         
         const existingContributions = await base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id, user_id: user.id });
         if (existingContributions.length > 0) {
