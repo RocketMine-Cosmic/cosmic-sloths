@@ -404,15 +404,6 @@ export class GameEngine {
                 this.addDamageText(this.player.x, this.player.y - 60, `WARNING: WORLD BOSS DETECTED!`, '#ff0000');
                 SoundManager.playBossSpawn();
             }
-            if (Math.random() < dt * 0.5) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = 800;
-                this.enemies.push({
-                    id: 'void_crawler', name: 'Void Crawler', tier: 5, hp: 500, maxHp: 500, damage: 20, speed: 200, xp: 50, radius: 15, color: '#4b0082',
-                    x: this.player.x + Math.cos(angle) * dist,
-                    y: this.player.y + Math.sin(angle) * dist
-                });
-            }
             return;
         }
 
