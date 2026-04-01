@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SoundManager } from '../../game/SoundManager';
-import { ThemeManager, THEMES } from '../../game/ThemeManager';
 import { X, Volume2, VolumeX } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
     const [bgmVol, setBgmVol] = useState(SoundManager.bgm.volume);
     const [sfxVol, setSfxVol] = useState(SoundManager.sfxVolume);
     const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
-    const [selectedTheme, setSelectedTheme] = useState(ThemeManager.getCurrentId());
-
-    const handleThemeChange = (themeId) => {
-        setSelectedTheme(themeId);
-        ThemeManager.setTheme(themeId);
-    };
 
     const handleBgmChange = (e) => {
         const val = parseFloat(e.target.value);
@@ -95,26 +88,6 @@ export default function SettingsModal({ onClose }) {
                             disabled={isMuted}
                             className="w-full accent-cyan-500"
                         />
-                    </div>
-                </div>
-                
-                <div>
-                    <div className="font-bold text-slate-300 mb-3">Interface Theme</div>
-                    <div className="grid grid-cols-3 gap-2">
-                        {THEMES.map(theme => (
-                            <button
-                                key={theme.id}
-                                onClick={() => handleThemeChange(theme.id)}
-                                className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all text-xs font-bold ${
-                                    selectedTheme === theme.id
-                                        ? 'border-white bg-slate-700 text-white'
-                                        : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500'
-                                }`}
-                            >
-                                <span className="text-xl">{theme.emoji}</span>
-                                <span>{theme.name}</span>
-                            </button>
-                        ))}
                     </div>
                 </div>
 

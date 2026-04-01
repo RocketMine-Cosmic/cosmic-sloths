@@ -4,20 +4,13 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Pencil, Check, X, LogOut } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
-import { ThemeManager } from '../game/ThemeManager';
 import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
+
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
-    const [theme, setTheme] = useState(ThemeManager.getTheme());
-
-    useEffect(() => {
-        const onThemeChange = () => setTheme(ThemeManager.getTheme());
-        window.addEventListener('themechange', onThemeChange);
-        return () => window.removeEventListener('themechange', onThemeChange);
-    }, []);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -35,8 +28,8 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
 
     return (
         <div 
-            className={`${isCarousel ? 'h-full' : 'h-[100dvh]'} w-full flex flex-col items-center justify-end pb-12 md:pb-20 relative overflow-hidden font-sans`}
-            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/20a4a9160_image-48.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundColor: theme.colors.bg }}
+            className={`${isCarousel ? 'h-full' : 'h-[100dvh]'} w-full flex flex-col items-center justify-end pb-12 md:pb-20 relative overflow-hidden font-sans bg-[#0b0416]`}
+            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/20a4a9160_image-48.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center center' }}
         >
 
             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/20 to-transparent opacity-90 pointer-events-none z-0"></div>
