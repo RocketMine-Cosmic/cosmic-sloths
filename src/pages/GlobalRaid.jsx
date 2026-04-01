@@ -81,10 +81,10 @@ export default function GlobalRaid({ isCarousel }) {
     const selectedChar = save.lastSelectedChar || 'neobyte';
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
+        <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-2 md:p-6 font-sans overflow-hidden`}>
             {!isCarousel && <SpaceBackground />}
-            <div className="max-w-5xl mx-auto h-full flex flex-col">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
+            <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-2 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>
                         {!isCarousel && (
                             <button 
@@ -101,11 +101,11 @@ export default function GlobalRaid({ isCarousel }) {
                     </div>
                 </header>
 
-                <div className="flex-1 flex flex-col items-center justify-center">
-                    <div className="bg-[#0b0416]/50 backdrop-blur-xl border border-red-500/50 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_60px_rgba(220,38,38,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden w-full max-w-2xl">
+                <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto">
+                    <div className="bg-[#0b0416]/50 backdrop-blur-xl border border-red-500/50 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-[0_0_60px_rgba(220,38,38,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden w-full max-w-2xl my-auto">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
                         
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xl md:text-2xl font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
                                 <Skull className="w-5 h-5 md:w-6 md:h-6" /> RAID EVENT
                             </h3>
@@ -121,13 +121,13 @@ export default function GlobalRaid({ isCarousel }) {
                         </p>
                         
                         {worldBossData ? (
-                            <div className="bg-slate-950 p-4 md:p-6 rounded-xl border border-red-900 mb-4 relative overflow-hidden">
+                            <div className="bg-slate-950 p-3 md:p-6 rounded-xl border border-red-900 mb-3 md:mb-4 relative overflow-hidden">
                                 <div className="absolute right-0 top-0 opacity-10 text-7xl md:text-9xl transform translate-x-1/4 -translate-y-1/4">👹</div>
-                                <div className="relative z-10 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center w-full">
-                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-full sm:w-auto aspect-square max-w-[200px] sm:max-w-none">
+                                <div className="relative z-10 flex flex-row gap-3 md:gap-6 items-center w-full">
+                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-20 h-20 md:w-32 md:h-32">
                                         <BossPreview bossId={worldBossData.boss_id} />
                                     </div>
-                                    <div className="flex-1 w-full text-center sm:text-left">
+                                    <div className="flex-1 w-full text-left">
                                         <h4 className="text-xl md:text-2xl font-bold text-white mb-1">{worldBossData.name}</h4>
                                         <div className="text-red-400 text-xs md:text-sm mb-3 font-mono">
                                             HP: {worldBossData.current_hp.toLocaleString()} / {worldBossData.max_hp.toLocaleString()}
@@ -140,9 +140,9 @@ export default function GlobalRaid({ isCarousel }) {
                                             ></div>
                                         </div>
                                         
-                                        <div className="flex flex-col sm:flex-row justify-between items-center sm:items-center text-xs md:text-sm gap-3">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs md:text-sm gap-2 mt-2 md:mt-0">
                                             <span className="text-slate-400">
-                                                Your Contribution: <span className="text-yellow-400 font-mono font-bold">{(worldBossContribution?.damage || 0).toLocaleString()}</span>
+                                                Contribution: <span className="text-yellow-400 font-mono font-bold">{(worldBossContribution?.damage || 0).toLocaleString()}</span>
                                             </span>
                                             
                                             {worldBossData.is_defeated ? (

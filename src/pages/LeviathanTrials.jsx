@@ -57,8 +57,8 @@ export default function LeviathanTrials({ isCarousel }) {
                 </header>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-                    <p className="text-slate-300 text-sm md:text-base">Toggle difficulty modifiers for Boss encounters to increase your rewards.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p className="text-slate-300 text-xs md:text-base">Toggle difficulty modifiers for Boss encounters to increase your rewards.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                         {BOSS_MODIFIERS.map(mod => {
                             const isActive = modifiers[mod.id];
                             const Icon = mod.icon;
@@ -68,26 +68,26 @@ export default function LeviathanTrials({ isCarousel }) {
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => toggleModifier(mod.id)}
-                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                                    className={`p-2.5 md:p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 md:gap-4 ${
                                         isActive 
                                         ? 'bg-red-950/50 backdrop-blur-xl border-red-400 shadow-[0_0_40px_rgba(239,68,68,0.4)]' 
                                         : 'bg-[#0b0416]/50 backdrop-blur-xl border-red-500/40 shadow-[0_0_25px_rgba(239,68,68,0.15)] hover:border-red-400/60'
                                     }`}
                                 >
-                                    <div className={`p-3 rounded-lg bg-slate-950 border border-slate-800 ${isActive ? mod.color : 'text-slate-600'}`}>
-                                        <Icon className="w-6 h-6 md:w-8 md:h-8" />
+                                    <div className={`p-2 md:p-3 rounded-lg bg-slate-950 border border-slate-800 ${isActive ? mod.color : 'text-slate-600'}`}>
+                                        <Icon className="w-5 h-5 md:w-8 md:h-8" />
                                     </div>
-                                    <div className="flex-1">
-                                        <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-slate-400'}`}>{mod.name}</h3>
-                                        <p className="text-xs text-slate-500 mb-1">{mod.desc}</p>
-                                        <div className="text-xs font-bold text-green-400 flex items-center gap-1 mt-1">
-                                            <Trophy className="w-3 h-3" /> Reward: {mod.rewardDesc}
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className={`font-bold text-sm md:text-lg truncate ${isActive ? 'text-white' : 'text-slate-400'}`}>{mod.name}</h3>
+                                        <p className="text-[10px] md:text-xs text-slate-500 mb-0.5 md:mb-1 truncate">{mod.desc}</p>
+                                        <div className="text-[10px] md:text-xs font-bold text-green-400 flex items-center gap-1">
+                                            <Trophy className="w-3 h-3 shrink-0" /> <span className="truncate">Reward: {mod.rewardDesc}</span>
                                         </div>
                                     </div>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                    <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
                                         isActive ? 'border-red-500 bg-red-500' : 'border-slate-700 bg-slate-950'
                                     }`}>
-                                        {isActive && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                                        {isActive && <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-white rounded-full" />}
                                     </div>
                                 </motion.div>
                             );
