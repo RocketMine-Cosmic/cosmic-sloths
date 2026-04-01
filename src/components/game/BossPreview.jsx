@@ -31,7 +31,7 @@ export default function BossPreview({ bossId }) {
             ctx.save();
             
             // Scale to fit a 300x300 canvas. Max boss drawSize is ~ 160 * 3.5 = 560
-            const scale = 300 / 800;
+            const scale = 300 / 650;
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.scale(scale, scale);
             
