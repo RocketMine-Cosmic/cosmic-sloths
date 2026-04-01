@@ -32,7 +32,7 @@ export default function Game() {
     const [isPaused, setIsPaused] = useState(false);
 
     useEffect(() => {
-        const { characterId, arenaId, difficultyId, isEndless } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
         const save = SaveManager.load();
         
         const canvas = canvasRef.current;
@@ -284,7 +284,7 @@ export default function Game() {
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }
-        }, isEndless);
+        }, isEndless, worldBossId, worldBossName);
         
         engineRef.current = engine;
         

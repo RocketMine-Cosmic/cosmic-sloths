@@ -10,7 +10,16 @@ export default function BossPreview({ bossId }) {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         
-        const bossTemplate = ENEMIES.find(e => e.id === bossId);
+        const BOSS_MAPPING = {
+            'world_boss_0': 'boss_nebula_devourer',
+            'world_boss_1': 'boss_plasma_kraken',
+            'world_boss_2': 'boss_stellar_colossus',
+            'world_boss_3': 'boss_cosmic_wyrm',
+        };
+        
+        const mappedId = BOSS_MAPPING[bossId] || bossId;
+        const bossTemplate = ENEMIES.find(e => e.id === mappedId);
+        
         if (!bossTemplate) return;
 
         let animationId;

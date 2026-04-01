@@ -7,12 +7,14 @@ import { drawUI } from './UIRenderer';
 import { drawPickups } from './PickupRenderer';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false) {
+    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
         this.characterId = characterId;
         this.save = save;
+        this.worldBossId = worldBossId || 'world_boss_0';
+        this.worldBossName = worldBossName || 'The World Eater';
         this.difficulty = DIFFICULTIES.find(d => d.id === difficultyId) || DIFFICULTIES[0];
         
         const saveStats = save.permanentUpgrades || {};
@@ -421,19 +423,10 @@ export class GameEngine {
         if (this.arena.id === 'world_boss_arena') {
             if (!this.worldBossSpawned) {
                 this.worldBossSpawned = true;
+                const baseMap = {'world_boss_0': 'boss_nebula_devourer', 'world_boss_1': 'boss_plasma_kraken', 'world_boss_2': 'boss_stellar_colossus', 'world_boss_3': 'boss_cosmic_wyrm'};
+                const baseBossTemplate = ENEMIES.find(e => e.id === (baseMap[this.worldBossId] || 'boss_nebula_devourer'));
                 const boss = {
-                    id: 'world_boss',
-                    name: 'The World Eater',
-                    hp: 50000000,
-                    maxHp: 50000000,
-                    damage: 80 * this.difficulty.enemyDmgMult,
-                    speed: 100,
-                    radius: 120,
-                    color: '#ff0044',
-                    isBoss: true,
-                    isWorldBoss: true,
-                    weakSide: 'back',
-                    weakDesc: 'ATTACK FROM BEHIND'
+                    ...baseBossTemplate, id: 'world_boss', name: this.worldBossName, hp: 50000000, maxHp: 50000000, damage: 80 * this.difficulty.enemyDmgMult, speed: 100, isBoss: true, isWorldBoss: true, originalBossId: baseBossTemplate.id
                 };
                 const angle = Math.random() * Math.PI * 2;
                 const dist = 600;

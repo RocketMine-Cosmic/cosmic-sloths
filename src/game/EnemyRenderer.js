@@ -55,7 +55,7 @@ export function drawEnemy(ctx, e, time, playerX) {
         }
     };
 
-    switch (e.id) {
+    switch (e.originalBossId || e.id) {
         case 't1_parasite':
         case 't4_worm':
         case 't8_wyrm':

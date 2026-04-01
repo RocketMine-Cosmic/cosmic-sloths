@@ -122,7 +122,7 @@ export default function GlobalRaid({ isCarousel }) {
                             <div className="bg-slate-950 p-4 md:p-6 rounded-xl border border-red-900 mb-4 relative overflow-hidden">
                                 <div className="absolute right-0 top-0 opacity-10 text-7xl md:text-9xl transform translate-x-1/4 -translate-y-1/4">👹</div>
                                 <div className="relative z-10 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center w-full">
-                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center">
+                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-full sm:w-auto aspect-square max-w-[200px] sm:max-w-none">
                                         <BossPreview bossId={worldBossData.boss_id} />
                                     </div>
                                     <div className="flex-1 w-full text-center sm:text-left">
@@ -173,7 +173,7 @@ export default function GlobalRaid({ isCarousel }) {
                         )}
                         
                         <button
-                            onClick={() => { SoundManager.playGameStart(); navigate('/game', { state: { characterId: selectedChar, arenaId: 'world_boss_arena', difficultyId: 'normal', isEndless: true } }); }}
+                            onClick={() => { SoundManager.playGameStart(); navigate('/game', { state: { characterId: selectedChar, arenaId: 'world_boss_arena', difficultyId: 'normal', isEndless: true, worldBossId: worldBossData?.boss_id, worldBossName: worldBossData?.name } }); }}
                             disabled={worldBossData?.is_defeated || !save.unlockedCharacters.includes(selectedChar)}
                             className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
                         >
