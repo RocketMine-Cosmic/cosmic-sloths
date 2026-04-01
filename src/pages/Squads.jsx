@@ -9,6 +9,7 @@ import { SaveManager } from '../game/SaveManager';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 import { getSquadLevel, getNextSquadLevel, getSquadXpProgress } from '../game/SquadLevels';
+import SpaceBackground from '../components/game/SpaceBackground';
 
 const MAX_SQUAD_MEMBERS = 5;
 
@@ -393,7 +394,8 @@ export default function Squads({ isCarousel }) {
     if (!user) return <div className="p-8 text-white">Loading...</div>;
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+            {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto h-full flex flex-col">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>

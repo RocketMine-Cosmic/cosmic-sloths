@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
+import SpaceBackground from '../components/game/SpaceBackground';
 
 const TABS = [
     { id: 'basics',     label: 'Basics',       icon: Gamepad2 },
@@ -424,23 +425,8 @@ export default function Info() {
     const [activeTab, setActiveTab] = useState('basics');
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 font-mono relative overflow-hidden">
-            {/* Starfield */}
-            <div className="absolute inset-0 opacity-20 pointer-events-none">
-                {[...Array(30)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="absolute bg-white rounded-full"
-                        style={{
-                            width: Math.random() * 2 + 1 + 'px',
-                            height: Math.random() * 2 + 1 + 'px',
-                            top: Math.random() * 100 + '%',
-                            left: Math.random() * 100 + '%',
-                            animation: `twinkle ${Math.random() * 3 + 2}s infinite`
-                        }}
-                    />
-                ))}
-            </div>
+        <div className="min-h-screen relative text-slate-200 font-mono overflow-hidden">
+            <SpaceBackground />
 
             <div className="relative z-10 max-w-3xl mx-auto px-4 pt-4 pb-20">
                 <button

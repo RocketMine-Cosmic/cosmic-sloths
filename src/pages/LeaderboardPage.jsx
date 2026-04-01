@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Leaderboard from '../components/game/Leaderboard';
 import { SoundManager } from '../game/SoundManager';
+import SpaceBackground from '../components/game/SpaceBackground';
 
 export default function LeaderboardPage({ isCarousel }) {
     const navigate = useNavigate();
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+            {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4">
                     <div>

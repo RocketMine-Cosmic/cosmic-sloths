@@ -7,6 +7,7 @@ import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity, Swords, Star } from 
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import SpaceBackground from '../components/game/SpaceBackground';
 
 const MASTERY_KILLS = (enemy) => enemy.isBoss ? 10 : 100;
 
@@ -75,7 +76,8 @@ export default function Bestiary({ isCarousel }) {
     const encounteredCount = ENEMIES.filter(e => encountered.includes(e.id)).length;
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+            {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto h-full flex flex-col">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>

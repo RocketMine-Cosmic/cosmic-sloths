@@ -7,6 +7,7 @@ import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import moment from 'moment';
+import SpaceBackground from '../components/game/SpaceBackground';
 
 export default function Profile({ isCarousel }) {
     const navigate = useNavigate();
@@ -103,7 +104,8 @@ export default function Profile({ isCarousel }) {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 font-mono">
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-4 md:p-8 font-mono`}>
+            {!isCarousel && <SpaceBackground />}
             <div className="max-w-4xl mx-auto relative z-10">
                 {!isCarousel && (
                     <button 

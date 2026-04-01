@@ -5,6 +5,7 @@ import { Skull, ArrowLeft, Trophy, Zap, Shield, Swords, FastForward } from 'luci
 import { SaveManager } from '../game/SaveManager';
 import { ENEMIES } from '../game/Constants';
 import { SoundManager } from '../game/SoundManager';
+import SpaceBackground from '../components/game/SpaceBackground';
 
 const BOSS_MODIFIERS = [
     { id: 'fury', name: 'Leviathan\'s Fury', desc: 'Bosses deal +50% Damage', rewardDesc: '+50 Boss Gold Drop', icon: Swords, color: 'text-red-500' },
@@ -33,7 +34,8 @@ export default function LeviathanTrials({ isCarousel }) {
     };
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+            {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto h-full flex flex-col">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>

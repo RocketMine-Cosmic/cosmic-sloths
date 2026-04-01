@@ -2,27 +2,14 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
+import SpaceBackground from '../components/game/SpaceBackground';
 
 export default function Credits() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 font-mono relative overflow-hidden">
-            <div className="absolute inset-0 opacity-20 pointer-events-none">
-                {[...Array(20)].map((_, i) => (
-                    <div 
-                        key={i}
-                        className="absolute bg-white rounded-full"
-                        style={{
-                            width: Math.random() * 3 + 1 + 'px',
-                            height: Math.random() * 3 + 1 + 'px',
-                            top: Math.random() * 100 + '%',
-                            left: Math.random() * 100 + '%',
-                            animation: `twinkle ${Math.random() * 3 + 2}s infinite`
-                        }}
-                    />
-                ))}
-            </div>
+        <div className="min-h-screen relative text-slate-200 p-4 md:p-8 font-mono overflow-hidden">
+            <SpaceBackground />
 
             <div className="max-w-4xl mx-auto relative z-10 text-center">
                 <button 
