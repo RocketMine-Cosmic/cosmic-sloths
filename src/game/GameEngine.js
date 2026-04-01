@@ -149,6 +149,14 @@ export class GameEngine {
         this.damageTexts = [];
         
         this.stars = Array.from({length: 150}, () => ({ x: Math.random() * 2000, y: Math.random() * 2000, size: Math.random() * 2 + 0.5, parallax: Math.random() * 0.4 + 0.1 }));
+        this.debris = Array.from({length: 60}, () => ({ 
+            x: Math.random() * 4000, 
+            y: Math.random() * 4000, 
+            size: Math.random() * 8 + 3, 
+            rot: Math.random() * Math.PI * 2, 
+            rotSpeed: (Math.random() - 0.5) * 1.5,
+            type: Math.floor(Math.random() * 3) 
+        }));
         
         this.keys = {};
         this.time = 0;
@@ -1261,30 +1269,35 @@ export class GameEngine {
 
     draw() {
         if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
-            // Cache the rendered background to avoid expensive scaling and blending every frame
-            if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
-                this.cachedArenaImage = document.createElement('canvas');
-                this.cachedArenaImage.width = this.canvas.width;
-                this.cachedArenaImage.height = this.canvas.height;
-                const oCtx = this.cachedArenaImage.getContext('2d');
-                
-                // Draw base color
-                oCtx.fillStyle = this.arena.bg;
-                oCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw scaled image with opacity
-                const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
-                const drawW = this.arenaImage.naturalWidth * scale;
-                const drawH = this.arenaImage.naturalHeight * scale;
-                const x = (this.canvas.width - drawW) / 2;
-                const y = (this.canvas.height - drawH) / 2;
-                
-                oCtx.globalAlpha = 0.9;
-                oCtx.drawImage(this.arenaImage, x, y, drawW, drawH);
-                oCtx.globalAlpha = 1.0;
+            if (!this.bgPattern) {
+                const offscreen = document.createElement('canvas');
+                // Provide a good base scale for tiling so it's not too tiny
+                const scale = Math.max(1, 1024 / this.arenaImage.naturalWidth);
+                offscreen.width = this.arenaImage.naturalWidth * scale;
+                offscreen.height = this.arenaImage.naturalHeight * scale;
+                const oCtx = offscreen.getContext('2d');
+                oCtx.drawImage(this.arenaImage, 0, 0, offscreen.width, offscreen.height);
+                this.bgPattern = this.ctx.createPattern(offscreen, 'repeat');
+                this.bgPatternWidth = offscreen.width;
+                this.bgPatternHeight = offscreen.height;
             }
-            // Draw the pre-rendered, screen-sized background (extremely fast)
-            this.ctx.drawImage(this.cachedArenaImage, 0, 0);
+            
+            this.ctx.fillStyle = this.arena.bg;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            this.ctx.save();
+            this.ctx.globalAlpha = 0.6; // Slightly more transparent so it doesn't distract too much when tiling
+            this.ctx.fillStyle = this.bgPattern;
+            
+            // Background moves slightly to give parallax depth, say 15% speed of the camera
+            const parallax = 0.15;
+            const offsetX = -((this.camera.x * parallax) % this.bgPatternWidth);
+            const offsetY = -((this.camera.y * parallax) % this.bgPatternHeight);
+            
+            this.ctx.translate(offsetX, offsetY);
+            // Draw slightly larger than screen to cover the offset
+            this.ctx.fillRect(-this.bgPatternWidth, -this.bgPatternHeight, this.canvas.width + this.bgPatternWidth * 2, this.canvas.height + this.bgPatternHeight * 2);
+            this.ctx.restore();
         } else {
             this.ctx.fillStyle = this.arena.bg;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -1308,6 +1321,40 @@ export class GameEngine {
         this.ctx.save();
         this.ctx.scale(this.zoom, this.zoom);
         this.ctx.translate(-this.camera.x + this.shakeX, -this.camera.y + this.shakeY);
+
+        // Draw Foreground Space Debris
+        this.ctx.fillStyle = 'rgba(100, 150, 200, 0.15)';
+        this.ctx.strokeStyle = 'rgba(100, 150, 200, 0.25)';
+        this.ctx.lineWidth = 2;
+        this.debris.forEach(d => {
+            let dx = (d.x - this.player.x) % 4000;
+            if (dx > 2000) dx -= 4000;
+            else if (dx < -2000) dx += 4000;
+            
+            let dy = (d.y - this.player.y) % 4000;
+            if (dy > 2000) dy -= 4000;
+            else if (dy < -2000) dy += 4000;
+            
+            const wx = this.player.x + dx;
+            const wy = this.player.y + dy;
+            
+            d.rot += d.rotSpeed * (this.lastDt || 0.016);
+
+            this.ctx.save();
+            this.ctx.translate(wx, wy);
+            this.ctx.rotate(d.rot);
+            this.ctx.beginPath();
+            if (d.type === 0) {
+                this.ctx.rect(-d.size/2, -d.size/2, d.size, d.size);
+            } else if (d.type === 1) {
+                this.ctx.moveTo(-d.size, 0); this.ctx.lineTo(0, d.size); this.ctx.lineTo(d.size, 0); this.ctx.lineTo(0, -d.size); this.ctx.closePath();
+            } else {
+                this.ctx.arc(0, 0, d.size, 0, Math.PI * 2);
+            }
+            this.ctx.fill();
+            this.ctx.stroke();
+            this.ctx.restore();
+        });
 
         drawPickups(this.ctx, this.pickups, this.time);
 
