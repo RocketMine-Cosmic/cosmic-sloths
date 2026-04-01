@@ -69,7 +69,7 @@ export default function Profile({ isCarousel }) {
 
     const handleSaveIcon = async (icon) => {
         try {
-            await base44.auth.updateMe({ pilot_icon: icon });
+            await base44.auth.updateMe({ ...user?.data, pilot_icon: icon });
             setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
             
             base44.functions.invoke('syncProfileIcon', { newIcon: icon }).catch(console.error);
@@ -83,7 +83,7 @@ export default function Profile({ isCarousel }) {
         const oldName = user?.player_name || user?.data?.player_name || user?.data?.full_name || user?.full_name;
         const updatedName = newName.trim();
         try {
-            await base44.auth.updateMe({ player_name: updatedName });
+            await base44.auth.updateMe({ ...user?.data, player_name: updatedName });
             setUser(prev => ({ ...prev, data: { ...prev?.data, player_name: updatedName } }));
             setIsEditingName(false);
             
