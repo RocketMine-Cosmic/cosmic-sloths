@@ -61,7 +61,13 @@ function EnemySprite({ enemy, size = 64 }) {
 export default function Bestiary({ isCarousel }) {
     const navigate = useNavigate();
     const [selectedTier, setSelectedTier] = useState('all');
-    const [save] = useState(SaveManager.load());
+    const [save, setSave] = useState(SaveManager.load());
+
+    useEffect(() => {
+        const handleSaveUpdated = (e) => setSave(e.detail);
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
     const [selectedEnemy, setSelectedEnemy] = useState(null);
 
     const encountered = ENEMIES.map(e => e.id); // save.encounteredEnemies || [];

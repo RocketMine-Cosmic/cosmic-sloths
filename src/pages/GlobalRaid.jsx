@@ -13,6 +13,13 @@ import { CHARACTERS } from '../game/Constants';
 export default function GlobalRaid({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
+
+    React.useEffect(() => {
+        const handleSaveUpdated = (e) => setSave(e.detail);
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
+
     const { toast } = useToast();
     
     const [worldBossData, setWorldBossData] = useState(null);

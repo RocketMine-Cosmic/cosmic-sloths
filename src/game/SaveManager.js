@@ -225,6 +225,7 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       SaveManager._syncToBackend(data);
+      window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
     } catch (e) {
       console.error('[SaveManager] Failed to save locally', e);
     }

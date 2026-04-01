@@ -14,6 +14,13 @@ import SpaceBackground from '../components/game/SpaceBackground';
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
+
+    React.useEffect(() => {
+        const handleSaveUpdated = (e) => setSave(e.detail);
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
+
     const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');
     const [selectedArena, setSelectedArena] = useState(save.lastSelectedArena || 'station');
     const [selectedDifficulty, setSelectedDifficulty] = useState(save.lastSelectedDifficulty || 'normal');

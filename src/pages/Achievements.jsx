@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, Clock, Skull, Users, Star, Coins, ArrowUpCircle } from 'lucide-react';
@@ -8,7 +8,13 @@ import SpaceBackground from '../components/game/SpaceBackground';
 
 export default function Achievements() {
     const navigate = useNavigate();
-    const [save] = useState(SaveManager.load());
+    const [save, setSave] = useState(SaveManager.load());
+
+    useEffect(() => {
+        const handleSaveUpdated = (e) => setSave(e.detail);
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
 
     const totalKills = save.totalKills || 0;
     const maxTimeSurvived = save.maxTimeSurvived || 0;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target } from 'lucide-react';
 import { SaveManager } from '../game/SaveManager';
@@ -10,6 +10,12 @@ import SpaceBackground from '../components/game/SpaceBackground';
 export default function Dailys({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
+
+    useEffect(() => {
+        const handleSaveUpdated = (e) => setSave(e.detail);
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
 
     return (
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>

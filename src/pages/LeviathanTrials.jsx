@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Skull, ArrowLeft, Trophy, Zap, Shield, Swords, FastForward, Heart, Anchor } from 'lucide-react';
@@ -19,6 +19,13 @@ const BOSS_MODIFIERS = [
 export default function LeviathanTrials({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(() => SaveManager.load());
+
+    useEffect(() => {
+        const handleSaveUpdated = (e) => setSave(e.detail);
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
+
     const [modifiers, setModifiers] = useState(save.bossModifiers || {});
 
     const enemyKills = save.enemyKills || {};

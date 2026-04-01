@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { SYNERGIES, WEAPONS } from '../game/Constants';
@@ -8,7 +8,14 @@ import { SoundManager } from '../game/SoundManager';
 
 export default function SynergyCodex({ isCarousel }) {
     const navigate = useNavigate();
-    const save = SaveManager.load();
+    const [save, setSave] = useState(SaveManager.load());
+
+    useEffect(() => {
+        const handleSaveUpdated = (e) => setSave(e.detail);
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
+
     const discovered = save.discoveredSynergies || [];
 
     return (
