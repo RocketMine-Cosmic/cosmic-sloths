@@ -86,7 +86,14 @@ export class GameEngine {
         }
 
         this.arenaImage = null;
-        if (this.arena.image) {
+        this.arenaLayers = [];
+        if (this.arena.layers) {
+            this.arena.layers.forEach(layer => {
+                const img = new Image();
+                img.src = layer.src;
+                this.arenaLayers.push({ img, speed: layer.speed });
+            });
+        } else if (this.arena.image) {
             this.arenaImage = new Image();
             this.arenaImage.src = this.arena.image;
         }
@@ -1260,7 +1267,31 @@ export class GameEngine {
     }
 
     draw() {
-        if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
+        if (this.arenaLayers && this.arenaLayers.length > 0) {
+            this.ctx.fillStyle = this.arena.bg;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            this.arenaLayers.forEach(layer => {
+                if (layer.img.complete && layer.img.naturalWidth > 0) {
+                    const scale = Math.max(this.canvas.width / layer.img.naturalWidth, this.canvas.height / layer.img.naturalHeight);
+                    const drawW = layer.img.naturalWidth * scale;
+                    const drawH = layer.img.naturalHeight * scale;
+                    
+                    let offsetX = (-this.camera.x * layer.speed) % drawW;
+                    let offsetY = (-this.camera.y * layer.speed) % drawH;
+                    
+                    if (offsetX > 0) offsetX -= drawW;
+                    if (offsetY > 0) offsetY -= drawH;
+
+                    this.ctx.globalAlpha = 0.9;
+                    this.ctx.drawImage(layer.img, offsetX, offsetY, drawW, drawH);
+                    this.ctx.drawImage(layer.img, offsetX + drawW, offsetY, drawW, drawH);
+                    this.ctx.drawImage(layer.img, offsetX, offsetY + drawH, drawW, drawH);
+                    this.ctx.drawImage(layer.img, offsetX + drawW, offsetY + drawH, drawW, drawH);
+                    this.ctx.globalAlpha = 1.0;
+                }
+            });
+        } else if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
             // Cache the rendered background to avoid expensive scaling and blending every frame
             if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
                 this.cachedArenaImage = document.createElement('canvas');

@@ -18,7 +18,7 @@ export const DIFFICULTIES = [
 ];
 
 export const ARENAS = [
-  { id: 'station', name: 'Azure Expanse', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', duration: 180, effect: 'neon_rain' },
+  { id: 'station', name: 'Azure Expanse', bg: '#1a1a2e', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/82c27e5c0_Map2.png', layers: [{src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/fe958cd68_background.png', speed: 0.1}, {src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/7c5b561fa_midground.png', speed: 0.3}, {src: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/16a610d77_foreground.png', speed: 0.6}], duration: 180, effect: 'neon_rain' },
   { id: 'asteroid', name: 'Mystic Cosmos', bg: '#2d1b19', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/1f6fc6cad_Map11.png', duration: 210, effect: 'fog' },
   { id: 'nebula', name: 'Ethereal Nebula', bg: '#2b103a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/888640bf8_Map13.png', duration: 240, effect: 'fog' },
   { id: 'void', name: 'Crimson Void', bg: '#0a0a0a', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/dca64fcac_Map14.png', duration: 270, effect: 'none' },
