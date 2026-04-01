@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pause, Heart, CircleDollarSign } from 'lucide-react';
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, onPause }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, cosmicTokens, onPause }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -37,6 +37,12 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
 
                 {/* Top Right: Gold & Controls */}
                 <div className="flex gap-1 md:gap-2 pointer-events-auto shrink-0">
+                    <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-emerald-500/30 flex flex-col justify-center text-right">
+                        <div className="text-[8px] md:text-xs font-black tracking-widest text-emerald-500/80 uppercase mb-0.5">TOKENS</div>
+                        <div className="text-emerald-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
+                            💠 {cosmicTokens || 0}
+                        </div>
+                    </div>
                     <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-amber-500/30 flex flex-col justify-center text-right">
                         <div className="text-[8px] md:text-xs font-black tracking-widest text-amber-500/80 uppercase mb-0.5">WEALTH</div>
                         <div className="text-amber-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
