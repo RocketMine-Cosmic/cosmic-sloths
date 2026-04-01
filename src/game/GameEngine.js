@@ -202,6 +202,7 @@ export class GameEngine {
         this.shakeTimer = 0;
         this.hitStopTimer = 0;
         this.zoom = window.innerWidth < 768 ? 0.55 : 1;
+        this.targetZoom = this.zoom;
         this.bossModifiers = save.bossModifiers || {};
         this.worldBossDamage = 0;
         
@@ -245,13 +246,19 @@ export class GameEngine {
     bindEvents() {
         this.handleKeyDown = (e) => { this.keys[e.key.toLowerCase()] = true; };
         this.handleKeyUp = (e) => { this.keys[e.key.toLowerCase()] = false; };
+        this.handleWheel = (e) => {
+            const zoomAmount = e.deltaY > 0 ? -0.1 : 0.1;
+            this.targetZoom = Math.max(0.3, Math.min(2.5, this.targetZoom + zoomAmount));
+        };
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
+        window.addEventListener('wheel', this.handleWheel, { passive: true });
     }
 
     cleanup() {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
+        window.removeEventListener('wheel', this.handleWheel);
         cancelAnimationFrame(this.animationId);
     }
 
@@ -334,7 +341,10 @@ export class GameEngine {
             this.player.invincibleTimer -= dt;
         }
         
-        this.zoom = window.innerWidth < 768 ? 0.55 : 1;
+        if (this.targetZoom !== undefined) {
+            this.zoom += (this.targetZoom - this.zoom) * dt * 10;
+        }
+
         this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
         this.camera.y = this.player.y - (this.canvas.height / this.zoom) / 2;
 
@@ -1598,15 +1608,17 @@ export class GameEngine {
                 drawEnemy(this.ctx, e, this.time, this.player.x);
                 
                 if (e.hp < e.maxHp) {
-                    const barW = e.isBoss ? 60 : 20;
-                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW, 4);
-                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW * (e.hp / e.maxHp), 4);
+                    const barW = (e.isBoss ? 60 : 20) / this.zoom;
+                    const barH = 4 / this.zoom;
+                    const yOff = 8 / this.zoom;
+                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOff, barW, barH);
+                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOff, barW * (e.hp / e.maxHp), barH);
                 }
                 if (e.isBoss && e.weakSide && e.weakDesc) {
                     this.ctx.fillStyle = '#ffdd00';
-                    this.ctx.font = 'bold 11px monospace';
+                    this.ctx.font = `bold ${11 / this.zoom}px monospace`;
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 14);
+                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 14 / this.zoom);
                 }
             } else {
                 // Draw burrowed indicator
@@ -1686,8 +1698,9 @@ export class GameEngine {
         this.damageTexts.forEach(t => {
             this.ctx.globalAlpha = Math.max(0, t.life);
             this.ctx.strokeStyle = '#000000';
-            this.ctx.lineWidth = t.isCrit ? 4 : 3;
-            this.ctx.font = t.isCrit ? 'bold 20px "Courier New", Courier, monospace' : 'bold 14px "Courier New", Courier, monospace';
+            this.ctx.lineWidth = (t.isCrit ? 4 : 3) / this.zoom;
+            const fontSize = (t.isCrit ? 20 : 14) / this.zoom;
+            this.ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
             const displayY = t.isCrit ? t.y - 10 * (1 - t.life) : t.y;
             const textToDraw = t.text + (t.isCrit ? '!' : '');
             this.ctx.strokeText(textToDraw, t.x, displayY);
