@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 
@@ -12,6 +12,7 @@ const TABS = [
     { id: 'compete',    label: 'Compete',      icon: Trophy },
     { id: 'squads',     label: 'Squads',       icon: Users },
     { id: 'combat',     label: 'Combat',       icon: Zap },
+    { id: 'raid',       label: 'Global Raid',  icon: Skull },
 ];
 
 function SectionCard({ title, children, color = 'cyan' }) {
@@ -368,6 +369,47 @@ const TABS_CONTENT = {
                 <p className="text-sm text-slate-300 leading-relaxed">
                     The top squads by weekly kills are ranked on the <strong className="text-white">Squads tab</strong> in the Hall of Fame leaderboard. Your squad's level badge and total members are shown — compete to be the most dominant squad this week!
                 </p>
+            </SectionCard>
+        </div>
+    ),
+
+    raid: (
+        <div className="space-y-4">
+            <SectionCard title="💀 Global Raid Event" color="rose">
+                <p className="text-sm text-slate-300 leading-relaxed">
+                    The <strong className="text-red-400">Global Raid</strong> is a community-wide cooperative event. You fight against a massive World Boss whose HP is shared across all players globally. 
+                </p>
+                <div className="bg-slate-900/60 p-3 rounded-lg border border-red-900/40 mt-3">
+                    <div className="font-bold text-white text-sm mb-1">⚔️ How to Participate</div>
+                    <p className="text-xs text-slate-400">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool.</p>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="📈 Infinite Scaling" color="purple">
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                    The raid never truly ends. Whenever the community manages to drop the World Boss's HP to 0:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                        <div className="font-bold text-white mb-0.5">Level Up</div>
+                        <div className="text-slate-400">The boss immediately respawns at the next Level.</div>
+                    </div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-purple-900/40">
+                        <div className="font-bold text-purple-400 mb-0.5">Stronger Boss</div>
+                        <div className="text-slate-400">Its max HP increases by 50% for every level it gains!</div>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="💰 Scaling Rewards" color="amber">
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                    As the community defeats higher levels of the boss, your potential rewards increase massively.
+                </p>
+                <div className="bg-slate-900/60 rounded-lg p-3 border border-yellow-900/30">
+                    <div className="font-bold text-yellow-400 text-sm mb-1">Claiming Gold</div>
+                    <p className="text-xs text-slate-400 mb-2">For every boss level the community defeats, you can claim <strong className="text-white">1,000 Gold × Boss Level</strong>. (e.g., Level 5 boss gives 5,000 Gold).</p>
+                    <p className="text-xs text-slate-500 italic">Note: You must have contributed damage to the raid to claim rewards!</p>
+                </div>
             </SectionCard>
         </div>
     ),
