@@ -80,6 +80,25 @@ export default function GlobalRaid({ isCarousel }) {
 
     const selectedChar = save.lastSelectedChar || 'neobyte';
 
+    const todayDate = moment().format('YYYY-MM-DD');
+    const runsToday = (save.raidRuns || {})[todayDate] || 0;
+    const MAX_RUNS_PER_DAY = 5;
+
+    const handleLaunchRaid = () => {
+        if (runsToday >= MAX_RUNS_PER_DAY) {
+            toast({ title: 'Limit Reached', description: 'You can only run the Global Raid 5 times per day.' });
+            return;
+        }
+        
+        const currentSave = SaveManager.load();
+        if (!currentSave.raidRuns) currentSave.raidRuns = {};
+        currentSave.raidRuns[todayDate] = (currentSave.raidRuns[todayDate] || 0) + 1;
+        SaveManager.save(currentSave);
+        
+        SoundManager.playUIClick();
+        navigate('/game', { state: { characterId: selectedChar, arenaId: 'world_boss_arena', difficultyId: 'normal', isEndless: false, worldBossId: worldBossData?.boss_id, worldBossName: worldBossData?.name } });
+    };
+
     return (
         <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-2 md:p-6 font-sans overflow-hidden`}>
             {!isCarousel && <SpaceBackground />}
@@ -175,12 +194,12 @@ export default function GlobalRaid({ isCarousel }) {
                         )}
                         
                         <button
-                            onClick={() => { SoundManager.playUIClick(); navigate('/game', { state: { characterId: selectedChar, arenaId: 'world_boss_arena', difficultyId: 'normal', isEndless: true, worldBossId: worldBossData?.boss_id, worldBossName: worldBossData?.name } }); }}
-                            disabled={worldBossData?.is_defeated || !(save.unlockedCharacters || ['neobyte']).includes(selectedChar)}
+                            onClick={handleLaunchRaid}
+                            disabled={worldBossData?.is_defeated || !(save.unlockedCharacters || ['neobyte']).includes(selectedChar) || runsToday >= MAX_RUNS_PER_DAY}
                             className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
                         >
                             <Crosshair className="w-4 h-4 md:w-5 md:h-5" />
-                            {worldBossData?.is_defeated ? 'Boss Defeated' : 'Launch Raid'}
+                            {worldBossData?.is_defeated ? 'Boss Defeated' : runsToday >= MAX_RUNS_PER_DAY ? 'Daily Limit Reached' : `Launch Raid (${MAX_RUNS_PER_DAY - runsToday} left today)`}
                         </button>
                         <p className="text-center text-slate-500 text-xs mt-3">
                             Currently selected operative: <span className="font-bold text-cyan-400 uppercase">{selectedChar}</span>

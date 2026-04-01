@@ -28,6 +28,7 @@ export function selectBossForArena(arenaId) {
 export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParticle, addDamageText, takeDamage, enemies, frameCount, arenaId, modifiers = {}) {
     const tier = getArenaTier(arenaId);
     const enraged = boss.hp < boss.maxHp * 0.4; // Enrage below 40% HP
+    const bossId = boss.originalBossId || boss.id;
 
     // --- Shared: rotating bullet ring (all bosses, scaled by tier) ---
     if (!boss.skillTimer) boss.skillTimer = 0;
@@ -56,7 +57,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
 
     // --- Per-boss unique abilities ---
 
-    if (boss.id === 'boss_nebula_devourer') {
+    if (bossId === 'boss_nebula_devourer') {
         // "Swirling energy tentacles" — spiral burst every 5s
         if (!boss.spiralTimer) boss.spiralTimer = 5;
         boss.spiralTimer -= dt;
@@ -96,7 +97,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         }
     }
 
-    if (boss.id === 'boss_plasma_kraken') {
+    if (bossId === 'boss_plasma_kraken') {
         // "Long glowing tentacles" — fires 4 aimed shots spread
         if (!boss.krakTimer) boss.krakTimer = 2.5;
         boss.krakTimer -= dt;
@@ -149,7 +150,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         }
     }
 
-    if (boss.id === 'boss_stellar_colossus') {
+    if (bossId === 'boss_stellar_colossus') {
         // "Rotating arms" — spinning laser arms
         if (!boss.armTimer) boss.armTimer = 4;
         boss.armTimer -= dt;
@@ -197,7 +198,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         }
     }
 
-    if (boss.id === 'boss_cosmic_wyrm') {
+    if (bossId === 'boss_cosmic_wyrm') {
         // "Serpentine dragon" — charge dash in player direction
         if (!boss.chargeTimer) boss.chargeTimer = 6;
         boss.chargeTimer -= dt;
@@ -244,7 +245,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         }
     }
 
-    if (boss.id === 'boss_supernova_empress') {
+    if (bossId === 'boss_supernova_empress') {
         // "Flowing energy wings" — wide sweeping arcs
         if (!boss.wingTimer) boss.wingTimer = 3.5;
         boss.wingTimer -= dt;
@@ -305,7 +306,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         }
     }
 
-    if (boss.id === 'boss_nexus_annihilator') {
+    if (bossId === 'boss_nexus_annihilator') {
         // "Rotating metallic rings" — dense ring attacks
         if (!boss.ringTimer) boss.ringTimer = 2;
         boss.ringTimer -= dt;
