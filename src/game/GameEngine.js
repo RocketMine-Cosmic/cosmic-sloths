@@ -1068,6 +1068,13 @@ export class GameEngine {
         this.xp -= this.xpRequired;
         this.level++;
         this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
+        
+        // Scale stats and fully heal
+        this.player.maxHp += 5;
+        this.player.damageMult += 0.02;
+        this.player.hp = this.player.maxHp;
+        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+        
         this.isPaused = true;
         SoundManager.playLevelUp();
         this.particleManager.createLevelUp(this.player.x, this.player.y);
