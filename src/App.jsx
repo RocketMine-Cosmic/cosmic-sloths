@@ -17,6 +17,7 @@ import Credits from './pages/Credits';
 import Achievements from './pages/Achievements';
 import Squads from './pages/Squads';
 import Bestiary from './pages/Bestiary';
+import SynergyCodex from './pages/SynergyCodex';
 import Profile from './pages/Profile';
 import LeviathanTrials from './pages/LeviathanTrials';
 import Dailys from './pages/Dailys';
@@ -87,6 +88,7 @@ const AuthenticatedApp = () => {
       <Route path="/achievements" element={<Achievements />} />
       <Route path="/squads" element={<Squads />} />
       <Route path="/bestiary" element={<Bestiary />} />
+      <Route path="/synergy-codex" element={<SynergyCodex />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/trials" element={<LeviathanTrials />} />
       <Route path="/dailys" element={<Dailys />} />

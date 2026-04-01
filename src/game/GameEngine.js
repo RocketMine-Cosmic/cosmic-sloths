@@ -3,6 +3,7 @@ import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
 import { selectBossForArena, updateBossAbilities } from './BossSystem';
+import { SaveManager } from './SaveManager';
 import { drawUI } from './UIRenderer';
 import { drawPickups } from './PickupRenderer';
 
@@ -1425,6 +1426,12 @@ export class GameEngine {
                 // Show a notification or effect here if desired
                 this.addDamageText(this.player.x, this.player.y - 40, "SYNERGY FORMED!", '#ff00ff');
                 
+                if (!this.save.discoveredSynergies) this.save.discoveredSynergies = [];
+                if (!this.save.discoveredSynergies.includes(synergy.result)) {
+                    this.save.discoveredSynergies.push(synergy.result);
+                    SaveManager.save(this.save);
+                }
+
                 // Check again in case multiple synergies formed (rare but possible)
                 this.checkSynergies();
                 break;
