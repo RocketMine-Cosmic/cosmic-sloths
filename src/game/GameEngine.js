@@ -164,7 +164,7 @@ export class GameEngine {
             this.level = 10;
             
             // Apply 9 levels worth of stats
-            this.player.maxHp += 9 * 5;
+            this.player.maxHp = Math.floor(this.player.maxHp * Math.pow(1.1, 9));
             this.player.damageMult += 9 * 0.02;
             this.player.armor += 9 * 1;
             this.player.hp = this.player.maxHp;
@@ -1082,7 +1082,7 @@ export class GameEngine {
         this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
         
         // Scale stats and fully heal
-        this.player.maxHp += 5;
+        this.player.maxHp = Math.floor(this.player.maxHp * 1.1);
         this.player.damageMult += 0.02;
         this.player.armor += 1;
         this.player.hp = this.player.maxHp;
