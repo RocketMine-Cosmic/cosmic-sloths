@@ -45,7 +45,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.8 }}
-                className="absolute inset-0 flex flex-col items-center justify-start pt-[12vh] md:pt-[15vh] z-10 pointer-events-none"
+                className="absolute inset-0 flex flex-col items-center justify-start pt-[14vh] md:pt-[12vh] z-10 pointer-events-none"
             >
                 <img 
                     src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/431c29f41_CosmicF.png" 
