@@ -40,12 +40,12 @@ async function distributeWeekly(base44, pool) {
     }
     
     const getRewardPercentage = (rank) => {
-        if (rank === 1) return 0.15;
-        if (rank === 2) return 0.12;
-        if (rank === 3) return 0.09;
-        if (rank >= 4 && rank <= 10) return 0.06;
-        if (rank >= 11 && rank <= 20) return 0.022;
-        if (rank >= 21 && rank <= 30) return 0.01;
+        if (rank === 1) return 0.10;
+        if (rank === 2) return 0.08;
+        if (rank === 3) return 0.06;
+        if (rank >= 4 && rank <= 10) return 0.04;
+        if (rank >= 11 && rank <= 20) return 0.03;
+        if (rank >= 21 && rank <= 30) return 0.018;
         return 0;
     };
     
@@ -88,13 +88,13 @@ async function distributeSeasonal(base44, pool) {
     }
     
     const getRewardPercentage = (rank) => {
-        if (rank === 1) return 0.12;
-        if (rank === 2) return 0.09;
-        if (rank === 3) return 0.07;
-        if (rank >= 4 && rank <= 10) return 0.045;
+        if (rank === 1) return 0.08;
+        if (rank === 2) return 0.06;
+        if (rank === 3) return 0.05;
+        if (rank >= 4 && rank <= 10) return 0.03;
         if (rank >= 11 && rank <= 20) return 0.025;
-        if (rank >= 21 && rank <= 30) return 0.0155;
-        if (rank >= 31 && rank <= 40) return 0.01;
+        if (rank >= 21 && rank <= 30) return 0.02;
+        if (rank >= 31 && rank <= 40) return 0.015;
         return 0;
     };
     
