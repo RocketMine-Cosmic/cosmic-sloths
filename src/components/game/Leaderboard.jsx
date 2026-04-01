@@ -17,6 +17,7 @@ export default function Leaderboard() {
         if (rank === 3) return 0.09;
         if (rank >= 4 && rank <= 10) return 0.06;
         if (rank >= 11 && rank <= 20) return 0.022;
+        if (rank >= 21 && rank <= 30) return 0.01;
         return 0;
     };
 
@@ -27,6 +28,7 @@ export default function Leaderboard() {
         if (rank >= 4 && rank <= 10) return 0.045;
         if (rank >= 11 && rank <= 20) return 0.025;
         if (rank >= 21 && rank <= 30) return 0.0155;
+        if (rank >= 31 && rank <= 40) return 0.01;
         return 0;
     };
 
@@ -127,11 +129,11 @@ export default function Leaderboard() {
     let totalSeasonalPercentage = 0;
     
     if (view === 'weekly') {
-        for (let i = 0; i < Math.min(scores.length, 20); i++) {
+        for (let i = 0; i < Math.min(scores.length, 30); i++) {
             totalWeeklyPercentage += getWeeklyRewardPercentage(i + 1);
         }
     } else if (view === 'seasonal') {
-        for (let i = 0; i < Math.min(scores.length, 30); i++) {
+        for (let i = 0; i < Math.min(scores.length, 40); i++) {
             totalSeasonalPercentage += getSeasonalRewardPercentage(i + 1);
         }
     }
@@ -197,7 +199,7 @@ export default function Leaderboard() {
                             {scores.map((score, index) => {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
-                                const isEligibleForReward = (view === 'weekly' && index < 20) || (view === 'seasonal' && index < 30);
+                                const isEligibleForReward = (view === 'weekly' && index < 30) || (view === 'seasonal' && index < 40);
                                 const rewardAmount = view === 'weekly' 
                                     ? Math.floor((currentPool * 0.30) * getWeeklyRewardPercentage(index + 1) * weeklyMultiplier) 
                                     : Math.floor((currentPool * 0.40) * getSeasonalRewardPercentage(index + 1) * seasonalMultiplier);

@@ -36,7 +36,7 @@ async function distributeWeekly(base44, pool) {
             seenPlayers.add(score.player_name);
             uniqueScores.push(score);
         }
-        if (uniqueScores.length >= 20) break;
+        if (uniqueScores.length >= 30) break;
     }
     
     const getRewardPercentage = (rank) => {
@@ -45,6 +45,7 @@ async function distributeWeekly(base44, pool) {
         if (rank === 3) return 0.09;
         if (rank >= 4 && rank <= 10) return 0.06;
         if (rank >= 11 && rank <= 20) return 0.022;
+        if (rank >= 21 && rank <= 30) return 0.01;
         return 0;
     };
     
@@ -83,7 +84,7 @@ async function distributeSeasonal(base44, pool) {
             seenPlayers.add(score.player_name);
             uniqueScores.push(score);
         }
-        if (uniqueScores.length >= 30) break;
+        if (uniqueScores.length >= 40) break;
     }
     
     const getRewardPercentage = (rank) => {
@@ -93,6 +94,7 @@ async function distributeSeasonal(base44, pool) {
         if (rank >= 4 && rank <= 10) return 0.045;
         if (rank >= 11 && rank <= 20) return 0.025;
         if (rank >= 21 && rank <= 30) return 0.0155;
+        if (rank >= 31 && rank <= 40) return 0.01;
         return 0;
     };
     
