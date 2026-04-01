@@ -42,12 +42,21 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/20 to-transparent opacity-90 pointer-events-none z-0"></div>
 
             <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1, duration: 0.5 }}
-                className="absolute inset-0 flex flex-col items-center justify-start pt-[15vh] md:pt-[20vh] z-10 pointer-events-none"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.8 }}
+                className="absolute inset-0 flex flex-col items-center justify-start pt-[12vh] md:pt-[15vh] z-10 pointer-events-none"
             >
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-widest text-center" style={{ background: 'linear-gradient(135deg, #0CA7B8 0%, #D946EF 50%, #F59E0B 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 25px rgba(217,70,239,0.4))' }}>
+                <h1 
+                    className="text-6xl md:text-8xl lg:text-[9rem] font-black uppercase tracking-widest text-center leading-none" 
+                    style={{ 
+                        background: 'linear-gradient(to bottom, #FFFFFF 0%, #A5F3FC 40%, #D946EF 100%)', 
+                        WebkitBackgroundClip: 'text', 
+                        WebkitTextFillColor: 'transparent', 
+                        filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 30px rgba(217,70,239,0.6))',
+                        WebkitTextStroke: '2px rgba(255,255,255,0.1)'
+                    }}
+                >
                     COSMIC<br/>SLOTHS
                 </h1>
             </motion.div>
