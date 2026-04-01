@@ -917,20 +917,20 @@ export default function Upgrades({ isCarousel }) {
                         </button>
                     ))}
                     <button
-                        onClick={() => { SoundManager.playUIClick(); setActiveCategory('cosmetics'); }}
-                        className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
-                            activeCategory === 'cosmetics' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                        }`}
-                    >
-                        Cosmetics
-                    </button>
-                    <button
                         onClick={() => { SoundManager.playUIClick(); setActiveCategory('forge'); }}
                         className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
                             activeCategory === 'forge' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                         }`}
                     >
                         🔨 Forge
+                    </button>
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setActiveCategory('cosmetics'); }}
+                        className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
+                            activeCategory === 'cosmetics' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                    >
+                        Cosmetics
                     </button>
                 </div>
 
