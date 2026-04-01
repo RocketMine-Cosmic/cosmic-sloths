@@ -175,7 +175,7 @@ export default function GlobalRaid({ isCarousel }) {
                         )}
                         
                         <button
-                            onClick={() => { SoundManager.playGameStart(); navigate('/game', { state: { characterId: selectedChar, arenaId: 'world_boss_arena', difficultyId: 'normal', isEndless: true, worldBossId: worldBossData?.boss_id, worldBossName: worldBossData?.name } }); }}
+                            onClick={() => { SoundManager.playUIClick(); navigate('/game', { state: { characterId: selectedChar, arenaId: 'world_boss_arena', difficultyId: 'normal', isEndless: true, worldBossId: worldBossData?.boss_id, worldBossName: worldBossData?.name } }); }}
                             disabled={worldBossData?.is_defeated || !(save.unlockedCharacters || ['neobyte']).includes(selectedChar)}
                             className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
                         >
