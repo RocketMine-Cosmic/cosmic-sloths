@@ -236,7 +236,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="💠 Cosmic Tokens" color="green">
                 <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    Cosmic Tokens are the premium currency. They can be used to buy characters and upgrades at a discounted rate.
+                    Cosmic Tokens are the premium currency earned <strong className="text-emerald-400">exclusively</strong> through competitive leaderboard rankings — they never drop in runs.
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
                     <strong className="text-emerald-400">How to earn:</strong> Place in the top rankings on Weekly or Seasonal leaderboards. Rewards are automatically distributed to your account when you visit the Sloth Lounge after a cycle ends.
