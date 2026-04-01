@@ -59,12 +59,12 @@ export default function BountiesPanel({ save, setSave }) {
     const progressPercent = Math.min(100, (currentPoints / SEASONAL_REWARD_TARGET) * 100);
 
     return (
-        <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] rounded-xl p-4">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+        <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] rounded-xl p-3 md:p-4">
             <h3 className="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
                 🎯 Daily Bounties
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
                 {save.bounties.active.map((bounty, index) => {
                     const isComplete = bounty.progress >= bounty.target;
                     const isClaimed = bounty.claimed;
@@ -120,8 +120,8 @@ export default function BountiesPanel({ save, setSave }) {
             </div>
         </div>
         
-        <div className="w-full md:w-80 flex flex-col gap-4">
-            <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.25)] rounded-xl p-4 relative overflow-hidden">
+        <div className="w-full md:w-80 flex flex-col gap-2 md:gap-4">
+            <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.25)] rounded-xl p-3 md:p-4 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-transparent pointer-events-none" />
                 <h3 className="text-xl font-bold text-purple-400 mb-4 flex items-center gap-2 relative z-10">
                     <ShieldAlert className="w-5 h-5" /> Daily Mission
@@ -176,7 +176,7 @@ export default function BountiesPanel({ save, setSave }) {
                 })()}
             </div>
 
-            <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.15)] rounded-xl p-4 flex flex-col justify-between">
+            <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.15)] rounded-xl p-3 md:p-4 flex flex-col justify-between">
                 <div>
                     <h3 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
                         <Star className="w-4 h-4 text-yellow-400" /> Seasonal Skin Reward

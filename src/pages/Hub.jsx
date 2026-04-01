@@ -104,7 +104,7 @@ export default function Hub({ isCarousel }) {
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-6xl mx-auto relative z-10">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-fuchsia-900/40 pb-2 md:pb-4">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-1.5 md:gap-4 mb-2 md:mb-6 border-b border-fuchsia-900/40 pb-1.5 md:pb-4">
                     <div>
                         {!isCarousel && (
                             <button 
@@ -114,8 +114,8 @@ export default function Hub({ isCarousel }) {
                                 <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
                             </button>
                         )}
-                        <h1 className="text-2xl md:text-4xl font-black tracking-widest uppercase" style={{ background: 'linear-gradient(90deg, #0CA7B8, #D946EF, #0CA7B8)', backgroundSize: '200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', dropShadow: '0 0 10px rgba(217,70,239,0.5)' }}>SLOTH LOUNGE</h1>
-                        <p className="text-slate-500 mt-0.5 md:text-sm text-xs tracking-widest uppercase">⚡ Rest · Upgrade · Prepare for the Cosmic Void</p>
+                        <h1 className="text-xl md:text-4xl font-black tracking-widest uppercase" style={{ background: 'linear-gradient(90deg, #0CA7B8, #D946EF, #0CA7B8)', backgroundSize: '200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', dropShadow: '0 0 10px rgba(217,70,239,0.5)' }}>SLOTH LOUNGE</h1>
+                        <p className="text-slate-500 mt-0 md:text-sm text-[10px] tracking-widest uppercase hidden md:block">⚡ Rest · Upgrade · Prepare for the Cosmic Void</p>
                     </div>
                     <div className="flex gap-1.5 md:gap-4">
                         <div className="text-sm md:text-lg font-bold text-purple-300 bg-purple-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-purple-700/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]" title="Reroll Tokens">
@@ -131,12 +131,12 @@ export default function Hub({ isCarousel }) {
                 </header>
 
                 <div className="flex flex-col gap-4 md:gap-8">
-                    <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-6 border border-[#D946EF]/30 shadow-[0_0_50px_rgba(217,70,239,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]">
+                    <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-2 md:p-6 border border-[#D946EF]/30 shadow-[0_0_50px_rgba(217,70,239,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]">
                         <div className="h-full flex flex-col justify-between">
                                 <div>
                                     <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4 tracking-widest uppercase flex items-center gap-2"><span className="text-cyan-400">▶</span> Mission Briefing</h2>
                                     
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6 mb-2 md:mb-6">
                                         <div>
                                         <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Operative</h3>
                                         <div 
@@ -174,7 +174,7 @@ export default function Hub({ isCarousel }) {
                                                         />
                                                         <div className="absolute inset-0 bg-gradient-to-r from-[#0b0416] via-[#0b0416]/90 to-transparent pointer-events-none" />
                                                         
-                                                        <div className="relative flex items-center justify-between p-2 md:p-4 min-h-[100px] md:min-h-[140px]">
+                                                        <div className="relative flex items-center justify-between p-1.5 md:p-4 min-h-[70px] md:min-h-[140px]">
                                                             <button 
                                                                 onClick={() => {
                                                                     const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
@@ -281,7 +281,7 @@ export default function Hub({ isCarousel }) {
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
-                                            <div className="relative flex items-center justify-between p-2 md:p-4 min-h-[80px] md:min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-1.5 md:p-4 min-h-[60px] md:min-h-[120px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = ARENAS.findIndex(a => a.id === selectedArena);
@@ -357,7 +357,7 @@ export default function Hub({ isCarousel }) {
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
-                                            <div className="relative flex items-center justify-between p-2 md:p-4 min-h-[80px] md:min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-1.5 md:p-4 min-h-[60px] md:min-h-[120px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
@@ -404,11 +404,11 @@ export default function Hub({ isCarousel }) {
                                     const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
                                     return (
-                                        <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-4 md:mt-8 pt-4 md:pt-6 border-t border-slate-700/40">
+                                        <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
                                             <button
                                                 onClick={startGame}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-lg md:text-xl font-black py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#0CA7B8] to-cyan-400 hover:from-cyan-400 hover:to-[#0CA7B8] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(12,167,184,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -429,7 +429,7 @@ export default function Hub({ isCarousel }) {
                                                     navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, isEndless: true } });
                                                 }}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-lg md:text-xl font-black py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'

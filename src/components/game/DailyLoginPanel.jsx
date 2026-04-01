@@ -58,7 +58,7 @@ export default function DailyLoginPanel({ save, setSave }) {
     };
 
     return (
-        <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)] rounded-xl p-4 mb-4">
+        <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)] rounded-xl p-3 md:p-4 mb-2 md:mb-4">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-amber-400 flex items-center gap-2">
                     <Flame className="w-5 h-5 text-orange-400" />
@@ -76,7 +76,7 @@ export default function DailyLoginPanel({ save, setSave }) {
                 )}
             </div>
 
-            <div className="grid grid-cols-7 gap-1.5 mb-4">
+            <div className="grid grid-cols-7 gap-1 md:gap-1.5 mb-2 md:mb-4">
                 {DAILY_REWARDS.map((r, i) => {
                     const isPast = i < (alreadyClaimed ? (login.streak % 7) : dayIndex);
                     const isCurrent = i === (alreadyClaimed ? (login.streak - 1) % 7 : dayIndex);
