@@ -1477,7 +1477,7 @@ export class GameEngine {
                 this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
 
                 // Add HD aura
-                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.globalAlpha = 0.5;
                 const auraCol = isMastered ? '#ff0000' : '#8B4513';
                 const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
@@ -1520,7 +1520,7 @@ export class GameEngine {
                 this.ctx.rotate(this.time * 5); // Spin
                 
                 // Add HD aura
-                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.globalAlpha = 0.5;
                 const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
                 grad.addColorStop(0, '#32CD32');
