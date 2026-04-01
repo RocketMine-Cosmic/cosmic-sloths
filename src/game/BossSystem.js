@@ -25,7 +25,7 @@ export function selectBossForArena(arenaId) {
 }
 
 // Called every frame for each boss — returns new enemy projectiles / side effects
-export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParticle, addDamageText, takeDamage, enemies, frameCount, arenaId) {
+export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParticle, addDamageText, takeDamage, enemies, frameCount, arenaId, modifiers = {}) {
     const tier = getArenaTier(arenaId);
     const enraged = boss.hp < boss.maxHp * 0.4; // Enrage below 40% HP
 
@@ -34,7 +34,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
     boss.skillTimer -= dt;
     if (boss.skillTimer <= 0) {
         const baseCount = 6 + tier;
-        const projCount = enraged ? baseCount * 2 : baseCount;
+        const projCount = (enraged ? baseCount * 2 : baseCount) * (modifiers.bullet_hell ? 2 : 1);
         const offset = boss.skillPhase || 0;
         boss.skillPhase = (offset + Math.PI / projCount);
         boss.skillTimer = enraged ? 1.8 : 3.0;
@@ -62,7 +62,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         boss.spiralTimer -= dt;
         if (boss.spiralTimer <= 0) {
             boss.spiralTimer = enraged ? 3 : 5;
-            const count = 20;
+            const count = modifiers.bullet_hell ? 40 : 20;
             for (let i = 0; i < count; i++) {
                 const angle = (Math.PI * 2 / count) * i + boss.spiralPhase;
                 boss.spiralPhase = (boss.spiralPhase || 0) + 0.15;
@@ -103,7 +103,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (boss.krakTimer <= 0) {
             boss.krakTimer = enraged ? 1.2 : 2.5;
             const baseAngle = Math.atan2(player.y - boss.y, player.x - boss.x);
-            const spread = enraged ? 5 : 3;
+            const spread = (enraged ? 5 : 3) * (modifiers.bullet_hell ? 2 : 1);
             for (let i = -spread; i <= spread; i += (enraged ? 1 : 2)) {
                 const a = baseAngle + (i * Math.PI / 16);
                 enemyProjectiles.push({
@@ -137,8 +137,9 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
                 if (w.timer <= 0) {
                     const dist = Math.hypot(player.x - w.x, player.y - w.y);
                     if (dist < 80) takeDamage(boss.damage * 1.5);
-                    for (let i = 0; i < 12; i++) {
-                        const a = (Math.PI * 2 / 12) * i;
+                    const novaCount = modifiers.bullet_hell ? 24 : 12;
+                    for (let i = 0; i < novaCount; i++) {
+                        const a = (Math.PI * 2 / novaCount) * i;
                         enemyProjectiles.push({ x: w.x, y: w.y, vx: Math.cos(a) * 180, vy: Math.sin(a) * 180, radius: 7, damage: boss.damage * 0.5, life: 2, color: '#ff4500' });
                     }
                     return false;
@@ -154,7 +155,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         boss.armTimer -= dt;
         if (boss.armTimer <= 0) {
             boss.armTimer = enraged ? 2.5 : 4;
-            const arms = enraged ? 6 : 4;
+            const arms = (enraged ? 6 : 4) * (modifiers.bullet_hell ? 2 : 1);
             for (let i = 0; i < arms; i++) {
                 const a = (Math.PI * 2 / arms) * i + (boss.armPhase || 0);
                 for (let j = 1; j <= 3; j++) {
@@ -179,7 +180,8 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (boss.eyeTimer <= 0) {
             boss.eyeTimer = enraged ? 7 : 12;
             const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
-            for (let i = 0; i < 8; i++) {
+            const eyeCount = modifiers.bullet_hell ? 16 : 8;
+            for (let i = 0; i < eyeCount; i++) {
                 enemyProjectiles.push({
                     x: boss.x, y: boss.y,
                     vx: Math.cos(angle) * (300 + i * 30),
@@ -227,7 +229,8 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (boss.shardTimer <= 0) {
             boss.shardTimer = enraged ? 3 : 5;
             const base = Math.atan2(player.y - boss.y, player.x - boss.x);
-            [-0.4, 0, 0.4].forEach(off => {
+            const offsets = modifiers.bullet_hell ? [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6] : [-0.4, 0, 0.4];
+            offsets.forEach(off => {
                 enemyProjectiles.push({
                     x: boss.x, y: boss.y,
                     vx: Math.cos(base + off) * 280,
@@ -248,7 +251,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (boss.wingTimer <= 0) {
             boss.wingTimer = enraged ? 2 : 3.5;
             const base = Math.atan2(player.y - boss.y, player.x - boss.x);
-            const count = enraged ? 16 : 10;
+            const count = (enraged ? 16 : 10) * (modifiers.bullet_hell ? 2 : 1);
             for (let i = 0; i < count; i++) {
                 const a = base - Math.PI / 3 + (Math.PI * 2 / 3 / count) * i;
                 enemyProjectiles.push({
@@ -269,7 +272,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         boss.crownTimer -= dt;
         if (boss.crownTimer <= 0) {
             boss.crownTimer = enraged ? 5 : 8;
-            const crownCount = 8;
+            const crownCount = modifiers.bullet_hell ? 16 : 8;
             for (let i = 0; i < crownCount; i++) {
                 const a = (Math.PI * 2 / crownCount) * i;
                 enemyProjectiles.push({
@@ -308,7 +311,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         boss.ringTimer -= dt;
         if (boss.ringTimer <= 0) {
             boss.ringTimer = enraged ? 1.0 : 2.0;
-            const count = enraged ? 24 : 16;
+            const count = (enraged ? 24 : 16) * (modifiers.bullet_hell ? 2 : 1);
             const phase = boss.ringPhase || 0;
             for (let i = 0; i < count; i++) {
                 const a = (Math.PI * 2 / count) * i + phase;
@@ -331,7 +334,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (boss.tendrilTimer <= 0) {
             boss.tendrilTimer = enraged ? 3 : 5;
             const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
-            const tendrils = enraged ? 5 : 3;
+            const tendrils = (enraged ? 5 : 3) * (modifiers.bullet_hell ? 2 : 1);
             for (let t = 0; t < tendrils; t++) {
                 const a = angle + (t - Math.floor(tendrils / 2)) * 0.25;
                 for (let j = 0; j < 5; j++) {

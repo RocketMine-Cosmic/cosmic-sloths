@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Skull, ArrowLeft, Trophy, Zap, Shield, Swords, FastForward } from 'lucide-react';
+import { Skull, ArrowLeft, Trophy, Zap, Shield, Swords, FastForward, Heart, Anchor } from 'lucide-react';
 import { SaveManager } from '../game/SaveManager';
 import { ENEMIES } from '../game/Constants';
 import { SoundManager } from '../game/SoundManager';
@@ -9,9 +9,11 @@ import SpaceBackground from '../components/game/SpaceBackground';
 
 const BOSS_MODIFIERS = [
     { id: 'fury', name: 'Leviathan\'s Fury', desc: 'Bosses deal +50% Damage', rewardDesc: '+50 Boss Gold Drop', icon: Swords, color: 'text-red-500' },
-    { id: 'hide', name: 'Thick Hide', desc: 'Bosses have +100% HP', rewardDesc: '+20% Boss XP Drop', icon: Shield, color: 'text-slate-400' },
+    { id: 'hide', name: 'Thick Hide', desc: 'Bosses have +100% HP', rewardDesc: '+50% Boss XP Drop', icon: Shield, color: 'text-slate-400' },
     { id: 'frenzy', name: 'Frenzy', desc: 'Bosses move 50% faster', rewardDesc: '+1 Reroll Token on Boss Kill', icon: FastForward, color: 'text-yellow-500' },
-    { id: 'bullet_hell', name: 'Bullet Hell', desc: 'Bosses fire twice as many projectiles', rewardDesc: '+30% Total Score', icon: Zap, color: 'text-cyan-400' }
+    { id: 'bullet_hell', name: 'Bullet Hell', desc: 'Bosses fire twice as many projectiles', rewardDesc: '+30% Total Score', icon: Zap, color: 'text-cyan-400' },
+    { id: 'regen', name: 'Cellular Regeneration', desc: 'Boss heals 1% Max HP every second', rewardDesc: '+1 Cosmic Token on Kill', icon: Heart, color: 'text-green-500' },
+    { id: 'unstoppable', name: 'Unstoppable Force', desc: 'Boss ignores slow and pushback', rewardDesc: '+150 Boss Gold Drop', icon: Anchor, color: 'text-orange-500' }
 ];
 
 export default function LeviathanTrials({ isCarousel }) {

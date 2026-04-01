@@ -143,15 +143,7 @@ export class GameEngine {
         this.particleManager = new ParticleManager();
         this.damageTexts = [];
         
-        this.stars = [];
-        for (let i = 0; i < 150; i++) {
-            this.stars.push({
-                x: Math.random() * 2000,
-                y: Math.random() * 2000,
-                size: Math.random() * 2 + 0.5,
-                parallax: Math.random() * 0.4 + 0.1
-            });
-        }
+        this.stars = Array.from({length: 150}, () => ({ x: Math.random() * 2000, y: Math.random() * 2000, size: Math.random() * 2 + 0.5, parallax: Math.random() * 0.4 + 0.1 }));
         
         this.keys = {};
         this.time = 0;
@@ -376,39 +368,12 @@ export class GameEngine {
         const vWidth = this.canvas.width / this.zoom;
         const vHeight = this.canvas.height / this.zoom;
         
-        if (this.envEffect === 'neon_rain') {
-            if (Math.random() < 0.5) {
-                this.envParticles.push({
-                    x: this.player.x + (Math.random() * vWidth * 1.5 - vWidth * 0.75),
-                    y: this.player.y - vHeight/2 - 50,
-                    vx: 100,
-                    vy: 600 + Math.random() * 300,
-                    life: 2,
-                    color: Math.random() > 0.5 ? '#00ffff' : '#ff00ff',
-                    length: 20 + Math.random() * 20
-                });
-            }
-        } else if (this.envEffect === 'fog') {
-            if (Math.random() < 0.05) {
-                this.envParticles.push({
-                    x: this.player.x + (Math.random() * vWidth * 2 - vWidth),
-                    y: this.player.y + (Math.random() * vHeight * 2 - vHeight),
-                    vx: 20 + Math.random() * 30,
-                    vy: 10 + Math.random() * 20,
-                    life: 10,
-                    size: 200 + Math.random() * 300
-                });
-            }
-        } else if (this.envEffect === 'solar_flare') {
-            if (Math.random() < 0.02) {
-                this.envParticles.push({
-                    x: this.player.x + (Math.random() * vWidth - vWidth/2),
-                    y: this.player.y + (Math.random() * vHeight - vHeight/2),
-                    life: 1.5,
-                    maxLife: 1.5,
-                    size: 50 + Math.random() * 100
-                });
-            }
+        if (this.envEffect === 'neon_rain' && Math.random() < 0.5) {
+            this.envParticles.push({ x: this.player.x + (Math.random() * vWidth * 1.5 - vWidth * 0.75), y: this.player.y - vHeight/2 - 50, vx: 100, vy: 600 + Math.random() * 300, life: 2, color: Math.random() > 0.5 ? '#00ffff' : '#ff00ff', length: 20 + Math.random() * 20 });
+        } else if (this.envEffect === 'fog' && Math.random() < 0.05) {
+            this.envParticles.push({ x: this.player.x + (Math.random() * vWidth * 2 - vWidth), y: this.player.y + (Math.random() * vHeight * 2 - vHeight), vx: 20 + Math.random() * 30, vy: 10 + Math.random() * 20, life: 10, size: 200 + Math.random() * 300 });
+        } else if (this.envEffect === 'solar_flare' && Math.random() < 0.02) {
+            this.envParticles.push({ x: this.player.x + (Math.random() * vWidth - vWidth/2), y: this.player.y + (Math.random() * vHeight - vHeight/2), life: 1.5, maxLife: 1.5, size: 50 + Math.random() * 100 });
         }
 
         this.envParticles = this.envParticles.filter(p => {
@@ -961,9 +926,12 @@ export class GameEngine {
                                 }
                             }
                             const pushResist = e.isTank ? 0.2 : 1;
-                            const angle = Math.atan2(e.y - p.y, e.x - p.x);
-                            e.x += Math.cos(angle) * p.pushback * pushResist * dt;
-                            e.y += Math.sin(angle) * p.pushback * pushResist * dt;
+                            const isUnstoppable = e.isBoss && this.bossModifiers.unstoppable;
+                            if (!isUnstoppable) {
+                                const angle = Math.atan2(e.y - p.y, e.x - p.x);
+                                e.x += Math.cos(angle) * p.pushback * pushResist * dt;
+                                e.y += Math.sin(angle) * p.pushback * pushResist * dt;
+                            }
                         }
                     });
                     
@@ -1025,7 +993,7 @@ export class GameEngine {
                 
                 let xpValue = e.xp;
                 if (e.isBoss && this.bossModifiers.hide) {
-                    xpValue *= 1.2;
+                    xpValue *= 1.5;
                 }
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc' });
                 
@@ -1042,8 +1010,17 @@ export class GameEngine {
                     const rerollReward = 1 + (this.bossModifiers.frenzy ? 1 : 0);
                     this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: rerollReward, color: '#ff00ff' });
                     
-                    if (this.bossModifiers.fury) {
-                        this.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: 50, color: '#ffd700' });
+                    let extraGold = 0;
+                    if (this.bossModifiers.fury) extraGold += 50;
+                    if (this.bossModifiers.unstoppable) extraGold += 150;
+
+                    if (extraGold > 0) {
+                        this.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: extraGold, color: '#ffd700' });
+                    }
+
+                    if (this.bossModifiers.regen) {
+                        if (this.callbacks.onTokenFound) this.callbacks.onTokenFound();
+                        this.addDamageText(e.x, e.y - 40, `+1 Cosmic Token!`, '#00ffcc');
                     }
 
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
@@ -1145,7 +1122,11 @@ export class GameEngine {
             // Movement
             if (dist > 0 && !e.latched && !e.burrowed) {
                 const baseSpeed = e.speedMult ? e.speed * e.speedMult : e.speed;
-                const currentSpeed = (e.slowTimer > 0 ? baseSpeed * 0.5 : baseSpeed) * this.envModifiers.enemySpeed;
+                let currentSpeed = baseSpeed;
+                if (e.slowTimer > 0 && !(e.isBoss && this.bossModifiers.unstoppable)) {
+                    currentSpeed *= 0.5;
+                }
+                currentSpeed *= this.envModifiers.enemySpeed;
                 e.x += (dx / dist) * currentSpeed * 60 * dt;
                 e.y += (dy / dist) * currentSpeed * 60 * dt;
             }
@@ -1158,6 +1139,15 @@ export class GameEngine {
                 }
             }
             if (e.attackTimer > 0) e.attackTimer -= dt;
+
+            if (e.isBoss && this.bossModifiers.regen && this.frameCount % 60 === 0) {
+                if (e.hp < e.maxHp) {
+                    const healAmount = e.maxHp * 0.01;
+                    e.hp = Math.min(e.maxHp, e.hp + healAmount);
+                    this.addParticle(e.x, e.y, '#00ff00', 5, 'spark', 1);
+                    this.addDamageText(e.x, e.y - 20, `+${Math.floor(healAmount)}`, '#00ff00');
+                }
+            }
 
             // Projectile attacks
             if (!e.burrowed) {
@@ -1180,15 +1170,7 @@ export class GameEngine {
                 }
                 
                 if (e.isBoss) {
-                    updateBossAbilities(
-                        e, dt, this.player, this.enemyProjectiles, 
-                        this.addParticle.bind(this), 
-                        this.addDamageText.bind(this), 
-                        this.takeDamage.bind(this), 
-                        this.enemies, 
-                        this.frameCount,
-                        this.arena.id
-                    );
+                    updateBossAbilities(e, dt, this.player, this.enemyProjectiles, this.addParticle.bind(this), this.addDamageText.bind(this), this.takeDamage.bind(this), this.enemies, this.frameCount, this.arena.id, this.bossModifiers);
                 }
             }
 
