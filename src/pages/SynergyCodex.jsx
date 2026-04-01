@@ -36,7 +36,7 @@ export default function SynergyCodex({ isCarousel }) {
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">
                     <p className="text-slate-300 text-xs md:text-base">Combine specific fully leveled weapons to create devastating synergies.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         {SYNERGIES.map((synergy, index) => {
                             const resultWeapon = WEAPONS[synergy.result];
                             const w1 = WEAPONS[synergy.weapon1];
@@ -44,47 +44,49 @@ export default function SynergyCodex({ isCarousel }) {
                             const isDiscovered = discovered.includes(synergy.result);
 
                             return (
-                                <div key={index} className={`p-4 rounded-xl border-2 transition-all ${
+                                <div key={index} className={`p-3 md:p-4 rounded-xl border-2 transition-all flex flex-col h-full ${
                                     isDiscovered 
                                     ? 'bg-[#0b0416]/80 backdrop-blur-xl border-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.2)]'
                                     : 'bg-slate-900/60 border-slate-800'
                                 }`}>
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className={`p-3 rounded-lg border ${isDiscovered ? 'bg-rose-950/50 border-rose-500/50 text-rose-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
-                                            {isDiscovered ? <Sparkles className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                                    <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                                        <div className={`p-2 md:p-3 rounded-lg border shrink-0 ${isDiscovered ? 'bg-rose-950/50 border-rose-500/50 text-rose-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+                                            {isDiscovered ? <Sparkles className="w-5 h-5 md:w-6 md:h-6" /> : <Lock className="w-5 h-5 md:w-6 md:h-6" />}
                                         </div>
-                                        <div>
-                                            <h3 className={`font-black text-lg tracking-widest uppercase ${isDiscovered ? 'text-white' : 'text-slate-500'}`}>
+                                        <div className="min-w-0">
+                                            <h3 className={`font-black text-base md:text-lg tracking-widest uppercase truncate ${isDiscovered ? 'text-white' : 'text-slate-500'}`}>
                                                 {isDiscovered ? resultWeapon.name : 'Unknown Synergy'}
                                             </h3>
-                                            <p className="text-xs text-slate-400">
+                                            <p className="text-[10px] md:text-xs text-slate-400 line-clamp-2">
                                                 {isDiscovered ? resultWeapon.desc : 'Discover this synergy in a run to reveal its true power.'}
                                             </p>
                                         </div>
                                     </div>
                                     
-                                    <div className="flex items-center gap-2 text-xs md:text-sm font-bold bg-slate-950/50 p-3 rounded-lg border border-slate-800">
-                                        <div className={`flex-1 text-center truncate ${isDiscovered ? 'text-cyan-400' : 'text-slate-500'}`}>{w1.name}</div>
-                                        <div className="text-slate-600">+</div>
-                                        <div className={`flex-1 text-center truncate ${isDiscovered ? 'text-amber-400' : 'text-slate-500'}`}>{w2.name}</div>
-                                    </div>
-
-                                    {isDiscovered && (
-                                        <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-                                            <div className="bg-slate-950 p-2 rounded border border-slate-800">
-                                                <div className="text-slate-500 mb-1">Base Dmg</div>
-                                                <div className="font-mono text-rose-400">{resultWeapon.baseDamage}</div>
-                                            </div>
-                                            <div className="bg-slate-950 p-2 rounded border border-slate-800">
-                                                <div className="text-slate-500 mb-1">Cooldown</div>
-                                                <div className="font-mono text-cyan-400">{resultWeapon.baseCooldown}s</div>
-                                            </div>
-                                            <div className="bg-slate-950 p-2 rounded border border-slate-800">
-                                                <div className="text-slate-500 mb-1">Area</div>
-                                                <div className="font-mono text-amber-400">{resultWeapon.baseArea}x</div>
-                                            </div>
+                                    <div className="mt-auto">
+                                        <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs font-bold bg-slate-950/50 p-2 md:p-3 rounded-lg border border-slate-800">
+                                            <div className={`flex-1 text-center truncate ${isDiscovered ? 'text-cyan-400' : 'text-slate-500'}`}>{w1.name}</div>
+                                            <div className="text-slate-600">+</div>
+                                            <div className={`flex-1 text-center truncate ${isDiscovered ? 'text-amber-400' : 'text-slate-500'}`}>{w2.name}</div>
                                         </div>
-                                    )}
+
+                                        {isDiscovered && (
+                                            <div className="mt-2 md:mt-3 grid grid-cols-3 gap-1.5 md:gap-2 text-center text-[10px] md:text-xs">
+                                                <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                    <div className="text-slate-500 mb-0.5 md:mb-1">Base Dmg</div>
+                                                    <div className="font-mono text-rose-400">{resultWeapon.baseDamage}</div>
+                                                </div>
+                                                <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                    <div className="text-slate-500 mb-0.5 md:mb-1">Cooldown</div>
+                                                    <div className="font-mono text-cyan-400">{resultWeapon.baseCooldown}s</div>
+                                                </div>
+                                                <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                    <div className="text-slate-500 mb-0.5 md:mb-1">Area</div>
+                                                    <div className="font-mono text-amber-400">{resultWeapon.baseArea}x</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })}
