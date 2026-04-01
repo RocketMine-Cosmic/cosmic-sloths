@@ -156,6 +156,7 @@ export class GameEngine {
         this.frameCount = 0;
         this.level = 1;
         this.xp = 0;
+        this.banishedUpgrades = new Set();
         this.xpRequired = 10;
         this.gold = 0;
         this.kills = 0;
@@ -180,6 +181,7 @@ export class GameEngine {
         this.hitStopTimer = 0;
         this.zoom = window.innerWidth < 768 ? 0.55 : 1;
         this.bossModifiers = save.bossModifiers || {};
+        this.worldBossDamage = 0;
         
         this.bindEvents();
         this.lastTime = performance.now();
@@ -416,6 +418,44 @@ export class GameEngine {
     }
 
     spawnEnemies(dt) {
+        if (this.arena.id === 'world_boss_arena') {
+            if (!this.worldBossSpawned) {
+                this.worldBossSpawned = true;
+                const boss = {
+                    id: 'world_boss',
+                    name: 'The World Eater',
+                    hp: 50000000,
+                    maxHp: 50000000,
+                    damage: 80 * this.difficulty.enemyDmgMult,
+                    speed: 100,
+                    radius: 120,
+                    color: '#ff0044',
+                    isBoss: true,
+                    isWorldBoss: true,
+                    weakSide: 'back',
+                    weakDesc: 'ATTACK FROM BEHIND'
+                };
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 600;
+                boss.x = this.player.x + Math.cos(angle) * dist;
+                boss.y = this.player.y + Math.sin(angle) * dist;
+                this.enemies.push(boss);
+                this.isBossActive = true;
+                this.addDamageText(this.player.x, this.player.y - 60, `WARNING: WORLD BOSS DETECTED!`, '#ff0000');
+                SoundManager.playBossSpawn();
+            }
+            if (Math.random() < dt * 0.5) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 800;
+                this.enemies.push({
+                    id: 'void_crawler', name: 'Void Crawler', tier: 5, hp: 500, maxHp: 500, damage: 20, speed: 200, xp: 50, radius: 15, color: '#4b0082',
+                    x: this.player.x + Math.cos(angle) * dist,
+                    y: this.player.y + Math.sin(angle) * dist
+                });
+            }
+            return;
+        }
+
         if (this.arena.duration === Infinity) {
             if (!this.lastBossSpawnTime) this.lastBossSpawnTime = 0;
             if (this.time > 0 && this.time - this.lastBossSpawnTime >= 180) { // Every 3 minutes
@@ -1246,6 +1286,9 @@ export class GameEngine {
         }
         
         enemy.hp -= finalDamage;
+        if (enemy.isWorldBoss) {
+            this.worldBossDamage += finalDamage;
+        }
 
         let color = isCrit ? '#ff4444' : (pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
         if (isWeakHit) {
@@ -1267,6 +1310,11 @@ export class GameEngine {
     addDamageText(x, y, text, color, isCrit = false) {
         const offsetX = (Math.random() - 0.5) * 20;
         this.damageTexts.push({ x: x + offsetX, y, text, color, life: 0.8, isCrit });
+    }
+
+    banishUpgrade(upgradeId) {
+        if (!this.banishedUpgrades) this.banishedUpgrades = new Set();
+        this.banishedUpgrades.add(upgradeId);
     }
 
     levelUp() {
@@ -1303,7 +1351,7 @@ export class GameEngine {
         };
 
         const choices = [];
-        const pool = [...UPGRADES];
+        const pool = [...UPGRADES].filter(u => !this.banishedUpgrades.has(u.id));
         for(let i=0; i<3; i++) {
             if (pool.length === 0) break;
             const idx = Math.floor(Math.random() * pool.length);
@@ -1407,7 +1455,8 @@ export class GameEngine {
             kills: this.kills,
             gold: this.gold,
             encountered: Array.from(this.encounteredEnemies),
-            enemyKills: this.enemyKills
+            enemyKills: this.enemyKills,
+            worldBossDamage: this.worldBossDamage || 0
         });
     }
 
@@ -1422,7 +1471,8 @@ export class GameEngine {
             arenaId: this.arena.id,
             characterId: this.characterId,
             encountered: Array.from(this.encounteredEnemies),
-            enemyKills: this.enemyKills
+            enemyKills: this.enemyKills,
+            worldBossDamage: this.worldBossDamage || 0
         });
     }
 

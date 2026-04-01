@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
 
-export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll }) {
+export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish }) {
     const [revealedIndex, setRevealedIndex] = useState(null);
     const [hasRerolled, setHasRerolled] = useState(false);
 
@@ -138,6 +138,20 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)] text-base md:text-lg"
                         >
                             Reroll Choices (10 💠)
+                        </motion.button>
+                    )}
+                    
+                    {revealedIndex !== null && (cosmicTokens || 0) >= 5 && (
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            onClick={() => {
+                                onBanish(choices[revealedIndex]);
+                                setRevealedIndex(null);
+                            }}
+                            className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)] text-base md:text-lg"
+                        >
+                            Banish (5 💠)
                         </motion.button>
                     )}
                 </div>

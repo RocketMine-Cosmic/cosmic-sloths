@@ -1,0 +1,45 @@
+{
+  "name": "GlobalBossContribution",
+  "type": "object",
+  "properties": {
+    "week_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "player_name": {
+      "type": "string"
+    },
+    "damage": {
+      "type": "number"
+    },
+    "claimed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "week_id",
+    "user_id",
+    "damage"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

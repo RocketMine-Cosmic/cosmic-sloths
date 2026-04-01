@@ -234,6 +234,12 @@ export default function Game() {
                 stats.score = Math.floor(goBase * goArenaMult * goBHMult);
                 setGameOverStats(stats);
                 saveScore(stats, false);
+                
+                if (stats.worldBossDamage > 0) {
+                    const week_id = moment().format('YYYY-[W]ww');
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, week_id })
+                        .catch(err => console.error('Failed to submit boss damage', err));
+                }
             },
             onVictory: (stats) => {
                 const currentSave = SaveManager.load();
@@ -271,6 +277,12 @@ export default function Game() {
                 stats.score = Math.floor(vicBase * vicArenaMult * vicBHMult);
                 setVictoryStats(stats);
                 saveScore(stats, true);
+                
+                if (stats.worldBossDamage > 0) {
+                    const week_id = moment().format('YYYY-[W]ww');
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, week_id })
+                        .catch(err => console.error('Failed to submit boss damage', err));
+                }
             }
         }, isEndless);
         
@@ -332,6 +344,26 @@ export default function Game() {
         }
     };
 
+    const handleBanish = (choice) => {
+        const currentSave = SaveManager.load();
+        const BANISH_COST = 5;
+        if ((currentSave.cosmicTokens || 0) >= BANISH_COST) {
+            currentSave.cosmicTokens -= BANISH_COST;
+            SaveManager.save(currentSave);
+            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
+            
+            const week_id = moment().format('YYYY-[W]ww');
+            const seasonNum = Math.floor(moment().week() / 4) + 1;
+            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            base44.functions.invoke('recordTokenSpend', { amount: BANISH_COST, week_id, season_id }).catch(console.error);
+
+            if (engineRef.current) {
+                engineRef.current.banishUpgrade(choice.id);
+                engineRef.current.rerollChoices();
+            }
+        }
+    };
+
     const handleJoystickChange = (pos) => {
         if (engineRef.current) {
             engineRef.current.joystick = pos;
@@ -368,7 +400,7 @@ export default function Game() {
             )}
 
             {levelUpChoices && (
-                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={gameState.cosmicTokens} onReroll={handleReroll} />
+                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={gameState.cosmicTokens} onReroll={handleReroll} onBanish={handleBanish} />
             )}
             
             {gameOverStats && (
