@@ -1007,7 +1007,7 @@ export class GameEngine {
     damageEnemy(enemy, amount, projectile = null) {
         let damageMult = 1.0;
         const pastKills = this.save.enemyKills?.[enemy.id] || 0;
-        const masteryReq = enemy.isBoss ? 20 : 200;
+        const masteryReq = enemy.isBoss ? 20 : 2000;
         if (pastKills >= masteryReq) {
             damageMult = 1.10; // +10% damage against mastered enemies
         }

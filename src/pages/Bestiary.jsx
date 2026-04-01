@@ -10,7 +10,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 
-const MASTERY_KILLS = (enemy) => enemy.isBoss ? 20 : 200;
+const MASTERY_KILLS = (enemy) => enemy.isBoss ? 20 : 2000;
 
 function EnemySprite({ enemy, size = 64 }) {
     const canvasRef = useRef(null);
