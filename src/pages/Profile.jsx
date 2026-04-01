@@ -20,6 +20,8 @@ export default function Profile({ isCarousel }) {
     const [stats, setStats] = useState({
         highestScore: 0,
         totalKills: 0,
+        leviathanKills: 0,
+        globalRaidDamage: 0,
     });
     const [squad, setSquad] = useState(null);
     const [rewardsHistory, setRewardsHistory] = useState([]);
@@ -43,9 +45,24 @@ export default function Profile({ isCarousel }) {
                     // Fetch total kills from local save
                     const save = SaveManager.load();
                     
+                    const enemyKills = save.enemyKills || {};
+                    const totalLeviathans = Object.keys(enemyKills)
+                        .filter(id => id.startsWith('boss_') || id === 'world_boss')
+                        .reduce((sum, id) => sum + (enemyKills[id] || 0), 0);
+                        
+                    let totalRaidDamage = 0;
+                    try {
+                        const contributions = await base44.entities.GlobalBossContribution.filter({ user_id: me.id });
+                        totalRaidDamage = contributions.reduce((sum, c) => sum + (c.damage || 0), 0);
+                    } catch(err) {
+                        console.error('Failed to fetch global boss contributions', err);
+                    }
+                    
                     setStats({
                         highestScore: maxScore,
                         totalKills: save.totalKills || 0,
+                        leviathanKills: totalLeviathans,
+                        globalRaidDamage: totalRaidDamage
                     });
 
                     // Fetch Squad Affiliation
@@ -121,6 +138,11 @@ export default function Profile({ isCarousel }) {
         if (stats.totalKills >= 10000) t.push({ id: 'Void Walker', label: 'Void Walker' });
         if (stats.highestScore >= 50000) t.push({ id: 'Top Survivor', label: 'Top Survivor' });
         if (stats.highestScore >= 100000) t.push({ id: 'Cosmic Legend', label: 'Cosmic Legend' });
+        
+        if (stats.leviathanKills >= 1) t.push({ id: 'Leviathan Slayer', label: 'Leviathan Slayer' });
+        if (stats.leviathanKills >= 10) t.push({ id: 'Apex Predator', label: 'Apex Predator' });
+        if (stats.globalRaidDamage >= 10000) t.push({ id: 'Raid Trooper', label: 'Raid Trooper' });
+        if (stats.globalRaidDamage >= 500000) t.push({ id: 'World Eater Bane', label: 'World Eater Bane' });
         
         const currentSave = SaveManager.load();
         if (currentSave.gold >= 10000 || currentSave.totalGoldEarned >= 100000) t.push({ id: 'Gold Hoarder', label: 'Gold Hoarder' });
