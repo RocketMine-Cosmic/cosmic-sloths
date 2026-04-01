@@ -118,7 +118,7 @@ export default function GlobalRaid({ isCarousel }) {
     };
 
     return (
-        <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-2 md:p-6 font-sans overflow-hidden`}>
+        <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-24 md:p-6 font-sans overflow-hidden`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-2 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
@@ -138,8 +138,8 @@ export default function GlobalRaid({ isCarousel }) {
                     </div>
                 </header>
 
-                <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto pt-2 md:pt-4">
-                    <div className="flex justify-center gap-2 mb-4 w-full max-w-2xl">
+                <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto pt-2 md:pt-4 pb-12">
+                    <div className="flex justify-center gap-2 mb-4 w-full max-w-2xl shrink-0">
                         <button onClick={() => { SoundManager.playUIClick(); setActiveTab('raid'); }} className={`flex-1 px-4 py-3 font-bold uppercase tracking-widest text-xs md:text-sm rounded-lg border transition-all ${activeTab === 'raid' ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                             Raid Event
                         </button>
@@ -171,8 +171,8 @@ export default function GlobalRaid({ isCarousel }) {
                         {worldBossData ? (
                             <div className="bg-slate-950 p-3 md:p-6 rounded-xl border border-red-900 mb-3 md:mb-4 relative overflow-hidden">
                                 <div className="absolute right-0 top-0 opacity-10 text-7xl md:text-9xl transform translate-x-1/4 -translate-y-1/4">👹</div>
-                                <div className="relative z-10 flex flex-row gap-5 md:gap-8 items-center w-full">
-                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-28 h-28 md:w-48 md:h-48">
+                                <div className="relative z-10 flex flex-row gap-3 md:gap-8 items-center w-full">
+                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-20 h-20 md:w-48 md:h-48">
                                         <BossPreview bossId={worldBossData.boss_id} />
                                     </div>
                                     <div className="flex-1 w-full text-left">
