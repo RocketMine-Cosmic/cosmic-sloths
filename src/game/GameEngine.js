@@ -1274,21 +1274,34 @@ export class GameEngine {
             this.arenaLayers.forEach(layer => {
                 if (layer.img.complete && layer.img.naturalWidth > 0) {
                     const scale = Math.max(this.canvas.width / layer.img.naturalWidth, this.canvas.height / layer.img.naturalHeight);
-                    const drawW = layer.img.naturalWidth * scale;
-                    const drawH = layer.img.naturalHeight * scale;
                     
-                    let offsetX = (-this.camera.x * layer.speed) % drawW;
-                    let offsetY = (-this.camera.y * layer.speed) % drawH;
-                    
-                    if (offsetX > 0) offsetX -= drawW;
-                    if (offsetY > 0) offsetY -= drawH;
+                    if (layer.isBackground) {
+                        const drawW = layer.img.naturalWidth * scale * (layer.scale || 1.1);
+                        const drawH = layer.img.naturalHeight * scale * (layer.scale || 1.1);
+                        
+                        const maxPanX = (drawW - this.canvas.width) / 2;
+                        const maxPanY = (drawH - this.canvas.height) / 2;
+                        
+                        const panX = Math.max(-maxPanX, Math.min(maxPanX, -this.camera.x * layer.speed));
+                        const panY = Math.max(-maxPanY, Math.min(maxPanY, -this.camera.y * layer.speed));
+                        
+                        const x = (this.canvas.width - drawW) / 2 + panX;
+                        const y = (this.canvas.height - drawH) / 2 + panY;
+                        
+                        this.ctx.globalAlpha = layer.alpha || 0.9;
+                        this.ctx.drawImage(layer.img, x, y, drawW, drawH);
+                        this.ctx.globalAlpha = 1.0;
+                    } else {
+                        const drawW = layer.img.naturalWidth * scale * (layer.scale || 1);
+                        const drawH = layer.img.naturalHeight * scale * (layer.scale || 1);
+                        
+                        const screenX = (this.canvas.width / 2) - (drawW / 2) - this.camera.x * layer.speed;
+                        const screenY = (this.canvas.height / 2) - (drawH / 2) - this.camera.y * layer.speed;
 
-                    this.ctx.globalAlpha = 0.9;
-                    this.ctx.drawImage(layer.img, offsetX, offsetY, drawW, drawH);
-                    this.ctx.drawImage(layer.img, offsetX + drawW, offsetY, drawW, drawH);
-                    this.ctx.drawImage(layer.img, offsetX, offsetY + drawH, drawW, drawH);
-                    this.ctx.drawImage(layer.img, offsetX + drawW, offsetY + drawH, drawW, drawH);
-                    this.ctx.globalAlpha = 1.0;
+                        this.ctx.globalAlpha = layer.alpha || 0.9;
+                        this.ctx.drawImage(layer.img, screenX, screenY, drawW, drawH);
+                        this.ctx.globalAlpha = 1.0;
+                    }
                 }
             });
         } else if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
