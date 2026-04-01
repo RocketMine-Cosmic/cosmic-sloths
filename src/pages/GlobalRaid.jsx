@@ -169,19 +169,19 @@ export default function GlobalRaid({ isCarousel }) {
                         </p>
                         
                         {worldBossData ? (
-                            <div className="bg-slate-950 p-2 md:p-6 rounded-xl border border-red-900 mb-3 md:mb-4 relative overflow-hidden">
+                            <div className="bg-slate-950 p-4 md:p-6 rounded-xl border border-red-900 mb-3 md:mb-4 relative overflow-hidden">
                                 <div className="absolute right-0 top-0 opacity-10 text-7xl md:text-9xl transform translate-x-1/4 -translate-y-1/4">👹</div>
-                                <div className="relative z-10 flex flex-row gap-3 md:gap-8 items-center w-full">
-                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-16 h-16 md:w-48 md:h-48">
+                                <div className="relative z-10 flex flex-row gap-4 md:gap-8 items-center w-full">
+                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-28 h-28 md:w-48 md:h-48">
                                         <BossPreview bossId={worldBossData.boss_id} />
                                     </div>
                                     <div className="flex-1 w-full text-left">
-                                        <h4 className="text-lg md:text-2xl font-bold text-white mb-1">{worldBossData.name}</h4>
-                                        <div className="text-red-400 text-[10px] md:text-sm mb-1.5 font-mono font-bold">
+                                        <h4 className="text-xl md:text-2xl font-bold text-white mb-1">{worldBossData.name}</h4>
+                                        <div className="text-red-400 text-xs md:text-sm mb-2 font-mono font-bold">
                                             LVL {worldBossData.level || 1} &nbsp;|&nbsp; HP: {worldBossData.current_hp.toLocaleString()} / {worldBossData.max_hp.toLocaleString()}
                                         </div>
                                         
-                                        <div className="w-full bg-slate-800 h-2 md:h-4 rounded-full overflow-hidden mb-1 border border-slate-700">
+                                        <div className="w-full bg-slate-800 h-3 md:h-4 rounded-full overflow-hidden mb-2 border border-slate-700">
                                             <div 
                                                 className="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all duration-1000"
                                                 style={{ width: `${Math.max(0, (worldBossData.current_hp / worldBossData.max_hp) * 100)}%` }}
