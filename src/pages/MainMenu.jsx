@@ -47,18 +47,11 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 transition={{ delay: 0.1, duration: 0.8 }}
                 className="absolute inset-0 flex flex-col items-center justify-start pt-[12vh] md:pt-[15vh] z-10 pointer-events-none"
             >
-                <h1 
-                    className="text-6xl md:text-8xl lg:text-[9rem] font-black uppercase tracking-widest text-center leading-none" 
-                    style={{ 
-                        background: 'linear-gradient(to bottom, #FFFFFF 0%, #A5F3FC 40%, #D946EF 100%)', 
-                        WebkitBackgroundClip: 'text', 
-                        WebkitTextFillColor: 'transparent', 
-                        filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 30px rgba(217,70,239,0.6))',
-                        WebkitTextStroke: '2px rgba(255,255,255,0.1)'
-                    }}
-                >
-                    COSMIC<br/>SLOTHS
-                </h1>
+                <img 
+                    src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/431c29f41_CosmicF.png" 
+                    alt="Cosmic Sloths" 
+                    className="w-[80%] md:w-[60%] max-w-[700px] h-auto object-contain drop-shadow-[0_0_30px_rgba(217,70,239,0.6)]"
+                />
             </motion.div>
 
             <motion.div 
