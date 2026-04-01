@@ -394,9 +394,9 @@ export default function Squads({ isCarousel }) {
     if (!user) return <div className="p-8 text-white">Loading...</div>;
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
+        <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-2 md:p-6 font-sans overflow-hidden`}>
             {!isCarousel && <SpaceBackground />}
-            <div className="max-w-5xl mx-auto h-full flex flex-col">
+            <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>
                         {!isCarousel && (
@@ -416,8 +416,8 @@ export default function Squads({ isCarousel }) {
 
                 {!mySquad ? (
                     // --- NO SQUAD VIEW ---
-                    <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
-                        <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl border border-orange-500/30 p-4 flex flex-col overflow-hidden shadow-[0_0_30px_rgba(249,115,22,0.15)]">
+                    <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden min-h-0">
+                        <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl border border-orange-500/30 p-4 flex flex-col overflow-hidden min-h-0 shadow-[0_0_30px_rgba(249,115,22,0.15)]">
                             <div className="flex justify-between items-center mb-4 shrink-0">
                                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                     <Search className="w-5 h-5 text-cyan-400" /> Find a Squad
@@ -520,7 +520,7 @@ export default function Squads({ isCarousel }) {
                     </div>
                 ) : (
                     // --- IN SQUAD VIEW ---
-                    <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 overflow-hidden">
+                    <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 overflow-hidden min-h-0">
                         {/* MOBILE: Compact squad info bar — full LEFT PANEL on desktop */}
                         {(() => {
                             const squadXp = mySquad.xp || 0;
@@ -656,7 +656,7 @@ export default function Squads({ isCarousel }) {
                         })()}
 
                         {/* RIGHT PANEL: CHAT, MEMBERS & SETTINGS */}
-                        <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-orange-500/30 shadow-[0_0_30px_rgba(249,115,22,0.15)] rounded-xl flex flex-col overflow-hidden" style={{ minHeight: '65vh' }}>
+                        <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-orange-500/30 shadow-[0_0_30px_rgba(249,115,22,0.15)] rounded-xl flex flex-col overflow-hidden min-h-0">
                             <div className="flex border-b border-slate-800 shrink-0">
                                 <button 
                                     onClick={() => setActiveTab('chat')}
