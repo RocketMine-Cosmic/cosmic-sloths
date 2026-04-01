@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
         
         const bossNames = ["The World Eater", "Cosmic Leviathan", "Star Devourer", "Void Sovereign"];
         const bossName = bossNames[charCodeSum % bossNames.length];
-        const bossHp = 1000000; // 1 Million HP base
+        const bossHp = 50000; // 50k HP base
         
         const newBoss = await base44.asServiceRole.entities.GlobalBoss.create({
             week_id,
