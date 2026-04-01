@@ -166,6 +166,7 @@ export class GameEngine {
             // Apply 9 levels worth of stats
             this.player.maxHp += 9 * 5;
             this.player.damageMult += 9 * 0.02;
+            this.player.armor += 9 * 1;
             this.player.hp = this.player.maxHp;
             
             // Scale XP required for level 10
@@ -1083,6 +1084,7 @@ export class GameEngine {
         // Scale stats and fully heal
         this.player.maxHp += 5;
         this.player.damageMult += 0.02;
+        this.player.armor += 1;
         this.player.hp = this.player.maxHp;
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
         
