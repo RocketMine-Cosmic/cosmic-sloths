@@ -66,6 +66,8 @@ export default function Profile({ isCarousel }) {
         try {
             await base44.auth.updateMe({ pilot_icon: icon });
             setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
+            
+            base44.functions.invoke('syncProfileIcon', { newIcon: icon }).catch(console.error);
         } catch (e) {
             console.error(e);
         }
