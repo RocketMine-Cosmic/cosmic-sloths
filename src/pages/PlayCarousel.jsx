@@ -11,6 +11,7 @@ import Squads from './Squads';
 import Bestiary from './Bestiary';
 import LeviathanTrials from './LeviathanTrials';
 import Profile from './Profile';
+import GlobalRaid from './GlobalRaid';
 import { SoundManager } from '../game/SoundManager';
 
 export default function PlayCarousel() {
@@ -56,7 +57,8 @@ export default function PlayCarousel() {
                         {selectedIndex === 5 && <span className="text-orange-400">Sloth Squads</span>}
                         {selectedIndex === 6 && <span className="text-rose-400">Cosmic Codex</span>}
                         {selectedIndex === 7 && <span className="text-red-500">Leviathan Trials</span>}
-                        {selectedIndex === 8 && <span className="text-purple-400">Pilot Profile</span>}
+                        {selectedIndex === 8 && <span className="text-red-600">Global Raid</span>}
+                        {selectedIndex === 9 && <span className="text-purple-400">Pilot Profile</span>}
                     </div>
                     <button 
                         onClick={() => { 
@@ -95,6 +97,9 @@ export default function PlayCarousel() {
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <LeviathanTrials isCarousel={true} />
+                    </div>
+                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
+                        <GlobalRaid isCarousel={true} />
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Profile isCarousel={true} />
