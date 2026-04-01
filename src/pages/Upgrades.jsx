@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
+import ForgePanel from '../components/game/ForgePanel';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [100, 200, 400, 800, 1600] },
@@ -891,6 +892,9 @@ export default function Upgrades({ isCarousel }) {
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Enhance your operatives and arsenal.</p>
                     </div>
                     <div className="flex gap-1.5 md:gap-4">
+                        <div className="text-sm md:text-lg font-bold text-yellow-300 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-yellow-700/50 shadow-lg" title="Star Fragments">
+                            🌟 {save.starFragments || 0}
+                        </div>
                         <div className="text-sm md:text-lg font-bold text-emerald-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
                             💠 {save.cosmicTokens || 0}
                         </div>
@@ -920,6 +924,14 @@ export default function Upgrades({ isCarousel }) {
                     >
                         Cosmetics
                     </button>
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setActiveCategory('forge'); }}
+                        className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
+                            activeCategory === 'forge' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                    >
+                        🔨 Forge
+                    </button>
                 </div>
 
                 {timeLeft && (
@@ -929,7 +941,9 @@ export default function Upgrades({ isCarousel }) {
                 )}
 
                 <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-2 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
-                    {activeCategory !== 'cosmetics' ? (
+                    {activeCategory === 'forge' ? (
+                        <ForgePanel save={save} setSave={setSave} />
+                    ) : activeCategory !== 'cosmetics' ? (
                         <>
                             <div className="flex flex-wrap gap-2 mb-3 border-b border-slate-800 pb-2">
                                 {['stats', 'armory', 'talents'].map(sub => (
@@ -951,6 +965,7 @@ export default function Upgrades({ isCarousel }) {
                     ) : (
                         renderCosmetics()
                     )}
+                    
                 </div>
             </div>
         </div>
