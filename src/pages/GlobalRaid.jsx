@@ -81,7 +81,7 @@ export default function GlobalRaid({ isCarousel }) {
     const selectedChar = save.lastSelectedChar || 'neobyte';
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto h-full flex flex-col">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
@@ -94,15 +94,15 @@ export default function GlobalRaid({ isCarousel }) {
                                 <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
                             </button>
                         )}
-                        <h1 className="text-2xl md:text-3xl font-bold text-red-500 tracking-tight flex items-center gap-2">
-                            <Skull className="w-6 h-6 md:w-8 md:h-8" /> GLOBAL RAID
+                        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #DC2626, #991B1B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(220,38,38,0.5))' }}>
+                            <Skull className="w-6 h-6 md:w-8 md:h-8 text-red-600" /> GLOBAL RAID
                         </h1>
-                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Join forces with all players globally.</p>
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Join forces with all players globally.</p>
                     </div>
                 </header>
 
                 <div className="flex-1 flex flex-col items-center justify-center">
-                    <div className="bg-slate-900 border border-red-900/50 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-2xl relative overflow-hidden w-full max-w-2xl">
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-red-500/30 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_50px_rgba(220,38,38,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] relative overflow-hidden w-full max-w-2xl">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
                         
                         <div className="flex justify-between items-start mb-2">

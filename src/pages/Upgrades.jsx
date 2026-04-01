@@ -880,7 +880,7 @@ export default function Upgrades({ isCarousel }) {
     };
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4">
@@ -893,29 +893,31 @@ export default function Upgrades({ isCarousel }) {
                                 <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
                             </button>
                         )}
-                        <h1 className="text-2xl md:text-3xl font-bold text-pink-400 tracking-tight">UPGRADE LOUNGE</h1>
-                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Enhance your operatives and arsenal.</p>
+                        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest" style={{ background: 'linear-gradient(90deg, #D946EF, #8B5CF6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(217,70,239,0.5))' }}>UPGRADE LOUNGE</h1>
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Enhance your operatives and arsenal.</p>
                     </div>
                     <div className="flex gap-1.5 md:gap-4">
-                        <div className="text-sm md:text-lg font-bold text-yellow-300 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-yellow-700/50 shadow-lg" title="Star Fragments">
+                        <div className="text-sm md:text-lg font-black text-yellow-300 bg-yellow-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]" title="Star Fragments">
                             🌟 {save.starFragments || 0}
                         </div>
-                        <div className="text-sm md:text-lg font-bold text-emerald-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
+                        <div className="text-sm md:text-lg font-black text-emerald-300 bg-emerald-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]" title="Cosmic Tokens">
                             💠 {save.cosmicTokens || 0}
                         </div>
-                        <div className="text-sm md:text-lg font-bold text-yellow-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Gold">
+                        <div className="text-sm md:text-lg font-black text-yellow-400 bg-amber-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]" title="Gold">
                             🪙 {save.gold}
                         </div>
                     </div>
                 </header>
 
-                <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-6">
+                <div className="flex flex-wrap gap-2 md:gap-3 mb-4 md:mb-6">
                     {UPGRADE_TYPES.map(type => (
                         <button
                             key={type.id}
                             onClick={() => { SoundManager.playUIClick(); setActiveCategory(type.id); }}
-                            className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
-                                activeCategory === type.id ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            className={`px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all ${
+                                activeCategory === type.id 
+                                ? 'bg-cyan-500/20 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]' 
+                                : 'bg-[#0b0416]/80 border border-slate-700/50 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-200'
                             }`}
                         >
                             {type.name}
@@ -923,16 +925,20 @@ export default function Upgrades({ isCarousel }) {
                     ))}
                     <button
                         onClick={() => { SoundManager.playUIClick(); setActiveCategory('forge'); }}
-                        className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
-                            activeCategory === 'forge' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        className={`px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all ${
+                            activeCategory === 'forge' 
+                            ? 'bg-yellow-500/20 border border-yellow-400 text-yellow-300 shadow-[0_0_15px_rgba(250,204,21,0.3)]' 
+                            : 'bg-[#0b0416]/80 border border-slate-700/50 text-slate-400 hover:border-yellow-500/50 hover:text-yellow-200'
                         }`}
                     >
                         🔨 Forge
                     </button>
                     <button
                         onClick={() => { SoundManager.playUIClick(); setActiveCategory('cosmetics'); }}
-                        className={`px-2.5 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg font-bold text-[10px] md:text-base transition-colors ${
-                            activeCategory === 'cosmetics' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        className={`px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all ${
+                            activeCategory === 'cosmetics' 
+                            ? 'bg-pink-500/20 border border-pink-400 text-pink-300 shadow-[0_0_15px_rgba(236,72,153,0.3)]' 
+                            : 'bg-[#0b0416]/80 border border-slate-700/50 text-slate-400 hover:border-pink-500/50 hover:text-pink-200'
                         }`}
                     >
                         Cosmetics
@@ -945,7 +951,7 @@ export default function Upgrades({ isCarousel }) {
                     </div>
                 )}
 
-                <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-2 md:p-6 border border-slate-800 min-h-[400px] md:min-h-[600px]">
+                <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-2 md:p-6 border border-[#8B5CF6]/30 shadow-[0_0_50px_rgba(139,92,246,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] min-h-[400px] md:min-h-[600px]">
                     {activeCategory === 'forge' ? (
                         <ForgePanel save={save} setSave={setSave} />
                     ) : activeCategory !== 'cosmetics' ? (

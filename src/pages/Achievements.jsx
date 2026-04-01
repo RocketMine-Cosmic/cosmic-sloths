@@ -77,7 +77,7 @@ export default function Achievements() {
     };
 
     return (
-        <div className="min-h-screen relative text-slate-200 p-4 md:p-8 font-mono overflow-hidden">
+        <div className="min-h-screen relative text-slate-200 p-4 md:p-8 font-sans overflow-hidden">
             <SpaceBackground />
 
             <div className="max-w-4xl mx-auto relative z-10">
@@ -91,7 +91,7 @@ export default function Achievements() {
                 <motion.div 
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-10 shadow-2xl"
+                    className="bg-[#0b0416]/60 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6 md:p-10 shadow-[0_0_50px_rgba(249,115,22,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]"
                 >
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 border-b border-slate-800 pb-6">
                         <div className="flex items-center gap-4">

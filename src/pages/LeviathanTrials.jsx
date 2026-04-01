@@ -34,7 +34,7 @@ export default function LeviathanTrials({ isCarousel }) {
     };
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto h-full flex flex-col">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
@@ -47,10 +47,10 @@ export default function LeviathanTrials({ isCarousel }) {
                                 <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
                             </button>
                         )}
-                        <h1 className="text-2xl md:text-3xl font-bold text-red-500 tracking-tight flex items-center gap-2">
-                            <Skull className="w-6 h-6 md:w-8 md:h-8" /> LEVIATHAN TRIALS
+                        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #EF4444, #DC2626)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(239,68,68,0.5))' }}>
+                            <Skull className="w-6 h-6 md:w-8 md:h-8 text-red-500" /> LEVIATHAN TRIALS
                         </h1>
-                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">
                             Total Leviathans Slain: <span className="text-red-400 font-bold">{totalLeviathanKills}</span>
                         </p>
                     </div>
@@ -70,8 +70,8 @@ export default function LeviathanTrials({ isCarousel }) {
                                     onClick={() => toggleModifier(mod.id)}
                                     className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
                                         isActive 
-                                        ? 'bg-red-950/40 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' 
-                                        : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                                        ? 'bg-red-950/60 backdrop-blur-md border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]' 
+                                        : 'bg-[#0b0416]/80 backdrop-blur-md border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.05)] hover:border-red-400/50'
                                     }`}
                                 >
                                     <div className={`p-3 rounded-lg bg-slate-950 border border-slate-800 ${isActive ? mod.color : 'text-slate-600'}`}>

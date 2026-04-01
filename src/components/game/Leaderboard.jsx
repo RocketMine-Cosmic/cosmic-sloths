@@ -181,7 +181,7 @@ export default function Leaderboard() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-slate-800 rounded-xl overflow-hidden border border-slate-700 flex flex-col">
+            <div className="flex-1 bg-[#0b0416]/40 rounded-xl overflow-hidden border-0 flex flex-col">
                 <div className="flex-1 overflow-y-auto p-2 md:p-4">
                     <div className="space-y-3">
                     {loading ? (

@@ -425,7 +425,7 @@ export default function Info() {
     const [activeTab, setActiveTab] = useState('basics');
 
     return (
-        <div className="min-h-screen relative text-slate-200 font-mono overflow-hidden">
+        <div className="min-h-screen relative text-slate-200 font-sans overflow-hidden">
             <SpaceBackground />
 
             <div className="relative z-10 max-w-3xl mx-auto px-4 pt-4 pb-20">
@@ -437,7 +437,7 @@ export default function Info() {
                 </button>
 
                 <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-                    <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-1">
+                    <h1 className="text-3xl md:text-4xl font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#0CA7B8] to-[#D946EF] mb-1 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]">
                         HOW TO PLAY
                     </h1>
                     <p className="text-slate-500 text-sm mb-5">Everything you need to know about Sloths in Space.</p>

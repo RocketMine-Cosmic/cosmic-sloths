@@ -104,7 +104,7 @@ export default function Profile({ isCarousel }) {
     }
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-4 md:p-8 font-mono`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-4 md:p-8 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-4xl mx-auto relative z-10">
                 {!isCarousel && (
@@ -122,7 +122,7 @@ export default function Profile({ isCarousel }) {
                     className="space-y-6"
                 >
                     {/* Header / Name Edit */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-6 md:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <button
@@ -184,7 +184,7 @@ export default function Profile({ isCarousel }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Career Stats */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-center">
+                        <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(6,182,212,0.15)] flex flex-col justify-center">
                             <h2 className="text-xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
                                 <Trophy className="w-5 h-5" /> Career Highlights
                             </h2>
@@ -211,7 +211,7 @@ export default function Profile({ isCarousel }) {
                         </div>
 
                         {/* Squad Affiliation */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                        <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(249,115,22,0.15)]">
                             <h2 className="text-xl font-bold text-orange-400 mb-6 flex items-center gap-2">
                                 <Users className="w-5 h-5" /> Squad Affiliation
                             </h2>
@@ -248,7 +248,7 @@ export default function Profile({ isCarousel }) {
                     </div>
 
                     {/* Rewards History */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
                         <h2 className="text-xl font-bold text-emerald-400 mb-6 flex items-center gap-2">
                             <Gift className="w-5 h-5" /> Rewards History
                         </h2>
