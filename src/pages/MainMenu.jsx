@@ -6,6 +6,7 @@ import { Pencil, Check, X, LogOut } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { ThemeManager } from '../game/ThemeManager';
 import SettingsModal from '../components/game/SettingsModal';
+import SpaceBackground from '../components/game/SpaceBackground';
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
@@ -34,18 +35,29 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
 
     return (
         <div 
-            className={`${isCarousel ? 'h-full' : 'h-[100dvh]'} w-full flex flex-col items-center justify-end pb-20 md:pb-28 relative overflow-hidden font-sans bg-no-repeat bg-cover bg-center`}
-            style={{ backgroundImage: `url('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/206f836d9_MainMenu.png')`, backgroundColor: theme.colors.bg }}
+            className={`${isCarousel ? 'h-full' : 'h-[100dvh]'} w-full flex flex-col items-center justify-end pb-12 md:pb-20 relative overflow-hidden font-sans`}
+            style={{ backgroundColor: theme.colors.bg }}
         >
+            {!isCarousel && <SpaceBackground />}
 
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/20 to-transparent opacity-90 pointer-events-none z-0"></div>
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-transparent to-transparent opacity-90 pointer-events-none"></div>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="absolute inset-0 flex flex-col items-center justify-start pt-[15vh] md:pt-[20vh] z-10 pointer-events-none"
+            >
+                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-widest text-center" style={{ background: 'linear-gradient(135deg, #0CA7B8 0%, #D946EF 50%, #F59E0B 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 25px rgba(217,70,239,0.4))' }}>
+                    COSMIC<br/>SLOTHS
+                </h1>
+            </motion.div>
 
             <motion.div 
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="z-10 grid grid-cols-2 gap-3 w-full max-w-xl md:max-w-2xl px-4 font-sans"
+                className="z-10 grid grid-cols-2 gap-3 w-[90%] max-w-md md:max-w-lg px-4 font-sans relative"
             >
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
@@ -79,8 +91,8 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 </button>
             </motion.div>
             
-            <div className="absolute bottom-4 text-slate-400 text-xs md:text-sm z-10">
-                v1.0.0 - Lazy but Devastating
+            <div className="absolute bottom-4 text-slate-500/70 text-[10px] md:text-xs z-10 tracking-widest uppercase">
+                v1.0.0 — Lazy but Devastating
             </div>
 
             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
