@@ -8,7 +8,8 @@ import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
-import { Skull, Crosshair } from 'lucide-react';
+import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
+import SpaceBackground from '../components/game/SpaceBackground';
 
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
@@ -100,9 +101,10 @@ export default function Hub({ isCarousel }) {
 
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
-            <div className="max-w-6xl mx-auto">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4">
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-mono`}>
+            {!isCarousel && <SpaceBackground />}
+            <div className="max-w-6xl mx-auto relative z-10">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-cyan-900/40 pb-2 md:pb-4">
                     <div>
                         {!isCarousel && (
                             <button 
@@ -112,27 +114,27 @@ export default function Hub({ isCarousel }) {
                                 <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
                             </button>
                         )}
-                        <h1 className="text-2xl md:text-3xl font-bold text-cyan-400 tracking-tight">SLOTH LOUNGE</h1>
-                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs">Rest, upgrade, and prepare for the cosmic void.</p>
+                        <h1 className="text-2xl md:text-4xl font-bold tracking-widest uppercase" style={{ background: 'linear-gradient(90deg, #22d3ee, #818cf8, #22d3ee)', backgroundSize: '200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: 'none' }}>SLOTH LOUNGE</h1>
+                        <p className="text-slate-500 mt-0.5 md:text-sm text-xs tracking-widest uppercase">⚡ Rest · Upgrade · Prepare for the Cosmic Void</p>
                     </div>
                     <div className="flex gap-1.5 md:gap-4">
-                        <div className="text-sm md:text-lg font-bold text-purple-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Reroll Tokens">
+                        <div className="text-sm md:text-lg font-bold text-purple-300 bg-purple-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-purple-700/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]" title="Reroll Tokens">
                             🎲 {save.rerollTokens || 0}
                         </div>
-                        <div className="text-sm md:text-lg font-bold text-emerald-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Cosmic Tokens (Crypto)">
+                        <div className="text-sm md:text-lg font-bold text-emerald-300 bg-emerald-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-emerald-700/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]" title="Cosmic Tokens">
                             💠 {save.cosmicTokens || 0}
                         </div>
-                        <div className="text-sm md:text-lg font-bold text-yellow-400 bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 shadow-lg" title="Gold">
+                        <div className="text-sm md:text-lg font-bold text-yellow-300 bg-yellow-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-yellow-700/50 shadow-[0_0_10px_rgba(234,179,8,0.2)]" title="Gold">
                             🪙 {save.gold}
                         </div>
                     </div>
                 </header>
 
                 <div className="flex flex-col gap-4 md:gap-8">
-                    <div className="flex-1 bg-slate-900 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-800">
+                    <div className="flex-1 bg-slate-900/60 backdrop-blur-md rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-700/40 shadow-[0_0_60px_rgba(6,182,212,0.05),inset_0_1px_0_rgba(255,255,255,0.05)]">
                         <div className="h-full flex flex-col justify-between">
                                 <div>
-                                    <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">Mission Briefing</h2>
+                                    <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4 tracking-widest uppercase flex items-center gap-2"><span className="text-cyan-400">▶</span> Mission Briefing</h2>
                                     
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
                                         <div>
@@ -402,14 +404,14 @@ export default function Hub({ isCarousel }) {
                                     const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
                                     return (
-                                        <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-4 md:mt-8 pt-4 md:pt-6 border-t border-slate-800">
+                                        <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-4 md:mt-8 pt-4 md:pt-6 border-t border-slate-700/40">
                                             <button
                                                 onClick={startGame}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
+                                                className={`flex-1 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
-                                                    ? 'bg-cyan-600 hover:bg-cyan-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
-                                                    : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                                    ? 'bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]'
+                                                    : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
                                                 {!isCharUnlocked ? (
@@ -427,10 +429,10 @@ export default function Hub({ isCarousel }) {
                                                     navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, isEndless: true } });
                                                 }}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform ${
+                                                className={`flex-1 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
-                                                    ? 'bg-purple-600 hover:bg-purple-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
-                                                    : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
+                                                    ? 'bg-gradient-to-r from-purple-700 to-violet-600 hover:from-purple-600 hover:to-violet-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(168,85,247,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]'
+                                                    : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
                                                 {!isCharUnlocked ? (
