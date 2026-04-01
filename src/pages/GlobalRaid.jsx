@@ -102,7 +102,7 @@ export default function GlobalRaid({ isCarousel }) {
                 </header>
 
                 <div className="flex-1 flex flex-col items-center justify-center">
-                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-red-500/30 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_50px_rgba(220,38,38,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] relative overflow-hidden w-full max-w-2xl">
+                    <div className="bg-[#0b0416]/50 backdrop-blur-xl border border-red-500/50 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_60px_rgba(220,38,38,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden w-full max-w-2xl">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
                         
                         <div className="flex justify-between items-start mb-2">

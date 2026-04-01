@@ -27,7 +27,7 @@ export default function LeaderboardPage({ isCarousel }) {
                     </div>
                 </header>
 
-                <div className="bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-6 border border-yellow-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] min-h-[400px] md:min-h-[600px]">
+                <div className="bg-[#0b0416]/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-6 border border-yellow-500/50 shadow-[0_0_60px_rgba(245,158,11,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] min-h-[400px] md:min-h-[600px]">
                     <Leaderboard />
                 </div>
             </div>

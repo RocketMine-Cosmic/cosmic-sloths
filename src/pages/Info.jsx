@@ -15,10 +15,17 @@ const TABS = [
 ];
 
 function SectionCard({ title, children, color = 'cyan' }) {
-    const borderColors = { cyan: 'border-cyan-500/30', purple: 'border-purple-500/30', amber: 'border-amber-500/30', green: 'border-green-500/30', rose: 'border-rose-500/30', orange: 'border-orange-500/30' };
+    const borderColors = { 
+        cyan: 'border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.15)]', 
+        purple: 'border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.15)]', 
+        amber: 'border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)]', 
+        green: 'border-green-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)]', 
+        rose: 'border-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.15)]', 
+        orange: 'border-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.15)]' 
+    };
     const titleColors = { cyan: 'text-cyan-400', purple: 'text-purple-400', amber: 'text-amber-400', green: 'text-green-400', rose: 'text-rose-400', orange: 'text-orange-400' };
     return (
-        <div className={`bg-slate-800/40 border ${borderColors[color]} rounded-xl p-4 md:p-5`}>
+        <div className={`bg-[#0b0416]/50 backdrop-blur-xl border ${borderColors[color]} rounded-xl p-4 md:p-5`}>
             <h3 className={`font-bold text-base md:text-lg mb-3 ${titleColors[color]}`}>{title}</h3>
             {children}
         </div>

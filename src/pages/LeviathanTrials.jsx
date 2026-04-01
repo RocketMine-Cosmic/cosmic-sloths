@@ -70,8 +70,8 @@ export default function LeviathanTrials({ isCarousel }) {
                                     onClick={() => toggleModifier(mod.id)}
                                     className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
                                         isActive 
-                                        ? 'bg-red-950/60 backdrop-blur-md border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]' 
-                                        : 'bg-[#0b0416]/80 backdrop-blur-md border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.05)] hover:border-red-400/50'
+                                        ? 'bg-red-950/50 backdrop-blur-xl border-red-400 shadow-[0_0_40px_rgba(239,68,68,0.4)]' 
+                                        : 'bg-[#0b0416]/50 backdrop-blur-xl border-red-500/40 shadow-[0_0_25px_rgba(239,68,68,0.15)] hover:border-red-400/60'
                                     }`}
                                 >
                                     <div className={`p-3 rounded-lg bg-slate-950 border border-slate-800 ${isActive ? mod.color : 'text-slate-600'}`}>

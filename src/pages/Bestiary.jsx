@@ -145,11 +145,11 @@ export default function Bestiary({ isCarousel }) {
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     onClick={() => { SoundManager.playUIClick(); setSelectedEnemy(isSelected ? null : enemy); }}
-                                    className={`bg-[#0b0416]/80 backdrop-blur-md rounded-xl p-4 border flex flex-col cursor-pointer transition-all ${
+                                    className={`bg-[#0b0416]/60 backdrop-blur-xl rounded-xl p-4 border flex flex-col cursor-pointer transition-all ${
                                         !isEncountered ? 'opacity-40 grayscale border-slate-800' :
-                                        isMastered ? 'border-fuchsia-500 shadow-[0_0_30px_rgba(217,70,239,0.3)]' :
-                                        enemy.isBoss ? 'border-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.2)]' :
-                                        'border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.05)] hover:border-cyan-400/50'
+                                        isMastered ? 'border-fuchsia-400 shadow-[0_0_40px_rgba(217,70,239,0.4)]' :
+                                        enemy.isBoss ? 'border-rose-400/60 shadow-[0_0_30px_rgba(244,63,94,0.3)]' :
+                                        'border-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:border-cyan-300/60'
                                     }`}
                                 >
                                     <div className="flex items-start gap-3 mb-3">
