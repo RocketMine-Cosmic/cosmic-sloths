@@ -86,14 +86,7 @@ export class GameEngine {
         }
 
         this.arenaImage = null;
-        this.arenaLayers = [];
-        if (this.arena.layers) {
-            this.arena.layers.forEach(layer => {
-                const img = new Image();
-                img.src = layer.src;
-                this.arenaLayers.push({ img, speed: layer.speed });
-            });
-        } else if (this.arena.image) {
+        if (this.arena.image) {
             this.arenaImage = new Image();
             this.arenaImage.src = this.arena.image;
         }
@@ -209,7 +202,6 @@ export class GameEngine {
         this.shakeTimer = 0;
         this.hitStopTimer = 0;
         this.zoom = window.innerWidth < 768 ? 0.55 : 1;
-        this.targetZoom = this.zoom;
         this.bossModifiers = save.bossModifiers || {};
         this.worldBossDamage = 0;
         
@@ -253,19 +245,13 @@ export class GameEngine {
     bindEvents() {
         this.handleKeyDown = (e) => { this.keys[e.key.toLowerCase()] = true; };
         this.handleKeyUp = (e) => { this.keys[e.key.toLowerCase()] = false; };
-        this.handleWheel = (e) => {
-            const zoomAmount = e.deltaY > 0 ? -0.1 : 0.1;
-            this.targetZoom = Math.max(0.3, Math.min(2.5, this.targetZoom + zoomAmount));
-        };
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
-        window.addEventListener('wheel', this.handleWheel, { passive: true });
     }
 
     cleanup() {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
-        window.removeEventListener('wheel', this.handleWheel);
         cancelAnimationFrame(this.animationId);
     }
 
@@ -348,10 +334,7 @@ export class GameEngine {
             this.player.invincibleTimer -= dt;
         }
         
-        if (this.targetZoom !== undefined) {
-            this.zoom += (this.targetZoom - this.zoom) * dt * 10;
-        }
-
+        this.zoom = window.innerWidth < 768 ? 0.55 : 1;
         this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
         this.camera.y = this.player.y - (this.canvas.height / this.zoom) / 2;
 
@@ -1267,8 +1250,35 @@ export class GameEngine {
     }
 
     draw() {
-        this.ctx.fillStyle = this.arena.bg;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
+            // Cache the rendered background to avoid expensive scaling and blending every frame
+            if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
+                this.cachedArenaImage = document.createElement('canvas');
+                this.cachedArenaImage.width = this.canvas.width;
+                this.cachedArenaImage.height = this.canvas.height;
+                const oCtx = this.cachedArenaImage.getContext('2d');
+                
+                // Draw base color
+                oCtx.fillStyle = this.arena.bg;
+                oCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw scaled image with opacity
+                const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
+                const drawW = this.arenaImage.naturalWidth * scale;
+                const drawH = this.arenaImage.naturalHeight * scale;
+                const x = (this.canvas.width - drawW) / 2;
+                const y = (this.canvas.height - drawH) / 2;
+                
+                oCtx.globalAlpha = 0.9;
+                oCtx.drawImage(this.arenaImage, x, y, drawW, drawH);
+                oCtx.globalAlpha = 1.0;
+            }
+            // Draw the pre-rendered, screen-sized background (extremely fast)
+            this.ctx.drawImage(this.cachedArenaImage, 0, 0);
+        } else {
+            this.ctx.fillStyle = this.arena.bg;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
 
         this.ctx.fillStyle = '#ffffff';
         this.stars.forEach(star => {
@@ -1284,66 +1294,6 @@ export class GameEngine {
             this.ctx.fillRect(screenX, screenY, star.size, star.size);
         });
         this.ctx.globalAlpha = 1.0;
-
-        if (this.arenaLayers && this.arenaLayers.length > 0) {
-            const playerX = this.camera.x + (this.canvas.width / this.zoom) / 2;
-            const playerY = this.camera.y + (this.canvas.height / this.zoom) / 2;
-
-            this.arenaLayers.forEach(layer => {
-                if (layer.img.complete && layer.img.naturalWidth > 0) {
-                    const scale = Math.max(this.canvas.width / layer.img.naturalWidth, this.canvas.height / layer.img.naturalHeight);
-                    
-                    if (layer.isBackground) {
-                        const drawW = layer.img.naturalWidth * scale * (layer.scale || 1.1);
-                        const drawH = layer.img.naturalHeight * scale * (layer.scale || 1.1);
-                        
-                        const maxPanX = (drawW - this.canvas.width) / 2;
-                        const maxPanY = (drawH - this.canvas.height) / 2;
-                        
-                        const panX = Math.max(-maxPanX, Math.min(maxPanX, -playerX * layer.speed * this.zoom));
-                        const panY = Math.max(-maxPanY, Math.min(maxPanY, -playerY * layer.speed * this.zoom));
-                        
-                        const x = (this.canvas.width - drawW) / 2 + panX;
-                        const y = (this.canvas.height - drawH) / 2 + panY;
-                        
-                        this.ctx.globalAlpha = layer.alpha || 1.0;
-                        this.ctx.drawImage(layer.img, x, y, drawW, drawH);
-                        this.ctx.globalAlpha = 1.0;
-                    } else {
-                        const drawW = layer.img.naturalWidth * scale * (layer.scale || 1);
-                        const drawH = layer.img.naturalHeight * scale * (layer.scale || 1);
-                        
-                        const screenX = (this.canvas.width / 2) - (drawW / 2) - playerX * layer.speed * this.zoom;
-                        const screenY = (this.canvas.height / 2) - (drawH / 2) - playerY * layer.speed * this.zoom;
-
-                        this.ctx.globalAlpha = layer.alpha || 1.0;
-                        this.ctx.drawImage(layer.img, screenX, screenY, drawW, drawH);
-                        this.ctx.globalAlpha = 1.0;
-                    }
-                }
-            });
-        } else if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
-            // Cache the rendered background to avoid expensive scaling and blending every frame
-            if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
-                this.cachedArenaImage = document.createElement('canvas');
-                this.cachedArenaImage.width = this.canvas.width;
-                this.cachedArenaImage.height = this.canvas.height;
-                const oCtx = this.cachedArenaImage.getContext('2d');
-                
-                // Draw scaled image with opacity
-                const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
-                const drawW = this.arenaImage.naturalWidth * scale;
-                const drawH = this.arenaImage.naturalHeight * scale;
-                const x = (this.canvas.width - drawW) / 2;
-                const y = (this.canvas.height - drawH) / 2;
-                
-                oCtx.globalAlpha = 0.9;
-                oCtx.drawImage(this.arenaImage, x, y, drawW, drawH);
-                oCtx.globalAlpha = 1.0;
-            }
-            // Draw the pre-rendered, screen-sized background (extremely fast)
-            this.ctx.drawImage(this.cachedArenaImage, 0, 0);
-        }
 
         this.ctx.save();
         this.ctx.scale(this.zoom, this.zoom);
@@ -1648,17 +1598,15 @@ export class GameEngine {
                 drawEnemy(this.ctx, e, this.time, this.player.x);
                 
                 if (e.hp < e.maxHp) {
-                    const barW = (e.isBoss ? 60 : 20) / this.zoom;
-                    const barH = 4 / this.zoom;
-                    const yOff = 8 / this.zoom;
-                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOff, barW, barH);
-                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOff, barW * (e.hp / e.maxHp), barH);
+                    const barW = e.isBoss ? 60 : 20;
+                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW, 4);
+                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW * (e.hp / e.maxHp), 4);
                 }
                 if (e.isBoss && e.weakSide && e.weakDesc) {
                     this.ctx.fillStyle = '#ffdd00';
-                    this.ctx.font = `bold ${11 / this.zoom}px monospace`;
+                    this.ctx.font = 'bold 11px monospace';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 14 / this.zoom);
+                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 14);
                 }
             } else {
                 // Draw burrowed indicator
@@ -1738,9 +1686,8 @@ export class GameEngine {
         this.damageTexts.forEach(t => {
             this.ctx.globalAlpha = Math.max(0, t.life);
             this.ctx.strokeStyle = '#000000';
-            this.ctx.lineWidth = (t.isCrit ? 4 : 3) / this.zoom;
-            const fontSize = (t.isCrit ? 20 : 14) / this.zoom;
-            this.ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
+            this.ctx.lineWidth = t.isCrit ? 4 : 3;
+            this.ctx.font = t.isCrit ? 'bold 20px "Courier New", Courier, monospace' : 'bold 14px "Courier New", Courier, monospace';
             const displayY = t.isCrit ? t.y - 10 * (1 - t.life) : t.y;
             const textToDraw = t.text + (t.isCrit ? '!' : '');
             this.ctx.strokeText(textToDraw, t.x, displayY);
