@@ -327,7 +327,7 @@ export default function Game() {
 
     const handleReroll = () => {
         const currentSave = SaveManager.load();
-        const REROLL_COST = 10;
+        const REROLL_COST = 2;
         if ((currentSave.cosmicTokens || 0) >= REROLL_COST) {
             currentSave.cosmicTokens -= REROLL_COST;
             SaveManager.save(currentSave);
@@ -346,7 +346,7 @@ export default function Game() {
 
     const handleBanish = (choice) => {
         const currentSave = SaveManager.load();
-        const BANISH_COST = 5;
+        const BANISH_COST = 1;
         if ((currentSave.cosmicTokens || 0) >= BANISH_COST) {
             currentSave.cosmicTokens -= BANISH_COST;
             SaveManager.save(currentSave);
