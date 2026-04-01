@@ -271,8 +271,15 @@ export default function Leaderboard() {
                                                 {score.pilot_icon?.startsWith('http') ? <img src={score.pilot_icon} className="w-full h-full object-cover" alt="pilot" /> : (score.pilot_icon || '🦥')}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-bold text-white text-lg md:text-xl truncate">
-                                                    {score.player_name?.includes('@') ? score.player_name.split('@')[0] : score.player_name}
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <div className="font-bold text-white text-lg md:text-xl truncate">
+                                                        {score.player_name?.includes('@') ? score.player_name.split('@')[0] : score.player_name}
+                                                    </div>
+                                                    {score.player_title && (
+                                                        <span className="text-[10px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider font-bold truncate">
+                                                            {score.player_title}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 {arena && view !== 'endless' && (
                                                     <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5">

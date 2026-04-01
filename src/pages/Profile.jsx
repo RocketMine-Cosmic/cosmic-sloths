@@ -15,6 +15,8 @@ export default function Profile({ isCarousel }) {
     const [user, setUser] = useState(null);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState('');
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [newTitle, setNewTitle] = useState('');
     const [stats, setStats] = useState({
         highestScore: 0,
         totalKills: 0,
@@ -31,6 +33,7 @@ export default function Profile({ isCarousel }) {
                 setUser(me);
                 const displayName = me?.player_name || me?.data?.player_name || me?.data?.full_name || me?.full_name;
                 setNewName(displayName || '');
+                setNewTitle(me?.data?.player_title || '');
 
                 if (me) {
                     // Fetch Highest Score
@@ -94,6 +97,37 @@ export default function Profile({ isCarousel }) {
         } catch (e) {
             console.error(e);
         }
+    };
+
+    const handleSaveTitle = async (title) => {
+        const oldName = user?.player_name || user?.data?.player_name || user?.data?.full_name || user?.full_name;
+        const updatedTitle = title;
+        try {
+            await base44.auth.updateMe({ ...user?.data, player_title: updatedTitle });
+            setUser(prev => ({ ...prev, data: { ...prev?.data, player_title: updatedTitle } }));
+            setNewTitle(updatedTitle);
+            setIsEditingTitle(false);
+            
+            base44.functions.invoke('syncProfileName', { oldName, newName: oldName, newTitle: updatedTitle }).catch(console.error);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const getAvailableTitles = () => {
+        const t = [{ id: '', label: 'No Title' }];
+        t.push({ id: 'Novice Pilot', label: 'Novice Pilot' });
+        if (stats.totalKills >= 1000) t.push({ id: 'Vanguard', label: 'Vanguard' });
+        if (stats.totalKills >= 10000) t.push({ id: 'Void Walker', label: 'Void Walker' });
+        if (stats.highestScore >= 50000) t.push({ id: 'Top Survivor', label: 'Top Survivor' });
+        if (stats.highestScore >= 100000) t.push({ id: 'Cosmic Legend', label: 'Cosmic Legend' });
+        
+        const currentSave = SaveManager.load();
+        if (currentSave.gold >= 10000 || currentSave.totalGoldEarned >= 100000) t.push({ id: 'Gold Hoarder', label: 'Gold Hoarder' });
+        if (currentSave.maxLevelReached >= 20) t.push({ id: 'Ascendant', label: 'Ascendant' });
+        if (currentSave.unlockedCharacters && currentSave.unlockedCharacters.length >= 5) t.push({ id: 'Commander', label: 'Commander' });
+        
+        return t;
     };
 
     if (loading) {
@@ -184,6 +218,35 @@ export default function Profile({ isCarousel }) {
                                         </button>
                                     </div>
                                 )}
+                                <div className="mt-2 flex items-center gap-2">
+                                    {isEditingTitle ? (
+                                        <div className="flex items-center gap-2">
+                                            <select 
+                                                value={newTitle}
+                                                onChange={(e) => handleSaveTitle(e.target.value)}
+                                                className="bg-slate-900 border border-amber-500/50 text-amber-300 rounded px-2 py-1 text-xs outline-none focus:border-amber-400"
+                                            >
+                                                {getAvailableTitles().map(t => (
+                                                    <option key={t.id} value={t.id}>{t.label}</option>
+                                                ))}
+                                            </select>
+                                            <button onClick={() => setIsEditingTitle(false)} className="text-slate-400 hover:text-white p-1">
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditingTitle(true)}>
+                                            {user?.data?.player_title ? (
+                                                <span className="text-[10px] bg-slate-900/80 text-amber-300 px-2 py-0.5 rounded border border-amber-900/50 tracking-wider font-bold">
+                                                    {user.data.player_title}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] text-slate-500 italic">No Title Equipped</span>
+                                            )}
+                                            <Pencil size={12} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="text-center md:text-right">

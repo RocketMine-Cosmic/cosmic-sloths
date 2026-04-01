@@ -183,6 +183,7 @@ export default function Squads({ isCarousel }) {
                 squad_id: squad.id,
                 user_id: user.id,
                 player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+                player_title: user.data?.player_title || '',
                 role: 'leader',
                 last_payout_week: ''
             });
@@ -209,6 +210,7 @@ export default function Squads({ isCarousel }) {
                 squad_id: squadId,
                 user_id: user.id,
                 player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+                player_title: user.data?.player_title || '',
                 role: 'member',
                 last_payout_week: ''
             });
@@ -271,6 +273,7 @@ export default function Squads({ isCarousel }) {
             squad_id: mySquad.id,
             user_id: user.id,
             player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+            player_title: user.data?.player_title || '',
             content: content,
             created_date: new Date().toISOString()
         };
@@ -281,6 +284,7 @@ export default function Squads({ isCarousel }) {
                 squad_id: mySquad.id,
                 user_id: user.id,
                 player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+                player_title: user.data?.player_title || '',
                 content: content
             });
             // Replace optimistic message with real one
@@ -700,8 +704,9 @@ export default function Squads({ isCarousel }) {
                                                                 ? 'bg-cyan-900/50 text-white border border-cyan-800' 
                                                                 : 'bg-slate-800 text-slate-200 border border-slate-700'
                                                         }`}>
-                                                            <div className="text-[10px] font-bold opacity-50 mb-0.5">
+                                                            <div className="text-[10px] font-bold opacity-50 mb-0.5 flex items-center gap-1">
                                                                 {msg.player_name}
+                                                                {msg.player_title && <span className="px-1 bg-slate-900/50 rounded text-[8px] tracking-wider text-amber-300">{msg.player_title}</span>}
                                                             </div>
                                                             <div className="text-sm break-words">
                                                                 {msg.content}
@@ -743,6 +748,7 @@ export default function Squads({ isCarousel }) {
                                                     <div className="font-bold text-white flex items-center gap-2">
                                                         {member.role === 'leader' && <Crown className="w-3 h-3 text-yellow-400" />}
                                                         {member.player_name}
+                                                        {member.player_title && <span className="text-[9px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider">{member.player_title}</span>}
                                                         {member.user_id === user.id && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 rounded">YOU</span>}
                                                     </div>
                                                     <div className="text-xs text-slate-400 capitalize">{member.role}</div>

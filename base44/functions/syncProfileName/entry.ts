@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { oldName, newName } = await req.json();
+        const { oldName, newName, newTitle } = await req.json();
         
         if (!newName) {
              return Response.json({ error: 'newName required' }, { status: 400 });
@@ -23,9 +23,10 @@ Deno.serve(async (req) => {
         [...runScoresById, ...runScoresByEmail].forEach(s => allRunScores.set(s.id, s));
         
         for (const score of allRunScores.values()) {
-            if (score.player_name !== newName) {
+            if (score.player_name !== newName || (newTitle !== undefined && score.player_title !== newTitle)) {
                 await base44.asServiceRole.entities.RunScore.update(score.id, { 
                     player_name: newName,
+                    player_title: newTitle !== undefined ? newTitle : score.player_title,
                     user_id: score.user_id || user.id, // Ensure required fields are not dropped from old records
                     score: score.score || 0,
                     week_id: score.week_id || 'unknown',
@@ -50,9 +51,10 @@ Deno.serve(async (req) => {
         // Update SquadMember (match by user_id)
         const members = await base44.asServiceRole.entities.SquadMember.filter({ user_id: user.id });
         for (const member of members) {
-            if (member.player_name !== newName) {
+            if (member.player_name !== newName || (newTitle !== undefined && member.player_title !== newTitle)) {
                 await base44.asServiceRole.entities.SquadMember.update(member.id, { 
                     player_name: newName,
+                    player_title: newTitle !== undefined ? newTitle : member.player_title,
                     squad_id: member.squad_id || 'unknown',
                     user_id: member.user_id || user.id
                 });
@@ -62,9 +64,10 @@ Deno.serve(async (req) => {
         // Update SquadMessage (match by user_id)
         const messages = await base44.asServiceRole.entities.SquadMessage.filter({ user_id: user.id });
         for (const msg of messages) {
-            if (msg.player_name !== newName) {
+            if (msg.player_name !== newName || (newTitle !== undefined && msg.player_title !== newTitle)) {
                 await base44.asServiceRole.entities.SquadMessage.update(msg.id, { 
                     player_name: newName,
+                    player_title: newTitle !== undefined ? newTitle : msg.player_title,
                     squad_id: msg.squad_id || 'unknown',
                     user_id: msg.user_id || user.id,
                     content: msg.content || ''

@@ -10,6 +10,10 @@
       "type": "string",
       "description": "Name of the player"
     },
+    "player_title": {
+      "type": "string",
+      "description": "Player's chosen title"
+    },
     "pilot_icon": {
       "type": "string",
       "description": "Emoji icon chosen by the player"

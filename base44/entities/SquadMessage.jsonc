@@ -11,6 +11,9 @@
     "player_name": {
       "type": "string"
     },
+    "player_title": {
+      "type": "string"
+    },
     "content": {
       "type": "string"
     }

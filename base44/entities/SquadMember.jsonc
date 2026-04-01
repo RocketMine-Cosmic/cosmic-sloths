@@ -11,6 +11,9 @@
     "player_name": {
       "type": "string"
     },
+    "player_title": {
+      "type": "string"
+    },
     "role": {
       "type": "string",
       "enum": [
@@ -29,9 +32,6 @@
     "player_name"
   ],
   "rls": {
-    "create": {
-      "data.user_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
@@ -60,6 +60,18 @@
       ]
     },
     "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
       "$or": [
         {
           "data.user_id": "{{user.id}}"
