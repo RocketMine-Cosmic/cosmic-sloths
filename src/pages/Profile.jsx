@@ -46,8 +46,12 @@ export default function Profile({ isCarousel }) {
                     // Fetch Squad Affiliation
                     const memberships = await base44.entities.SquadMember.filter({ user_id: me.id });
                     if (memberships.length > 0) {
-                        const mySquad = await base44.entities.Squad.get(memberships[0].squad_id);
-                        setSquad(mySquad);
+                        try {
+                            const mySquad = await base44.entities.Squad.get(memberships[0].squad_id);
+                            setSquad(mySquad);
+                        } catch (err) {
+                            console.error('Failed to fetch squad, might be deleted', err);
+                        }
                     }
 
                     // Fetch Rewards History
@@ -211,7 +215,9 @@ export default function Profile({ isCarousel }) {
                             </h2>
                             {squad ? (
                                 <div className="bg-slate-800/50 rounded-xl p-5 border border-orange-500/30 text-center">
-                                    <div className="text-4xl mb-3">{squad.icon || '🛡️'}</div>
+                                    <div className="text-4xl mb-3 h-12 flex items-center justify-center">
+                                        {(squad.icon || '🛡️').startsWith('http') ? <img src={squad.icon} className="h-full aspect-square rounded-md object-cover" alt="squad" /> : (squad.icon || '🛡️')}
+                                    </div>
                                     <h3 className="text-2xl font-bold text-white mb-1">{squad.name}</h3>
                                     <div className="text-sm font-bold text-orange-400 bg-orange-950/50 px-2 py-1 rounded inline-block border border-orange-900 mb-3">
                                         [{squad.tag}]
