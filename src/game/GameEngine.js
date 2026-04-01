@@ -1013,14 +1013,10 @@ export class GameEngine {
                     let extraGold = 0;
                     if (this.bossModifiers.fury) extraGold += 50;
                     if (this.bossModifiers.unstoppable) extraGold += 150;
+                    if (this.bossModifiers.regen) extraGold += 100;
 
                     if (extraGold > 0) {
                         this.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: extraGold, color: '#ffd700' });
-                    }
-
-                    if (this.bossModifiers.regen) {
-                        if (this.callbacks.onTokenFound) this.callbacks.onTokenFound();
-                        this.addDamageText(e.x, e.y - 40, `+1 Cosmic Token!`, '#00ffcc');
                     }
 
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
