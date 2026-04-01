@@ -770,7 +770,7 @@ export default function Squads({ isCarousel }) {
                             ) : (
                                 <div className="flex-1 overflow-y-auto p-4">
                                     <form onSubmit={handleSaveSettings} className="space-y-4">
-                                        <div>
+                                        <div className="relative z-20">
                                             <label className="block text-xs font-bold text-slate-400 mb-1">Squad Icon</label>
                                             <div className="relative">
                                                 <button
