@@ -1010,10 +1010,10 @@ export class GameEngine {
                     const rerollReward = 1 + (this.bossModifiers.frenzy ? 1 : 0);
                     this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: rerollReward, color: '#ff00ff' });
                     
-                    let extraGold = 0;
-                    if (this.bossModifiers.fury) extraGold += 50;
-                    if (this.bossModifiers.unstoppable) extraGold += 150;
-                    if (this.bossModifiers.regen) extraGold += 100;
+                    let extraGold = 1000; // Base boss gold
+                    if (this.bossModifiers.fury) extraGold += 500;
+                    if (this.bossModifiers.unstoppable) extraGold += 1000;
+                    if (this.bossModifiers.regen) extraGold += 800;
 
                     if (extraGold > 0) {
                         this.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: extraGold, color: '#ffd700' });
