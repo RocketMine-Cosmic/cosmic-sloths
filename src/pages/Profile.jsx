@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift } from 'lucide-react';
+import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import moment from 'moment';
@@ -19,6 +20,7 @@ export default function Profile({ isCarousel }) {
     const [squad, setSquad] = useState(null);
     const [rewardsHistory, setRewardsHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showIconPicker, setShowIconPicker] = useState(false);
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -59,6 +61,15 @@ export default function Profile({ isCarousel }) {
         };
         fetchProfileData();
     }, []);
+
+    const handleSaveIcon = async (icon) => {
+        try {
+            await base44.auth.updateMe({ pilot_icon: icon });
+            setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const handleSaveName = async () => {
         if (!newName.trim()) return;
@@ -105,8 +116,25 @@ export default function Profile({ isCarousel }) {
                     {/* Header / Name Edit */}
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-500 flex items-center justify-center text-2xl">
-                                🦥
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowIconPicker(v => !v)}
+                                    className="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-500 flex items-center justify-center text-2xl hover:border-cyan-300 transition-colors"
+                                    title="Change pilot icon"
+                                >
+                                    {user?.data?.pilot_icon || user?.pilot_icon || '🦥'}
+                                </button>
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-cyan-600 rounded-full flex items-center justify-center pointer-events-none">
+                                    <Pencil size={10} className="text-white" />
+                                </div>
+                                {showIconPicker && (
+                                    <EmojiPicker
+                                        options={PILOT_ICONS}
+                                        selected={user?.data?.pilot_icon || user?.pilot_icon || '🦥'}
+                                        onSelect={handleSaveIcon}
+                                        onClose={() => setShowIconPicker(false)}
+                                    />
+                                )}
                             </div>
                             <div>
                                 <h1 className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-1">Pilot Identity</h1>
@@ -178,7 +206,7 @@ export default function Profile({ isCarousel }) {
                             </h2>
                             {squad ? (
                                 <div className="bg-slate-800/50 rounded-xl p-5 border border-orange-500/30 text-center">
-                                    <div className="text-4xl mb-3">🛡️</div>
+                                    <div className="text-4xl mb-3">{squad.icon || '🛡️'}</div>
                                     <h3 className="text-2xl font-bold text-white mb-1">{squad.name}</h3>
                                     <div className="text-sm font-bold text-orange-400 bg-orange-950/50 px-2 py-1 rounded inline-block border border-orange-900 mb-3">
                                         [{squad.tag}]

@@ -124,9 +124,11 @@ export default function Game() {
                     ? rawExisting 
                     : rawExisting.filter(e => e.arena_id !== 'endless');
 
+                const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
                 const scoreData = {
                     user_id: user.id,
                     player_name: displayName,
+                    pilot_icon: pilotIcon,
                     score,
                     time_survived: stats.time,
                     level: stats.level,

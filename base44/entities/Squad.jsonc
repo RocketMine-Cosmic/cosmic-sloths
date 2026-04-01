@@ -14,6 +14,10 @@
     "owner_id": {
       "type": "string"
     },
+    "icon": {
+      "type": "string",
+      "description": "Squad emoji icon"
+    },
     "weekly_kills": {
       "type": "number",
       "default": 0
@@ -39,9 +43,6 @@
     "tag"
   ],
   "rls": {
-    "create": {
-      "data.owner_id": "{{user.id}}"
-    },
     "read": {},
     "update": {
       "$or": [
@@ -56,6 +57,18 @@
       ]
     },
     "delete": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
       "$or": [
         {
           "data.owner_id": "{{user.id}}"

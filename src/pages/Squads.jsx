@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX } from 'lucide-react';
+import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { useToast } from "@/components/ui/use-toast";
@@ -56,7 +57,9 @@ export default function Squads({ isCarousel }) {
     const [editName, setEditName] = useState('');
     const [editTag, setEditTag] = useState('');
     const [editDesc, setEditDesc] = useState('');
+    const [editIcon, setEditIcon] = useState('🛡️');
     const [isSavingSettings, setIsSavingSettings] = useState(false);
+    const [showSquadIconPicker, setShowSquadIconPicker] = useState(false);
 
     const getCurrentWeek = () => moment().format('YYYY-[W]ww');
 
@@ -108,6 +111,7 @@ export default function Squads({ isCarousel }) {
             setEditName(mySquad.name || '');
             setEditTag(mySquad.tag || '');
             setEditDesc(mySquad.description || '');
+            setEditIcon(mySquad.icon || '🛡️');
         }
     }, [mySquad]);
 
@@ -343,7 +347,8 @@ export default function Squads({ isCarousel }) {
             const updated = await base44.entities.Squad.update(mySquad.id, {
                 name: editName.trim(),
                 tag: editTag.trim().toUpperCase().substring(0, 4),
-                description: editDesc.trim()
+                description: editDesc.trim(),
+                icon: editIcon
             });
             setMySquad(updated);
             toast({ title: "Settings Saved", description: "Squad info has been updated." });
@@ -474,7 +479,7 @@ export default function Squads({ isCarousel }) {
                                             >
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-lg">{lvl.badge}</span>
+                                                        <span className="text-lg">{squad.icon || lvl.badge}</span>
                                                         <span className="font-bold text-white text-lg">{squad.name}</span>
                                                         <span className="px-1.5 py-0.5 rounded text-xs border bg-slate-900"
                                                             style={{ color: lvl.borderColor, borderColor: lvl.borderColor + '60' }}
@@ -528,7 +533,7 @@ export default function Squads({ isCarousel }) {
                                 <div className="md:hidden bg-slate-900 rounded-xl p-3 shrink-0" style={{ border: `2px solid ${lvlData.borderColor}`, boxShadow: `0 0 12px ${lvlData.glowColor}` }}>
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <span className="text-xl shrink-0">{lvlData.badge}</span>
+                                            <span className="text-xl shrink-0">{mySquad.icon || lvlData.badge}</span>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                     <span className="font-bold text-white text-sm truncate">{mySquad.name}</span>
@@ -568,7 +573,7 @@ export default function Squads({ isCarousel }) {
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-2xl">{lvlData.badge}</span>
+                                                    <span className="text-2xl">{mySquad.icon || lvlData.badge}</span>
                                                     <h2 className="text-xl font-bold text-white">{mySquad.name}</h2>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -757,6 +762,26 @@ export default function Squads({ isCarousel }) {
                             ) : (
                                 <div className="flex-1 overflow-y-auto p-4">
                                     <form onSubmit={handleSaveSettings} className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-400 mb-1">Squad Icon</label>
+                                            <div className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowSquadIconPicker(v => !v)}
+                                                    className="w-14 h-14 bg-slate-800 border border-slate-700 hover:border-orange-500 rounded-xl text-3xl flex items-center justify-center transition-colors"
+                                                >
+                                                    {editIcon}
+                                                </button>
+                                                {showSquadIconPicker && (
+                                                    <EmojiPicker
+                                                        options={SQUAD_ICONS}
+                                                        selected={editIcon}
+                                                        onSelect={setEditIcon}
+                                                        onClose={() => setShowSquadIconPicker(false)}
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
                                         <div>
                                             <label className="block text-xs font-bold text-slate-400 mb-1">Squad Name</label>
                                             <input

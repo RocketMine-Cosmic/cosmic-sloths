@@ -10,6 +10,10 @@
       "type": "string",
       "description": "Name of the player"
     },
+    "pilot_icon": {
+      "type": "string",
+      "description": "Emoji icon chosen by the player"
+    },
     "score": {
       "type": "number",
       "description": "Calculated score for the run"
