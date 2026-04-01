@@ -50,7 +50,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 <img 
                     src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/431c29f41_CosmicF.png" 
                     alt="Cosmic Sloths" 
-                    className="w-[80%] md:w-[60%] max-w-[700px] h-auto object-contain drop-shadow-[0_0_30px_rgba(217,70,239,0.6)]"
+                    className="w-[90%] md:w-[75%] max-w-[900px] h-auto object-contain drop-shadow-[0_0_30px_rgba(217,70,239,0.6)]"
                 />
             </motion.div>
 
