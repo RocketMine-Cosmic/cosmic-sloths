@@ -164,53 +164,46 @@ export default function GlobalRaid({ isCarousel }) {
                             )}
                         </div>
                         
-                        <p className="text-slate-400 text-xs md:text-sm mb-4">
+                        <p className="text-slate-400 text-xs md:text-sm mb-2 hidden md:block">
                             Work together with the community to drain the boss's health. The boss levels up each time it dies, granting increasing Gold rewards for every level defeated!
                         </p>
                         
                         {worldBossData ? (
-                            <div className="bg-slate-950 p-3 md:p-6 rounded-xl border border-red-900 mb-3 md:mb-4 relative overflow-hidden">
+                            <div className="bg-slate-950 p-2 md:p-6 rounded-xl border border-red-900 mb-3 md:mb-4 relative overflow-hidden">
                                 <div className="absolute right-0 top-0 opacity-10 text-7xl md:text-9xl transform translate-x-1/4 -translate-y-1/4">👹</div>
                                 <div className="relative z-10 flex flex-row gap-3 md:gap-8 items-center w-full">
-                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-20 h-20 md:w-48 md:h-48">
+                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-16 h-16 md:w-48 md:h-48">
                                         <BossPreview bossId={worldBossData.boss_id} />
                                     </div>
                                     <div className="flex-1 w-full text-left">
-                                        <h4 className="text-xl md:text-2xl font-bold text-white mb-1">{worldBossData.name}</h4>
-                                        <div className="text-red-400 text-xs md:text-sm mb-3 font-mono font-bold">
+                                        <h4 className="text-lg md:text-2xl font-bold text-white mb-1">{worldBossData.name}</h4>
+                                        <div className="text-red-400 text-[10px] md:text-sm mb-1.5 font-mono font-bold">
                                             LVL {worldBossData.level || 1} &nbsp;|&nbsp; HP: {worldBossData.current_hp.toLocaleString()} / {worldBossData.max_hp.toLocaleString()}
                                         </div>
                                         
-                                        <div className="w-full bg-slate-800 h-3 md:h-4 rounded-full overflow-hidden mb-4 border border-slate-700">
+                                        <div className="w-full bg-slate-800 h-2 md:h-4 rounded-full overflow-hidden mb-1 border border-slate-700">
                                             <div 
                                                 className="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all duration-1000"
                                                 style={{ width: `${Math.max(0, (worldBossData.current_hp / worldBossData.max_hp) * 100)}%` }}
                                             ></div>
                                         </div>
                                         
-                                        <div className="mt-4 border-t border-slate-800 pt-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-slate-400 text-xs md:text-sm">
-                                                    Your Contribution: <span className="text-yellow-400 font-mono font-bold">{(worldBossContribution?.damage || 0).toLocaleString()}</span>
-                                                </span>
-                                                {!worldBossData.is_defeated && <span className="text-red-400 font-bold text-xs animate-pulse">BOSS IS ACTIVE</span>}
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                {Array.from({length: (worldBossData.level || 1)}).map((_, i) => {
-                                                    const lvl = i + 1;
-                                                    const isReached = lvl < (worldBossData.level || 1);
-                                                    const isClaimed = (worldBossContribution?.claimed_milestones || []).includes(lvl);
-                                                    const canClaim = isReached && worldBossContribution && !isClaimed;
-                                                    const reward = lvl * 1000;
-                                                    
-                                                    return (
-                                                        <div key={lvl} className={`p-2 rounded-lg border ${isReached ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/50'} flex flex-col items-center justify-center text-center gap-1`}>
-                                                            <div className="text-xs font-bold text-slate-300">Level {lvl}</div>
-                                                            <div className="text-yellow-400 text-xs font-mono mb-1">{reward.toLocaleString()} Gold</div>
-                                                            {isClaimed ? (
-                                                                <span className="text-emerald-500 text-[10px] font-bold uppercase">Claimed ✓</span>
-                                                            ) : canClaim ? (
+                                        {(() => {
+                                            const unclaimedLevels = Array.from({length: (worldBossData.level || 1)}).map((_, i) => i + 1).filter(lvl => {
+                                                const isReached = lvl < (worldBossData.level || 1);
+                                                const isClaimed = (worldBossContribution?.claimed_milestones || []).includes(lvl);
+                                                return isReached && worldBossContribution && !isClaimed;
+                                            });
+
+                                            if (unclaimedLevels.length === 0) return null;
+
+                                            return (
+                                                <div className="mt-2 border-t border-slate-800 pt-2">
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                        {unclaimedLevels.map(lvl => (
+                                                            <div key={lvl} className="p-2 rounded-lg border border-emerald-500/50 bg-emerald-950/20 flex flex-col items-center justify-center text-center gap-1">
+                                                                <div className="text-xs font-bold text-slate-300">Level {lvl}</div>
+                                                                <div className="text-yellow-400 text-xs font-mono mb-1">{lvl * 1000} Gold</div>
                                                                 <button 
                                                                     onClick={() => handleClaimBossReward(lvl)}
                                                                     disabled={claimingReward === lvl}
@@ -218,14 +211,12 @@ export default function GlobalRaid({ isCarousel }) {
                                                                 >
                                                                     {claimingReward === lvl ? '...' : 'CLAIM'}
                                                                 </button>
-                                                            ) : (
-                                                                <span className="text-slate-600 text-[10px] uppercase font-bold">{isReached ? 'No Contrib' : 'In Progress'}</span>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
