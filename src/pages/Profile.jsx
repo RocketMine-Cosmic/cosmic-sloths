@@ -104,30 +104,38 @@ export default function Profile({ isCarousel }) {
     }
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-4 md:p-8 font-sans`}>
+        <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-2 md:p-6 font-sans overflow-hidden`}>
             {!isCarousel && <SpaceBackground />}
-            <div className="max-w-4xl mx-auto relative z-10">
-                {!isCarousel && (
-                    <button 
-                        onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
-                        className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors font-bold"
-                    >
-                        <ArrowLeft size={20} /> Back to Main Menu
-                    </button>
-                )}
+            <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0 relative z-10">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
+                    <div>
+                        {!isCarousel && (
+                            <button 
+                                onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
+                                className="mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
+                            >
+                                <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
+                            </button>
+                        )}
+                        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #0CA7B8, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(6,182,212,0.5))' }}>
+                            PILOT PROFILE
+                        </h1>
+                        <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">View your career and statistics.</p>
+                    </div>
+                </header>
 
                 <motion.div 
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="space-y-6"
+                    className="space-y-4 md:space-y-6 flex-1 overflow-y-auto pr-1 pb-10"
                 >
                     {/* Header / Name Edit */}
-                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-6 md:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="relative">
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl md:rounded-2xl p-4 md:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+                        <div className="flex items-center gap-3 md:gap-4">
+                            <div className="relative shrink-0">
                                 <button
                                     onClick={() => setShowIconPicker(v => !v)}
-                                    className="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-500 flex items-center justify-center text-2xl hover:border-cyan-300 transition-colors overflow-hidden"
+                                    className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-slate-800 border-2 border-cyan-500 flex items-center justify-center text-xl md:text-2xl hover:border-cyan-300 transition-colors overflow-hidden"
                                     title="Change pilot icon"
                                 >
                                     {(() => {
@@ -150,12 +158,12 @@ export default function Profile({ isCarousel }) {
                             <div>
                                 <h1 className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-1">Pilot Identity</h1>
                                 {isEditingName ? (
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5 md:gap-2">
                                         <input 
                                             type="text" 
                                             value={newName} 
                                             onChange={(e) => setNewName(e.target.value)}
-                                            className="bg-slate-950 text-white px-3 py-1.5 rounded-lg border border-cyan-500 outline-none text-xl w-48 md:w-64 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                                            className="bg-slate-950 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-cyan-500 outline-none text-base md:text-xl w-40 md:w-64 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)]"
                                             autoFocus
                                             onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                                         />
@@ -182,14 +190,14 @@ export default function Profile({ isCarousel }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         {/* Career Stats */}
-                        <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(6,182,212,0.15)] flex flex-col justify-center">
-                            <h2 className="text-xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
+                        <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_30px_rgba(6,182,212,0.15)] flex flex-col justify-center">
+                            <h2 className="text-lg md:text-xl font-bold text-cyan-400 mb-4 md:mb-6 flex items-center gap-2">
                                 <Trophy className="w-5 h-5" /> Career Highlights
                             </h2>
-                            <div className="space-y-6">
-                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-center gap-4">
+                            <div className="space-y-3 md:space-y-6">
+                                <div className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-slate-700/50 flex items-center gap-3 md:gap-4">
                                     <div className="p-3 bg-orange-900/30 rounded-lg text-orange-400 border border-orange-500/30">
                                         <Crosshair className="w-6 h-6" />
                                     </div>
@@ -198,33 +206,33 @@ export default function Profile({ isCarousel }) {
                                         <div className="text-2xl font-mono font-bold text-white">{stats.totalKills.toLocaleString()}</div>
                                     </div>
                                 </div>
-                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-center gap-4">
+                                <div className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-slate-700/50 flex items-center gap-3 md:gap-4">
                                     <div className="p-3 bg-cyan-900/30 rounded-lg text-cyan-400 border border-cyan-500/30">
                                         <Trophy className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <div className="text-sm text-slate-400 font-bold mb-1">Highest Score</div>
-                                        <div className="text-2xl font-mono font-bold text-white">{stats.highestScore.toLocaleString()}</div>
+                                        <div className="text-xs md:text-sm text-slate-400 font-bold mb-0.5 md:mb-1">Highest Score</div>
+                                        <div className="text-xl md:text-2xl font-mono font-bold text-white">{stats.highestScore.toLocaleString()}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Squad Affiliation */}
-                        <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(249,115,22,0.15)]">
-                            <h2 className="text-xl font-bold text-orange-400 mb-6 flex items-center gap-2">
+                        <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-orange-500/30 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_30px_rgba(249,115,22,0.15)]">
+                            <h2 className="text-lg md:text-xl font-bold text-orange-400 mb-4 md:mb-6 flex items-center gap-2">
                                 <Users className="w-5 h-5" /> Squad Affiliation
                             </h2>
                             {squad ? (
-                                <div className="bg-slate-800/50 rounded-xl p-5 border border-orange-500/30 text-center">
-                                    <div className="text-4xl mb-3 h-12 flex items-center justify-center">
+                                <div className="bg-slate-800/50 rounded-xl p-4 md:p-5 border border-orange-500/30 text-center">
+                                    <div className="text-3xl md:text-4xl mb-2 md:mb-3 h-10 md:h-12 flex items-center justify-center">
                                         {(squad.icon || '🛡️').startsWith('http') ? <img src={squad.icon} className="h-full aspect-square rounded-md object-cover" alt="squad" /> : (squad.icon || '🛡️')}
                                     </div>
-                                    <h3 className="text-2xl font-bold text-white mb-1">{squad.name}</h3>
-                                    <div className="text-sm font-bold text-orange-400 bg-orange-950/50 px-2 py-1 rounded inline-block border border-orange-900 mb-3">
+                                    <h3 className="text-xl md:text-2xl font-bold text-white mb-1">{squad.name}</h3>
+                                    <div className="text-xs md:text-sm font-bold text-orange-400 bg-orange-950/50 px-2 py-1 rounded inline-block border border-orange-900 mb-2 md:mb-3">
                                         [{squad.tag}]
                                     </div>
-                                    <p className="text-slate-400 text-sm mb-4">{squad.description}</p>
+                                    <p className="text-slate-400 text-xs md:text-sm mb-3 md:mb-4">{squad.description}</p>
                                     <button 
                                         onClick={() => { SoundManager.playUIClick(); navigate('/squads'); }}
                                         className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors w-full"
@@ -233,9 +241,9 @@ export default function Profile({ isCarousel }) {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 text-center h-[240px] flex flex-col items-center justify-center">
-                                    <Users className="w-12 h-12 text-slate-600 mb-3" />
-                                    <div className="text-slate-400 mb-4">You are not currently in a squad.</div>
+                                <div className="bg-slate-800/30 rounded-xl p-4 md:p-6 border border-slate-700/50 text-center h-[180px] md:h-[240px] flex flex-col items-center justify-center">
+                                    <Users className="w-10 h-10 md:w-12 md:h-12 text-slate-600 mb-2 md:mb-3" />
+                                    <div className="text-xs md:text-sm text-slate-400 mb-3 md:mb-4">You are not currently in a squad.</div>
                                     <button 
                                         onClick={() => { SoundManager.playUIClick(); navigate('/squads'); }}
                                         className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
@@ -248,17 +256,17 @@ export default function Profile({ isCarousel }) {
                     </div>
 
                     {/* Rewards History */}
-                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
-                        <h2 className="text-xl font-bold text-emerald-400 mb-6 flex items-center gap-2">
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-emerald-500/30 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+                        <h2 className="text-lg md:text-xl font-bold text-emerald-400 mb-4 md:mb-6 flex items-center gap-2">
                             <Gift className="w-5 h-5" /> Rewards History
                         </h2>
                         
                         {rewardsHistory.length === 0 ? (
-                            <div className="text-center text-slate-500 py-8 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                            <div className="text-center text-sm md:text-base text-slate-500 py-6 md:py-8 bg-slate-800/30 rounded-xl border border-slate-700/50">
                                 No rewards claimed yet. Compete on the leaderboards to earn Cosmic Tokens!
                             </div>
                         ) : (
-                            <div className="grid gap-3 max-h-[300px] overflow-y-auto pr-2">
+                            <div className="grid gap-2 md:gap-3 max-h-[200px] md:max-h-[300px] overflow-y-auto pr-2">
                                 {rewardsHistory.map((reward) => (
                                     <div key={reward.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
                                         <div>
