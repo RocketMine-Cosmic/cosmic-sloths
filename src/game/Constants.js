@@ -41,6 +41,9 @@ export const WEAPONS = {
   burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 8, baseCooldown: 180, baseArea: 1.5, isSynergy: true },
   laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 30, baseCooldown: 150, baseArea: 1.2, isSynergy: true },
   thornySwarm: { id: 'thornySwarm', name: 'Plasma Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting drones armed with plasma whips.', baseDamage: 12, baseCooldown: 90, baseArea: 1.5, isSynergy: true },
+  orbitalLasers: { id: 'orbitalLasers', name: 'Orbital Lasers', type: 'weapon', desc: 'SYNERGY: Drones that rapidly fire piercing beams.', baseDamage: 15, baseCooldown: 60, baseArea: 1.2, isSynergy: true },
+  seismicWhip: { id: 'seismicWhip', name: 'Seismic Whip', type: 'weapon', desc: 'SYNERGY: Whip strikes generate expanding shockwaves.', baseDamage: 25, baseCooldown: 40, baseArea: 1.5, isSynergy: true },
+  flamingLash: { id: 'flamingLash', name: 'Flaming Lash', type: 'weapon', desc: 'SYNERGY: A molten whip that leaves persistent fire.', baseDamage: 20, baseCooldown: 40, baseArea: 1.5, isSynergy: true },
   supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 40, baseCooldown: 40, baseArea: 2, isEvolution: true },
   vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals massively and covers screen.', baseDamage: 30, baseCooldown: 30, baseArea: 3, isEvolution: true },
   orbitalDefense: { id: 'orbitalDefense', name: 'Orbital Defense Network', type: 'weapon', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.', baseDamage: 20, baseCooldown: 60, baseArea: 2, isEvolution: true },
@@ -69,7 +72,10 @@ export const DAILY_MISSIONS_POOL = [
 export const SYNERGIES = [
   { weapon1: 'napalm', weapon2: 'shieldBubble', result: 'burningBarrier' },
   { weapon1: 'napBeam', weapon2: 'novaPulse', result: 'laserNova' },
-  { weapon1: 'vineWhip', weapon2: 'slothSwarm', result: 'thornySwarm' }
+  { weapon1: 'vineWhip', weapon2: 'slothSwarm', result: 'thornySwarm' },
+  { weapon1: 'napBeam', weapon2: 'slothSwarm', result: 'orbitalLasers' },
+  { weapon1: 'vineWhip', weapon2: 'novaPulse', result: 'seismicWhip' },
+  { weapon1: 'napalm', weapon2: 'vineWhip', result: 'flamingLash' }
 ];
 
 export const EVOLUTIONS = [
