@@ -139,21 +139,21 @@ export default function GlobalRaid({ isCarousel }) {
                 </header>
 
                 <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto pt-2 md:pt-4 pb-12">
-                    <div className="flex justify-center gap-2 mb-4 w-full max-w-2xl shrink-0">
-                        <button onClick={() => { SoundManager.playUIClick(); setActiveTab('raid'); }} className={`flex-1 px-4 py-3 font-bold uppercase tracking-widest text-xs md:text-sm rounded-lg border transition-all ${activeTab === 'raid' ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                    <div className="flex justify-center gap-2 mb-2 md:mb-4 w-full max-w-2xl shrink-0">
+                        <button onClick={() => { SoundManager.playUIClick(); setActiveTab('raid'); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'raid' ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                             Raid Event
                         </button>
-                        <button onClick={() => { SoundManager.playUIClick(); setActiveTab('contributors'); }} className={`flex-1 px-4 py-3 font-bold uppercase tracking-widest text-xs md:text-sm rounded-lg border transition-all ${activeTab === 'contributors' ? 'bg-cyan-600 border-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                        <button onClick={() => { SoundManager.playUIClick(); setActiveTab('contributors'); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'contributors' ? 'bg-cyan-600 border-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                             Top Contributors
                         </button>
                     </div>
 
-                    <div className="bg-[#0b0416]/50 backdrop-blur-xl border border-red-500/50 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-[0_0_60px_rgba(220,38,38,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden w-full max-w-2xl">
+                    <div className="bg-[#0b0416]/50 backdrop-blur-xl border border-red-500/50 rounded-xl md:rounded-2xl p-2 md:p-6 shadow-[0_0_60px_rgba(220,38,38,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden w-full max-w-2xl">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
                         
                         {activeTab === 'raid' && (
                             <>
-                        <div className="flex justify-between items-center mb-2">
+                        <div className="flex justify-between items-center mb-1 md:mb-2">
                             <h3 className="text-xl md:text-2xl font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
                                 <Skull className="w-5 h-5 md:w-6 md:h-6" /> RAID EVENT
                             </h3>
@@ -226,32 +226,32 @@ export default function GlobalRaid({ isCarousel }) {
                             </div>
                         )}
                         
-                        <div className="flex flex-col items-center mb-4 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                            <label className="text-xs text-slate-400 mb-2 uppercase tracking-wider font-bold">Select Operative</label>
-                            <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-center mb-2 md:mb-4 bg-slate-900/50 p-1.5 md:p-3 rounded-xl border border-slate-800">
+                            <label className="text-[10px] md:text-xs text-slate-400 mb-1 md:mb-2 uppercase tracking-wider font-bold">Select Operative</label>
+                            <div className="flex items-center gap-2 md:gap-4">
                                 <button onClick={() => {
                                     SoundManager.playUIClick();
                                     const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
                                     setSelectedChar(CHARACTERS[idx <= 0 ? CHARACTERS.length - 1 : idx - 1].id);
-                                }} className="p-2 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700 text-white transition-colors">&lt;</button>
-                                <div className="text-sm md:text-base font-bold w-40 text-center uppercase" style={{ color: CHARACTERS.find(c => c.id === selectedChar)?.color || '#fff' }}>
+                                }} className="p-1 md:p-2 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700 text-white transition-colors">&lt;</button>
+                                <div className="text-xs md:text-base font-bold w-32 md:w-40 text-center uppercase" style={{ color: CHARACTERS.find(c => c.id === selectedChar)?.color || '#fff' }}>
                                     {CHARACTERS.find(c => c.id === selectedChar)?.name}
                                 </div>
                                 <button onClick={() => {
                                     SoundManager.playUIClick();
                                     const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
                                     setSelectedChar(CHARACTERS[idx >= CHARACTERS.length - 1 ? 0 : idx + 1].id);
-                                }} className="p-2 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700 text-white transition-colors">&gt;</button>
+                                }} className="p-1 md:p-2 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700 text-white transition-colors">&gt;</button>
                             </div>
                             {!(save.unlockedCharacters || ['neobyte']).includes(selectedChar) && (
-                                <div className="text-xs text-red-400 mt-2 font-bold uppercase">Character Locked</div>
+                                <div className="text-[10px] md:text-xs text-red-400 mt-1 font-bold uppercase">Character Locked</div>
                             )}
                         </div>
 
                         <button
                             onClick={handleLaunchRaid}
                             disabled={worldBossData?.is_defeated || !(save.unlockedCharacters || ['neobyte']).includes(selectedChar) || runsToday >= MAX_RUNS_PER_DAY}
-                            className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
+                            className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 md:py-4 rounded-xl font-bold text-sm md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
                         >
                             <Crosshair className="w-4 h-4 md:w-5 md:h-5" />
                             {worldBossData?.is_defeated ? 'Boss Defeated' : runsToday >= MAX_RUNS_PER_DAY ? 'Daily Limit Reached' : `Launch Raid (${MAX_RUNS_PER_DAY - runsToday} left today)`}
