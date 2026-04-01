@@ -101,8 +101,8 @@ export default function GlobalRaid({ isCarousel }) {
                     </div>
                 </header>
 
-                <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto">
-                    <div className="bg-[#0b0416]/50 backdrop-blur-xl border border-red-500/50 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-[0_0_60px_rgba(220,38,38,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden w-full max-w-2xl my-auto">
+                <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto pt-2 md:pt-8">
+                    <div className="bg-[#0b0416]/50 backdrop-blur-xl border border-red-500/50 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-[0_0_60px_rgba(220,38,38,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] relative overflow-hidden w-full max-w-2xl">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
                         
                         <div className="flex justify-between items-center mb-2">
@@ -123,8 +123,8 @@ export default function GlobalRaid({ isCarousel }) {
                         {worldBossData ? (
                             <div className="bg-slate-950 p-3 md:p-6 rounded-xl border border-red-900 mb-3 md:mb-4 relative overflow-hidden">
                                 <div className="absolute right-0 top-0 opacity-10 text-7xl md:text-9xl transform translate-x-1/4 -translate-y-1/4">👹</div>
-                                <div className="relative z-10 flex flex-row gap-3 md:gap-6 items-center w-full">
-                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-20 h-20 md:w-32 md:h-32">
+                                <div className="relative z-10 flex flex-row gap-5 md:gap-8 items-center w-full">
+                                    <div className="shrink-0 bg-slate-900/50 rounded-xl border border-red-900/30 shadow-[0_0_15px_rgba(220,38,38,0.15)] flex items-center justify-center overflow-hidden w-28 h-28 md:w-48 md:h-48">
                                         <BossPreview bossId={worldBossData.boss_id} />
                                     </div>
                                     <div className="flex-1 w-full text-left">
