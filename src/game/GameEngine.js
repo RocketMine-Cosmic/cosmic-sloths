@@ -164,14 +164,14 @@ export class GameEngine {
             this.level = 10;
             
             // Apply 9 levels worth of stats
-            this.player.maxHp = Math.floor(this.player.maxHp * Math.pow(1.1, 9));
-            this.player.damageMult += 9 * 0.02;
+            this.player.maxHp = Math.floor(this.player.maxHp * Math.pow(1.05, 9));
+            this.player.damageMult += 9 * 0.04;
             this.player.armor += 9 * 1;
             this.player.hp = this.player.maxHp;
             
             // Scale XP required for level 10
             for (let i = 0; i < 9; i++) {
-                this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
+                this.xpRequired = Math.floor(this.xpRequired * 1.1 + 20);
             }
             
             for (let i = 0; i < 9; i++) {
@@ -515,7 +515,7 @@ export class GameEngine {
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
             const hpMult = (1.0 + (2.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
-            const dmgMult = (1.0 + (1.4 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
+            const dmgMult = (1.0 + (2.0 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
@@ -803,7 +803,7 @@ export class GameEngine {
                             this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });
                         }
                     }
-                    if (Math.random() < 0.005 + (this.player.luck * 0.001)) {
+                    if (Math.random() < 0.01 + (this.player.luck * 0.001)) {
                         const pickupTypes = [
                             { type: 'nuke', color: '#ff0000', icon: '☢️' },
                             { type: 'magnet_power', color: '#0000ff', icon: '🧲' },
@@ -1079,11 +1079,11 @@ export class GameEngine {
     levelUp() {
         this.xp -= this.xpRequired;
         this.level++;
-        this.xpRequired = Math.floor(this.xpRequired * 1.2 + 10);
+        this.xpRequired = Math.floor(this.xpRequired * 1.1 + 20);
         
         // Scale stats and fully heal
-        this.player.maxHp = Math.floor(this.player.maxHp * 1.1);
-        this.player.damageMult += 0.02;
+        this.player.maxHp = Math.floor(this.player.maxHp * 1.05);
+        this.player.damageMult += 0.04;
         this.player.armor += 1;
         this.player.hp = this.player.maxHp;
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
