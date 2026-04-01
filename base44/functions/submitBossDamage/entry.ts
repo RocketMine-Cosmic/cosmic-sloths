@@ -37,6 +37,21 @@ Deno.serve(async (req) => {
         
         await base44.asServiceRole.entities.GlobalBoss.update(boss.id, updates);
         
+        const playerName = user.player_name || user.data?.player_name || user.full_name;
+        const eventType = (boss.current_hp - damage <= 0) ? 'kill' : 'damage';
+        const eventMessage = (boss.current_hp - damage <= 0) 
+            ? `${playerName} defeated the Level ${boss.level || 1} Boss!`
+            : `${playerName} dealt ${damage.toLocaleString()} damage!`;
+
+        await base44.asServiceRole.entities.GlobalBossEvent.create({
+            week_id,
+            player_name: playerName,
+            event_type: eventType,
+            damage: damage,
+            level: boss.level || 1,
+            message: eventMessage
+        });
+        
         const existingContributions = await base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id, user_id: user.id });
         if (existingContributions.length > 0) {
             const cont = existingContributions[0];

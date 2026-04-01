@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { ArrowLeft, Skull, Crosshair, Trophy } from 'lucide-react';
+import { ArrowLeft, Skull, Crosshair, Trophy, Activity, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
@@ -17,6 +17,7 @@ export default function GlobalRaid({ isCarousel }) {
     const [worldBossData, setWorldBossData] = useState(null);
     const [worldBossContribution, setWorldBossContribution] = useState(null);
     const [topContributors, setTopContributors] = useState([]);
+    const [recentEvents, setRecentEvents] = useState([]);
     const [claimingReward, setClaimingReward] = useState(false);
     const [timeLeft, setTimeLeft] = useState('');
 
@@ -45,6 +46,9 @@ export default function GlobalRaid({ isCarousel }) {
                     
                     const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 10);
                     setTopContributors(allContribs);
+
+                    const events = await base44.entities.GlobalBossEvent.filter({ week_id }, '-created_date', 15);
+                    setRecentEvents(events);
                 }
             } catch (e) { console.error('Failed to fetch world boss', e); }
         };
@@ -237,6 +241,31 @@ export default function GlobalRaid({ isCarousel }) {
                                             <span className="text-yellow-400 font-mono font-bold text-xs md:text-sm">
                                                 {c.damage.toLocaleString()} DMG
                                             </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {recentEvents.length > 0 && (
+                            <div className="bg-slate-950/80 p-3 md:p-4 rounded-xl border border-slate-800 w-full mt-4">
+                                <h4 className="text-cyan-400 font-bold mb-3 uppercase tracking-widest text-xs md:text-sm flex items-center gap-2">
+                                    <Activity className="w-4 h-4" /> Live Activity
+                                </h4>
+                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                    {recentEvents.map((evt, idx) => (
+                                        <div key={evt.id || idx} className="flex items-center gap-3 bg-slate-900/50 p-2 rounded-lg border border-slate-800/50">
+                                            <div className={`p-1.5 rounded-full flex items-center justify-center ${evt.event_type === 'kill' ? 'bg-red-500/20 text-red-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
+                                                {evt.event_type === 'kill' ? <Skull className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-xs text-slate-300">
+                                                    {evt.message}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                                    {moment(evt.created_date).fromNow()}
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
