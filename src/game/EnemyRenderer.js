@@ -32,6 +32,38 @@ export function drawEnemy(ctx, e, time, playerX) {
         return;
     }
 
+    // Elite aura — drawn before the enemy body
+    if (e.isElite) {
+        const eliteT = time * 4;
+        const elitePulse = 0.6 + Math.sin(eliteT * 2) * 0.25;
+        const auraRadius = e.radius * 1.6;
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        ctx.globalAlpha = elitePulse;
+        const eliteGrad = ctx.createRadialGradient(0, 0, e.radius * 0.5, 0, 0, auraRadius);
+        eliteGrad.addColorStop(0, '#ff6600');
+        eliteGrad.addColorStop(0.5, '#ff2200');
+        eliteGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = eliteGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+        // Spinning rune rings
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 2;
+        for (let ri = 0; ri < 2; ri++) {
+            const rot = eliteT * (ri === 0 ? 1 : -0.7) + ri * Math.PI * 0.5;
+            const ringR = e.radius * (1.1 + ri * 0.3);
+            ctx.beginPath();
+            ctx.arc(0, 0, ringR, rot, rot + Math.PI * 1.3);
+            ctx.stroke();
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
     const t = time * 5 + e.x * 0.01;
     const pulse = Math.sin(t) * 0.1 + 1;
     const wiggle = Math.sin(t * 2) * 0.1;

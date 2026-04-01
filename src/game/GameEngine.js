@@ -537,7 +537,18 @@ export class GameEngine {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
                 if (elites.length > 0) {
                     const elite = elites[Math.floor(Math.random() * elites.length)];
-                    this.enemies.push({ ...elite, x: ex, y: ey, maxHp: elite.hp * hpMult * 2, hp: elite.hp * hpMult * 2, damage: elite.damage * dmgMult, radius: elite.radius * 1.5, isElite: true });
+                    this.enemies.push({
+                        ...elite,
+                        x: ex, y: ey,
+                        maxHp: elite.hp * hpMult * 2.5,
+                        hp: elite.hp * hpMult * 2.5,
+                        damage: elite.damage * dmgMult * 1.5,
+                        radius: elite.radius * 1.4,
+                        speed: elite.speed * 1.2,
+                        xp: elite.xp * 4,
+                        isElite: true,
+                        eliteGoldBonus: 3,
+                    });
                     this.encounteredEnemies.add(elite.id);
                     SoundManager.playEnemySpawn();
                     return;
@@ -1040,7 +1051,11 @@ export class GameEngine {
                 } else {
                     if (Math.random() < 0.50 + (this.player.luck * 0.05)) {
                         const goldValue = 5 + Math.floor(this.time / 15);
-                        this.pickups.push({ x: e.x + Math.random()*10-5, y: e.y + Math.random()*10-5, type: 'gold', value: goldValue, color: '#ffd700' });
+                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 3) : 1;
+                        const goldCount = e.isElite ? 3 : 1;
+                        for (let gi = 0; gi < goldCount; gi++) {
+                            this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });
+                        }
                     }
                     if (Math.random() < 0.005 + (this.player.luck * 0.001)) {
                         const pickupTypes = [
