@@ -130,7 +130,7 @@ export default function Profile({ isCarousel }) {
                     className="space-y-4 md:space-y-6 flex-1 overflow-y-auto pr-1 pb-10"
                 >
                     {/* Header / Name Edit */}
-                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl md:rounded-2xl p-4 md:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+                    <div className="relative z-20 bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl md:rounded-2xl p-4 md:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="relative shrink-0">
                                 <button
