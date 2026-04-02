@@ -21,11 +21,11 @@ export class ParticleManager {
     constructor() {
         this.particles = [];
         this.textures = {
-            star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ca0a76494_generated_image.png'),
-            explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/86d44852a_generated_image.png'),
-            smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ef136da01_generated_image.png'),
-            slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d5b11e804_generated_image.png'),
-            shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b8eb9bf39_generated_image.png'),
+            star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png'),
+            explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png'),
+            smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png'),
+            slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png'),
+            shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png'),
         };
     }
 

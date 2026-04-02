@@ -1543,39 +1543,32 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
 
-                // HD-2D Neon Energy Drone
+                // Add HD aura - optimized
                 this.ctx.globalCompositeOperation = 'lighter';
-                const auraCol = isMastered ? '#ff0055' : '#00e5ff';
-                
+                const auraCol = isMastered ? '#ff0000' : '#8B4513';
                 this.ctx.fillStyle = auraCol;
-                this.ctx.globalAlpha = 0.3;
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, 28, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
                 this.ctx.fill();
-                
-                this.ctx.globalAlpha = 0.6;
+                this.ctx.globalAlpha = 0.4;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, 14, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
-                
-                // White-hot plasma core
+                this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.globalAlpha = 1.0;
-                this.ctx.fillStyle = '#ffffff';
+                
+                // Draw Sloth Head shape
+                this.ctx.fillStyle = isMastered ? '#FF0000' : '#8B4513';
                 this.ctx.beginPath();
-                this.ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2);
+                this.ctx.ellipse(0, 0, 8, 6, 0, 0, Math.PI*2); // Head
                 this.ctx.fill();
-                
-                // Energy trails/wings
-                this.ctx.strokeStyle = auraCol;
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.moveTo(-8, -4);
-                this.ctx.lineTo(-20, -10);
-                this.ctx.moveTo(-8, 4);
-                this.ctx.lineTo(-20, 10);
-                this.ctx.stroke();
-                
-                this.ctx.globalCompositeOperation = 'screen';
+                // Ears
+                this.ctx.beginPath(); this.ctx.arc(-6, -4, 3, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(6, -4, 3, 0, Math.PI*2); this.ctx.fill();
+                // Face
+                this.ctx.fillStyle = '#d2b48c';
+                this.ctx.beginPath(); this.ctx.ellipse(0, 1, 5, 4, 0, 0, Math.PI*2); this.ctx.fill();
                 
                 this.ctx.restore();
             }
@@ -1594,39 +1587,33 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(this.time * 5); // Spin
                 
-                // HD-2D Neon Plasma Swarm
+                // Add HD aura - optimized
                 this.ctx.globalCompositeOperation = 'lighter';
-                this.ctx.fillStyle = '#39ff14';
-                this.ctx.globalAlpha = 0.3;
+                this.ctx.fillStyle = '#32CD32';
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, 30, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
                 this.ctx.fill();
-                
-                this.ctx.globalAlpha = 0.6;
+                this.ctx.globalAlpha = 0.4;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, 16, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
-                
-                // Energy Core
+                this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.globalAlpha = 1.0;
-                this.ctx.fillStyle = '#ffffff';
+                
+                // Spiky Ball
+                this.ctx.fillStyle = '#32CD32';
                 this.ctx.beginPath();
                 const spikes = 8;
                 for(let j=0; j<spikes*2; j++) {
                     const a = (Math.PI*2/(spikes*2))*j;
-                    const r = j%2===0 ? 10 : 4;
+                    const r = j%2===0 ? 10 : 5;
                     this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
                 }
                 this.ctx.fill();
-                
-                // Plasma halo
-                this.ctx.strokeStyle = '#00ff88';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 14, 0, Math.PI * 2);
+                this.ctx.strokeStyle = '#006400';
+                this.ctx.lineWidth = 1;
                 this.ctx.stroke();
-                
-                this.ctx.globalCompositeOperation = 'screen';
                 
                 this.ctx.restore();
             }
@@ -1645,27 +1632,18 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(this.time * 3);
                 
-                // HD-2D Neon Orbital Laser Drone
                 this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#00ffff';
-                this.ctx.globalAlpha = 0.4;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
-                
-                this.ctx.globalAlpha = 0.8;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 12, 0, Math.PI * 2); this.ctx.fill();
-                
-                // White-hot core
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
-                this.ctx.fillStyle = '#ffffff';
+                this.ctx.globalCompositeOperation = 'source-over';
+                
+                this.ctx.fillStyle = '#00ffff';
                 this.ctx.beginPath(); this.ctx.arc(0, 0, 6, 0, Math.PI * 2); this.ctx.fill();
-                
-                this.ctx.strokeStyle = '#00ffff';
+                this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 10, 0, Math.PI * 2);
                 this.ctx.stroke();
-                
-                this.ctx.globalCompositeOperation = 'screen';
                 
                 this.ctx.restore();
             }
@@ -1684,37 +1662,29 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(this.time * -4);
                 
-                // HD-2D Neon Orbital Defense
                 this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#ff00ff';
-                this.ctx.globalAlpha = 0.4;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 35, 0, Math.PI * 2); this.ctx.fill();
-                
-                this.ctx.globalAlpha = 0.7;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI * 2); this.ctx.fill();
-                
-                // White-hot core gem
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
-                this.ctx.fillStyle = '#ffffff';
+                this.ctx.globalCompositeOperation = 'source-over';
+                
+                this.ctx.fillStyle = '#111111';
                 this.ctx.beginPath();
-                this.ctx.moveTo(18, 0);
-                this.ctx.lineTo(0, 18);
-                this.ctx.lineTo(-18, 0);
-                this.ctx.lineTo(0, -18);
+                this.ctx.moveTo(15, 0);
+                this.ctx.lineTo(0, 15);
+                this.ctx.lineTo(-15, 0);
+                this.ctx.lineTo(0, -15);
                 this.ctx.fill();
                 
-                // Pulsing electric blue halo
-                this.ctx.strokeStyle = '#00ffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.moveTo(12, 0);
-                this.ctx.lineTo(0, 12);
-                this.ctx.lineTo(-12, 0);
-                this.ctx.lineTo(0, -12);
-                this.ctx.closePath();
+                this.ctx.strokeStyle = '#ff00ff';
+                this.ctx.lineWidth = 3;
                 this.ctx.stroke();
                 
-                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                this.ctx.fill();
                 
                 this.ctx.restore();
             }

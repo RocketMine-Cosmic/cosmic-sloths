@@ -75,15 +75,15 @@ const CHAR_AUGMENTS = {
 };
 
 const RARITY_COLORS = {
-    Common: 'text-cyan-200 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]',
-    Rare:   'text-blue-300 border-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.6)]',
-    Epic:   'text-fuchsia-300 border-fuchsia-400 shadow-[0_0_25px_rgba(217,70,239,0.7)]',
+    Common: 'text-slate-300 border-slate-500',
+    Rare:   'text-blue-400 border-blue-500',
+    Epic:   'text-purple-400 border-purple-500',
 };
 
 const RARITY_BG = {
-    Common: 'bg-slate-900',
-    Rare:   'bg-[#0b1021]',
-    Epic:   'bg-[#150a1f]',
+    Common: 'bg-slate-800',
+    Rare:   'bg-blue-950',
+    Epic:   'bg-purple-950',
 };
 
 function getToday() {

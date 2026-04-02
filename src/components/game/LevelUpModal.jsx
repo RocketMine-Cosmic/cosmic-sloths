@@ -23,19 +23,19 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
     };
 
     const rarityColors = {
-        'Common': 'text-cyan-200 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)]',
-        'Rare': 'text-blue-300 border-blue-400 shadow-[0_0_25px_rgba(96,165,250,0.6)]',
-        'Epic': 'text-fuchsia-300 border-fuchsia-400 shadow-[0_0_30px_rgba(217,70,239,0.7)]',
-        'Legendary': 'text-purple-300 border-purple-400 shadow-[0_0_35px_rgba(168,85,247,0.8)]',
-        'Evolution': 'text-red-300 border-red-400 shadow-[0_0_40px_rgba(239,68,68,0.9)]'
+        'Common': 'text-slate-400 border-slate-500',
+        'Rare': 'text-blue-400 border-blue-500 shadow-[0_0_10px_rgba(96,165,250,0.5)]',
+        'Epic': 'text-purple-400 border-purple-500 shadow-[0_0_15px_rgba(192,132,252,0.6)]',
+        'Legendary': 'text-orange-400 border-orange-500 shadow-[0_0_20px_rgba(251,146,60,0.8)]',
+        'Evolution': 'text-red-400 border-red-500 shadow-[0_0_25px_rgba(239,68,68,0.9)]'
     };
 
     const rarityBg = {
-        'Common': 'bg-slate-900',
-        'Rare': 'bg-[#0b1021]',
-        'Epic': 'bg-[#150a1f]',
-        'Legendary': 'bg-[#120518]',
-        'Evolution': 'bg-[#1a0505]'
+        'Common': 'bg-slate-800',
+        'Rare': 'bg-blue-950',
+        'Epic': 'bg-purple-950',
+        'Legendary': 'bg-orange-950',
+        'Evolution': 'bg-red-950'
     };
 
     return (
@@ -71,16 +71,12 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                 key={i}
                                 onClick={() => handleSelect(i)}
                                 disabled={revealedIndex !== null}
-                                className={`relative p-3 md:p-6 rounded-xl text-left transition-all duration-300 flex flex-col min-h-[90px] md:min-h-[160px] border border-cyan-500/20 bg-slate-900/80 backdrop-blur overflow-hidden ${
+                                className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-300 flex flex-col min-h-[90px] md:min-h-[160px] border-2 ${
                                     isRevealed 
                                     ? `${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ')[1]} ${rarityColors[choice.rarity].split(' ')[2] || ''}` 
-                                    : 'hover:border-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] hover:bg-cyan-950/40 cursor-pointer'
+                                    : 'bg-slate-800 border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer'
                                 }`}
                             >
-                                {/* Inner glow / bloom for HD-2D aesthetic */}
-                                {isRevealed && (
-                                    <div className="absolute inset-0 pointer-events-none opacity-20 bg-gradient-to-tr from-transparent via-white to-transparent" />
-                                )}
                                 <AnimatePresence mode="wait">
                                     {!isRevealed ? (
                                         <motion.div 
