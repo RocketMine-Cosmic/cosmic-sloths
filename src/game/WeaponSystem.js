@@ -127,10 +127,11 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg * 0.5,
             pierce: 999,
             life: 3 + w.level,
-            color: isMastered ? 'rgba(0, 191, 255, 0.5)' : engine.player.color + '80',
+            color: isMastered ? '#00bfff' : engine.player.color,
             isAoe: true,
             isMastered: isMastered,
-            weaponId: 'napalm'
+            weaponId: 'napalm',
+            type: 'napalm_pool'
         });
     }
     else if (w.id === 'novaPulse') {
@@ -141,9 +142,10 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 0.5,
-            color: isMastered ? 'rgba(138, 43, 226, 0.6)' : engine.player.color + '99',
+            color: isMastered ? '#8a2be2' : engine.player.color,
             isAoe: true,
-            pulse: true
+            pulse: true,
+            type: 'nova_pulse'
         });
         if (isMastered) {
             setTimeout(() => {
@@ -155,9 +157,10 @@ export function fireWeaponLogic(engine, w) {
                     damage: dmg * 0.5,
                     pierce: 999,
                     life: 0.5,
-                    color: 'rgba(138, 43, 226, 0.4)',
+                    color: '#8a2be2',
                     isAoe: true,
-                    pulse: true
+                    pulse: true,
+                    type: 'nova_pulse'
                 });
             }, 500);
         }
@@ -170,11 +173,12 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 2.0,
-            color: isMastered ? 'rgba(255, 215, 0, 0.3)' : engine.player.color + '4D',
+            color: isMastered ? '#ffd700' : engine.player.color,
             isAoe: true,
             pushback: 250,
             isMastered: isMastered,
-            weaponId: 'shieldBubble'
+            weaponId: 'shieldBubble',
+            type: 'shield_bubble'
         });
     }
     else if (w.id === 'burningBarrier') {
@@ -185,10 +189,11 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 3.0 + (w.level * 0.5),
-            color: 'rgba(255, 69, 0, 0.4)',
+            color: '#ff4500',
             isAoe: true,
             pushback: 150,
-            burn: true
+            burn: true,
+            type: 'burning_barrier'
         });
     }
     else if (w.id === 'laserNova') {
@@ -199,9 +204,10 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 0.8,
-            color: 'rgba(0, 255, 255, 0.8)',
+            color: '#00ffff',
             isAoe: true,
-            pulse: true
+            pulse: true,
+            type: 'laser_nova_pulse'
         });
         for (let i = 0; i < 8; i++) {
             const angle = (Math.PI / 4) * i;
@@ -306,9 +312,10 @@ export function fireWeaponLogic(engine, w) {
                 damage: dmg * 1.5,
                 pierce: 999,
                 life: 0.5,
-                color: 'rgba(138, 43, 226, 0.6)',
+                color: '#8a2be2',
                 isAoe: true,
-                pulse: true
+                pulse: true,
+                type: 'seismic_shockwave'
             });
         }
     }
@@ -326,9 +333,10 @@ export function fireWeaponLogic(engine, w) {
                     damage: dmg * 0.4,
                     pierce: 999,
                     life: 2.0 + (w.level * 0.5),
-                    color: 'rgba(255, 69, 0, 0.5)',
+                    color: '#ff4500',
                     isAoe: true,
-                    burn: true
+                    burn: true,
+                    type: 'flaming_lash_pool'
                 });
             }
         });

@@ -7,6 +7,7 @@ import { SaveManager } from './SaveManager';
 import { drawUI } from './UIRenderer';
 import { drawPickups } from './PickupRenderer';
 import { fireWeaponLogic } from './WeaponSystem';
+import { drawProjectiles } from './ProjectileRenderer';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null) {
@@ -1393,186 +1394,7 @@ export class GameEngine {
             }
         }
 
-        this.ctx.globalCompositeOperation = 'screen';
-        const texStar = this.particleManager?.textures?.star;
-        const texSlash = this.particleManager?.textures?.slash;
-        const texShockwave = this.particleManager?.textures?.shockwave;
-        const texSmoke = this.particleManager?.textures?.smoke;
-
-        this.projectiles.forEach(p => {
-            if (!isVisible(p.x, p.y, p.radius * 3)) return;
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            if (p.vx || p.vy) {
-                this.ctx.rotate(Math.atan2(p.vy, p.vx));
-            }
-            
-            // Glowing Aura - optimized for performance
-            this.ctx.globalAlpha = 0.2;
-            this.ctx.fillStyle = p.color || '#ffffff';
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.globalAlpha = 0.4;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, p.radius * 1.5, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
-
-            if (p.type === 'beam' || p.type === 'dual_laser') {
-                this.ctx.fillStyle = p.color || '#ffffff';
-                this.ctx.fillRect(-p.radius * 1.5, -p.radius / 2, p.radius * 3, p.radius);
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius, -p.radius / 4, p.radius * 2, p.radius / 2);
-                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
-            } else if (p.type === 'lightning') {
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.moveTo(-p.radius, 0);
-                this.ctx.lineTo(-p.radius/2, (Math.random()-0.5)*p.radius);
-                this.ctx.lineTo(0, (Math.random()-0.5)*p.radius);
-                this.ctx.lineTo(p.radius/2, (Math.random()-0.5)*p.radius);
-                this.ctx.lineTo(p.radius, 0);
-                this.ctx.stroke();
-            } else if (p.type === 'glitch_slash') {
-                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
-                else { this.ctx.fillStyle = p.color || '#ffffff'; this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2); }
-            } else if (p.type === 'stomp') {
-                if (texShockwave && texShockwave.isReady) this.ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-                else {
-                    this.ctx.strokeStyle = p.color || '#ffffff';
-                    this.ctx.lineWidth = 2;
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-                    this.ctx.stroke();
-                }
-            } else if (p.type === 'repair_beam') {
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 3;
-                this.ctx.beginPath();
-                this.ctx.moveTo(-p.radius, 0);
-                this.ctx.lineTo(p.radius, 0);
-                this.ctx.stroke();
-            } else if (p.type === 'missile') {
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius, -p.radius*0.2, p.radius*1.5, p.radius*0.4);
-                if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius, p.radius*2, p.radius*2);
-            } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
-                if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-                else {
-                    this.ctx.fillStyle = p.color || '#ffffff';
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, p.radius*0.8, 0, Math.PI * 2);
-                    this.ctx.fill();
-                }
-            } else if (p.type === 'railgun') {
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.moveTo(-p.radius*2, 0);
-                this.ctx.lineTo(p.radius*2, 0);
-                this.ctx.stroke();
-                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
-            } else if (p.type === 'sonic_wave') {
-                this.ctx.strokeStyle = p.color || '#ffffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
-                this.ctx.stroke();
-                if (texShockwave && texShockwave.isReady) this.ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-            } else if (p.type === 'supernova_beam') {
-                this.ctx.fillStyle = p.color || '#ffaa00';
-                this.ctx.fillRect(-p.radius * 2, -p.radius * 0.8, p.radius * 4, p.radius * 1.6);
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius * 1.5, -p.radius * 0.4, p.radius * 3, p.radius * 0.8);
-                if (texSlash && texSlash.isReady) {
-                    this.ctx.drawImage(texSlash, -p.radius*3, -p.radius*2, p.radius*6, p.radius*4);
-                }
-                if (texStar && texStar.isReady) {
-                    this.ctx.drawImage(texStar, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
-                }
-            } else if (p.type === 'hellfire') {
-                this.ctx.globalAlpha = 0.5 + Math.sin(this.time * 8 + p.x) * 0.2;
-                this.ctx.fillStyle = p.color;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-                this.ctx.fill();
-                this.ctx.globalAlpha = 1.0;
-                if (texSmoke && texSmoke.isReady) {
-                    this.ctx.globalCompositeOperation = 'screen';
-                    this.ctx.drawImage(texSmoke, -p.radius * 1.2, -p.radius * 1.2, p.radius*2.4, p.radius*2.4);
-                    this.ctx.globalCompositeOperation = 'source-over';
-                }
-            } else if (p.type === 'quantum_collapse') {
-                this.ctx.globalAlpha = 0.8;
-                this.ctx.fillStyle = '#1a0033';
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
-                this.ctx.fill();
-                
-                this.ctx.globalCompositeOperation = 'screen';
-                this.ctx.strokeStyle = p.color;
-                this.ctx.lineWidth = 12;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-                this.ctx.stroke();
-                
-                if (texShockwave && texShockwave.isReady) {
-                    this.ctx.drawImage(texShockwave, -p.radius*1.4, -p.radius*1.4, p.radius*2.8, p.radius*2.8);
-                }
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.globalAlpha = 1.0;
-            } else if (p.type === 'aegis_matrix') {
-                this.ctx.globalAlpha = 0.3;
-                this.ctx.fillStyle = '#00ff88';
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-                this.ctx.fill();
-                
-                this.ctx.globalCompositeOperation = 'screen';
-                this.ctx.strokeStyle = '#00ff66';
-                this.ctx.lineWidth = 6;
-                this.ctx.setLineDash([20, 20]);
-                this.ctx.lineDashOffset = -this.time * 100;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-                this.ctx.stroke();
-                this.ctx.setLineDash([]);
-                
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius - 12, 0, Math.PI*2);
-                this.ctx.stroke();
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.globalAlpha = 1.0;
-            } else if (p.isAoe) {
-                if (texShockwave && texShockwave.isReady) {
-                    this.ctx.globalAlpha = 0.8;
-                    this.ctx.drawImage(texShockwave, -p.radius, -p.radius, p.radius*2, p.radius*2);
-                    this.ctx.globalAlpha = 1.0;
-                } else {
-                    this.ctx.strokeStyle = '#ffffff';
-                    this.ctx.lineWidth = 2;
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-                    this.ctx.stroke();
-                }
-            } else {
-                // Default projectile
-                if (texStar && texStar.isReady) {
-                    this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-                } else {
-                    this.ctx.fillStyle = '#ffffff';
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, p.radius*0.5, 0, Math.PI*2);
-                    this.ctx.fill();
-                }
-            }
-            this.ctx.restore();
-        });
-        this.ctx.globalCompositeOperation = 'source-over';
+        drawProjectiles(this.ctx, this.projectiles, this.particleManager, this.time, camX, camY, vWidth, vHeight);
 
         if (this.hazards) {
             this.hazards.forEach(h => {
@@ -1920,6 +1742,7 @@ export class GameEngine {
 
         // Draw Environmental Effects
         this.ctx.globalCompositeOperation = 'screen';
+        const texSmoke = this.particleManager?.textures?.smoke;
 
         if (this.envEffect === 'neon_rain') {
             this.envParticles.forEach(p => {
