@@ -31,13 +31,13 @@ export const ARENAS = [
 ];
 
 export const WEAPONS = {
-  neoBlaster: { id: 'neoBlaster', name: 'Blaster', type: 'weapon', desc: 'Fires reliable energy blasts.', masteryDesc: 'MASTERY: Fires a spread of 3 blasts.', baseDamage: 12, baseCooldown: 50, baseArea: 1 },
-  napBeam: { id: 'napBeam', name: 'Cosmic Nap Beam', type: 'weapon', desc: 'Fires a piercing beam.', masteryDesc: 'MASTERY: Beam chains to nearby enemies. (Blue Beam)', baseDamage: 10, baseCooldown: 60, baseArea: 1 },
-  vineWhip: { id: 'vineWhip', name: 'Plasma Whip', type: 'weapon', desc: 'Swipes nearby enemies.', masteryDesc: 'MASTERY: Heals player for 5% of damage dealt. (Red Whip)', baseDamage: 15, baseCooldown: 45, baseArea: 1 },
-  slothSwarm: { id: 'slothSwarm', name: 'Orbital Drones', type: 'weapon', desc: 'Orbiting defense drones.', masteryDesc: 'MASTERY: Drones move faster and shoot lasers. (Red Drones)', baseDamage: 5, baseCooldown: 120, baseArea: 1 },
+  neoBlaster: { id: 'neoBlaster', name: 'Blaster', type: 'weapon', desc: 'Fires reliable energy blasts.', masteryDesc: 'MASTERY: Fires a spread of 3 blasts.', baseDamage: 8, baseCooldown: 50, baseArea: 1 },
+  napBeam: { id: 'napBeam', name: 'Cosmic Nap Beam', type: 'weapon', desc: 'Fires a piercing beam.', masteryDesc: 'MASTERY: Beam chains to nearby enemies. (Blue Beam)', baseDamage: 7, baseCooldown: 60, baseArea: 1 },
+  vineWhip: { id: 'vineWhip', name: 'Plasma Whip', type: 'weapon', desc: 'Swipes nearby enemies.', masteryDesc: 'MASTERY: Heals player for 5% of damage dealt. (Red Whip)', baseDamage: 10, baseCooldown: 45, baseArea: 1 },
+  slothSwarm: { id: 'slothSwarm', name: 'Orbital Drones', type: 'weapon', desc: 'Orbiting defense drones.', masteryDesc: 'MASTERY: Drones move faster and shoot lasers. (Red Drones)', baseDamage: 3, baseCooldown: 120, baseArea: 1 },
   napalm: { id: 'napalm', name: 'Zero-G Napalm', type: 'weapon', desc: 'Leaves burning pools.', masteryDesc: 'MASTERY: Blue fire that slows enemies by 50%.', baseDamage: 3, baseCooldown: 90, baseArea: 1 },
-  novaPulse: { id: 'novaPulse', name: 'Nova Pulse', type: 'weapon', desc: 'A massive expanding energy blast.', masteryDesc: 'MASTERY: Triggers a second echo pulse. (Purple Blast)', baseDamage: 25, baseCooldown: 180, baseArea: 1 },
-  shieldBubble: { id: 'shieldBubble', name: 'Shield Bubble', type: 'weapon', desc: 'Pushes enemies away and damages them.', masteryDesc: 'MASTERY: Fires retaliatory lasers at enemies. (Golden Shield)', baseDamage: 10, baseCooldown: 240, baseArea: 1 },
+  novaPulse: { id: 'novaPulse', name: 'Nova Pulse', type: 'weapon', desc: 'A massive expanding energy blast.', masteryDesc: 'MASTERY: Triggers a second echo pulse. (Purple Blast)', baseDamage: 18, baseCooldown: 180, baseArea: 1 },
+  shieldBubble: { id: 'shieldBubble', name: 'Shield Bubble', type: 'weapon', desc: 'Pushes enemies away and damages them.', masteryDesc: 'MASTERY: Fires retaliatory lasers at enemies. (Golden Shield)', baseDamage: 8, baseCooldown: 240, baseArea: 1 },
   // Synergies
   burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 8, baseCooldown: 180, baseArea: 1.5, isSynergy: true },
   laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 30, baseCooldown: 150, baseArea: 1.2, isSynergy: true },
