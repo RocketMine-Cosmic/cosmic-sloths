@@ -44,7 +44,12 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
 
         if (p.type === 'beam' || p.type === 'dual_laser') {
             if (texSlash && texSlash.isReady) {
-                ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(texSlash, -p.radius*2.5, -p.radius*1.8, p.radius*5, p.radius*3.6);
+                ctx.globalAlpha = 1.0;
+                ctx.drawImage(texSlash, -p.radius*1.5, -p.radius*1.0, p.radius*3, p.radius*2);
+                ctx.globalCompositeOperation = 'screen';
             } else {
                 ctx.fillStyle = p.color || '#ffffff';
                 ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius / 2, 0, 0, Math.PI * 2); ctx.fill();
@@ -63,7 +68,14 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.stroke();
         } else if (p.type === 'glitch_slash') {
             if (texSlash && texSlash.isReady) {
-                ctx.drawImage(texSlash, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.drawImage(texSlash, -p.radius*2.5, -p.radius*2.5, p.radius*5, p.radius*5);
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.radius, -p.radius/2, p.radius*2, p.radius);
+                ctx.globalAlpha = 1.0;
+                ctx.globalCompositeOperation = 'screen';
+                ctx.drawImage(texSlash, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
             } else { 
                 ctx.fillStyle = p.color || '#ffffff'; 
                 ctx.beginPath(); ctx.ellipse(0, 0, p.radius, p.radius/4, 0, 0, Math.PI * 2); ctx.fill();
@@ -87,13 +99,24 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.stroke();
         } else if (p.type === 'missile') {
             if (texStar && texStar.isReady) {
-                ctx.drawImage(texStar, -p.radius*1.5, -p.radius, p.radius*2, p.radius*2);
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.drawImage(texStar, -p.radius*2, -p.radius*1.5, p.radius*3, p.radius*3);
+                ctx.globalCompositeOperation = 'screen';
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.2, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
             } else {
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.2, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
             }
         } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
             if (texStar && texStar.isReady) {
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(0,0,p.radius*2,0,Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1.0;
+                ctx.drawImage(texStar, -p.radius*2.5, -p.radius*2.5, p.radius*5, p.radius*5);
+                ctx.globalCompositeOperation = 'screen';
                 ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
             } else {
                 ctx.fillStyle = p.color || '#ffffff';
@@ -103,6 +126,13 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             }
         } else if (p.type === 'railgun') {
             if (texSlash && texSlash.isReady) {
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = 0.7;
+                ctx.drawImage(texSlash, -p.radius*3, -p.radius*2, p.radius*6, p.radius*4);
+                ctx.globalAlpha = 1.0;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-p.radius*2, -p.radius/4, p.radius*4, p.radius/2);
+                ctx.globalCompositeOperation = 'screen';
                 ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
             } else {
                 ctx.strokeStyle = '#ffffff';
@@ -134,7 +164,18 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             }
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
             if (texShockwave && texShockwave.isReady) {
-                ctx.globalAlpha = Math.min(1, p.life * 1.5) * 0.6;
+                ctx.globalAlpha = Math.min(1, p.life * 1.5) * 0.9;
+                
+                const grad = ctx.createRadialGradient(0, 0, p.radius * 0.7, 0, 0, p.radius * 1.1);
+                grad.addColorStop(0, 'transparent');
+                grad.addColorStop(0.7, p.color || '#ffffff');
+                grad.addColorStop(1, 'transparent');
+                
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius * 1.1, 0, Math.PI * 2);
+                ctx.fill();
+
                 ctx.drawImage(texShockwave, -p.radius*1.1, -p.radius*1.1, p.radius*2.2, p.radius*2.2);
             } else {
                 ctx.strokeStyle = p.color;

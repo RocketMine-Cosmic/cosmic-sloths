@@ -41,7 +41,8 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'wrenchSmash') {
-        engine.addParticle(engine.player.x, engine.player.y, '#aaaaaa', 10, 'slash', 2.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 12, 'slash', 3.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ffdd00', 8, 'spark', 2.5 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 80 * area) {
                 engine.damageEnemy(e, dmg);
@@ -80,7 +81,8 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'cyberBlade') {
-        engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 12, 'slash', 1.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 15, 'slash', 2.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ff00ff', 10, 'glitch', 1.5 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 60 * area) {
                 engine.damageEnemy(e, dmg);
@@ -318,7 +320,7 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 0.5,
-            color: isMastered ? '#8a2be2' : engine.player.color,
+            color: isMastered ? '#8a2be2' : '#dc143c',
             isAoe: true,
             pulse: true,
             type: 'nova_pulse'
