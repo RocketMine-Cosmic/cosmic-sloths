@@ -312,7 +312,9 @@ export default function Game() {
                 setGameState(s => ({
                     ...s,
                     xp: engineRef.current.xp,
-                    xpRequired: engineRef.current.xpRequired
+                    xpRequired: engineRef.current.xpRequired,
+                    weapons: engineRef.current.player.weapons || [],
+                    passives: engineRef.current.player.passives || []
                 }));
             }
         }, 100);
