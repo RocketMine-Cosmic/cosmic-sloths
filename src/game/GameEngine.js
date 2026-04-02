@@ -1401,13 +1401,8 @@ export class GameEngine {
         const vHeight = this.canvas.height / this.zoom;
         const camX = this.camera.x;
         const camY = this.camera.y;
-        const isVisible = (x, y, r) => {
-            return x + r > camX && x - r < camX + vWidth &&
-                   y + r > camY && y - r < camY + vHeight;
-        };
 
-        const visiblePickups = this.pickups.filter(p => isVisible(p.x, p.y, 20));
-        drawPickups(this.ctx, visiblePickups, this.time);
+        drawPickups(this.ctx, this.pickups, this.time);
 
         if (this.characterPickup) {
             this.ctx.fillStyle = this.characterPickup.color;
@@ -1443,7 +1438,6 @@ export class GameEngine {
 
         if (this.hazards) {
             this.hazards.forEach(h => {
-                if (!isVisible(h.x, h.y, h.radius * 2)) return;
                 this.ctx.save();
                 this.ctx.translate(h.x, h.y);
                 this.ctx.rotate(this.time);
@@ -1472,7 +1466,6 @@ export class GameEngine {
         if (this.enemyProjectiles) {
             this.ctx.globalCompositeOperation = 'screen';
             this.enemyProjectiles.forEach(p => {
-                if (!isVisible(p.x, p.y, p.radius * 2)) return;
                 this.ctx.save();
                 this.ctx.translate(p.x, p.y);
                 if (p.vx || p.vy) {
@@ -1681,7 +1674,6 @@ export class GameEngine {
         this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
 
         this.enemies.forEach(e => {
-            if (!isVisible(e.x, e.y, e.radius * 2)) return;
             if (!e.burrowed) {
                 drawEnemy(this.ctx, e, this.time, this.player.x);
                 
@@ -1772,7 +1764,6 @@ export class GameEngine {
 
         this.ctx.textAlign = 'center';
         this.damageTexts.forEach(t => {
-            if (!isVisible(t.x, t.y, 20)) return;
             this.ctx.globalAlpha = Math.max(0, t.life);
             this.ctx.strokeStyle = '#000000';
             this.ctx.lineWidth = t.isCrit ? 4 : 3;
@@ -1791,7 +1782,6 @@ export class GameEngine {
 
         if (this.envEffect === 'neon_rain') {
             this.envParticles.forEach(p => {
-                if (!isVisible(p.x, p.y, 20)) return;
                 this.ctx.strokeStyle = p.color;
                 this.ctx.lineWidth = 3;
                 this.ctx.globalAlpha = (p.life / 2) * 0.8;
@@ -1809,7 +1799,6 @@ export class GameEngine {
             this.ctx.globalAlpha = 1.0;
         } else if (this.envEffect === 'fog') {
             this.envParticles.forEach(p => {
-                if (!isVisible(p.x, p.y, p.size)) return;
                 this.ctx.globalAlpha = 0.15 * (p.life / 10);
                 if (texSmoke && texSmoke.isReady) {
                     this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
@@ -1826,7 +1815,6 @@ export class GameEngine {
             this.ctx.globalAlpha = 1.0;
         } else if (this.envEffect === 'solar_flare') {
             this.envParticles.forEach(p => {
-                if (!isVisible(p.x, p.y, p.size)) return;
                 const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.4;
                 this.ctx.globalAlpha = alpha;
                 

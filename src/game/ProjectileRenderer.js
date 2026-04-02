@@ -1,9 +1,4 @@
 export function drawProjectiles(ctx, projectiles, particleManager, time, camX, camY, vWidth, vHeight) {
-    const isVisible = (x, y, r) => {
-        return x + r > camX && x - r < camX + vWidth &&
-               y + r > camY && y - r < camY + vHeight;
-    };
-
     ctx.globalCompositeOperation = 'screen';
     const texStar = particleManager?.textures?.star;
     const texSlash = particleManager?.textures?.slash;
@@ -11,7 +6,6 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
     const texSmoke = particleManager?.textures?.smoke;
 
     projectiles.forEach(p => {
-        if (!isVisible(p.x, p.y, p.radius * 3)) return;
         ctx.save();
         ctx.translate(p.x, p.y);
         if (p.vx || p.vy) {

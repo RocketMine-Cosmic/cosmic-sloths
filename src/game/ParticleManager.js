@@ -84,7 +84,6 @@ export class ParticleManager {
 
         this.particles.forEach(p => {
             const size = p.size || 8;
-            if (camX !== undefined && (p.x + size * 4 < camX || p.x - size * 4 > camX + vWidth || p.y + size * 4 < camY || p.y - size * 4 > camY + vHeight)) return;
             const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
 
