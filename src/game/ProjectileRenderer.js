@@ -47,9 +47,9 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
             } else {
                 ctx.fillStyle = p.color || '#ffffff';
-                ctx.fillRect(-p.radius * 1.5, -p.radius / 2, p.radius * 3, p.radius);
+                ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius / 2, 0, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = '#ffffff';
-                ctx.fillRect(-p.radius, -p.radius / 4, p.radius * 2, p.radius / 2);
+                ctx.beginPath(); ctx.ellipse(0, 0, p.radius, p.radius / 4, 0, 0, Math.PI * 2); ctx.fill();
             }
         } else if (p.type === 'lightning') {
             ctx.strokeStyle = '#ffffff';
@@ -66,7 +66,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.drawImage(texSlash, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
             } else { 
                 ctx.fillStyle = p.color || '#ffffff'; 
-                ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2); 
+                ctx.beginPath(); ctx.ellipse(0, 0, p.radius, p.radius/4, 0, 0, Math.PI * 2); ctx.fill();
             }
         } else if (p.type === 'stomp') {
             if (texShockwave && texShockwave.isReady) {
@@ -90,7 +90,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.drawImage(texStar, -p.radius*1.5, -p.radius, p.radius*2, p.radius*2);
             } else {
                 ctx.fillStyle = '#ffffff';
-                ctx.fillRect(-p.radius, -p.radius*0.2, p.radius*1.5, p.radius*0.4);
+                ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.2, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
             }
         } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
             if (texStar && texStar.isReady) {
@@ -128,21 +128,21 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 if (texStar && texStar.isReady) ctx.drawImage(texStar, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
             } else {
                 ctx.fillStyle = p.color || '#ffaa00';
-                ctx.fillRect(-p.radius * 2, -p.radius * 0.8, p.radius * 4, p.radius * 1.6);
+                ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = '#ffffff';
-                ctx.fillRect(-p.radius * 1.5, -p.radius * 0.4, p.radius * 3, p.radius * 0.8);
+                ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
             }
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
-            ctx.strokeStyle = p.color;
-            ctx.lineWidth = Math.max(1, 6 * p.life);
-            ctx.globalAlpha = Math.min(1, p.life * 2);
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.stroke();
-            
             if (texShockwave && texShockwave.isReady) {
                 ctx.globalAlpha = Math.min(1, p.life * 1.5) * 0.6;
                 ctx.drawImage(texShockwave, -p.radius*1.1, -p.radius*1.1, p.radius*2.2, p.radius*2.2);
+            } else {
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = Math.max(1, 6 * p.life);
+                ctx.globalAlpha = Math.min(1, p.life * 2);
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                ctx.stroke();
             }
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
@@ -186,34 +186,46 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'hellfire') {
             ctx.globalAlpha = 0.5 + Math.sin(time * 8 + p.x) * 0.2;
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.fill();
-            ctx.globalAlpha = 1.0;
             if (texSmoke && texSmoke.isReady) {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                ctx.fill();
                 ctx.globalCompositeOperation = 'screen';
                 ctx.drawImage(texSmoke, -p.radius * 1.2, -p.radius * 1.2, p.radius*2.4, p.radius*2.4);
                 ctx.globalCompositeOperation = 'source-over';
+            } else {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                ctx.fill();
             }
+            ctx.globalAlpha = 1.0;
         } else if (p.type === 'quantum_collapse') {
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = '#1a0033';
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
-            ctx.fill();
-            
-            ctx.globalCompositeOperation = 'screen';
-            ctx.strokeStyle = p.color;
-            ctx.lineWidth = 12;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.stroke();
-            
             if (texShockwave && texShockwave.isReady) {
+                ctx.globalAlpha = 0.6;
+                ctx.globalCompositeOperation = 'screen';
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
+                ctx.fill();
                 ctx.drawImage(texShockwave, -p.radius*1.4, -p.radius*1.4, p.radius*2.8, p.radius*2.8);
+                ctx.globalCompositeOperation = 'source-over';
+            } else {
+                ctx.globalAlpha = 0.8;
+                ctx.fillStyle = '#1a0033';
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
+                ctx.fill();
+                
+                ctx.globalCompositeOperation = 'screen';
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 12;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.globalCompositeOperation = 'source-over';
             }
-            ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'aegis_matrix') {
             ctx.globalAlpha = 0.3;
