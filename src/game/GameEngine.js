@@ -1528,11 +1528,11 @@ export class GameEngine {
                 this.ctx.globalCompositeOperation = 'lighter';
                 const auraCol = isMastered ? '#ff0000' : '#8B4513';
                 this.ctx.fillStyle = auraCol;
-                this.ctx.globalAlpha = 0.2;
+                this.ctx.globalAlpha = 0.1;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
                 this.ctx.fill();
-                this.ctx.globalAlpha = 0.4;
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -1571,11 +1571,11 @@ export class GameEngine {
                 // Add HD aura - optimized
                 this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#32CD32';
-                this.ctx.globalAlpha = 0.2;
+                this.ctx.globalAlpha = 0.1;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
                 this.ctx.fill();
-                this.ctx.globalAlpha = 0.4;
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -1615,7 +1615,7 @@ export class GameEngine {
                 
                 this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#00ffff';
-                this.ctx.globalAlpha = 0.3;
+                this.ctx.globalAlpha = 0.15;
                 this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.globalCompositeOperation = 'source-over';
@@ -1645,7 +1645,7 @@ export class GameEngine {
                 
                 this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#ff00ff';
-                this.ctx.globalAlpha = 0.6;
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.globalCompositeOperation = 'source-over';

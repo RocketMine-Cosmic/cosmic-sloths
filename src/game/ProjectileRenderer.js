@@ -15,20 +15,20 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         // Glowing Aura - optimized for HD-2D Neon Bloom
         if (!p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.5;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 3.5);
+            ctx.globalAlpha = 0.2;
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 2.5);
             grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(0.3, p.color || '#ffffff');
+            grad.addColorStop(0.1, p.color || '#ffffff');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             
             if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot') {
                 ctx.beginPath();
-                ctx.ellipse(0, 0, p.radius * 3.5, p.radius * 2.0, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 1.5, 0, 0, Math.PI * 2);
                 ctx.fill();
             } else {
                 ctx.beginPath();
-                ctx.arc(0, 0, p.radius * 3.5, 0, Math.PI * 2);
+                ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.globalAlpha = 1.0;
@@ -188,7 +188,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.4;
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.15;
             const grad = ctx.createRadialGradient(0, 0, p.radius * 0.5, 0, 0, p.radius);
             grad.addColorStop(0, 'transparent');
             grad.addColorStop(0.8, p.color);
@@ -214,7 +214,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life) * 0.6;
+            ctx.globalAlpha = Math.min(1, p.life) * 0.25;
             const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius);
             grad.addColorStop(0, p.color);
             grad.addColorStop(1, 'transparent');
@@ -236,7 +236,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'hellfire') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.6 + Math.sin(time * 8 + p.x) * 0.2;
+            ctx.globalAlpha = 0.25 + Math.sin(time * 8 + p.x) * 0.1;
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = p.color || '#00bbff';
             ctx.shadowBlur = 20;
@@ -248,7 +248,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'quantum_collapse') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.9;
+            ctx.globalAlpha = 0.4;
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = p.color || '#ff00ff';
             ctx.shadowBlur = 25;
@@ -269,7 +269,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'aegis_matrix') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.4;
+            ctx.globalAlpha = 0.15;
             ctx.fillStyle = p.color || '#00ff88';
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, 0, Math.PI*2);
