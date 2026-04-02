@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ENEMIES } from '../game/Constants';
+import { ENEMIES, getEnemyMasteryMilestones } from '../game/Constants';
 import { ENEMY_LORE } from '../game/Lore';
 import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity, Swords, Star } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
@@ -9,8 +9,6 @@ import { SaveManager } from '../game/SaveManager';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
-
-const MASTERY_KILLS = (enemy) => enemy.isBoss ? 20 : 2000;
 
 function EnemySprite({ enemy, size = 64 }) {
     const canvasRef = useRef(null);
@@ -106,8 +104,8 @@ export default function Bestiary({ isCarousel }) {
                     <div className="flex flex-col items-end gap-2">
                         <CurrencyHeader />
                         <div className="text-right text-xs text-slate-500">
-                            <div className="text-fuchsia-400 font-bold">⚡ Mastered = +10% DMG</div>
-                            <div>vs that enemy type</div>
+                            <div className="text-fuchsia-400 font-bold">⚡ Mastery Milestones</div>
+                            <div>up to +10% DMG</div>
                         </div>
                     </div>
                 </header>
@@ -144,10 +142,23 @@ export default function Bestiary({ isCarousel }) {
                         {filteredEnemies.map(enemy => {
                             const isEncountered = encountered.includes(enemy.id);
                             const kills = enemyKills[enemy.id] || 0;
-                            const masteryReq = MASTERY_KILLS(enemy);
-                            const isMastered = kills >= masteryReq;
-                            const progress = Math.min(kills / masteryReq, 1);
+                            const milestones = getEnemyMasteryMilestones(enemy);
+                            const maxMastery = milestones[milestones.length - 1].kills;
+                            const isFullyMastered = kills >= maxMastery;
+                            const progress = Math.min(kills / maxMastery, 1);
                             const isSelected = selectedEnemy?.id === enemy.id;
+
+                            let currentBonus = 0;
+                            let nextMilestone = milestones[0];
+                            for (let i = 0; i < milestones.length; i++) {
+                                if (kills >= milestones[i].kills) {
+                                    currentBonus = milestones[i].bonus;
+                                    nextMilestone = milestones[i + 1] || null;
+                                } else {
+                                    nextMilestone = milestones[i];
+                                    break;
+                                }
+                            }
 
                             return (
                                 <motion.div
@@ -157,7 +168,7 @@ export default function Bestiary({ isCarousel }) {
                                     onClick={() => { SoundManager.playUIClick(); setSelectedEnemy(isSelected ? null : enemy); }}
                                     className={`bg-[#0b0416]/60 backdrop-blur-xl rounded-xl p-4 border flex flex-col cursor-pointer transition-all ${
                                         !isEncountered ? 'opacity-40 grayscale border-slate-800' :
-                                        isMastered ? 'border-fuchsia-400 shadow-[0_0_40px_rgba(217,70,239,0.4)]' :
+                                        isFullyMastered ? 'border-fuchsia-400 shadow-[0_0_40px_rgba(217,70,239,0.4)]' :
                                         enemy.isBoss ? 'border-rose-400/60 shadow-[0_0_30px_rgba(244,63,94,0.3)]' :
                                         'border-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:border-cyan-300/60'
                                     }`}
@@ -176,7 +187,7 @@ export default function Bestiary({ isCarousel }) {
                                                     {isEncountered ? enemy.name : 'Unknown Threat'}
                                                 </h3>
                                                 <div className="flex items-center gap-1 shrink-0">
-                                                    {isMastered && <Star className="w-3 h-3 text-fuchsia-400 fill-fuchsia-400" />}
+                                                    {isFullyMastered && <Star className="w-3 h-3 text-fuchsia-400 fill-fuchsia-400" />}
                                                     {enemy.isBoss ? (
                                                         <span className="text-[9px] bg-rose-950 text-rose-400 px-1 py-0.5 rounded border border-rose-900 font-bold">BOSS</span>
                                                     ) : (
@@ -187,7 +198,7 @@ export default function Bestiary({ isCarousel }) {
                                             <div className="text-[10px] text-slate-400 mt-0.5 flex gap-2">
                                                 {isEncountered && enemy.isTank && <span className="text-amber-400">Tank</span>}
                                                 {isEncountered && enemy.isRanged && <span className="text-cyan-400">Ranged</span>}
-                                                {isMastered && <span className="text-fuchsia-400 font-bold">MASTERED</span>}
+                                                {isFullyMastered && <span className="text-fuchsia-400 font-bold">MASTERED</span>}
                                             </div>
                                         </div>
                                     </div>
@@ -227,15 +238,31 @@ export default function Bestiary({ isCarousel }) {
 
                                             {/* Mastery Progress */}
                                             <div className="mb-3">
-                                                <div className="flex justify-between text-[10px] font-bold mb-1">
-                                                    <span className="text-slate-500">Mastery</span>
-                                                    <span className={isMastered ? 'text-fuchsia-400' : 'text-slate-400'}>{Math.min(kills, masteryReq)} / {masteryReq}</span>
+                                                <div className="flex justify-between items-end text-[10px] font-bold mb-1">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-slate-500">Mastery {currentBonus > 0 && <span className="text-fuchsia-400">+{currentBonus}% DMG</span>}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        {isFullyMastered ? (
+                                                            <span className="text-fuchsia-400">MAXED</span>
+                                                        ) : (
+                                                            <span className="text-slate-400">Next: {kills.toLocaleString()} / {nextMilestone?.kills.toLocaleString()}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex relative">
                                                     <div
-                                                        className={`h-full transition-all ${isMastered ? 'bg-fuchsia-500' : 'bg-slate-500'}`}
+                                                        className={`absolute top-0 left-0 h-full transition-all ${isFullyMastered ? 'bg-fuchsia-500' : 'bg-fuchsia-600/50'}`}
                                                         style={{ width: `${progress * 100}%` }}
                                                     />
+                                                    {/* Milestone markers */}
+                                                    {milestones.map((m, i) => (
+                                                        <div 
+                                                            key={i}
+                                                            className={`absolute top-0 h-full w-0.5 bg-slate-950 ${kills >= m.kills ? 'opacity-50' : 'opacity-100'}`}
+                                                            style={{ left: `${(m.kills / maxMastery) * 100}%`, zIndex: 10 }}
+                                                        />
+                                                    ))}
                                                 </div>
                                             </div>
 

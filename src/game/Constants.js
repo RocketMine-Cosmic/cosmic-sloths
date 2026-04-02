@@ -255,3 +255,39 @@ export const CHARACTER_TALENTS = {
     { id: 'sky_3b', name: 'Evasive Maneuvers', desc: '+20% Speed', stat: 'speedMult', value: 0.2, tier: 3, requires: 'sky_2b' }
   ]
 };
+
+export const getEnemyMasteryMilestones = (enemy) => {
+    if (enemy.isBoss) {
+        return [
+            { kills: 5, bonus: 2 },
+            { kills: 15, bonus: 4 },
+            { kills: 25, bonus: 6 },
+            { kills: 35, bonus: 8 },
+            { kills: 50, bonus: 10 }
+        ];
+    } else if (enemy.tier >= 9) {
+        return [
+            { kills: 50, bonus: 2 },
+            { kills: 125, bonus: 4 },
+            { kills: 250, bonus: 6 },
+            { kills: 375, bonus: 8 },
+            { kills: 500, bonus: 10 }
+        ];
+    } else if (enemy.tier >= 5) {
+        return [
+            { kills: 100, bonus: 2 },
+            { kills: 250, bonus: 4 },
+            { kills: 500, bonus: 6 },
+            { kills: 750, bonus: 8 },
+            { kills: 1000, bonus: 10 }
+        ];
+    } else {
+        return [
+            { kills: 200, bonus: 2 },
+            { kills: 500, bonus: 4 },
+            { kills: 1000, bonus: 6 },
+            { kills: 1500, bonus: 8 },
+            { kills: 2000, bonus: 10 }
+        ];
+    }
+};

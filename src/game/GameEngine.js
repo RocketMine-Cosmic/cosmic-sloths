@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, getEnemyMasteryMilestones } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
@@ -1011,10 +1011,19 @@ export class GameEngine {
     damageEnemy(enemy, amount, projectile = null) {
         let damageMult = 1.0;
         const pastKills = this.save.enemyKills?.[enemy.id] || 0;
-        const masteryReq = enemy.isBoss ? 20 : 2000;
-        if (pastKills >= masteryReq) {
-            damageMult = 1.10; // +10% damage against mastered enemies
+        
+        const milestones = getEnemyMasteryMilestones(enemy);
+        let achievedBonus = 0;
+        for (let i = milestones.length - 1; i >= 0; i--) {
+            if (pastKills >= milestones[i].kills) {
+                achievedBonus = milestones[i].bonus;
+                break;
+            }
         }
+        damageMult += (achievedBonus / 100);
+        
+        const isFullyMastered = pastKills >= milestones[milestones.length - 1].kills;
+
         let finalDamage = amount * damageMult;
         let isCrit = false;
         let isWeakHit = false;
@@ -1075,7 +1084,7 @@ export class GameEngine {
             return;
         }
 
-        let color = isCrit ? '#ff4444' : (pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
+        let color = isCrit ? '#ff4444' : (isFullyMastered ? '#ff00ff' : '#ffffff');
         if (isWeakHit) {
             color = '#ffdd00';
             this.addDamageText(enemy.x, enemy.y - 30, 'WEAK SPOT!', '#ffdd00', false);
