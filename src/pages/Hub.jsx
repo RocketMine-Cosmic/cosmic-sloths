@@ -228,20 +228,6 @@ export default function Hub({ isCarousel }) {
                                                                             <span className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></span>
                                                                             <span className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></span>
                                                                         </div>
-                                                                        {isUnlocked && (
-                                                                            <div className="mt-1 w-full pr-4 relative z-20">
-                                                                                <select
-                                                                                    value={selectedWeapon}
-                                                                                    onChange={(e) => { SoundManager.playUIClick(); setSelectedWeapon(e.target.value); }}
-                                                                                    onClick={(e) => e.stopPropagation()}
-                                                                                    className="w-full bg-[#0b0416]/90 text-white text-xs border border-cyan-500/50 rounded p-1 outline-none focus:border-cyan-400"
-                                                                                >
-                                                                                    {getAvailableWeapons(selectedChar).map(w => (
-                                                                                        <option key={w.id} value={w.id}>🔫 {w.name}</option>
-                                                                                    ))}
-                                                                                </select>
-                                                                            </div>
-                                                                        )}
                                                                     </>
                                                                 ) : (
                                                                     <div className="w-full pr-4 flex flex-col gap-2 relative z-50">
