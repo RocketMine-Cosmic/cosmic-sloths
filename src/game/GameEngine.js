@@ -1364,14 +1364,15 @@ export class GameEngine {
                 this.ctx.rotate(Math.atan2(p.vy, p.vx));
             }
             
-            // Glowing Aura
-            this.ctx.globalAlpha = 0.5;
-            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 2.5);
-            grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = grad;
+            // Glowing Aura - optimized for performance
+            this.ctx.globalAlpha = 0.2;
+            this.ctx.fillStyle = p.color || '#ffffff';
             this.ctx.beginPath();
             this.ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 0.4;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, p.radius * 1.5, 0, Math.PI * 2);
             this.ctx.fill();
             this.ctx.globalAlpha = 1.0;
 
@@ -1487,13 +1488,14 @@ export class GameEngine {
                     this.ctx.rotate(Math.atan2(p.vy, p.vx));
                 }
                 
-                this.ctx.globalAlpha = 0.6;
-                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 2);
-                grad.addColorStop(0, p.color || '#ff0000');
-                grad.addColorStop(1, 'transparent');
-                this.ctx.fillStyle = grad;
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.fillStyle = p.color || '#ff0000';
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, p.radius * 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius * 1.2, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
 
@@ -1538,16 +1540,17 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
 
-                // Add HD aura
+                // Add HD aura - optimized
                 this.ctx.globalCompositeOperation = 'lighter';
-                this.ctx.globalAlpha = 0.5;
                 const auraCol = isMastered ? '#ff0000' : '#8B4513';
-                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
-                grad.addColorStop(0, auraCol);
-                grad.addColorStop(1, 'transparent');
-                this.ctx.fillStyle = grad;
+                this.ctx.fillStyle = auraCol;
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 0.4;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.globalAlpha = 1.0;
@@ -1581,15 +1584,16 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(this.time * 5); // Spin
                 
-                // Add HD aura
+                // Add HD aura - optimized
                 this.ctx.globalCompositeOperation = 'lighter';
-                this.ctx.globalAlpha = 0.5;
-                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
-                grad.addColorStop(0, '#32CD32');
-                grad.addColorStop(1, 'transparent');
-                this.ctx.fillStyle = grad;
+                this.ctx.fillStyle = '#32CD32';
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 0.4;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.globalAlpha = 1.0;
