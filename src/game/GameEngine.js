@@ -1082,8 +1082,12 @@ export class GameEngine {
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
         
         this.isPaused = true;
-        SoundManager.playLevelUp();
-        this.particleManager.createLevelUp(this.player.x, this.player.y);
+        
+        // Skip VFX/SFX if leveling up instantly at the start of a raid to prevent lag bursts
+        if (this.time > 0.5) {
+            SoundManager.playLevelUp();
+            this.particleManager.createLevelUp(this.player.x, this.player.y);
+        }
         
         this.callbacks.onLevelUp(this.generateChoices());
     }
