@@ -257,6 +257,7 @@ export const CHARACTER_TALENTS = {
 };
 
 export const getEnemyMasteryMilestones = (enemy) => {
+    if (!enemy) return [{ kills: 10, bonus: 0 }];
     if (enemy.isBoss) {
         return [
             { kills: 5, bonus: 2 },

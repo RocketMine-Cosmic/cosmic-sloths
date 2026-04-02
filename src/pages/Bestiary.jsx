@@ -246,7 +246,7 @@ export default function Bestiary({ isCarousel }) {
                                                         {isFullyMastered ? (
                                                             <span className="text-fuchsia-400">MAXED</span>
                                                         ) : (
-                                                            <span className="text-slate-400">Next: {kills.toLocaleString()} / {nextMilestone?.kills.toLocaleString()}</span>
+                                                            <span className="text-slate-400">Next: {kills.toLocaleString()} / {nextMilestone?.kills?.toLocaleString() || '???'}</span>
                                                         )}
                                                     </div>
                                                 </div>
