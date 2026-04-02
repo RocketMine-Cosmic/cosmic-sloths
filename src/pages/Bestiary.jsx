@@ -253,7 +253,7 @@ export default function Bestiary({ isCarousel }) {
                                                 <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex relative">
                                                     <div
                                                         className={`absolute top-0 left-0 h-full transition-all ${isFullyMastered ? 'bg-fuchsia-500' : 'bg-fuchsia-600/50'}`}
-                                                        style={{ width: `${progress * 100}%` }}
+                                                        style={{ width: `${progress * 100}%`, zIndex: 5 }}
                                                     />
                                                     {/* Milestone markers */}
                                                     {milestones.map((m, i) => (

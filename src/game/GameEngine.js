@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, getEnemyMasteryMilestones } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
@@ -1010,19 +1010,46 @@ export class GameEngine {
 
     damageEnemy(enemy, amount, projectile = null) {
         let damageMult = 1.0;
-        const pastKills = this.save.enemyKills?.[enemy.id] || 0;
+        let isFullyMastered = false;
         
-        const milestones = getEnemyMasteryMilestones(enemy);
-        let achievedBonus = 0;
-        for (let i = milestones.length - 1; i >= 0; i--) {
-            if (pastKills >= milestones[i].kills) {
-                achievedBonus = milestones[i].bonus;
-                break;
+        if (enemy && enemy.id) {
+            const pastKills = this.save?.enemyKills?.[enemy.id] || 0;
+            
+            let milestones = [
+                { kills: 200, bonus: 2 },
+                { kills: 500, bonus: 4 },
+                { kills: 1000, bonus: 6 },
+                { kills: 1500, bonus: 8 },
+                { kills: 2000, bonus: 10 }
+            ];
+            
+            if (enemy.isBoss) {
+                milestones = [
+                    { kills: 5, bonus: 2 }, { kills: 15, bonus: 4 }, { kills: 25, bonus: 6 },
+                    { kills: 35, bonus: 8 }, { kills: 50, bonus: 10 }
+                ];
+            } else if (enemy.tier >= 9) {
+                milestones = [
+                    { kills: 50, bonus: 2 }, { kills: 125, bonus: 4 }, { kills: 250, bonus: 6 },
+                    { kills: 375, bonus: 8 }, { kills: 500, bonus: 10 }
+                ];
+            } else if (enemy.tier >= 5) {
+                milestones = [
+                    { kills: 100, bonus: 2 }, { kills: 250, bonus: 4 }, { kills: 500, bonus: 6 },
+                    { kills: 750, bonus: 8 }, { kills: 1000, bonus: 10 }
+                ];
             }
+
+            let achievedBonus = 0;
+            for (let i = milestones.length - 1; i >= 0; i--) {
+                if (pastKills >= milestones[i].kills) {
+                    achievedBonus = milestones[i].bonus;
+                    break;
+                }
+            }
+            damageMult += (achievedBonus / 100);
+            isFullyMastered = pastKills >= milestones[milestones.length - 1].kills;
         }
-        damageMult += (achievedBonus / 100);
-        
-        const isFullyMastered = pastKills >= milestones[milestones.length - 1].kills;
 
         let finalDamage = amount * damageMult;
         let isCrit = false;
