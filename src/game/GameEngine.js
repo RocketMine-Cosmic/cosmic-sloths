@@ -161,11 +161,11 @@ export class GameEngine {
         this.kills = 0;
 
         if (arenaId === 'world_boss_arena') {
-            // Instead of random upgrades, grant enough XP to reach Level 10
+            // Instead of random upgrades, grant enough XP to reach Level 20
             // so the player can build their character properly!
             let totalXpNeeded = 0;
             let currentReq = 10;
-            for (let i = 1; i < 10; i++) {
+            for (let i = 1; i < 20; i++) {
                 totalXpNeeded += currentReq;
                 currentReq = Math.floor(currentReq * 1.1 + 20);
             }
@@ -412,7 +412,7 @@ export class GameEngine {
                 const baseMap = {'world_boss_0': 'boss_nebula_devourer', 'world_boss_1': 'boss_plasma_kraken', 'world_boss_2': 'boss_stellar_colossus', 'world_boss_3': 'boss_cosmic_wyrm'};
                 const baseBossTemplate = ENEMIES.find(e => e.id === (baseMap[this.worldBossId] || 'boss_nebula_devourer'));
                 const boss = {
-                    ...baseBossTemplate, id: 'world_boss', name: this.worldBossName, hp: 50000000, maxHp: 50000000, damage: 30 * this.difficulty.enemyDmgMult, isBoss: true, isWorldBoss: true, originalBossId: baseBossTemplate.id
+                    ...baseBossTemplate, id: 'world_boss', name: this.worldBossName, hp: 50000000, maxHp: 50000000, damage: 20 * this.difficulty.enemyDmgMult, isBoss: true, isWorldBoss: true, originalBossId: baseBossTemplate.id
                 };
                 const angle = Math.random() * Math.PI * 2;
                 const dist = 600;
