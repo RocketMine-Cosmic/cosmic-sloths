@@ -59,7 +59,7 @@ export class GameEngine {
         const baseChar = save.skinColorOverride ? { ...baseCharRaw, color: save.skinColorOverride } : baseCharRaw;
 
         if (arenaId === 'world_boss_arena') {
-            this.arena = { id: 'world_boss_arena', name: 'Global Raid', bg: '#1a0000', duration: Infinity, effect: 'solar_flare' };
+            this.arena = { id: 'world_boss_arena', name: 'Global Raid', bg: '#1a0000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/887e8de50_image-48.jpg', duration: Infinity, effect: 'solar_flare' };
         } else {
             this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
             if (isEndless) {
