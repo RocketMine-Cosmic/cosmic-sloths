@@ -19,8 +19,8 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
                 
                 const edgePadding = 40;
                 const tan = Math.tan(angle);
-                const rectWidth = centerX - edgePadding;
-                const rectHeight = centerY - edgePadding;
+                const rectWidth = Math.max(1, centerX - edgePadding);
+                const rectHeight = Math.max(1, centerY - edgePadding);
 
                 let indX, indY;
                 if (Math.abs(tan) < rectHeight / rectWidth) {
@@ -30,6 +30,8 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
                     indY = centerY + Math.sign(Math.sin(angle)) * rectHeight;
                     indX = centerX + (indY - centerY) / tan;
                 }
+
+                if (!Number.isFinite(indX) || !Number.isFinite(indY)) return;
 
                 ctx.save();
                 ctx.translate(indX, indY);

@@ -246,10 +246,14 @@ export class GameEngine {
     }
 
     loop(timestamp) {
-        if (!this.isPaused && !this.isGameOver && !this.isVictory) {
-            const dt = (timestamp - this.lastTime) / 1000;
-            this.update(dt);
-            this.draw();
+        try {
+            if (!this.isPaused && !this.isGameOver && !this.isVictory) {
+                const dt = (timestamp - this.lastTime) / 1000;
+                this.update(dt);
+                this.draw();
+            }
+        } catch (e) {
+            console.error("Game loop error:", e);
         }
         this.lastTime = timestamp;
         this.animationId = requestAnimationFrame(this.loop.bind(this));
