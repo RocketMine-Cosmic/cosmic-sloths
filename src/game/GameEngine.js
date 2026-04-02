@@ -203,9 +203,10 @@ export class GameEngine {
     }
 
     takeDamage(amount) {
-        if (this.player.invincibleTimer > 0) return;
+        if (this.player.invincibleTimer > 0 || this.player.iFrames > 0) return;
         const actualDmg = Math.max(1, amount - this.player.armor);
         this.player.hp -= actualDmg;
+        this.player.iFrames = 0.2;
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
         this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
         SoundManager.playPlayerHit();
@@ -329,6 +330,9 @@ export class GameEngine {
 
         if (this.player.invincibleTimer > 0) {
             this.player.invincibleTimer -= dt;
+        }
+        if (this.player.iFrames > 0) {
+            this.player.iFrames -= dt;
         }
         
         this.zoom = window.innerWidth < 768 ? 0.55 : 1;
@@ -1714,6 +1718,10 @@ export class GameEngine {
             ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
             : (this.player.idleImage && this.player.idleImage.complete ? this.player.idleImage : null);
 
+        if (this.player.iFrames > 0 && Math.floor(this.time * 15) % 2 === 0) {
+            this.ctx.globalAlpha = 0.5;
+        }
+
         if (spriteSheet) {
             const size = this.player.radius * 5;
             const frame = this.player.currentFrame;
@@ -1753,6 +1761,8 @@ export class GameEngine {
             this.ctx.roundRect(this.player.x - this.player.radius + 2, this.player.y - this.player.radius + 2, this.player.radius * 2 - 4, this.player.radius - 2, 4);
             this.ctx.fill();
         }
+
+        this.ctx.globalAlpha = 1.0;
 
         if (this.player.invincibleTimer > 0) {
             this.ctx.strokeStyle = '#ffff00';
