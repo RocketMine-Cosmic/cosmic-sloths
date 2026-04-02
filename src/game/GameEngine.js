@@ -1107,8 +1107,8 @@ export class GameEngine {
         
         this.isPaused = true;
         
-        // Skip VFX/SFX if leveling up instantly at the start of a raid to prevent lag bursts
-        if (this.time > 0.5) {
+        // Skip VFX/SFX entirely in Global Raids, or if leveling up instantly at the start to prevent lag bursts
+        if (this.time > 0.5 && this.arena.id !== 'world_boss_arena') {
             SoundManager.playLevelUp();
             this.particleManager.createLevelUp(this.player.x, this.player.y);
         }
