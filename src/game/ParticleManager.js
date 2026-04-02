@@ -30,9 +30,9 @@ export class ParticleManager {
     }
 
     update(dt) {
-        // Hard cap to prevent spiral lag
-        if (this.particles.length > 600) {
-            this.particles.splice(0, this.particles.length - 600);
+        // Hard cap to prevent spiral lag, stricter for mobile optimization
+        if (this.particles.length > 350) {
+            this.particles.splice(0, this.particles.length - 350);
         }
         this.particles = this.particles.filter(p => {
             p.life -= dt;
@@ -78,11 +78,13 @@ export class ParticleManager {
         });
     }
 
-    draw(ctx) {
+    draw(ctx, camX, camY, vWidth, vHeight) {
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
 
         this.particles.forEach(p => {
+            const size = p.size || 8;
+            if (camX !== undefined && (p.x + size * 4 < camX || p.x - size * 4 > camX + vWidth || p.y + size * 4 < camY || p.y - size * 4 > camY + vHeight)) return;
             const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
 
