@@ -179,10 +179,11 @@ export default function Squads({ isCarousel }) {
                 level: 1
             });
             
+            const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A new pilot';
             const member = await base44.entities.SquadMember.create({
                 squad_id: squad.id,
                 user_id: user.id,
-                player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+                player_name: displayName,
                 player_title: user.data?.player_title || '',
                 role: 'leader',
                 last_payout_week: ''
@@ -200,16 +201,25 @@ export default function Squads({ isCarousel }) {
         if (!user) return;
         try {
             SoundManager.playUIClick();
+            
+            const existingMembers = await base44.entities.SquadMember.filter({ user_id: user.id });
+            if (existingMembers.length > 0) {
+                toast({ title: "Already in a Squad", description: "You are already in a squad." });
+                return;
+            }
+
             const currentSquad = await base44.entities.Squad.get(squadId);
             if ((currentSquad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
                 toast({ title: "Squad Full", description: "This squad has reached the maximum number of members." });
                 return;
             }
 
+            const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A new pilot';
+
             const member = await base44.entities.SquadMember.create({
                 squad_id: squadId,
                 user_id: user.id,
-                player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+                player_name: displayName,
                 player_title: user.data?.player_title || '',
                 role: 'member',
                 last_payout_week: ''
@@ -219,7 +229,7 @@ export default function Squads({ isCarousel }) {
                 squad_id: squadId,
                 user_id: 'system',
                 player_name: 'SYSTEM',
-                content: `${user.player_name || user.data?.player_name || user.data?.full_name || user.full_name} has joined the squad!`
+                content: `${displayName} has joined the squad!`
             });
             
             const updatedSquad = await base44.entities.Squad.update(squadId, {
@@ -239,11 +249,13 @@ export default function Squads({ isCarousel }) {
             SoundManager.playUIClick();
             await base44.entities.SquadMember.delete(myMemberRecord.id);
             
+            const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A pilot';
+
             await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
                 user_id: 'system',
                 player_name: 'SYSTEM',
-                content: `${user.player_name || user.data?.player_name || user.data?.full_name || user.full_name} has left the squad.`
+                content: `${displayName} has left the squad.`
             });
             
             await base44.entities.Squad.update(mySquad.id, {
@@ -268,11 +280,12 @@ export default function Squads({ isCarousel }) {
         SoundManager.playUIClick();
 
         // Optimistically add to local state immediately
+        const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'Pilot';
         const optimisticMsg = {
             id: `optimistic-${Date.now()}`,
             squad_id: mySquad.id,
             user_id: user.id,
-            player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+            player_name: displayName,
             player_title: user.data?.player_title || '',
             content: content,
             created_date: new Date().toISOString()
@@ -283,7 +296,7 @@ export default function Squads({ isCarousel }) {
             const saved = await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
                 user_id: user.id,
-                player_name: user.player_name || user.data?.player_name || user.data?.full_name || user.full_name,
+                player_name: displayName,
                 player_title: user.data?.player_title || '',
                 content: content
             });

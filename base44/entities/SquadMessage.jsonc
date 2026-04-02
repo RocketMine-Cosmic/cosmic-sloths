@@ -25,17 +25,10 @@
     "content"
   ],
   "rls": {
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
+    "read": {},
+    "create": {},
+    "update": {},
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "write": {
       "user_condition": {
         "role": "admin"
       }

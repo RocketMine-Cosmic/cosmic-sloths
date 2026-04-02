@@ -44,31 +44,9 @@
   ],
   "rls": {
     "read": {},
-    "update": {
-      "$or": [
-        {
-          "data.owner_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "create": {},
+    "update": {},
     "delete": {
-      "$or": [
-        {
-          "data.owner_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "write": {
       "$or": [
         {
           "data.owner_id": "{{user.id}}"
