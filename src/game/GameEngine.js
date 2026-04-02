@@ -605,18 +605,18 @@ export class GameEngine {
             
             // Trails
             if (!p.isAoe && this.frameCount % 2 === 0) {
-                if (p.type === 'dual_laser') this.addParticle(p.x, p.y, p.color, 1, 'glow', 0.5);
+                if (p.type === 'dual_laser') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
                 else if (p.type === 'lightning') this.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'spark', 0.8);
-                else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 2, 'glitch', 1.0);
+                else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 2, 'spark', 1.0);
                 else if (p.type === 'repair_beam') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 0.5);
-                else if (p.type === 'missile') this.addParticle(p.x, p.y, '#ff4500', 3, 'smoke', 1.0);
-                else if (p.type === 'data_pulse') this.addParticle(p.x, p.y, p.color, 1, 'glitch', 0.5);
-                else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 2, 'glow', 0.8);
+                else if (p.type === 'missile') this.addParticle(p.x, p.y, '#ff4500', 3, 'spark', 1.0);
+                else if (p.type === 'data_pulse') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
+                else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 2, 'spark', 0.8);
                 else if (p.type === 'railgun') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 1.2);
-                else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'circle', 0.5);
+                else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
                 else if (p.type === 'supernova_beam') {
                     this.addParticle(p.x, p.y, '#ffffff', 2, 'spark', 1.5);
-                    this.addParticle(p.x, p.y, p.color, 2, 'explosion', 1.0);
+                    this.addParticle(p.x, p.y, p.color, 2, 'spark', 1.0);
                 }
                 else this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
             }
@@ -652,14 +652,14 @@ export class GameEngine {
                                 this.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
                             }
                             
-                            if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'glow', 2);
-                            if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'smoke', 2);
-                            if (p.type === 'glitch_slash') this.addParticle(e.x, e.y, p.color, 8, 'glitch', 2);
+                            if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
+                            if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'spark', 2);
+                            if (p.type === 'glitch_slash') this.addParticle(e.x, e.y, p.color, 8, 'spark', 2);
                             if (p.type === 'missile') this.particleManager.createExplosion(e.x, e.y, '#ff4500', 1.0, 'drone');
-                            if (p.type === 'data_pulse') this.addParticle(e.x, e.y, p.color, 10, 'glitch', 2);
-                            if (p.type === 'phantom_orb') this.addParticle(e.x, e.y, p.color, 15, 'glow', 1.5);
+                            if (p.type === 'data_pulse') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
+                            if (p.type === 'phantom_orb') this.addParticle(e.x, e.y, p.color, 15, 'spark', 1.5);
                             if (p.type === 'railgun') this.addParticle(e.x, e.y, '#ffffff', 20, 'spark', 3);
-                            if (p.type === 'sonic_wave') this.addParticle(e.x, e.y, p.color, 10, 'circle', 2);
+                            if (p.type === 'sonic_wave') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
 
                             p.pierce--;
                             if (p.pierce <= 0) p.dead = true;
