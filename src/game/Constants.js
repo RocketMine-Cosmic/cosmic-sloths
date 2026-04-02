@@ -185,7 +185,7 @@ export const ENEMIES = [
   { id: 't1_floater', name: 'Crystal Floater', hp: 14, speed: 1.8, damage: 7, color: '#ec4899', radius: 32, xp: 1, tier: 1, spriteImage: loadSprite('a70ff7ac4_crystal_floater_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 2
-  { id: 't2_serpent', name: 'Plasma Serpent', hp: 18, speed: 2.4, damage: 12, color: '#f97316', radius: 32, xp: 2, tier: 2, spriteImage: loadSprite('7baf81106_plasma_serpent_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't2_serpent', name: 'Plasma Serpent', hp: 18, speed: 2.4, damage: 12, color: '#f97316', radius: 32, xp: 2, tier: 2, isRanged: true, spriteImage: loadSprite('7baf81106_plasma_serpent_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't2_eye_tentacle', name: 'Eye Tentacle', hp: 22, speed: 1.5, damage: 15, color: '#d946ef', radius: 36, xp: 2, tier: 2, spriteImage: loadSprite('e1e15823a_eye_tentacle_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't2_spore_wasp', name: 'Spore Wasp', hp: 15, speed: 2.6, damage: 10, color: '#84cc16', radius: 27, xp: 2, tier: 2, spriteImage: loadSprite('3b545ef7a_spore_wasp_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't2_rock', name: 'Rock Fragment', hp: 35, speed: 0.8, damage: 14, color: '#f97316', radius: 41, xp: 2, tier: 2, isTank: true, spriteImage: loadSprite('0452ce6df_rock_fragment_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
@@ -194,13 +194,13 @@ export const ENEMIES = [
   { id: 't3_manta', name: 'Void Manta', hp: 30, speed: 2.0, damage: 16, color: '#8b5cf6', radius: 41, xp: 3, tier: 3, spriteImage: loadSprite('9842135cf_void_mantra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't3_energy_phantom', name: 'Energy Phantom', hp: 28, speed: 1.8, damage: 15, color: '#0ea5e9', radius: 36, xp: 3, tier: 3, spriteImage: loadSprite('74d31fdc0_energy_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't3_starfish', name: 'Stellar Starfish', hp: 35, speed: 1.2, damage: 18, color: '#eab308', radius: 36, xp: 3, tier: 3, spriteImage: loadSprite('bdcbfb6bd_stellar_starfish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't3_angler', name: 'Angler Lantern', hp: 32, speed: 1.5, damage: 17, color: '#3b82f6', radius: 41, xp: 3, tier: 3, spriteImage: loadSprite('b00d8e25b_angler_lantern_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't3_angler', name: 'Angler Lantern', hp: 32, speed: 1.5, damage: 17, color: '#3b82f6', radius: 41, xp: 3, tier: 3, isRanged: true, spriteImage: loadSprite('b00d8e25b_angler_lantern_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 4
   { id: 't4_spinner', name: 'Quantum Spinner', hp: 45, speed: 2.2, damage: 20, color: '#06b6d4', radius: 41, xp: 4, tier: 4, spriteImage: loadSprite('a2df90068_quantum_spinner_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't4_ribbon', name: 'Ribbon Phantom', hp: 40, speed: 1.9, damage: 22, color: '#d946ef', radius: 36, xp: 4, tier: 4, spriteImage: loadSprite('06dc947b3_ribbon_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't4_vortex', name: 'Vortex Drifter', hp: 55, speed: 1.4, damage: 25, color: '#ec4899', radius: 45, xp: 4, tier: 4, spriteImage: loadSprite('28251fe02_vortex_drifter_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
-  { id: 't4_mothra', name: 'Neon Mothra', hp: 38, speed: 2.4, damage: 18, color: '#14b8a6', radius: 36, xp: 4, tier: 4, spriteImage: loadSprite('23d933892_neon_mothra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't4_mothra', name: 'Neon Mothra', hp: 38, speed: 2.4, damage: 18, color: '#14b8a6', radius: 36, xp: 4, tier: 4, isRanged: true, spriteImage: loadSprite('23d933892_neon_mothra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 5
   { id: 't5_spike_virus', name: 'Spike Virus', hp: 65, speed: 1.8, damage: 28, color: '#a855f7', radius: 45, xp: 5, tier: 5, spriteImage: loadSprite('9b4da0034_spike_virus_sheet.png'), frameCount: 16, animationSpeed: 0.15 },

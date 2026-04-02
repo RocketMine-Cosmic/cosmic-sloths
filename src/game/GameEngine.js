@@ -935,7 +935,7 @@ export class GameEngine {
 
             // Projectile attacks
             if (!e.burrowed) {
-                if (e.isRanged || e.id === 'nebula_serpent' || e.id === 'asteroid_kraken' || e.id === 'solar_mantis' || e.id === 'starspine_urchin' || e.id === 'cryo_wraith' || e.id === 'pulsar_anglerfish' || e.id === 'ion_stingray' || e.id === 'elite_solar_drake') {
+                if (e.isRanged) {
                     if (!e.shootTimer) e.shootTimer = 2 + Math.random() * 2;
                     e.shootTimer -= dt;
                     if (e.shootTimer <= 0 && dist < 500) {
