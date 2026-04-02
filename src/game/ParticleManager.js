@@ -212,10 +212,8 @@ export class ParticleManager {
 
         if (isVoid) {
             this.addParticle(x, y, color, 8 * s, 'implode', 2 * s, { speed: 180 * s });
-            this.addParticle(x, y, '#110033', 6 * s, 'smoke', 3 * s, { lifeBonus: 0.8, speed: 40 });
         } else if (isRock) {
             this.addParticle(x, y, color, 10 * s, 'fragment', 3 * s, { gravity: true, speed: 350 * s });
-            this.addParticle(x, y, '#555555', 6 * s, 'smoke', 3 * s, { lifeBonus: 0.6, speed: 30 });
         } else if (isTech) {
             this.addParticle(x, y, color, 8 * s, 'slash', 2 * s, { speed: 500 * s });
             this.addParticle(x, y, '#ffffff', 6 * s, 'star', 1.5 * s, { speed: 600 * s });
@@ -226,12 +224,11 @@ export class ParticleManager {
             this.addParticle(x, y, color, 12 * s, 'fragment', 2 * s, { speed: 280 * s });
             this.addParticle(x, y, '#ffffff', 6 * s, 'star', 1 * s, { speed: 180 * s });
         } else if (isBio) {
-            this.addParticle(x, y, color, 10 * s, 'smoke', 2 * s, { speed: 150 * s, lifeBonus: 0.5 });
+            this.addParticle(x, y, color, 8 * s, 'explosion', 2 * s, { speed: 150 * s });
             this.addParticle(x, y, '#22c55e', 5 * s, 'blood', 2 * s, { gravity: true, speed: 220 * s });
         } else {
             this.addParticle(x, y, color, 8 * s, 'explosion', 2 * s, { gravity: true, speed: 320 * s });
             this.addParticle(x, y, '#ffffff', 5 * s, 'star', 1.5 * s, { gravity: true, speed: 420 * s });
-            this.addParticle(x, y, '#333333', 5 * s, 'smoke', 2.5 * s, { lifeBonus: 0.4, speed: 40 });
         }
     }
 
@@ -283,7 +280,6 @@ export class ParticleManager {
             case 'explosion':
                 this.addParticle(x, y, '#ff4500', 6, 'explosion', 1.5, { speed: 250 });
                 this.addParticle(x, y, '#ffdd00', 3, 'flame', 1.5, { speed: 100 });
-                this.addParticle(x, y, '#333333', 3, 'smoke', 2, { lifeBonus: 0.5, speed: 40 });
                 this.particles.push({ x, y, vx: 0, vy: 0, life: 0.3, maxLife: 0.3, color: '#ff6600', tint: '#ff6600', type: 'shockwave', size: 6, growthRate: 350, lineWidth: 3 });
                 break;
             case 'pixel_burst':
@@ -295,7 +291,6 @@ export class ParticleManager {
                 break;
             case 'blood_splatter':
                 this.addParticle(x, y, '#ff0000', 16, 'blood', 3.0, { gravity: true, speed: 300 });
-                this.addParticle(x, y, '#880000', 12, 'smoke', 2.5, { gravity: true, speed: 200 });
                 this.addParticle(x, y, '#550000', 8, 'fragment', 2.0, { gravity: true, speed: 350 });
                 this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#ff0000', tint: '#ff0000', type: 'shockwave', size: 5, growthRate: 300, lineWidth: 6 });
                 break;
@@ -312,7 +307,6 @@ export class ParticleManager {
                         rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 15
                     });
                 }
-                this.addParticle(x, y, '#000000', 8, 'smoke', 3.5, { lifeBonus: 0.8, speed: 20 });
                 this.particles.push({ x, y, vx: 0, vy: 0, life: 0.5, maxLife: 0.5, color: '#2a004d', tint: '#2a004d', type: 'shockwave', size: 6, growthRate: 200, lineWidth: 10 });
                 break;
             case 'freeze':
@@ -321,7 +315,7 @@ export class ParticleManager {
                 this.particles.push({ x, y, vx: 0, vy: 0, life: 0.35, maxLife: 0.35, color: '#00cfff', tint: '#00cfff', type: 'shockwave', size: 6, growthRate: 300, lineWidth: 3 });
                 break;
             case 'vaporize':
-                this.addParticle(x, y, '#39ff14', 8, 'smoke', 1.8, { lifeBonus: 0.6, speed: 70 });
+                this.addParticle(x, y, '#39ff14', 8, 'explosion', 1.8, { speed: 150 });
                 this.addParticle(x, y, '#aaff00', 4, 'circle', 1.2, { speed: 110 });
                 this.particles.push({ x, y, vx: 0, vy: 0, life: 0.4, maxLife: 0.4, color: '#39ff14', tint: '#39ff14', type: 'shockwave', size: 4, growthRate: 240, lineWidth: 3 });
                 break;
