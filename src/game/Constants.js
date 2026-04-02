@@ -31,16 +31,7 @@ export const ARENAS = [
 ];
 
 export const WEAPONS = {
-  neoBlaster: { id: 'neoBlaster', name: 'Commander Blaster', type: 'weapon', desc: 'Fires reliable energy blasts.', masteryDesc: 'MASTERY: Fires a spread of 3 blasts.', baseDamage: 12, baseCooldown: 50, baseArea: 1 },
-  wrenchSmash: { id: 'wrenchSmash', name: 'Heavy Wrench', type: 'weapon', desc: 'Smash enemies at close range.', masteryDesc: 'MASTERY: Stuns enemies briefly.', baseDamage: 25, baseCooldown: 70, baseArea: 1.2 },
-  fragGrenade: { id: 'fragGrenade', name: 'Frag Grenade', type: 'weapon', desc: 'Explodes over a large area.', masteryDesc: 'MASTERY: Explodes into smaller cluster bombs.', baseDamage: 30, baseCooldown: 90, baseArea: 1.5 },
-  cyberBlade: { id: 'cyberBlade', name: 'Cyber Blade', type: 'weapon', desc: 'Rapid close-range slashes.', masteryDesc: 'MASTERY: Rapidly strikes a second time.', baseDamage: 18, baseCooldown: 30, baseArea: 0.8 },
-  holoBolt: { id: 'holoBolt', name: 'Holo-Bolts', type: 'weapon', desc: 'Fires tracking holographic bolts.', masteryDesc: 'MASTERY: Bolts pierce through 2 additional targets.', baseDamage: 10, baseCooldown: 45, baseArea: 1 },
-  dataSpike: { id: 'dataSpike', name: 'Data Spike', type: 'weapon', desc: 'Extremely fast-firing digital spikes.', masteryDesc: 'MASTERY: Fires 3 spikes in rapid succession.', baseDamage: 8, baseCooldown: 20, baseArea: 1 },
-  phantomSpear: { id: 'phantomSpear', name: 'Phantom Spear', type: 'weapon', desc: 'High-speed piercing spears.', masteryDesc: 'MASTERY: Pierces far more targets and leaves a damaging pool.', baseDamage: 20, baseCooldown: 60, baseArea: 1 },
-  sniperShot: { id: 'sniperShot', name: 'Vortex Sniper', type: 'weapon', desc: 'Devastating, precise single shots.', masteryDesc: 'MASTERY: Shots pierce all enemies in a line.', baseDamage: 80, baseCooldown: 120, baseArea: 1 },
-  sonicBoom: { id: 'sonicBoom', name: 'Sonic Boom', type: 'weapon', desc: 'Emits damaging soundwaves.', masteryDesc: 'MASTERY: Knocks back enemies significantly.', baseDamage: 15, baseCooldown: 80, baseArea: 1.5 },
-  missileSwarm: { id: 'missileSwarm', name: 'Micro-Missiles', type: 'weapon', desc: 'Launches a barrage of mini-missiles.', masteryDesc: 'MASTERY: Fires double the amount of missiles.', baseDamage: 12, baseCooldown: 100, baseArea: 1.2 },
+  neoBlaster: { id: 'neoBlaster', name: 'Blaster', type: 'weapon', desc: 'Fires reliable energy blasts.', masteryDesc: 'MASTERY: Fires a spread of 3 blasts.', baseDamage: 12, baseCooldown: 50, baseArea: 1 },
   napBeam: { id: 'napBeam', name: 'Cosmic Nap Beam', type: 'weapon', desc: 'Fires a piercing beam.', masteryDesc: 'MASTERY: Beam chains to nearby enemies. (Blue Beam)', baseDamage: 10, baseCooldown: 60, baseArea: 1 },
   vineWhip: { id: 'vineWhip', name: 'Plasma Whip', type: 'weapon', desc: 'Swipes nearby enemies.', masteryDesc: 'MASTERY: Heals player for 5% of damage dealt. (Red Whip)', baseDamage: 15, baseCooldown: 45, baseArea: 1 },
   slothSwarm: { id: 'slothSwarm', name: 'Orbital Drones', type: 'weapon', desc: 'Orbiting defense drones.', masteryDesc: 'MASTERY: Drones move faster and shoot lasers. (Red Drones)', baseDamage: 5, baseCooldown: 120, baseArea: 1 },
@@ -174,16 +165,7 @@ export const UPGRADES = [
   { id: 'w_napalm', name: 'Zero-G Napalm', desc: 'Leaves burning pools.', type: 'weapon', weaponId: 'napalm' },
   { id: 'w_novaPulse', name: 'Nova Pulse', desc: 'A massive expanding energy blast.', type: 'weapon', weaponId: 'novaPulse' },
   { id: 'w_shieldBubble', name: 'Shield Bubble', desc: 'Pushes enemies away and damages them.', type: 'weapon', weaponId: 'shieldBubble' },
-  { id: 'w_neoBlaster', name: 'Commander Blaster', desc: 'Fires reliable energy blasts.', type: 'weapon', weaponId: 'neoBlaster', characterSpecific: 'neobyte' },
-  { id: 'w_wrenchSmash', name: 'Heavy Wrench', desc: 'Smash enemies at close range.', type: 'weapon', weaponId: 'wrenchSmash', characterSpecific: 'pandypaws' },
-  { id: 'w_fragGrenade', name: 'Frag Grenade', desc: 'Explodes over a large area.', type: 'weapon', weaponId: 'fragGrenade', characterSpecific: 'novabyte' },
-  { id: 'w_cyberBlade', name: 'Cyber Blade', desc: 'Rapid close-range slashes.', type: 'weapon', weaponId: 'cyberBlade', characterSpecific: 'glitch' },
-  { id: 'w_holoBolt', name: 'Holo-Bolts', desc: 'Fires tracking holographic bolts.', type: 'weapon', weaponId: 'holoBolt', characterSpecific: 'holodrift' },
-  { id: 'w_dataSpike', name: 'Data Spike', desc: 'Extremely fast-firing digital spikes.', type: 'weapon', weaponId: 'dataSpike', characterSpecific: 'codebreaker' },
-  { id: 'w_phantomSpear', name: 'Phantom Spear', desc: 'High-speed piercing spears.', type: 'weapon', weaponId: 'phantomSpear', characterSpecific: 'dataphantom' },
-  { id: 'w_sniperShot', name: 'Vortex Sniper', desc: 'Devastating, precise single shots.', type: 'weapon', weaponId: 'sniperShot', characterSpecific: 'neonvortex' },
-  { id: 'w_sonicBoom', name: 'Sonic Boom', desc: 'Emits damaging soundwaves.', type: 'weapon', weaponId: 'sonicBoom', characterSpecific: 'synthbeats' },
-  { id: 'w_missileSwarm', name: 'Micro-Missiles', desc: 'Launches a barrage of mini-missiles.', type: 'weapon', weaponId: 'missileSwarm', characterSpecific: 'skybyte' },
+  { id: 'w_neoBlaster', name: 'Blaster', desc: 'Fires reliable energy blasts.', type: 'weapon', weaponId: 'neoBlaster' },
 ];
 
 const loadSprite = (filename) => {

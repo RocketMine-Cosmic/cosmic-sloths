@@ -31,41 +31,20 @@ export default function Hub({ isCarousel }) {
     const { toast } = useToast();
     const touchStartX = React.useRef(null);
 
-    const CHAR_WEAPONS = {
-        neobyte: 'neoBlaster',
-        pandypaws: 'wrenchSmash',
-        novabyte: 'fragGrenade',
-        glitch: 'cyberBlade',
-        holodrift: 'holoBolt',
-        codebreaker: 'dataSpike',
-        dataphantom: 'phantomSpear',
-        neonvortex: 'sniperShot',
-        synthbeats: 'sonicBoom',
-        skybyte: 'missileSwarm'
-    };
-
     const getAvailableWeapons = (charId) => {
-        const startingWeaponIds = Object.values(CHAR_WEAPONS);
-        const available = startingWeaponIds.map(id => WEAPONS[id]).filter(Boolean);
-        const defaultWepId = CHAR_WEAPONS[charId];
-        
-        return available.sort((a, b) => {
-            if (a.id === defaultWepId) return -1;
-            if (b.id === defaultWepId) return 1;
-            return a.name.localeCompare(b.name);
-        });
+        return [WEAPONS['neoBlaster']].filter(Boolean);
     };
 
     const prevCharRef = useRef(selectedChar);
 
     React.useEffect(() => {
         if (prevCharRef.current !== selectedChar) {
-            setSelectedWeapon(CHAR_WEAPONS[selectedChar] || 'neoBlaster');
+            setSelectedWeapon('neoBlaster');
             prevCharRef.current = selectedChar;
         } else {
             const available = getAvailableWeapons(selectedChar);
             if (!available.find(w => w.id === selectedWeapon)) {
-                setSelectedWeapon(CHAR_WEAPONS[selectedChar] || available[0]?.id);
+                setSelectedWeapon(available[0]?.id || 'neoBlaster');
             }
         }
     }, [selectedChar, selectedWeapon]);

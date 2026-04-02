@@ -112,19 +112,7 @@ export class GameEngine {
         
         this.killEffect = save.cosmetics?.killEffect || 'none';
 
-        const CHAR_WEAPONS = {
-            neobyte: 'neoBlaster',
-            pandypaws: 'wrenchSmash',
-            novabyte: 'fragGrenade',
-            glitch: 'cyberBlade',
-            holodrift: 'holoBolt',
-            codebreaker: 'dataSpike',
-            dataphantom: 'phantomSpear',
-            neonvortex: 'sniperShot',
-            synthbeats: 'sonicBoom',
-            skybyte: 'missileSwarm'
-        };
-        const initialWeaponId = startingWeaponId || CHAR_WEAPONS[characterId] || 'neoBlaster';
+        const initialWeaponId = startingWeaponId || 'neoBlaster';
 
         this.player = {
             name: baseChar.name,
