@@ -213,7 +213,8 @@ export function fireWeaponLogic(engine, w) {
                 damage: dmg * 0.5,
                 pierce: 5 + Math.floor(w.level/2),
                 life: 2,
-                color: '#00ffff'
+                color: '#00ffff',
+                type: 'beam'
             });
         }
     }
@@ -330,6 +331,152 @@ export function fireWeaponLogic(engine, w) {
                     burn: true
                 });
             }
+        });
+    }
+    else if (w.id === 'supernovaBeam') {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
+        const spawnOffset = engine.player.radius + 5;
+        
+        engine.projectiles.push({
+            x: engine.player.x + Math.cos(angle) * spawnOffset,
+            y: engine.player.y + Math.sin(angle) * spawnOffset,
+            vx: Math.cos(angle) * 400 * engine.player.projSpeedMult,
+            vy: Math.sin(angle) * 400 * engine.player.projSpeedMult,
+            radius: 12 * area,
+            damage: dmg,
+            pierce: 10 + w.level,
+            life: 3,
+            color: '#ffaa00',
+            type: 'dual_laser',
+            isMastered: true,
+            weaponId: 'supernovaBeam'
+        });
+    }
+    else if (w.id === 'vampiricLash') {
+        engine.addParticle(engine.player.x, engine.player.y, '#ff0000', 30, 'slash', 3.5 * area);
+        engine.enemies.forEach(e => {
+            if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 150 * area) {
+                engine.damageEnemy(e, dmg);
+                engine.addParticle(e.x, e.y, '#ff0000', 12, 'blood', 2);
+                engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + (dmg * 0.1));
+                engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
+            }
+        });
+    }
+    else if (w.id === 'orbitalDefense') {
+        const count = 4 + Math.floor(w.level / 2);
+        for(let i=0; i<count; i++) {
+            const angle = (Math.PI * 2 / count) * i + engine.time * 3;
+            const px = engine.player.x + Math.cos(angle) * (70 * area);
+            const py = engine.player.y + Math.sin(angle) * (70 * area);
+            
+            engine.enemies.forEach(e => {
+                if (Math.hypot(e.x - px, e.y - py) < 30) {
+                    engine.damageEnemy(e, dmg * 0.5);
+                    engine.addParticle(e.x, e.y, '#ff00ff', 3);
+                }
+            });
+            
+            if (engine.frameCount % 20 === i % 20) { 
+                let nearest = null;
+                let minDist = 400 * area;
+                engine.enemies.forEach(e => {
+                    const d = Math.hypot(e.x - px, e.y - py);
+                    if (d < minDist) { minDist = d; nearest = e; }
+                });
+                
+                if (nearest) {
+                    const lAngle = Math.atan2(nearest.y - py, nearest.x - px);
+                    engine.projectiles.push({
+                        x: px, y: py,
+                        vx: Math.cos(lAngle) * 500 * engine.player.projSpeedMult,
+                        vy: Math.sin(lAngle) * 500 * engine.player.projSpeedMult,
+                        radius: 5,
+                        damage: dmg,
+                        pierce: 5 + Math.floor(w.level/2),
+                        life: 2.0,
+                        color: '#ff00ff',
+                        type: 'beam'
+                    });
+                }
+            }
+        }
+    }
+    else if (w.id === 'hellfire') {
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: 0, vy: 0,
+            radius: 50 * area,
+            damage: dmg,
+            pierce: 999,
+            life: 5 + w.level,
+            color: 'rgba(0, 191, 255, 0.6)',
+            isAoe: true,
+            burn: true,
+            isMastered: true,
+            weaponId: 'napalm'
+        });
+    }
+    else if (w.id === 'quantumCollapse') {
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: 0, vy: 0,
+            radius: 20 * area,
+            damage: dmg,
+            pierce: 999,
+            life: 0.8,
+            color: 'rgba(138, 43, 226, 0.8)',
+            isAoe: true,
+            pulse: true
+        });
+        setTimeout(() => {
+            if (engine.isGameOver || engine.isVictory) return;
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: 0, vy: 0,
+                radius: 25 * area,
+                damage: dmg * 0.8,
+                pierce: 999,
+                life: 0.8,
+                color: 'rgba(138, 43, 226, 0.6)',
+                isAoe: true,
+                pulse: true
+            });
+        }, 300);
+        setTimeout(() => {
+            if (engine.isGameOver || engine.isVictory) return;
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: 0, vy: 0,
+                radius: 30 * area,
+                damage: dmg * 0.6,
+                pierce: 999,
+                life: 0.8,
+                color: 'rgba(138, 43, 226, 0.4)',
+                isAoe: true,
+                pulse: true
+            });
+        }, 600);
+    }
+    else if (w.id === 'aegisMatrix') {
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: 0, vy: 0,
+            radius: 100 * area,
+            damage: dmg,
+            pierce: 999,
+            life: 2.5,
+            color: 'rgba(0, 255, 128, 0.4)',
+            isAoe: true,
+            pushback: 400,
+            isMastered: true,
+            weaponId: 'shieldBubble'
         });
     }
 }

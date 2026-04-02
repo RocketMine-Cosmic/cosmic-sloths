@@ -591,6 +591,7 @@ export class GameEngine {
 
     updateProjectiles(dt) {
         this.projectiles = this.projectiles.filter(p => {
+            if (p.dead) return false;
             p.x += p.vx * dt;
             p.y += p.vy * dt;
             p.life -= dt;
@@ -614,6 +615,7 @@ export class GameEngine {
                     if (p.pierce > 0 && Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
                         if (e.id === 'boss_supernova') {
                             p.pierce = 0;
+                            p.dead = true;
                             const angle = Math.atan2(this.player.y - e.y, this.player.x - e.x);
                             this.enemyProjectiles.push({
                                 x: e.x, y: e.y,
@@ -649,6 +651,7 @@ export class GameEngine {
                             if (p.type === 'sonic_wave') this.addParticle(e.x, e.y, p.color, 10, 'circle', 2);
 
                             p.pierce--;
+                            if (p.pierce <= 0) p.dead = true;
                             
                             if (p.isMastered && p.weaponId === 'napBeam') {
                                 let nearest = null;
@@ -734,18 +737,19 @@ export class GameEngine {
                     }
                 }
             }
-            return p.life > 0 && p.pierce > 0;
+            return p.life > 0;
         });
 
         if (this.enemyProjectiles) {
             this.enemyProjectiles = this.enemyProjectiles.filter(p => {
+                if (p.dead) return false;
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
                 p.life -= dt;
                 
                 if (Math.hypot(this.player.x - p.x, this.player.y - p.y) < this.player.radius + p.radius) {
                     this.takeDamage(p.damage);
-                    return false;
+                    p.dead = true;
                 }
                 return p.life > 0;
             });
@@ -1182,6 +1186,7 @@ export class GameEngine {
                 this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
             }
             this.player.passives.push(upgrade);
+            if (this.checkEvolutions) this.checkEvolutions();
         } else if (upgrade.type === 'weapon') {
             const levelIncrement = upgrade.value || 1;
             
@@ -1235,6 +1240,28 @@ export class GameEngine {
 
                 // Check again in case multiple synergies formed (rare but possible)
                 this.checkSynergies();
+                break;
+            }
+        }
+        if (this.checkEvolutions) this.checkEvolutions();
+    }
+
+    checkEvolutions() {
+        for (const evolution of EVOLUTIONS) {
+            const baseWeapon = this.player.weapons.find(w => w.id === evolution.baseWeapon);
+            const passive = this.player.passives.find(p => p.id === evolution.passive);
+            
+            if (baseWeapon && passive) {
+                // Remove base weapon
+                this.player.weapons = this.player.weapons.filter(w => w.id !== evolution.baseWeapon);
+                
+                // Add evolved weapon, keeping the level
+                this.player.weapons.push({ ...WEAPONS[evolution.evolvedWeapon], level: baseWeapon.level, timer: 0 });
+                
+                this.addDamageText(this.player.x, this.player.y - 40, "WEAPON EVOLVED!", '#ff4500');
+                
+                // Check again in case multiple evolutions formed
+                this.checkEvolutions();
                 break;
             }
         }
@@ -1377,9 +1404,11 @@ export class GameEngine {
             this.ctx.globalAlpha = 1.0;
 
             if (p.type === 'beam' || p.type === 'dual_laser') {
+                this.ctx.fillStyle = p.color || '#ffffff';
+                this.ctx.fillRect(-p.radius * 1.5, -p.radius / 2, p.radius * 3, p.radius);
                 this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2);
-                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*1.5, -p.radius, p.radius*3, p.radius*2);
+                this.ctx.fillRect(-p.radius, -p.radius / 4, p.radius * 2, p.radius / 2);
+                if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
             } else if (p.type === 'lightning') {
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 2;
@@ -1392,9 +1421,16 @@ export class GameEngine {
                 this.ctx.stroke();
             } else if (p.type === 'glitch_slash') {
                 if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
-                else { this.ctx.fillStyle = '#ffffff'; this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2); }
+                else { this.ctx.fillStyle = p.color || '#ffffff'; this.ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2); }
             } else if (p.type === 'stomp') {
                 if (texShockwave && texShockwave.isReady) this.ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+                else {
+                    this.ctx.strokeStyle = p.color || '#ffffff';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
             } else if (p.type === 'repair_beam') {
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 3;
@@ -1406,10 +1442,14 @@ export class GameEngine {
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.fillRect(-p.radius, -p.radius*0.2, p.radius*1.5, p.radius*0.4);
                 if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius, p.radius*2, p.radius*2);
-            } else if (p.type === 'data_pulse') {
+            } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
                 if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-            } else if (p.type === 'phantom_orb') {
-                if (texStar && texStar.isReady) this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+                else {
+                    this.ctx.fillStyle = p.color || '#ffffff';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, p.radius*0.8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
             } else if (p.type === 'railgun') {
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 2;
@@ -1419,7 +1459,7 @@ export class GameEngine {
                 this.ctx.stroke();
                 if (texSlash && texSlash.isReady) this.ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
             } else if (p.type === 'sonic_wave') {
-                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.strokeStyle = p.color || '#ffffff';
                 this.ctx.lineWidth = 2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
@@ -1610,6 +1650,70 @@ export class GameEngine {
                 this.ctx.fill();
                 this.ctx.strokeStyle = '#006400';
                 this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+                
+                this.ctx.restore();
+            }
+        }
+
+        const orbitalLasers = this.player.weapons.find(w => w.id === 'orbitalLasers');
+        if (orbitalLasers) {
+            const count = 2 + Math.floor(orbitalLasers.level / 2);
+            const area = orbitalLasers.baseArea * this.player.areaMult * (1 + (orbitalLasers.level-1)*0.1);
+            for(let i=0; i<count; i++) {
+                const angle = (Math.PI * 2 / count) * i + this.time * 2;
+                const px = this.player.x + Math.cos(angle) * (60 * area);
+                const py = this.player.y + Math.sin(angle) * (60 * area);
+                
+                this.ctx.save();
+                this.ctx.translate(px, py);
+                this.ctx.rotate(this.time * 3);
+                
+                this.ctx.globalCompositeOperation = 'lighter';
+                this.ctx.fillStyle = '#00ffff';
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
+                this.ctx.globalCompositeOperation = 'source-over';
+                
+                this.ctx.fillStyle = '#00ffff';
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 6, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                
+                this.ctx.restore();
+            }
+        }
+
+        const orbitalDefense = this.player.weapons.find(w => w.id === 'orbitalDefense');
+        if (orbitalDefense) {
+            const count = 4 + Math.floor(orbitalDefense.level / 2);
+            const area = orbitalDefense.baseArea * this.player.areaMult * (1 + (orbitalDefense.level-1)*0.1);
+            for(let i=0; i<count; i++) {
+                const angle = (Math.PI * 2 / count) * i + this.time * 3;
+                const px = this.player.x + Math.cos(angle) * (70 * area);
+                const py = this.player.y + Math.sin(angle) * (70 * area);
+                
+                this.ctx.save();
+                this.ctx.translate(px, py);
+                this.ctx.rotate(this.time * -4);
+                
+                this.ctx.globalCompositeOperation = 'lighter';
+                this.ctx.fillStyle = '#ff00ff';
+                this.ctx.globalAlpha = 0.4;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
+                this.ctx.globalCompositeOperation = 'source-over';
+                
+                this.ctx.fillStyle = '#ff00ff';
+                this.ctx.beginPath();
+                this.ctx.moveTo(12, 0);
+                this.ctx.lineTo(-6, 8);
+                this.ctx.lineTo(-6, -8);
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 2;
                 this.ctx.stroke();
                 
                 this.ctx.restore();
