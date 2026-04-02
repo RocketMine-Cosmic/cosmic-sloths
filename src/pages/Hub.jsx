@@ -31,20 +31,42 @@ export default function Hub({ isCarousel }) {
     const { toast } = useToast();
     const touchStartX = React.useRef(null);
 
-    const getAvailableWeapons = (charId) => {
-        return Object.values(WEAPONS).filter(w => 
-            w.type === 'weapon' && 
-            !w.isSynergy && 
-            !w.isEvolution && 
-            (!w.characterSpecific || w.characterSpecific === charId)
-        );
+    const CHAR_WEAPONS = {
+        neobyte: 'neoBlaster',
+        pandypaws: 'wrenchSmash',
+        novabyte: 'fragGrenade',
+        glitch: 'cyberBlade',
+        holodrift: 'holoBolt',
+        codebreaker: 'dataSpike',
+        dataphantom: 'phantomSpear',
+        neonvortex: 'sniperShot',
+        synthbeats: 'sonicBoom',
+        skybyte: 'missileSwarm'
     };
 
+    const getAvailableWeapons = (charId) => {
+        const startingWeaponIds = Object.values(CHAR_WEAPONS);
+        const available = startingWeaponIds.map(id => WEAPONS[id]).filter(Boolean);
+        const defaultWepId = CHAR_WEAPONS[charId];
+        
+        return available.sort((a, b) => {
+            if (a.id === defaultWepId) return -1;
+            if (b.id === defaultWepId) return 1;
+            return a.name.localeCompare(b.name);
+        });
+    };
+
+    const prevCharRef = useRef(selectedChar);
+
     React.useEffect(() => {
-        const available = getAvailableWeapons(selectedChar);
-        if (!available.find(w => w.id === selectedWeapon)) {
-            const defaultWep = available.find(w => w.characterSpecific === selectedChar) || available[0];
-            setSelectedWeapon(defaultWep.id);
+        if (prevCharRef.current !== selectedChar) {
+            setSelectedWeapon(CHAR_WEAPONS[selectedChar] || 'neoBlaster');
+            prevCharRef.current = selectedChar;
+        } else {
+            const available = getAvailableWeapons(selectedChar);
+            if (!available.find(w => w.id === selectedWeapon)) {
+                setSelectedWeapon(CHAR_WEAPONS[selectedChar] || available[0]?.id);
+            }
         }
     }, [selectedChar, selectedWeapon]);
     
