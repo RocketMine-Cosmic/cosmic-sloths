@@ -1465,6 +1465,7 @@ export class GameEngine {
 
         if (this.enemyProjectiles) {
             this.ctx.globalCompositeOperation = 'screen';
+            const texStar = this.particleManager?.textures?.star;
             this.enemyProjectiles.forEach(p => {
                 this.ctx.save();
                 this.ctx.translate(p.x, p.y);
