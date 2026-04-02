@@ -1472,12 +1472,12 @@ export class GameEngine {
                     this.ctx.rotate(Math.atan2(p.vy, p.vx));
                 }
                 
-                this.ctx.globalAlpha = 0.15;
+                this.ctx.globalAlpha = 0.3;
                 this.ctx.fillStyle = p.color || '#ff0000';
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, p.radius * 2, 0, Math.PI * 2);
                 this.ctx.fill();
-                this.ctx.globalAlpha = 0.3;
+                this.ctx.globalAlpha = 0.6;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, p.radius * 1.2, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -1525,14 +1525,14 @@ export class GameEngine {
                 this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
 
                 // Add HD aura - optimized
-                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalCompositeOperation = 'lighter';
                 const auraCol = isMastered ? '#ff0000' : '#8B4513';
                 this.ctx.fillStyle = auraCol;
-                this.ctx.globalAlpha = 0.1;
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
                 this.ctx.fill();
-                this.ctx.globalAlpha = 0.2;
+                this.ctx.globalAlpha = 0.4;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -1569,13 +1569,13 @@ export class GameEngine {
                 this.ctx.rotate(this.time * 5); // Spin
                 
                 // Add HD aura - optimized
-                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#32CD32';
-                this.ctx.globalAlpha = 0.1;
+                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
                 this.ctx.fill();
-                this.ctx.globalAlpha = 0.2;
+                this.ctx.globalAlpha = 0.4;
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -1613,9 +1613,9 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(this.time * 3);
                 
-                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#00ffff';
-                this.ctx.globalAlpha = 0.15;
+                this.ctx.globalAlpha = 0.3;
                 this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.globalCompositeOperation = 'source-over';
@@ -1643,9 +1643,9 @@ export class GameEngine {
                 this.ctx.translate(px, py);
                 this.ctx.rotate(this.time * -4);
                 
-                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#ff00ff';
-                this.ctx.globalAlpha = 0.3;
+                this.ctx.globalAlpha = 0.6;
                 this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.globalCompositeOperation = 'source-over';

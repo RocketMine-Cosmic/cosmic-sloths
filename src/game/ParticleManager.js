@@ -96,7 +96,7 @@ export class ParticleManager {
             const sBase = p.size || 8;
 
             // DRAW BASE TINT (colorize the HD texture below)
-            ctx.globalAlpha = alpha * 0.15;
+            ctx.globalAlpha = alpha * 0.4;
             const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, sBase * 2);
             grad.addColorStop(0, color);
             grad.addColorStop(1, 'transparent');
