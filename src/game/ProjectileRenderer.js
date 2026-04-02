@@ -22,22 +22,35 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         if (!p.isAoe) {
             ctx.globalAlpha = 0.2;
             ctx.fillStyle = p.color || '#ffffff';
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 0.4;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 1.5, 0, Math.PI * 2);
-            ctx.fill();
+            if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun') {
+                ctx.beginPath();
+                ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 1.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 0.4;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.8, 0, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 0.4;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.globalAlpha = 1.0;
         }
 
         if (p.type === 'beam' || p.type === 'dual_laser') {
-            ctx.fillStyle = p.color || '#ffffff';
-            ctx.fillRect(-p.radius * 1.5, -p.radius / 2, p.radius * 3, p.radius);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(-p.radius, -p.radius / 4, p.radius * 2, p.radius / 2);
-            if (texSlash && texSlash.isReady) ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
+            if (texSlash && texSlash.isReady) {
+                ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
+            } else {
+                ctx.fillStyle = p.color || '#ffffff';
+                ctx.fillRect(-p.radius * 1.5, -p.radius / 2, p.radius * 3, p.radius);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-p.radius, -p.radius / 4, p.radius * 2, p.radius / 2);
+            }
         } else if (p.type === 'lightning') {
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
@@ -49,11 +62,16 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.lineTo(p.radius, 0);
             ctx.stroke();
         } else if (p.type === 'glitch_slash') {
-            if (texSlash && texSlash.isReady) ctx.drawImage(texSlash, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
-            else { ctx.fillStyle = p.color || '#ffffff'; ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2); }
+            if (texSlash && texSlash.isReady) {
+                ctx.drawImage(texSlash, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
+            } else { 
+                ctx.fillStyle = p.color || '#ffffff'; 
+                ctx.fillRect(-p.radius, -p.radius/4, p.radius*2, p.radius/2); 
+            }
         } else if (p.type === 'stomp') {
-            if (texShockwave && texShockwave.isReady) ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-            else {
+            if (texShockwave && texShockwave.isReady) {
+                ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+            } else {
                 ctx.strokeStyle = p.color || '#ffffff';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -68,42 +86,51 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.lineTo(p.radius, 0);
             ctx.stroke();
         } else if (p.type === 'missile') {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(-p.radius, -p.radius*0.2, p.radius*1.5, p.radius*0.4);
-            if (texStar && texStar.isReady) ctx.drawImage(texStar, -p.radius*1.5, -p.radius, p.radius*2, p.radius*2);
+            if (texStar && texStar.isReady) {
+                ctx.drawImage(texStar, -p.radius*1.5, -p.radius, p.radius*2, p.radius*2);
+            } else {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-p.radius, -p.radius*0.2, p.radius*1.5, p.radius*0.4);
+            }
         } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
-            if (texStar && texStar.isReady) ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-            else {
+            if (texStar && texStar.isReady) {
+                ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+            } else {
                 ctx.fillStyle = p.color || '#ffffff';
                 ctx.beginPath();
                 ctx.arc(0, 0, p.radius*0.8, 0, Math.PI * 2);
                 ctx.fill();
             }
         } else if (p.type === 'railgun') {
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(-p.radius*2, 0);
-            ctx.lineTo(p.radius*2, 0);
-            ctx.stroke();
-            if (texSlash && texSlash.isReady) ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
+            if (texSlash && texSlash.isReady) {
+                ctx.drawImage(texSlash, -p.radius*2, -p.radius*1.5, p.radius*4, p.radius*3);
+            } else {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-p.radius*2, 0);
+                ctx.lineTo(p.radius*2, 0);
+                ctx.stroke();
+            }
         } else if (p.type === 'sonic_wave') {
-            ctx.strokeStyle = p.color || '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
-            ctx.stroke();
-            if (texShockwave && texShockwave.isReady) ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+            if (texShockwave && texShockwave.isReady) {
+                ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+            } else {
+                ctx.strokeStyle = p.color || '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
+                ctx.stroke();
+            }
         } else if (p.type === 'supernova_beam') {
-            ctx.fillStyle = p.color || '#ffaa00';
-            ctx.fillRect(-p.radius * 2, -p.radius * 0.8, p.radius * 4, p.radius * 1.6);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(-p.radius * 1.5, -p.radius * 0.4, p.radius * 3, p.radius * 0.8);
             if (texSlash && texSlash.isReady) {
                 ctx.drawImage(texSlash, -p.radius*3, -p.radius*2, p.radius*6, p.radius*4);
-            }
-            if (texStar && texStar.isReady) {
-                ctx.drawImage(texStar, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
+                if (texStar && texStar.isReady) ctx.drawImage(texStar, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
+            } else {
+                ctx.fillStyle = p.color || '#ffaa00';
+                ctx.fillRect(-p.radius * 2, -p.radius * 0.8, p.radius * 4, p.radius * 1.6);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-p.radius * 1.5, -p.radius * 0.4, p.radius * 3, p.radius * 0.8);
             }
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
             ctx.strokeStyle = p.color;
