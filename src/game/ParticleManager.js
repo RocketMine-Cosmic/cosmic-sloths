@@ -112,9 +112,9 @@ export class ParticleManager {
             let tex = null;
             let scaleMult = 1.5;
 
-            if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 2.0; }
+            if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star' || p.type === 'blood' || p.type === 'flame') { tex = this.textures.star; scaleMult = 2.0; }
             else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 2.2; }
-            else if (p.type === 'smoke' || p.type === 'blood' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 2.2; }
+            else if (p.type === 'smoke') { tex = this.textures.smoke; scaleMult = 2.2; }
             else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 2.5; }
             else if (p.type === 'shockwave' || p.type === 'implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
             
@@ -265,7 +265,7 @@ export class ParticleManager {
             this.addParticle(x, y, '#ffffff', 1, 'flash', 15, { lifeBonus: 0.3, speed: 0 });
             this.addParticle(x, y, '#00e5ff', 12, 'star', 2.5, { speed: 450 });
             this.addParticle(x, y, '#ff00e5', 12, 'star', 2.0, { speed: 350 });
-            this.addParticle(x, y, '#ffff00', 8, 'explosion', 2.0, { speed: 200 });
+            this.addParticle(x, y, '#ffff00', 12, 'spark', 2.5, { speed: 300 });
             this.particles.push({ x, y, vx: 0, vy: 0, life: 0.4, maxLife: 0.4, color: '#00e5ff', tint: '#00e5ff', type: 'shockwave', size: 10, growthRate: 800, lineWidth: 5 });
         }, 850);
     }
