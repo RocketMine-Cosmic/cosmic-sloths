@@ -10,7 +10,7 @@ import { fireWeaponLogic } from './WeaponSystem';
 import { drawProjectiles } from './ProjectileRenderer';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null) {
+    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
@@ -124,7 +124,7 @@ export class GameEngine {
             synthbeats: 'sonicBoom',
             skybyte: 'missileSwarm'
         };
-        const startingWeaponId = CHAR_WEAPONS[characterId] || 'neoBlaster';
+        const initialWeaponId = startingWeaponId || CHAR_WEAPONS[characterId] || 'neoBlaster';
 
         this.player = {
             name: baseChar.name,
@@ -150,7 +150,7 @@ export class GameEngine {
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0),
             color: baseChar.color,
             trail: save.cosmetics?.trail || 'default',
-            weapons: [{ ...WEAPONS[startingWeaponId], level: 1, timer: 0 }],
+            weapons: [{ ...WEAPONS[initialWeaponId], level: 1, timer: 0 }],
             passives: [],
             passiveLevels: {}
         };

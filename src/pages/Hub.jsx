@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, ARENAS, DIFFICULTIES } from '../game/Constants';
+import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMETICS } from '../game/Constants';
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
@@ -11,6 +11,7 @@ import BountiesPanel from '../components/game/BountiesPanel';
 import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import CosmeticPreview from '../components/game/CosmeticPreview';
 
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
@@ -25,19 +26,38 @@ export default function Hub({ isCarousel }) {
     const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');
     const [selectedArena, setSelectedArena] = useState(save.lastSelectedArena || 'station');
     const [selectedDifficulty, setSelectedDifficulty] = useState(save.lastSelectedDifficulty || 'normal');
+    const [selectedWeapon, setSelectedWeapon] = useState(save.lastSelectedWeapon || 'neoBlaster');
+    const [charTab, setCharTab] = useState('loadout');
     const { toast } = useToast();
     const touchStartX = React.useRef(null);
+
+    const getAvailableWeapons = (charId) => {
+        return Object.values(WEAPONS).filter(w => 
+            w.type === 'weapon' && 
+            !w.isSynergy && 
+            !w.isEvolution && 
+            (!w.characterSpecific || w.characterSpecific === charId)
+        );
+    };
+
+    React.useEffect(() => {
+        const available = getAvailableWeapons(selectedChar);
+        if (!available.find(w => w.id === selectedWeapon)) {
+            const defaultWep = available.find(w => w.characterSpecific === selectedChar) || available[0];
+            setSelectedWeapon(defaultWep.id);
+        }
+    }, [selectedChar, selectedWeapon]);
     
     React.useEffect(() => {
         setSave(prevSave => {
-            if (prevSave.lastSelectedChar !== selectedChar || prevSave.lastSelectedArena !== selectedArena || prevSave.lastSelectedDifficulty !== selectedDifficulty) {
-                const newSave = { ...prevSave, lastSelectedChar: selectedChar, lastSelectedArena: selectedArena, lastSelectedDifficulty: selectedDifficulty };
+            if (prevSave.lastSelectedChar !== selectedChar || prevSave.lastSelectedArena !== selectedArena || prevSave.lastSelectedDifficulty !== selectedDifficulty || prevSave.lastSelectedWeapon !== selectedWeapon) {
+                const newSave = { ...prevSave, lastSelectedChar: selectedChar, lastSelectedArena: selectedArena, lastSelectedDifficulty: selectedDifficulty, lastSelectedWeapon: selectedWeapon };
                 SaveManager.save(newSave);
                 return newSave;
             }
             return prevSave;
         });
-    }, [selectedChar, selectedArena, selectedDifficulty]);
+    }, [selectedChar, selectedArena, selectedDifficulty, selectedWeapon]);
 
     React.useEffect(() => {
         const claimRewards = async () => {
@@ -103,7 +123,7 @@ export default function Hub({ isCarousel }) {
 
     const startGame = () => {
         SoundManager.playUIClick();
-        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty } });
+        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon } });
     };
 
 
@@ -168,7 +188,11 @@ export default function Hub({ isCarousel }) {
                                                     <>
                                                         <div 
                                                             className="absolute inset-0 opacity-80 bg-contain bg-no-repeat transition-all duration-500"
-                                                            style={{ backgroundImage: char.image ? `url(${char.image})` : 'none', backgroundPosition: '85% center' }}
+                                                            style={{ 
+                                                                backgroundImage: char.image ? `url(${char.image})` : 'none', 
+                                                                backgroundPosition: '85% center',
+                                                                filter: `drop-shadow(0 0 10px ${SKIN_COSMETICS.find(s => s.id === (save.cosmetics?.skins?.[char.id] || `${char.id}_default`))?.color || char.color})`
+                                                            }}
                                                         />
                                                         <div className="absolute inset-0 bg-gradient-to-r from-[#0b0416] via-[#0b0416]/90 to-transparent pointer-events-none" />
                                                         
@@ -189,14 +213,78 @@ export default function Hub({ isCarousel }) {
                                                                 <h4 className="text-lg md:text-xl font-bold text-white mb-0.5 drop-shadow-md" style={{ color: char.color }}>
                                                                     {char.name}
                                                                 </h4>
-                                                                <p className="text-[10px] md:text-xs text-slate-300 mb-1 max-w-[80%] leading-tight">
-                                                                    {char.desc}
-                                                                </p>
-                                                                <div className="flex gap-1.5 md:gap-2 text-[9px] md:text-[10px] mb-1 bg-[#0b0416]/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/30 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
-                                                                    <span className="text-slate-300">HP: <span className="text-white">{char.hp}</span></span>
-                                                                    <span className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></span>
-                                                                    <span className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></span>
+                                                                <div className="flex gap-2 mb-2 w-full pr-4 relative z-20">
+                                                                    <button onClick={(e) => { e.stopPropagation(); setCharTab('loadout'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-colors ${charTab === 'loadout' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700/50'}`}>LOADOUT</button>
+                                                                    <button onClick={(e) => { e.stopPropagation(); setCharTab('cosmetics'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-colors ${charTab === 'cosmetics' ? 'bg-pink-500/20 text-pink-300 border-pink-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700/50'}`}>COSMETICS</button>
                                                                 </div>
+                                                                {charTab === 'loadout' ? (
+                                                                    <>
+                                                                        <p className="text-[10px] md:text-xs text-slate-300 mb-1 max-w-[80%] leading-tight">
+                                                                            {char.desc}
+                                                                        </p>
+                                                                        <div className="flex gap-1.5 md:gap-2 text-[9px] md:text-[10px] mb-1 bg-[#0b0416]/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/30 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
+                                                                            <span className="text-slate-300">HP: <span className="text-white">{char.hp}</span></span>
+                                                                            <span className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></span>
+                                                                            <span className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></span>
+                                                                        </div>
+                                                                        {isUnlocked && (
+                                                                            <div className="mt-1 w-full pr-4 relative z-20">
+                                                                                <select
+                                                                                    value={selectedWeapon}
+                                                                                    onChange={(e) => { SoundManager.playUIClick(); setSelectedWeapon(e.target.value); }}
+                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                    className="w-full bg-[#0b0416]/90 text-white text-xs border border-cyan-500/50 rounded p-1 outline-none focus:border-cyan-400"
+                                                                                >
+                                                                                    {getAvailableWeapons(selectedChar).map(w => (
+                                                                                        <option key={w.id} value={w.id}>🔫 {w.name}</option>
+                                                                                    ))}
+                                                                                </select>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="w-full pr-4 flex flex-col gap-2 relative z-50">
+                                                                        <select
+                                                                            value={save.cosmetics?.skins?.[char.id] || `${char.id}_default`}
+                                                                            onChange={(e) => {
+                                                                                SoundManager.playUIClick();
+                                                                                const newSave = { ...save, cosmetics: { ...save.cosmetics, skins: { ...(save.cosmetics?.skins || {}), [char.id]: e.target.value } } };
+                                                                                SaveManager.save(newSave);
+                                                                                setSave(newSave);
+                                                                            }}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            className="w-full bg-[#0b0416]/90 text-white text-xs border border-pink-500/50 rounded p-1 outline-none focus:border-pink-400"
+                                                                        >
+                                                                            <option disabled>-- Select Skin --</option>
+                                                                            {SKIN_COSMETICS.filter(s => s.charId === char.id).map(s => {
+                                                                                const unlockedSkins = save.unlockedSkins || [];
+                                                                                const isOwned = s.goldCost === 0 || unlockedSkins.includes(s.id);
+                                                                                if (!isOwned) return null;
+                                                                                return <option key={s.id} value={s.id}>{s.icon} {s.name}</option>;
+                                                                            })}
+                                                                        </select>
+                                                                        
+                                                                        <select
+                                                                            value={save.cosmetics?.trail || 'default'}
+                                                                            onChange={(e) => {
+                                                                                SoundManager.playUIClick();
+                                                                                const newSave = { ...save, cosmetics: { ...save.cosmetics, trail: e.target.value } };
+                                                                                SaveManager.save(newSave);
+                                                                                setSave(newSave);
+                                                                            }}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            className="w-full bg-[#0b0416]/90 text-white text-xs border border-pink-500/50 rounded p-1 outline-none focus:border-pink-400"
+                                                                        >
+                                                                            <option disabled>-- Select Trail --</option>
+                                                                            {TRAIL_COSMETICS.map(t => {
+                                                                                const unlockedTrails = save.unlockedCosmetics || ['default'];
+                                                                                const isOwned = unlockedTrails.includes(t.id);
+                                                                                if (!isOwned) return null;
+                                                                                return <option key={t.id} value={t.id}>{t.icon} {t.name}</option>;
+                                                                            })}
+                                                                        </select>
+                                                                    </div>
+                                                                )}
                                                                 
                                                                 {!isUnlocked && !isFindable && (
                                                                     <div className="flex gap-2 mt-1">
@@ -424,7 +512,7 @@ export default function Hub({ isCarousel }) {
                                             <button
                                                 onClick={() => {
                                                     SoundManager.playUIClick();
-                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, isEndless: true } });
+                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isEndless: true } });
                                                 }}
                                                 disabled={!canLaunch}
                                                 className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${

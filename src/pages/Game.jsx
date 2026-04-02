@@ -4,7 +4,7 @@ import { GameEngine } from '../game/GameEngine';
 import { SaveManager } from '../game/SaveManager';
 import UIOverlay from '../components/game/UIOverlay';
 import LevelUpModal from '../components/game/LevelUpModal';
-import { ARENAS } from '../game/Constants';
+import { ARENAS, SKIN_COSMETICS } from '../game/Constants';
 import GameOverModal from '../components/game/GameOverModal';
 import VictoryModal from '../components/game/VictoryModal';
 import VirtualJoystick from '../components/game/VirtualJoystick';
@@ -32,7 +32,7 @@ export default function Game() {
     const [isPaused, setIsPaused] = useState(false);
 
     useEffect(() => {
-        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
         const save = SaveManager.load();
         
         const canvas = canvasRef.current;
@@ -162,21 +162,12 @@ export default function Game() {
         };
 
         // Inject skin color override into save so GameEngine can read it
-        const SKIN_COLORS = {
-            neobyte_crimson: '#DC143C', neobyte_gold: '#FFD700',
-            pandypaws_obsidian: '#222222', pandypaws_ice: '#00CFFF',
-            novabyte_void: '#8A2BE2', novabyte_neon: '#39FF14',
-            glitch_red: '#FF0000', glitch_white: '#FFFFFF',
-            holodrift_amber: '#FFA500',
-            codebreaker_pink: '#FF1493',
-            dataphantom_ghost: '#C0C0C0',
-            neonvortex_plasma: '#00E5FF',
-            synthbeats_violet: '#9400D3',
-            skybyte_solar: '#FF6600',
-        };
         const equippedSkinId = save.cosmetics?.skins?.[characterId];
-        if (equippedSkinId && SKIN_COLORS[equippedSkinId]) {
-            save.skinColorOverride = SKIN_COLORS[equippedSkinId];
+        if (equippedSkinId) {
+            const skin = SKIN_COSMETICS.find(s => s.id === equippedSkinId);
+            if (skin) {
+                save.skinColorOverride = skin.color;
+            }
         }
 
         const engine = new GameEngine(canvas, characterId, arenaId, difficultyId, save, {
@@ -285,7 +276,7 @@ export default function Game() {
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }
-        }, isEndless, worldBossId, worldBossName);
+        }, isEndless, worldBossId, worldBossName, startingWeaponId);
         
         engineRef.current = engine;
         

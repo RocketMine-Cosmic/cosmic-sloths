@@ -88,6 +88,60 @@ export const SYNERGIES = [
   { weapon1: 'napalm', weapon2: 'vineWhip', result: 'flamingLash' }
 ];
 
+export const TRAIL_COSMETICS = [
+    { id: 'default', name: 'No Trail',     goldCost: 0,     tokenCost: 0,    icon: '⚪', desc: 'Clean and simple.' },
+    { id: 'fire',    name: 'Fire Trail',   goldCost: 2500,  tokenCost: 25,  icon: '🔥', desc: 'A blazing inferno follows your every move.' },
+    { id: 'ice',     name: 'Ice Trail',    goldCost: 2500,  tokenCost: 25,  icon: '❄️', desc: 'Leaves a crystalline frost in your wake.' },
+    { id: 'toxic',   name: 'Toxic Trail',  goldCost: 2500,  tokenCost: 25,  icon: '🧪', desc: 'Neon green slime marks your path.' },
+    { id: 'plasma',  name: 'Plasma Trail', goldCost: 8000,  tokenCost: 80,  icon: '⚡', desc: 'Crackling cyan and magenta energy.' },
+    { id: 'void',    name: 'Void Trail',   goldCost: 12500, tokenCost: 125,  icon: '🌌', desc: 'Dark energy that bends space itself.' },
+    { id: 'shadow',  name: 'Shadow Trail', goldCost: 15000, tokenCost: 150, icon: '🌑', desc: 'A shroud of absolute darkness.' },
+    { id: 'gold',    name: 'Golden Trail', goldCost: 25000, tokenCost: 250, icon: '✨', desc: 'Pure wealth made visible.' },
+    { id: 'blood',   name: 'Blood Trail',  goldCost: 30000, tokenCost: 300, icon: '🩸', desc: 'Leave a visceral red path.' },
+    { id: 'pixel',   name: 'Pixel Trail',  goldCost: 35000, tokenCost: 350, icon: '👾', desc: 'Retro 8-bit digital fragments.' },
+    { id: 'nebula',  name: 'Nebula Dust',  goldCost: 38000, tokenCost: 380, icon: '☄️', desc: 'Sprinkle cosmic stardust.' },
+    { id: 'rainbow', name: 'Rainbow Trail',goldCost: 40000, tokenCost: 500, icon: '🌈', desc: 'All colors at once. Maximum flex.' },
+];
+
+export const KILL_COSMETICS = [
+    { id: 'none',      name: 'No Effect',     goldCost: 0,     tokenCost: 0,    icon: '⚫', desc: 'Enemies die quietly.' },
+    { id: 'explosion', name: 'Explosion',     goldCost: 3000,  tokenCost: 30,  icon: '💥', desc: 'Every kill bursts into flames.' },
+    { id: 'freeze',    name: 'Freeze Burst',  goldCost: 3000,  tokenCost: 30,  icon: '🧊', desc: 'Enemies shatter into icy shards.' },
+    { id: 'vaporize',  name: 'Vaporize',      goldCost: 3000,  tokenCost: 30,  icon: '☠️', desc: 'Enemies dissolve in toxic mist.' },
+    { id: 'pixel_burst',name: 'Pixel Burst',  goldCost: 8000,  tokenCost: 80,  icon: '👾', desc: 'Enemies break into retro pixels.' },
+    { id: 'implode',   name: 'Implode',       goldCost: 15000, tokenCost: 150, icon: '🌀', desc: 'Enemies collapse into a void singularity.' },
+    { id: 'blood_splatter', name: 'Blood Splatter', goldCost: 20000, tokenCost: 200, icon: '🩸', desc: 'Messy biological destruction.' },
+    { id: 'black_hole',name: 'Black Hole',    goldCost: 25000, tokenCost: 250, icon: '🕳️', desc: 'Sucks enemies into oblivion.' },
+    { id: 'golden',    name: 'Gold Shatter',  goldCost: 30000, tokenCost: 300, icon: '💰', desc: 'Enemies explode into golden coins.' },
+];
+
+export const SKIN_COSMETICS = [
+    { charId: 'neobyte',     id: 'neobyte_default',    name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#4169E1', icon: '🔵', desc: 'Classic NeoByte blue.' },
+    { charId: 'neobyte',     id: 'neobyte_crimson',    name: 'Crimson',       goldCost: 5000,  tokenCost: 50,  color: '#DC143C', icon: '🔴', desc: 'Blood-red battle variant.' },
+    { charId: 'neobyte',     id: 'neobyte_gold',       name: 'Gold Edition',  goldCost: 20000, tokenCost: 200, color: '#FFD700', icon: '🟡', desc: 'Gleaming prestige skin.' },
+    { charId: 'pandypaws',   id: 'pandypaws_default',  name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FF69B4', icon: '🩷', desc: 'Classic pink armor.' },
+    { charId: 'pandypaws',   id: 'pandypaws_obsidian', name: 'Obsidian',      goldCost: 5000,  tokenCost: 50,  color: '#222222', icon: '⬛', desc: 'Dark armour plating.' },
+    { charId: 'pandypaws',   id: 'pandypaws_ice',      name: 'Cryo',          goldCost: 20000, tokenCost: 200, color: '#00CFFF', icon: '🩵', desc: 'Frozen tundra variant.' },
+    { charId: 'novabyte',    id: 'novabyte_default',   name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FF4500', icon: '🟠', desc: 'Classic inferno orange.' },
+    { charId: 'novabyte',    id: 'novabyte_void',      name: 'Void',          goldCost: 5000,  tokenCost: 50,  color: '#8A2BE2', icon: '🟣', desc: 'Corrupted by the void.' },
+    { charId: 'novabyte',    id: 'novabyte_neon',      name: 'Neon',          goldCost: 20000, tokenCost: 200, color: '#39FF14', icon: '🟢', desc: 'Toxic neon glow.' },
+    { charId: 'glitch',      id: 'glitch_default',     name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#8A2BE2', icon: '🟣', desc: 'Classic glitch purple.' },
+    { charId: 'glitch',      id: 'glitch_red',         name: 'Fatal Error',   goldCost: 5000,  tokenCost: 50,  color: '#FF0000', icon: '🔴', desc: 'Corrupted red state.' },
+    { charId: 'glitch',      id: 'glitch_white',       name: 'Whitespace',    goldCost: 20000, tokenCost: 200, color: '#FFFFFF', icon: '⬜', desc: 'Pure emptiness.' },
+    { charId: 'holodrift',   id: 'holodrift_default',  name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#20B2AA', icon: '🩵', desc: 'Classic teal holo.' },
+    { charId: 'holodrift',   id: 'holodrift_amber',    name: 'Amber',         goldCost: 5000,  tokenCost: 50,  color: '#FFA500', icon: '🟠', desc: 'Warm amber frequency.' },
+    { charId: 'codebreaker', id: 'codebreaker_default',name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#32CD32', icon: '🟢', desc: 'Classic hacker green.' },
+    { charId: 'codebreaker', id: 'codebreaker_pink',   name: 'Rootkit',       goldCost: 5000,  tokenCost: 50,  color: '#FF1493', icon: '🩷', desc: 'Stealth-mode pink.' },
+    { charId: 'dataphantom', id: 'dataphantom_default',name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#4682B4', icon: '🔵', desc: 'Classic steel blue.' },
+    { charId: 'dataphantom', id: 'dataphantom_ghost',  name: 'Ghost',         goldCost: 5000,  tokenCost: 50,  color: '#C0C0C0', icon: '🩶', desc: 'Ethereal silver form.' },
+    { charId: 'neonvortex',  id: 'neonvortex_default', name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FFD700', icon: '🟡', desc: 'Classic golden sniper.' },
+    { charId: 'neonvortex',  id: 'neonvortex_plasma',  name: 'Plasma',        goldCost: 5000,  tokenCost: 50,  color: '#00E5FF', icon: '🩵', desc: 'Crackling plasma skin.' },
+    { charId: 'synthbeats',  id: 'synthbeats_default', name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#FF8C00', icon: '🟠', desc: 'Classic dark orange.' },
+    { charId: 'synthbeats',  id: 'synthbeats_violet',  name: 'Violet Drop',   goldCost: 5000,  tokenCost: 50,  color: '#9400D3', icon: '🟣', desc: 'Deep bass violet.' },
+    { charId: 'skybyte',     id: 'skybyte_default',    name: 'Default',       goldCost: 0,     tokenCost: 0,    color: '#00FFFF', icon: '🩵', desc: 'Classic ace cyan.' },
+    { charId: 'skybyte',     id: 'skybyte_solar',      name: 'Solar Ace',     goldCost: 5000,  tokenCost: 50,  color: '#FF6600', icon: '🔶', desc: 'Blazing sunset variant.' },
+];
+
 export const EVOLUTIONS = [
     { baseWeapon: 'napBeam', passive: 'area_up', evolvedWeapon: 'supernovaBeam', name: 'Supernova Beam', desc: 'EVOLVED: Massive piercing beam that explodes on impact.' },
     { baseWeapon: 'vineWhip', passive: 'regen_up', evolvedWeapon: 'vampiricLash', name: 'Vampiric Lash', desc: 'EVOLVED: Heals massively and covers screen.' },
