@@ -133,22 +133,75 @@ export default function Profile({ isCarousel }) {
 
     const getAvailableTitles = () => {
         const t = [{ id: '', label: 'No Title' }];
-        t.push({ id: 'Novice Pilot', label: 'Novice Pilot' });
-        if (stats.totalKills >= 1000) t.push({ id: 'Vanguard', label: 'Vanguard' });
-        if (stats.totalKills >= 10000) t.push({ id: 'Void Walker', label: 'Void Walker' });
-        if (stats.highestScore >= 50000) t.push({ id: 'Top Survivor', label: 'Top Survivor' });
-        if (stats.highestScore >= 100000) t.push({ id: 'Cosmic Legend', label: 'Cosmic Legend' });
         
-        if (stats.leviathanKills >= 1) t.push({ id: 'Leviathan Slayer', label: 'Leviathan Slayer' });
-        if (stats.leviathanKills >= 10) t.push({ id: 'Apex Predator', label: 'Apex Predator' });
-        if (stats.globalRaidDamage >= 10000) t.push({ id: 'Raid Trooper', label: 'Raid Trooper' });
-        if (stats.globalRaidDamage >= 500000) t.push({ id: 'World Eater Bane', label: 'World Eater Bane' });
+        const addTitle = (id, label) => {
+            if (!t.some(existing => existing.id === id)) {
+                t.push({ id, label });
+            }
+        };
+
+        addTitle('Novice Pilot', 'Novice Pilot');
         
         const currentSave = SaveManager.load();
-        if (currentSave.gold >= 10000 || currentSave.totalGoldEarned >= 100000) t.push({ id: 'Gold Hoarder', label: 'Gold Hoarder' });
-        if (currentSave.maxLevelReached >= 20) t.push({ id: 'Ascendant', label: 'Ascendant' });
-        if (currentSave.unlockedCharacters && currentSave.unlockedCharacters.length >= 5) t.push({ id: 'Commander', label: 'Commander' });
+        const totalKills = currentSave.totalKills || 0;
+        const maxTimeSurvived = currentSave.maxTimeSurvived || 0;
+        const totalGoldEarned = currentSave.totalGoldEarned || 0;
+        const maxLevelReached = currentSave.maxLevelReached || 0;
+        const unlockedCharactersCount = currentSave.unlockedCharacters?.length || 0;
+        const totalUnlockedCosmetics = currentSave.unlockedCosmetics?.length || 0;
+        const totalUnlockedTalents = Object.values(currentSave.unlockedTalents || {}).reduce((acc, arr) => acc + arr.length, 0);
+
+        // Original Profile Titles
+        if (stats.totalKills >= 1000) addTitle('Vanguard', 'Vanguard');
+        if (stats.totalKills >= 10000) addTitle('Void Walker', 'Void Walker');
+        if (stats.highestScore >= 50000) addTitle('Top Survivor', 'Top Survivor');
+        if (stats.highestScore >= 100000) addTitle('Cosmic Legend', 'Cosmic Legend');
         
+        if (stats.leviathanKills >= 1) addTitle('Leviathan Slayer', 'Leviathan Slayer');
+        if (stats.leviathanKills >= 10) addTitle('Apex Predator', 'Apex Predator');
+        if (stats.globalRaidDamage >= 10000) addTitle('Raid Trooper', 'Raid Trooper');
+        if (stats.globalRaidDamage >= 500000) addTitle('World Eater Bane', 'World Eater Bane');
+        
+        if (currentSave.gold >= 10000 || totalGoldEarned >= 100000) addTitle('Gold Hoarder', 'Gold Hoarder');
+        if (maxLevelReached >= 20) addTitle('Ascendant', 'Ascendant');
+        if (unlockedCharactersCount >= 5) addTitle('Commander', 'Commander');
+
+        // Achievement Titles - Survival
+        if (maxTimeSurvived >= 180) addTitle('Survivor', 'Survivor');
+        if (maxTimeSurvived >= 240) addTitle('Veteran', 'Veteran');
+        if (maxTimeSurvived >= 300) addTitle('Master', 'Master');
+        if (maxTimeSurvived >= 360) addTitle('Cosmic Legend', 'Cosmic Legend'); // Note: Duplicate protected by addTitle logic
+        if (maxTimeSurvived >= 420) addTitle('Time Lord', 'Time Lord');
+        if (maxTimeSurvived >= 480) addTitle('Eternal', 'Eternal');
+        if (maxTimeSurvived >= 600) addTitle('Immortal Sloth', 'Immortal Sloth');
+
+        // Achievement Titles - Combat
+        if (totalKills >= 100) addTitle('First Blood', 'First Blood');
+        if (totalKills >= 1000) addTitle('Exterminator', 'Exterminator');
+        if (totalKills >= 10000) addTitle('Cosmic Destroyer', 'Cosmic Destroyer');
+        if (totalKills >= 50000) addTitle('Genocidal Sloth', 'Genocidal Sloth');
+        if (totalKills >= 100000) addTitle('Sloth God', 'Sloth God');
+        if (totalKills >= 250000) addTitle('Bringer of Extinction', 'Bringer of Extinction');
+
+        // Achievement Titles - Wealth
+        if (totalGoldEarned >= 10000) addTitle('Pocket Change', 'Pocket Change');
+        if (totalGoldEarned >= 100000) addTitle('Filthy Rich', 'Filthy Rich');
+        if (totalGoldEarned >= 1000000) addTitle('Billionaire', 'Billionaire');
+        if (totalGoldEarned >= 5000000) addTitle('Sloth of Wall Street', 'Sloth of Wall Street');
+
+        // Achievement Titles - Progression
+        if (maxLevelReached >= 10) addTitle('Power Up', 'Power Up');
+        if (maxLevelReached >= 20) addTitle('Ascended', 'Ascended'); // Duplicate protected
+        if (maxLevelReached >= 30) addTitle('Beyond Limits', 'Beyond Limits');
+        if (maxLevelReached >= 40) addTitle('God Tier', 'God Tier');
+        if (maxLevelReached >= 50) addTitle('Maximum Overdrive', 'Maximum Overdrive');
+        
+        if (unlockedCharactersCount >= 5) addTitle('Growing Crew', 'Growing Crew');
+        if (unlockedCharactersCount >= 10) addTitle('Completionist', 'Completionist');
+        if (totalUnlockedCosmetics >= 6) addTitle('Fashionista', 'Fashionista');
+        if (totalUnlockedTalents >= 15) addTitle('Skillful', 'Skillful');
+        if (totalUnlockedTalents >= 30) addTitle('Omniscient', 'Omniscient');
+
         return t;
     };
 
