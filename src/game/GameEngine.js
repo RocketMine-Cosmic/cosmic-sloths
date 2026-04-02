@@ -256,6 +256,7 @@ export class GameEngine {
             }
         } catch (e) {
             console.error("Game loop error:", e);
+            this.isPaused = true; // Safety net: auto-pause if a rendering or logic error occurs
         }
         this.lastTime = timestamp;
         this.animationId = requestAnimationFrame(this.loop.bind(this));
