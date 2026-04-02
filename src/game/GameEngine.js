@@ -455,7 +455,7 @@ export class GameEngine {
             const arenaIndex = ARENAS.findIndex(a => a.id === this.arena.id);
             const isBossArena = [1, 3, 5, 7, 9].includes(arenaIndex); // Arenas 2, 4, 6, 8, 10
             
-            if (isBossArena && Math.random() < 0.5) { // 50% chance for a boss encounter
+            if (isBossArena) { // Boss encounter
                 this.isBossActive = true;
                 this.enemies = []; // Clear all other enemies
                 const boss = selectBossForArena(this.arena.id);
@@ -962,7 +962,7 @@ export class GameEngine {
                 if (p.type === 'xp') {
                     SoundManager.playPickup();
                     this.xp += p.value * this.player.xpMult;
-                    if (this.xp >= this.xpRequired) this.levelUp();
+                    if (this.xp >= this.xpRequired && !this.isPaused) this.levelUp();
                 } else if (p.type === 'gold') {
                     SoundManager.playGoldPickup();
                     this.gold += Math.floor(p.value * this.player.goldMult);
