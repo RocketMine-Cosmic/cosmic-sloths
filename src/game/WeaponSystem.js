@@ -44,12 +44,14 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
             radius: 80 * area, damage: 0, pierce: 999, life: 0.25,
-            color: '#aaaaaa', isAoe: true, type: 'wrench_swing'
+            color: '#00ffff', isAoe: true, type: 'wrench_swing'
         });
-        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 8, 'slash', 2.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 15, 'slash', 3 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 10, 'spark', 2 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 80 * area) {
                 engine.damageEnemy(e, dmg);
+                engine.addParticle(e.x, e.y, '#00ffff', 5, 'spark', 1.5);
                 if (isMastered && Math.random() < 0.5) e.slowTimer = 1.0;
             }
         });
@@ -65,9 +67,10 @@ export function fireWeaponLogic(engine, w) {
         const ty = nearest ? nearest.y : engine.player.y;
         
         engine.projectiles.push({
-            x: tx, y: ty, vx: 0, vy: 0, radius: 80 * area, damage: dmg, pierce: 999, life: 0.3, color: '#ff4500', isAoe: true, type: 'grenade_explosion'
+            x: tx, y: ty, vx: 0, vy: 0, radius: 80 * area, damage: dmg, pierce: 999, life: 0.3, color: '#ff0055', isAoe: true, type: 'grenade_explosion'
         });
-        engine.addParticle(tx, ty, '#ff4500', 15, 'explosion', 2 * area);
+        engine.addParticle(tx, ty, '#ff0055', 20, 'explosion', 3 * area);
+        engine.addParticle(tx, ty, '#ffaa00', 15, 'spark', 2 * area);
         
         if (isMastered) {
             setTimeout(() => {
@@ -77,9 +80,10 @@ export function fireWeaponLogic(engine, w) {
                     const ctx = tx + Math.cos(angle) * 50;
                     const cty = ty + Math.sin(angle) * 50;
                     engine.projectiles.push({
-                        x: ctx, y: cty, vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.5, pierce: 999, life: 0.2, color: '#ff8c00', isAoe: true, type: 'grenade_explosion'
+                        x: ctx, y: cty, vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.5, pierce: 999, life: 0.2, color: '#ffaa00', isAoe: true, type: 'grenade_explosion'
                     });
-                    engine.addParticle(ctx, cty, '#ff8c00', 10, 'explosion', 1 * area);
+                    engine.addParticle(ctx, cty, '#ffaa00', 12, 'explosion', 1.5 * area);
+                    engine.addParticle(ctx, cty, '#ffffff', 8, 'spark', 1 * area);
                 }
             }, 300);
         }
@@ -88,12 +92,14 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
             radius: 60 * area, damage: 0, pierce: 999, life: 0.2,
-            color: '#8a2be2', isAoe: true, type: 'blade_swing'
+            color: '#ff00ff', isAoe: true, type: 'blade_swing'
         });
-        engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 8, 'slash', 1.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ff00ff', 15, 'slash', 2.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 10, 'spark', 1.5 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 60 * area) {
                 engine.damageEnemy(e, dmg);
+                engine.addParticle(e.x, e.y, '#ff00ff', 5, 'glitch', 1);
             }
         });
         if (isMastered) {
@@ -102,13 +108,13 @@ export function fireWeaponLogic(engine, w) {
                 engine.projectiles.push({
                     x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
                     radius: 60 * area, damage: 0, pierce: 999, life: 0.2,
-                    color: '#ff0000', isAoe: true, type: 'blade_swing'
+                    color: '#00ffff', isAoe: true, type: 'blade_swing'
                 });
-                engine.addParticle(engine.player.x, engine.player.y, '#ff0000', 8, 'slash', 1.5 * area);
+                engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 15, 'slash', 2.5 * area);
                 engine.enemies.forEach(e => {
                     if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 60 * area) {
                         engine.damageEnemy(e, dmg * 0.5);
-                        engine.addParticle(e.x, e.y, '#ff0000', 5, 'blood', 1);
+                        engine.addParticle(e.x, e.y, '#00ffff', 5, 'glitch', 1);
                     }
                 });
             }, 200);
@@ -123,11 +129,12 @@ export function fireWeaponLogic(engine, w) {
         });
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         
+        engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 8, 'glitch', 1.5);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: Math.cos(angle) * 350 * engine.player.projSpeedMult,
             vy: Math.sin(angle) * 350 * engine.player.projSpeedMult,
-            radius: 5 * area, damage: dmg, pierce: isMastered ? 3 : 1, life: 3, color: '#20b2aa', type: 'data_pulse'
+            radius: 5 * area, damage: dmg, pierce: isMastered ? 3 : 1, life: 3, color: '#00ffff', type: 'data_pulse'
         });
     }
     else if (w.id === 'dataSpike') {
@@ -140,6 +147,7 @@ export function fireWeaponLogic(engine, w) {
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         
         const count = isMastered ? 3 : 1;
+        engine.addParticle(engine.player.x, engine.player.y, '#39ff14', 10, 'glitch', 1.5);
         for (let i = 0; i < count; i++) {
             setTimeout(() => {
                 if (engine.isGameOver || engine.isVictory) return;
@@ -147,7 +155,7 @@ export function fireWeaponLogic(engine, w) {
                     x: engine.player.x, y: engine.player.y,
                     vx: Math.cos(angle) * 500 * engine.player.projSpeedMult,
                     vy: Math.sin(angle) * 500 * engine.player.projSpeedMult,
-                    radius: 4 * area, damage: dmg, pierce: 1, life: 1.5, color: '#32CD32', type: 'glitch_slash'
+                    radius: 4 * area, damage: dmg, pierce: 1, life: 1.5, color: '#39ff14', type: 'glitch_slash'
                 });
             }, i * 100);
         }
@@ -161,17 +169,18 @@ export function fireWeaponLogic(engine, w) {
         });
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         
+        engine.addParticle(engine.player.x, engine.player.y, '#00ccff', 12, 'spark', 2);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: Math.cos(angle) * 600 * engine.player.projSpeedMult,
             vy: Math.sin(angle) * 600 * engine.player.projSpeedMult,
-            radius: 6 * area, damage: dmg, pierce: 5 + (isMastered ? 5 : 0), life: 2, color: '#4682B4', type: 'railgun'
+            radius: 6 * area, damage: dmg, pierce: 5 + (isMastered ? 5 : 0), life: 2, color: '#00ccff', type: 'railgun'
         });
         
         if (isMastered) {
             engine.projectiles.push({
                 x: engine.player.x, y: engine.player.y,
-                vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.2, pierce: 999, life: 2, color: '#4682B4', isAoe: true, type: 'napalm_pool'
+                vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.2, pierce: 999, life: 2, color: '#00ccff', isAoe: true, type: 'napalm_pool'
             });
         }
     }
@@ -184,23 +193,27 @@ export function fireWeaponLogic(engine, w) {
         });
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         
+        engine.addParticle(engine.player.x, engine.player.y, '#ffea00', 20, 'spark', 2.5);
+        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 5, 'flash', 1);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: Math.cos(angle) * 800 * engine.player.projSpeedMult,
             vy: Math.sin(angle) * 800 * engine.player.projSpeedMult,
-            radius: 8 * area, damage: dmg, pierce: isMastered ? 999 : 5, life: 2, color: '#FFD700', type: 'railgun'
+            radius: 8 * area, damage: dmg, pierce: isMastered ? 999 : 5, life: 2, color: '#ffea00', type: 'railgun'
         });
     }
     else if (w.id === 'sonicBoom') {
+        engine.addParticle(engine.player.x, engine.player.y, '#ff00ff', 15, 'circle', 3 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 80 * area, damage: dmg, pierce: 999, life: 0.5, color: '#FF8C00', isAoe: true, pulse: true, type: 'seismic_shockwave',
+            radius: 80 * area, damage: dmg, pierce: 999, life: 0.5, color: '#ff00ff', isAoe: true, pulse: true, type: 'seismic_shockwave',
             pushback: isMastered ? 200 : 0
         });
     }
     else if (w.id === 'missileSwarm') {
         const count = isMastered ? 6 : 3;
+        engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 12, 'smoke', 1.5);
         for (let i = 0; i < count; i++) {
             let angle = Math.random() * Math.PI * 2;
             engine.projectiles.push({
@@ -262,11 +275,15 @@ export function fireWeaponLogic(engine, w) {
     }
     else if (w.id === 'vineWhip') {
         const charColor = engine.player.color;
-        engine.addParticle(engine.player.x, engine.player.y, isMastered ? '#FF0000' : charColor, 15, 'slash', 2 * area);
+        const color1 = isMastered ? '#ff0055' : charColor;
+        const color2 = isMastered ? '#ffaa00' : '#ffffff';
+        engine.addParticle(engine.player.x, engine.player.y, color1, 20, 'slash', 3 * area);
+        engine.addParticle(engine.player.x, engine.player.y, color2, 10, 'spark', 2 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 100 * area) {
                 engine.damageEnemy(e, dmg);
-                engine.addParticle(e.x, e.y, isMastered ? '#FF0000' : charColor, 10, 'glitch', 1.5);
+                engine.addParticle(e.x, e.y, color1, 10, 'glitch', 1.5);
+                engine.addParticle(e.x, e.y, color2, 5, 'spark', 1);
                 if (isMastered) {
                     engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + (dmg * 0.05));
                     engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
@@ -326,6 +343,10 @@ export function fireWeaponLogic(engine, w) {
         });
     }
     else if (w.id === 'novaPulse') {
+        const primaryColor = isMastered ? '#ff00ff' : '#00ffff';
+        const secondaryColor = isMastered ? '#8a2be2' : '#ffffff';
+        engine.addParticle(engine.player.x, engine.player.y, primaryColor, 20, 'circle', 3 * area);
+        engine.addParticle(engine.player.x, engine.player.y, secondaryColor, 15, 'explosion', 2 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -333,7 +354,7 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 0.5,
-            color: isMastered ? '#8a2be2' : '#dc143c',
+            color: primaryColor,
             isAoe: true,
             pulse: true,
             type: 'nova_pulse'
@@ -348,7 +369,7 @@ export function fireWeaponLogic(engine, w) {
                     damage: dmg * 0.5,
                     pierce: 999,
                     life: 0.5,
-                    color: '#8a2be2',
+                    color: secondaryColor,
                     isAoe: true,
                     pulse: true,
                     type: 'nova_pulse'
@@ -357,6 +378,8 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'shieldBubble') {
+        const color = isMastered ? '#ffd700' : engine.player.color;
+        engine.addParticle(engine.player.x, engine.player.y, color, 15, 'circle', 2.5 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -364,7 +387,7 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 2.0,
-            color: isMastered ? '#ffd700' : engine.player.color,
+            color: color,
             isAoe: true,
             pushback: 250,
             isMastered: isMastered,
@@ -388,6 +411,8 @@ export function fireWeaponLogic(engine, w) {
         });
     }
     else if (w.id === 'laserNova') {
+        engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 25, 'explosion', 3 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ff00ff', 15, 'spark', 2.5 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -410,7 +435,7 @@ export function fireWeaponLogic(engine, w) {
                 damage: dmg * 0.5,
                 pierce: 5 + Math.floor(w.level/2),
                 life: 2,
-                color: '#00ffff',
+                color: '#ff00ff',
                 type: 'beam'
             });
         }
@@ -480,7 +505,8 @@ export function fireWeaponLogic(engine, w) {
     }
     else if (w.id === 'seismicWhip') {
         const charColor = engine.player.color;
-        engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 20, 'slash', 2.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ff00ff', 25, 'slash', 3.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 15, 'spark', 2.5 * area);
         let hitAny = false;
         let hitX = engine.player.x;
         let hitY = engine.player.y;
@@ -488,7 +514,7 @@ export function fireWeaponLogic(engine, w) {
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
                 engine.damageEnemy(e, dmg);
-                engine.addParticle(e.x, e.y, '#8a2be2', 5, 'glitch', 1.5);
+                engine.addParticle(e.x, e.y, '#ff00ff', 8, 'glitch', 1.5);
                 hitAny = true;
                 hitX = e.x;
                 hitY = e.y;
@@ -496,6 +522,7 @@ export function fireWeaponLogic(engine, w) {
         });
         
         if (hitAny) {
+            engine.addParticle(hitX, hitY, '#00ffff', 15, 'circle', 2);
             engine.projectiles.push({
                 x: hitX, y: hitY,
                 vx: 0, vy: 0,
@@ -503,7 +530,7 @@ export function fireWeaponLogic(engine, w) {
                 damage: dmg * 1.5,
                 pierce: 999,
                 life: 0.5,
-                color: '#8a2be2',
+                color: '#00ffff',
                 isAoe: true,
                 pulse: true,
                 type: 'seismic_shockwave'
@@ -511,11 +538,12 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'flamingLash') {
-        engine.addParticle(engine.player.x, engine.player.y, '#ff4500', 25, 'slash', 2.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ff4500', 30, 'slash', 3.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ffaa00', 15, 'spark', 2 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
                 engine.damageEnemy(e, dmg);
-                engine.addParticle(e.x, e.y, '#ff4500', 8, 'spark', 2);
+                engine.addParticle(e.x, e.y, '#ff4500', 10, 'spark', 2);
                 
                 engine.projectiles.push({
                     x: e.x, y: e.y,
@@ -542,6 +570,9 @@ export function fireWeaponLogic(engine, w) {
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         const spawnOffset = engine.player.radius + 5;
         
+        engine.addParticle(engine.player.x, engine.player.y, '#ffaa00', 30, 'explosion', 4 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 20, 'spark', 3 * area);
+        
         engine.projectiles.push({
             x: engine.player.x + Math.cos(angle) * spawnOffset,
             y: engine.player.y + Math.sin(angle) * spawnOffset,
@@ -559,6 +590,7 @@ export function fireWeaponLogic(engine, w) {
     }
     else if (w.id === 'vampiricLash') {
         engine.addParticle(engine.player.x, engine.player.y, '#ff0000', 40, 'slash', 4.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ff00ff', 20, 'spark', 3.5 * area);
         engine.particleManager.particles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -571,6 +603,7 @@ export function fireWeaponLogic(engine, w) {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 180 * area) {
                 engine.damageEnemy(e, dmg);
                 engine.addParticle(e.x, e.y, '#ff0000', 12, 'blood', 2.5);
+                engine.addParticle(e.x, e.y, '#ff00ff', 8, 'glitch', 2);
                 engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + (dmg * 0.1));
                 engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
             }
@@ -635,6 +668,8 @@ export function fireWeaponLogic(engine, w) {
         const spawnCollapse = (multiplier, delay) => {
             setTimeout(() => {
                 if (engine.isGameOver || engine.isVictory) return;
+                engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 15, 'explosion', 3 * area * multiplier);
+                engine.addParticle(engine.player.x, engine.player.y, '#00ffff', 10, 'spark', 2 * area * multiplier);
                 engine.projectiles.push({
                     x: engine.player.x, y: engine.player.y,
                     vx: 0, vy: 0,
@@ -654,6 +689,8 @@ export function fireWeaponLogic(engine, w) {
         spawnCollapse(1.4, 600);
     }
     else if (w.id === 'aegisMatrix') {
+        engine.addParticle(engine.player.x, engine.player.y, '#00ff88', 30, 'circle', 4 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 20, 'spark', 3 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
