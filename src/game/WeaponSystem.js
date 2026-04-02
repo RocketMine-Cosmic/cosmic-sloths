@@ -34,15 +34,19 @@ export function fireWeaponLogic(engine, w) {
             const a = count > 1 ? angle + (i - 1) * 0.2 : angle;
             engine.projectiles.push({
                 x: engine.player.x, y: engine.player.y,
-                vx: Math.cos(a) * 400 * engine.player.projSpeedMult,
-                vy: Math.sin(a) * 400 * engine.player.projSpeedMult,
-                radius: 6 * area, damage: dmg, pierce: 1, life: 2, color: '#4169E1', type: 'beam'
+                vx: Math.cos(a) * 500 * engine.player.projSpeedMult,
+                vy: Math.sin(a) * 500 * engine.player.projSpeedMult,
+                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: '#00aaff', type: 'blaster_shot'
             });
         }
     }
     else if (w.id === 'wrenchSmash') {
-        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 12, 'slash', 3.5 * area);
-        engine.addParticle(engine.player.x, engine.player.y, '#ffdd00', 8, 'spark', 2.5 * area);
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
+            radius: 80 * area, damage: 0, pierce: 999, life: 0.25,
+            color: '#aaaaaa', isAoe: true, type: 'wrench_swing'
+        });
+        engine.addParticle(engine.player.x, engine.player.y, '#ffffff', 8, 'slash', 2.5 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 80 * area) {
                 engine.damageEnemy(e, dmg);
@@ -61,7 +65,7 @@ export function fireWeaponLogic(engine, w) {
         const ty = nearest ? nearest.y : engine.player.y;
         
         engine.projectiles.push({
-            x: tx, y: ty, vx: 0, vy: 0, radius: 80 * area, damage: dmg, pierce: 999, life: 0.3, color: '#ff4500', isAoe: true, type: 'nova_pulse'
+            x: tx, y: ty, vx: 0, vy: 0, radius: 80 * area, damage: dmg, pierce: 999, life: 0.3, color: '#ff4500', isAoe: true, type: 'grenade_explosion'
         });
         engine.addParticle(tx, ty, '#ff4500', 15, 'explosion', 2 * area);
         
@@ -73,7 +77,7 @@ export function fireWeaponLogic(engine, w) {
                     const ctx = tx + Math.cos(angle) * 50;
                     const cty = ty + Math.sin(angle) * 50;
                     engine.projectiles.push({
-                        x: ctx, y: cty, vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.5, pierce: 999, life: 0.2, color: '#ff8c00', isAoe: true, type: 'nova_pulse'
+                        x: ctx, y: cty, vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.5, pierce: 999, life: 0.2, color: '#ff8c00', isAoe: true, type: 'grenade_explosion'
                     });
                     engine.addParticle(ctx, cty, '#ff8c00', 10, 'explosion', 1 * area);
                 }
@@ -81,8 +85,12 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'cyberBlade') {
-        engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 15, 'slash', 2.5 * area);
-        engine.addParticle(engine.player.x, engine.player.y, '#ff00ff', 10, 'glitch', 1.5 * area);
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
+            radius: 60 * area, damage: 0, pierce: 999, life: 0.2,
+            color: '#8a2be2', isAoe: true, type: 'blade_swing'
+        });
+        engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 8, 'slash', 1.5 * area);
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 60 * area) {
                 engine.damageEnemy(e, dmg);
@@ -91,6 +99,11 @@ export function fireWeaponLogic(engine, w) {
         if (isMastered) {
             setTimeout(() => {
                 if (engine.isGameOver || engine.isVictory) return;
+                engine.projectiles.push({
+                    x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
+                    radius: 60 * area, damage: 0, pierce: 999, life: 0.2,
+                    color: '#ff0000', isAoe: true, type: 'blade_swing'
+                });
                 engine.addParticle(engine.player.x, engine.player.y, '#ff0000', 8, 'slash', 1.5 * area);
                 engine.enemies.forEach(e => {
                     if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 60 * area) {

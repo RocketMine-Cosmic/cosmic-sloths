@@ -42,7 +42,45 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
         }
 
-        if (p.type === 'beam' || p.type === 'dual_laser') {
+        if (p.type === 'blaster_shot') {
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.2, p.radius * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+            ctx.globalCompositeOperation = 'screen';
+        } else if (p.type === 'wrench_swing') {
+            ctx.globalAlpha = Math.max(0, p.life / 0.25);
+            const swingAngle = (1 - (p.life / 0.25)) * Math.PI * 1.5; 
+            ctx.rotate(swingAngle);
+            ctx.fillStyle = '#cccccc';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(0, -6, p.radius * 0.9, 12, 6); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.arc(p.radius * 0.9, 0, 18, Math.PI * 0.2, Math.PI * 1.8); ctx.lineTo(p.radius * 0.9 - 6, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        } else if (p.type === 'blade_swing') {
+            ctx.globalAlpha = Math.max(0, p.life / 0.2);
+            const swingAngle = (1 - (p.life / 0.2)) * Math.PI * 1.5; 
+            ctx.rotate(swingAngle);
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(p.radius, -p.radius * 0.6, p.radius, 0); ctx.quadraticCurveTo(p.radius, p.radius * 0.6, 0, 0); ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(p.radius * 0.8, -p.radius * 0.2, p.radius * 0.8, 0); ctx.quadraticCurveTo(p.radius * 0.8, p.radius * 0.2, 0, 0); ctx.fill();
+            ctx.globalAlpha = 1.0;
+        } else if (p.type === 'grenade_explosion') {
+            ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 3));
+            const maxR = p.radius;
+            const lifeRatio = p.weaponId === 'fragGrenade' ? 0.4 : 0.3;
+            const progress = Math.max(0, 1 - (p.life / lifeRatio));
+            const currentR = maxR * Math.pow(progress, 0.5); 
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(0, 0, Math.max(0, currentR), 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, 4 * p.life); ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        } else if (p.type === 'beam' || p.type === 'dual_laser') {
             if (texSlash && texSlash.isReady) {
                 ctx.globalCompositeOperation = 'lighter';
                 ctx.globalAlpha = 0.8;
