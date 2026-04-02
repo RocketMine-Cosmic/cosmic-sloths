@@ -238,36 +238,10 @@ export class ParticleManager {
     }
 
     createLevelUp(x, y) {
-        // Star implosions
-        for (let i = 0; i < 25; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 200 + Math.random() * 100;
-            const c = ['#00e5ff', '#ff00e5', '#ffff00'][Math.floor(Math.random() * 3)];
-            this.particles.push({
-                x: x + Math.cos(angle) * dist,
-                y: y + Math.sin(angle) * dist,
-                vx: 0, vy: 0,
-                targetX: x, targetY: y,
-                life: 1.0, maxLife: 1.0,
-                color: c, tint: c,
-                type: 'imploding_star',
-                size: Math.random() * 16 + 8,
-                rotation: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 12
-            });
-        }
-        
-        // Initial flash to build anticipation
-        this.addParticle(x, y, '#ffffff', 1, 'flash', 12, { lifeBonus: 0.2, speed: 0 });
-
-        setTimeout(() => {
-            // Huge radiant burst
-            this.addParticle(x, y, '#ffffff', 1, 'flash', 15, { lifeBonus: 0.3, speed: 0 });
-            this.addParticle(x, y, '#00e5ff', 12, 'star', 2.5, { speed: 450 });
-            this.addParticle(x, y, '#ff00e5', 12, 'star', 2.0, { speed: 350 });
-            this.addParticle(x, y, '#ffff00', 12, 'spark', 2.5, { speed: 300 });
-            this.particles.push({ x, y, vx: 0, vy: 0, life: 0.4, maxLife: 0.4, color: '#00e5ff', tint: '#00e5ff', type: 'shockwave', size: 10, growthRate: 800, lineWidth: 5 });
-        }, 850);
+        // Clean and vibrant sparks only
+        this.addParticle(x, y, '#00e5ff', 20, 'spark', 2.5, { speed: 450 });
+        this.addParticle(x, y, '#ff00e5', 20, 'spark', 2.0, { speed: 350 });
+        this.addParticle(x, y, '#ffff00', 20, 'spark', 2.5, { speed: 300 });
     }
 
     createPickup(x, y, color) {
