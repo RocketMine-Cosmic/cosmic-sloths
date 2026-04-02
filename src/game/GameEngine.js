@@ -161,26 +161,15 @@ export class GameEngine {
         this.kills = 0;
 
         if (arenaId === 'world_boss_arena') {
-            this.level = 10;
-            
-            // Apply 9 levels worth of stats
-            this.player.maxHp = Math.floor(this.player.maxHp * Math.pow(1.05, 9));
-            this.player.damageMult += 9 * 0.04;
-            this.player.armor += 9 * 1;
-            this.player.hp = this.player.maxHp;
-            
-            // Scale XP required for level 10
-            for (let i = 0; i < 9; i++) {
-                this.xpRequired = Math.floor(this.xpRequired * 1.1 + 20);
+            // Instead of random upgrades, grant enough XP to reach Level 10
+            // so the player can build their character properly!
+            let totalXpNeeded = 0;
+            let currentReq = 10;
+            for (let i = 1; i < 10; i++) {
+                totalXpNeeded += currentReq;
+                currentReq = Math.floor(currentReq * 1.1 + 20);
             }
-            
-            for (let i = 0; i < 9; i++) {
-                const choices = this.generateChoices();
-                if (choices.length > 0) {
-                    this.applyUpgrade(choices[Math.floor(Math.random() * choices.length)]);
-                }
-            }
-            this.isPaused = false;
+            this.xp = totalXpNeeded;
         }
         
         this.isPaused = false;
@@ -344,6 +333,10 @@ export class GameEngine {
         this.updateEnemies(dt);
         this.updatePickups(dt);
         this.updateHazards(dt);
+        
+        if (this.xp >= this.xpRequired && !this.isPaused && !this.isGameOver && !this.isVictory) {
+            this.levelUp();
+        }
         
         if (!this.characterPickupSpawned && this.lockedCharacters.length > 0) {
             if (this.characterSpawnRoll === undefined) {
