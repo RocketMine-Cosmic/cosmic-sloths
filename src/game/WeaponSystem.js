@@ -20,7 +20,183 @@ export function fireWeaponLogic(engine, w) {
     const dmg = w.baseDamage * engine.player.damageMult * (1 + (w.level-1)*0.2) * wDmgMult;
     const area = w.baseArea * engine.player.areaMult * (1 + (w.level-1)*0.1) * wAreaMult;
     
-    if (w.id === 'napBeam') {
+    if (w.id === 'neoBlaster') {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
+        
+        const count = isMastered ? 3 : 1;
+        for (let i = 0; i < count; i++) {
+            const a = count > 1 ? angle + (i - 1) * 0.2 : angle;
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: Math.cos(a) * 400 * engine.player.projSpeedMult,
+                vy: Math.sin(a) * 400 * engine.player.projSpeedMult,
+                radius: 6 * area, damage: dmg, pierce: 1, life: 2, color: '#4169E1', type: 'beam'
+            });
+        }
+    }
+    else if (w.id === 'wrenchSmash') {
+        engine.addParticle(engine.player.x, engine.player.y, '#aaaaaa', 10, 'slash', 2.5 * area);
+        engine.enemies.forEach(e => {
+            if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 80 * area) {
+                engine.damageEnemy(e, dmg);
+                if (isMastered && Math.random() < 0.5) e.slowTimer = 1.0;
+            }
+        });
+    }
+    else if (w.id === 'fragGrenade') {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        const tx = nearest ? nearest.x : engine.player.x;
+        const ty = nearest ? nearest.y : engine.player.y;
+        
+        engine.projectiles.push({
+            x: tx, y: ty, vx: 0, vy: 0, radius: 80 * area, damage: dmg, pierce: 999, life: 0.3, color: '#ff4500', isAoe: true, type: 'nova_pulse'
+        });
+        engine.addParticle(tx, ty, '#ff4500', 15, 'explosion', 2 * area);
+        
+        if (isMastered) {
+            setTimeout(() => {
+                if (engine.isGameOver || engine.isVictory) return;
+                for(let i=0; i<3; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const ctx = tx + Math.cos(angle) * 50;
+                    const cty = ty + Math.sin(angle) * 50;
+                    engine.projectiles.push({
+                        x: ctx, y: cty, vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.5, pierce: 999, life: 0.2, color: '#ff8c00', isAoe: true, type: 'nova_pulse'
+                    });
+                    engine.addParticle(ctx, cty, '#ff8c00', 10, 'explosion', 1 * area);
+                }
+            }, 300);
+        }
+    }
+    else if (w.id === 'cyberBlade') {
+        engine.addParticle(engine.player.x, engine.player.y, '#8a2be2', 12, 'slash', 1.5 * area);
+        engine.enemies.forEach(e => {
+            if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 60 * area) {
+                engine.damageEnemy(e, dmg);
+            }
+        });
+        if (isMastered) {
+            setTimeout(() => {
+                if (engine.isGameOver || engine.isVictory) return;
+                engine.addParticle(engine.player.x, engine.player.y, '#ff0000', 8, 'slash', 1.5 * area);
+                engine.enemies.forEach(e => {
+                    if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 60 * area) {
+                        engine.damageEnemy(e, dmg * 0.5);
+                        engine.addParticle(e.x, e.y, '#ff0000', 5, 'blood', 1);
+                    }
+                });
+            }, 200);
+        }
+    }
+    else if (w.id === 'holoBolt') {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
+        
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: Math.cos(angle) * 350 * engine.player.projSpeedMult,
+            vy: Math.sin(angle) * 350 * engine.player.projSpeedMult,
+            radius: 5 * area, damage: dmg, pierce: isMastered ? 3 : 1, life: 3, color: '#20b2aa', type: 'data_pulse'
+        });
+    }
+    else if (w.id === 'dataSpike') {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
+        
+        const count = isMastered ? 3 : 1;
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                if (engine.isGameOver || engine.isVictory) return;
+                engine.projectiles.push({
+                    x: engine.player.x, y: engine.player.y,
+                    vx: Math.cos(angle) * 500 * engine.player.projSpeedMult,
+                    vy: Math.sin(angle) * 500 * engine.player.projSpeedMult,
+                    radius: 4 * area, damage: dmg, pierce: 1, life: 1.5, color: '#32CD32', type: 'glitch_slash'
+                });
+            }, i * 100);
+        }
+    }
+    else if (w.id === 'phantomSpear') {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
+        
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: Math.cos(angle) * 600 * engine.player.projSpeedMult,
+            vy: Math.sin(angle) * 600 * engine.player.projSpeedMult,
+            radius: 6 * area, damage: dmg, pierce: 5 + (isMastered ? 5 : 0), life: 2, color: '#4682B4', type: 'railgun'
+        });
+        
+        if (isMastered) {
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: 0, vy: 0, radius: 40 * area, damage: dmg * 0.2, pierce: 999, life: 2, color: '#4682B4', isAoe: true, type: 'napalm_pool'
+            });
+        }
+    }
+    else if (w.id === 'sniperShot') {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
+        
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: Math.cos(angle) * 800 * engine.player.projSpeedMult,
+            vy: Math.sin(angle) * 800 * engine.player.projSpeedMult,
+            radius: 8 * area, damage: dmg, pierce: isMastered ? 999 : 5, life: 2, color: '#FFD700', type: 'railgun'
+        });
+    }
+    else if (w.id === 'sonicBoom') {
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: 0, vy: 0,
+            radius: 80 * area, damage: dmg, pierce: 999, life: 0.5, color: '#FF8C00', isAoe: true, pulse: true, type: 'seismic_shockwave',
+            pushback: isMastered ? 200 : 0
+        });
+    }
+    else if (w.id === 'missileSwarm') {
+        const count = isMastered ? 6 : 3;
+        for (let i = 0; i < count; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: Math.cos(angle) * 300 * engine.player.projSpeedMult,
+                vy: Math.sin(angle) * 300 * engine.player.projSpeedMult,
+                radius: 4 * area, damage: dmg, pierce: 0, life: 1.5, color: '#00FFFF', type: 'missile'
+            });
+        }
+    }
+    else if (w.id === 'napBeam') {
         let nearest = null;
         let minDist = Infinity;
         engine.enemies.forEach(e => {

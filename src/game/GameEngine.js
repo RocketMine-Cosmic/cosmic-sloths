@@ -112,6 +112,20 @@ export class GameEngine {
         
         this.killEffect = save.cosmetics?.killEffect || 'none';
 
+        const CHAR_WEAPONS = {
+            neobyte: 'neoBlaster',
+            pandypaws: 'wrenchSmash',
+            novabyte: 'fragGrenade',
+            glitch: 'cyberBlade',
+            holodrift: 'holoBolt',
+            codebreaker: 'dataSpike',
+            dataphantom: 'phantomSpear',
+            neonvortex: 'sniperShot',
+            synthbeats: 'sonicBoom',
+            skybyte: 'missileSwarm'
+        };
+        const startingWeaponId = CHAR_WEAPONS[characterId] || 'neoBlaster';
+
         this.player = {
             name: baseChar.name,
             image: playerImage,
@@ -136,7 +150,7 @@ export class GameEngine {
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0),
             color: baseChar.color,
             trail: save.cosmetics?.trail || 'default',
-            weapons: [{ ...WEAPONS.napBeam, level: 1, timer: 0 }],
+            weapons: [{ ...WEAPONS[startingWeaponId], level: 1, timer: 0 }],
             passives: [],
             passiveLevels: {}
         };
@@ -1188,7 +1202,10 @@ export class GameEngine {
         };
 
         const choices = [];
-        const pool = [...UPGRADES].filter(u => !this.banishedUpgrades.has(u.id));
+        const pool = [...UPGRADES].filter(u => 
+            !this.banishedUpgrades.has(u.id) && 
+            (!u.characterSpecific || u.characterSpecific === this.characterId)
+        );
         for(let i=0; i<3; i++) {
             if (pool.length === 0) break;
             const idx = Math.floor(Math.random() * pool.length);
