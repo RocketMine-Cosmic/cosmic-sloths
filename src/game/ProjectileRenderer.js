@@ -18,17 +18,19 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.rotate(Math.atan2(p.vy, p.vx));
         }
         
-        // Glowing Aura - optimized for performance
-        ctx.globalAlpha = 0.2;
-        ctx.fillStyle = p.color || '#ffffff';
-        ctx.beginPath();
-        ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 0.4;
-        ctx.beginPath();
-        ctx.arc(0, 0, p.radius * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
+        // Glowing Aura - optimized for performance (only for small projectiles, not AoE)
+        if (!p.isAoe) {
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = p.color || '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
 
         if (p.type === 'beam' || p.type === 'dual_laser') {
             ctx.fillStyle = p.color || '#ffffff';
