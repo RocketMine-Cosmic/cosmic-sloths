@@ -607,6 +607,10 @@ export class GameEngine {
                 else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 2, 'glow', 0.8);
                 else if (p.type === 'railgun') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 1.2);
                 else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'circle', 0.5);
+                else if (p.type === 'supernova_beam') {
+                    this.addParticle(p.x, p.y, '#ffffff', 2, 'spark', 1.5);
+                    this.addParticle(p.x, p.y, p.color, 2, 'explosion', 1.0);
+                }
                 else this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
             }
 
@@ -1393,6 +1397,7 @@ export class GameEngine {
         const texStar = this.particleManager?.textures?.star;
         const texSlash = this.particleManager?.textures?.slash;
         const texShockwave = this.particleManager?.textures?.shockwave;
+        const texSmoke = this.particleManager?.textures?.smoke;
 
         this.projectiles.forEach(p => {
             if (!isVisible(p.x, p.y, p.radius * 3)) return;
@@ -1476,6 +1481,72 @@ export class GameEngine {
                 this.ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
                 this.ctx.stroke();
                 if (texShockwave && texShockwave.isReady) this.ctx.drawImage(texShockwave, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+            } else if (p.type === 'supernova_beam') {
+                this.ctx.fillStyle = p.color || '#ffaa00';
+                this.ctx.fillRect(-p.radius * 2, -p.radius * 0.8, p.radius * 4, p.radius * 1.6);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(-p.radius * 1.5, -p.radius * 0.4, p.radius * 3, p.radius * 0.8);
+                if (texSlash && texSlash.isReady) {
+                    this.ctx.drawImage(texSlash, -p.radius*3, -p.radius*2, p.radius*6, p.radius*4);
+                }
+                if (texStar && texStar.isReady) {
+                    this.ctx.drawImage(texStar, -p.radius*2, -p.radius*2, p.radius*4, p.radius*4);
+                }
+            } else if (p.type === 'hellfire') {
+                this.ctx.globalAlpha = 0.5 + Math.sin(this.time * 8 + p.x) * 0.2;
+                this.ctx.fillStyle = p.color;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
+                if (texSmoke && texSmoke.isReady) {
+                    this.ctx.globalCompositeOperation = 'screen';
+                    this.ctx.drawImage(texSmoke, -p.radius * 1.2, -p.radius * 1.2, p.radius*2.4, p.radius*2.4);
+                    this.ctx.globalCompositeOperation = 'source-over';
+                }
+            } else if (p.type === 'quantum_collapse') {
+                this.ctx.globalAlpha = 0.8;
+                this.ctx.fillStyle = '#1a0033';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
+                this.ctx.fill();
+                
+                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.strokeStyle = p.color;
+                this.ctx.lineWidth = 12;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                this.ctx.stroke();
+                
+                if (texShockwave && texShockwave.isReady) {
+                    this.ctx.drawImage(texShockwave, -p.radius*1.4, -p.radius*1.4, p.radius*2.8, p.radius*2.8);
+                }
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.globalAlpha = 1.0;
+            } else if (p.type === 'aegis_matrix') {
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.fillStyle = '#00ff88';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                this.ctx.fill();
+                
+                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.strokeStyle = '#00ff66';
+                this.ctx.lineWidth = 6;
+                this.ctx.setLineDash([20, 20]);
+                this.ctx.lineDashOffset = -this.time * 100;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius - 12, 0, Math.PI*2);
+                this.ctx.stroke();
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.globalAlpha = 1.0;
             } else if (p.isAoe) {
                 if (texShockwave && texShockwave.isReady) {
                     this.ctx.globalAlpha = 0.8;
@@ -1714,20 +1785,27 @@ export class GameEngine {
                 
                 this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.fillStyle = '#ff00ff';
-                this.ctx.globalAlpha = 0.4;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.globalCompositeOperation = 'source-over';
                 
-                this.ctx.fillStyle = '#ff00ff';
+                this.ctx.fillStyle = '#111111';
                 this.ctx.beginPath();
-                this.ctx.moveTo(12, 0);
-                this.ctx.lineTo(-6, 8);
-                this.ctx.lineTo(-6, -8);
+                this.ctx.moveTo(15, 0);
+                this.ctx.lineTo(0, 15);
+                this.ctx.lineTo(-15, 0);
+                this.ctx.lineTo(0, -15);
                 this.ctx.fill();
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 2;
+                
+                this.ctx.strokeStyle = '#ff00ff';
+                this.ctx.lineWidth = 3;
                 this.ctx.stroke();
+                
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                this.ctx.fill();
                 
                 this.ctx.restore();
             }
@@ -1842,7 +1920,6 @@ export class GameEngine {
 
         // Draw Environmental Effects
         this.ctx.globalCompositeOperation = 'screen';
-        const texSmoke = this.particleManager?.textures?.smoke;
 
         if (this.envEffect === 'neon_rain') {
             this.envParticles.forEach(p => {

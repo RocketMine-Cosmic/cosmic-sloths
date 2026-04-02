@@ -348,22 +348,30 @@ export function fireWeaponLogic(engine, w) {
             y: engine.player.y + Math.sin(angle) * spawnOffset,
             vx: Math.cos(angle) * 400 * engine.player.projSpeedMult,
             vy: Math.sin(angle) * 400 * engine.player.projSpeedMult,
-            radius: 12 * area,
+            radius: 15 * area,
             damage: dmg,
             pierce: 10 + w.level,
             life: 3,
             color: '#ffaa00',
-            type: 'dual_laser',
+            type: 'supernova_beam',
             isMastered: true,
             weaponId: 'supernovaBeam'
         });
     }
     else if (w.id === 'vampiricLash') {
-        engine.addParticle(engine.player.x, engine.player.y, '#ff0000', 30, 'slash', 3.5 * area);
+        engine.addParticle(engine.player.x, engine.player.y, '#ff0000', 40, 'slash', 4.5 * area);
+        engine.particleManager.particles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: 0, vy: 0,
+            life: 0.5, maxLife: 0.5,
+            color: '#ff0000', tint: '#ff0000',
+            type: 'shockwave',
+            size: 20 * area, growthRate: 1200 * area, lineWidth: 10
+        });
         engine.enemies.forEach(e => {
-            if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 150 * area) {
+            if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 180 * area) {
                 engine.damageEnemy(e, dmg);
-                engine.addParticle(e.x, e.y, '#ff0000', 12, 'blood', 2);
+                engine.addParticle(e.x, e.y, '#ff0000', 12, 'blood', 2.5);
                 engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + (dmg * 0.1));
                 engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
             }
@@ -412,71 +420,54 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 50 * area,
+            radius: 60 * area,
             damage: dmg,
             pierce: 999,
             life: 5 + w.level,
-            color: 'rgba(0, 191, 255, 0.6)',
+            color: '#00bfff',
             isAoe: true,
             burn: true,
             isMastered: true,
-            weaponId: 'napalm'
+            weaponId: 'napalm',
+            type: 'hellfire'
         });
     }
     else if (w.id === 'quantumCollapse') {
-        engine.projectiles.push({
-            x: engine.player.x, y: engine.player.y,
-            vx: 0, vy: 0,
-            radius: 20 * area,
-            damage: dmg,
-            pierce: 999,
-            life: 0.8,
-            color: 'rgba(138, 43, 226, 0.8)',
-            isAoe: true,
-            pulse: true
-        });
-        setTimeout(() => {
-            if (engine.isGameOver || engine.isVictory) return;
-            engine.projectiles.push({
-                x: engine.player.x, y: engine.player.y,
-                vx: 0, vy: 0,
-                radius: 25 * area,
-                damage: dmg * 0.8,
-                pierce: 999,
-                life: 0.8,
-                color: 'rgba(138, 43, 226, 0.6)',
-                isAoe: true,
-                pulse: true
-            });
-        }, 300);
-        setTimeout(() => {
-            if (engine.isGameOver || engine.isVictory) return;
-            engine.projectiles.push({
-                x: engine.player.x, y: engine.player.y,
-                vx: 0, vy: 0,
-                radius: 30 * area,
-                damage: dmg * 0.6,
-                pierce: 999,
-                life: 0.8,
-                color: 'rgba(138, 43, 226, 0.4)',
-                isAoe: true,
-                pulse: true
-            });
-        }, 600);
+        const spawnCollapse = (multiplier, delay) => {
+            setTimeout(() => {
+                if (engine.isGameOver || engine.isVictory) return;
+                engine.projectiles.push({
+                    x: engine.player.x, y: engine.player.y,
+                    vx: 0, vy: 0,
+                    radius: 25 * area * multiplier,
+                    damage: dmg * multiplier,
+                    pierce: 999,
+                    life: 1.0,
+                    color: '#8a2be2',
+                    isAoe: true,
+                    pulse: true,
+                    type: 'quantum_collapse'
+                });
+            }, delay);
+        };
+        spawnCollapse(1.0, 0);
+        spawnCollapse(1.2, 300);
+        spawnCollapse(1.4, 600);
     }
     else if (w.id === 'aegisMatrix') {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 100 * area,
+            radius: 120 * area,
             damage: dmg,
             pierce: 999,
             life: 2.5,
-            color: 'rgba(0, 255, 128, 0.4)',
+            color: '#00ff88',
             isAoe: true,
-            pushback: 400,
+            pushback: 500,
             isMastered: true,
-            weaponId: 'shieldBubble'
+            weaponId: 'shieldBubble',
+            type: 'aegis_matrix'
         });
     }
 }
