@@ -59,7 +59,7 @@ export class GameEngine {
         const baseChar = save.skinColorOverride ? { ...baseCharRaw, color: save.skinColorOverride } : baseCharRaw;
 
         if (arenaId === 'world_boss_arena') {
-            this.arena = { id: 'world_boss_arena', name: 'Global Raid', bg: '#1a0000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/887e8de50_image-48.jpg', duration: Infinity, effect: 'solar_flare' };
+            this.arena = { id: 'world_boss_arena', name: 'Global Raid', bg: '#1a0000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/887e8de50_image-48.jpg', duration: Infinity, effect: 'none' };
         } else {
             this.arena = ARENAS.find(a => a.id === arenaId) || ARENAS[0];
             if (isEndless) {
@@ -633,9 +633,11 @@ export class GameEngine {
                             this.damageEnemy(e, p.damage, p);
                             
                             // Impact Effects
-                            this.shake(0.1);
-                            this.hitStopTimer = 0.02;
-                            this.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
+                            if (!e.isWorldBoss || Math.random() < 0.1) {
+                                this.shake(0.1);
+                                this.hitStopTimer = 0.02;
+                                this.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
+                            }
                             
                             if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'glow', 2);
                             if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'smoke', 2);
@@ -1040,6 +1042,28 @@ export class GameEngine {
         enemy.hp -= finalDamage;
         if (enemy.isWorldBoss) {
             this.worldBossDamage += finalDamage;
+            
+            // --- PREVENT DAMAGE TEXT LAG ON WORLD BOSS ---
+            enemy.damageBuffer = (enemy.damageBuffer || 0) + finalDamage;
+            if (isCrit) enemy.hadCritInBuffer = true;
+            if (isWeakHit) enemy.hadWeakInBuffer = true;
+            
+            if (!enemy.lastDamageTextTime) enemy.lastDamageTextTime = this.time;
+            
+            if (this.time - enemy.lastDamageTextTime >= 0.25) { // Show damage every 0.25s
+                let color = enemy.hadCritInBuffer ? '#ff4444' : '#ffffff';
+                if (enemy.hadWeakInBuffer) {
+                    color = '#ffdd00';
+                    this.addDamageText(enemy.x, enemy.y - 30, 'WEAK SPOT!', '#ffdd00', false);
+                }
+                this.addDamageText(enemy.x, enemy.y - 10, Math.floor(enemy.damageBuffer), color, enemy.hadCritInBuffer);
+                enemy.damageBuffer = 0;
+                enemy.hadCritInBuffer = false;
+                enemy.hadWeakInBuffer = false;
+                enemy.lastDamageTextTime = this.time;
+            }
+            if (Math.random() < 0.1) SoundManager.playEnemyHit(); // Throttle sound
+            return;
         }
 
         let color = isCrit ? '#ff4444' : (pastKills >= masteryReq ? '#ff00ff' : '#ffffff');
