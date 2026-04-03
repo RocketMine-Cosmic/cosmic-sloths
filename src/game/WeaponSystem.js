@@ -53,16 +53,16 @@ export function fireWeaponLogic(engine, w) {
         let projColor = isMastered ? '#4169E1' : '#00ff00';
         let projType = 'beam';
         
-        if (engine.characterId === 'skybyte') { projColor = '#00ffff'; projType = 'dual_laser'; }
-        else if (engine.characterId === 'neobyte') { projColor = '#4169E1'; projType = 'lightning'; }
-        else if (engine.characterId === 'glitch') { projColor = '#8a2be2'; projType = 'glitch_slash'; }
-        else if (engine.characterId === 'pandypaws') { projColor = '#ff69b4'; projType = 'stomp'; }
-        else if (engine.characterId === 'holodrift') { projColor = '#20b2aa'; projType = 'repair_beam'; }
-        else if (engine.characterId === 'novabyte') { projColor = '#FF4500'; projType = 'missile'; }
-        else if (engine.characterId === 'codebreaker') { projColor = '#32CD32'; projType = 'data_pulse'; }
-        else if (engine.characterId === 'dataphantom') { projColor = '#4682B4'; projType = 'phantom_orb'; }
-        else if (engine.characterId === 'neonvortex') { projColor = '#FFD700'; projType = 'railgun'; }
-        else if (engine.characterId === 'synthbeats') { projColor = '#FF8C00'; projType = 'sonic_wave'; }
+        if (engine.characterId === 'skybyte') { projColor = '#00FFFF'; projType = 'dual_laser'; }
+        else if (engine.characterId === 'neobyte') { projColor = '#0055FF'; projType = 'lightning'; }
+        else if (engine.characterId === 'glitch') { projColor = '#FF10F0'; projType = 'glitch_slash'; }
+        else if (engine.characterId === 'pandypaws') { projColor = '#D81B60'; projType = 'stomp'; }
+        else if (engine.characterId === 'holodrift') { projColor = '#008080'; projType = 'repair_beam'; }
+        else if (engine.characterId === 'novabyte') { projColor = '#FF00FF'; projType = 'missile'; }
+        else if (engine.characterId === 'codebreaker') { projColor = '#39FF14'; projType = 'data_pulse'; }
+        else if (engine.characterId === 'dataphantom') { projColor = '#99FFCC'; projType = 'phantom_orb'; }
+        else if (engine.characterId === 'neonvortex') { projColor = '#4B0082'; projType = 'railgun'; }
+        else if (engine.characterId === 'synthbeats') { projColor = '#FFC100'; projType = 'sonic_wave'; }
 
         const spawnOffset = engine.player.radius + 5;
         engine.projectiles.push({

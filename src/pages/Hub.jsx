@@ -211,7 +211,7 @@ export default function Hub({ isCarousel }) {
                                                             </button>
                                                             
                                                             <div className="text-left z-10 flex-1 px-2 md:px-4 flex flex-col items-start">
-                                                                <h4 className="text-lg md:text-xl font-bold text-white mb-0.5 drop-shadow-md" style={{ color: char.color }}>
+                                                                <h4 className="text-lg md:text-xl font-bold mb-0.5" style={{ color: char.color, textShadow: `0 0 10px ${char.color}80` }}>
                                                                     {char.name}
                                                                 </h4>
                                                                 <div className="flex gap-2 mb-2 w-full pr-4 relative z-20">
