@@ -490,7 +490,7 @@ export class GameEngine {
 
         const progress = this.arena.duration === Infinity ? this.time / 300 : Math.min(1, this.time / this.arena.duration);
         const effectiveProgress = Math.min(1, progress);
-        const spawnRate = Math.max(0.12, (2.5 - (2.2 * Math.pow(effectiveProgress, 1.5))) / this.envModifiers.enemySpawnRate);
+        const spawnRate = Math.max(0.05, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / this.envModifiers.enemySpawnRate);
         
         if (Math.random() < dt / spawnRate) {
             const angle = Math.random() * Math.PI * 2;
