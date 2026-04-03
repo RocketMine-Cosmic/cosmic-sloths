@@ -57,8 +57,8 @@ export class GameEngine {
         });
 
         const baseCharRaw = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
-        const skinId = save.cosmetics?.skins?.[characterId];
-        const skinColor = skinId ? SKIN_COSMETICS.find(s => s.id === skinId)?.color : null;
+        const skinId = save.cosmetics?.skins?.[characterId] || `${characterId}_default`;
+        const skinColor = SKIN_COSMETICS.find(s => s.id === skinId)?.color;
         const baseChar = skinColor ? { ...baseCharRaw, color: skinColor } : (save.skinColorOverride ? { ...baseCharRaw, color: save.skinColorOverride } : baseCharRaw);
 
         if (arenaId === 'world_boss_arena') {
