@@ -287,7 +287,7 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/60 rounded-lg p-3 border border-yellow-900/40">
                         <div className="font-bold text-yellow-300 text-sm mb-1">🛡️ Daily & Weekly Bounties</div>
-                        <p className="text-xs text-slate-400">Your squad shares daily and weekly kill targets. Hit them and every member can <strong className="text-white">individually claim</strong> Gold, Cosmic Tokens, and Relic Fragments as their reward.</p>
+                        <p className="text-xs text-slate-400">Your squad shares daily and weekly kill targets. Hit them and every member can <strong className="text-white">individually claim</strong> Gold and Relic Fragments as their reward.</p>
                         <div className="grid grid-cols-2 gap-1.5 mt-2 text-[10px]">
                             <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.1 Rookie</div><div className="text-yellow-400 font-bold">2,000 kills → 🪙500 + 🧩×1</div></div>
                             <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.3 Hunters</div><div className="text-yellow-400 font-bold">10,000 kills → 🪙2,500 + 🧩×3</div></div>
@@ -339,7 +339,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="🛡️ Daily & Weekly Bounties" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Your squad receives both a Daily and a Weekly kill target based on its level. Hit the targets together, and <strong className="text-white">every member</strong> can individually claim Gold, Cosmic Tokens, and Relic Fragments.
+                    Your squad receives both a Daily and a Weekly kill target based on its level. Hit the targets together, and <strong className="text-white">every member</strong> can individually claim Gold and Relic Fragments.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
                     <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie Bounty</div><div className="text-slate-400">2,000 kills → 🪙 500 + 🧩×1</div></div>

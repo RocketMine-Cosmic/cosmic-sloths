@@ -26,13 +26,13 @@ const BOUNTY_TIERS = [
 ];
 
 const DAILY_BOUNTY_TIERS = [
-    { minLevel: 1, target: 300,  gold: 150,   fragments: 0, cosmic: 1, label: 'Daily Patrol' },
-    { minLevel: 2, target: 800,  gold: 300,   fragments: 0, cosmic: 2, label: 'Daily Sweep' },
-    { minLevel: 3, target: 1500, gold: 600,   fragments: 1, cosmic: 3, label: 'Daily Hunt' },
-    { minLevel: 4, target: 2500, gold: 1000,  fragments: 1, cosmic: 4, label: 'Daily Purge' },
-    { minLevel: 5, target: 4500, gold: 1500,  fragments: 2, cosmic: 5, label: 'Daily Assault' },
-    { minLevel: 6, target: 7500, gold: 2500,  fragments: 2, cosmic: 6, label: 'Daily Crusade' },
-    { minLevel: 7, target: 12000, gold: 4000, fragments: 3, cosmic: 8, label: 'Daily Annihilation' },
+    { minLevel: 1, target: 300,  gold: 150,   fragments: 0, label: 'Daily Patrol' },
+    { minLevel: 2, target: 800,  gold: 300,   fragments: 0, label: 'Daily Sweep' },
+    { minLevel: 3, target: 1500, gold: 600,   fragments: 1, label: 'Daily Hunt' },
+    { minLevel: 4, target: 2500, gold: 1000,  fragments: 1, label: 'Daily Purge' },
+    { minLevel: 5, target: 4500, gold: 1500,  fragments: 2, label: 'Daily Assault' },
+    { minLevel: 6, target: 7500, gold: 2500,  fragments: 2, label: 'Daily Crusade' },
+    { minLevel: 7, target: 12000, gold: 4000, fragments: 3, label: 'Daily Annihilation' },
 ];
 
 function getBountyTier(level) {
@@ -456,7 +456,6 @@ export default function Squads({ isCarousel }) {
                 const currentSave = SaveManager.load();
                 currentSave.gold += tier.gold;
                 currentSave.relicFragments = (currentSave.relicFragments || 0) + tier.fragments;
-                currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + tier.cosmic;
                 SaveManager.save(currentSave);
                 
                 // Update member record
@@ -467,7 +466,7 @@ export default function Squads({ isCarousel }) {
                 
                 toast({
                     title: "Daily Bounty Claimed!",
-                    description: `You received ${tier.gold.toLocaleString()} Gold${tier.fragments > 0 ? `, ${tier.fragments} Fragments` : ''} and ${tier.cosmic} Cosmic Tokens!`,
+                    description: `You received ${tier.gold.toLocaleString()} Gold${tier.fragments > 0 ? ` and ${tier.fragments} Relic Fragments` : ''}!`,
                 });
             } catch (e) {
                 console.error(e);
@@ -739,10 +738,6 @@ export default function Squads({ isCarousel }) {
                                                             <div className="text-xs font-bold text-fuchsia-400">×{dailyTier.fragments}</div>
                                                         </div>
                                                     )}
-                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                        <div className="text-sm">💠</div>
-                                                        <div className="text-xs font-bold text-emerald-400">×{dailyTier.cosmic}</div>
-                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between text-xs font-bold mb-1">
                                                     <span className="text-slate-400">Progress</span>
