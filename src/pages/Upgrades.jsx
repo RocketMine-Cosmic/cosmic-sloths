@@ -896,18 +896,20 @@ export default function Upgrades({ isCarousel }) {
                                                        className={`w-full py-1 rounded-lg font-bold transition-colors text-xs ${previewSkinColor === skin.color ? 'bg-amber-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
                                                        {previewSkinColor === skin.color ? '👁 Previewing' : '👁 Preview'}
                                                     </button>
-                                                    <div className="flex gap-1.5">
-                                                        <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold}
-                                                            className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                            🪙 {skin.goldCost.toLocaleString()}
-                                                        </button>
-                                                        {skin.tokenCost > 0 && (
-                                                            <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
-                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                💠 {skin.tokenCost.toLocaleString()}
+                                                    {!skin.isSeasonalReward && (
+                                                        <div className="flex gap-1.5">
+                                                            <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold}
+                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                🪙 {skin.goldCost.toLocaleString()}
                                                             </button>
-                                                        )}
-                                                    </div>
+                                                            {skin.tokenCost > 0 && (
+                                                                <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
+                                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                    💠 {skin.tokenCost.toLocaleString()}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

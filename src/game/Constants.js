@@ -107,6 +107,9 @@ export const KILL_COSMETICS = [
 ];
 
 export const SKIN_COSMETICS = [
+    { charId: 'neobyte',     id: 'neobyte_neon_vanguard', name: 'Neon Vanguard', goldCost: -1, tokenCost: -1, color: '#00D4FF', icon: '⚡', desc: 'Seasonal Reward: Neon blue sci-fi armor.', isSeasonalReward: true },
+    { charId: 'pandypaws',   id: 'pandypaws_golden_sov', name: 'Golden Sovereign', goldCost: -1, tokenCost: -1, color: '#FFD700', icon: '👑', desc: 'Seasonal Reward: Heavy golden mechanical armor.', isSeasonalReward: true },
+    { charId: 'glitch',      id: 'glitch_toxic_phantom', name: 'Toxic Phantom', goldCost: -1, tokenCost: -1, color: '#39FF14', icon: '☣️', desc: 'Seasonal Reward: Sleek stealthy toxic green armor.', isSeasonalReward: true },
     { charId: 'neobyte',     id: 'neobyte_default',    name: 'Electric Core Blue', goldCost: 0,     tokenCost: 0,    color: '#0066FF', icon: '🔵', desc: 'Electric Core Blue.' },
     { charId: 'neobyte',     id: 'neobyte_crimson',    name: 'Crimson',       goldCost: 5000,  tokenCost: 50,  color: '#DC143C', icon: '🔴', desc: 'Blood-red battle variant.' },
     { charId: 'neobyte',     id: 'neobyte_gold',       name: 'Gold Edition',  goldCost: 20000, tokenCost: 200, color: '#FFD700', icon: '🟡', desc: 'Gleaming prestige skin.' },
