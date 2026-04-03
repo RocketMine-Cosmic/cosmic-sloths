@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS } from '../game/Constants';
+import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS } from '../game/Constants';
 import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
@@ -169,6 +169,43 @@ export default function Upgrades({ isCarousel }) {
             recordTokenSpend(tokenCost);
             SoundManager.playUIClick();
         }
+    };
+
+    const handleBuyRelic = (relic, currency) => {
+        const currentSave = SaveManager.load();
+        const unlocked = currentSave.unlockedRelics || [];
+        if (unlocked.includes(relic.id)) return;
+
+        if (currency === 'gold' && currentSave.gold >= relic.goldCost) {
+            currentSave.gold -= relic.goldCost;
+            currentSave.unlockedRelics = [...unlocked, relic.id];
+            SaveManager.save(currentSave);
+            setSave(currentSave);
+            SoundManager.playUIClick();
+        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= relic.tokenCost) {
+            currentSave.cosmicTokens -= relic.tokenCost;
+            currentSave.unlockedRelics = [...unlocked, relic.id];
+            SaveManager.save(currentSave);
+            setSave(currentSave);
+            recordTokenSpend(relic.tokenCost);
+            SoundManager.playUIClick();
+        }
+    };
+
+    const handleToggleRelic = (relicId) => {
+        const currentSave = SaveManager.load();
+        let equipped = currentSave.equippedRelics || [];
+        if (equipped.includes(relicId)) {
+            equipped = equipped.filter(id => id !== relicId);
+        } else if (equipped.length < 2) {
+            equipped.push(relicId);
+        } else {
+            return;
+        }
+        currentSave.equippedRelics = equipped;
+        SaveManager.save(currentSave);
+        setSave(currentSave);
+        SoundManager.playUIClick();
     };
 
     const handleBuyCosmetic = (cosmetic, slot, currency) => {
@@ -616,6 +653,75 @@ export default function Upgrades({ isCarousel }) {
         );
     };
 
+    const renderRelics = () => {
+        return (
+            <div>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Ancient Relics</h2>
+                <p className="text-slate-400 mb-6 text-sm">Equip powerful global artifacts. You can only equip up to 2 Relics at once.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {RELICS.map(relic => {
+                        const unlocked = save.unlockedRelics || [];
+                        const equipped = save.equippedRelics || [];
+                        const isOwned = unlocked.includes(relic.id);
+                        const isEquipped = equipped.includes(relic.id);
+                        const canEquipMore = equipped.length < 2;
+                        
+                        return (
+                            <div key={relic.id} className={`bg-slate-800 p-4 rounded-xl border-2 transition-all ${isEquipped ? 'border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'border-slate-700'}`}>
+                                <div className="flex items-start gap-4 mb-2">
+                                    <div className="text-3xl bg-slate-900 p-3 rounded-lg border border-slate-700">{relic.icon}</div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between">
+                                            <h3 className="text-lg font-bold text-purple-400">{relic.name}</h3>
+                                            {isEquipped && <span className="text-xs font-bold text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/50">EQUIPPED</span>}
+                                        </div>
+                                        <p className="text-xs text-slate-300 mt-1">{relic.desc}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    {isOwned ? (
+                                        <button 
+                                            onClick={() => handleToggleRelic(relic.id)}
+                                            disabled={!isEquipped && !canEquipMore}
+                                            className={`w-full py-2 rounded-lg font-bold text-sm transition-colors ${
+                                                isEquipped ? 'bg-slate-700 text-white hover:bg-slate-600' : 
+                                                canEquipMore ? 'bg-purple-600 hover:bg-purple-500 text-white' : 
+                                                'bg-slate-800 text-slate-500 border border-slate-700'
+                                            }`}
+                                        >
+                                            {isEquipped ? 'UNEQUIP' : canEquipMore ? 'EQUIP' : 'SLOTS FULL'}
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => handleBuyRelic(relic, 'gold')}
+                                                disabled={save.gold < relic.goldCost}
+                                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${
+                                                    save.gold >= relic.goldCost ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                🪙 {relic.goldCost.toLocaleString()}
+                                            </button>
+                                            <button 
+                                                onClick={() => handleBuyRelic(relic, 'token')}
+                                                disabled={(save.cosmicTokens || 0) < relic.tokenCost}
+                                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${
+                                                    (save.cosmicTokens || 0) >= relic.tokenCost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                💠 {relic.tokenCost.toLocaleString()}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+        );
+    };
+
     const renderCosmetics = () => {
         const isTrail = cosmeticTab === 'trail';
         const list = isTrail ? TRAIL_COSMETICS : KILL_COSMETICS;
@@ -875,6 +981,16 @@ export default function Upgrades({ isCarousel }) {
                         </button>
                     ))}
                     <button
+                        onClick={() => { SoundManager.playUIClick(); setActiveCategory('relics'); }}
+                        className={`px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all ${
+                            activeCategory === 'relics' 
+                            ? 'bg-purple-500/20 border border-purple-400 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]' 
+                            : 'bg-[#0b0416]/80 border border-slate-700/50 text-slate-400 hover:border-purple-500/50 hover:text-purple-200'
+                        }`}
+                    >
+                        💎 Relics
+                    </button>
+                    <button
                         onClick={() => { SoundManager.playUIClick(); setActiveCategory('forge'); }}
                         className={`px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all ${
                             activeCategory === 'forge' 
@@ -905,6 +1021,8 @@ export default function Upgrades({ isCarousel }) {
                 <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-2 md:p-6 border border-[#8B5CF6]/30 shadow-[0_0_50px_rgba(139,92,246,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] min-h-[400px] md:min-h-[600px]">
                     {activeCategory === 'forge' ? (
                         <ForgePanel save={save} setSave={setSave} />
+                    ) : activeCategory === 'relics' ? (
+                        renderRelics()
                     ) : activeCategory !== 'cosmetics' ? (
                         <>
                             <div className="flex flex-wrap gap-2 mb-3 border-b border-slate-800 pb-2">

@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
@@ -53,6 +53,18 @@ export class GameEngine {
             const t = talentsData.find(td => td.id === tId);
             if (t) {
                 talentBonus[t.stat] = (talentBonus[t.stat] || 0) + t.value;
+            }
+        });
+
+        const equippedRelics = save.equippedRelics || [];
+        const relicBonus = {
+            maxHp: 0, speedMult: 0, damageMult: 0, magnetRange: 0, regen: 0, armor: 0, areaMult: 0, cooldownMult: 0, projSpeedMult: 0, goldMult: 0, xpMult: 0, luck: 0
+        };
+
+        equippedRelics.forEach(rId => {
+            const r = RELICS.find(rd => rd.id === rId);
+            if (r) {
+                relicBonus[r.stat] = (relicBonus[r.stat] || 0) + r.value;
             }
         });
 
@@ -124,20 +136,20 @@ export class GameEngine {
             frameTimer: 0,
             currentFrame: 0,
             x: 0, y: 0, radius: 16,
-            maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
-            hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0),
+            maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
+            hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
             speed: baseChar.speed,
-            speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0)) * this.envModifiers.playerSpeed,
-            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0),
-            magnetRange: (baseChar.magnetRange || 60) + getStatBonus('magnet') + (talentBonus.magnetRange || 0),
-            regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0),
-            armor: baseChar.armor + (talentBonus.armor || 0),
-            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0),
-            cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0),
-            projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0),
-            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0)) * this.difficulty.goldMult,
-            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0)) * this.difficulty.xpMult,
-            luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0),
+            speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0)) * this.envModifiers.playerSpeed,
+            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0),
+            magnetRange: (baseChar.magnetRange || 60) + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0),
+            regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0),
+            armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0),
+            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0),
+            cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0),
+            projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0) + (relicBonus.projSpeedMult || 0),
+            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0)) * this.difficulty.goldMult,
+            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0)) * this.difficulty.xpMult,
+            luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0),
             color: baseChar.color,
             trail: save.cosmetics?.trail || 'default',
             weapons: [{ ...WEAPONS[initialWeaponId], level: 1, timer: 0 }],

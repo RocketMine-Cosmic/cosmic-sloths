@@ -312,6 +312,14 @@ export const CHARACTER_TALENTS = {
   ]
 };
 
+export const RELICS = [
+    { id: 'relic_lucky_dice', name: 'Cosmic Dice', desc: '+5 Luck globally. Greatly increases chance of crits and rare drops.', icon: '🎲', goldCost: 50000, tokenCost: 500, stat: 'luck', value: 5 },
+    { id: 'relic_gold_magnet', name: 'Midas Core', desc: '+50% Gold Multiplier. Farm faster.', icon: '💰', goldCost: 100000, tokenCost: 1000, stat: 'goldMult', value: 0.5 },
+    { id: 'relic_xp_drive', name: 'Knowledge Drive', desc: '+50% XP Gain. Level up incredibly fast.', icon: '🧠', goldCost: 100000, tokenCost: 1000, stat: 'xpMult', value: 0.5 },
+    { id: 'relic_blood_chalice', name: 'Blood Chalice', desc: '+1.0 HP Regen. Essential for long runs.', icon: '🍷', goldCost: 150000, tokenCost: 1500, stat: 'regen', value: 1.0 },
+    { id: 'relic_damage_core', name: 'Annihilation Core', desc: '+25% Base Damage. Annihilate your foes.', icon: '💥', goldCost: 200000, tokenCost: 2000, stat: 'damageMult', value: 0.25 },
+];
+
 export const getEnemyMasteryMilestones = (enemy) => {
     if (!enemy) return [{ kills: 10, bonus: 0 }];
     if (enemy.isBoss) {

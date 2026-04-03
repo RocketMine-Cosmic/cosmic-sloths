@@ -121,7 +121,9 @@ export const SaveManager = {
       encounteredEnemies: [],
       enemyKills: {},
       bossModifiers: {},
-      hasSetProfileName: false
+      hasSetProfileName: false,
+      unlockedRelics: [],
+      equippedRelics: []
     };
 
     try {
@@ -189,6 +191,8 @@ export const SaveManager = {
         if (!parsed.encounteredEnemies) parsed.encounteredEnemies = [];
         if (!parsed.enemyKills) parsed.enemyKills = {};
         if (!parsed.bossModifiers) parsed.bossModifiers = {};
+        if (!parsed.unlockedRelics) parsed.unlockedRelics = [];
+        if (!parsed.equippedRelics) parsed.equippedRelics = [];
         
         const today = moment().format('YYYY-MM-DD');
         if (parsed.bounties.date !== today) {
