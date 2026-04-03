@@ -9,9 +9,9 @@ const DAILY_REWARDS = [
     { day: 1, reward: 400,   currency: 'gold',  icon: '🪙' },
     { day: 2, reward: 800,   currency: 'gold',  icon: '🪙' },
     { day: 3, reward: 1000,  currency: 'gold',  icon: '🪙' },
-    { day: 4, reward: 1,     currency: 'reroll', icon: '🎲' },
+    { day: 4, reward: 1,     currency: 'fragment', icon: '🧩' },
     { day: 5, reward: 2000,  currency: 'gold',  icon: '🪙' },
-    { day: 6, reward: 2,     currency: 'reroll', icon: '🎲' },
+    { day: 6, reward: 2,     currency: 'fragment', icon: '🧩' },
     { day: 7, reward: 4000,  currency: 'gold',  icon: '🪙', bonus: true },
 ];
 
@@ -43,8 +43,8 @@ export default function DailyLoginPanel({ save, setSave }) {
             currentSave.gold = (currentSave.gold || 0) + rewardDay.reward;
         } else if (rewardDay.currency === 'token') {
             currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + rewardDay.reward;
-        } else if (rewardDay.currency === 'reroll') {
-            currentSave.rerollTokens = (currentSave.rerollTokens || 0) + rewardDay.reward;
+        } else if (rewardDay.currency === 'fragment') {
+            currentSave.relicFragments = (currentSave.relicFragments || 0) + rewardDay.reward;
         }
 
         SaveManager.save(currentSave);
@@ -53,7 +53,7 @@ export default function DailyLoginPanel({ save, setSave }) {
 
         toast({
             title: `Day ${newStreak} Reward Claimed!`,
-            description: `+${rewardDay.reward} ${rewardDay.currency === 'gold' ? '🪙 Gold' : rewardDay.currency === 'token' ? '💠 Cosmic Tokens' : '🎲 Reroll Token'}`,
+            description: `+${rewardDay.reward} ${rewardDay.currency === 'gold' ? '🪙 Gold' : rewardDay.currency === 'token' ? '💠 Cosmic Tokens' : '🧩 Relic Fragments'}`,
         });
     };
 
@@ -98,7 +98,7 @@ export default function DailyLoginPanel({ save, setSave }) {
                             <div className="text-[9px] font-bold text-slate-400 mb-0.5">DAY {r.day}</div>
                             <div className="text-lg leading-none">{r.icon}</div>
                             <div className={`text-[9px] font-bold mt-0.5 ${r.bonus ? 'text-yellow-400' : 'text-slate-300'}`}>
-                                {r.reward}{r.currency === 'reroll' ? '' : ''}
+                                {r.reward}{r.currency === 'fragment' ? '' : ''}
                             </div>
                             {(isPast || (isCurrent && alreadyClaimed)) && (
                                 <CheckCircle className="w-3 h-3 text-emerald-400 mt-0.5" />
