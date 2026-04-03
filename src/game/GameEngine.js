@@ -548,8 +548,8 @@ export class GameEngine {
             // Steeper difficulty curve: exponentially scale HP and Damage based on the sector/arena index
             const sectorDifficultyScale = Math.pow(1.2, arenaIndex); 
             
-            const hpMult = (1.0 + (3.0 * Math.pow(progress, 1.8))) * this.difficulty.enemyHpMult * sectorDifficultyScale;
-            const dmgMult = (1.0 + (2.2 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult * sectorDifficultyScale;
+            const hpMult = (1.0 + (2.0 * Math.pow(progress, 1.6))) * this.difficulty.enemyHpMult * sectorDifficultyScale;
+            const dmgMult = (1.0 + (1.5 * Math.pow(progress, 1.4))) * this.difficulty.enemyDmgMult * sectorDifficultyScale;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
