@@ -94,7 +94,7 @@ export const SaveManager = {
 
     const defaultSave = {
       gold: 0,
-      cosmicTokens: 20000,
+      cosmicTokens: 5000,
       receivedTestTokens: true,
       relicFragments: 0,
       unlockedCharacters: [...defaultChars],
@@ -211,7 +211,7 @@ export const SaveManager = {
         }
         
         if (!parsed.receivedTestTokens) {
-            parsed.cosmicTokens = (parsed.cosmicTokens || 0) + 20000;
+            parsed.cosmicTokens = (parsed.cosmicTokens || 0) + 5000;
             parsed.receivedTestTokens = true;
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
         }
