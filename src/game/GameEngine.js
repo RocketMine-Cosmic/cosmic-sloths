@@ -478,7 +478,7 @@ export class GameEngine {
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
                     
-                    const sectorDifficultyScale = Math.pow(1.4, arenaIndex);
+                    const sectorDifficultyScale = Math.pow(1.2, arenaIndex);
                     
                     const bossHpMult = 1.5 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 2.0 : 1.0) * sectorDifficultyScale;
                     const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.5 : 1.0) * sectorDifficultyScale;
@@ -525,7 +525,7 @@ export class GameEngine {
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
             // Steeper difficulty curve: exponentially scale HP and Damage based on the sector/arena index
-            const sectorDifficultyScale = Math.pow(1.4, arenaIndex); 
+            const sectorDifficultyScale = Math.pow(1.2, arenaIndex); 
             
             const hpMult = (1.0 + (3.0 * Math.pow(progress, 1.8))) * this.difficulty.enemyHpMult * sectorDifficultyScale;
             const dmgMult = (1.0 + (2.2 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult * sectorDifficultyScale;
