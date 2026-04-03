@@ -91,7 +91,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             </motion.div>
             
             <div className="absolute bottom-4 text-slate-500/70 text-[10px] md:text-xs z-10 tracking-widest uppercase">
-                v1.0.0 — Lazy but Devastating
+                SlowBurn Studios
             </div>
 
             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
