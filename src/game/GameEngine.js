@@ -193,7 +193,7 @@ export class GameEngine {
             let currentReq = 10;
             for (let i = 1; i < 20; i++) {
                 totalXpNeeded += currentReq;
-                currentReq = Math.floor(currentReq * 1.15 + 30);
+                currentReq = Math.floor(currentReq * 1.1 + 20);
             }
             this.xp = totalXpNeeded;
         }
