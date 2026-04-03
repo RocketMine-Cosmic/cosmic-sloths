@@ -184,6 +184,21 @@ export default function BountiesPanel({ save, setSave }) {
                     <p className="text-xs text-slate-400 mb-3">
                         Earn Seasonal Points from Daily Missions to unlock exclusive character skins!
                     </p>
+
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <div className="relative group cursor-pointer transition-transform hover:scale-105 z-10">
+                            <div className="absolute inset-0 bg-blue-500/20 blur-md rounded-full group-hover:bg-blue-500/40 transition-all" />
+                            <img src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/e97f69b57_generated_image.png" alt="Cosmic Skin" className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-blue-500 object-cover relative" title="Neon Vanguard" />
+                        </div>
+                        <div className="relative group cursor-pointer transition-transform hover:scale-110 z-20 -mx-2">
+                            <div className="absolute inset-0 bg-yellow-500/20 blur-md rounded-full group-hover:bg-yellow-500/40 transition-all" />
+                            <img src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/f4c7a4b5c_generated_image.png" alt="Aegis Skin" className="w-14 h-14 md:w-16 md:h-16 rounded-full border-2 border-yellow-500 object-cover relative shadow-[0_0_15px_rgba(234,179,8,0.3)]" title="Golden Sovereign" />
+                        </div>
+                        <div className="relative group cursor-pointer transition-transform hover:scale-105 z-10">
+                            <div className="absolute inset-0 bg-green-500/20 blur-md rounded-full group-hover:bg-green-500/40 transition-all" />
+                            <img src="https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/e55d5a3da_generated_image.png" alt="Venom Skin" className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-green-500 object-cover relative" title="Toxic Phantom" />
+                        </div>
+                    </div>
                 </div>
                 
                 <div>
