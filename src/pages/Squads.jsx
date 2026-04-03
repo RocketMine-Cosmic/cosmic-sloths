@@ -96,9 +96,9 @@ export default function Squads({ isCarousel }) {
                             setMySquad(squad);
                         }
                     } else {
-                        // Load all squads
-                        const squads = await base44.entities.Squad.list('-created_date', 50);
-                        setAllSquads(squads);
+                        // Load squad suggestions
+                        const squads = await base44.entities.Squad.list('-xp', 100);
+                        setAllSquads(squads.filter(s => (s.member_count || 1) < MAX_SQUAD_MEMBERS).slice(0, 15));
                     }
                 }
             } catch (e) {
@@ -264,8 +264,8 @@ export default function Squads({ isCarousel }) {
 
             setMyMemberRecord(null);
             setMySquad(null);
-            const squads = await base44.entities.Squad.list('-created_date', 50);
-            setAllSquads(squads);
+            const squads = await base44.entities.Squad.list('-xp', 100);
+            setAllSquads(squads.filter(s => (s.member_count || 1) < MAX_SQUAD_MEMBERS).slice(0, 15));
         } catch (e) {
             console.error(e);
         }
@@ -439,7 +439,7 @@ export default function Squads({ isCarousel }) {
                         <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl border border-orange-500/30 p-4 flex flex-col overflow-hidden min-h-0 shadow-[0_0_30px_rgba(249,115,22,0.15)]">
                             <div className="flex justify-between items-center mb-4 shrink-0">
                                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <Search className="w-5 h-5 text-cyan-400" /> Find a Squad
+                                    <Search className="w-5 h-5 text-cyan-400" /> Squad Suggestions
                                 </h2>
                                 <button 
                                     onClick={() => setIsCreating(!isCreating)}
