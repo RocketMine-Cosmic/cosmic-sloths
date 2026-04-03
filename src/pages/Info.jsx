@@ -287,12 +287,12 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/60 rounded-lg p-3 border border-yellow-900/40">
                         <div className="font-bold text-yellow-300 text-sm mb-1">🛡️ Weekly Bounty</div>
-                        <p className="text-xs text-slate-400">Each week your squad has a kill target that scales with your squad level. Hit the target and every member can <strong className="text-white">individually claim</strong> Gold and Reroll Tokens as their reward.</p>
+                        <p className="text-xs text-slate-400">Each week your squad has a kill target that scales with your squad level. Hit the target and every member can <strong className="text-white">individually claim</strong> Gold and Relic Fragments as their reward.</p>
                         <div className="grid grid-cols-2 gap-1.5 mt-2 text-[10px]">
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.1 Rookie</div><div className="text-yellow-400 font-bold">2,000 kills → 🪙500 + 🎲×1</div></div>
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.3 Hunters</div><div className="text-yellow-400 font-bold">10,000 kills → 🪙2,500 + 🎲×3</div></div>
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.5 Reapers</div><div className="text-yellow-400 font-bold">30,000 kills → 🪙6,500 + 🎲×5</div></div>
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.7 Cosmic Elite</div><div className="text-pink-400 font-bold">75,000 kills → 🪙15k + 🎲×10</div></div>
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.1 Rookie</div><div className="text-yellow-400 font-bold">2,000 kills → 🪙500 + 🧩×1</div></div>
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.3 Hunters</div><div className="text-yellow-400 font-bold">10,000 kills → 🪙2,500 + 🧩×3</div></div>
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.5 Reapers</div><div className="text-yellow-400 font-bold">30,000 kills → 🪙6,500 + 🧩×5</div></div>
+                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.7 Cosmic Elite</div><div className="text-pink-400 font-bold">75,000 kills → 🪙15k + 🧩×10</div></div>
                         </div>
                     </div>
                     <div className="bg-slate-900/60 rounded-lg p-3 border border-slate-700/50">
