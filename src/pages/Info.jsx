@@ -159,6 +159,15 @@ const TABS_CONTENT = {
                     Every enemy you encounter is logged in the Codex. Kill enough of a specific enemy to achieve <strong className="text-fuchsia-400">Mastery</strong> — granting a permanent <strong className="text-fuchsia-400">+5% damage bonus</strong> against that enemy type forever.
                 </p>
             </SectionCard>
+
+            <SectionCard title="🏅 Character Mastery" color="amber">
+                <p className="text-sm text-slate-300 leading-relaxed mb-2">
+                    Playing a character repeatedly builds their <strong className="text-amber-400">Mastery</strong>. As you defeat more enemies with a specific character, they will rank up through 5 tiers (from Novice to Grandmaster), unlocking unique badges and permanent stat bonuses!
+                </p>
+                <div className="bg-slate-900/60 rounded-lg p-3 text-xs text-slate-400 italic border border-slate-700/50">
+                    💡 Track your character's kills and Mastery level directly on the character selection screen in the Lounge.
+                </div>
+            </SectionCard>
         </div>
     ),
 
@@ -202,8 +211,8 @@ const TABS_CONTENT = {
                     One harder challenge per day. Completing it earns <strong className="text-yellow-400">Seasonal Points</strong>.
                 </p>
                 <div className="bg-slate-900/50 rounded-lg p-3 border border-purple-800/40">
-                    <div className="font-bold text-sm text-yellow-400 mb-1">⭐ Seasonal Skin Reward</div>
-                    <p className="text-xs text-slate-400">Collect <strong className="text-white">100 Seasonal Points</strong> to unlock an exclusive character skin. Points carry across the season.</p>
+                    <div className="font-bold text-sm text-yellow-400 mb-1">⭐ Seasonal Skin Rewards</div>
+                    <p className="text-xs text-slate-400">Collect <strong className="text-white">100 Seasonal Points</strong> to unlock an exclusive character skin. Points carry across the season. <strong className="text-white">Every character</strong> has their own unique seasonal skin to collect!</p>
                 </div>
             </SectionCard>
 
