@@ -243,11 +243,11 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every Monday. Top 20 players earn Cosmic Tokens. Weekly stat upgrades also reset.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every Monday. Top 30 players earn Cosmic Tokens. Weekly stat upgrades also reset.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for 4 weeks. Top 30 players earn Cosmic Tokens. Seasonal stat upgrades reset at end.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for 4 weeks. Top 40 players earn Cosmic Tokens. Seasonal stat upgrades reset at end.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
