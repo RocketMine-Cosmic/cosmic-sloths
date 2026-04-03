@@ -170,7 +170,7 @@ export class GameEngine {
             let currentReq = 10;
             for (let i = 1; i < 20; i++) {
                 totalXpNeeded += currentReq;
-                currentReq = Math.floor(currentReq * 1.1 + 20);
+                currentReq = Math.floor(currentReq * 1.15 + 30);
             }
             this.xp = totalXpNeeded;
         }
@@ -519,8 +519,8 @@ export class GameEngine {
             
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
-            const hpMult = (1.0 + (2.0 * Math.pow(progress, 2.0))) * this.difficulty.enemyHpMult;
-            const dmgMult = (1.0 + (2.0 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
+            const hpMult = (1.0 + (3.0 * Math.pow(progress, 1.8))) * this.difficulty.enemyHpMult;
+            const dmgMult = (1.0 + (2.2 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
@@ -1152,7 +1152,7 @@ export class GameEngine {
     levelUp() {
         this.xp -= this.xpRequired;
         this.level++;
-        this.xpRequired = Math.floor(this.xpRequired * 1.1 + 20);
+        this.xpRequired = Math.floor(this.xpRequired * 1.15 + 30);
         
         // Scale stats and fully heal
         this.player.maxHp = Math.floor(this.player.maxHp * 1.05);
