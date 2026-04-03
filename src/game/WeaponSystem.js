@@ -36,7 +36,7 @@ export function fireWeaponLogic(engine, w) {
                 x: engine.player.x, y: engine.player.y,
                 vx: Math.cos(a) * 500 * engine.player.projSpeedMult,
                 vy: Math.sin(a) * 500 * engine.player.projSpeedMult,
-                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: '#00aaff', type: 'blaster_shot'
+                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: engine.player.color, type: 'blaster_shot'
             });
         }
     }

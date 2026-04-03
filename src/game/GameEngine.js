@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
@@ -57,7 +57,9 @@ export class GameEngine {
         });
 
         const baseCharRaw = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
-        const baseChar = save.skinColorOverride ? { ...baseCharRaw, color: save.skinColorOverride } : baseCharRaw;
+        const skinId = save.cosmetics?.skins?.[characterId];
+        const skinColor = skinId ? SKIN_COSMETICS.find(s => s.id === skinId)?.color : null;
+        const baseChar = skinColor ? { ...baseCharRaw, color: skinColor } : (save.skinColorOverride ? { ...baseCharRaw, color: save.skinColorOverride } : baseCharRaw);
 
         if (arenaId === 'world_boss_arena') {
             this.arena = { id: 'world_boss_arena', name: 'Global Raid', bg: '#1a0000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/887e8de50_image-48.jpg', duration: Infinity, effect: 'none' };
