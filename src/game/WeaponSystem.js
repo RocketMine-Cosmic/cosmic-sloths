@@ -50,19 +50,19 @@ export function fireWeaponLogic(engine, w) {
         
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         
-        let projColor = isMastered ? '#4169E1' : '#00ff00';
+        let projColor = isMastered ? '#4169E1' : engine.player.color;
         let projType = 'beam';
         
-        if (engine.characterId === 'skybyte') { projColor = '#00D4FF'; projType = 'dual_laser'; }
-        else if (engine.characterId === 'neobyte') { projColor = '#0066FF'; projType = 'lightning'; }
-        else if (engine.characterId === 'glitch') { projColor = '#FF00FF'; projType = 'glitch_slash'; }
-        else if (engine.characterId === 'pandypaws') { projColor = '#C2185B'; projType = 'stomp'; }
-        else if (engine.characterId === 'holodrift') { projColor = '#00FA9A'; projType = 'repair_beam'; }
-        else if (engine.characterId === 'novabyte') { projColor = '#FF007F'; projType = 'missile'; }
-        else if (engine.characterId === 'codebreaker') { projColor = '#39FF14'; projType = 'data_pulse'; }
-        else if (engine.characterId === 'dataphantom') { projColor = '#98FF98'; projType = 'phantom_orb'; }
-        else if (engine.characterId === 'neonvortex') { projColor = '#7A00FF'; projType = 'railgun'; }
-        else if (engine.characterId === 'synthbeats') { projColor = '#FFD700'; projType = 'sonic_wave'; }
+        if (engine.characterId === 'skybyte') { projType = 'dual_laser'; }
+        else if (engine.characterId === 'neobyte') { projType = 'lightning'; }
+        else if (engine.characterId === 'glitch') { projType = 'glitch_slash'; }
+        else if (engine.characterId === 'pandypaws') { projType = 'stomp'; }
+        else if (engine.characterId === 'holodrift') { projType = 'repair_beam'; }
+        else if (engine.characterId === 'novabyte') { projType = 'missile'; }
+        else if (engine.characterId === 'codebreaker') { projType = 'data_pulse'; }
+        else if (engine.characterId === 'dataphantom') { projType = 'phantom_orb'; }
+        else if (engine.characterId === 'neonvortex') { projType = 'railgun'; }
+        else if (engine.characterId === 'synthbeats') { projType = 'sonic_wave'; }
 
         const spawnOffset = engine.player.radius + 5;
         engine.projectiles.push({

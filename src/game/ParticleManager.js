@@ -97,12 +97,12 @@ export class ParticleManager {
 
             // DRAW BASE TINT (colorize the HD texture below)
             ctx.globalAlpha = alpha * 0.05;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, sBase);
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, sBase));
             grad.addColorStop(0, color);
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(0, 0, sBase, 0, Math.PI * 2);
+            ctx.arc(0, 0, Math.max(0.1, sBase), 0, Math.PI * 2);
             ctx.fill();
 
             ctx.globalAlpha = alpha;
@@ -126,7 +126,7 @@ export class ParticleManager {
                         ctx.strokeStyle = color;
                         ctx.lineWidth = p.lineWidth || 2;
                         ctx.beginPath();
-                        ctx.arc(0, 0, sBase * 0.5, 0, Math.PI * 2);
+                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.5), 0, Math.PI * 2);
                         ctx.stroke();
                         break;
                     case 'slash':
@@ -140,7 +140,7 @@ export class ParticleManager {
                     default:
                         ctx.fillStyle = color;
                         ctx.beginPath();
-                        ctx.arc(0, 0, sBase * 0.5, 0, Math.PI * 2);
+                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.5), 0, Math.PI * 2);
                         ctx.fill();
                 }
             } else {
@@ -152,7 +152,7 @@ export class ParticleManager {
                     ctx.globalAlpha = alpha * 0.8;
                     ctx.fillStyle = '#ffffff';
                     ctx.beginPath();
-                    ctx.arc(0, 0, sBase * 0.2, 0, Math.PI * 2);
+                    ctx.arc(0, 0, Math.max(0.1, sBase * 0.2), 0, Math.PI * 2);
                     ctx.fill();
                 }
             }

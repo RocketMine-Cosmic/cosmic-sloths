@@ -16,7 +16,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         if (!p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = 0.2;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius * 2.5);
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 2.5));
             grad.addColorStop(0, p.color || '#ffffff');
             grad.addColorStop(0.1, p.color || '#ffffff');
             grad.addColorStop(1, 'transparent');
@@ -202,13 +202,13 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = Math.min(1, p.life * 2) * 0.15;
-            const grad = ctx.createRadialGradient(0, 0, p.radius * 0.5, 0, 0, p.radius);
+            const grad = ctx.createRadialGradient(0, 0, Math.max(0.1, p.radius * 0.5), 0, 0, Math.max(0.1, p.radius));
             grad.addColorStop(0, 'transparent');
-            grad.addColorStop(0.8, p.color);
+            grad.addColorStop(0.8, p.color || '#ffffff');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
             ctx.fill();
 
             ctx.globalAlpha = Math.min(1, p.life * 2);
@@ -219,7 +219,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.setLineDash([10, 15]);
             ctx.lineDashOffset = -time * 40;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.shadowBlur = 0;
@@ -228,12 +228,12 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = Math.min(1, p.life) * 0.25;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius);
-            grad.addColorStop(0, p.color);
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius));
+            grad.addColorStop(0, p.color || '#ffffff');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
             ctx.fill();
             
             ctx.globalAlpha = Math.min(1, p.life) * 0.8;
@@ -242,7 +242,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.shadowBlur = 10;
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius * (0.9 + Math.sin(time * 4 + p.x) * 0.05), 0, Math.PI*2);
+            ctx.arc(0, 0, Math.max(0.1, p.radius * (0.9 + Math.sin(time * 4 + p.x) * 0.05)), 0, Math.PI*2);
             ctx.stroke();
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1.0;
