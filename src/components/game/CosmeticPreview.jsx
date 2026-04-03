@@ -162,7 +162,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.save();
                 
                 // Base glow
-                ctx.globalAlpha = alpha * 0.5;
+                ctx.globalAlpha = alpha * 0.15;
                 ctx.globalCompositeOperation = 'screen';
                 const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.5);
                 grad.addColorStop(0, p.color);
