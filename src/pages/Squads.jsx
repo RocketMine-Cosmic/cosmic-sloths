@@ -16,13 +16,13 @@ const MAX_SQUAD_MEMBERS = 5;
 
 // Bounty tiers scale with squad level
 const BOUNTY_TIERS = [
-    { minLevel: 1, target: 2000,  gold: 500,   rerolls: 1, label: 'Rookie Bounty' },
-    { minLevel: 2, target: 5000,  gold: 1200,  rerolls: 2, label: 'Drifter Bounty' },
-    { minLevel: 3, target: 10000, gold: 2500,  rerolls: 3, label: 'Hunter Bounty' },
-    { minLevel: 4, target: 18000, gold: 4000,  rerolls: 4, label: 'Vanguard Bounty' },
-    { minLevel: 5, target: 30000, gold: 6500,  rerolls: 5, label: 'Reaper Bounty' },
-    { minLevel: 6, target: 50000, gold: 10000, rerolls: 7, label: 'Legend Bounty' },
-    { minLevel: 7, target: 75000, gold: 15000, rerolls: 10, label: 'Cosmic Bounty' },
+    { minLevel: 1, target: 2000,  gold: 500,   fragments: 1, label: 'Rookie Bounty' },
+    { minLevel: 2, target: 5000,  gold: 1200,  fragments: 2, label: 'Drifter Bounty' },
+    { minLevel: 3, target: 10000, gold: 2500,  fragments: 3, label: 'Hunter Bounty' },
+    { minLevel: 4, target: 18000, gold: 4000,  fragments: 4, label: 'Vanguard Bounty' },
+    { minLevel: 5, target: 30000, gold: 6500,  fragments: 5, label: 'Reaper Bounty' },
+    { minLevel: 6, target: 50000, gold: 10000, fragments: 7, label: 'Legend Bounty' },
+    { minLevel: 7, target: 75000, gold: 15000, fragments: 10, label: 'Cosmic Bounty' },
 ];
 
 function getBountyTier(level) {
@@ -390,7 +390,7 @@ export default function Squads({ isCarousel }) {
                 // Update local save
                 const currentSave = SaveManager.load();
                 currentSave.gold += tier.gold;
-                currentSave.rerollTokens = (currentSave.rerollTokens || 0) + tier.rerolls;
+                currentSave.relicFragments = (currentSave.relicFragments || 0) + tier.fragments;
                 SaveManager.save(currentSave);
                 
                 // Update member record
@@ -401,7 +401,7 @@ export default function Squads({ isCarousel }) {
                 
                 toast({
                     title: "Weekly Bounty Claimed!",
-                    description: `You received ${tier.gold.toLocaleString()} Gold and ${tier.rerolls} Reroll Tokens!`,
+                    description: `You received ${tier.gold.toLocaleString()} Gold and ${tier.fragments} Relic Fragments!`,
                 });
             } catch (e) {
                 console.error(e);
@@ -647,8 +647,8 @@ export default function Squads({ isCarousel }) {
                                                     <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()}</div>
                                                 </div>
                                                 <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                    <div className="text-base">🎲</div>
-                                                    <div className="text-xs font-bold text-purple-400">×{tier.rerolls}</div>
+                                                    <div className="text-base">🧩</div>
+                                                    <div className="text-xs font-bold text-fuchsia-400">×{tier.fragments}</div>
                                                 </div>
                                             </div>
                                             <div className="flex justify-between text-xs font-bold mb-1">
