@@ -313,11 +313,11 @@ export const CHARACTER_TALENTS = {
 };
 
 export const RELICS = [
-    { id: 'relic_lucky_dice', name: 'Cosmic Dice', desc: 'Increases chance of crits and rare drops globally.', icon: '🎲', fragmentCost: 5, stat: 'luck', values: [1, 2, 3, 4, 5] },
-    { id: 'relic_gold_magnet', name: 'Midas Core', desc: 'Boosts Gold Multiplier. Farm faster.', icon: '💰', fragmentCost: 10, stat: 'goldMult', values: [0.1, 0.2, 0.3, 0.4, 0.5] },
-    { id: 'relic_xp_drive', name: 'Knowledge Drive', desc: 'Boosts XP Gain. Level up incredibly fast.', icon: '🧠', fragmentCost: 10, stat: 'xpMult', values: [0.1, 0.2, 0.3, 0.4, 0.5] },
-    { id: 'relic_blood_chalice', name: 'Blood Chalice', desc: 'Increases HP Regen. Essential for long runs.', icon: '🍷', fragmentCost: 15, stat: 'regen', values: [0.2, 0.4, 0.6, 0.8, 1.0] },
-    { id: 'relic_damage_core', name: 'Annihilation Core', desc: 'Boosts Base Damage. Annihilate your foes.', icon: '💥', fragmentCost: 20, stat: 'damageMult', values: [0.05, 0.10, 0.15, 0.20, 0.25] },
+    { id: 'relic_lucky_dice', name: 'Cosmic Dice', desc: 'Increases chance of crits and rare drops globally.', icon: '🎲', fragmentCost: 2, stat: 'luck', values: [1, 2, 3, 4, 5] },
+    { id: 'relic_gold_magnet', name: 'Midas Core', desc: 'Boosts Gold Multiplier. Farm faster.', icon: '💰', fragmentCost: 3, stat: 'goldMult', values: [0.1, 0.2, 0.3, 0.4, 0.5] },
+    { id: 'relic_xp_drive', name: 'Knowledge Drive', desc: 'Boosts XP Gain. Level up incredibly fast.', icon: '🧠', fragmentCost: 3, stat: 'xpMult', values: [0.1, 0.2, 0.3, 0.4, 0.5] },
+    { id: 'relic_blood_chalice', name: 'Blood Chalice', desc: 'Increases HP Regen. Essential for long runs.', icon: '🍷', fragmentCost: 4, stat: 'regen', values: [0.2, 0.4, 0.6, 0.8, 1.0] },
+    { id: 'relic_damage_core', name: 'Annihilation Core', desc: 'Boosts Base Damage. Annihilate your foes.', icon: '💥', fragmentCost: 5, stat: 'damageMult', values: [0.05, 0.10, 0.15, 0.20, 0.25] },
 ];
 
 export const RELIC_RARITIES = [

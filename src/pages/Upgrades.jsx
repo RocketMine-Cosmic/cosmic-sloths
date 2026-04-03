@@ -722,14 +722,19 @@ export default function Upgrades({ isCarousel }) {
                                         </div>
                                         <p className="text-xs text-slate-300 mt-2">{relic.desc}</p>
                                         
-                                        {isOwned && (
-                                            <div className="mt-2 text-sm">
-                                                <span className={`font-bold ${rarity.color}`}>{currentBuff}</span>
-                                                {!isMaxLevel && (
-                                                    <span className="text-slate-500 ml-2">→ <span className={nextRarity.color}>{nextBuff}</span></span>
-                                                )}
-                                            </div>
-                                        )}
+                                        <div className="mt-3 flex gap-1.5 flex-wrap">
+                                            {relic.values.map((v, i) => {
+                                                const lvlRarity = RELIC_RARITIES[i];
+                                                const isCurrent = currentLevel === i + 1;
+                                                const isUnlocked = currentLevel > i;
+                                                return (
+                                                    <div key={i} className={`text-[10px] px-1.5 py-0.5 rounded border flex flex-col items-center min-w-[36px] ${isCurrent ? `${lvlRarity.border} bg-slate-800 ${lvlRarity.color} font-bold shadow-[0_0_10px_currentColor]` : isUnlocked ? `border-slate-700 bg-slate-800/50 ${lvlRarity.color}` : 'border-slate-800/50 text-slate-600 bg-slate-900/50'}`} title={lvlRarity.name}>
+                                                        <span className="opacity-70 text-[8px]">{lvlRarity.name.substring(0,3).toUpperCase()}</span>
+                                                        <span>{formatVal(v)}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                                 
