@@ -244,17 +244,17 @@ export class ParticleManager {
 
     createTrail(x, y, trailId, frameCount) {
         const trailConfigs = {
-            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'spark', count: 2, size: 1.4 },
+            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'spark', count: 1, size: 1.4 },
             'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'spark', count: 1, size: 1.0 },
             'void':    { colors: ['#8a2be2', '#6600cc', '#cc00ff'], type: 'spark', count: 1, size: 1.1 },
             'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'spark', count: 1, size: 2.0 },
             'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 1, size: 1.6 },
-            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'star', count: 2, size: 1.3 },
-            'shadow':  { colors: ['#222244', '#333355', '#0a0a20'], type: 'spark', count: 2, size: 2.2 },
-            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'circle', count: 2, size: 1.5 },
+            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'star', count: 1, size: 1.3 },
+            'shadow':  { colors: ['#222244', '#333355', '#0a0a20'], type: 'spark', count: 1, size: 2.2 },
+            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'circle', count: 1, size: 1.5 },
             'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 1, size: 1.2 },
-            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'star', count: 2, size: 1.5 },
-            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 2, size: 1.4 },
+            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'star', count: 1, size: 1.5 },
+            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 1, size: 1.4 },
         };
         const config = trailConfigs[trailId];
         if (config) {

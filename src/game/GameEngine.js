@@ -1701,7 +1701,7 @@ export class GameEngine {
             }
         });
 
-        if (this.player.trail !== 'default' && this.frameCount % 3 === 0) {
+        if (this.player.trail !== 'default' && this.frameCount % 6 === 0) {
             this.particleManager.createTrail(this.player.x, this.player.y, this.player.trail, this.frameCount);
         }
 

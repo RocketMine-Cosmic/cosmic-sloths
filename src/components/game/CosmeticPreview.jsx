@@ -117,8 +117,8 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 }
             });
 
-            // Trail particles — every 2 frames
-            if (trailColors && frame % 2 === 0) {
+            // Trail particles — every 4 frames
+            if (trailColors && frame % 4 === 0) {
                 particles.push({
                     x: px + (Math.random() - 0.5) * 4,
                     y: py + (Math.random() - 0.5) * 4,
