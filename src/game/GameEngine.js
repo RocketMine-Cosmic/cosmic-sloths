@@ -1181,7 +1181,7 @@ export class GameEngine {
     levelUp() {
         this.xp -= this.xpRequired;
         this.level++;
-        this.xpRequired = Math.floor(this.xpRequired * 1.15 + 30);
+        this.xpRequired = Math.floor(this.xpRequired * 1.1 + 20);
         
         // Scale stats and fully heal
         this.player.maxHp = Math.floor(this.player.maxHp * 1.05);
