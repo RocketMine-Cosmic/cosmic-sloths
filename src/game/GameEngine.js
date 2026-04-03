@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, getCharacterMastery } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { ParticleManager } from './ParticleManager';
@@ -55,6 +55,12 @@ export class GameEngine {
                 talentBonus[t.stat] = (talentBonus[t.stat] || 0) + t.value;
             }
         });
+
+        const charKills = save.characterKills?.[characterId] || 0;
+        const mastery = getCharacterMastery(charKills);
+        if (mastery.current && mastery.current.stat) {
+            talentBonus[mastery.current.stat] = (talentBonus[mastery.current.stat] || 0) + mastery.current.value;
+        }
 
         const equippedRelics = save.equippedRelics || [];
         const relicBonus = {

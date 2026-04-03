@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMETICS } from '../game/Constants';
+import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMETICS, getCharacterMastery } from '../game/Constants';
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
@@ -211,9 +211,23 @@ export default function Hub({ isCarousel }) {
                                                             </button>
                                                             
                                                             <div className="text-left z-10 flex-1 px-2 md:px-4 flex flex-col items-start">
-                                                                <h4 className="text-lg md:text-xl font-bold mb-0.5" style={{ color: char.color, textShadow: `0 0 10px ${char.color}80` }}>
-                                                                    {char.name}
-                                                                </h4>
+                                                                {(() => {
+                                                                    const charKills = save.characterKills?.[char.id] || 0;
+                                                                    const mastery = getCharacterMastery(charKills);
+                                                                    return (
+                                                                        <>
+                                                                            <h4 className="text-lg md:text-xl font-bold mb-0.5 flex flex-wrap items-center gap-2" style={{ color: char.color, textShadow: `0 0 10px ${char.color}80` }}>
+                                                                                {char.name}
+                                                                                <span className="text-xs bg-slate-900/80 px-2 py-1 rounded-full border border-slate-700 font-mono tracking-normal flex items-center gap-1" style={{ textShadow: 'none', color: '#fff' }} title={mastery.current.bonusDesc !== 'None' ? `Mastery Bonus: ${mastery.current.bonusDesc}` : 'No Mastery Bonus'}>
+                                                                                    {mastery.current.badge} {mastery.current.title}
+                                                                                </span>
+                                                                            </h4>
+                                                                            <div className="text-[10px] text-slate-400 mb-1.5 font-mono">
+                                                                                Kills: <span className="text-white">{charKills.toLocaleString()}</span> {mastery.next ? <span className="text-slate-500">/ {mastery.next.killsRequired.toLocaleString()} for {mastery.next.title} ({mastery.next.bonusDesc})</span> : <span className="text-yellow-400">(MAX)</span>}
+                                                                            </div>
+                                                                        </>
+                                                                    );
+                                                                })()}
                                                                 <div className="flex gap-2 mb-2 w-full pr-4 relative z-20">
                                                                     <button onClick={(e) => { e.stopPropagation(); setCharTab('loadout'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-colors ${charTab === 'loadout' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700/50'}`}>LOADOUT</button>
                                                                     <button onClick={(e) => { e.stopPropagation(); setCharTab('cosmetics'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-colors ${charTab === 'cosmetics' ? 'bg-pink-500/20 text-pink-300 border-pink-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700/50'}`}>COSMETICS</button>

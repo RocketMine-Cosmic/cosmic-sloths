@@ -211,6 +211,8 @@ export default function Game() {
                 const currentSave = SaveManager.load();
                 currentSave.gold += stats.gold;
                 currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
+                if (!currentSave.characterKills) currentSave.characterKills = {};
+                currentSave.characterKills[stats.characterId] = (currentSave.characterKills[stats.characterId] || 0) + stats.kills;
                 currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
                 currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
                 currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
@@ -244,6 +246,8 @@ export default function Game() {
                 const currentSave = SaveManager.load();
                 currentSave.gold += stats.gold;
                 currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
+                if (!currentSave.characterKills) currentSave.characterKills = {};
+                currentSave.characterKills[stats.characterId] = (currentSave.characterKills[stats.characterId] || 0) + stats.kills;
                 currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
                 currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
                 currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);

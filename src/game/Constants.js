@@ -374,3 +374,23 @@ export const getEnemyMasteryMilestones = (enemy) => {
         ];
     }
 };
+
+export const CHARACTER_MASTERY_LEVELS = [
+    { level: 1, killsRequired: 0, title: 'Novice', bonusDesc: 'None', stat: null, value: 0, badge: '🟢' },
+    { level: 2, killsRequired: 2000, title: 'Adept', bonusDesc: '+5% Speed', stat: 'speedMult', value: 0.05, badge: '🔵' },
+    { level: 3, killsRequired: 5000, title: 'Expert', bonusDesc: '+10% Damage', stat: 'damageMult', value: 0.1, badge: '🟣' },
+    { level: 4, killsRequired: 10000, title: 'Master', bonusDesc: '+15% Area', stat: 'areaMult', value: 0.15, badge: '🟡' },
+    { level: 5, killsRequired: 25000, title: 'Grandmaster', bonusDesc: '-10% Cooldown', stat: 'cooldownMult', value: -0.1, badge: '👑' },
+];
+
+export const getCharacterMastery = (kills) => {
+    let current = CHARACTER_MASTERY_LEVELS[0];
+    let next = CHARACTER_MASTERY_LEVELS[1];
+    for (let i = 0; i < CHARACTER_MASTERY_LEVELS.length; i++) {
+        if (kills >= CHARACTER_MASTERY_LEVELS[i].killsRequired) {
+            current = CHARACTER_MASTERY_LEVELS[i];
+            next = CHARACTER_MASTERY_LEVELS[i+1] || null;
+        }
+    }
+    return { current, next };
+};
