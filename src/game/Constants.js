@@ -313,11 +313,19 @@ export const CHARACTER_TALENTS = {
 };
 
 export const RELICS = [
-    { id: 'relic_lucky_dice', name: 'Cosmic Dice', desc: '+5 Luck globally. Greatly increases chance of crits and rare drops.', icon: '🎲', fragmentCost: 5, stat: 'luck', value: 5 },
-    { id: 'relic_gold_magnet', name: 'Midas Core', desc: '+50% Gold Multiplier. Farm faster.', icon: '💰', fragmentCost: 10, stat: 'goldMult', value: 0.5 },
-    { id: 'relic_xp_drive', name: 'Knowledge Drive', desc: '+50% XP Gain. Level up incredibly fast.', icon: '🧠', fragmentCost: 10, stat: 'xpMult', value: 0.5 },
-    { id: 'relic_blood_chalice', name: 'Blood Chalice', desc: '+1.0 HP Regen. Essential for long runs.', icon: '🍷', fragmentCost: 15, stat: 'regen', value: 1.0 },
-    { id: 'relic_damage_core', name: 'Annihilation Core', desc: '+25% Base Damage. Annihilate your foes.', icon: '💥', fragmentCost: 20, stat: 'damageMult', value: 0.25 },
+    { id: 'relic_lucky_dice', name: 'Cosmic Dice', desc: 'Increases chance of crits and rare drops globally.', icon: '🎲', fragmentCost: 5, stat: 'luck', values: [1, 2, 3, 4, 5] },
+    { id: 'relic_gold_magnet', name: 'Midas Core', desc: 'Boosts Gold Multiplier. Farm faster.', icon: '💰', fragmentCost: 10, stat: 'goldMult', values: [0.1, 0.2, 0.3, 0.4, 0.5] },
+    { id: 'relic_xp_drive', name: 'Knowledge Drive', desc: 'Boosts XP Gain. Level up incredibly fast.', icon: '🧠', fragmentCost: 10, stat: 'xpMult', values: [0.1, 0.2, 0.3, 0.4, 0.5] },
+    { id: 'relic_blood_chalice', name: 'Blood Chalice', desc: 'Increases HP Regen. Essential for long runs.', icon: '🍷', fragmentCost: 15, stat: 'regen', values: [0.2, 0.4, 0.6, 0.8, 1.0] },
+    { id: 'relic_damage_core', name: 'Annihilation Core', desc: 'Boosts Base Damage. Annihilate your foes.', icon: '💥', fragmentCost: 20, stat: 'damageMult', values: [0.05, 0.10, 0.15, 0.20, 0.25] },
+];
+
+export const RELIC_RARITIES = [
+    { level: 1, name: 'Common', color: 'text-slate-400', border: 'border-slate-500', bg: 'bg-slate-900', glow: 'shadow-[0_0_15px_rgba(100,116,139,0.3)]' },
+    { level: 2, name: 'Uncommon', color: 'text-green-400', border: 'border-green-500', bg: 'bg-green-950/20', glow: 'shadow-[0_0_15px_rgba(74,222,128,0.3)]' },
+    { level: 3, name: 'Rare', color: 'text-blue-400', border: 'border-blue-500', bg: 'bg-blue-950/20', glow: 'shadow-[0_0_15px_rgba(96,165,250,0.3)]' },
+    { level: 4, name: 'Epic', color: 'text-purple-400', border: 'border-purple-500', bg: 'bg-purple-950/20', glow: 'shadow-[0_0_15px_rgba(192,132,252,0.3)]' },
+    { level: 5, name: 'Legendary', color: 'text-yellow-400', border: 'border-yellow-500', bg: 'bg-yellow-950/20', glow: 'shadow-[0_0_15px_rgba(250,204,21,0.3)]' },
 ];
 
 export const getEnemyMasteryMilestones = (enemy) => {

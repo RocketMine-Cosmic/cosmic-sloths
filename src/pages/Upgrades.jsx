@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS } from '../game/Constants';
+import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
 import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
@@ -171,24 +171,32 @@ export default function Upgrades({ isCarousel }) {
         }
     };
 
-    const handleBuyRelic = (relic, currency) => {
+    const handleBuyRelic = (relic) => {
         const currentSave = SaveManager.load();
         const unlocked = currentSave.unlockedRelics || [];
-        if (unlocked.includes(relic.id)) return;
+        const relicLevels = currentSave.relicLevels || {};
+        const isOwned = unlocked.includes(relic.id);
+        const currentLevel = isOwned ? (relicLevels[relic.id] || 1) : 0;
+        
+        if (currentLevel >= 5) return;
+        
+        const costMultiplier = currentLevel === 0 ? 1 : Math.pow(2, currentLevel);
+        const cost = relic.fragmentCost * costMultiplier;
 
-        if (currency === 'gold' && currentSave.gold >= relic.goldCost) {
-            currentSave.gold -= relic.goldCost;
-            currentSave.unlockedRelics = [...unlocked, relic.id];
+        if ((currentSave.relicFragments || 0) >= cost) {
+            currentSave.relicFragments -= cost;
+            
+            if (!isOwned) {
+                currentSave.unlockedRelics = [...unlocked, relic.id];
+                relicLevels[relic.id] = 1;
+            } else {
+                relicLevels[relic.id] = currentLevel + 1;
+            }
+            
+            currentSave.relicLevels = relicLevels;
             SaveManager.save(currentSave);
             setSave(currentSave);
-            SoundManager.playUIClick();
-        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= relic.tokenCost) {
-            currentSave.cosmicTokens -= relic.tokenCost;
-            currentSave.unlockedRelics = [...unlocked, relic.id];
-            SaveManager.save(currentSave);
-            setSave(currentSave);
-            recordTokenSpend(relic.tokenCost);
-            SoundManager.playUIClick();
+            SoundManager.playLevelUp();
         }
     };
 
@@ -657,51 +665,90 @@ export default function Upgrades({ isCarousel }) {
         return (
             <div>
                 <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Ancient Relics</h2>
-                <p className="text-slate-400 mb-6 text-sm">Equip powerful global artifacts. You can only equip up to 2 Relics at once.</p>
+                <p className="text-slate-400 mb-6 text-sm">Equip powerful global artifacts. You can only equip up to 2 Relics at once. Upgrade them using Relic Fragments!</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {RELICS.map(relic => {
                         const unlocked = save.unlockedRelics || [];
                         const equipped = save.equippedRelics || [];
+                        const relicLevels = save.relicLevels || {};
                         const isOwned = unlocked.includes(relic.id);
                         const isEquipped = equipped.includes(relic.id);
                         const canEquipMore = equipped.length < 2;
+                        const currentLevel = isOwned ? (relicLevels[relic.id] || 1) : 0;
+                        const isMaxLevel = currentLevel >= 5;
                         
+                        const costMultiplier = currentLevel === 0 ? 1 : Math.pow(2, currentLevel);
+                        const cost = relic.fragmentCost * costMultiplier;
+                        const canAfford = (save.relicFragments || 0) >= cost;
+                        
+                        const rarity = currentLevel > 0 ? RELIC_RARITIES[currentLevel - 1] : RELIC_RARITIES[0];
+                        const nextRarity = !isMaxLevel ? RELIC_RARITIES[currentLevel] : null;
+                        
+                        const formatVal = (val) => {
+                            if (relic.stat === 'luck' || relic.stat === 'regen') return `+${val.toFixed(1).replace('.0', '')}`;
+                            return `+${Math.round(val * 100)}%`;
+                        };
+                        
+                        const currentBuff = currentLevel > 0 ? formatVal(relic.values[currentLevel - 1]) : null;
+                        const nextBuff = !isMaxLevel ? formatVal(relic.values[currentLevel]) : null;
+
                         return (
-                            <div key={relic.id} className={`bg-slate-800 p-4 rounded-xl border-2 transition-all ${isEquipped ? 'border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'border-slate-700'}`}>
+                            <div key={relic.id} className={`p-4 rounded-xl border-2 transition-all ${isEquipped ? `${rarity.border} ${rarity.glow} ${rarity.bg}` : isOwned ? `${rarity.border} bg-slate-800` : 'border-slate-700 bg-slate-800/50'}`}>
                                 <div className="flex items-start gap-4 mb-2">
-                                    <div className="text-3xl bg-slate-900 p-3 rounded-lg border border-slate-700">{relic.icon}</div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between">
-                                            <h3 className="text-lg font-bold text-purple-400">{relic.name}</h3>
-                                            {isEquipped && <span className="text-xs font-bold text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/50">EQUIPPED</span>}
+                                    <div className="text-3xl bg-slate-900 p-3 rounded-lg border border-slate-700 shrink-0">{relic.icon}</div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between flex-wrap gap-2">
+                                            <div>
+                                                <h3 className={`text-lg font-bold truncate ${isOwned ? rarity.color : 'text-slate-400'}`}>{relic.name}</h3>
+                                                {isOwned && (
+                                                    <div className={`text-[10px] font-bold ${rarity.color} uppercase tracking-wider`}>
+                                                        Lv.{currentLevel} {rarity.name} {isEquipped && ' • EQUIPPED'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {isOwned && (
+                                                <button 
+                                                    onClick={() => handleToggleRelic(relic.id)}
+                                                    disabled={!isEquipped && !canEquipMore}
+                                                    className={`px-3 py-1 h-fit rounded-md font-bold text-xs transition-colors shrink-0 ${
+                                                        isEquipped ? 'bg-slate-700 text-white hover:bg-slate-600' : 
+                                                        canEquipMore ? 'bg-purple-600 hover:bg-purple-500 text-white' : 
+                                                        'bg-slate-800 text-slate-500 border border-slate-700'
+                                                    }`}
+                                                >
+                                                    {isEquipped ? 'UNEQUIP' : canEquipMore ? 'EQUIP' : 'SLOTS FULL'}
+                                                </button>
+                                            )}
                                         </div>
-                                        <p className="text-xs text-slate-300 mt-1">{relic.desc}</p>
+                                        <p className="text-xs text-slate-300 mt-2">{relic.desc}</p>
+                                        
+                                        {isOwned && (
+                                            <div className="mt-2 text-sm">
+                                                <span className={`font-bold ${rarity.color}`}>{currentBuff}</span>
+                                                {!isMaxLevel && (
+                                                    <span className="text-slate-500 ml-2">→ <span className={nextRarity.color}>{nextBuff}</span></span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="mt-4">
-                                    {isOwned ? (
-                                        <button 
-                                            onClick={() => handleToggleRelic(relic.id)}
-                                            disabled={!isEquipped && !canEquipMore}
-                                            className={`w-full py-2 rounded-lg font-bold text-sm transition-colors ${
-                                                isEquipped ? 'bg-slate-700 text-white hover:bg-slate-600' : 
-                                                canEquipMore ? 'bg-purple-600 hover:bg-purple-500 text-white' : 
-                                                'bg-slate-800 text-slate-500 border border-slate-700'
-                                            }`}
-                                        >
-                                            {isEquipped ? 'UNEQUIP' : canEquipMore ? 'EQUIP' : 'SLOTS FULL'}
-                                        </button>
-                                    ) : (
+                                
+                                <div className="mt-4 border-t border-slate-700/50 pt-4">
+                                    {!isMaxLevel ? (
                                         <button 
                                             onClick={() => handleBuyRelic(relic)}
-                                            disabled={(save.relicFragments || 0) < relic.fragmentCost}
+                                            disabled={!canAfford}
                                             className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
-                                                (save.relicFragments || 0) >= relic.fragmentCost ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                canAfford ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                             }`}
                                         >
-                                            <span>CRAFT</span>
-                                            <span className="bg-slate-950/50 px-2 py-0.5 rounded border border-fuchsia-500/30 text-fuchsia-300">🧩 {relic.fragmentCost}</span>
+                                            <span>{isOwned ? 'UPGRADE' : 'CRAFT'}</span>
+                                            <span className="bg-slate-950/50 px-2 py-0.5 rounded border border-fuchsia-500/30 text-fuchsia-300">🧩 {cost}</span>
                                         </button>
+                                    ) : (
+                                        <div className="w-full py-2 text-center text-yellow-500 font-bold text-sm bg-yellow-950/20 rounded-lg border border-yellow-500/30">
+                                            MAXIMUM LEVEL REACHED
+                                        </div>
                                     )}
                                 </div>
                             </div>

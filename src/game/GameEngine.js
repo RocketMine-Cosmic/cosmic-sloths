@@ -61,10 +61,13 @@ export class GameEngine {
             maxHp: 0, speedMult: 0, damageMult: 0, magnetRange: 0, regen: 0, armor: 0, areaMult: 0, cooldownMult: 0, projSpeedMult: 0, goldMult: 0, xpMult: 0, luck: 0
         };
 
+        const relicLevels = save.relicLevels || {};
         equippedRelics.forEach(rId => {
             const r = RELICS.find(rd => rd.id === rId);
             if (r) {
-                relicBonus[r.stat] = (relicBonus[r.stat] || 0) + r.value;
+                const level = relicLevels[rId] || 1;
+                const val = r.values ? r.values[Math.min(level, 5) - 1] : r.value;
+                relicBonus[r.stat] = (relicBonus[r.stat] || 0) + val;
             }
         });
 
