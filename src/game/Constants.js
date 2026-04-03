@@ -56,9 +56,9 @@ export const WEAPONS = {
 export const BOUNTIES_POOL = [
   { id: 'kills_200', desc: 'Defeat 200 enemies (Total)', type: 'kills', target: 200, reward: 150, currency: 'gold' },
   { id: 'kills_500', desc: 'Defeat 500 enemies (Total)', type: 'kills', target: 500, reward: 300, currency: 'gold' },
-  { id: 'survive_300', desc: 'Survive for 5 mins (Single run)', type: 'survive', target: 300, reward: 2, currency: 'reroll' },
+  { id: 'survive_300', desc: 'Survive for 5 mins (Single run)', type: 'survive', target: 300, reward: 2, currency: 'fragment' },
   { id: 'gold_100', desc: 'Earn 100 gold (Single run)', type: 'gold', target: 100, reward: 50, currency: 'gold' },
-  { id: 'level_15', desc: 'Reach Level 15 (Single run)', type: 'level', target: 15, reward: 1, currency: 'reroll' },
+  { id: 'level_15', desc: 'Reach Level 15 (Single run)', type: 'level', target: 15, reward: 1, currency: 'fragment' },
   { id: 'play_3', desc: 'Play 3 runs', type: 'play', target: 3, reward: 100, currency: 'gold' }
 ];
 
@@ -313,11 +313,11 @@ export const CHARACTER_TALENTS = {
 };
 
 export const RELICS = [
-    { id: 'relic_lucky_dice', name: 'Cosmic Dice', desc: '+5 Luck globally. Greatly increases chance of crits and rare drops.', icon: '🎲', goldCost: 50000, tokenCost: 500, stat: 'luck', value: 5 },
-    { id: 'relic_gold_magnet', name: 'Midas Core', desc: '+50% Gold Multiplier. Farm faster.', icon: '💰', goldCost: 100000, tokenCost: 1000, stat: 'goldMult', value: 0.5 },
-    { id: 'relic_xp_drive', name: 'Knowledge Drive', desc: '+50% XP Gain. Level up incredibly fast.', icon: '🧠', goldCost: 100000, tokenCost: 1000, stat: 'xpMult', value: 0.5 },
-    { id: 'relic_blood_chalice', name: 'Blood Chalice', desc: '+1.0 HP Regen. Essential for long runs.', icon: '🍷', goldCost: 150000, tokenCost: 1500, stat: 'regen', value: 1.0 },
-    { id: 'relic_damage_core', name: 'Annihilation Core', desc: '+25% Base Damage. Annihilate your foes.', icon: '💥', goldCost: 200000, tokenCost: 2000, stat: 'damageMult', value: 0.25 },
+    { id: 'relic_lucky_dice', name: 'Cosmic Dice', desc: '+5 Luck globally. Greatly increases chance of crits and rare drops.', icon: '🎲', fragmentCost: 5, stat: 'luck', value: 5 },
+    { id: 'relic_gold_magnet', name: 'Midas Core', desc: '+50% Gold Multiplier. Farm faster.', icon: '💰', fragmentCost: 10, stat: 'goldMult', value: 0.5 },
+    { id: 'relic_xp_drive', name: 'Knowledge Drive', desc: '+50% XP Gain. Level up incredibly fast.', icon: '🧠', fragmentCost: 10, stat: 'xpMult', value: 0.5 },
+    { id: 'relic_blood_chalice', name: 'Blood Chalice', desc: '+1.0 HP Regen. Essential for long runs.', icon: '🍷', fragmentCost: 15, stat: 'regen', value: 1.0 },
+    { id: 'relic_damage_core', name: 'Annihilation Core', desc: '+25% Base Damage. Annihilate your foes.', icon: '💥', fragmentCost: 20, stat: 'damageMult', value: 0.25 },
 ];
 
 export const getEnemyMasteryMilestones = (enemy) => {

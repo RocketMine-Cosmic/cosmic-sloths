@@ -815,8 +815,8 @@ export class GameEngine {
                 }
 
                 if (e.isBoss) {
-                    const rerollReward = 1 + (this.bossModifiers.frenzy ? 1 : 0);
-                    this.pickups.push({ x: e.x, y: e.y, type: 'reroll', value: rerollReward, color: '#ff00ff' });
+                    const fragmentReward = 1 + (this.bossModifiers.frenzy ? 1 : 0);
+                    this.pickups.push({ x: e.x, y: e.y, type: 'fragment', value: fragmentReward, color: '#a855f7' });
                     
                     let extraGold = 1000; // Base boss gold
                     if (this.bossModifiers.fury) extraGold += 500;
@@ -998,10 +998,10 @@ export class GameEngine {
                     SoundManager.playGoldPickup();
                     this.gold += Math.floor(p.value * this.player.goldMult);
                     this.callbacks.onGoldChange(this.gold);
-                } else if (p.type === 'reroll') {
+                } else if (p.type === 'fragment') {
                     SoundManager.playGoldPickup();
-                    if (this.callbacks.onRerollFound) this.callbacks.onRerollFound();
-                    this.addDamageText(this.player.x, this.player.y - 40, `+1 Reroll Token!`, '#ff00ff');
+                    if (this.callbacks.onFragmentFound) this.callbacks.onFragmentFound(p.value || 1);
+                    this.addDamageText(this.player.x, this.player.y - 40, `+${p.value || 1} Relic Fragment!`, '#a855f7');
 
                 } else if (p.type === 'nuke') {
                     SoundManager.playWeaponFire('novaPulse');

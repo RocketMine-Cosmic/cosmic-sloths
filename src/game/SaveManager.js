@@ -96,7 +96,7 @@ export const SaveManager = {
       gold: 0,
       cosmicTokens: 20000,
       receivedTestTokens: true,
-      rerollTokens: 0,
+      relicFragments: 0,
       unlockedCharacters: [...defaultChars],
       foundCharacters: [],
       unlockedArenasByCharacter: {},
@@ -213,6 +213,12 @@ export const SaveManager = {
         if (!parsed.receivedTestTokens) {
             parsed.cosmicTokens = (parsed.cosmicTokens || 0) + 20000;
             parsed.receivedTestTokens = true;
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+        }
+        
+        if (parsed.rerollTokens !== undefined) {
+            parsed.relicFragments = (parsed.relicFragments || 0) + parsed.rerollTokens;
+            delete parsed.rerollTokens;
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
         }
         

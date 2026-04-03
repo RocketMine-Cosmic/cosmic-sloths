@@ -692,26 +692,16 @@ export default function Upgrades({ isCarousel }) {
                                             {isEquipped ? 'UNEQUIP' : canEquipMore ? 'EQUIP' : 'SLOTS FULL'}
                                         </button>
                                     ) : (
-                                        <div className="flex gap-2">
-                                            <button 
-                                                onClick={() => handleBuyRelic(relic, 'gold')}
-                                                disabled={save.gold < relic.goldCost}
-                                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${
-                                                    save.gold >= relic.goldCost ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
-                                                }`}
-                                            >
-                                                🪙 {relic.goldCost.toLocaleString()}
-                                            </button>
-                                            <button 
-                                                onClick={() => handleBuyRelic(relic, 'token')}
-                                                disabled={(save.cosmicTokens || 0) < relic.tokenCost}
-                                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${
-                                                    (save.cosmicTokens || 0) >= relic.tokenCost ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
-                                                }`}
-                                            >
-                                                💠 {relic.tokenCost.toLocaleString()}
-                                            </button>
-                                        </div>
+                                        <button 
+                                            onClick={() => handleBuyRelic(relic)}
+                                            disabled={(save.relicFragments || 0) < relic.fragmentCost}
+                                            className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
+                                                (save.relicFragments || 0) >= relic.fragmentCost ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                            }`}
+                                        >
+                                            <span>CRAFT</span>
+                                            <span className="bg-slate-950/50 px-2 py-0.5 rounded border border-fuchsia-500/30 text-fuchsia-300">🧩 {relic.fragmentCost}</span>
+                                        </button>
                                     )}
                                 </div>
                             </div>

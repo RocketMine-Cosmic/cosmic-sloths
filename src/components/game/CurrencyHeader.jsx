@@ -15,8 +15,8 @@ export default function CurrencyHeader() {
             <div className="text-xs md:text-sm lg:text-base font-black text-yellow-300 bg-yellow-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.2)]" title="Star Fragments">
                 🌟 {save.starFragments || 0}
             </div>
-            <div className="text-xs md:text-sm lg:text-base font-black text-purple-300 bg-purple-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-purple-700/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]" title="Reroll Tokens">
-                🎲 {save.rerollTokens || 0}
+            <div className="text-xs md:text-sm lg:text-base font-black text-fuchsia-300 bg-fuchsia-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-fuchsia-700/50 shadow-[0_0_10px_rgba(217,70,239,0.2)]" title="Relic Fragments">
+                🧩 {save.relicFragments || 0}
             </div>
             <div className="text-xs md:text-sm lg:text-base font-black text-emerald-300 bg-emerald-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]" title="Cosmic Tokens">
                 💠 {save.cosmicTokens || 0}

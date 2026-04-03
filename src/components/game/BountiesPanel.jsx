@@ -21,8 +21,8 @@ export default function BountiesPanel({ save, setSave }) {
                 currentSave.gold += bounty.reward;
             } else if (bounty.currency === 'token') {
                 currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + bounty.reward;
-            } else if (bounty.currency === 'reroll') {
-                currentSave.rerollTokens = (currentSave.rerollTokens || 0) + bounty.reward;
+            } else if (bounty.currency === 'fragment') {
+                currentSave.relicFragments = (currentSave.relicFragments || 0) + bounty.reward;
             }
             
             SaveManager.save(currentSave);
@@ -31,7 +31,7 @@ export default function BountiesPanel({ save, setSave }) {
             
             toast({
                 title: "Bounty Claimed!",
-                description: `You received ${bounty.reward} ${bounty.currency === 'gold' ? '🪙' : bounty.currency === 'reroll' ? '🎲' : '💠'}`,
+                description: `You received ${bounty.reward} ${bounty.currency === 'gold' ? '🪙' : bounty.currency === 'fragment' ? '🧩' : '💠'}`,
             });
         }
     };
@@ -88,8 +88,8 @@ export default function BountiesPanel({ save, setSave }) {
                                         <span className="font-mono bg-slate-900 px-1.5 py-0.5 rounded text-[10px]">
                                             {Math.min(bounty.progress, bounty.target)} / {bounty.target}
                                         </span>
-                                        <span className={`${bounty.currency === 'gold' ? 'text-yellow-500' : bounty.currency === 'reroll' ? 'text-purple-400' : 'text-emerald-400'} font-bold`}>
-                                            {bounty.currency === 'gold' ? '🪙' : bounty.currency === 'reroll' ? '🎲' : '💠'} {bounty.reward}
+                                        <span className={`${bounty.currency === 'gold' ? 'text-yellow-500' : bounty.currency === 'fragment' ? 'text-fuchsia-400' : 'text-emerald-400'} font-bold`}>
+                                            {bounty.currency === 'gold' ? '🪙' : bounty.currency === 'fragment' ? '🧩' : '💠'} {bounty.reward}
                                         </span>
                                     </div>
                                 </div>

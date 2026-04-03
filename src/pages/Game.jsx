@@ -23,7 +23,7 @@ export default function Game() {
         hp: 100, maxHp: 100,
         time: 0, duration: 300, level: 1,
         xp: 0, xpRequired: 10,
-        gold: 0, rerollTokens: 0
+        gold: 0, relicFragments: 0
     });
     
     const [levelUpChoices, setLevelUpChoices] = useState(null);
@@ -178,11 +178,11 @@ export default function Game() {
                 setGameState(s => ({ ...s, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired }));
                 setLevelUpChoices(choices);
             },
-            onRerollFound: () => {
+            onFragmentFound: (amount) => {
                 const currentSave = SaveManager.load();
-                currentSave.rerollTokens = (currentSave.rerollTokens || 0) + 1;
+                currentSave.relicFragments = (currentSave.relicFragments || 0) + amount;
                 SaveManager.save(currentSave);
-                setGameState(s => ({ ...s, rerollTokens: currentSave.rerollTokens }));
+                setGameState(s => ({ ...s, relicFragments: currentSave.relicFragments }));
             },
             onTokenFound: () => {
                 const currentSave = SaveManager.load();
@@ -283,7 +283,7 @@ export default function Game() {
         setGameState({
             hp: engine.player.hp, maxHp: engine.player.maxHp,
             time: 0, duration: engine.arena.duration, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired, gold: 0,
-            rerollTokens: save.rerollTokens || 0,
+            relicFragments: save.relicFragments || 0,
             cosmicTokens: save.cosmicTokens || 0
         });
         
