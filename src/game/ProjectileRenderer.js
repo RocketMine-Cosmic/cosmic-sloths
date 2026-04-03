@@ -37,12 +37,21 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
 
         if (p.type === 'blaster_shot') {
             ctx.globalCompositeOperation = 'lighter';
+            
+            // Colored Outer Glow
             ctx.fillStyle = p.color || '#ffffff';
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+            
+            // Colored Inner Body
+            ctx.globalAlpha = 0.9;
             ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+            
+            // Tiny White Hot Center
             ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 0.7;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 0.8, p.radius * 0.3, 0, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1.0;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 0.6, p.radius * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+            
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'wrench_swing') {
             ctx.globalCompositeOperation = 'lighter';
