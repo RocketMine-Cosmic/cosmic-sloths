@@ -24,11 +24,11 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             
             if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot') {
                 ctx.beginPath();
-                ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 1.5, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.5), 0, 0, Math.PI * 2);
                 ctx.fill();
             } else {
                 ctx.beginPath();
-                ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+                ctx.arc(0, 0, Math.max(0.1, p.radius * 2.5), 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.globalAlpha = 1.0;
@@ -41,16 +41,16 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             // Colored Outer Glow
             ctx.fillStyle = p.color || '#ffffff';
             ctx.globalAlpha = 0.4;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
             
             // Colored Inner Body
             ctx.globalAlpha = 0.9;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.5), Math.max(0.1, p.radius * 0.6), 0, 0, Math.PI * 2); ctx.fill();
             
             // Tiny White Hot Center
             ctx.fillStyle = '#ffffff';
             ctx.globalAlpha = 1.0;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 0.6, p.radius * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.6), Math.max(0.1, p.radius * 0.2), 0, 0, Math.PI * 2); ctx.fill();
             
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'wrench_swing') {
@@ -92,7 +92,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         } else if (p.type === 'beam' || p.type === 'dual_laser') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2, p.radius * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2), Math.max(0.1, p.radius * 0.5), 0, 0, Math.PI * 2); ctx.fill();
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'lightning') {
             ctx.globalCompositeOperation = 'lighter';
@@ -192,9 +192,9 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.shadowColor = p.color || '#ff00ff';
             ctx.shadowBlur = 20;
             ctx.lineWidth = Math.max(2, 8 * p.life);
-            ctx.globalAlpha = Math.min(1, p.life * 2);
+            ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
             ctx.stroke();
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1.0;
