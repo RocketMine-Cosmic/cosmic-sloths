@@ -45,20 +45,20 @@ function StatBadge({ label, desc, color }) {
         amber: 'bg-amber-950/50 border-amber-800/50 text-amber-400',
     };
     return (
-        <div className={`border rounded-lg p-3 ${colors[color]}`}>
-            <div className="font-bold text-sm mb-0.5">{label}</div>
-            <div className="text-xs text-slate-400">{desc}</div>
+        <div className={`border rounded-xl p-4 flex flex-col justify-center ${colors[color]}`}>
+            <div className="font-bold text-sm md:text-base mb-1.5">{label}</div>
+            <div className="text-xs md:text-sm text-slate-400/90 leading-relaxed">{desc}</div>
         </div>
     );
 }
 
 function PickupCard({ icon, label, color, desc }) {
     return (
-        <div className="flex items-start gap-3 bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
-            <span className="text-2xl shrink-0">{icon}</span>
+        <div className="flex items-start gap-4 bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+            <span className="text-3xl shrink-0 mt-0.5">{icon}</span>
             <div>
-                <div className={`font-bold text-sm ${color}`}>{label}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{desc}</div>
+                <div className={`font-bold text-sm md:text-base mb-1.5 ${color}`}>{label}</div>
+                <div className="text-xs md:text-sm text-slate-400 leading-relaxed">{desc}</div>
             </div>
         </div>
     );
@@ -84,7 +84,7 @@ const TABS_CONTENT = {
             </SectionCard>
 
             <SectionCard title="📊 Character Stats" color="cyan">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                     <StatBadge label="❤️ HP & Regen" desc="Health pool and passive healing per second" color="red" />
                     <StatBadge label="👟 Speed" desc="Movement speed multiplier" color="blue" />
                     <StatBadge label="🛡️ Armor" desc="Flat reduction to incoming damage" color="slate" />
@@ -97,7 +97,7 @@ const TABS_CONTENT = {
             </SectionCard>
 
             <SectionCard title="💎 In-Run Pickups" color="purple">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <PickupCard icon="💠" label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
                     <PickupCard icon="🪙" label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
                     <PickupCard icon="🎲" label="Reroll Tokens" color="text-purple-400" desc="Dropped by Bosses. Re-roll your level-up choices." />
@@ -110,33 +110,33 @@ const TABS_CONTENT = {
     ),
 
     progression: (
-        <div className="space-y-4">
+        <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏠 Sloth Lounge (Meta Progression)" color="cyan">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">Between runs, visit the Sloth Lounge to spend your Gold and Cosmic Tokens on persistent upgrades.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                        <div className="font-bold text-white text-sm mb-1">👤 Characters</div>
-                        <p className="text-xs text-slate-400">Unlock new sloths with unique stats, abilities, and exclusive Talent Trees.</p>
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and Cosmic Tokens on persistent upgrades.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
+                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Unlock new sloths with unique stats, abilities, and exclusive Talent Trees.</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                        <div className="font-bold text-white text-sm mb-1">⬆️ Stat Upgrades</div>
-                        <p className="text-xs text-slate-400">3 tiers: Permanent (forever), Weekly (resets weekly), Seasonal (resets every 4 weeks). Higher tiers = stronger bonuses.</p>
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
+                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">⬆️ Stat Upgrades</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">3 tiers: Permanent (forever), Weekly (resets weekly), Seasonal (resets every 4 weeks). Higher tiers = stronger bonuses.</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                        <div className="font-bold text-white text-sm mb-1">🔫 Armory</div>
-                        <p className="text-xs text-slate-400">Upgrade individual weapons' Damage, Area, and Cooldown. Max all 3 to Master a weapon and unlock its ultimate form!</p>
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
+                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🔫 Armory</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Upgrade individual weapons' Damage, Area, and Cooldown. Max all 3 to Master a weapon and unlock its ultimate form!</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-                        <div className="font-bold text-white text-sm mb-1">🌳 Talent Trees</div>
-                        <p className="text-xs text-slate-400">Each character has a unique skill tree with branching paths. Respec anytime for a Gold refund.</p>
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
+                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🌳 Talent Trees</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Each character has a unique skill tree with branching paths. Respec anytime for a Gold refund.</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700 sm:col-span-2">
-                        <div className="font-bold text-white text-sm mb-1">✨ Cosmetics</div>
-                        <p className="text-xs text-slate-400">Buy flashy trails, kill effects, and character skins. Preview before you buy!</p>
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 md:col-span-2 flex flex-col justify-center">
+                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">✨ Cosmetics</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Buy flashy trails, kill effects, and character skins. Preview before you buy!</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-yellow-700/40 sm:col-span-2">
-                        <div className="font-bold text-yellow-400 text-sm mb-1">🔨 The Forge</div>
-                        <p className="text-xs text-slate-400">Convert excess Gold into <strong className="text-yellow-300">Star Fragments 🌟</strong> (1,000 Gold = 1 🌟, up to 20/day). Use fragments to permanently enhance weapons beyond their normal cap, or unlock powerful passive augments for each character. Forge upgrades <strong className="text-white">never reset</strong>.</p>
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-yellow-700/50 md:col-span-2 flex flex-col justify-center shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                        <div className="font-bold text-yellow-400 text-sm md:text-base mb-2 flex items-center gap-2">🔨 The Forge</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Convert excess Gold into <strong className="text-yellow-300">Star Fragments 🌟</strong> (1,000 Gold = 1 🌟, up to 20/day). Use fragments to permanently enhance weapons beyond their normal cap, or unlock powerful passive augments for each character. Forge upgrades <strong className="text-white">never reset</strong>.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -161,10 +161,10 @@ const TABS_CONTENT = {
     missions: (
         <div className="space-y-4">
             <SectionCard title="🔥 Daily Login Rewards" color="amber">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Log in every day to claim escalating rewards. Build a streak across 7 days for the biggest bonus!
                 </p>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3">
                     {[
                         { day: 1, icon: '🪙', label: '400' },
                         { day: 2, icon: '🪙', label: '800' },
@@ -174,14 +174,14 @@ const TABS_CONTENT = {
                         { day: 6, icon: '🎲', label: '×2' },
                         { day: 7, icon: '🪙', label: '4000', bonus: true },
                     ].map(r => (
-                        <div key={r.day} className={`flex flex-col items-center p-1.5 rounded-lg border text-center ${r.bonus ? 'bg-amber-900/40 border-amber-500' : 'bg-slate-800/60 border-slate-700'}`}>
-                            <div className="text-[9px] text-slate-500 font-bold">D{r.day}</div>
-                            <div className="text-base leading-none my-0.5">{r.icon}</div>
-                            <div className={`text-[9px] font-bold ${r.bonus ? 'text-amber-400' : 'text-slate-300'}`}>{r.label}</div>
+                        <div key={r.day} className={`flex flex-col items-center justify-center p-2.5 md:p-3 rounded-xl border text-center transition-transform hover:scale-105 ${r.bonus ? 'bg-amber-900/40 border-amber-500 col-span-4 md:col-span-1 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-800/60 border-slate-700'}`}>
+                            <div className="text-xs md:text-sm text-slate-500 font-bold mb-1">Day {r.day}</div>
+                            <div className="text-2xl md:text-3xl leading-none my-1">{r.icon}</div>
+                            <div className={`text-xs md:text-sm font-bold mt-1 ${r.bonus ? 'text-amber-400' : 'text-slate-300'}`}>{r.label}</div>
                         </div>
                     ))}
                 </div>
-                <p className="text-xs text-slate-500 mt-2">⚠️ Miss a day and your streak resets to Day 1!</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-3">⚠️ Miss a day and your streak resets to Day 1!</p>
             </SectionCard>
 
             <SectionCard title="🎯 Daily Bounties" color="cyan">
@@ -204,17 +204,17 @@ const TABS_CONTENT = {
             </SectionCard>
 
             <SectionCard title="👥 Squad Weekly Bounty" color="orange">
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Join a <strong className="text-orange-400">Sloth Squad</strong> and work together to defeat <strong className="text-white">10,000 enemies</strong> in a week. All contributing members can claim:
                 </p>
-                <div className="flex gap-3">
-                    <div className="bg-slate-900/50 rounded-lg p-2 text-center border border-slate-700 flex-1">
-                        <div className="text-lg">🪙</div>
-                        <div className="text-xs text-yellow-400 font-bold">2,500 Gold</div>
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center">
+                        <div className="text-2xl md:text-3xl mb-1.5">🪙</div>
+                        <div className="text-sm md:text-base text-yellow-400 font-bold">2,500 Gold</div>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-2 text-center border border-slate-700 flex-1">
-                        <div className="text-lg">🎲</div>
-                        <div className="text-xs text-purple-400 font-bold">5 Rerolls</div>
+                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center">
+                        <div className="text-2xl md:text-3xl mb-1.5">🎲</div>
+                        <div className="text-sm md:text-base text-purple-400 font-bold">5 Rerolls</div>
                     </div>
                 </div>
             </SectionCard>
@@ -222,23 +222,23 @@ const TABS_CONTENT = {
     ),
 
     compete: (
-        <div className="space-y-4">
+        <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏆 Leaderboards & Seasons" color="amber">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Compete for <strong className="text-emerald-400">Cosmic Tokens</strong> — the premium currency earned exclusively through competitive play.
                 </p>
-                <div className="space-y-2">
-                    <div className="bg-slate-900/60 rounded-lg p-3 border border-slate-700">
-                        <div className="font-bold text-white text-sm mb-1">📅 Weekly Leaderboard</div>
-                        <p className="text-xs text-slate-400">Resets every Monday. Top 20 players earn Cosmic Tokens. Weekly stat upgrades also reset.</p>
+                <div className="space-y-3">
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
+                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every Monday. Top 20 players earn Cosmic Tokens. Weekly stat upgrades also reset.</p>
                     </div>
-                    <div className="bg-slate-900/60 rounded-lg p-3 border border-slate-700">
-                        <div className="font-bold text-white text-sm mb-1">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs text-slate-400">Runs for 4 weeks. Top 30 players earn Cosmic Tokens. Seasonal stat upgrades reset at end.</p>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
+                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for 4 weeks. Top 30 players earn Cosmic Tokens. Seasonal stat upgrades reset at end.</p>
                     </div>
-                    <div className="bg-slate-900/60 rounded-lg p-3 border border-purple-800/40">
-                        <div className="font-bold text-purple-300 text-sm mb-1">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs text-slate-400">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes.</p>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
+                        <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -253,13 +253,22 @@ const TABS_CONTENT = {
             </SectionCard>
 
             <SectionCard title="⚡ Leviathan Trials" color="rose">
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Activate special <strong className="text-rose-400">modifiers</strong> before a run to make boss encounters harder — but more rewarding.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="bg-slate-900/60 rounded-lg p-2 border border-red-900/40 text-center"><div className="text-red-400 font-bold">FURY</div><div className="text-slate-400">Boss deals +50% damage</div></div>
-                    <div className="bg-slate-900/60 rounded-lg p-2 border border-orange-900/40 text-center"><div className="text-orange-400 font-bold">FRENZY</div><div className="text-slate-400">Boss moves +50% faster</div></div>
-                    <div className="bg-slate-900/60 rounded-lg p-2 border border-purple-900/40 text-center"><div className="text-purple-400 font-bold">HIDE</div><div className="text-slate-400">Boss has +100% HP</div></div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-sm">
+                    <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-red-900/40 text-center flex flex-col justify-center">
+                        <div className="text-red-400 font-bold mb-1">FURY</div>
+                        <div className="text-slate-400 text-xs md:text-sm">Boss deals +50% damage</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-orange-900/40 text-center flex flex-col justify-center">
+                        <div className="text-orange-400 font-bold mb-1">FRENZY</div>
+                        <div className="text-slate-400 text-xs md:text-sm">Boss moves +50% faster</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-purple-900/40 text-center flex flex-col justify-center">
+                        <div className="text-purple-400 font-bold mb-1">HIDE</div>
+                        <div className="text-slate-400 text-xs md:text-sm">Boss has +100% HP</div>
+                    </div>
                 </div>
             </SectionCard>
 
@@ -296,16 +305,16 @@ const TABS_CONTENT = {
     ),
 
     squads: (
-        <div className="space-y-4">
+        <div className="space-y-4 md:space-y-6">
             <SectionCard title="👥 What are Squads?" color="orange">
-                <p className="text-sm text-slate-300 leading-relaxed">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed">
                     Squads are persistent teams of up to <strong className="text-orange-400">5 players</strong>. Every kill you score in any run automatically contributes to your squad's weekly total — no extra steps needed. Find the Squads page from the main carousel.
                 </p>
             </SectionCard>
 
             <SectionCard title="📈 Squad Levels & XP" color="cyan">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">At the end of each week, your squad earns XP equal to its total weekly kills. Level up through 7 tiers to unlock bigger bounties.</p>
-                <div className="space-y-1.5">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">At the end of each week, your squad earns XP equal to its total weekly kills. Level up through 7 tiers to unlock bigger bounties.</p>
+                <div className="space-y-2">
                     {[
                         { badge: '🦥', name: 'Recruits',     level: 1, color: 'text-slate-400' },
                         { badge: '⭐', name: 'Drifters',     level: 2, color: 'text-blue-400' },
@@ -315,27 +324,27 @@ const TABS_CONTENT = {
                         { badge: '👑', name: 'Legends',      level: 6, color: 'text-purple-400' },
                         { badge: '🌌', name: 'Cosmic Elite', level: 7, color: 'text-pink-400' },
                     ].map(t => (
-                        <div key={t.level} className="flex items-center gap-3 bg-slate-900/60 rounded-lg px-3 py-2 border border-slate-700/50">
-                            <span className="text-lg w-7 text-center">{t.badge}</span>
-                            <span className={`font-bold text-sm ${t.color} w-28`}>Lv.{t.level} {t.name}</span>
-                            <span className="text-xs text-slate-400">higher bounty rewards unlocked</span>
+                        <div key={t.level} className="flex items-center gap-3 md:gap-4 bg-slate-900/60 rounded-xl px-4 py-3 border border-slate-700/50">
+                            <span className="text-xl md:text-2xl w-8 text-center">{t.badge}</span>
+                            <span className={`font-bold text-sm md:text-base ${t.color} min-w-[120px]`}>Lv.{t.level} {t.name}</span>
+                            <span className="text-xs md:text-sm text-slate-400 hidden sm:inline">higher bounty rewards unlocked</span>
                         </div>
                     ))}
                 </div>
             </SectionCard>
 
             <SectionCard title="🛡️ Weekly Bounty" color="amber">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Each week your squad has a kill target based on its level. Hit the target and <strong className="text-white">every member</strong> can individually claim their reward — Gold and Reroll Tokens.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.1 — Rookie Bounty</div><div className="text-slate-400">2,000 kills → 🪙 500 + 🎲×1</div></div>
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.2 — Drifter Bounty</div><div className="text-slate-400">5,000 kills → 🪙 1,200 + 🎲×2</div></div>
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.3 — Hunter Bounty</div><div className="text-slate-400">10,000 kills → 🪙 2,500 + 🎲×3</div></div>
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.4 — Vanguard Bounty</div><div className="text-slate-400">18,000 kills → 🪙 4,000 + 🎲×4</div></div>
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.5 — Reaper Bounty</div><div className="text-slate-400">30,000 kills → 🪙 6,500 + 🎲×5</div></div>
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700"><div className="font-bold text-white mb-0.5">Lv.6 — Legend Bounty</div><div className="text-slate-400">50,000 kills → 🪙 10,000 + 🎲×7</div></div>
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-pink-900/40 sm:col-span-2"><div className="font-bold text-pink-400 mb-0.5">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400">75,000 kills → 🪙 15,000 + 🎲×10</div></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie Bounty</div><div className="text-slate-400">2,000 kills → 🪙 500 + 🎲×1</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter Bounty</div><div className="text-slate-400">5,000 kills → 🪙 1,200 + 🎲×2</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter Bounty</div><div className="text-slate-400">10,000 kills → 🪙 2,500 + 🎲×3</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard Bounty</div><div className="text-slate-400">18,000 kills → 🪙 4,000 + 🎲×4</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper Bounty</div><div className="text-slate-400">30,000 kills → 🪙 6,500 + 🎲×5</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend Bounty</div><div className="text-slate-400">50,000 kills → 🪙 10,000 + 🎲×7</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400">75,000 kills → 🪙 15,000 + 🎲×10</div></div>
                 </div>
             </SectionCard>
 
@@ -374,41 +383,41 @@ const TABS_CONTENT = {
     ),
 
     raid: (
-        <div className="space-y-4">
+        <div className="space-y-4 md:space-y-6">
             <SectionCard title="💀 Global Raid Event" color="rose">
-                <p className="text-sm text-slate-300 leading-relaxed">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed">
                     The <strong className="text-red-400">Global Raid</strong> is a community-wide cooperative event. You fight against a massive World Boss whose HP is shared across all players globally. 
                 </p>
-                <div className="bg-slate-900/60 p-3 rounded-lg border border-red-900/40 mt-3">
-                    <div className="font-bold text-white text-sm mb-1">⚔️ How to Participate</div>
-                    <p className="text-xs text-slate-400">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool.</p>
+                <div className="bg-slate-900/60 p-4 rounded-xl border border-red-900/40 mt-4">
+                    <div className="font-bold text-white text-sm md:text-base mb-1.5">⚔️ How to Participate</div>
+                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool.</p>
                 </div>
             </SectionCard>
 
             <SectionCard title="📈 Infinite Scaling" color="purple">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     The raid never truly ends. Whenever the community manages to drop the World Boss's HP to 0:
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                        <div className="font-bold text-white mb-0.5">Level Up</div>
-                        <div className="text-slate-400">The boss immediately respawns at the next Level.</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
+                    <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                        <div className="font-bold text-white mb-1.5">Level Up</div>
+                        <div className="text-slate-400 leading-relaxed">The boss immediately respawns at the next Level.</div>
                     </div>
-                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-purple-900/40">
-                        <div className="font-bold text-purple-400 mb-0.5">Stronger Boss</div>
-                        <div className="text-slate-400">Its max HP increases by 50% for every level it gains!</div>
+                    <div className="bg-slate-900/60 p-4 rounded-xl border border-purple-900/40 flex flex-col justify-center">
+                        <div className="font-bold text-purple-400 mb-1.5">Stronger Boss</div>
+                        <div className="text-slate-400 leading-relaxed">Its max HP increases by 50% for every level it gains!</div>
                     </div>
                 </div>
             </SectionCard>
 
             <SectionCard title="💰 Scaling Rewards" color="amber">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     As the community defeats higher levels of the boss, your potential rewards increase massively.
                 </p>
-                <div className="bg-slate-900/60 rounded-lg p-3 border border-yellow-900/30">
-                    <div className="font-bold text-yellow-400 text-sm mb-1">Claiming Gold</div>
-                    <p className="text-xs text-slate-400 mb-2">For every boss level the community defeats, you can claim <strong className="text-white">1,000 Gold × Boss Level</strong>. (e.g., Level 5 boss gives 5,000 Gold).</p>
-                    <p className="text-xs text-slate-500 italic">Note: You must have contributed damage to the raid to claim rewards!</p>
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-yellow-900/30">
+                    <div className="font-bold text-yellow-400 text-sm md:text-base mb-1.5">Claiming Gold</div>
+                    <p className="text-xs md:text-sm text-slate-400 mb-2 leading-relaxed">For every boss level the community defeats, you can claim <strong className="text-white">1,000 Gold × Boss Level</strong>. (e.g., Level 5 boss gives 5,000 Gold).</p>
+                    <p className="text-xs md:text-sm text-slate-500 italic">Note: You must have contributed damage to the raid to claim rewards!</p>
                 </div>
             </SectionCard>
         </div>
@@ -417,27 +426,48 @@ const TABS_CONTENT = {
     combat: (
         <div className="space-y-4">
             <SectionCard title="⚔️ Sectors" color="cyan">
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Each sector has a unique environment, enemy pool, and difficulty. Unlock new sectors by completing runs with each character. Every sector has its own environmental effect:
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-700 text-center"><div className="text-cyan-400 font-bold">Neon Rain</div><div className="text-slate-400">+Speed for all</div></div>
-                    <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-700 text-center"><div className="text-slate-400 font-bold">Fog</div><div className="text-slate-400">-Speed, fewer spawns</div></div>
-                    <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-700 text-center"><div className="text-orange-400 font-bold">Solar Flare</div><div className="text-slate-400">+Enemy spawns</div></div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-sm">
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-cyan-900/40 text-center flex flex-col justify-center">
+                        <div className="text-cyan-400 font-bold mb-1">Neon Rain</div>
+                        <div className="text-slate-400 text-xs md:text-sm">+Speed for all</div>
+                    </div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 text-center flex flex-col justify-center">
+                        <div className="text-slate-300 font-bold mb-1">Fog</div>
+                        <div className="text-slate-400 text-xs md:text-sm">-Speed, fewer spawns</div>
+                    </div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-orange-900/40 text-center flex flex-col justify-center">
+                        <div className="text-orange-400 font-bold mb-1">Solar Flare</div>
+                        <div className="text-slate-400 text-xs md:text-sm">+Enemy spawns</div>
+                    </div>
                 </div>
             </SectionCard>
 
             <SectionCard title="🌟 Level Ups & Rarity" color="purple">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Every time you level up mid-run, you pick 1 of 3 random upgrades. Each can be one of 4 rarities:
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-center">
-                    <div className="rounded-lg p-2 border border-slate-600 bg-slate-800/50"><div className="text-slate-300 font-bold">Common</div><div className="text-slate-500">×1 value</div></div>
-                    <div className="rounded-lg p-2 border border-blue-700 bg-blue-950/30"><div className="text-blue-400 font-bold">Rare</div><div className="text-slate-500">×1.5 value</div></div>
-                    <div className="rounded-lg p-2 border border-purple-700 bg-purple-950/30"><div className="text-purple-400 font-bold">Epic</div><div className="text-slate-500">×2 value</div></div>
-                    <div className="rounded-lg p-2 border border-amber-600 bg-amber-950/30"><div className="text-amber-400 font-bold">Legendary</div><div className="text-slate-500">×3 value</div></div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm text-center">
+                    <div className="rounded-xl p-3 md:p-4 border border-slate-600 bg-slate-800/50 flex flex-col justify-center">
+                        <div className="text-slate-300 font-bold mb-1">Common</div>
+                        <div className="text-slate-500 text-xs">×1 value</div>
+                    </div>
+                    <div className="rounded-xl p-3 md:p-4 border border-blue-700 bg-blue-950/30 flex flex-col justify-center">
+                        <div className="text-blue-400 font-bold mb-1">Rare</div>
+                        <div className="text-slate-400 text-xs">×1.5 value</div>
+                    </div>
+                    <div className="rounded-xl p-3 md:p-4 border border-purple-700 bg-purple-950/30 flex flex-col justify-center">
+                        <div className="text-purple-400 font-bold mb-1">Epic</div>
+                        <div className="text-slate-400 text-xs">×2 value</div>
+                    </div>
+                    <div className="rounded-xl p-3 md:p-4 border border-amber-600 bg-amber-950/30 flex flex-col justify-center">
+                        <div className="text-amber-400 font-bold mb-1">Legendary</div>
+                        <div className="text-slate-400 text-xs">×3 value</div>
+                    </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">Use 🎲 Reroll Tokens during the level-up screen to refresh your choices.</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-4">Use 🎲 Reroll Tokens during the level-up screen to refresh your choices.</p>
             </SectionCard>
 
             <SectionCard title="👑 Boss Encounters" color="rose">
