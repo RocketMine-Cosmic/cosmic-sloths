@@ -100,7 +100,7 @@ const TABS_CONTENT = {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <PickupCard icon="💠" label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
                     <PickupCard icon="🪙" label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
-                    <PickupCard icon="🎲" label="Reroll Tokens" color="text-purple-400" desc="Dropped by Bosses. Re-roll your level-up choices." />
+                    <PickupCard icon="🧩" label="Relic Fragments" color="text-fuchsia-400" desc="Dropped by Bosses. Craft and upgrade Ancient Relics in the Sloth Lounge." />
                     <PickupCard icon="☢️" label="Nuke" color="text-red-400" desc="Instantly destroys all non-boss enemies on screen." />
                     <PickupCard icon="🧲" label="Magnet Surge" color="text-blue-400" desc="Instantly pulls all nearby XP and Gold to you." />
                     <PickupCard icon="🛡️" label="Shield Overcharge" color="text-cyan-400" desc="10 seconds of full invincibility." />
@@ -130,9 +130,13 @@ const TABS_CONTENT = {
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🌳 Talent Trees</div>
                         <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Each character has a unique skill tree with branching paths. Respec anytime for a Gold refund.</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 md:col-span-2 flex flex-col justify-center">
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">✨ Cosmetics</div>
                         <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Buy flashy trails, kill effects, and character skins. Preview before you buy!</p>
+                    </div>
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-purple-700/50 flex flex-col justify-center shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                        <div className="font-bold text-purple-400 text-sm md:text-base mb-1.5 flex items-center gap-2">💎 Ancient Relics</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Equip Relics for global stat boosts. Use <strong className="text-fuchsia-300">Relic Fragments 🧩</strong> to upgrade them to Level 5!</p>
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-yellow-700/50 md:col-span-2 flex flex-col justify-center shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                         <div className="font-bold text-yellow-400 text-sm md:text-base mb-2 flex items-center gap-2">🔨 The Forge</div>
@@ -169,9 +173,9 @@ const TABS_CONTENT = {
                         { day: 1, icon: '🪙', label: '400' },
                         { day: 2, icon: '🪙', label: '800' },
                         { day: 3, icon: '🪙', label: '1000' },
-                        { day: 4, icon: '🎲', label: '×1' },
+                        { day: 4, icon: '🧩', label: '×1' },
                         { day: 5, icon: '🪙', label: '2000' },
-                        { day: 6, icon: '🎲', label: '×2' },
+                        { day: 6, icon: '🧩', label: '×2' },
                         { day: 7, icon: '🪙', label: '4000', bonus: true },
                     ].map(r => (
                         <div key={r.day} className={`flex flex-col items-center justify-center p-2.5 md:p-3 rounded-xl border text-center transition-transform hover:scale-105 ${r.bonus ? 'bg-amber-900/40 border-amber-500 col-span-4 md:col-span-1 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-800/60 border-slate-700'}`}>
@@ -186,7 +190,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="🎯 Daily Bounties" color="cyan">
                 <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    3 random bounty tasks refresh every day. Complete them to earn <strong className="text-yellow-400">Gold</strong> or <strong className="text-purple-400">Reroll Tokens</strong>. Progress is tracked automatically during your runs.
+                    3 random bounty tasks refresh every day. Complete them to earn <strong className="text-yellow-400">Gold</strong> or <strong className="text-fuchsia-400">Relic Fragments</strong>. Progress is tracked automatically during your runs.
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-2 border border-slate-700">
                     Examples: Kill 200 enemies, Survive 5 minutes, Collect 500 Gold in a single run...
@@ -213,8 +217,8 @@ const TABS_CONTENT = {
                         <div className="text-sm md:text-base text-yellow-400 font-bold">2,500 Gold</div>
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center">
-                        <div className="text-2xl md:text-3xl mb-1.5">🎲</div>
-                        <div className="text-sm md:text-base text-purple-400 font-bold">5 Rerolls</div>
+                        <div className="text-2xl md:text-3xl mb-1.5">🧩</div>
+                        <div className="text-sm md:text-base text-fuchsia-400 font-bold">5 Fragments</div>
                     </div>
                 </div>
             </SectionCard>
@@ -335,16 +339,16 @@ const TABS_CONTENT = {
 
             <SectionCard title="🛡️ Weekly Bounty" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Each week your squad has a kill target based on its level. Hit the target and <strong className="text-white">every member</strong> can individually claim their reward — Gold and Reroll Tokens.
+                    Each week your squad has a kill target based on its level. Hit the target and <strong className="text-white">every member</strong> can individually claim their reward — Gold and Relic Fragments.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie Bounty</div><div className="text-slate-400">2,000 kills → 🪙 500 + 🎲×1</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter Bounty</div><div className="text-slate-400">5,000 kills → 🪙 1,200 + 🎲×2</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter Bounty</div><div className="text-slate-400">10,000 kills → 🪙 2,500 + 🎲×3</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard Bounty</div><div className="text-slate-400">18,000 kills → 🪙 4,000 + 🎲×4</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper Bounty</div><div className="text-slate-400">30,000 kills → 🪙 6,500 + 🎲×5</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend Bounty</div><div className="text-slate-400">50,000 kills → 🪙 10,000 + 🎲×7</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400">75,000 kills → 🪙 15,000 + 🎲×10</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie Bounty</div><div className="text-slate-400">2,000 kills → 🪙 500 + 🧩×1</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter Bounty</div><div className="text-slate-400">5,000 kills → 🪙 1,200 + 🧩×2</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter Bounty</div><div className="text-slate-400">10,000 kills → 🪙 2,500 + 🧩×3</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard Bounty</div><div className="text-slate-400">18,000 kills → 🪙 4,000 + 🧩×4</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper Bounty</div><div className="text-slate-400">30,000 kills → 🪙 6,500 + 🧩×5</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend Bounty</div><div className="text-slate-400">50,000 kills → 🪙 10,000 + 🧩×7</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400">75,000 kills → 🪙 15,000 + 🧩×10</div></div>
                 </div>
             </SectionCard>
 
@@ -467,7 +471,7 @@ const TABS_CONTENT = {
                         <div className="text-slate-400 text-xs">×3 value</div>
                     </div>
                 </div>
-                <p className="text-xs md:text-sm text-slate-500 mt-4">Use 🎲 Reroll Tokens during the level-up screen to refresh your choices.</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400">Cosmic Tokens 💠</strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
             </SectionCard>
 
             <SectionCard title="👑 Boss Encounters" color="rose">
@@ -475,7 +479,7 @@ const TABS_CONTENT = {
                     Bosses appear at the end of certain sectors or every 3 minutes in Endless mode. When a boss is active, normal enemy spawning stops.
                 </p>
                 <p className="text-sm text-slate-300 leading-relaxed">
-                    Defeating a boss drops <strong className="text-purple-400">Reroll Tokens</strong> and rewards you with bonus gold. Boss difficulty scales with game time.
+                    Defeating a boss drops <strong className="text-fuchsia-400">Relic Fragments</strong> and rewards you with bonus gold. Boss difficulty scales with game time.
                 </p>
             </SectionCard>
 
