@@ -477,8 +477,11 @@ export class GameEngine {
                     const dist = Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50;
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
-                    const bossHpMult = 1.5 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 2.0 : 1.0);
-                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.5 : 1.0);
+                    
+                    const sectorDifficultyScale = Math.pow(1.4, arenaIndex);
+                    
+                    const bossHpMult = 1.5 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 2.0 : 1.0) * sectorDifficultyScale;
+                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.5 : 1.0) * sectorDifficultyScale;
                     const speedMult = this.bossModifiers.frenzy ? 1.5 : 1.0;
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
@@ -521,8 +524,11 @@ export class GameEngine {
             
             const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             
-            const hpMult = (1.0 + (3.0 * Math.pow(progress, 1.8))) * this.difficulty.enemyHpMult;
-            const dmgMult = (1.0 + (2.2 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult;
+            // Steeper difficulty curve: exponentially scale HP and Damage based on the sector/arena index
+            const sectorDifficultyScale = Math.pow(1.4, arenaIndex); 
+            
+            const hpMult = (1.0 + (3.0 * Math.pow(progress, 1.8))) * this.difficulty.enemyHpMult * sectorDifficultyScale;
+            const dmgMult = (1.0 + (2.2 * Math.pow(progress, 1.5))) * this.difficulty.enemyDmgMult * sectorDifficultyScale;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
