@@ -1739,7 +1739,16 @@ export class GameEngine {
             // The base sprite sheets are drawn facing left. 
             // So if we are facing right (!facingLeft), we need to mirror them.
             if (!this.player.facingLeft) this.ctx.scale(-1, 1);
+            
+            // Neon Silhouette Outline
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 15;
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+            
+            // Draw again with a tighter blur to create a solid neon edge
+            this.ctx.shadowBlur = 5;
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+            
             this.ctx.restore();
         } else if (this.player.image && this.player.image.complete) {
             const size = this.player.radius * 3;
@@ -1751,7 +1760,15 @@ export class GameEngine {
                 this.ctx.scale(-1, 1);
             }
             
+            // Neon Silhouette Outline
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 15;
             this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+            
+            // Tighter blur for solid edge
+            this.ctx.shadowBlur = 5;
+            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+            
             this.ctx.restore();
         } else {
             this.ctx.fillStyle = this.player.color;
