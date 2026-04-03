@@ -91,8 +91,15 @@ export default function Game() {
                     if (memberships.length > 0) {
                         const squad = await base44.entities.Squad.get(memberships[0].squad_id);
                         if (squad) {
+                            const today = moment().format('YYYY-MM-DD');
+                            let newDailyKills = (squad.daily_kills || 0) + stats.kills;
+                            if (squad.current_day !== today) {
+                                newDailyKills = stats.kills;
+                            }
                             await base44.entities.Squad.update(squad.id, {
-                                weekly_kills: (squad.weekly_kills || 0) + stats.kills
+                                weekly_kills: (squad.weekly_kills || 0) + stats.kills,
+                                daily_kills: newDailyKills,
+                                current_day: today
                             });
                         }
                     }

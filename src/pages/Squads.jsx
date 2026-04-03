@@ -25,10 +25,27 @@ const BOUNTY_TIERS = [
     { minLevel: 7, target: 75000, gold: 15000, fragments: 10, label: 'Cosmic Bounty' },
 ];
 
+const DAILY_BOUNTY_TIERS = [
+    { minLevel: 1, target: 300,  gold: 150,   fragments: 0, cosmic: 1, label: 'Daily Patrol' },
+    { minLevel: 2, target: 800,  gold: 300,   fragments: 0, cosmic: 2, label: 'Daily Sweep' },
+    { minLevel: 3, target: 1500, gold: 600,   fragments: 1, cosmic: 3, label: 'Daily Hunt' },
+    { minLevel: 4, target: 2500, gold: 1000,  fragments: 1, cosmic: 4, label: 'Daily Purge' },
+    { minLevel: 5, target: 4500, gold: 1500,  fragments: 2, cosmic: 5, label: 'Daily Assault' },
+    { minLevel: 6, target: 7500, gold: 2500,  fragments: 2, cosmic: 6, label: 'Daily Crusade' },
+    { minLevel: 7, target: 12000, gold: 4000, fragments: 3, cosmic: 8, label: 'Daily Annihilation' },
+];
+
 function getBountyTier(level) {
-    // Find the highest tier available for this level
     let tier = BOUNTY_TIERS[0];
     for (const t of BOUNTY_TIERS) {
+        if (level >= t.minLevel) tier = t;
+    }
+    return tier;
+}
+
+function getDailyBountyTier(level) {
+    let tier = DAILY_BOUNTY_TIERS[0];
+    for (const t of DAILY_BOUNTY_TIERS) {
         if (level >= t.minLevel) tier = t;
     }
     return tier;
@@ -80,21 +97,34 @@ export default function Squads({ isCarousel }) {
                         
                         // Check weekly reset
                         const currentWeek = getCurrentWeek();
+                        const currentDay = moment().format('YYYY-MM-DD');
+                        let needsUpdate = false;
+                        const updateData = {};
+                        let updatedSquad = squad;
+
                         if (squad.current_week !== currentWeek) {
                             // Award XP from last week's kills before resetting
                             const earnedXp = squad.weekly_kills || 0;
                             const newXp = (squad.xp || 0) + earnedXp;
                             const newLevelData = getSquadLevel(newXp);
-                            const updatedSquad = await base44.entities.Squad.update(squad.id, {
-                                current_week: currentWeek,
-                                weekly_kills: 0,
-                                xp: newXp,
-                                level: newLevelData.level
-                            });
-                            setMySquad(updatedSquad);
-                        } else {
-                            setMySquad(squad);
+                            updateData.current_week = currentWeek;
+                            updateData.weekly_kills = 0;
+                            updateData.xp = newXp;
+                            updateData.level = newLevelData.level;
+                            needsUpdate = true;
                         }
+                        
+                        if (squad.current_day !== currentDay) {
+                            updateData.current_day = currentDay;
+                            updateData.daily_kills = 0;
+                            needsUpdate = true;
+                        }
+
+                        if (needsUpdate) {
+                            updatedSquad = await base44.entities.Squad.update(squad.id, updateData);
+                        }
+                        
+                        setMySquad(updatedSquad);
                     } else {
                         // Load all squads
                         const squads = await base44.entities.Squad.list('-created_date', 50);
@@ -174,6 +204,8 @@ export default function Squads({ isCarousel }) {
                 owner_id: user.id,
                 weekly_kills: 0,
                 current_week: getCurrentWeek(),
+                daily_kills: 0,
+                current_day: moment().format('YYYY-MM-DD'),
                 member_count: 1,
                 xp: 0,
                 level: 1
@@ -186,7 +218,8 @@ export default function Squads({ isCarousel }) {
                 player_name: displayName,
                 player_title: user.data?.player_title || '',
                 role: 'leader',
-                last_payout_week: ''
+                last_payout_week: '',
+                last_daily_payout_date: ''
             });
             
             setMySquad(squad);
@@ -222,7 +255,8 @@ export default function Squads({ isCarousel }) {
                 player_name: displayName,
                 player_title: user.data?.player_title || '',
                 role: 'member',
-                last_payout_week: ''
+                last_payout_week: '',
+                last_daily_payout_date: ''
             });
             
             await base44.entities.SquadMessage.create({
@@ -409,6 +443,38 @@ export default function Squads({ isCarousel }) {
         }
     };
 
+    const handleClaimDaily = async () => {
+        if (!mySquad || !myMemberRecord) return;
+        const currentDay = moment().format('YYYY-MM-DD');
+        const tier = getDailyBountyTier(mySquad.level || 1);
+        
+        if ((mySquad.daily_kills || 0) >= tier.target && myMemberRecord.last_daily_payout_date !== currentDay) {
+            try {
+                SoundManager.playGoldPickup();
+                
+                // Update local save
+                const currentSave = SaveManager.load();
+                currentSave.gold += tier.gold;
+                currentSave.relicFragments = (currentSave.relicFragments || 0) + tier.fragments;
+                currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + tier.cosmic;
+                SaveManager.save(currentSave);
+                
+                // Update member record
+                const updatedMember = await base44.entities.SquadMember.update(myMemberRecord.id, {
+                    last_daily_payout_date: currentDay
+                });
+                setMyMemberRecord(updatedMember);
+                
+                toast({
+                    title: "Daily Bounty Claimed!",
+                    description: `You received ${tier.gold.toLocaleString()} Gold${tier.fragments > 0 ? `, ${tier.fragments} Fragments` : ''} and ${tier.cosmic} Cosmic Tokens!`,
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    };
+
     if (!user) return <div className="p-8 text-white">Loading...</div>;
 
     return (
@@ -550,6 +616,11 @@ export default function Squads({ isCarousel }) {
                             const kills = mySquad.weekly_kills || 0;
                             const isComplete = kills >= tier.target;
                             const isClaimed = myMemberRecord?.last_payout_week === getCurrentWeek();
+                            
+                            const dailyTier = getDailyBountyTier(mySquad.level || 1);
+                            const dailyKills = mySquad.daily_kills || 0;
+                            const isDailyComplete = dailyKills >= dailyTier.target;
+                            const isDailyClaimed = myMemberRecord?.last_daily_payout_date === moment().format('YYYY-MM-DD');
                             return (
                                 <>
                                 {/* MOBILE compact strip */}
@@ -576,7 +647,21 @@ export default function Squads({ isCarousel }) {
                                     <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
                                         <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress}%`, background: lvlData.borderColor }} />
                                     </div>
-                                    {/* Bounty progress row */}
+                                    {/* Daily Bounty progress row */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Shield className="w-3 h-3 text-cyan-400 shrink-0" />
+                                        <span className="text-[10px] text-slate-400 flex-1 truncate">{dailyTier.label}: {Math.min(dailyKills, dailyTier.target).toLocaleString()}/{dailyTier.target.toLocaleString()}</span>
+                                        <div className="w-20 bg-slate-800 h-2 rounded-full overflow-hidden shrink-0">
+                                            <div className="bg-gradient-to-r from-cyan-600 to-cyan-300 h-full" style={{ width: `${Math.min(100, (dailyKills / dailyTier.target) * 100)}%` }} />
+                                        </div>
+                                        {isDailyComplete && !isDailyClaimed && (
+                                            <button onClick={handleClaimDaily} className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold animate-pulse shrink-0">
+                                                CLAIM
+                                            </button>
+                                        )}
+                                        {isDailyClaimed && <span className="text-[10px] text-emerald-500 font-bold shrink-0">✓ Claimed</span>}
+                                    </div>
+                                    {/* Weekly Bounty progress row */}
                                     <div className="flex items-center gap-2">
                                         <Shield className="w-3 h-3 text-yellow-400 shrink-0" />
                                         <span className="text-[10px] text-slate-400 flex-1 truncate">{tier.label}: {Math.min(kills, tier.target).toLocaleString()}/{tier.target.toLocaleString()}</span>
@@ -631,42 +716,90 @@ export default function Squads({ isCarousel }) {
                                             </div>
                                             {nextLvl && <div className="text-[10px] text-slate-500 mt-1">Next: {nextLvl.badge} {nextLvl.name} — earned at end of each week</div>}
                                         </div>
-                                        <div className="border-t border-slate-800 pt-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <h3 className="text-sm font-bold text-yellow-400 flex items-center gap-2">
-                                                    <Shield className="w-4 h-4" /> {tier.label}
-                                                </h3>
-                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: lvlData.borderColor, background: lvlData.glowColor }}>
-                                                    Lv.{mySquad.level || 1}
-                                                </span>
-                                            </div>
-                                            <div className="text-xs text-slate-300 mb-2">Defeat {tier.target.toLocaleString()} enemies together this week.</div>
-                                            <div className="flex gap-2 mb-3">
-                                                <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                    <div className="text-base">🪙</div>
-                                                    <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()}</div>
+                                        <div className="border-t border-slate-800 pt-4 flex flex-col gap-4">
+                                            {/* Daily Bounty */}
+                                            <div className="bg-slate-900/50 rounded-xl p-3 border border-cyan-900/40">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h3 className="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                                                        <Shield className="w-4 h-4" /> {dailyTier.label} (Daily)
+                                                    </h3>
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/50 bg-cyan-950/50 text-cyan-300">
+                                                        Lv.{mySquad.level || 1}
+                                                    </span>
                                                 </div>
-                                                <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                    <div className="text-base">🧩</div>
-                                                    <div className="text-xs font-bold text-fuchsia-400">×{tier.fragments}</div>
+                                                <div className="text-xs text-slate-300 mb-2">Defeat {dailyTier.target.toLocaleString()} enemies today.</div>
+                                                <div className="flex gap-2 mb-3">
+                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                        <div className="text-sm">🪙</div>
+                                                        <div className="text-xs font-bold text-yellow-400">{dailyTier.gold.toLocaleString()}</div>
+                                                    </div>
+                                                    {dailyTier.fragments > 0 && (
+                                                        <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                            <div className="text-sm">🧩</div>
+                                                            <div className="text-xs font-bold text-fuchsia-400">×{dailyTier.fragments}</div>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                        <div className="text-sm">💠</div>
+                                                        <div className="text-xs font-bold text-emerald-400">×{dailyTier.cosmic}</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex justify-between text-xs font-bold mb-1">
-                                                <span className="text-slate-400">Progress</span>
-                                                <span className="text-white">{Math.min(kills, tier.target).toLocaleString()} / {tier.target.toLocaleString()}</span>
-                                            </div>
-                                            <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700 mb-3">
-                                                <div className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full transition-all duration-500" style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }} />
-                                            </div>
-                                            {isComplete && !isClaimed ? (
-                                                <button onClick={handleClaimWeekly} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
-                                                    <Gift className="w-4 h-4" /> CLAIM WEEKLY PAYOUT
-                                                </button>
-                                            ) : isClaimed ? (
-                                                <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-2 rounded-lg border border-emerald-900/50">
-                                                    ✓ PAYOUT CLAIMED FOR THIS WEEK
+                                                <div className="flex justify-between text-xs font-bold mb-1">
+                                                    <span className="text-slate-400">Progress</span>
+                                                    <span className="text-white">{Math.min(dailyKills, dailyTier.target).toLocaleString()} / {dailyTier.target.toLocaleString()}</span>
                                                 </div>
-                                            ) : null}
+                                                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700 mb-3">
+                                                    <div className="bg-gradient-to-r from-cyan-600 to-cyan-300 h-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyKills / dailyTier.target) * 100)}%` }} />
+                                                </div>
+                                                {isDailyComplete && !isDailyClaimed ? (
+                                                    <button onClick={handleClaimDaily} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 text-xs rounded-lg flex items-center justify-center gap-1.5 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                                        <Gift className="w-3 h-3" /> CLAIM DAILY
+                                                    </button>
+                                                ) : isDailyClaimed ? (
+                                                    <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-1.5 rounded-lg border border-emerald-900/50">
+                                                        ✓ CLAIMED FOR TODAY
+                                                    </div>
+                                                ) : null}
+                                            </div>
+
+                                            {/* Weekly Bounty */}
+                                            <div className="bg-slate-900/50 rounded-xl p-3 border border-yellow-900/40">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h3 className="text-sm font-bold text-yellow-400 flex items-center gap-2">
+                                                        <Shield className="w-4 h-4" /> {tier.label} (Weekly)
+                                                    </h3>
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/50 bg-yellow-950/50 text-yellow-300">
+                                                        Lv.{mySquad.level || 1}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs text-slate-300 mb-2">Defeat {tier.target.toLocaleString()} enemies this week.</div>
+                                                <div className="flex gap-2 mb-3">
+                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                        <div className="text-sm">🪙</div>
+                                                        <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()}</div>
+                                                    </div>
+                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
+                                                        <div className="text-sm">🧩</div>
+                                                        <div className="text-xs font-bold text-fuchsia-400">×{tier.fragments}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between text-xs font-bold mb-1">
+                                                    <span className="text-slate-400">Progress</span>
+                                                    <span className="text-white">{Math.min(kills, tier.target).toLocaleString()} / {tier.target.toLocaleString()}</span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700 mb-3">
+                                                    <div className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full transition-all duration-500" style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }} />
+                                                </div>
+                                                {isComplete && !isClaimed ? (
+                                                    <button onClick={handleClaimWeekly} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 text-xs rounded-lg flex items-center justify-center gap-1.5 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                                        <Gift className="w-3 h-3" /> CLAIM WEEKLY
+                                                    </button>
+                                                ) : isClaimed ? (
+                                                    <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-1.5 rounded-lg border border-emerald-900/50">
+                                                        ✓ CLAIMED FOR THIS WEEK
+                                                    </div>
+                                                ) : null}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

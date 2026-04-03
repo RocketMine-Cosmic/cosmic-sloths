@@ -25,6 +25,13 @@
     "current_week": {
       "type": "string"
     },
+    "daily_kills": {
+      "type": "number",
+      "default": 0
+    },
+    "current_day": {
+      "type": "string"
+    },
     "member_count": {
       "type": "number",
       "default": 1
