@@ -25,6 +25,7 @@ import GlobalRaid from './pages/GlobalRaid';
 import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
+import GamepadManager from './components/GamepadManager';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -113,6 +114,7 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
+        <GamepadManager />
         <Router>
           <AuthenticatedApp />
         </Router>

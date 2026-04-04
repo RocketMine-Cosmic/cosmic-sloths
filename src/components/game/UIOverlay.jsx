@@ -80,6 +80,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     
                     <div className="flex flex-col gap-1 md:gap-2 justify-center">
                         <button 
+                            id="pause-game-btn"
                             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
                             className="bg-[#0b0416]/90 p-1.5 md:p-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none h-full"
                             style={{ touchAction: 'none' }}
