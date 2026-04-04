@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function GameOverModal({ stats }) {
     const navigate = useNavigate();
+    const location = useLocation();
     
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
@@ -60,7 +61,10 @@ export default function GameOverModal({ stats }) {
                         Sloth Lounge
                     </button>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={() => {
+                            const currentState = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+                            navigate('/game', { state: { ...currentState, _retry: Date.now() }, replace: true });
+                        }}
                         className="bg-red-600 hover:bg-red-500 text-white px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
                     >
                         Try Again
