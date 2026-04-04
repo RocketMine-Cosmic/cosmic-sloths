@@ -179,13 +179,14 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'supernova_beam') {
-            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.8;
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = p.color || '#ffaa00';
-            ctx.shadowBlur = 25;
+            ctx.shadowBlur = 10;
             ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
             ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 1.0;
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
@@ -248,23 +249,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'hellfire') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.25 + Math.sin(time * 8 + p.x) * 0.1;
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.15 + Math.sin(time * 8 + p.x) * 0.05;
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = p.color || '#00bbff';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 10;
             ctx.beginPath();
             ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'quantum_collapse') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.4;
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.25;
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 25;
+            ctx.shadowBlur = 15;
             ctx.beginPath();
             ctx.arc(0, 0, p.radius * 0.6, 0, Math.PI*2);
             ctx.fill();
@@ -272,26 +272,25 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             
             ctx.strokeStyle = '#ffffff';
             ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 8;
+            ctx.shadowBlur = 10;
+            ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, 0, Math.PI*2);
             ctx.stroke();
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'aegis_matrix') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.15;
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.1;
             ctx.fillStyle = p.color || '#00ff88';
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, 0, Math.PI*2);
             ctx.fill();
             
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = 0.6;
             ctx.strokeStyle = '#ffffff';
             ctx.shadowColor = p.color || '#00ff88';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 10;
             ctx.lineWidth = 4;
             ctx.setLineDash([20, 20]);
             ctx.lineDashOffset = -time * 100;
@@ -305,7 +304,6 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.arc(0, 0, p.radius - 12, 0, Math.PI*2);
             ctx.stroke();
             ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';

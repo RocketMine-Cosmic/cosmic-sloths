@@ -334,7 +334,7 @@ export function fireWeaponLogic(engine, w) {
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
                 engine.damageEnemy(e, dmg);
-                engine.addParticle(e.x, e.y, '#ff00ff', 8, 'spark', 1.5);
+                if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 4, 'spark', 1.5);
                 hitAny = true;
                 hitX = e.x;
                 hitY = e.y;
@@ -366,7 +366,7 @@ export function fireWeaponLogic(engine, w) {
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
                 engine.damageEnemy(e, dmg);
-                engine.addParticle(e.x, e.y, '#ff4500', 10, 'spark', 2);
+                if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff4500', 4, 'spark', 1.5);
                 
                 engine.projectiles.push({
                     x: e.x, y: e.y,
@@ -424,15 +424,19 @@ export function fireWeaponLogic(engine, w) {
             type: 'shockwave',
             size: 20 * area, growthRate: 1200 * area, lineWidth: 10
         });
+        let totalHeal = 0;
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 180 * area) {
                 engine.damageEnemy(e, dmg);
-                engine.addParticle(e.x, e.y, '#ff0000', 12, 'spark', 2.5);
-                engine.addParticle(e.x, e.y, '#ff00ff', 8, 'spark', 2);
-                engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + (dmg * 0.1));
-                engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
+                if (Math.random() < 0.2) engine.addParticle(e.x, e.y, '#ff0000', 4, 'spark', 1.5);
+                totalHeal += dmg * 0.01;
             }
         });
+        if (totalHeal > 0) {
+            totalHeal = Math.min(totalHeal, engine.player.maxHp * 0.05); // Cap at 5% max HP per swing
+            engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + totalHeal);
+            engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
+        }
     }
     else if (w.id === 'orbitalDefense') {
         const count = 4 + Math.floor(w.level / 2);
@@ -522,7 +526,7 @@ export function fireWeaponLogic(engine, w) {
             life: 2.5,
             color: '#00ff88',
             isAoe: true,
-            pushback: 500,
+            pushback: 300,
             isMastered: true,
             weaponId: 'shieldBubble',
             type: 'aegis_matrix'

@@ -45,12 +45,12 @@ export const WEAPONS = {
   orbitalLasers: { id: 'orbitalLasers', name: 'Orbital Lasers', type: 'weapon', desc: 'SYNERGY: Drones that rapidly fire piercing beams.', baseDamage: 15, baseCooldown: 60, baseArea: 1.2, isSynergy: true },
   seismicWhip: { id: 'seismicWhip', name: 'Seismic Whip', type: 'weapon', desc: 'SYNERGY: Whip strikes generate expanding shockwaves.', baseDamage: 25, baseCooldown: 40, baseArea: 1.5, isSynergy: true },
   flamingLash: { id: 'flamingLash', name: 'Flaming Lash', type: 'weapon', desc: 'SYNERGY: A molten whip that leaves persistent fire.', baseDamage: 20, baseCooldown: 40, baseArea: 1.5, isSynergy: true },
-  supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 40, baseCooldown: 40, baseArea: 2, isEvolution: true },
-  vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals massively and covers screen.', baseDamage: 30, baseCooldown: 30, baseArea: 3, isEvolution: true },
+  supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 40, baseCooldown: 80, baseArea: 1.5, isEvolution: true },
+  vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals slightly and covers screen.', baseDamage: 30, baseCooldown: 70, baseArea: 2.2, isEvolution: true },
   orbitalDefense: { id: 'orbitalDefense', name: 'Orbital Defense Network', type: 'weapon', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.', baseDamage: 20, baseCooldown: 60, baseArea: 2, isEvolution: true },
-  hellfire: { id: 'hellfire', name: 'Hellfire', type: 'weapon', desc: 'EVOLVED: Blue flames that persist and melt everything.', baseDamage: 15, baseCooldown: 90, baseArea: 2, isEvolution: true },
-  quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Constant rapid pulses of dark energy.', baseDamage: 50, baseCooldown: 90, baseArea: 2, isEvolution: true },
-  aegisMatrix: { id: 'aegisMatrix', name: 'Aegis Matrix', type: 'weapon', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.', baseDamage: 30, baseCooldown: 120, baseArea: 2, isEvolution: true },
+  hellfire: { id: 'hellfire', name: 'Hellfire', type: 'weapon', desc: 'EVOLVED: Blue flames that persist and melt everything.', baseDamage: 12, baseCooldown: 100, baseArea: 1.5, isEvolution: true },
+  quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Constant rapid pulses of dark energy.', baseDamage: 40, baseCooldown: 100, baseArea: 2, isEvolution: true },
+  aegisMatrix: { id: 'aegisMatrix', name: 'Aegis Matrix', type: 'weapon', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.', baseDamage: 25, baseCooldown: 140, baseArea: 2, isEvolution: true },
 };
 
 export const BOUNTIES_POOL = [
