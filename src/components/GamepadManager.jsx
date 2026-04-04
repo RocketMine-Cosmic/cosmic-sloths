@@ -34,7 +34,8 @@ export default function GamepadManager() {
 
         const handleUserInteraction = (e) => {
             if (e.type === 'mousemove') {
-                if (Math.abs(e.movementX) < 3 && Math.abs(e.movementY) < 3) return;
+                if (e.movementX === undefined && e.movementY === undefined) return;
+                if (Math.abs(e.movementX || 0) < 3 && Math.abs(e.movementY || 0) < 3) return;
             }
             if (isGamepadActive) {
                 isGamepadActive = false;
@@ -50,7 +51,7 @@ export default function GamepadManager() {
 
         const getFocusableElements = () => {
             let container = document;
-            const modal = document.querySelector('.z-50.inset-0');
+            const modal = document.querySelector('.z-50');
             if (modal) {
                 container = modal;
             }
@@ -142,7 +143,7 @@ export default function GamepadManager() {
 
         const checkGamepad = () => {
             const inGame = window.location.pathname.includes('/game');
-            const modalOpen = document.querySelector('.z-50.inset-0') !== null;
+            const modalOpen = document.querySelector('.z-50') !== null;
             const uiActive = !inGame || modalOpen;
 
             if (typeof navigator !== 'undefined' && navigator.getGamepads) {
