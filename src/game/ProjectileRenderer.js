@@ -179,13 +179,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'supernova_beam') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ffaa00';
-            ctx.shadowBlur = 10;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.9;
+            // Outer casing
+            ctx.fillStyle = p.color || '#ffaa00';
             ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
+            // Inner hot core
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.0, p.radius * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+            // Segmented energy rings
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            for (let i = -2; i <= 2; i++) {
+                ctx.beginPath();
+                ctx.ellipse(i * p.radius * 0.8, 0, p.radius * 0.2, p.radius * 1.0, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
             ctx.globalCompositeOperation = 'lighter';
@@ -201,31 +210,30 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.15;
-            const grad = ctx.createRadialGradient(0, 0, Math.max(0.1, p.radius * 0.5), 0, 0, Math.max(0.1, p.radius));
-            grad.addColorStop(0, 'transparent');
-            grad.addColorStop(0.8, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.7;
+            
+            ctx.strokeStyle = p.color || '#ffffff';
+            ctx.lineWidth = 4;
+            
+            // Draw a gear-like boundary
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
-            ctx.fill();
-
-            ctx.globalAlpha = Math.min(1, p.life * 2);
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 3;
-            ctx.setLineDash([10, 15]);
-            ctx.lineDashOffset = -time * 40;
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+            const spikes = p.type === 'burning_barrier' ? 12 : 8;
+            for (let i = 0; i < spikes * 2; i++) {
+                const angle = (Math.PI * 2 / (spikes * 2)) * i + (time * 2);
+                const r = i % 2 === 0 ? p.radius : p.radius * 0.85;
+                if (i === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
+            ctx.closePath();
             ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.shadowBlur = 0;
+            
+            // Inner hollow core
+            ctx.globalAlpha = 0.15;
+            ctx.fillStyle = p.color || '#ffffff';
+            ctx.fill();
+            
             ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = Math.min(1, p.life) * 0.25;
@@ -249,61 +257,84 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'hellfire') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.15 + Math.sin(time * 8 + p.x) * 0.05;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00bbff';
-            ctx.shadowBlur = 10;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = p.color || '#00bbff';
+            
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
+            for (let i = 0; i < 20; i++) {
+                const angle = (Math.PI * 2 / 20) * i;
+                const wave = Math.sin(time * 10 + i * 2) * (p.radius * 0.15);
+                const r = p.radius * 0.75 + wave;
+                if (i === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
+            ctx.closePath();
             ctx.fill();
-            ctx.shadowBlur = 0;
+            
+            ctx.fillStyle = '#110022';
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'quantum_collapse') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.25;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 15;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.8;
+            ctx.strokeStyle = p.color || '#ff00ff';
+            ctx.lineWidth = 6;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 0.6, 0, Math.PI*2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            // Draw an octagram (8-pointed star)
+            for (let i = 0; i < 16; i++) {
+                const angle = (Math.PI * 2 / 16) * i + time;
+                const r = i % 2 === 0 ? p.radius : p.radius * 0.5;
+                if (i === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
+            ctx.closePath();
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
+            ctx.fillStyle = '#110022';
+            ctx.globalAlpha = 0.6;
+            ctx.fill();
+            
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.2, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'aegis_matrix') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.1;
-            ctx.fillStyle = p.color || '#00ff88';
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.fill();
-            
-            ctx.globalAlpha = 0.6;
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ff88';
-            ctx.shadowBlur = 10;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.7;
+            ctx.strokeStyle = p.color || '#00ff88';
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.15)';
             ctx.lineWidth = 4;
-            ctx.setLineDash([20, 20]);
-            ctx.lineDashOffset = -time * 100;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.stroke();
-            ctx.setLineDash([]);
             
-            ctx.lineWidth = 2;
+            ctx.rotate(time * 0.5);
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius - 12, 0, Math.PI*2);
+            // Draw a hexagon
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI * 2 / 6) * i;
+                if (i === 0) ctx.moveTo(Math.cos(angle) * p.radius, Math.sin(angle) * p.radius);
+                else ctx.lineTo(Math.cos(angle) * p.radius, Math.sin(angle) * p.radius);
+            }
+            ctx.closePath();
+            ctx.fill();
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
+            // Inner rotating triangle
+            ctx.rotate(-time * 1.5);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let i = 0; i < 3; i++) {
+                const angle = (Math.PI * 2 / 3) * i;
+                const r = p.radius * 0.5;
+                if (i === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
         } else if (p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
