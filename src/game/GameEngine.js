@@ -1475,86 +1475,35 @@ export class GameEngine {
         drawProjectiles(this.ctx, this.projectiles, this.particleManager, this.time, camX, camY, vWidth, vHeight);
 
         if (this.hazards) {
-            this.ctx.globalCompositeOperation = 'screen';
             this.hazards.forEach(h => {
                 this.ctx.save();
                 this.ctx.translate(h.x, h.y);
-                
+                this.ctx.rotate(this.time);
+                this.ctx.beginPath();
+                const spikes = 12;
+                for (let i = 0; i < spikes * 2; i++) {
+                    const a = (Math.PI * 2 / (spikes * 2)) * i;
+                    const r = i % 2 === 0 ? h.radius : h.radius * 0.8;
+                    this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                }
+                this.ctx.closePath();
                 if (h.active) {
-                    // Explosion blast
-                    const blastRatio = h.timer / 0.5; // active for 0.5s, timer goes down to 0
-                    this.ctx.globalAlpha = blastRatio;
-                    
-                    const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, h.radius * 1.5);
-                    grad.addColorStop(0, '#ffffff');
-                    grad.addColorStop(0.2, '#ffaa00');
-                    grad.addColorStop(0.6, '#ff0000');
-                    grad.addColorStop(1, 'transparent');
-                    
-                    this.ctx.fillStyle = grad;
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, h.radius * 1.5, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    
-                    // Spiky inner blast
-                    this.ctx.rotate(this.time * 5);
-                    this.ctx.fillStyle = '#ffffff';
-                    this.ctx.beginPath();
-                    const spikes = 12;
-                    for (let i = 0; i < spikes * 2; i++) {
-                        const a = (Math.PI * 2 / (spikes * 2)) * i;
-                        const r = i % 2 === 0 ? h.radius * 1.2 : h.radius * 0.5;
-                        if (i === 0) this.ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-                        else this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-                    }
-                    this.ctx.closePath();
+                    this.ctx.fillStyle = 'rgba(255, 69, 0, 0.8)';
                     this.ctx.fill();
                 } else {
-                    // Warning lock-on phase
-                    // h.timer starts at 2.0 and goes to 0
-                    const pulse = Math.sin(h.timer * 15) * 0.5 + 0.5; // fast pulse
-                    const warningScale = 1 + (h.timer / 2.0); // shrinks inward
-                    
-                    this.ctx.scale(warningScale, warningScale);
-                    this.ctx.rotate(this.time * 2);
-                    
-                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + pulse * 0.1})`;
-                    this.ctx.strokeStyle = `rgba(255, 50, 0, ${0.5 + pulse * 0.5})`;
-                    this.ctx.lineWidth = 2;
-                    
-                    // Center warning zone
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + (2 - h.timer) * 0.2})`;
                     this.ctx.fill();
-                    this.ctx.stroke();
-                    
-                    // Crosshairs
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(-h.radius * 1.3, 0);
-                    this.ctx.lineTo(-h.radius * 0.8, 0);
-                    this.ctx.moveTo(h.radius * 1.3, 0);
-                    this.ctx.lineTo(h.radius * 0.8, 0);
-                    this.ctx.moveTo(0, -h.radius * 1.3);
-                    this.ctx.lineTo(0, -h.radius * 0.8);
-                    this.ctx.moveTo(0, h.radius * 1.3);
-                    this.ctx.lineTo(0, h.radius * 0.8);
-                    
-                    // Corner targets
-                    const s = h.radius * 0.8;
-                    const c = h.radius * 0.6;
-                    this.ctx.moveTo(-s, -c); this.ctx.lineTo(-s, -s); this.ctx.lineTo(-c, -s);
-                    this.ctx.moveTo(s, -c); this.ctx.lineTo(s, -s); this.ctx.lineTo(c, -s);
-                    this.ctx.moveTo(-s, c); this.ctx.lineTo(-s, s); this.ctx.lineTo(-c, s);
-                    this.ctx.moveTo(s, c); this.ctx.lineTo(s, s); this.ctx.lineTo(c, s);
-                    
+                    this.ctx.strokeStyle = '#ff0000';
+                    this.ctx.lineWidth = 2;
                     this.ctx.stroke();
                 }
                 this.ctx.restore();
             });
-            this.ctx.globalCompositeOperation = 'source-over';
         }
 
         if (this.enemyProjectiles) {
+            this.ctx.globalCompositeOperation = 'screen';
+            const texStar = this.particleManager?.textures?.star;
             this.enemyProjectiles.forEach(p => {
                 this.ctx.save();
                 this.ctx.translate(p.x, p.y);
@@ -1562,33 +1511,31 @@ export class GameEngine {
                     this.ctx.rotate(Math.atan2(p.vy, p.vx));
                 }
                 
-                // Sharp glowing diamond for enemy projectiles
-                this.ctx.globalCompositeOperation = 'source-over';
-                
-                // Fast simulated glow
+                this.ctx.globalAlpha = 0.3;
                 this.ctx.fillStyle = p.color || '#ff0000';
-                this.ctx.globalAlpha = 0.2;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, p.radius * 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius * 1.2, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.globalAlpha = 1.0;
-                
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath();
-                this.ctx.moveTo(p.radius * 2.5, 0); // Front point (elongated)
-                this.ctx.lineTo(0, p.radius * 1.2);    // Right point
-                this.ctx.lineTo(-p.radius * 1.5, 0); // Back point
-                this.ctx.lineTo(0, -p.radius * 1.2);   // Left point
-                this.ctx.closePath();
-                this.ctx.fill();
-                
-                // Colored outer outline
-                this.ctx.strokeStyle = p.color || '#ff0000';
-                this.ctx.lineWidth = 2;
-                this.ctx.stroke();
-                
+
+                if (texStar && texStar.isReady) {
+                    this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
+                } else {
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(p.radius, 0);
+                    this.ctx.lineTo(-p.radius, p.radius*0.5);
+                    this.ctx.lineTo(-p.radius*0.5, 0);
+                    this.ctx.lineTo(-p.radius, -p.radius*0.5);
+                    this.ctx.fill();
+                }
                 this.ctx.restore();
             });
+            this.ctx.globalCompositeOperation = 'source-over';
         }
 
         const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
@@ -1822,19 +1769,17 @@ export class GameEngine {
             
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
-            
-            // Fast simulated glow behind player
-            this.ctx.fillStyle = this.player.color;
-            this.ctx.globalAlpha = 0.3;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
-            
             // The base sprite sheets are drawn facing left. 
             // So if we are facing right (!facingLeft), we need to mirror them.
             if (!this.player.facingLeft) this.ctx.scale(-1, 1);
             
+            // Neon Silhouette Outline
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 15;
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+            
+            // Draw again with a tighter blur to create a solid neon edge
+            this.ctx.shadowBlur = 5;
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
             
             this.ctx.restore();
@@ -1844,18 +1789,17 @@ export class GameEngine {
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
             
-            // Fast simulated glow behind player
-            this.ctx.fillStyle = this.player.color;
-            this.ctx.globalAlpha = 0.3;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
-            
             if (this.player.facingLeft) {
                 this.ctx.scale(-1, 1);
             }
             
+            // Neon Silhouette Outline
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 15;
+            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+            
+            // Tighter blur for solid edge
+            this.ctx.shadowBlur = 5;
             this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
             
             this.ctx.restore();
