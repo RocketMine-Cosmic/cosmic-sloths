@@ -120,23 +120,38 @@ export default function GamepadManager() {
                 }
             });
 
-            if (bestCandidate) {
-                bestCandidate.focus({ preventScroll: true });
-                
-                const scrollContainer = bestCandidate.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+            const focusAndScroll = (el) => {
+                el.focus({ preventScroll: true });
+                const scrollContainer = el.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
                 if (scrollContainer) {
                     const containerRect = scrollContainer.getBoundingClientRect();
-                    const elRect = bestCandidate.getBoundingClientRect();
+                    const elRect = el.getBoundingClientRect();
                     const targetTop = scrollContainer.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 2) + (elRect.height / 2);
                     scrollContainer.scrollTo({ top: targetTop, behavior: 'auto' });
                 } else {
-                    const elRect = bestCandidate.getBoundingClientRect();
+                    const elRect = el.getBoundingClientRect();
                     const targetTop = window.scrollY + elRect.top - (window.innerHeight / 2) + (elRect.height / 2);
                     window.scrollTo({ top: targetTop, behavior: 'auto' });
                 }
+            };
+
+            if (bestCandidate) {
+                focusAndScroll(bestCandidate);
             } else {
-                if (!active || !focusable.includes(active)) {
-                    focusable[0].focus({ preventScroll: true });
+                // Fallback to 1D array wrapping if 2D spatial math fails or reaches an edge
+                const activeIndex = focusable.indexOf(active);
+                if (activeIndex !== -1) {
+                    let nextIndex = activeIndex;
+                    if (dirY > 0 || dirX > 0) {
+                        nextIndex = (activeIndex + 1) % focusable.length;
+                    } else if (dirY < 0 || dirX < 0) {
+                        nextIndex = (activeIndex - 1 + focusable.length) % focusable.length;
+                    }
+                    if (nextIndex !== activeIndex && focusable[nextIndex]) {
+                        focusAndScroll(focusable[nextIndex]);
+                    }
+                } else if (focusable.length > 0) {
+                    focusAndScroll(focusable[0]);
                 }
             }
         };
