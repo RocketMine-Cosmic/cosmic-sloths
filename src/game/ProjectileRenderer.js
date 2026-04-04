@@ -22,7 +22,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             
-            if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun') {
+            if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot') {
                 ctx.beginPath();
                 ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.5), 0, 0, Math.PI * 2);
                 ctx.fill();
@@ -71,7 +71,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.strokeStyle = p.color; ctx.lineWidth = Math.max(2, 6 * p.life); ctx.stroke();
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'beam' || p.type === 'dual_laser') {
+        } else if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'blaster_shot') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.fillStyle = '#ffffff';
             ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2), Math.max(0.1, p.radius * 0.5), 0, 0, Math.PI * 2); ctx.fill();
