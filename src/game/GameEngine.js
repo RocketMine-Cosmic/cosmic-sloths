@@ -182,7 +182,7 @@ export class GameEngine {
         this.level = 1;
         this.xp = 0;
         this.banishedUpgrades = new Set();
-        this.xpRequired = 10;
+        this.xpRequired = 25;
         this.gold = 0;
         this.kills = 0;
 
@@ -839,10 +839,10 @@ export class GameEngine {
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                     this.isBossActive = false;
                 } else {
-                    if (Math.random() < 0.50 + (this.player.luck * 0.05)) {
-                        const goldValue = 5 + Math.floor(this.time / 15);
-                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 3) : 1;
-                        const goldCount = e.isElite ? 3 : 1;
+                    if (Math.random() < 0.20 + (this.player.luck * 0.02)) {
+                        const goldValue = 2 + Math.floor(this.time / 60);
+                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 2) : 1;
+                        const goldCount = e.isElite ? 2 : 1;
                         for (let gi = 0; gi < goldCount; gi++) {
                             this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });
                         }
@@ -1185,7 +1185,7 @@ export class GameEngine {
     levelUp() {
         this.xp -= this.xpRequired;
         this.level++;
-        this.xpRequired = Math.floor(this.xpRequired * 1.1 + 20);
+        this.xpRequired = Math.floor(this.xpRequired * 1.2 + 40);
         
         // Scale stats and fully heal
         this.player.maxHp = Math.floor(this.player.maxHp * 1.05);

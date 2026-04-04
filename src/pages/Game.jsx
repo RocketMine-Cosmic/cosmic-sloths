@@ -108,8 +108,8 @@ export default function Game() {
                 }
 
                 const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
-                const arenaMultiplier = isEndless ? 3.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
-                const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20 + (isVictory ? 5000 : 0);
+                const arenaMultiplier = isEndless ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
+                const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + (isVictory ? 5000 : 0);
                 const currentSaveForScore = SaveManager.load();
                 const bulletHellMult = (currentSaveForScore.bossModifiers && currentSaveForScore.bossModifiers.bullet_hell) ? 1.3 : 1.0;
                 const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
@@ -229,8 +229,8 @@ export default function Game() {
                 SaveManager.save(currentSave);
                 const currentSaveForGameOver = SaveManager.load();
                 const goArenaIndex = ARENAS.findIndex(a => a.id === arenaId);
-                const goArenaMult = isEndless ? 3.0 : 1.0 + (Math.max(0, goArenaIndex) * 0.2);
-                const goBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20;
+                const goArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, goArenaIndex) * 0.2);
+                const goBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5;
                 const goBHMult = (currentSaveForGameOver.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
                 stats.score = Math.floor(goBase * goArenaMult * goBHMult);
                 setGameOverStats(stats);
@@ -274,8 +274,8 @@ export default function Game() {
                 SaveManager.save(currentSave);
                 const currentSaveForVictory = SaveManager.load();
                 const vicArenaIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
-                const vicArenaMult = isEndless ? 3.0 : 1.0 + (Math.max(0, vicArenaIndex) * 0.2);
-                const vicBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 20 + 5000;
+                const vicArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, vicArenaIndex) * 0.2);
+                const vicBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + 5000;
                 const vicBHMult = (currentSaveForVictory.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
                 stats.score = Math.floor(vicBase * vicArenaMult * vicBHMult);
                 setVictoryStats(stats);
