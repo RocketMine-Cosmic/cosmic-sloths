@@ -329,9 +329,40 @@ export class GameEngine {
         if (this.keys['a'] || this.keys['arrowleft']) dx -= 1;
         if (this.keys['d'] || this.keys['arrowright']) dx += 1;
         
+        let usingGamepad = false;
+        if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+            const gamepads = navigator.getGamepads();
+            for (let i = 0; i < gamepads.length; i++) {
+                const gp = gamepads[i];
+                if (gp && gp.connected) {
+                    const axeX = gp.axes[0] || 0;
+                    const axeY = gp.axes[1] || 0;
+                    const deadzone = 0.15;
+                    
+                    if (Math.abs(axeX) > deadzone || Math.abs(axeY) > deadzone) {
+                        dx = axeX;
+                        dy = axeY;
+                        usingGamepad = true;
+                    }
+                    
+                    if (gp.buttons[12] && gp.buttons[12].pressed) { dy = -1; usingGamepad = true; } // D-pad Up
+                    if (gp.buttons[13] && gp.buttons[13].pressed) { dy = 1; usingGamepad = true; } // D-pad Down
+                    if (gp.buttons[14] && gp.buttons[14].pressed) { dx = -1; usingGamepad = true; } // D-pad Left
+                    if (gp.buttons[15] && gp.buttons[15].pressed) { dx = 1; usingGamepad = true; } // D-pad Right
+                    
+                    if (usingGamepad) break;
+                }
+            }
+        }
+        
         if (this.joystick.x !== 0 || this.joystick.y !== 0) {
             dx = this.joystick.x;
             dy = this.joystick.y;
+        } else if (usingGamepad) {
+            const len = Math.sqrt(dx*dx + dy*dy);
+            if (len > 1) {
+                dx /= len; dy /= len;
+            }
         } else if (dx !== 0 && dy !== 0) {
             const len = Math.sqrt(dx*dx + dy*dy);
             dx /= len; dy /= len;
