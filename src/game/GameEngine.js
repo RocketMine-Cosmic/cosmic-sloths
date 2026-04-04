@@ -741,9 +741,9 @@ export class GameEngine {
                                     this.addParticle(e.x, e.y, '#ff4500', 3);
                                 }
                             }
-                            const pushResist = e.isTank ? 0.2 : 1;
+                            const pushResist = e.isWorldBoss ? 0 : (e.isBoss ? 0.05 : (e.isTank ? 0.2 : 1));
                             const isUnstoppable = e.isBoss && this.bossModifiers.unstoppable;
-                            if (!isUnstoppable) {
+                            if (!isUnstoppable && pushResist > 0) {
                                 const angle = Math.atan2(e.y - p.y, e.x - p.x);
                                 e.x += Math.cos(angle) * p.pushback * pushResist * dt;
                                 e.y += Math.sin(angle) * p.pushback * pushResist * dt;
