@@ -12,23 +12,37 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.rotate(Math.atan2(p.vy, p.vx));
         }
         
-        // Glowing Aura - optimized for HD-2D Neon Bloom
+        const isElongated = p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot';
+
+        // High Quality Glowing Aura
         if (!p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.2;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 2.5));
+            const auraRadius = Math.max(0.1, p.radius * 3);
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, auraRadius);
             grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(0.1, p.color || '#ffffff');
+            grad.addColorStop(0.2, p.color || '#ffffff');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
+            ctx.globalAlpha = 0.4; // Boosted aura alpha
             
-            if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot') {
+            if (isElongated) {
                 ctx.beginPath();
-                ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.5), 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, auraRadius * 1.2, auraRadius * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Tail
+                const tailGrad = ctx.createLinearGradient(0, 0, -auraRadius * 2, 0);
+                tailGrad.addColorStop(0, p.color || '#ffffff');
+                tailGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = tailGrad;
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.moveTo(0, auraRadius * 0.4);
+                ctx.lineTo(-auraRadius * 2.5, 0);
+                ctx.lineTo(0, -auraRadius * 0.4);
                 ctx.fill();
             } else {
                 ctx.beginPath();
-                ctx.arc(0, 0, Math.max(0.1, p.radius * 2.5), 0, Math.PI * 2);
+                ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.globalAlpha = 1.0;
@@ -37,21 +51,16 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
 
         if (p.type === 'blaster_shot') {
             ctx.globalCompositeOperation = 'lighter';
-            
-            // Colored Outer Glow
             ctx.fillStyle = p.color || '#ffffff';
-            ctx.globalAlpha = 0.4;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
-            
-            // Colored Inner Body
-            ctx.globalAlpha = 0.9;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.5), Math.max(0.1, p.radius * 0.6), 0, 0, Math.PI * 2); ctx.fill();
-            
-            // Tiny White Hot Center
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.5), Math.max(0.1, p.radius * 0.8), 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
             ctx.globalAlpha = 1.0;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.6), Math.max(0.1, p.radius * 0.2), 0, 0, Math.PI * 2); ctx.fill();
-            
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.8), Math.max(0.1, p.radius * 0.3), 0, 0, Math.PI * 2); ctx.fill();
+            if (texStar && texStar.isReady) {
+                ctx.globalAlpha = 0.6;
+                ctx.drawImage(texStar, -p.radius * 2, -p.radius * 2, p.radius * 4, p.radius * 4);
+            }
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'wrench_swing') {
             ctx.globalCompositeOperation = 'lighter';
@@ -90,22 +99,32 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'beam' || p.type === 'dual_laser') {
-            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = p.color || '#ffffff';
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2), Math.max(0.1, p.radius * 0.5), 0, 0, Math.PI * 2); ctx.fill();
-            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+            if (texSlash && texSlash.isReady) {
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(texSlash, -p.radius * 3, -p.radius * 1.5, p.radius * 6, p.radius * 3);
+                ctx.globalCompositeOperation = 'screen';
+            }
         } else if (p.type === 'lightning') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
             ctx.shadowColor = p.color || '#00aaff';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.lineWidth = Math.max(2, p.radius * 0.4);
             ctx.beginPath();
-            ctx.moveTo(-p.radius, 0);
-            ctx.lineTo(-p.radius/2, (Math.random()-0.5)*p.radius);
-            ctx.lineTo(0, (Math.random()-0.5)*p.radius);
-            ctx.lineTo(p.radius/2, (Math.random()-0.5)*p.radius);
-            ctx.lineTo(p.radius, 0);
+            ctx.moveTo(-p.radius * 1.5, 0);
+            ctx.lineTo(-p.radius*0.5, (Math.random()-0.5)*p.radius*1.5);
+            ctx.lineTo(p.radius*0.5, (Math.random()-0.5)*p.radius*1.5);
+            ctx.lineTo(p.radius * 1.5, 0);
+            ctx.stroke();
+            ctx.strokeStyle = p.color || '#00aaff';
+            ctx.lineWidth = Math.max(1, p.radius * 0.8);
             ctx.stroke();
             ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
@@ -113,80 +132,133 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'lighter';
             ctx.fillStyle = '#ffffff'; 
             ctx.shadowColor = p.color || '#00ff00';
-            ctx.shadowBlur = 15;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius/3, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 20;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2, p.radius*0.4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = p.color || '#00ff00';
+            for(let i=0; i<3; i++) {
+                ctx.fillRect((Math.random()-0.5)*p.radius*3, (Math.random()-0.5)*p.radius, p.radius*0.8, p.radius*0.2);
+            }
             ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'stomp') {
             ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = p.color || '#ff00ff';
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI * 2); ctx.stroke();
+            ctx.setLineDash([]);
+            if (texShockwave && texShockwave.isReady) {
+                ctx.globalAlpha = 0.7;
+                ctx.drawImage(texShockwave, -p.radius * 1.5, -p.radius * 1.5, p.radius * 3, p.radius * 3);
+            }
+            ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'repair_beam') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = '#00ffcc';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 4;
+            ctx.strokeStyle = p.color || '#00ffcc';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
             ctx.beginPath();
             ctx.moveTo(-p.radius, 0);
             ctx.lineTo(p.radius, 0);
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'missile') {
-            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = p.color || '#ff4400';
+            ctx.globalAlpha = 0.9;
+            ctx.beginPath();
+            ctx.moveTo(p.radius * 1.5, 0);
+            ctx.lineTo(-p.radius, p.radius * 0.8);
+            ctx.lineTo(-p.radius * 0.5, 0);
+            ctx.lineTo(-p.radius, -p.radius * 0.8);
+            ctx.closePath();
+            ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = '#ff4400';
-            ctx.shadowBlur = 10;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.moveTo(p.radius * 1.5, 0);
+            ctx.lineTo(-p.radius * 0.2, p.radius * 0.3);
+            ctx.lineTo(0, 0);
+            ctx.lineTo(-p.radius * 0.2, -p.radius * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = '#ffaa00';
+            ctx.beginPath();
+            ctx.ellipse(-p.radius * 1.2, 0, p.radius * 0.8 + Math.random() * 2, p.radius * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
             ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = p.color || '#00ff00';
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.4, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = p.color || '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.8;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-            ctx.fill();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i + time * 5;
+                const px = Math.cos(angle) * p.radius * 1.2;
+                const py = Math.sin(angle) * p.radius * 1.2;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'railgun') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00aaff';
-            ctx.shadowBlur = 20;
-            ctx.lineWidth = 5;
-            ctx.beginPath();
-            ctx.moveTo(-p.radius*2, 0);
-            ctx.lineTo(p.radius*2, 0);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            ctx.fillStyle = p.color || '#00aaff';
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 4, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 3, p.radius * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = p.color || '#00aaff';
+            ctx.lineWidth = 1;
+            for(let i=0; i<3; i++) {
+                const offset = (time * 200 + i * 10) % (p.radius * 3);
+                ctx.beginPath();
+                ctx.ellipse(-p.radius * 2 + offset, 0, p.radius * 0.4, p.radius * 1.2, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'sonic_wave') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ffff';
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            ctx.strokeStyle = p.color || '#00ffff';
+            ctx.lineWidth = Math.max(2, p.radius * 0.2);
+            ctx.lineCap = 'round';
+            for(let i=0; i<3; i++) {
+                ctx.globalAlpha = 1 - (i * 0.3);
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius - (i * p.radius * 0.3), -Math.PI/2.5, Math.PI/2.5);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'supernova_beam') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ffaa00';
-            ctx.shadowBlur = 10;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = p.color || '#ffaa00';
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 3.5, p.radius * 1.2, 0, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1.0;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+            if (texStar && texStar.isReady) {
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
+            }
+            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
             ctx.globalCompositeOperation = 'screen'; // Use screen instead of lighter to prevent intense whiteout
             ctx.globalAlpha = Math.min(1, p.life * 2) * 0.08; // Much lower center alpha
