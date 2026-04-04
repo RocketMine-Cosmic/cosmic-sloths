@@ -159,7 +159,7 @@ export default function GamepadManager() {
 
                     if (uiActive && Math.abs(axeRightY) > 0.15) {
                         try {
-                            const scrollAmount = axeRightY * 25;
+                            const scrollAmount = axeRightY * 60;
                             const active = document.activeElement;
                             let scrollContainer = null;
                             if (active && typeof active.closest === 'function') {
@@ -192,7 +192,8 @@ export default function GamepadManager() {
                         let isActiveVisible = false;
                         if (active && focusable.includes(active)) {
                             const rect = active.getBoundingClientRect();
-                            if (rect.bottom > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight)) {
+                            // Add a generous buffer so elements near the edge don't get stolen from focus
+                            if (rect.bottom >= -50 && rect.top <= (window.innerHeight || document.documentElement.clientHeight) + 50) {
                                 isActiveVisible = true;
                             }
                         }
@@ -204,21 +205,16 @@ export default function GamepadManager() {
                             
                             focusable.forEach(el => {
                                 const rect = el.getBoundingClientRect();
-                                if (rect.bottom >= 0 && rect.top <= (window.innerHeight || document.documentElement.clientHeight)) {
-                                    const dist = Math.abs((rect.top + rect.height / 2) - centerY);
-                                    if (dist < minCenterDist) {
-                                        minCenterDist = dist;
-                                        bestCenterEl = el;
-                                    }
+                                const dist = Math.abs((rect.top + rect.height / 2) - centerY);
+                                if (dist < minCenterDist) {
+                                    minCenterDist = dist;
+                                    bestCenterEl = el;
                                 }
                             });
                             
                             if (bestCenterEl) {
                                 bestCenterEl.focus({ preventScroll: true });
                                 active = bestCenterEl;
-                            } else {
-                                focusable[0].focus({ preventScroll: true });
-                                active = focusable[0];
                             }
                         }
 
