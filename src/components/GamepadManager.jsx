@@ -90,7 +90,18 @@ export default function GamepadManager() {
 
             if (bestCandidate) {
                 bestCandidate.focus({ preventScroll: true });
-                bestCandidate.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                
+                const scrollContainer = bestCandidate.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+                if (scrollContainer) {
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const elRect = bestCandidate.getBoundingClientRect();
+                    const targetTop = scrollContainer.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 2) + (elRect.height / 2);
+                    scrollContainer.scrollTo({ top: targetTop, behavior: 'smooth' });
+                } else {
+                    const elRect = bestCandidate.getBoundingClientRect();
+                    const targetTop = window.scrollY + elRect.top - (window.innerHeight / 2) + (elRect.height / 2);
+                    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                }
             } else {
                 // If nothing was found in that direction, maybe change carousel slide
                 if (dirX !== 0 && !document.querySelector('.z-50')) {
@@ -100,7 +111,7 @@ export default function GamepadManager() {
                     if (dirX < 0 && leftBtn) leftBtn.click();
                     if (dirX > 0 && rightBtn) rightBtn.click();
                 } else if (!active || !focusable.includes(active)) {
-                    focusable[0].focus();
+                    focusable[0].focus({ preventScroll: true });
                 }
             }
         };
@@ -177,7 +188,18 @@ export default function GamepadManager() {
                         if (!active || active === document.body || !focusable.includes(active)) {
                             if (focusable.length > 0) {
                                 focusable[0].focus({ preventScroll: true });
-                                focusable[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+                                
+                                const scrollContainer = focusable[0].closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+                                if (scrollContainer) {
+                                    const containerRect = scrollContainer.getBoundingClientRect();
+                                    const elRect = focusable[0].getBoundingClientRect();
+                                    const targetTop = scrollContainer.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 2) + (elRect.height / 2);
+                                    scrollContainer.scrollTo({ top: targetTop, behavior: 'smooth' });
+                                } else {
+                                    const elRect = focusable[0].getBoundingClientRect();
+                                    const targetTop = window.scrollY + elRect.top - (window.innerHeight / 2) + (elRect.height / 2);
+                                    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                                }
                             }
                         }
 
