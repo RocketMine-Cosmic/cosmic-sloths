@@ -10,7 +10,7 @@ export default function GamepadManager() {
             confirm: false, cancel: false, pause: false
         };
 
-        const handleUserInteraction = (e) => {
+        const handleUserInteraction = () => {
             isGamepadActive = false;
         };
         window.addEventListener('mousemove', handleUserInteraction);
@@ -18,11 +18,17 @@ export default function GamepadManager() {
         window.addEventListener('touchstart', handleUserInteraction);
 
         const getFocusableElements = () => {
-            return Array.from(document.querySelectorAll(
+            let container = document;
+            const modal = document.querySelector('.z-50');
+            if (modal) {
+                container = modal;
+            }
+
+            return Array.from(container.querySelectorAll(
                 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
             )).filter(el => {
                 const style = window.getComputedStyle(el);
-                return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && el.offsetWidth > 0;
+                return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetWidth > 0;
             });
         };
 
@@ -32,14 +38,6 @@ export default function GamepadManager() {
 
             const active = document.activeElement;
             if (!active || !focusable.includes(active)) {
-                const modal = document.querySelector('.z-50');
-                if (modal) {
-                    const modalFocusable = Array.from(modal.querySelectorAll('button:not([disabled])'));
-                    if (modalFocusable.length > 0) {
-                        modalFocusable[0].focus();
-                        return;
-                    }
-                }
                 focusable[0].focus();
                 return;
             }
@@ -66,7 +64,7 @@ export default function GamepadManager() {
                 const perpDist = dirX !== 0 ? Math.abs(dy) : Math.abs(dx);
                 const primaryDist = dirX !== 0 ? Math.abs(dx) : Math.abs(dy);
 
-                if (perpDist > primaryDist * 1.5) return;
+                if (perpDist > primaryDist * 2.5) return;
 
                 const score = primaryDist + perpDist * 2;
 
@@ -80,6 +78,7 @@ export default function GamepadManager() {
                 bestCandidate.focus();
             } else {
                 let index = focusable.indexOf(active);
+                if (index === -1) index = 0;
                 if (dirX > 0 || dirY > 0) index = (index + 1) % focusable.length;
                 if (dirX < 0 || dirY < 0) index = (index - 1 + focusable.length) % focusable.length;
                 focusable[index].focus();
@@ -125,46 +124,36 @@ export default function GamepadManager() {
                         
                         if (!active || active === document.body || !focusable.includes(active)) {
                             if (focusable.length > 0) {
-                                const modal = document.querySelector('.z-50');
-                                if (modal) {
-                                    const modalFocusable = Array.from(modal.querySelectorAll('button:not([disabled])'));
-                                    if (modalFocusable.length > 0) {
-                                        modalFocusable[0].focus();
-                                    }
-                                } else {
-                                    focusable[0].focus();
-                                }
+                                focusable[0].focus();
                             }
                         }
 
-                        if (now - lastActionTime > throttle) {
-                            let actionTaken = false;
+                        let actionTaken = false;
 
-                            if (isUp && !state.up) { moveFocus(0, -1); actionTaken = true; }
-                            else if (isDown && !state.down) { moveFocus(0, 1); actionTaken = true; }
-                            else if (isLeft && !state.left) { moveFocus(-1, 0); actionTaken = true; }
-                            else if (isRight && !state.right) { moveFocus(1, 0); actionTaken = true; }
+                        if (isUp && (!state.up || now - lastActionTime > throttle)) { moveFocus(0, -1); actionTaken = true; }
+                        else if (isDown && (!state.down || now - lastActionTime > throttle)) { moveFocus(0, 1); actionTaken = true; }
+                        else if (isLeft && (!state.left || now - lastActionTime > throttle)) { moveFocus(-1, 0); actionTaken = true; }
+                        else if (isRight && (!state.right || now - lastActionTime > throttle)) { moveFocus(1, 0); actionTaken = true; }
 
-                            if (buttonA && !state.confirm) {
-                                if (document.activeElement && typeof document.activeElement.click === 'function') {
-                                    document.activeElement.click();
-                                }
-                                actionTaken = true;
+                        if (buttonA && !state.confirm) {
+                            if (document.activeElement && typeof document.activeElement.click === 'function') {
+                                document.activeElement.click();
                             }
+                            actionTaken = true;
+                        }
 
-                            if (buttonB && !state.cancel) {
-                                const cancelBtn = Array.from(document.querySelectorAll('button')).find(b => 
-                                    b.textContent.match(/cancel|close|back|return|resume/i) && !b.disabled
-                                );
-                                if (cancelBtn) {
-                                    cancelBtn.click();
-                                    actionTaken = true;
-                                }
+                        if (buttonB && !state.cancel) {
+                            const cancelBtn = Array.from(document.querySelectorAll('button')).find(b => 
+                                b.textContent.match(/cancel|close|back|return|resume/i) && !b.disabled
+                            );
+                            if (cancelBtn) {
+                                cancelBtn.click();
                             }
+                            actionTaken = true;
+                        }
 
-                            if (actionTaken) {
-                                lastActionTime = now;
-                            }
+                        if (actionTaken) {
+                            lastActionTime = now;
                         }
                     }
 
