@@ -1712,16 +1712,18 @@ export class GameEngine {
             if (!e.burrowed) {
                 drawEnemy(this.ctx, e, this.time, this.player.x);
                 
-                if (e.hp < e.maxHp) {
-                    const barW = e.isBoss ? 60 : 20;
-                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW, 4);
-                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - 8, barW * (e.hp / e.maxHp), 4);
+                if (e.hp < e.maxHp || e.isBoss) {
+                    const barW = e.isBoss ? 80 : 20;
+                    const barH = e.isBoss ? 6 : 4;
+                    const yOffset = e.isBoss ? 16 : 8;
+                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW, barH);
+                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW * (e.hp / e.maxHp), barH);
                 }
                 if (e.isBoss && e.weakSide && e.weakDesc) {
                     this.ctx.fillStyle = '#ffdd00';
                     this.ctx.font = 'bold 11px monospace';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 14);
+                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 28);
                 }
             } else {
                 // Draw burrowed indicator
