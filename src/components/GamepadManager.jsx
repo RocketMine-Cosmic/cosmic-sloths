@@ -4,10 +4,18 @@ export default function GamepadManager() {
     useEffect(() => {
         let animationFrameId;
         let lastActionTime = 0;
+        let isGamepadActive = false;
         const state = {
             up: false, down: false, left: false, right: false,
             confirm: false, cancel: false, pause: false
         };
+
+        const handleUserInteraction = (e) => {
+            isGamepadActive = false;
+        };
+        window.addEventListener('mousemove', handleUserInteraction);
+        window.addEventListener('keydown', handleUserInteraction);
+        window.addEventListener('touchstart', handleUserInteraction);
 
         const getFocusableElements = () => {
             return Array.from(document.querySelectorAll(
@@ -107,7 +115,28 @@ export default function GamepadManager() {
                     const buttonB = gp.buttons[1]?.pressed;
                     const buttonStart = gp.buttons[9]?.pressed;
 
-                    if (uiActive) {
+                    if (isUp || isDown || isLeft || isRight || buttonA || buttonB || buttonStart) {
+                        isGamepadActive = true;
+                    }
+
+                    if (uiActive && isGamepadActive) {
+                        const active = document.activeElement;
+                        const focusable = getFocusableElements();
+                        
+                        if (!active || active === document.body || !focusable.includes(active)) {
+                            if (focusable.length > 0) {
+                                const modal = document.querySelector('.z-50');
+                                if (modal) {
+                                    const modalFocusable = Array.from(modal.querySelectorAll('button:not([disabled])'));
+                                    if (modalFocusable.length > 0) {
+                                        modalFocusable[0].focus();
+                                    }
+                                } else {
+                                    focusable[0].focus();
+                                }
+                            }
+                        }
+
                         if (now - lastActionTime > throttle) {
                             let actionTaken = false;
 
@@ -121,6 +150,16 @@ export default function GamepadManager() {
                                     document.activeElement.click();
                                 }
                                 actionTaken = true;
+                            }
+
+                            if (buttonB && !state.cancel) {
+                                const cancelBtn = Array.from(document.querySelectorAll('button')).find(b => 
+                                    b.textContent.match(/cancel|close|back|return|resume/i) && !b.disabled
+                                );
+                                if (cancelBtn) {
+                                    cancelBtn.click();
+                                    actionTaken = true;
+                                }
                             }
 
                             if (actionTaken) {
@@ -154,7 +193,12 @@ export default function GamepadManager() {
         };
 
         animationFrameId = requestAnimationFrame(checkGamepad);
-        return () => cancelAnimationFrame(animationFrameId);
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('mousemove', handleUserInteraction);
+            window.removeEventListener('keydown', handleUserInteraction);
+            window.removeEventListener('touchstart', handleUserInteraction);
+        };
     }, []);
 
     return null;
