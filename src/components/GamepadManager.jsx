@@ -83,9 +83,14 @@ export default function GamepadManager() {
                 bestCandidate.focus({ preventScroll: true });
                 bestCandidate.scrollIntoView({ block: 'center', behavior: 'smooth' });
             } else {
-                // If nothing was found in that direction, don't just jump randomly.
-                // Do nothing, or fallback to first if somehow lost.
-                if (!active || !focusable.includes(active)) {
+                // If nothing was found in that direction, maybe change carousel slide
+                if (dirX !== 0 && !document.querySelector('.z-50')) {
+                    const leftBtn = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.lucide-chevron-left'));
+                    const rightBtn = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.lucide-chevron-right'));
+                    
+                    if (dirX < 0 && leftBtn) leftBtn.click();
+                    if (dirX > 0 && rightBtn) rightBtn.click();
+                } else if (!active || !focusable.includes(active)) {
                     focusable[0].focus();
                 }
             }
@@ -129,15 +134,22 @@ export default function GamepadManager() {
                     }
 
                     if (uiActive && Math.abs(axeRightY) > 0.15) {
-                        const scrollAmount = axeRightY * 15;
-                        const active = document.activeElement;
-                        let scrollContainer = active ? active.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]') : null;
-                        if (!scrollContainer) scrollContainer = document.querySelector('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
-                        
-                        if (scrollContainer) {
-                            scrollContainer.scrollTop += scrollAmount;
-                        } else {
-                            window.scrollBy(0, scrollAmount);
+                        try {
+                            const scrollAmount = axeRightY * 15;
+                            const active = document.activeElement;
+                            let scrollContainer = null;
+                            if (active && typeof active.closest === 'function') {
+                                scrollContainer = active.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+                            }
+                            if (!scrollContainer) scrollContainer = document.querySelector('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+                            
+                            if (scrollContainer) {
+                                scrollContainer.scrollTop += scrollAmount;
+                            } else {
+                                window.scrollBy(0, scrollAmount);
+                            }
+                        } catch(e) {
+                            console.error("Gamepad scroll error:", e);
                         }
                     }
 
