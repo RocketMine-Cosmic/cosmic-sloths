@@ -29,7 +29,13 @@ export default function GamepadManager() {
                 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
             )).filter(el => {
                 const style = window.getComputedStyle(el);
-                return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetWidth > 0;
+                if (style.display === 'none' || style.visibility === 'hidden' || el.offsetWidth === 0) return false;
+                
+                const rect = el.getBoundingClientRect();
+                return (
+                    rect.right > 0 &&
+                    rect.left < (window.innerWidth || document.documentElement.clientWidth)
+                );
             });
         };
 
