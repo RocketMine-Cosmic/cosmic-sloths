@@ -13,46 +13,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         }
         
         // Glowing Aura - optimized for HD-2D Neon Bloom
-        if (!p.isAoe) {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.2;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 2.5));
-            grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(0.1, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            
-            if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot') {
-                ctx.beginPath();
-                ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.5), 0, 0, Math.PI * 2);
-                ctx.fill();
-            } else {
-                ctx.beginPath();
-                ctx.arc(0, 0, Math.max(0.1, p.radius * 2.5), 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
-        }
+        // Removed glowing aura to stick to the clean geometric style
 
         if (p.type === 'blaster_shot') {
-            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalCompositeOperation = 'source-over';
             
-            // Colored Outer Glow
-            ctx.fillStyle = p.color || '#ffffff';
-            ctx.globalAlpha = 0.4;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
-            
-            // Colored Inner Body
-            ctx.globalAlpha = 0.9;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.5), Math.max(0.1, p.radius * 0.6), 0, 0, Math.PI * 2); ctx.fill();
-            
-            // Tiny White Hot Center
             ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 1.0;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.6), Math.max(0.1, p.radius * 0.2), 0, 0, Math.PI * 2); ctx.fill();
-            
-            ctx.globalCompositeOperation = 'screen';
+            ctx.strokeStyle = p.color || '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p.radius * 2.5, 0);
+            ctx.lineTo(0, p.radius * 1.2);
+            ctx.lineTo(-p.radius * 1.5, 0);
+            ctx.lineTo(0, -p.radius * 1.2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
         } else if (p.type === 'wrench_swing') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = Math.max(0, p.life / 0.25);
@@ -90,94 +66,139 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'beam' || p.type === 'dual_laser') {
-            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalCompositeOperation = 'source-over';
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2), Math.max(0.1, p.radius * 0.5), 0, 0, Math.PI * 2); ctx.fill();
-            ctx.globalCompositeOperation = 'screen';
+            ctx.strokeStyle = p.color || '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p.radius * 2.5, 0);
+            ctx.lineTo(p.radius * 2, p.radius * 0.5);
+            ctx.lineTo(-p.radius * 2, p.radius * 0.5);
+            ctx.lineTo(-p.radius * 2.5, 0);
+            ctx.lineTo(-p.radius * 2, -p.radius * 0.5);
+            ctx.lineTo(p.radius * 2, -p.radius * 0.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
         } else if (p.type === 'lightning') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00aaff';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 3;
+            ctx.globalCompositeOperation = 'source-over';
             ctx.beginPath();
             ctx.moveTo(-p.radius, 0);
             ctx.lineTo(-p.radius/2, (Math.random()-0.5)*p.radius);
             ctx.lineTo(0, (Math.random()-0.5)*p.radius);
             ctx.lineTo(p.radius/2, (Math.random()-0.5)*p.radius);
             ctx.lineTo(p.radius, 0);
+            
+            ctx.strokeStyle = p.color || '#00aaff';
+            ctx.lineWidth = 5;
             ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'glitch_slash') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#ffffff'; 
-            ctx.shadowColor = p.color || '#00ff00';
-            ctx.shadowBlur = 15;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius/3, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'stomp') {
-            ctx.globalCompositeOperation = 'lighter';
+            
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        } else if (p.type === 'glitch_slash') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#ffffff'; 
+            ctx.strokeStyle = p.color || '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); 
+            ctx.moveTo(-p.radius, -p.radius * 0.2);
+            ctx.lineTo(p.radius, -p.radius * 0.4);
+            ctx.lineTo(p.radius * 0.8, p.radius * 0.2);
+            ctx.lineTo(-p.radius * 1.2, p.radius * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else if (p.type === 'stomp') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = p.color || '#ff00ff';
+            ctx.lineWidth = 6;
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
             ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'repair_beam') {
-            ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = '#00ffcc';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = p.color || '#ff00ff';
+            ctx.beginPath();
+            for(let i=0; i<8; i++){
+                const a = (Math.PI * 2 / 8) * i;
+                ctx.moveTo(Math.cos(a) * p.radius * 0.8, Math.sin(a) * p.radius * 0.8);
+                ctx.lineTo(Math.cos(a+0.2) * p.radius, Math.sin(a+0.2) * p.radius);
+                ctx.lineTo(Math.cos(a-0.2) * p.radius, Math.sin(a-0.2) * p.radius);
+            }
+            ctx.fill();
+        } else if (p.type === 'repair_beam') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = p.color || '#00ffcc';
+            ctx.lineWidth = 6;
             ctx.beginPath();
             ctx.moveTo(-p.radius, 0);
             ctx.lineTo(p.radius, 0);
             ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'missile') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = '#ff4400';
-            ctx.shadowBlur = 10;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'railgun') {
-            ctx.globalCompositeOperation = 'lighter';
+            
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00aaff';
-            ctx.shadowBlur = 20;
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(-p.radius*2, 0);
-            ctx.lineTo(p.radius*2, 0);
+            ctx.moveTo(-p.radius, 0);
+            ctx.lineTo(p.radius, 0);
             ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(p.radius - 4, -4, 8, 8);
+        } else if (p.type === 'missile') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = p.color || '#ff4400';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); 
+            ctx.moveTo(p.radius * 2, 0);
+            ctx.lineTo(-p.radius, p.radius * 0.8);
+            ctx.lineTo(-p.radius * 0.5, 0);
+            ctx.lineTo(-p.radius, -p.radius * 0.8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = p.color || '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(p.radius * 1.5, 0);
+            ctx.lineTo(0, p.radius * 1.5);
+            ctx.lineTo(-p.radius * 1.5, 0);
+            ctx.lineTo(0, -p.radius * 1.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else if (p.type === 'railgun') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = p.color || '#00aaff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.rect(-p.radius*2, -p.radius*0.4, p.radius*4, p.radius*0.8);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-p.radius*2, -p.radius*0.8);
+            ctx.lineTo(p.radius*2, -p.radius*0.8);
+            ctx.moveTo(-p.radius*2, p.radius*0.8);
+            ctx.lineTo(p.radius*2, p.radius*0.8);
+            ctx.stroke();
         } else if (p.type === 'sonic_wave') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ffff';
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 4;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = p.color || '#00ffff';
+            ctx.lineWidth = 6;
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, -Math.PI/3, Math.PI/3);
             ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         } else if (p.type === 'supernova_beam') {
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 0.9;
@@ -369,27 +390,31 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.stroke();
             ctx.globalAlpha = 1.0;
         } else if (p.isAoe) {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ffff';
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 3;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = p.color || '#00ffff';
+            ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, 0, Math.PI*2);
             ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([10, 10]);
+            ctx.stroke();
+            ctx.setLineDash([]);
         } else {
             // Default projectile
-            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalCompositeOperation = 'source-over';
             ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ffff';
-            ctx.shadowBlur = 10;
+            ctx.strokeStyle = p.color || '#00ffff';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            ctx.moveTo(p.radius, 0);
+            ctx.lineTo(0, p.radius);
+            ctx.lineTo(-p.radius, 0);
+            ctx.lineTo(0, -p.radius);
+            ctx.closePath();
             ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.globalCompositeOperation = 'screen';
+            ctx.stroke();
         }
         ctx.restore();
     });
