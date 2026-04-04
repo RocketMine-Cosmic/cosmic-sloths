@@ -1565,8 +1565,13 @@ export class GameEngine {
                 // Sharp glowing diamond for enemy projectiles
                 this.ctx.globalCompositeOperation = 'source-over';
                 
-                this.ctx.shadowColor = p.color || '#ff0000';
-                this.ctx.shadowBlur = 10;
+                // Fast simulated glow
+                this.ctx.fillStyle = p.color || '#ff0000';
+                this.ctx.globalAlpha = 0.2;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
                 
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.beginPath();
@@ -1582,7 +1587,6 @@ export class GameEngine {
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
                 
-                this.ctx.shadowBlur = 0;
                 this.ctx.restore();
             });
         }
@@ -1818,17 +1822,19 @@ export class GameEngine {
             
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
+            
+            // Fast simulated glow behind player
+            this.ctx.fillStyle = this.player.color;
+            this.ctx.globalAlpha = 0.3;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1.0;
+            
             // The base sprite sheets are drawn facing left. 
             // So if we are facing right (!facingLeft), we need to mirror them.
             if (!this.player.facingLeft) this.ctx.scale(-1, 1);
             
-            // Neon Silhouette Outline
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 15;
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-            
-            // Draw again with a tighter blur to create a solid neon edge
-            this.ctx.shadowBlur = 5;
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
             
             this.ctx.restore();
@@ -1838,17 +1844,18 @@ export class GameEngine {
             this.ctx.save();
             this.ctx.translate(this.player.x, this.player.y);
             
+            // Fast simulated glow behind player
+            this.ctx.fillStyle = this.player.color;
+            this.ctx.globalAlpha = 0.3;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1.0;
+            
             if (this.player.facingLeft) {
                 this.ctx.scale(-1, 1);
             }
             
-            // Neon Silhouette Outline
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 15;
-            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
-            
-            // Tighter blur for solid edge
-            this.ctx.shadowBlur = 5;
             this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
             
             this.ctx.restore();

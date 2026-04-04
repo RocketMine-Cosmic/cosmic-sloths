@@ -21,9 +21,14 @@ export function drawPickups(ctx, pickups, time) {
             
             ctx.globalCompositeOperation = 'source-over';
             
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+            
             ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 10;
             ctx.beginPath();
             ctx.moveTo(0, -14);
             ctx.lineTo(7, 0);
@@ -33,7 +38,6 @@ export function drawPickups(ctx, pickups, time) {
             ctx.fill();
             
             ctx.fillStyle = '#ccffff';
-            ctx.shadowBlur = 0;
             ctx.beginPath();
             ctx.moveTo(0, -7);
             ctx.lineTo(3.5, 0);
@@ -58,9 +62,14 @@ export function drawPickups(ctx, pickups, time) {
             
             ctx.globalCompositeOperation = 'source-over';
 
+            ctx.fillStyle = '#ffcc00';
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+
             ctx.fillStyle = '#ffaa00';
-            ctx.shadowColor = '#ffcc00';
-            ctx.shadowBlur = 10;
             ctx.beginPath();
             for (let i = 0; i < 6; i++) {
                 const a = (Math.PI / 3) * i + Math.PI/2;
@@ -70,7 +79,6 @@ export function drawPickups(ctx, pickups, time) {
             ctx.fill();
             
             ctx.fillStyle = '#ffe100';
-            ctx.shadowBlur = 0;
             ctx.beginPath();
             for (let i = 0; i < 6; i++) {
                 const a = (Math.PI / 3) * i + Math.PI/2;
@@ -122,10 +130,13 @@ export function drawPickups(ctx, pickups, time) {
             ctx.font = '42px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#ffffff';
-            ctx.shadowBlur = 16;
+            ctx.fillStyle = p.color || '#ffffff';
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.arc(0, 0, 30, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
             ctx.fillText(p.icon, 0, 0);
-            ctx.shadowBlur = 0;
         } else {
             ctx.fillStyle = p.color;
             ctx.beginPath();

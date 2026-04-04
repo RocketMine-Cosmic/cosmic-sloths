@@ -12,8 +12,15 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.rotate(Math.atan2(p.vy, p.vx));
         }
         
-        // Glowing Aura - optimized for HD-2D Neon Bloom
-        // Removed glowing aura to stick to the clean geometric style
+        // Ultra-fast simulated glow (no shadowBlur to prevent freezes)
+        if (!p.isAoe && p.type !== 'beam' && p.type !== 'railgun' && p.type !== 'dual_laser') {
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = p.color || '#00ffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
 
         if (p.type === 'blaster_shot') {
             ctx.globalCompositeOperation = 'source-over';
