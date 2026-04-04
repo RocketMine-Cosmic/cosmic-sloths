@@ -1475,30 +1475,83 @@ export class GameEngine {
         drawProjectiles(this.ctx, this.projectiles, this.particleManager, this.time, camX, camY, vWidth, vHeight);
 
         if (this.hazards) {
+            this.ctx.globalCompositeOperation = 'screen';
             this.hazards.forEach(h => {
                 this.ctx.save();
                 this.ctx.translate(h.x, h.y);
-                this.ctx.rotate(this.time);
-                this.ctx.beginPath();
-                const spikes = 12;
-                for (let i = 0; i < spikes * 2; i++) {
-                    const a = (Math.PI * 2 / (spikes * 2)) * i;
-                    const r = i % 2 === 0 ? h.radius : h.radius * 0.8;
-                    this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-                }
-                this.ctx.closePath();
+                
                 if (h.active) {
-                    this.ctx.fillStyle = 'rgba(255, 69, 0, 0.8)';
+                    // Explosion blast
+                    const blastRatio = h.timer / 0.5; // active for 0.5s, timer goes down to 0
+                    this.ctx.globalAlpha = blastRatio;
+                    
+                    const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, h.radius * 1.5);
+                    grad.addColorStop(0, '#ffffff');
+                    grad.addColorStop(0.2, '#ffaa00');
+                    grad.addColorStop(0.6, '#ff0000');
+                    grad.addColorStop(1, 'transparent');
+                    
+                    this.ctx.fillStyle = grad;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, h.radius * 1.5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Spiky inner blast
+                    this.ctx.rotate(this.time * 5);
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.beginPath();
+                    const spikes = 12;
+                    for (let i = 0; i < spikes * 2; i++) {
+                        const a = (Math.PI * 2 / (spikes * 2)) * i;
+                        const r = i % 2 === 0 ? h.radius * 1.2 : h.radius * 0.5;
+                        if (i === 0) this.ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+                        else this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                    }
+                    this.ctx.closePath();
                     this.ctx.fill();
                 } else {
-                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + (2 - h.timer) * 0.2})`;
-                    this.ctx.fill();
-                    this.ctx.strokeStyle = '#ff0000';
+                    // Warning lock-on phase
+                    // h.timer starts at 2.0 and goes to 0
+                    const pulse = Math.sin(h.timer * 15) * 0.5 + 0.5; // fast pulse
+                    const warningScale = 1 + (h.timer / 2.0); // shrinks inward
+                    
+                    this.ctx.scale(warningScale, warningScale);
+                    this.ctx.rotate(this.time * 2);
+                    
+                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + pulse * 0.1})`;
+                    this.ctx.strokeStyle = `rgba(255, 50, 0, ${0.5 + pulse * 0.5})`;
                     this.ctx.lineWidth = 2;
+                    
+                    // Center warning zone
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.stroke();
+                    
+                    // Crosshairs
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-h.radius * 1.3, 0);
+                    this.ctx.lineTo(-h.radius * 0.8, 0);
+                    this.ctx.moveTo(h.radius * 1.3, 0);
+                    this.ctx.lineTo(h.radius * 0.8, 0);
+                    this.ctx.moveTo(0, -h.radius * 1.3);
+                    this.ctx.lineTo(0, -h.radius * 0.8);
+                    this.ctx.moveTo(0, h.radius * 1.3);
+                    this.ctx.lineTo(0, h.radius * 0.8);
+                    
+                    // Corner targets
+                    const s = h.radius * 0.8;
+                    const c = h.radius * 0.6;
+                    this.ctx.moveTo(-s, -c); this.ctx.lineTo(-s, -s); this.ctx.lineTo(-c, -s);
+                    this.ctx.moveTo(s, -c); this.ctx.lineTo(s, -s); this.ctx.lineTo(c, -s);
+                    this.ctx.moveTo(-s, c); this.ctx.lineTo(-s, s); this.ctx.lineTo(-c, s);
+                    this.ctx.moveTo(s, c); this.ctx.lineTo(s, s); this.ctx.lineTo(c, s);
+                    
                     this.ctx.stroke();
                 }
                 this.ctx.restore();
             });
+            this.ctx.globalCompositeOperation = 'source-over';
         }
 
         if (this.enemyProjectiles) {
