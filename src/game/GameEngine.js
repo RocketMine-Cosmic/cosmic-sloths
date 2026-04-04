@@ -1555,8 +1555,6 @@ export class GameEngine {
         }
 
         if (this.enemyProjectiles) {
-            this.ctx.globalCompositeOperation = 'screen';
-            const texStar = this.particleManager?.textures?.star;
             this.enemyProjectiles.forEach(p => {
                 this.ctx.save();
                 this.ctx.translate(p.x, p.y);
@@ -1564,31 +1562,29 @@ export class GameEngine {
                     this.ctx.rotate(Math.atan2(p.vy, p.vx));
                 }
                 
-                this.ctx.globalAlpha = 0.3;
-                this.ctx.fillStyle = p.color || '#ff0000';
+                // Sharp glowing diamond for enemy projectiles
+                this.ctx.globalCompositeOperation = 'source-over';
+                
+                this.ctx.shadowColor = p.color || '#ff0000';
+                this.ctx.shadowBlur = 10;
+                
+                this.ctx.fillStyle = '#ffffff';
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius * 2, 0, Math.PI * 2);
+                this.ctx.moveTo(p.radius * 2.5, 0); // Front point (elongated)
+                this.ctx.lineTo(0, p.radius * 1.2);    // Right point
+                this.ctx.lineTo(-p.radius * 1.5, 0); // Back point
+                this.ctx.lineTo(0, -p.radius * 1.2);   // Left point
+                this.ctx.closePath();
                 this.ctx.fill();
-                this.ctx.globalAlpha = 0.6;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius * 1.2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalAlpha = 1.0;
-
-                if (texStar && texStar.isReady) {
-                    this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-                } else {
-                    this.ctx.fillStyle = '#ffffff';
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(p.radius, 0);
-                    this.ctx.lineTo(-p.radius, p.radius*0.5);
-                    this.ctx.lineTo(-p.radius*0.5, 0);
-                    this.ctx.lineTo(-p.radius, -p.radius*0.5);
-                    this.ctx.fill();
-                }
+                
+                // Colored outer outline
+                this.ctx.strokeStyle = p.color || '#ff0000';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                
+                this.ctx.shadowBlur = 0;
                 this.ctx.restore();
             });
-            this.ctx.globalCompositeOperation = 'source-over';
         }
 
         const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');

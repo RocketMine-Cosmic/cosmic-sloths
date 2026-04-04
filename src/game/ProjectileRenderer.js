@@ -197,18 +197,35 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             }
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 20;
-            ctx.lineWidth = Math.max(2, 8 * p.life);
+            ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
+            const r = Math.max(0.1, p.radius);
+            
+            // Inner blast gradient
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.5, p.color || '#ff00ff');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+            
+            // Shatter lines
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = Math.max(1, 4 * p.life);
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+            for(let i=0; i<8; i++) {
+                const angle = (Math.PI*2/8) * i + (time * 2);
+                ctx.moveTo(Math.cos(angle) * r * 0.2, Math.sin(angle) * r * 0.2);
+                ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
+            // Outer shockwave ring
+            ctx.strokeStyle = p.color || '#ff00ff';
+            ctx.lineWidth = Math.max(2, 8 * p.life);
+            ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.stroke();
+            
             ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = Math.min(1, p.life * 2) * 0.7;
@@ -235,27 +252,43 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life) * 0.25;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius));
-            grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = Math.min(1, p.life) * 0.8;
+            
+            // Lava base
+            ctx.fillStyle = p.color || '#ff4500';
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+            const spikes = 10;
+            for (let i = 0; i < spikes * 2; i++) {
+                const angle = (Math.PI * 2 / (spikes * 2)) * i;
+                const wave = Math.sin(time * 3 + i) * (p.radius * 0.1);
+                const r = (i % 2 === 0 ? p.radius * 0.9 : p.radius) + wave;
+                if (i === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
+            ctx.closePath();
             ctx.fill();
             
-            ctx.globalAlpha = Math.min(1, p.life) * 0.8;
+            // Magma cracks / inner fiery cells
+            ctx.globalAlpha = Math.min(1, p.life);
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 10;
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius * (0.9 + Math.sin(time * 4 + p.x) * 0.05)), 0, Math.PI*2);
+            for (let i = 0; i < 5; i++) {
+                const angle = (Math.PI * 2 / 5) * i + time;
+                const r1 = p.radius * 0.2;
+                const r2 = p.radius * 0.7;
+                ctx.moveTo(Math.cos(angle) * r1, Math.sin(angle) * r1);
+                ctx.quadraticCurveTo(
+                    Math.cos(angle + 0.5) * (p.radius * 0.5), 
+                    Math.sin(angle + 0.5) * (p.radius * 0.5), 
+                    Math.cos(angle + 0.2) * r2, 
+                    Math.sin(angle + 0.2) * r2
+                );
+            }
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
             ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'hellfire') {
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 0.7;
