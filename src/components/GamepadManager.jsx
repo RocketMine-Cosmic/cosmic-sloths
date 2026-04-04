@@ -74,7 +74,8 @@ export default function GamepadManager() {
             });
 
             if (bestCandidate) {
-                bestCandidate.focus();
+                bestCandidate.focus({ preventScroll: true });
+                bestCandidate.scrollIntoView({ block: 'center', behavior: 'smooth' });
             } else {
                 // If nothing was found in that direction, don't just jump randomly.
                 // Do nothing, or fallback to first if somehow lost.
@@ -99,6 +100,7 @@ export default function GamepadManager() {
 
                     const axeX = gp.axes[0] || 0;
                     const axeY = gp.axes[1] || 0;
+                    const axeRightY = gp.axes[3] || 0;
                     const dpadUp = gp.buttons[12]?.pressed;
                     const dpadDown = gp.buttons[13]?.pressed;
                     const dpadLeft = gp.buttons[14]?.pressed;
@@ -113,11 +115,24 @@ export default function GamepadManager() {
                     const buttonB = gp.buttons[1]?.pressed;
                     const buttonStart = gp.buttons[9]?.pressed;
 
-                    if (isUp || isDown || isLeft || isRight || buttonA || buttonB || buttonStart) {
+                    if (isUp || isDown || isLeft || isRight || buttonA || buttonB || buttonStart || Math.abs(axeRightY) > 0.15) {
                         if (!isGamepadActive) {
                             document.body.classList.add('gamepad-active');
                         }
                         isGamepadActive = true;
+                    }
+
+                    if (uiActive && Math.abs(axeRightY) > 0.15) {
+                        const scrollAmount = axeRightY * 15;
+                        const active = document.activeElement;
+                        let scrollContainer = active ? active.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]') : null;
+                        if (!scrollContainer) scrollContainer = document.querySelector('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+                        
+                        if (scrollContainer) {
+                            scrollContainer.scrollTop += scrollAmount;
+                        } else {
+                            window.scrollBy(0, scrollAmount);
+                        }
                     }
 
                     if (uiActive && isGamepadActive) {
@@ -126,7 +141,8 @@ export default function GamepadManager() {
                         
                         if (!active || active === document.body || !focusable.includes(active)) {
                             if (focusable.length > 0) {
-                                focusable[0].focus();
+                                focusable[0].focus({ preventScroll: true });
+                                focusable[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
                             }
                         }
 
