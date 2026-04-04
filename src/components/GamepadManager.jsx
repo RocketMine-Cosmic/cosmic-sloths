@@ -10,17 +10,25 @@ export default function GamepadManager() {
             confirm: false, cancel: false, pause: false
         };
 
-        const handleUserInteraction = () => {
-            isGamepadActive = false;
-            document.body.classList.remove('gamepad-active');
+        const handleUserInteraction = (e) => {
+            if (e.type === 'mousemove') {
+                // Ignore tiny sub-pixel mouse movements which can be caused by controller stick drift mapping to mouse
+                if (Math.abs(e.movementX) < 3 && Math.abs(e.movementY) < 3) return;
+            }
+            if (isGamepadActive) {
+                isGamepadActive = false;
+                document.body.classList.remove('gamepad-active');
+            }
         };
         window.addEventListener('mousemove', handleUserInteraction);
+        window.addEventListener('mousedown', handleUserInteraction);
         window.addEventListener('keydown', handleUserInteraction);
         window.addEventListener('touchstart', handleUserInteraction);
 
         const getFocusableElements = () => {
             let container = document;
-            const modal = document.querySelector('.z-50');
+            // Only trap focus in actual full-screen modals, not arbitrary z-50 relative containers
+            const modal = document.querySelector('.z-50.inset-0');
             if (modal) {
                 container = modal;
             }
@@ -128,7 +136,7 @@ export default function GamepadManager() {
 
         const checkGamepad = () => {
             const inGame = window.location.pathname.includes('/game');
-            const modalOpen = document.querySelector('.z-50') !== null;
+            const modalOpen = document.querySelector('.z-50.inset-0') !== null;
             const uiActive = !inGame || modalOpen;
 
             if (typeof navigator !== 'undefined' && navigator.getGamepads) {
