@@ -12,6 +12,7 @@ export default function GamepadManager() {
 
         const handleUserInteraction = () => {
             isGamepadActive = false;
+            document.body.classList.remove('gamepad-active');
         };
         window.addEventListener('mousemove', handleUserInteraction);
         window.addEventListener('keydown', handleUserInteraction);
@@ -64,9 +65,7 @@ export default function GamepadManager() {
                 const perpDist = dirX !== 0 ? Math.abs(dy) : Math.abs(dx);
                 const primaryDist = dirX !== 0 ? Math.abs(dx) : Math.abs(dy);
 
-                if (perpDist > primaryDist * 2.5) return;
-
-                const score = primaryDist + perpDist * 2;
+                const score = primaryDist + perpDist * 5;
 
                 if (score < minScore) {
                     minScore = score;
@@ -77,11 +76,11 @@ export default function GamepadManager() {
             if (bestCandidate) {
                 bestCandidate.focus();
             } else {
-                let index = focusable.indexOf(active);
-                if (index === -1) index = 0;
-                if (dirX > 0 || dirY > 0) index = (index + 1) % focusable.length;
-                if (dirX < 0 || dirY < 0) index = (index - 1 + focusable.length) % focusable.length;
-                focusable[index].focus();
+                // If nothing was found in that direction, don't just jump randomly.
+                // Do nothing, or fallback to first if somehow lost.
+                if (!active || !focusable.includes(active)) {
+                    focusable[0].focus();
+                }
             }
         };
 
@@ -115,6 +114,9 @@ export default function GamepadManager() {
                     const buttonStart = gp.buttons[9]?.pressed;
 
                     if (isUp || isDown || isLeft || isRight || buttonA || buttonB || buttonStart) {
+                        if (!isGamepadActive) {
+                            document.body.classList.add('gamepad-active');
+                        }
                         isGamepadActive = true;
                     }
 
