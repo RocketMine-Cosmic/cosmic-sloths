@@ -67,13 +67,18 @@ function PickupCard({ icon, label, color, desc }) {
 const TABS_CONTENT = {
     basics: (
         <div className="space-y-4">
-            <SectionCard title="🎮 Controls" color="cyan">
+            <SectionCard title="🎮 Controls & Gamepad" color="cyan">
                 <p className="text-sm text-slate-300 leading-relaxed mb-3">
                     Move with <strong className="text-white">WASD</strong> or <strong className="text-white">Arrow Keys</strong> on desktop, or the <strong className="text-white">Virtual Joystick</strong> on mobile. Your weapons fire <strong className="text-cyan-400">automatically</strong> at the nearest enemies.
                 </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
                     <div className="bg-slate-900/60 rounded-lg p-2 text-center"><kbd className="text-cyan-300 font-bold">W A S D</kbd><div className="text-slate-400 mt-1">Move</div></div>
                     <div className="bg-slate-900/60 rounded-lg p-2 text-center"><kbd className="text-cyan-300 font-bold">ESC / P</kbd><div className="text-slate-400 mt-1">Pause</div></div>
+                    <div className="bg-slate-900/60 rounded-lg p-2 text-center"><kbd className="text-purple-400 font-bold">Left Stick</kbd><div className="text-slate-400 mt-1">Move / Steer</div></div>
+                    <div className="bg-slate-900/60 rounded-lg p-2 text-center"><kbd className="text-purple-400 font-bold">Right Stick</kbd><div className="text-slate-400 mt-1">Scroll Menus</div></div>
+                </div>
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-slate-700/50 text-xs text-slate-400">
+                    <strong className="text-white">Full Gamepad Support:</strong> Connect an Xbox, PlayStation, or generic controller to play from the couch! Use the <strong className="text-fuchsia-400">Virtual Cursor</strong> to navigate the Hub and menus seamlessly, and the <strong className="text-cyan-400">Snap-to-Grid</strong> system for quick selections during gameplay.
                 </div>
             </SectionCard>
 
@@ -154,10 +159,26 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
-            <SectionCard title="📖 Cosmic Codex" color="purple">
-                <p className="text-sm text-slate-300 leading-relaxed">
-                    Every enemy you encounter is logged in the Codex. Kill enough of a specific enemy to achieve <strong className="text-fuchsia-400">Mastery</strong> — granting a permanent <strong className="text-fuchsia-400">+5% damage bonus</strong> against that enemy type forever.
+            <SectionCard title="📖 Bestiary & Synergy Codex" color="purple">
+                <div className="space-y-3">
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-purple-800/40">
+                        <div className="font-bold text-purple-300 text-sm mb-1">👾 The Bestiary</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Every enemy you encounter is logged here. View lore and stats! Kill enough of a specific enemy to achieve <strong className="text-fuchsia-400">Mastery</strong> — granting a permanent <strong className="text-white">+2% to +10% damage bonus</strong> against that enemy type forever.</p>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-pink-800/40">
+                        <div className="font-bold text-pink-300 text-sm mb-1">🔥 Synergy Codex</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Tracks all your discovered <strong className="text-white">Weapon Synergies</strong>. Finding the right combinations is crucial to dominating higher difficulties and surviving Endless Mode.</p>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="🏆 Achievements" color="amber">
+                <p className="text-sm text-slate-300 leading-relaxed mb-2">
+                    Complete hundreds of challenges to earn <strong className="text-amber-400">Achievement Points</strong>.
                 </p>
+                <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-2 border border-slate-700">
+                    Track your total completion progress for <strong className="text-white">Survival, Combat, Wealth, and Progression</strong> milestones from the Main Menu.
+                </div>
             </SectionCard>
 
             <SectionCard title="🏅 Character Mastery" color="amber">
