@@ -1475,30 +1475,63 @@ export class GameEngine {
         drawProjectiles(this.ctx, this.projectiles, this.particleManager, this.time, camX, camY, vWidth, vHeight);
 
         if (this.hazards) {
+            this.ctx.globalCompositeOperation = 'screen';
             this.hazards.forEach(h => {
                 this.ctx.save();
                 this.ctx.translate(h.x, h.y);
-                this.ctx.rotate(this.time);
-                this.ctx.beginPath();
-                const spikes = 12;
-                for (let i = 0; i < spikes * 2; i++) {
-                    const a = (Math.PI * 2 / (spikes * 2)) * i;
-                    const r = i % 2 === 0 ? h.radius : h.radius * 0.8;
-                    this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-                }
-                this.ctx.closePath();
+                
                 if (h.active) {
-                    this.ctx.fillStyle = 'rgba(255, 69, 0, 0.8)';
+                    // Explosion phase
+                    this.ctx.fillStyle = 'rgba(255, 69, 0, 0.6)';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
                     this.ctx.fill();
-                } else {
-                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + (2 - h.timer) * 0.2})`;
-                    this.ctx.fill();
+                    
                     this.ctx.strokeStyle = '#ff0000';
+                    this.ctx.lineWidth = 4;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, h.radius * 1.2, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                } else {
+                    // Warning phase
+                    const progress = 1 - (h.timer / 2.0); // 0 to 1
+                    
+                    // Pulsing background
+                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + Math.sin(this.time * 10) * 0.1})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Rotating danger ring
+                    this.ctx.rotate(this.time * 2);
+                    this.ctx.strokeStyle = `rgba(255, 50, 0, ${0.3 + progress * 0.7})`;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.setLineDash([20, 15]);
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                    
+                    // Inner shrinking circle
+                    this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
                     this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, h.radius * (1 - progress), 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    
+                    // Crosshairs
+                    this.ctx.rotate(-this.time * 2); // reset rotation for crosshairs
+                    this.ctx.strokeStyle = `rgba(255, 0, 0, ${0.5 + progress * 0.5})`;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-h.radius, 0);
+                    this.ctx.lineTo(h.radius, 0);
+                    this.ctx.moveTo(0, -h.radius);
+                    this.ctx.lineTo(0, h.radius);
                     this.ctx.stroke();
                 }
                 this.ctx.restore();
             });
+            this.ctx.globalCompositeOperation = 'source-over';
         }
 
         if (this.enemyProjectiles) {
