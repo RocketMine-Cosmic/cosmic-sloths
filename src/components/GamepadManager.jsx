@@ -30,8 +30,12 @@ export default function GamepadManager() {
             )).filter(el => {
                 // Ignore structural divs/spans with tabindex (like embla carousel viewport)
                 const tag = el.tagName.toLowerCase();
-                if ((tag === 'div' || tag === 'span') && !el.getAttribute('role')) {
-                    return false;
+                if (tag === 'div' || tag === 'span') {
+                    const role = el.getAttribute('role');
+                    // Only allow divs/spans if they are explicitly roles that act like buttons/links
+                    if (role !== 'button' && role !== 'link' && role !== 'menuitem' && role !== 'tab') {
+                        return false;
+                    }
                 }
 
                 const style = window.getComputedStyle(el);
