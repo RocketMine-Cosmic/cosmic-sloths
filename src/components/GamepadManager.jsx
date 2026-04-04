@@ -28,13 +28,22 @@ export default function GamepadManager() {
             return Array.from(container.querySelectorAll(
                 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
             )).filter(el => {
+                // Ignore structural divs/spans with tabindex (like embla carousel viewport)
+                const tag = el.tagName.toLowerCase();
+                if ((tag === 'div' || tag === 'span') && !el.getAttribute('role')) {
+                    return false;
+                }
+
                 const style = window.getComputedStyle(el);
-                if (style.display === 'none' || style.visibility === 'hidden' || el.offsetWidth === 0) return false;
+                if (style.display === 'none' || style.visibility === 'hidden' || el.offsetWidth === 0 || el.offsetHeight === 0) return false;
                 
+                // Ensure the element's horizontal center is physically on screen to prevent 
+                // focusing elements on off-screen carousel slides
                 const rect = el.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
                 return (
-                    rect.right > 0 &&
-                    rect.left < (window.innerWidth || document.documentElement.clientWidth)
+                    centerX > 0 &&
+                    centerX < (window.innerWidth || document.documentElement.clientWidth)
                 );
             });
         };
@@ -141,7 +150,15 @@ export default function GamepadManager() {
                             if (active && typeof active.closest === 'function') {
                                 scrollContainer = active.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
                             }
-                            if (!scrollContainer) scrollContainer = document.querySelector('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+                            
+                            if (!scrollContainer) {
+                                const containers = Array.from(document.querySelectorAll('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]'));
+                                scrollContainer = containers.find(c => {
+                                    const rect = c.getBoundingClientRect();
+                                    const centerX = rect.left + rect.width / 2;
+                                    return centerX > 0 && centerX < (window.innerWidth || document.documentElement.clientWidth);
+                                });
+                            }
                             
                             if (scrollContainer) {
                                 scrollContainer.scrollTop += scrollAmount;
