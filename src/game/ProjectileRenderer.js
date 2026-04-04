@@ -187,123 +187,132 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1.0;
-        } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 20;
-            ctx.lineWidth = Math.max(2, 8 * p.life);
-            ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.15;
-            const grad = ctx.createRadialGradient(0, 0, Math.max(0.1, p.radius * 0.5), 0, 0, Math.max(0.1, p.radius));
-            grad.addColorStop(0, 'transparent');
-            grad.addColorStop(0.8, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
-            ctx.fill();
+            ctx.globalCompositeOperation = 'screen'; // Use screen instead of lighter to prevent intense whiteout
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.08; // Much lower center alpha
+            
+            ctx.fillStyle = p.color || '#ffffff';
+            
+            if (p.type === 'shield_bubble') {
+                // Shield Bubble: Rotating dashed ring with minimal center fill
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+                ctx.fill();
+                
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.8;
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([15, 20]);
+                ctx.lineDashOffset = -time * 50;
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else {
+                // Burning Barrier: Hexagon shape so it's instantly distinct from circles
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i + time;
+                    const px = Math.cos(angle) * p.radius;
+                    const py = Math.sin(angle) * p.radius;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
 
-            ctx.globalAlpha = Math.min(1, p.life * 2);
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 3;
-            ctx.setLineDash([10, 15]);
-            ctx.lineDashOffset = -time * 40;
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life) * 0.25;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius));
-            grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
-            ctx.fill();
-            
-            ctx.globalAlpha = Math.min(1, p.life) * 0.8;
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius * (0.9 + Math.sin(time * 4 + p.x) * 0.05)), 0, Math.PI*2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'hellfire') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.15 + Math.sin(time * 8 + p.x) * 0.05;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00bbff';
-            ctx.shadowBlur = 10;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = 1.0;
-        } else if (p.type === 'quantum_collapse') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.25;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 0.6, 0, Math.PI*2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.9;
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([20, 10]);
+                ctx.lineDashOffset = time * 60;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'aegis_matrix') {
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.1;
+            ctx.globalAlpha = 0.05; // Faint background
             ctx.fillStyle = p.color || '#00ff88';
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, 0, Math.PI*2);
             ctx.fill();
             
-            ctx.globalAlpha = 0.6;
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ff88';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 4;
-            ctx.setLineDash([20, 20]);
-            ctx.lineDashOffset = -time * 100;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
+            ctx.globalAlpha = 0.8;
+            ctx.strokeStyle = p.color || '#00ff88';
             ctx.lineWidth = 2;
+            
+            // Aegis Matrix: Dual rotating octagons (geometric tech pattern)
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius - 12, 0, Math.PI*2);
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i + time * 0.5;
+                const px = Math.cos(angle) * p.radius;
+                const py = Math.sin(angle) * p.radius;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
             ctx.stroke();
-            ctx.shadowBlur = 0;
+
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i - time * 0.8;
+                const px = Math.cos(angle) * (p.radius - 15);
+                const py = Math.sin(angle) * (p.radius - 15);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool' || p.type === 'hellfire') {
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = Math.min(1, p.life) * (p.type === 'hellfire' ? 0.15 : 0.08); // Transparent core
+            ctx.fillStyle = p.color || '#ffffff';
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.globalAlpha = Math.min(1, p.life) * 0.7;
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = p.type === 'hellfire' ? 3 : 2;
+            
+            // Segmented bio-hazard ring instead of a solid blob
+            const segments = p.type === 'hellfire' ? 5 : 4;
+            const segmentSize = (Math.PI * 2) / segments;
+            const gap = 0.4;
+            
+            for (let i = 0; i < segments; i++) {
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius * (0.9 + Math.sin(time * 4 + p.x) * 0.05)), 
+                    i * segmentSize + gap/2 + (time * (p.type === 'hellfire' ? 1.5 : 1)), 
+                    (i + 1) * segmentSize - gap/2 + (time * (p.type === 'hellfire' ? 1.5 : 1)));
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+        } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave' || p.type === 'quantum_collapse') {
+            ctx.globalCompositeOperation = 'screen';
+            ctx.strokeStyle = p.color || '#ff00ff';
+            ctx.lineWidth = p.type === 'quantum_collapse' ? 4 : Math.max(1, 4 * p.life);
+            ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
+            
+            // Clean shockwave rings
+            if (p.type === 'quantum_collapse') {
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+                ctx.stroke();
+                
+                ctx.lineWidth = 1; // Inner ripple
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius * 0.6), 0, Math.PI*2);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
         } else if (p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
