@@ -271,7 +271,7 @@ export function fireWeaponLogic(engine, w) {
                 }
             });
             
-            if (Math.random() < 0.1) {
+            if (Math.random() < 0.3) {
                 engine.enemies.forEach(e => {
                     if (Math.hypot(e.x - px, e.y - py) < 120 * area) {
                         engine.damageEnemy(e, dmg);
@@ -295,28 +295,26 @@ export function fireWeaponLogic(engine, w) {
                 }
             });
             
-            if (engine.frameCount % 45 === i % 45) { 
-                let nearest = null;
-                let minDist = 300 * area;
-                engine.enemies.forEach(e => {
-                    const d = Math.hypot(e.x - px, e.y - py);
-                    if (d < minDist) { minDist = d; nearest = e; }
+            let nearest = null;
+            let minDist = 300 * area;
+            engine.enemies.forEach(e => {
+                const d = Math.hypot(e.x - px, e.y - py);
+                if (d < minDist) { minDist = d; nearest = e; }
+            });
+            
+            if (nearest) {
+                const lAngle = Math.atan2(nearest.y - py, nearest.x - px);
+                engine.projectiles.push({
+                    x: px, y: py,
+                    vx: Math.cos(lAngle) * 400 * engine.player.projSpeedMult,
+                    vy: Math.sin(lAngle) * 400 * engine.player.projSpeedMult,
+                    radius: 4,
+                    damage: dmg,
+                    pierce: 3 + Math.floor(w.level/2),
+                    life: 1.5,
+                    color: '#00ffff',
+                    type: 'beam'
                 });
-                
-                if (nearest) {
-                    const lAngle = Math.atan2(nearest.y - py, nearest.x - px);
-                    engine.projectiles.push({
-                        x: px, y: py,
-                        vx: Math.cos(lAngle) * 400 * engine.player.projSpeedMult,
-                        vy: Math.sin(lAngle) * 400 * engine.player.projSpeedMult,
-                        radius: 4,
-                        damage: dmg,
-                        pierce: 3 + Math.floor(w.level/2),
-                        life: 1.5,
-                        color: '#00ffff',
-                        type: 'beam'
-                    });
-                }
             }
         }
     }
@@ -452,28 +450,26 @@ export function fireWeaponLogic(engine, w) {
                 }
             });
             
-            if (engine.frameCount % 20 === i % 20) { 
-                let nearest = null;
-                let minDist = 400 * area;
-                engine.enemies.forEach(e => {
-                    const d = Math.hypot(e.x - px, e.y - py);
-                    if (d < minDist) { minDist = d; nearest = e; }
+            let nearest = null;
+            let minDist = 400 * area;
+            engine.enemies.forEach(e => {
+                const d = Math.hypot(e.x - px, e.y - py);
+                if (d < minDist) { minDist = d; nearest = e; }
+            });
+            
+            if (nearest) {
+                const lAngle = Math.atan2(nearest.y - py, nearest.x - px);
+                engine.projectiles.push({
+                    x: px, y: py,
+                    vx: Math.cos(lAngle) * 500 * engine.player.projSpeedMult,
+                    vy: Math.sin(lAngle) * 500 * engine.player.projSpeedMult,
+                    radius: 5,
+                    damage: dmg,
+                    pierce: 5 + Math.floor(w.level/2),
+                    life: 2.0,
+                    color: '#ff00ff',
+                    type: 'beam'
                 });
-                
-                if (nearest) {
-                    const lAngle = Math.atan2(nearest.y - py, nearest.x - px);
-                    engine.projectiles.push({
-                        x: px, y: py,
-                        vx: Math.cos(lAngle) * 500 * engine.player.projSpeedMult,
-                        vy: Math.sin(lAngle) * 500 * engine.player.projSpeedMult,
-                        radius: 5,
-                        damage: dmg,
-                        pierce: 5 + Math.floor(w.level/2),
-                        life: 2.0,
-                        color: '#ff00ff',
-                        type: 'beam'
-                    });
-                }
             }
         }
     }

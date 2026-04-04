@@ -1187,11 +1187,11 @@ export class GameEngine {
         this.level++;
         this.xpRequired = Math.floor(this.xpRequired * 1.2 + 40);
         
-        // Scale stats and fully heal
-        this.player.maxHp = Math.floor(this.player.maxHp * 1.05);
-        this.player.damageMult += 0.04;
-        this.player.armor += 1;
-        this.player.hp = this.player.maxHp;
+        // Scale stats slightly and heal a bit (no longer full heal + god mode)
+        this.player.maxHp = Math.floor(this.player.maxHp * 1.02);
+        this.player.damageMult += 0.02;
+        this.player.armor += 0.25;
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + (this.player.maxHp * 0.2));
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
         
         this.isPaused = true;
