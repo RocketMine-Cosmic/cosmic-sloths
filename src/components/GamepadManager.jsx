@@ -100,11 +100,11 @@ export default function GamepadManager() {
                     const containerRect = scrollContainer.getBoundingClientRect();
                     const elRect = bestCandidate.getBoundingClientRect();
                     const targetTop = scrollContainer.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 2) + (elRect.height / 2);
-                    scrollContainer.scrollTo({ top: targetTop, behavior: 'smooth' });
+                    scrollContainer.scrollTo({ top: targetTop, behavior: 'auto' });
                 } else {
                     const elRect = bestCandidate.getBoundingClientRect();
                     const targetTop = window.scrollY + elRect.top - (window.innerHeight / 2) + (elRect.height / 2);
-                    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                    window.scrollTo({ top: targetTop, behavior: 'auto' });
                 }
             } else {
                 // If nothing was found in that direction, maybe change carousel slide
@@ -159,7 +159,7 @@ export default function GamepadManager() {
 
                     if (uiActive && Math.abs(axeRightY) > 0.15) {
                         try {
-                            const scrollAmount = axeRightY * 15;
+                            const scrollAmount = axeRightY * 25;
                             const active = document.activeElement;
                             let scrollContainer = null;
                             if (active && typeof active.closest === 'function') {
@@ -186,24 +186,39 @@ export default function GamepadManager() {
                     }
 
                     if (uiActive && isGamepadActive) {
-                        const active = document.activeElement;
+                        let active = document.activeElement;
                         const focusable = getFocusableElements();
                         
-                        if (!active || active === document.body || !focusable.includes(active)) {
-                            if (focusable.length > 0) {
-                                focusable[0].focus({ preventScroll: true });
-                                
-                                const scrollContainer = focusable[0].closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
-                                if (scrollContainer) {
-                                    const containerRect = scrollContainer.getBoundingClientRect();
-                                    const elRect = focusable[0].getBoundingClientRect();
-                                    const targetTop = scrollContainer.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 2) + (elRect.height / 2);
-                                    scrollContainer.scrollTo({ top: targetTop, behavior: 'smooth' });
-                                } else {
-                                    const elRect = focusable[0].getBoundingClientRect();
-                                    const targetTop = window.scrollY + elRect.top - (window.innerHeight / 2) + (elRect.height / 2);
-                                    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                        let isActiveVisible = false;
+                        if (active && focusable.includes(active)) {
+                            const rect = active.getBoundingClientRect();
+                            if (rect.bottom > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight)) {
+                                isActiveVisible = true;
+                            }
+                        }
+
+                        if (!isActiveVisible && focusable.length > 0) {
+                            let bestCenterEl = null;
+                            let minCenterDist = Infinity;
+                            const centerY = (window.innerHeight || document.documentElement.clientHeight) / 2;
+                            
+                            focusable.forEach(el => {
+                                const rect = el.getBoundingClientRect();
+                                if (rect.bottom >= 0 && rect.top <= (window.innerHeight || document.documentElement.clientHeight)) {
+                                    const dist = Math.abs((rect.top + rect.height / 2) - centerY);
+                                    if (dist < minCenterDist) {
+                                        minCenterDist = dist;
+                                        bestCenterEl = el;
+                                    }
                                 }
+                            });
+                            
+                            if (bestCenterEl) {
+                                bestCenterEl.focus({ preventScroll: true });
+                                active = bestCenterEl;
+                            } else {
+                                focusable[0].focus({ preventScroll: true });
+                                active = focusable[0];
                             }
                         }
 
