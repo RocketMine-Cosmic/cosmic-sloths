@@ -84,7 +84,7 @@ export class ParticleManager {
 
         this.particles.forEach(p => {
             const size = p.size || 8;
-            const alpha = Math.max(0, p.life / (p.maxLife || 1)) * (p.alphaCap || 1.0);
+            const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
 
             ctx.save();
@@ -164,32 +164,12 @@ export class ParticleManager {
     }
 
     addParticle(x, y, color, count, type = 'star', sizeMult = 1, options = {}) {
-        let nearbyCount = 0;
-        for (let i = 0; i < this.particles.length; i++) {
-            const p = this.particles[i];
-            if (Math.abs(p.x - x) < 50 && Math.abs(p.y - y) < 50) {
-                nearbyCount++;
-            }
-        }
-        
-        let actualCount = count;
-        let alphaCap = 1.0;
-        
-        if (nearbyCount > 20) {
-            actualCount = Math.max(1, Math.floor(count / 3));
-            alphaCap = 0.3;
-        } else if (nearbyCount > 10) {
-            actualCount = Math.max(1, Math.floor(count / 2));
-            alphaCap = 0.6;
-        }
-
-        for (let i = 0; i < actualCount; i++) {
+        for (let i = 0; i < count; i++) {
             const angle = options.angle !== undefined ? options.angle + (Math.random() - 0.5) * 0.8 : Math.random() * Math.PI * 2;
             const speed = options.speed !== undefined ? options.speed * (0.7 + Math.random() * 0.6) : Math.random() * 150 * sizeMult + 50;
 
             const lifeBase = Math.random() * 0.5 + 0.3 + (options.lifeBonus || 0);
             this.particles.push({
-                alphaCap,
                 x, y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
