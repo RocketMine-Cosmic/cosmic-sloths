@@ -189,121 +189,240 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 20;
-            ctx.lineWidth = Math.max(2, 8 * p.life);
+            ctx.strokeStyle = p.color || '#ff00ff';
+            ctx.lineWidth = Math.max(2, 6 * p.life);
             ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
+            
+            // Draw multiple thin sharp rings
             ctx.beginPath();
             ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = Math.max(1, 3 * p.life);
+            ctx.beginPath();
+            ctx.arc(0, 0, Math.max(0.1, p.radius * 0.9), 0, Math.PI*2);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, Math.max(0.1, p.radius * 0.8), 0, Math.PI*2);
+            ctx.stroke();
+            
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.15;
-            const grad = ctx.createRadialGradient(0, 0, Math.max(0.1, p.radius * 0.5), 0, 0, Math.max(0.1, p.radius));
-            grad.addColorStop(0, 'transparent');
-            grad.addColorStop(0.8, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.2;
+            ctx.fillStyle = p.color || '#ffffff';
+            
+            // Draw Hexagon instead of circle
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i + (time * 0.5);
+                const hx = Math.cos(angle) * Math.max(0.1, p.radius);
+                const hy = Math.sin(angle) * Math.max(0.1, p.radius);
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
             ctx.fill();
 
-            ctx.globalAlpha = Math.min(1, p.life * 2);
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.8;
             ctx.strokeStyle = '#ffffff';
             ctx.shadowColor = p.color;
             ctx.shadowBlur = 15;
             ctx.lineWidth = 3;
-            ctx.setLineDash([10, 15]);
-            ctx.lineDashOffset = -time * 40;
+            
+            // Outer Hexagon stroke
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i + (time * 0.5);
+                const hx = Math.cos(angle) * Math.max(0.1, p.radius);
+                const hy = Math.sin(angle) * Math.max(0.1, p.radius);
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
             ctx.stroke();
-            ctx.setLineDash([]);
+            
+            // Inner counter-rotating smaller hexagon
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - (time * 0.5);
+                const hx = Math.cos(angle) * Math.max(0.1, p.radius * 0.8);
+                const hy = Math.sin(angle) * Math.max(0.1, p.radius * 0.8);
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.min(1, p.life) * 0.25;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius));
-            grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
+            ctx.globalAlpha = Math.min(1, p.life) * 0.4;
+            ctx.fillStyle = p.color || '#ffffff';
+            
+            // Draw irregular organic blob
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+            const points = 12;
+            for (let i = 0; i < points; i++) {
+                const angle = (Math.PI * 2 / points) * i;
+                const noise = Math.sin(angle * 3 + time * 3 + p.x) * 0.15 + Math.cos(angle * 2 - time * 2 + p.y) * 0.15;
+                const r = Math.max(0.1, p.radius * (0.85 + noise));
+                const hx = Math.cos(angle) * r;
+                const hy = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
             ctx.fill();
             
             ctx.globalAlpha = Math.min(1, p.life) * 0.8;
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 10;
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius * (0.9 + Math.sin(time * 4 + p.x) * 0.05)), 0, Math.PI*2);
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'hellfire') {
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.15 + Math.sin(time * 8 + p.x) * 0.05;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00bbff';
-            ctx.shadowBlur = 10;
+            ctx.globalAlpha = 0.3 + Math.sin(time * 8 + p.x) * 0.1;
+            ctx.fillStyle = p.color || '#00bbff';
+            
+            // Draw jagged fire blob
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 0.8, 0, Math.PI*2);
+            const points = 16;
+            for (let i = 0; i < points; i++) {
+                const angle = (Math.PI * 2 / points) * i;
+                const noise = Math.sin(angle * 5 + time * 10 + p.x) * 0.25;
+                const r = Math.max(0.1, p.radius * (0.75 + noise));
+                const hx = Math.cos(angle) * r;
+                const hy = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
             ctx.fill();
-            ctx.shadowBlur = 0;
+
+            // Inner brighter fire
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            for (let i = 0; i < points; i++) {
+                const angle = (Math.PI * 2 / points) * i;
+                const noise = Math.cos(angle * 6 - time * 12 + p.y) * 0.2;
+                const r = Math.max(0.1, p.radius * 0.4 * (0.8 + noise));
+                const hx = Math.cos(angle) * r;
+                const hy = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.fill();
+
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'quantum_collapse') {
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.25;
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius * 0.6, 0, Math.PI*2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = p.color || '#ff00ff';
             
-            ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#ff00ff';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 4;
+            // Draw jagged star
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            const points = 10;
+            for (let i = 0; i < points * 2; i++) {
+                const angle = (Math.PI * 2 / (points * 2)) * i + (time * 2);
+                const r = i % 2 === 0 ? p.radius : p.radius * 0.4;
+                const hx = Math.cos(angle) * r;
+                const hy = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.globalAlpha = 0.8;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            
+            // Outer Star Stroke
+            ctx.beginPath();
+            for (let i = 0; i < points * 2; i++) {
+                const angle = (Math.PI * 2 / (points * 2)) * i + (time * 2);
+                const r = i % 2 === 0 ? p.radius : p.radius * 0.4;
+                const hx = Math.cos(angle) * r;
+                const hy = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
+            // Inner dark core
             ctx.globalAlpha = 1.0;
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius * 0.2, 0, Math.PI*2);
+            ctx.fill();
         } else if (p.type === 'aegis_matrix') {
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.1;
+            ctx.globalAlpha = 0.15;
             ctx.fillStyle = p.color || '#00ff88';
+            
+            // Draw large octagon
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i + (time * 0.2);
+                const hx = Math.cos(angle) * p.radius;
+                const hy = Math.sin(angle) * p.radius;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
             ctx.fill();
             
-            ctx.globalAlpha = 0.6;
+            ctx.globalAlpha = 0.8;
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ff88';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 4;
-            ctx.setLineDash([20, 20]);
-            ctx.lineDashOffset = -time * 100;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            ctx.lineWidth = 3;
             
-            ctx.lineWidth = 2;
+            // Outer Octagon stroke
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius - 12, 0, Math.PI*2);
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i + (time * 0.2);
+                const hx = Math.cos(angle) * p.radius;
+                const hy = Math.sin(angle) * p.radius;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
+            // Inner counter-rotating octagon
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i - (time * 0.3);
+                const hx = Math.cos(angle) * (p.radius - 15);
+                const hy = Math.sin(angle) * (p.radius - 15);
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Cross lines
+            ctx.globalAlpha = 0.3;
+            for (let i = 0; i < 4; i++) {
+                const angle = (Math.PI / 4) * i + (time * 0.2);
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(angle) * p.radius, Math.sin(angle) * p.radius);
+                ctx.lineTo(Math.cos(angle + Math.PI) * p.radius, Math.sin(angle + Math.PI) * p.radius);
+                ctx.stroke();
+            }
         } else if (p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
