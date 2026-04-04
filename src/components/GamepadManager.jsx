@@ -13,17 +13,20 @@ export default function GamepadManager() {
             cursorEl = document.createElement('div');
             cursorEl.id = 'gamepad-virtual-cursor';
             cursorEl.style.position = 'fixed';
-            cursorEl.style.width = '24px';
-            cursorEl.style.height = '24px';
+            cursorEl.style.left = '0px';
+            cursorEl.style.top = '0px';
+            cursorEl.style.width = '36px';
+            cursorEl.style.height = '36px';
             cursorEl.style.borderRadius = '50%';
-            cursorEl.style.border = '3px solid #0CA7B8';
-            cursorEl.style.backgroundColor = 'rgba(217, 70, 239, 0.5)';
-            cursorEl.style.boxShadow = '0 0 15px #0CA7B8';
-            cursorEl.style.transform = 'translate(-50%, -50%)';
+            cursorEl.style.border = '2px solid rgba(12, 167, 184, 0.9)';
+            cursorEl.style.backgroundColor = 'rgba(217, 70, 239, 0.15)';
+            cursorEl.style.boxShadow = '0 0 20px rgba(12, 167, 184, 0.6), inset 0 0 15px rgba(217, 70, 239, 0.4)';
+            cursorEl.style.transform = 'translate3d(-50%, -50%, 0)';
             cursorEl.style.pointerEvents = 'none';
             cursorEl.style.zIndex = '999999';
             cursorEl.style.display = 'none';
             cursorEl.style.transition = 'opacity 0.2s';
+            cursorEl.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;background-color:#fff;border-radius:50%;box-shadow:0 0 12px #fff, 0 0 20px #D946EF;"></div>';
             document.body.appendChild(cursorEl);
         }
 
@@ -218,15 +221,15 @@ export default function GamepadManager() {
                             cursorEl.style.display = 'block';
                             
                             // Update cursor position
-                            const speed = 18;
+                            const speed = 30; // Increased speed for faster movement
                             cursorX += cursorDx * speed;
                             cursorY += cursorDy * speed;
                             
                             cursorX = Math.max(0, Math.min(window.innerWidth, cursorX));
                             cursorY = Math.max(0, Math.min(window.innerHeight, cursorY));
                             
-                            cursorEl.style.left = `${cursorX}px`;
-                            cursorEl.style.top = `${cursorY}px`;
+                            // Use hardware-accelerated transforms for perfectly smooth 60fps movement
+                            cursorEl.style.transform = `translate3d(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%), 0)`;
 
                             // Right Stick Scroll
                             if (Math.abs(axeRightY) > 0.15) {
