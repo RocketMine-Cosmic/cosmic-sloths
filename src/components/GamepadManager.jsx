@@ -145,9 +145,10 @@ export default function GamepadManager() {
                 const activeIndex = focusable.indexOf(active);
                 if (activeIndex !== -1) {
                     let nextIndex = activeIndex;
-                    if (dirY > 0 || dirX > 0) {
+                    // Only wrap vertically to prevent accidental left/right inputs from acting like up/down
+                    if (dirY > 0) {
                         nextIndex = (activeIndex + 1) % focusable.length;
-                    } else if (dirY < 0 || dirX < 0) {
+                    } else if (dirY < 0) {
                         nextIndex = (activeIndex - 1 + focusable.length) % focusable.length;
                     }
                     if (nextIndex !== activeIndex && focusable[nextIndex]) {
