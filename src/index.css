@@ -93,8 +93,8 @@
     @apply bg-background text-foreground;
   }
 
-  button:focus-visible, a:focus-visible, [role="button"]:focus-visible,
-  body.gamepad-active button:focus, body.gamepad-active a:focus, body.gamepad-active [role="button"]:focus {
+  button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+  body.gamepad-active button:focus, body.gamepad-active a:focus, body.gamepad-active [role="button"]:focus, body.gamepad-active input:focus, body.gamepad-active select:focus, body.gamepad-active textarea:focus {
     @apply outline-none ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900 z-10;
   }
 }

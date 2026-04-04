@@ -58,7 +58,20 @@ export default function GamepadManager() {
 
             const active = document.activeElement;
             if (!active || !focusable.includes(active)) {
-                focusable[0].focus();
+                const first = focusable[0];
+                first.focus({ preventScroll: true });
+                
+                const scrollContainer = first.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y: auto"]');
+                if (scrollContainer) {
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const elRect = first.getBoundingClientRect();
+                    const targetTop = scrollContainer.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 2) + (elRect.height / 2);
+                    scrollContainer.scrollTo({ top: targetTop, behavior: 'auto' });
+                } else {
+                    const elRect = first.getBoundingClientRect();
+                    const targetTop = window.scrollY + elRect.top - (window.innerHeight / 2) + (elRect.height / 2);
+                    window.scrollTo({ top: targetTop, behavior: 'auto' });
+                }
                 return;
             }
 
@@ -107,14 +120,7 @@ export default function GamepadManager() {
                     window.scrollTo({ top: targetTop, behavior: 'auto' });
                 }
             } else {
-                // If nothing was found in that direction, maybe change carousel slide
-                if (dirX !== 0 && !document.querySelector('.z-50')) {
-                    const leftBtn = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.lucide-chevron-left'));
-                    const rightBtn = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.lucide-chevron-right'));
-                    
-                    if (dirX < 0 && leftBtn) leftBtn.click();
-                    if (dirX > 0 && rightBtn) rightBtn.click();
-                } else if (!active || !focusable.includes(active)) {
+                if (!active || !focusable.includes(active)) {
                     focusable[0].focus({ preventScroll: true });
                 }
             }
@@ -136,21 +142,28 @@ export default function GamepadManager() {
                     const axeX = gp.axes[0] || 0;
                     const axeY = gp.axes[1] || 0;
                     const axeRightY = gp.axes[3] || 0;
-                    const dpadUp = gp.buttons[12]?.pressed;
-                    const dpadDown = gp.buttons[13]?.pressed;
-                    const dpadLeft = gp.buttons[14]?.pressed;
-                    const dpadRight = gp.buttons[15]?.pressed;
+                    const dpadUp = gp.buttons[12]?.pressed || gp.axes[9] === -1 || gp.axes[9] === -1.2857142686843872;
+                    const dpadDown = gp.buttons[13]?.pressed || gp.axes[9] === 0.14285719394683838 || gp.axes[9] === 1;
+                    const dpadLeft = gp.buttons[14]?.pressed || gp.axes[9] === 0.7142857313156128 || gp.axes[9] === -1;
+                    const dpadRight = gp.buttons[15]?.pressed || gp.axes[9] === -0.4285714030265808 || gp.axes[9] === 1;
                     
-                    const isUp = axeY < -0.5 || dpadUp;
-                    const isDown = axeY > 0.5 || dpadDown;
-                    const isLeft = axeX < -0.5 || dpadLeft;
-                    const isRight = axeX > 0.5 || dpadRight;
+                    // Fallback for some Linux/Mac gamepads
+                    const altAxeX = gp.axes[4] || gp.axes[6] || 0;
+                    const altAxeY = gp.axes[5] || gp.axes[7] || 0;
+                    
+                    const isUp = axeY < -0.5 || dpadUp || altAxeY < -0.5;
+                    const isDown = axeY > 0.5 || dpadDown || altAxeY > 0.5;
+                    const isLeft = axeX < -0.5 || dpadLeft || altAxeX < -0.5;
+                    const isRight = axeX > 0.5 || dpadRight || altAxeX > 0.5;
                     
                     const buttonA = gp.buttons[0]?.pressed;
                     const buttonB = gp.buttons[1]?.pressed;
-                    const buttonStart = gp.buttons[9]?.pressed;
+                    const buttonStart = gp.buttons[9]?.pressed || gp.buttons[8]?.pressed;
+                    
+                    const buttonLB = gp.buttons[4]?.pressed;
+                    const buttonRB = gp.buttons[5]?.pressed;
 
-                    if (isUp || isDown || isLeft || isRight || buttonA || buttonB || buttonStart || Math.abs(axeRightY) > 0.15) {
+                    if (isUp || isDown || isLeft || isRight || buttonA || buttonB || buttonStart || buttonLB || buttonRB || Math.abs(axeRightY) > 0.15) {
                         if (!isGamepadActive) {
                             document.body.classList.add('gamepad-active');
                         }
@@ -242,6 +255,16 @@ export default function GamepadManager() {
                             actionTaken = true;
                         }
 
+                        if (buttonLB && (!state.lb || now - lastActionTime > throttle)) {
+                            const leftBtn = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.lucide-chevron-left'));
+                            if (leftBtn) { leftBtn.click(); actionTaken = true; }
+                        }
+                        
+                        if (buttonRB && (!state.rb || now - lastActionTime > throttle)) {
+                            const rightBtn = Array.from(document.querySelectorAll('button')).find(b => b.querySelector('.lucide-chevron-right'));
+                            if (rightBtn) { rightBtn.click(); actionTaken = true; }
+                        }
+
                         if (actionTaken) {
                             lastActionTime = now;
                         }
@@ -266,6 +289,8 @@ export default function GamepadManager() {
                     state.confirm = buttonA;
                     state.cancel = buttonB;
                     state.pause = buttonStart;
+                    state.lb = buttonLB;
+                    state.rb = buttonRB;
                 }
             }
             animationFrameId = requestAnimationFrame(checkGamepad);
