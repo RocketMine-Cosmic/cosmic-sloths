@@ -22,7 +22,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             
-            if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot') {
+            if (p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun') {
                 ctx.beginPath();
                 ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.5), 0, 0, Math.PI * 2);
                 ctx.fill();
@@ -35,25 +35,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         }
 
-        if (p.type === 'blaster_shot') {
-            ctx.globalCompositeOperation = 'lighter';
-            
-            // Colored Outer Glow
-            ctx.fillStyle = p.color || '#ffffff';
-            ctx.globalAlpha = 0.4;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
-            
-            // Colored Inner Body
-            ctx.globalAlpha = 0.9;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.5), Math.max(0.1, p.radius * 0.6), 0, 0, Math.PI * 2); ctx.fill();
-            
-            // Tiny White Hot Center
-            ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 1.0;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.6), Math.max(0.1, p.radius * 0.2), 0, 0, Math.PI * 2); ctx.fill();
-            
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'wrench_swing') {
+        if (p.type === 'wrench_swing') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = Math.max(0, p.life / 0.25);
             const swingAngle = (1 - (p.life / 0.25)) * Math.PI * 1.5; 
