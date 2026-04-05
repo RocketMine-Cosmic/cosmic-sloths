@@ -32,16 +32,16 @@ export const SaveManager = {
         } else if (localData && localTime > backendTime) {
           // Local is newer — push local up to backend immediately
           console.log('[SaveManager] Local save newer, pushing to backend');
-          await SaveManager._syncToBackendNow(localData);
+          await SaveManager.syncToBackendNow(localData);
         }
-      } else {
+        } else {
         // No backend save exists — create one from local if available
         const localDataRaw = localStorage.getItem('cosmic_sloth_save');
         if (localDataRaw) {
           try {
             const localData = JSON.parse(localDataRaw);
             console.log('[SaveManager] No backend save found, creating from local');
-            await SaveManager._syncToBackendNow(localData);
+            await SaveManager.syncToBackendNow(localData);
           } catch(e) {}
         }
       }
@@ -50,8 +50,8 @@ export const SaveManager = {
     }
   },
 
-  // Immediately syncs to backend (no debounce) — used during initialize
-  _syncToBackendNow: async (data) => {
+  // Immediately syncs to backend (no debounce)
+  syncToBackendNow: async (data) => {
     if (!SaveManager._userId) return;
     try {
       if (SaveManager._saveId) {

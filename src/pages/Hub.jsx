@@ -77,12 +77,21 @@ export default function Hub({ isCarousel }) {
                     let totalAmount = 0;
                     for (const reward of pending) {
                         totalAmount += reward.amount;
-                        await base44.entities.PendingReward.update(reward.id, { claimed: true });
                     }
+
                     const currentSave = SaveManager.load();
                     const newSave = { ...currentSave, cosmicTokens: (currentSave.cosmicTokens || 0) + totalAmount };
                     SaveManager.save(newSave);
                     setSave(newSave);
+                    
+                    if (SaveManager.syncToBackendNow) {
+                        await SaveManager.syncToBackendNow(newSave);
+                    }
+
+                    for (const reward of pending) {
+                        await base44.entities.PendingReward.update(reward.id, { claimed: true });
+                    }
+
                     toast({
                         title: "Rewards Claimed!",
                         description: `You received ${totalAmount} Cosmic Tokens from leaderboards!`,
