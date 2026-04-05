@@ -60,6 +60,7 @@ async function distributeWeekly(base44, pool) {
             const amount = Math.floor(rewardPool * getRewardPercentage(i + 1) * multiplier);
             if (amount > 0) {
                 await base44.asServiceRole.entities.PendingReward.create({
+                    user_id: uniqueScores[i].user_id,
                     player_name: uniqueScores[i].player_name,
                     amount: amount,
                     reason: `Weekly Leaderboard Rank ${i + 1}`,
@@ -109,6 +110,7 @@ async function distributeSeasonal(base44, pool) {
             const amount = Math.floor(rewardPool * getRewardPercentage(i + 1) * multiplier);
             if (amount > 0) {
                 await base44.asServiceRole.entities.PendingReward.create({
+                    user_id: uniqueScores[i].user_id,
                     player_name: uniqueScores[i].player_name,
                     amount: amount,
                     reason: `Seasonal Leaderboard Rank ${i + 1}`,

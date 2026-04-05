@@ -69,7 +69,10 @@ export default function Hub({ isCarousel }) {
                 const user = await base44.auth.me();
                 if (!user) return;
                 const displayName = user.player_name || user.data?.player_name || user.data?.full_name || user.full_name;
-                const pending = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: false });
+                const pendingByUserId = await base44.entities.PendingReward.filter({ user_id: user.id, claimed: false });
+                const pendingByName = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: false });
+                const pending = [...new Map([...pendingByUserId, ...pendingByName].map(item => [item.id, item])).values()];
+                
                 if (pending.length > 0) {
                     let totalAmount = 0;
                     for (const reward of pending) {
