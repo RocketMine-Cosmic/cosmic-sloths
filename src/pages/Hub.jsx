@@ -79,7 +79,8 @@ export default function Hub({ isCarousel }) {
                         totalAmount += reward.amount;
                         await base44.entities.PendingReward.update(reward.id, { claimed: true });
                     }
-                    const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) + totalAmount };
+                    const currentSave = SaveManager.load();
+                    const newSave = { ...currentSave, cosmicTokens: (currentSave.cosmicTokens || 0) + totalAmount };
                     SaveManager.save(newSave);
                     setSave(newSave);
                     toast({
