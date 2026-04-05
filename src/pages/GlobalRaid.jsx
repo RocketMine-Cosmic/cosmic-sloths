@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { ArrowLeft, Skull, Crosshair, Trophy, Activity, Zap } from 'lucide-react';
+import { ArrowLeft, Skull, Crosshair, Trophy, Activity, Zap, Hexagon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
@@ -288,7 +288,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     <Zap className="w-4 h-4 md:w-5 md:h-5" /> BUY 5 MORE RUNS
                                 </div>
                                 <span className="text-[10px] md:text-xs text-purple-200 flex items-center gap-1 font-normal tracking-normal normal-case">
-                                    Cost: 5 <span className="text-emerald-400 font-bold">💠 Cosmic Tokens</span>
+                                    Cost: 5 <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400 inline" /> <span className="text-emerald-400 font-bold">Cosmic Tokens</span>
                                 </span>
                             </button>
                         ) : (

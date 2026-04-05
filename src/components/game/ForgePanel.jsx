@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SaveManager } from '../../game/SaveManager';
 import { CHARACTERS, WEAPONS } from '../../game/Constants';
 import { SoundManager } from '../../game/SoundManager';
-import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star, Coins, Hexagon } from 'lucide-react';
 
 const GOLD_PER_FRAGMENT = 1000;
 const DAILY_CONVERT_CAP = 20; // max fragments from conversion per day
@@ -235,11 +235,11 @@ export default function ForgePanel({ save, setSave }) {
                             </div>
                             <div className="text-center">
                                 <div className="text-xs text-slate-400 mb-1">Cost</div>
-                                <div className="text-yellow-400 font-bold font-mono">🪙 {(convertAmount * GOLD_PER_FRAGMENT).toLocaleString()}</div>
+                                <div className="text-yellow-400 font-bold font-mono flex items-center justify-center gap-1"><Coins className="w-4 h-4 fill-yellow-500" /> {(convertAmount * GOLD_PER_FRAGMENT).toLocaleString()}</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-xs text-slate-400 mb-1">You receive</div>
-                                <div className="text-yellow-400 font-bold font-mono">🌟 {convertAmount}</div>
+                                <div className="text-yellow-400 font-bold font-mono flex items-center justify-center gap-1"><Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> {convertAmount}</div>
                             </div>
                             <button
                                 onClick={handleConvert}
@@ -307,9 +307,9 @@ export default function ForgePanel({ save, setSave }) {
                                         <button
                                             onClick={() => handleForgeWeaponAugment(aug)}
                                             disabled={!canAfford}
-                                            className={`py-1.5 rounded-lg font-bold text-xs transition-colors ${canAfford ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
+                                            className={`py-1.5 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1 ${canAfford ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
                                         >
-                                            🌟 {aug.cost} Fragments
+                                            <Star className="w-3 h-3 fill-current" /> {aug.cost} Fragments
                                         </button>
                                     )}
                                 </div>
@@ -365,9 +365,9 @@ export default function ForgePanel({ save, setSave }) {
                                         <button
                                             onClick={() => handleForgeCharAugment(currentCharId, aug)}
                                             disabled={!canAfford}
-                                            className={`py-1.5 rounded-lg font-bold text-xs transition-colors ${canAfford ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
+                                            className={`py-1.5 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1 ${canAfford ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
                                         >
-                                            🌟 {aug.cost} Fragments
+                                            <Star className="w-3 h-3 fill-current" /> {aug.cost} Fragments
                                         </button>
                                     )}
                                 </div>

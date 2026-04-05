@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMETICS, getCharacterMastery } from '../game/Constants';
-import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Coins, Hexagon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
@@ -332,20 +332,20 @@ export default function Hub({ isCarousel }) {
                                                                         <button
                                                                             onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'gold'); }}
                                                                             disabled={!canAfford}
-                                                                            className={`px-3 py-1 rounded font-bold text-xs border transition-colors ${
+                                                                            className={`px-3 py-1 rounded font-bold text-xs border transition-colors flex items-center justify-center gap-1 ${
                                                                                 canAfford ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 hover:bg-yellow-500/40' : 'bg-[#0b0416]/50 border-slate-700/50 text-slate-600'
                                                                             }`}
                                                                         >
-                                                                            🪙 {char.cost}
+                                                                            <Coins className="w-3 h-3 fill-current" /> {char.cost}
                                                                         </button>
                                                                         <button
                                                                             onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'token'); }}
                                                                             disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(char.cost / 4))}
-                                                                            className={`px-3 py-1 rounded font-bold text-xs border transition-colors ${
+                                                                            className={`px-3 py-1 rounded font-bold text-xs border transition-colors flex items-center justify-center gap-1 ${
                                                                                 (save.cosmicTokens || 0) >= Math.max(1, Math.floor(char.cost / 4)) ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 hover:bg-emerald-500/40' : 'bg-[#0b0416]/50 border-slate-700/50 text-slate-600'
                                                                             }`}
                                                                         >
-                                                                            💠 {Math.max(1, Math.floor(char.cost / 4))}
+                                                                            <Hexagon className="w-3 h-3 fill-current" /> {Math.max(1, Math.floor(char.cost / 4))}
                                                                         </button>
                                                                     </div>
                                                                 )}

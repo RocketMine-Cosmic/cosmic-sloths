@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Circle, Gift, Star, ShieldAlert } from 'lucide-react';
+import { CheckCircle, Circle, Gift, Star, ShieldAlert, Coins, Puzzle, Hexagon } from 'lucide-react';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { useToast } from "@/components/ui/use-toast";
@@ -88,8 +88,8 @@ export default function BountiesPanel({ save, setSave }) {
                                         <span className="font-mono bg-slate-900 px-1.5 py-0.5 rounded text-[10px]">
                                             {Math.min(bounty.progress, bounty.target)} / {bounty.target}
                                         </span>
-                                        <span className={`${bounty.currency === 'gold' ? 'text-yellow-500' : bounty.currency === 'fragment' ? 'text-fuchsia-400' : 'text-emerald-400'} font-bold`}>
-                                            {bounty.currency === 'gold' ? '🪙' : bounty.currency === 'fragment' ? '🧩' : '💠'} {bounty.reward}
+                                        <span className={`${bounty.currency === 'gold' ? 'text-yellow-500' : bounty.currency === 'fragment' ? 'text-fuchsia-400' : 'text-emerald-400'} font-bold flex items-center gap-1`}>
+                                            {bounty.currency === 'gold' ? <Coins className="w-3 h-3 fill-yellow-500" /> : bounty.currency === 'fragment' ? <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> : <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400" />} {bounty.reward}
                                         </span>
                                     </div>
                                 </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
-import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet, ChevronLeft, ChevronRight, Coins, Hexagon, Puzzle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
@@ -344,24 +344,24 @@ export default function Upgrades({ isCarousel }) {
                                 <button
                                     onClick={() => handleBuyStat(stat.id, 'gold')}
                                     disabled={isMax || !canAffordGold}
-                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
                                         isMax ? 'bg-slate-700 text-slate-500' :
                                         canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                         'bg-slate-700 text-slate-400 border border-slate-600'
                                     }`}
                                 >
-                                    {isMax ? 'MAX' : `🪙 ${goldCost}`}
+                                    {isMax ? 'MAX' : <><Coins className="w-4 h-4 fill-current" /> {goldCost}</>}
                                 </button>
                                 {!isMax && (
                                     <button
                                         onClick={() => handleBuyStat(stat.id, 'token')}
                                         disabled={!canAffordToken}
-                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
                                             canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                         }`}
                                     >
-                                        💠 {tokenCost}
+                                        <Hexagon className="w-4 h-4 fill-current" /> {tokenCost}
                                     </button>
                                 )}
                             </div>
@@ -478,24 +478,24 @@ export default function Upgrades({ isCarousel }) {
                                         <button
                                             onClick={() => handleBuyWeapon(weapon.id, stat.id, 'gold')}
                                             disabled={isMax || !canAffordGold}
-                                            className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
+                                            className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                 isMax ? 'bg-slate-800 text-slate-600' :
                                                 canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                                 'bg-slate-800 text-slate-500 border border-slate-700'
                                             }`}
                                         >
-                                            {isMax ? 'MAX' : `🪙 ${cost}`}
+                                            {isMax ? 'MAX' : <><Coins className="w-3 h-3 fill-current" /> {cost}</>}
                                         </button>
                                         {!isMax && (
                                             <button
                                                 onClick={() => handleBuyWeapon(weapon.id, stat.id, 'token')}
                                                 disabled={!canAffordToken}
-                                                className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs ${
+                                                className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                     canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                💠 {tokenCost}
+                                                <Hexagon className="w-3 h-3 fill-current" /> {tokenCost}
                                             </button>
                                         )}
                                     </div>
@@ -641,24 +641,24 @@ export default function Upgrades({ isCarousel }) {
                                     <button
                                         onClick={() => handleBuyTalent(talent, 'gold')}
                                         disabled={isUnlocked || !canUnlock || !canAffordGold}
-                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
                                             isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
                                             canUnlock && canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                             'bg-slate-800 text-slate-600 border border-slate-700'
                                         }`}
                                     >
-                                        {isUnlocked ? 'UNLOCKED' : `🪙 ${goldCost}`}
+                                        {isUnlocked ? 'UNLOCKED' : <><Coins className="w-4 h-4 fill-current" /> {goldCost}</>}
                                     </button>
                                     {!isUnlocked && (
                                         <button
                                             onClick={() => handleBuyTalent(talent, 'token')}
                                             disabled={!canUnlock || !canAffordToken}
-                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base ${
+                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
                                                 canUnlock && canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
                                         >
-                                            💠 {tokenCost}
+                                            <Hexagon className="w-4 h-4 fill-current" /> {tokenCost}
                                         </button>
                                     )}
                                 </div>
@@ -757,7 +757,7 @@ export default function Upgrades({ isCarousel }) {
                                             }`}
                                         >
                                             <span>{isOwned ? 'UPGRADE' : 'CRAFT'}</span>
-                                            <span className="bg-slate-950/50 px-2 py-0.5 rounded border border-fuchsia-500/30 text-fuchsia-300">🧩 {cost}</span>
+                                            <span className="bg-slate-950/50 px-2 py-0.5 rounded border border-fuchsia-500/30 text-fuchsia-300 flex items-center gap-1"><Puzzle className="w-3 h-3 fill-current" /> {cost}</span>
                                         </button>
                                     ) : (
                                         <div className="w-full py-2 text-center text-yellow-500 font-bold text-sm bg-yellow-950/20 rounded-lg border border-yellow-500/30">
@@ -908,13 +908,13 @@ export default function Upgrades({ isCarousel }) {
                                                     {!skin.isSeasonalReward && (
                                                         <div className="flex gap-1.5">
                                                             <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold}
-                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                🪙 {skin.goldCost.toLocaleString()}
+                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()}
                                                             </button>
                                                             {skin.tokenCost > 0 && (
                                                                 <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
-                                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                    💠 {skin.tokenCost.toLocaleString()}
+                                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                    <Hexagon className="w-3 h-3 fill-current" /> {skin.tokenCost.toLocaleString()}
                                                                 </button>
                                                             )}
                                                         </div>
@@ -970,21 +970,21 @@ export default function Upgrades({ isCarousel }) {
                                             <button
                                                 onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'gold')}
                                                 disabled={!canAffordGold}
-                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${
+                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                     canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                🪙 {cosmetic.goldCost.toLocaleString()}
+                                                <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()}
                                             </button>
                                             {cosmetic.tokenCost > 0 && (
                                                 <button
                                                     onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'token')}
                                                     disabled={!canAffordToken}
-                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs ${
+                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                         canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
-                                                    💠 {cosmetic.tokenCost.toLocaleString()}
+                                                    <Hexagon className="w-3 h-3 fill-current" /> {cosmetic.tokenCost.toLocaleString()}
                                                 </button>
                                             )}
                                         </div>
