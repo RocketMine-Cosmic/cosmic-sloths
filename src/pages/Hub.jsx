@@ -97,6 +97,24 @@ export default function Hub({ isCarousel }) {
                         description: `You received ${totalAmount} Cosmic Tokens from leaderboards!`,
                     });
                 }
+
+                // Automatically claim any missed Global Raid rewards from past weeks
+                const raidRes = await base44.functions.invoke('claimPastRaidRewards', {});
+                if (raidRes.data?.status === 'success' && raidRes.data.totalGold > 0) {
+                    const currentSave = SaveManager.load();
+                    const newSave = { ...currentSave, gold: (currentSave.gold || 0) + raidRes.data.totalGold };
+                    SaveManager.save(newSave);
+                    setSave(newSave);
+                    
+                    if (SaveManager.syncToBackendNow) {
+                        await SaveManager.syncToBackendNow(newSave);
+                    }
+
+                    toast({
+                        title: "Past Raid Rewards Claimed!",
+                        description: `You received ${raidRes.data.totalGold.toLocaleString()} Gold from past Global Raids!`,
+                    });
+                }
             } catch (e) {
                 console.error(e);
             }
