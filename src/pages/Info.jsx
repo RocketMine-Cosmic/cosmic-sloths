@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull, Coins, Puzzle, Hexagon } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 
@@ -103,9 +103,9 @@ const TABS_CONTENT = {
 
             <SectionCard title="💎 In-Run Pickups" color="purple">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                    <PickupCard icon="💠" label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
-                    <PickupCard icon="🪙" label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
-                    <PickupCard icon="🧩" label="Relic Fragments" color="text-fuchsia-400" desc="Dropped by Bosses. Craft and upgrade Ancient Relics in the Sloth Lounge." />
+                    <PickupCard icon={<Hexagon className="w-8 h-8 fill-emerald-400 text-emerald-400" />} label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
+                    <PickupCard icon={<Coins className="w-8 h-8 fill-yellow-500 text-yellow-500" />} label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
+                    <PickupCard icon={<Puzzle className="w-8 h-8 fill-fuchsia-400 text-fuchsia-400" />} label="Relic Fragments" color="text-fuchsia-400" desc="Dropped by Bosses. Craft and upgrade Ancient Relics in the Sloth Lounge." />
                     <PickupCard icon="☢️" label="Nuke" color="text-red-400" desc="Instantly destroys all non-boss enemies on screen." />
                     <PickupCard icon="🧲" label="Magnet Surge" color="text-blue-400" desc="Instantly pulls all nearby XP and Gold to you." />
                     <PickupCard icon="🛡️" label="Shield Overcharge" color="text-cyan-400" desc="10 seconds of full invincibility." />
@@ -141,11 +141,11 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-purple-700/50 flex flex-col justify-center shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                         <div className="font-bold text-purple-400 text-sm md:text-base mb-1.5 flex items-center gap-2">💎 Ancient Relics</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Equip Relics for global stat boosts. Use <strong className="text-fuchsia-300">Relic Fragments 🧩</strong> to upgrade them to Level 5!</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Equip Relics for global stat boosts. Use <strong className="text-fuchsia-300 inline-flex items-center gap-1">Relic Fragments <Puzzle className="w-3 h-3 fill-fuchsia-300 text-fuchsia-300" /></strong> to upgrade them to Level 5!</p>
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-yellow-700/50 md:col-span-2 flex flex-col justify-center shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                         <div className="font-bold text-yellow-400 text-sm md:text-base mb-2 flex items-center gap-2">🔨 The Forge</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Convert excess Gold into <strong className="text-yellow-300">Star Fragments 🌟</strong> (1,000 Gold = 1 🌟, up to 20/day). Use fragments to permanently enhance weapons beyond their normal cap, or unlock powerful passive augments for each character. Forge upgrades <strong className="text-white">never reset</strong>.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Convert excess Gold into <strong className="text-yellow-300 inline-flex items-center gap-1">Star Fragments <Star className="w-3 h-3 fill-yellow-300 text-yellow-300" /></strong> (1,000 Gold = 1 <Star className="w-3 h-3 fill-yellow-300 text-yellow-300 inline" />, up to 20/day). Use fragments to permanently enhance weapons beyond their normal cap, or unlock powerful passive augments for each character. Forge upgrades <strong className="text-white">never reset</strong>.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -200,17 +200,17 @@ const TABS_CONTENT = {
                 </p>
                 <div className="grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3">
                     {[
-                        { day: 1, icon: '🪙', label: '400' },
-                        { day: 2, icon: '🪙', label: '800' },
-                        { day: 3, icon: '🪙', label: '1000' },
-                        { day: 4, icon: '🧩', label: '×1' },
-                        { day: 5, icon: '🪙', label: '2000' },
-                        { day: 6, icon: '🧩', label: '×2' },
-                        { day: 7, icon: '🪙', label: '4000', bonus: true },
+                        { day: 1, icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" />, label: '400' },
+                        { day: 2, icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" />, label: '800' },
+                        { day: 3, icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" />, label: '1000' },
+                        { day: 4, icon: <Puzzle className="w-6 h-6 md:w-8 md:h-8 fill-fuchsia-400 text-fuchsia-400 mx-auto" />, label: '×1' },
+                        { day: 5, icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" />, label: '2000' },
+                        { day: 6, icon: <Puzzle className="w-6 h-6 md:w-8 md:h-8 fill-fuchsia-400 text-fuchsia-400 mx-auto" />, label: '×2' },
+                        { day: 7, icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" />, label: '4000', bonus: true },
                     ].map(r => (
                         <div key={r.day} className={`flex flex-col items-center justify-center p-2.5 md:p-3 rounded-xl border text-center transition-transform hover:scale-105 ${r.bonus ? 'bg-amber-900/40 border-amber-500 col-span-4 md:col-span-1 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-800/60 border-slate-700'}`}>
                             <div className="text-xs md:text-sm text-slate-500 font-bold mb-1">Day {r.day}</div>
-                            <div className="text-2xl md:text-3xl leading-none my-1">{r.icon}</div>
+                            <div className="leading-none my-1 flex justify-center w-full">{r.icon}</div>
                             <div className={`text-xs md:text-sm font-bold mt-1 ${r.bonus ? 'text-amber-400' : 'text-slate-300'}`}>{r.label}</div>
                         </div>
                     ))}
@@ -242,12 +242,12 @@ const TABS_CONTENT = {
                     Join a <strong className="text-orange-400">Sloth Squad</strong> and work together to defeat <strong className="text-white">10,000 enemies</strong> in a week. All contributing members can claim:
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center">
-                        <div className="text-2xl md:text-3xl mb-1.5">🪙</div>
+                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center items-center">
+                        <Coins className="w-8 h-8 md:w-10 md:h-10 fill-yellow-500 text-yellow-500 mb-1.5" />
                         <div className="text-sm md:text-base text-yellow-400 font-bold">2,500 Gold</div>
                     </div>
-                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center">
-                        <div className="text-2xl md:text-3xl mb-1.5">🧩</div>
+                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center items-center">
+                        <Puzzle className="w-8 h-8 md:w-10 md:h-10 fill-fuchsia-400 text-fuchsia-400 mb-1.5" />
                         <div className="text-sm md:text-base text-fuchsia-400 font-bold">5 Fragments</div>
                     </div>
                 </div>
@@ -372,13 +372,13 @@ const TABS_CONTENT = {
                     Your squad receives both a Daily and a Weekly kill target based on its level. Hit the targets together, and <strong className="text-white">every member</strong> can individually claim Gold and Relic Fragments.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie Bounty</div><div className="text-slate-400">2,000 kills → 🪙 500 + 🧩×1</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter Bounty</div><div className="text-slate-400">5,000 kills → 🪙 1,200 + 🧩×2</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter Bounty</div><div className="text-slate-400">10,000 kills → 🪙 2,500 + 🧩×3</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard Bounty</div><div className="text-slate-400">18,000 kills → 🪙 4,000 + 🧩×4</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper Bounty</div><div className="text-slate-400">30,000 kills → 🪙 6,500 + 🧩×5</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend Bounty</div><div className="text-slate-400">50,000 kills → 🪙 10,000 + 🧩×7</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400">75,000 kills → 🪙 15,000 + 🧩×10</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">2,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×1</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">5,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 1,200 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×2</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">10,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 2,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×3</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">18,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 4,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×4</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">30,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 6,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×5</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">50,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 10,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×7</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">75,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 15,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×10</div></div>
                 </div>
             </SectionCard>
 
@@ -501,7 +501,7 @@ const TABS_CONTENT = {
                         <div className="text-slate-400 text-xs">×3 value</div>
                     </div>
                 </div>
-                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400">Cosmic Tokens 💠</strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400 inline-flex items-center gap-1">Cosmic Tokens <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400" /></strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
             </SectionCard>
 
             <SectionCard title="👑 Boss Encounters" color="rose">

@@ -31,7 +31,7 @@ export default function BountiesPanel({ save, setSave }) {
             
             toast({
                 title: "Bounty Claimed!",
-                description: `You received ${bounty.reward} ${bounty.currency === 'gold' ? '🪙' : bounty.currency === 'fragment' ? '🧩' : '💠'}`,
+                description: `You received ${bounty.reward} ${bounty.currency === 'gold' ? 'Gold' : bounty.currency === 'fragment' ? 'Fragments' : 'Tokens'}`,
             });
         }
     };

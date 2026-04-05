@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift } from 'lucide-react';
+import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon } from 'lucide-react';
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -413,8 +413,8 @@ export default function Profile({ isCarousel }) {
                                             <div className="font-bold text-white mb-1">{reward.reason}</div>
                                             <div className="text-xs text-slate-400">Period: {reward.period_id}</div>
                                         </div>
-                                        <div className="bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-2">
-                                            💠 +{reward.amount}
+                                        <div className="bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
+                                            <Hexagon className="w-4 h-4 fill-emerald-400 text-emerald-400" /> +{reward.amount.toLocaleString()}
                                         </div>
                                     </div>
                                 ))}

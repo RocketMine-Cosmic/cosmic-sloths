@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Flame, CheckCircle } from 'lucide-react';
+import { Gift, Flame, CheckCircle, Coins, Puzzle, Hexagon } from 'lucide-react';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
 
 const DAILY_REWARDS = [
-    { day: 1, reward: 400,   currency: 'gold',  icon: '🪙' },
-    { day: 2, reward: 800,   currency: 'gold',  icon: '🪙' },
-    { day: 3, reward: 1000,  currency: 'gold',  icon: '🪙' },
-    { day: 4, reward: 1,     currency: 'fragment', icon: '🧩' },
-    { day: 5, reward: 2000,  currency: 'gold',  icon: '🪙' },
-    { day: 6, reward: 2,     currency: 'fragment', icon: '🧩' },
-    { day: 7, reward: 4000,  currency: 'gold',  icon: '🪙', bonus: true },
+    { day: 1, reward: 400,   currency: 'gold',  icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" /> },
+    { day: 2, reward: 800,   currency: 'gold',  icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" /> },
+    { day: 3, reward: 1000,  currency: 'gold',  icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" /> },
+    { day: 4, reward: 1,     currency: 'fragment', icon: <Puzzle className="w-6 h-6 md:w-8 md:h-8 fill-fuchsia-400 text-fuchsia-400 mx-auto" /> },
+    { day: 5, reward: 2000,  currency: 'gold',  icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" /> },
+    { day: 6, reward: 2,     currency: 'fragment', icon: <Puzzle className="w-6 h-6 md:w-8 md:h-8 fill-fuchsia-400 text-fuchsia-400 mx-auto" /> },
+    { day: 7, reward: 4000,  currency: 'gold',  icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" />, bonus: true },
 ];
 
 export default function DailyLoginPanel({ save, setSave }) {
@@ -53,7 +53,7 @@ export default function DailyLoginPanel({ save, setSave }) {
 
         toast({
             title: `Day ${newStreak} Reward Claimed!`,
-            description: `+${rewardDay.reward} ${rewardDay.currency === 'gold' ? '🪙 Gold' : rewardDay.currency === 'token' ? '💠 Cosmic Tokens' : '🧩 Relic Fragments'}`,
+            description: `+${rewardDay.reward} ${rewardDay.currency === 'gold' ? 'Gold' : rewardDay.currency === 'token' ? 'Cosmic Tokens' : 'Relic Fragments'}`,
         });
     };
 
