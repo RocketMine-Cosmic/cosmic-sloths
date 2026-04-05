@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX } from 'lucide-react';
+import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle } from 'lucide-react';
 import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -765,14 +765,14 @@ export default function Squads({ isCarousel }) {
                                                 </div>
                                                 <div className="text-xs text-slate-300 mb-2">Defeat {dailyTier.target.toLocaleString()} enemies today.</div>
                                                 <div className="flex gap-2 mb-3">
-                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                        <div className="text-sm">🪙</div>
-                                                        <div className="text-xs font-bold text-yellow-400">{dailyTier.gold.toLocaleString()}</div>
+                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700 flex flex-col items-center">
+                                                        <Coins className="w-4 h-4 fill-yellow-500 text-yellow-500 mb-1" />
+                                                        <div className="text-xs font-bold text-yellow-400">{dailyTier.gold.toLocaleString()} Gold</div>
                                                     </div>
                                                     {dailyTier.fragments > 0 && (
-                                                        <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                            <div className="text-sm">🧩</div>
-                                                            <div className="text-xs font-bold text-fuchsia-400">×{dailyTier.fragments}</div>
+                                                        <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700 flex flex-col items-center">
+                                                            <Puzzle className="w-4 h-4 fill-fuchsia-400 text-fuchsia-400 mb-1" />
+                                                            <div className="text-xs font-bold text-fuchsia-400">{dailyTier.fragments} Fragments</div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -806,13 +806,13 @@ export default function Squads({ isCarousel }) {
                                                 </div>
                                                 <div className="text-xs text-slate-300 mb-2">Defeat {tier.target.toLocaleString()} enemies this week.</div>
                                                 <div className="flex gap-2 mb-3">
-                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                        <div className="text-sm">🪙</div>
-                                                        <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()}</div>
+                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700 flex flex-col items-center">
+                                                        <Coins className="w-4 h-4 fill-yellow-500 text-yellow-500 mb-1" />
+                                                        <div className="text-xs font-bold text-yellow-400">{tier.gold.toLocaleString()} Gold</div>
                                                     </div>
-                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700">
-                                                        <div className="text-sm">🧩</div>
-                                                        <div className="text-xs font-bold text-fuchsia-400">×{tier.fragments}</div>
+                                                    <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700 flex flex-col items-center">
+                                                        <Puzzle className="w-4 h-4 fill-fuchsia-400 text-fuchsia-400 mb-1" />
+                                                        <div className="text-xs font-bold text-fuchsia-400">{tier.fragments} Fragments</div>
                                                     </div>
                                                 </div>
                                                 <div className="flex justify-between text-xs font-bold mb-1">

@@ -344,24 +344,27 @@ export default function Upgrades({ isCarousel }) {
                                 <button
                                     onClick={() => handleBuyStat(stat.id, 'gold')}
                                     disabled={isMax || !canAffordGold}
-                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
+                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                         isMax ? 'bg-slate-700 text-slate-500' :
                                         canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                         'bg-slate-700 text-slate-400 border border-slate-600'
                                     }`}
                                 >
-                                    {isMax ? 'MAX' : <><Coins className="w-4 h-4 fill-current" /> {goldCost}</>}
+                                    {isMax ? 'MAX' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
                                 </button>
+                                {!isMax && (
+                                    <div className="flex items-center justify-center text-slate-500 text-xs font-bold sm:hidden md:flex">OR</div>
+                                )}
                                 {!isMax && (
                                     <button
                                         onClick={() => handleBuyStat(stat.id, 'token')}
                                         disabled={!canAffordToken}
-                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
+                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                             canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                         }`}
                                     >
-                                        <Hexagon className="w-4 h-4 fill-current" /> {tokenCost}
+                                        <Hexagon className="w-4 h-4 fill-current" /> {tokenCost.toLocaleString()} Tokens
                                     </button>
                                 )}
                             </div>
@@ -484,7 +487,7 @@ export default function Upgrades({ isCarousel }) {
                                                 'bg-slate-800 text-slate-500 border border-slate-700'
                                             }`}
                                         >
-                                            {isMax ? 'MAX' : <><Coins className="w-3 h-3 fill-current" /> {cost}</>}
+                                            {isMax ? 'MAX' : <><Coins className="w-3 h-3 fill-current" /> {cost.toLocaleString()} Gold</>}
                                         </button>
                                         {!isMax && (
                                             <button
@@ -495,7 +498,7 @@ export default function Upgrades({ isCarousel }) {
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                <Hexagon className="w-3 h-3 fill-current" /> {tokenCost}
+                                                <Hexagon className="w-3 h-3 fill-current" /> {tokenCost.toLocaleString()} Tokens
                                             </button>
                                         )}
                                     </div>
@@ -641,24 +644,27 @@ export default function Upgrades({ isCarousel }) {
                                     <button
                                         onClick={() => handleBuyTalent(talent, 'gold')}
                                         disabled={isUnlocked || !canUnlock || !canAffordGold}
-                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
+                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                             isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
                                             canUnlock && canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                             'bg-slate-800 text-slate-600 border border-slate-700'
                                         }`}
                                     >
-                                        {isUnlocked ? 'UNLOCKED' : <><Coins className="w-4 h-4 fill-current" /> {goldCost}</>}
+                                        {isUnlocked ? 'UNLOCKED' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
                                     </button>
+                                    {!isUnlocked && (
+                                        <div className="flex items-center justify-center text-slate-500 text-xs font-bold sm:hidden md:flex">OR</div>
+                                    )}
                                     {!isUnlocked && (
                                         <button
                                             onClick={() => handleBuyTalent(talent, 'token')}
                                             disabled={!canUnlock || !canAffordToken}
-                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1 ${
+                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                 canUnlock && canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
                                         >
-                                            <Hexagon className="w-4 h-4 fill-current" /> {tokenCost}
+                                            <Hexagon className="w-4 h-4 fill-current" /> {tokenCost.toLocaleString()} Tokens
                                         </button>
                                     )}
                                 </div>
@@ -909,12 +915,12 @@ export default function Upgrades({ isCarousel }) {
                                                         <div className="flex gap-1.5">
                                                             <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold}
                                                                 className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()}
+                                                                <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                                             </button>
                                                             {skin.tokenCost > 0 && (
                                                                 <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
                                                                     className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                    <Hexagon className="w-3 h-3 fill-current" /> {skin.tokenCost.toLocaleString()}
+                                                                    <Hexagon className="w-3 h-3 fill-current" /> {skin.tokenCost.toLocaleString()} Tokens
                                                                 </button>
                                                             )}
                                                         </div>
@@ -974,7 +980,7 @@ export default function Upgrades({ isCarousel }) {
                                                     canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()}
+                                                <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
                                             </button>
                                             {cosmetic.tokenCost > 0 && (
                                                 <button
@@ -984,7 +990,7 @@ export default function Upgrades({ isCarousel }) {
                                                         canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
-                                                    <Hexagon className="w-3 h-3 fill-current" /> {cosmetic.tokenCost.toLocaleString()}
+                                                    <Hexagon className="w-3 h-3 fill-current" /> {cosmetic.tokenCost.toLocaleString()} Tokens
                                                 </button>
                                             )}
                                         </div>
