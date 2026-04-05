@@ -8,14 +8,15 @@ Deno.serve(async (req) => {
         const body = await req.json();
         const { week_id, claim_level } = body;
         
-        if (!claim_level || claim_level < 1) return Response.json({ error: 'Invalid level' }, { status: 400 });
+        const levelNum = parseInt(claim_level, 10);
+        if (isNaN(levelNum) || levelNum < 1) return Response.json({ error: 'Invalid level' }, { status: 400 });
         
         const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
         if (bossRecords.length === 0) return Response.json({ error: 'No boss' }, { status: 404 });
         
         const boss = bossRecords[0];
         
-        if (claim_level >= (boss.level || 1)) {
+        if (levelNum >= (boss.level || 1)) {
             return Response.json({ error: 'Boss level not defeated yet' }, { status: 400 });
         }
         
@@ -23,13 +24,19 @@ Deno.serve(async (req) => {
         if (contribs.length === 0) return Response.json({ error: 'No contribution' }, { status: 400 });
         
         const cont = contribs[0];
-        const claimed_milestones = cont.claimed_milestones || [];
-        if (claimed_milestones.includes(claim_level)) return Response.json({ error: 'Already claimed' }, { status: 400 });
+        // Re-fetch right before update to minimize concurrent claim race condition
+        const freshCont = await base44.asServiceRole.entities.GlobalBossContribution.get(cont.id);
+        const claimed_milestones = freshCont.claimed_milestones || [];
         
-        claimed_milestones.push(claim_level);
-        await base44.asServiceRole.entities.GlobalBossContribution.update(cont.id, { claimed_milestones });
+        if (claimed_milestones.includes(levelNum)) return Response.json({ error: 'Already claimed' }, { status: 400 });
         
-        const goldReward = claim_level * 1000;
+        claimed_milestones.push(levelNum);
+        
+        // Remove potential duplicates and sort
+        const uniqueMilestones = [...new Set(claimed_milestones)].sort((a,b) => a - b);
+        await base44.asServiceRole.entities.GlobalBossContribution.update(cont.id, { claimed_milestones: uniqueMilestones });
+        
+        const goldReward = levelNum * 1000;
         return Response.json({ status: 'success', reward: { type: 'gold', id: goldReward.toString() } });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

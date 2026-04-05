@@ -27,7 +27,7 @@ export default function GlobalRaid({ isCarousel }) {
     const [worldBossContribution, setWorldBossContribution] = useState(null);
     const [topContributors, setTopContributors] = useState([]);
     const [recentEvents, setRecentEvents] = useState([]);
-    const [claimingReward, setClaimingReward] = useState(false);
+    const [claimingLevel, setClaimingLevel] = useState(null);
     const [timeLeft, setTimeLeft] = useState('');
     const [activeTab, setActiveTab] = useState('raid');
     const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');
@@ -75,8 +75,8 @@ export default function GlobalRaid({ isCarousel }) {
     }, []);
 
     const handleClaimBossReward = async (level) => {
-        if (!worldBossData || claimingReward) return;
-        setClaimingReward(level);
+        if (!worldBossData || claimingLevel !== null) return;
+        setClaimingLevel(level);
         try {
             const week_id = moment().format('YYYY-[W]ww');
             const res = await base44.functions.invoke('claimBossReward', { week_id, claim_level: level });
@@ -103,7 +103,7 @@ export default function GlobalRaid({ isCarousel }) {
             console.error(e);
             toast({ title: 'Error', description: 'Failed to claim reward' });
         }
-        setClaimingReward(null);
+        setClaimingLevel(null);
     };
 
     const todayDate = moment().format('YYYY-MM-DD');
@@ -237,10 +237,10 @@ export default function GlobalRaid({ isCarousel }) {
                                                                 <div className="text-yellow-400 text-xs font-mono mb-1">{lvl * 1000} Gold</div>
                                                                 <button 
                                                                     onClick={() => handleClaimBossReward(lvl)}
-                                                                    disabled={claimingReward === lvl}
-                                                                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] px-2 py-1 rounded font-bold transition-colors w-full"
+                                                                    disabled={claimingLevel !== null}
+                                                                    className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] px-2 py-1 rounded font-bold transition-colors w-full"
                                                                 >
-                                                                    {claimingReward === lvl ? '...' : 'CLAIM'}
+                                                                    {claimingLevel === lvl ? '...' : 'CLAIM'}
                                                                 </button>
                                                             </div>
                                                         ))}
