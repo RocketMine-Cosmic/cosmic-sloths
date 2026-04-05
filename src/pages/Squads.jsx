@@ -197,6 +197,14 @@ export default function Squads({ isCarousel }) {
         
         try {
             SoundManager.playUIClick();
+            
+            const currentSave = SaveManager.load();
+            if (currentSave.lastSquadLeaveTime && Date.now() - currentSave.lastSquadLeaveTime < 24 * 60 * 60 * 1000) {
+                const hoursLeft = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - currentSave.lastSquadLeaveTime)) / (60 * 60 * 1000));
+                toast({ title: "Cooldown Active", description: `You must wait ${hoursLeft} hours after leaving a squad before creating a new one.` });
+                return;
+            }
+
             const squad = await base44.entities.Squad.create({
                 name: newSquadName,
                 tag: newSquadTag.toUpperCase().substring(0, 4),
@@ -235,6 +243,13 @@ export default function Squads({ isCarousel }) {
         try {
             SoundManager.playUIClick();
             
+            const currentSave = SaveManager.load();
+            if (currentSave.lastSquadLeaveTime && Date.now() - currentSave.lastSquadLeaveTime < 24 * 60 * 60 * 1000) {
+                const hoursLeft = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - currentSave.lastSquadLeaveTime)) / (60 * 60 * 1000));
+                toast({ title: "Cooldown Active", description: `You must wait ${hoursLeft} hours after leaving a squad before joining a new one.` });
+                return;
+            }
+
             const existingMembers = await base44.entities.SquadMember.filter({ user_id: user.id });
             if (existingMembers.length > 0) {
                 toast({ title: "Already in a Squad", description: "You are already in a squad." });
@@ -295,6 +310,10 @@ export default function Squads({ isCarousel }) {
             await base44.entities.Squad.update(mySquad.id, {
                 member_count: Math.max(0, (mySquad.member_count || 1) - 1)
             });
+
+            const currentSave = SaveManager.load();
+            currentSave.lastSquadLeaveTime = Date.now();
+            SaveManager.save(currentSave);
 
             setMyMemberRecord(null);
             setMySquad(null);
@@ -417,6 +436,15 @@ export default function Squads({ isCarousel }) {
         const currentWeek = getCurrentWeek();
         const tier = getBountyTier(mySquad.level || 1);
         
+        if (myMemberRecord.created_date) {
+            const joinDate = new Date(myMemberRecord.created_date).getTime();
+            if (Date.now() - joinDate < 24 * 60 * 60 * 1000) {
+                const hoursLeft = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - joinDate)) / (60 * 60 * 1000));
+                toast({ title: "New Member Cooldown", description: `You must be in the squad for 24 hours before claiming rewards. (${hoursLeft}h left)` });
+                return;
+            }
+        }
+
         if ((mySquad.weekly_kills || 0) >= tier.target && myMemberRecord.last_payout_week !== currentWeek) {
             try {
                 SoundManager.playLevelUp();
@@ -448,6 +476,15 @@ export default function Squads({ isCarousel }) {
         const currentDay = moment().format('YYYY-MM-DD');
         const tier = getDailyBountyTier(mySquad.level || 1);
         
+        if (myMemberRecord.created_date) {
+            const joinDate = new Date(myMemberRecord.created_date).getTime();
+            if (Date.now() - joinDate < 24 * 60 * 60 * 1000) {
+                const hoursLeft = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - joinDate)) / (60 * 60 * 1000));
+                toast({ title: "New Member Cooldown", description: `You must be in the squad for 24 hours before claiming rewards. (${hoursLeft}h left)` });
+                return;
+            }
+        }
+
         if ((mySquad.daily_kills || 0) >= tier.target && myMemberRecord.last_daily_payout_date !== currentDay) {
             try {
                 SoundManager.playGoldPickup();
