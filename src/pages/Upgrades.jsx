@@ -11,6 +11,9 @@ import ForgePanel from '../components/game/ForgePanel';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 
+let tokenSpendQueue = 0;
+let tokenSpendTimeout = null;
+
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [15, 30, 60, 120, 240] },
     { id: 'weekly', name: 'Weekly', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [8, 15, 30, 60, 120] },
@@ -72,10 +75,16 @@ export default function Upgrades({ isCarousel }) {
     }, [activeCategory]);
 
     const recordTokenSpend = (amount) => {
-        const week_id = moment().format('YYYY-[W]ww');
-        const seasonNum = Math.floor(moment().week() / 4) + 1;
-        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-        base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
+        tokenSpendQueue += amount;
+        if (tokenSpendTimeout) clearTimeout(tokenSpendTimeout);
+        tokenSpendTimeout = setTimeout(() => {
+            const amountToSend = tokenSpendQueue;
+            tokenSpendQueue = 0;
+            const week_id = moment().format('YYYY-[W]ww');
+            const seasonNum = Math.floor(moment().week() / 4) + 1;
+            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            base44.functions.invoke('recordTokenSpend', { amount: amountToSend, week_id, season_id }).catch(console.error);
+        }, 1000);
     };
 
     const handleBuyStat = (stat, currency) => {
