@@ -7,6 +7,7 @@ Deno.serve(async (req) => {
         if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { amount, week_id, season_id } = await req.json();
+        console.log(`User ${user.email} is logging a spend of ${amount} tokens.`);
 
         // Update Weekly Pool
         const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
