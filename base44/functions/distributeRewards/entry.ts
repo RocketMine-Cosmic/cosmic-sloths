@@ -32,8 +32,9 @@ async function distributeWeekly(base44, pool) {
     const uniqueScores = [];
     const seenPlayers = new Set();
     for (const score of scores) {
-        if (!seenPlayers.has(score.player_name)) {
-            seenPlayers.add(score.player_name);
+        const identifier = score.user_id || score.player_name;
+        if (!seenPlayers.has(identifier)) {
+            seenPlayers.add(identifier);
             uniqueScores.push(score);
         }
         if (uniqueScores.length >= 30) break;
@@ -81,8 +82,9 @@ async function distributeSeasonal(base44, pool) {
     const uniqueScores = [];
     const seenPlayers = new Set();
     for (const score of scores) {
-        if (!seenPlayers.has(score.player_name)) {
-            seenPlayers.add(score.player_name);
+        const identifier = score.user_id || score.player_name;
+        if (!seenPlayers.has(identifier)) {
+            seenPlayers.add(identifier);
             uniqueScores.push(score);
         }
         if (uniqueScores.length >= 40) break;
