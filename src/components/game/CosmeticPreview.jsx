@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ParticleManager } from '../../game/ParticleManager';
 
-export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none' }) {
+export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none', playerColor = '#00cfff' }) {
     const canvasRef = useRef(null);
     const stateRef = useRef({ animId: null });
 
@@ -89,7 +89,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             });
 
             // Player — simple circle
-            const pc = '#00cfff';
+            const pc = playerColor;
             ctx.fillStyle = pc;
             ctx.beginPath();
             ctx.arc(px, py, 10, 0, Math.PI * 2);
@@ -118,7 +118,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             ref={canvasRef}
             width={320}
             height={160}
-            className="w-full rounded-xl border border-slate-700 bg-slate-950"
+            className="w-full h-full object-cover rounded-md border border-slate-700 bg-slate-950"
         />
     );
 }
