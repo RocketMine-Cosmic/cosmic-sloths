@@ -81,6 +81,55 @@ export class ParticleManager {
         if (this.particles.length > 350) {
             this.particles.splice(0, this.particles.length - 350);
         }
+        
+        // Wind & Gravity forces
+        this.time = (this.time || 0) + dt;
+        const windX = Math.sin(this.time * 0.8) * 60;
+        const windY = Math.cos(this.time * 0.5) * 30;
+
+        for (let i = 0; i < this.particles.length; i++) {
+            const p1 = this.particles[i];
+            if (p1.life <= 0) continue;
+
+            if (!p1.ignoreWind && (p1.type === 'smoke' || p1.type === 'dark_smoke' || p1.type === 'spark' || p1.type === 'star')) {
+                p1.vx += windX * dt;
+                p1.vy += windY * dt;
+            }
+
+            if (p1.gravity) {
+                p1.vy += (typeof p1.gravity === 'number' ? p1.gravity : 500) * dt;
+            }
+
+            if (p1.collides) {
+                for (let j = i + 1; j < this.particles.length; j++) {
+                    const p2 = this.particles[j];
+                    if (p2.life > 0 && p2.collides) {
+                        const dx = p2.x - p1.x;
+                        const dy = p2.y - p1.y;
+                        const distSq = dx * dx + dy * dy;
+                        const minDist = (p1.size + p2.size) * 0.4; // Slightly smaller collision radius for visual overlap
+                        if (distSq > 0 && distSq < minDist * minDist) {
+                            const dist = Math.sqrt(distSq);
+                            const nx = dx / dist;
+                            const ny = dy / dist;
+                            const overlap = minDist - dist;
+                            
+                            p1.x -= nx * overlap * 0.5;
+                            p1.y -= ny * overlap * 0.5;
+                            p2.x += nx * overlap * 0.5;
+                            p2.y += ny * overlap * 0.5;
+                            
+                            const bounce = 0.5;
+                            p1.vx -= nx * overlap * bounce * 60;
+                            p1.vy -= ny * overlap * bounce * 60;
+                            p2.vx += nx * overlap * bounce * 60;
+                            p2.vy += ny * overlap * bounce * 60;
+                        }
+                    }
+                }
+            }
+        }
+
         this.particles = this.particles.filter(p => {
             p.life -= dt;
             p.x += p.vx * dt;
@@ -95,12 +144,10 @@ export class ParticleManager {
             } else if (p.type === 'star' || p.type === 'spark') {
                 p.vx *= 0.88;
                 p.vy *= 0.88;
-                if (p.gravity) p.vy += 500 * dt;
-            } else if (p.type === 'fragment' || p.type === 'shatter') {
+            } else if (p.type === 'fragment' || p.type === 'shatter' || p.type === 'blood') {
                 p.vx *= 0.93;
                 p.vy *= 0.93;
                 p.size *= 0.98;
-                if (p.gravity) p.vy += 400 * dt;
             } else if (p.type === 'implode' || p.type === 'imploding_star' || p.type === 'dark_implode') {
                 const dx = p.targetX - p.x;
                 const dy = p.targetY - p.y;
@@ -237,6 +284,7 @@ export class ParticleManager {
                 rotation: Math.random() * Math.PI * 2,
                 rotSpeed: (Math.random() - 0.5) * 12,
                 gravity: options.gravity || false,
+                collides: ['star', 'spark', 'fragment', 'shatter', 'blood'].includes(type),
                 lineWidth: options.lineWidth,
                 growthRate: options.growthRate,
                 ...options
