@@ -82,6 +82,14 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 >
                     CREDITS
                 </button>
+                {user?.role === 'admin' && (
+                    <button 
+                        onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/admin'); }}
+                        className="col-span-2 w-full bg-red-900/40 hover:bg-red-900/60 backdrop-blur-md text-red-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-red-500/60 hover:border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center justify-center gap-2"
+                    >
+                        ADMIN DASHBOARD
+                    </button>
+                )}
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
                     className="col-span-2 w-full bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 backdrop-blur-md text-amber-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#F59E0B]/60 hover:border-[#F59E0B] rounded-b-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center justify-center gap-2"
