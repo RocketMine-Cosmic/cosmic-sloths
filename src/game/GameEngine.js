@@ -9,6 +9,7 @@ import { drawUI } from './UIRenderer';
 import { drawPickups } from './PickupRenderer';
 import { fireWeaponLogic } from './WeaponSystem';
 import { drawProjectiles } from './ProjectileRenderer';
+import { renderGame } from './GameEngineDraw';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
@@ -221,14 +222,59 @@ export class GameEngine {
         this.bossModifiers = save.bossModifiers || {};
         this.worldBossDamage = 0;
         
+        this.characterMechanics = {
+            bannerTimer: 0,
+            banners: [],
+            scrapArmor: 0,
+            decoyTimer: 0,
+            decoys: [],
+            hackTimer: 0,
+            hackedEnemies: [],
+            sonicCharge: 0,
+            lastMoveDir: { x: 0, y: 0 }
+        };
+        
         this.bindEvents();
         this.lastTime = performance.now();
         this.animationId = requestAnimationFrame(this.loop.bind(this));
     }
 
+    triggerSonicBoom() {
+        this.characterMechanics.sonicCharge = 0;
+        this.addDamageText(this.player.x, this.player.y - 40, "SONIC BOOM!", '#00D4FF');
+        this.particleManager.createExplosion(this.player.x, this.player.y, '#00D4FF', 2.0, 'default');
+        this.shake(0.5);
+        this.enemies.forEach(e => {
+            if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < 300) {
+                this.damageEnemy(e, 50 * this.player.damageMult);
+                const angle = Math.atan2(e.y - this.player.y, e.x - this.player.x);
+                e.x += Math.cos(angle) * 100;
+                e.y += Math.sin(angle) * 100;
+            }
+        });
+    }
+
     takeDamage(amount) {
         if (this.player.invincibleTimer > 0 || this.player.iFrames > 0) return;
-        const actualDmg = Math.max(1, amount - this.player.armor);
+
+        if (this.characterId === 'synthbeats' && this.gold >= 5) {
+            this.gold -= 5;
+            if (this.callbacks.onGoldChange) this.callbacks.onGoldChange(this.gold);
+            this.addDamageText(this.player.x, this.player.y - 20, "BRIBED!", '#FFD700');
+            this.particleManager.createExplosion(this.player.x, this.player.y, '#FFD700', 1.0, 'default');
+            this.player.iFrames = 0.5;
+            return;
+        }
+
+        if (this.characterId === 'glitch' && Math.random() < 0.15) {
+            this.player.iFrames = 2.0;
+            this.player.invincibleTimer = 2.0;
+            this.addDamageText(this.player.x, this.player.y - 20, "PHASE SHIFT!", '#FF00FF');
+            this.player.weapons.forEach(w => w.timer = 0);
+            return;
+        }
+
+        const actualDmg = Math.max(1, amount - this.player.armor - (this.characterMechanics.scrapArmor || 0));
         this.player.hp -= actualDmg;
         this.player.iFrames = 0.2;
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
@@ -369,7 +415,10 @@ export class GameEngine {
             dx /= len; dy /= len;
         }
         
-        const actualSpeed = this.player.speed * this.player.speedMult * 60 * dt;
+        let moveMultiplier = 1.0;
+        if (this.characterId === 'dataphantom' && this.player.phantomBoostTimer > 0) moveMultiplier = 1.5;
+
+        const actualSpeed = this.player.speed * this.player.speedMult * 60 * dt * moveMultiplier;
         this.player.x += dx * actualSpeed;
         this.player.y += dy * actualSpeed;
 
@@ -414,6 +463,79 @@ export class GameEngine {
         this.updatePickups(dt);
         this.updateHazards(dt);
         
+        // --- Character Mechanics Update ---
+        if (this.characterId === 'neobyte') {
+            this.characterMechanics.bannerTimer += dt;
+            if (this.characterMechanics.bannerTimer >= 15) {
+                this.characterMechanics.bannerTimer = 0;
+                this.characterMechanics.banners.push({ x: this.player.x, y: this.player.y, life: 10, radius: 150 });
+            }
+            let nearBanner = false;
+            this.characterMechanics.banners = this.characterMechanics.banners.filter(b => {
+                b.life -= dt;
+                if (Math.hypot(this.player.x - b.x, this.player.y - b.y) < b.radius) {
+                    nearBanner = true;
+                    if (this.frameCount % 10 === 0) this.addParticle(this.player.x + (Math.random()-0.5)*40, this.player.y + (Math.random()-0.5)*40, '#0066FF', 1, 'glow');
+                }
+                return b.life > 0;
+            });
+            this.player.bannerBuff = nearBanner;
+        }
+
+        if (this.characterId === 'holodrift') {
+            this.characterMechanics.decoyTimer += dt;
+            if (this.characterMechanics.decoyTimer >= 20) {
+                this.characterMechanics.decoyTimer = 0;
+                this.characterMechanics.decoys.push({ x: this.player.x, y: this.player.y, hp: 100, maxHp: 100, life: 15 });
+            }
+            this.characterMechanics.decoys = this.characterMechanics.decoys.filter(d => d.hp > 0 && d.life > 0);
+            this.characterMechanics.decoys.forEach(d => {
+                d.life -= dt;
+                if (this.frameCount % 15 === 0) this.addParticle(d.x, d.y, '#00FA9A', 1, 'glow', 0.5);
+            });
+        }
+
+        if (this.characterId === 'codebreaker') {
+            this.characterMechanics.hackTimer += dt;
+            if (this.characterMechanics.hackTimer >= 10) {
+                this.characterMechanics.hackTimer = 0;
+                const targets = this.enemies.filter(e => !e.isBoss && !e.hacked && Math.hypot(this.player.x - e.x, this.player.y - e.y) < 400);
+                if (targets.length > 0) {
+                    const target = targets[Math.floor(Math.random() * targets.length)];
+                    target.hacked = true;
+                    target.color = '#39FF14';
+                    this.characterMechanics.hackedEnemies.push(target);
+                    this.addDamageText(target.x, target.y - 20, "HACKED", '#39FF14');
+                }
+            }
+            this.characterMechanics.hackedEnemies = this.characterMechanics.hackedEnemies.filter(e => e.hp > 0 && this.enemies.includes(e));
+        }
+
+        if (this.characterId === 'skybyte') {
+            if (this.player.isMoving) {
+                this.characterMechanics.sonicCharge = Math.min(100, (this.characterMechanics.sonicCharge || 0) + dt * 20);
+                const moveDot = dx * this.characterMechanics.lastMoveDir.x + dy * this.characterMechanics.lastMoveDir.y;
+                if (moveDot < 0.5 && this.characterMechanics.sonicCharge >= 100) {
+                    this.triggerSonicBoom();
+                }
+            } else if (this.characterMechanics.sonicCharge >= 100) {
+                this.triggerSonicBoom();
+            }
+            if (dx !== 0 || dy !== 0) {
+                this.characterMechanics.lastMoveDir = { x: dx, y: dy };
+            }
+            if (this.characterMechanics.sonicCharge >= 100 && this.frameCount % 5 === 0) {
+                this.addParticle(this.player.x, this.player.y, '#00D4FF', 1, 'spark', 1.5);
+            }
+        }
+        
+        if (this.characterId === 'dataphantom') {
+            this.player.phantomBoostTimer = (this.player.phantomBoostTimer || 0) - dt;
+            if (this.player.phantomBoostTimer > 0 && this.frameCount % 5 === 0) {
+                this.addParticle(this.player.x, this.player.y, '#98FF98', 1, 'glow', 1.0);
+            }
+        }
+
         if (this.xp >= this.xpRequired && !this.isPaused && !this.isGameOver && !this.isVictory) {
             this.levelUp();
         }
@@ -657,8 +779,9 @@ export class GameEngine {
     }
 
     updateWeapons(dt) {
+        const timeMultiplier = (this.characterId === 'neobyte' && this.player.bannerBuff) ? 1.3 : 1.0;
         this.player.weapons.forEach(w => {
-            w.timer -= dt;
+            w.timer -= dt * timeMultiplier;
             if (w.timer <= 0) {
                 this.fireWeapon(w);
                 
@@ -899,6 +1022,19 @@ export class GameEngine {
                 SFXManager.playEnemyDeath();
                 this.kills++;
                 this.enemyKills[e.id] = (this.enemyKills[e.id] || 0) + 1;
+
+                if (this.characterId === 'novabyte' && Math.random() < 0.10 && !e.isBoss) {
+                    this.particleManager.createExplosion(e.x, e.y, '#FF007F', 1.5 * this.player.areaMult, 'default');
+                    this.enemies.forEach(other => {
+                        if (other !== e && Math.hypot(other.x - e.x, other.y - e.y) < 100 * this.player.areaMult) {
+                            this.damageEnemy(other, 20 * this.player.damageMult);
+                        }
+                    });
+                }
+                
+                if (this.characterId === 'pandypaws' && Math.random() < 0.05 && !e.isBoss) {
+                    this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'scrap', color: '#aaaaaa', icon: '⚙️' });
+                }
                 
                 let xpValue = e.xp;
                 if (e.isBoss && this.bossModifiers.hide) {
@@ -958,6 +1094,46 @@ export class GameEngine {
             const dist = Math.hypot(dx, dy);
             
             // --- Custom Enemy Mechanics ---
+            if (e.hacked) {
+                let nearest = null;
+                let minDist = 400;
+                this.enemies.forEach(other => {
+                    if (other !== e && !other.hacked && Math.hypot(other.x - e.x, other.y - e.y) < minDist) {
+                        minDist = Math.hypot(other.x - e.x, other.y - e.y);
+                        nearest = other;
+                    }
+                });
+                
+                if (nearest) {
+                    const hx = nearest.x - e.x;
+                    const hy = nearest.y - e.y;
+                    const hdist = Math.hypot(hx, hy);
+                    const currentSpeed = e.speed * (e.speedMult || 1) * 60 * dt;
+                    e.x += (hx / hdist) * currentSpeed;
+                    e.y += (hy / hdist) * currentSpeed;
+                    
+                    if (hdist < e.radius + nearest.radius) {
+                        if (!e.attackTimer || e.attackTimer <= 0) {
+                            this.damageEnemy(nearest, e.damage);
+                            e.hp -= nearest.damage; // hacked enemy takes damage back
+                            e.attackTimer = 1.0;
+                        }
+                    }
+                } else {
+                    const pdx = this.player.x - e.x;
+                    const pdy = this.player.y - e.y;
+                    const pdist = Math.hypot(pdx, pdy);
+                    const currentSpeed = e.speed * (e.speedMult || 1) * 60 * dt;
+                    if (pdist > 100) {
+                        e.x += (pdx / pdist) * currentSpeed;
+                        e.y += (pdy / pdist) * currentSpeed;
+                    }
+                }
+                if (e.attackTimer > 0) e.attackTimer -= dt;
+                e.hp -= e.maxHp * 0.05 * dt; // Die over 20 seconds
+                return true;
+            }
+
             if (e.isWorldBoss) {
                 e.damage += dt * 2; // Damage scales infinitely over time
                 e.speedMult = (e.speedMult || 1) + (dt * 0.01); // Slowly gets faster over time to ensure it catches the player
@@ -1029,23 +1205,63 @@ export class GameEngine {
                 if (e.hp < e.maxHp * 0.1 && e.heads === 5) e.heads = 6;
             }
             
+            let targetX = this.player.x;
+            let targetY = this.player.y;
+            let isTargetingDecoy = false;
+            let activeDecoy = null;
+
+            if (this.characterId === 'holodrift' && this.characterMechanics?.decoys?.length > 0 && !e.isBoss) {
+                let nearestDecoy = null;
+                let minDecoyDist = 600;
+                this.characterMechanics.decoys.forEach(d => {
+                    const distToDecoy = Math.hypot(d.x - e.x, d.y - e.y);
+                    if (distToDecoy < minDecoyDist) { minDecoyDist = distToDecoy; nearestDecoy = d; }
+                });
+                if (nearestDecoy) {
+                    targetX = nearestDecoy.x;
+                    targetY = nearestDecoy.y;
+                    isTargetingDecoy = true;
+                    activeDecoy = nearestDecoy;
+                }
+            }
+
+            const targetDx = targetX - e.x;
+            const targetDy = targetY - e.y;
+            const targetDist = Math.hypot(targetDx, targetDy);
+            
             // Movement
-            if (dist > 0 && !e.latched && !e.burrowed) {
+            if (targetDist > 0 && !e.latched && !e.burrowed) {
                 const baseSpeed = e.speedMult ? e.speed * e.speedMult : e.speed;
                 let currentSpeed = baseSpeed;
                 if (e.slowTimer > 0 && !(e.isBoss && this.bossModifiers.unstoppable)) {
                     currentSpeed *= 0.5;
                 }
                 currentSpeed *= this.envModifiers.enemySpeed;
-                e.x += (dx / dist) * currentSpeed * 60 * dt;
-                e.y += (dy / dist) * currentSpeed * 60 * dt;
+                e.x += (targetDx / targetDist) * currentSpeed * 60 * dt;
+                e.y += (targetDy / targetDist) * currentSpeed * 60 * dt;
             }
             if (e.slowTimer > 0) e.slowTimer -= dt;
             
-            if (dist < this.player.radius + e.radius && !e.burrowed) {
-                if (!e.attackTimer || e.attackTimer <= 0) {
-                    this.takeDamage(e.damage);
-                    e.attackTimer = 1.0;
+            if (this.characterId === 'dataphantom' && dist < this.player.radius + e.radius && !e.burrowed && !e.dataLeeched) {
+                e.dataLeeched = true;
+                e.speedMult = (e.speedMult || 1) * 0.7;
+                this.player.phantomBoostTimer = 2.0;
+                this.addParticle(e.x, e.y, '#98FF98', 5, 'spark');
+            }
+
+            if (isTargetingDecoy) {
+                if (targetDist < 15 + e.radius && !e.burrowed) {
+                    if (!e.attackTimer || e.attackTimer <= 0) {
+                        activeDecoy.hp -= e.damage;
+                        e.attackTimer = 1.0;
+                    }
+                }
+            } else {
+                if (dist < this.player.radius + e.radius && !e.burrowed) {
+                    if (!e.attackTimer || e.attackTimer <= 0) {
+                        this.takeDamage(e.damage);
+                        e.attackTimer = 1.0;
+                    }
                 }
             }
             if (e.attackTimer > 0) e.attackTimer -= dt;
@@ -1131,6 +1347,10 @@ export class GameEngine {
                     SFXManager.playGoldPickup();
                     this.player.invincibleTimer = 10;
                     this.addDamageText(this.player.x, this.player.y - 60, `SHIELD OVERCHARGE`, '#ffff00');
+                } else if (p.type === 'scrap') {
+                    SFXManager.playPickup();
+                    this.characterMechanics.scrapArmor = Math.min(10, (this.characterMechanics.scrapArmor || 0) + 0.1);
+                    this.addDamageText(this.player.x, this.player.y - 40, `+0.1 ARMOR`, '#aaaaaa');
                 }
                 return false;
             }
@@ -1148,6 +1368,10 @@ export class GameEngine {
     damageEnemy(enemy, amount, projectile = null) {
         let damageMult = 1.0;
         let isFullyMastered = false;
+
+        if (this.characterId === 'neobyte' && this.player.bannerBuff) {
+            damageMult *= 1.3;
+        }
         
         if (enemy && enemy.id) {
             const pastKills = this.save?.enemyKills?.[enemy.id] || 0;
@@ -1222,6 +1446,26 @@ export class GameEngine {
         }
         
         enemy.hp -= finalDamage;
+
+        if (this.characterId === 'neonvortex' && !enemy.isBoss && enemy.hp > 0 && enemy.hp <= enemy.maxHp * 0.2) {
+            enemy.hp = 0;
+            this.addDamageText(enemy.x, enemy.y - 20, "EXECUTED", '#7A00FF');
+            for(let i=0; i<3; i++) {
+                const angle = (Math.PI * 2 / 3) * i + Math.random();
+                this.projectiles.push({
+                    x: enemy.x, y: enemy.y,
+                    vx: Math.cos(angle) * 800,
+                    vy: Math.sin(angle) * 800,
+                    radius: 8,
+                    damage: this.player.damageMult * 30,
+                    pierce: 3,
+                    life: 2,
+                    color: '#7A00FF',
+                    type: 'railgun'
+                });
+            }
+        }
+
         if (enemy.isWorldBoss) {
             this.worldBossDamage += finalDamage;
             
@@ -1481,515 +1725,6 @@ export class GameEngine {
     }
 
     draw() {
-        if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
-            // Cache the rendered background to avoid expensive scaling and blending every frame
-            if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
-                this.cachedArenaImage = document.createElement('canvas');
-                this.cachedArenaImage.width = this.canvas.width;
-                this.cachedArenaImage.height = this.canvas.height;
-                const oCtx = this.cachedArenaImage.getContext('2d');
-                
-                // Draw base color
-                oCtx.fillStyle = this.arena.bg;
-                oCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw scaled image with opacity
-                const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
-                const drawW = this.arenaImage.naturalWidth * scale;
-                const drawH = this.arenaImage.naturalHeight * scale;
-                const x = (this.canvas.width - drawW) / 2;
-                const y = (this.canvas.height - drawH) / 2;
-                
-                oCtx.globalAlpha = 0.9;
-                oCtx.drawImage(this.arenaImage, x, y, drawW, drawH);
-                oCtx.globalAlpha = 1.0;
-            }
-            // Draw the pre-rendered, screen-sized background (extremely fast)
-            this.ctx.drawImage(this.cachedArenaImage, 0, 0);
-        } else {
-            this.ctx.fillStyle = this.arena.bg;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-
-        this.ctx.fillStyle = '#ffffff';
-        this.stars.forEach(star => {
-            let sx = (star.x - this.camera.x * star.parallax) % 2000;
-            let sy = (star.y - this.camera.y * star.parallax) % 2000;
-            if (sx < 0) sx += 2000;
-            if (sy < 0) sy += 2000;
-            
-            const screenX = (sx / 2000) * this.canvas.width;
-            const screenY = (sy / 2000) * this.canvas.height;
-            
-            this.ctx.globalAlpha = star.parallax;
-            this.ctx.fillRect(screenX, screenY, star.size, star.size);
-        });
-        this.ctx.globalAlpha = 1.0;
-
-        this.ctx.save();
-        this.ctx.scale(this.zoom, this.zoom);
-        this.ctx.translate(-this.camera.x + this.shakeX, -this.camera.y + this.shakeY);
-
-        const vWidth = this.canvas.width / this.zoom;
-        const vHeight = this.canvas.height / this.zoom;
-        const camX = this.camera.x;
-        const camY = this.camera.y;
-
-        drawPickups(this.ctx, this.pickups, this.time);
-
-        if (this.characterPickup) {
-            this.ctx.fillStyle = this.characterPickup.color;
-            this.ctx.fillRect(this.characterPickup.x - 15, this.characterPickup.y - 15, 30, 30);
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = '16px Arial';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText('🦥', this.characterPickup.x, this.characterPickup.y + 5);
-            
-            const dx = this.characterPickup.x - this.player.x;
-            const dy = this.characterPickup.y - this.player.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist > Math.min(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 - 50) {
-                const angle = Math.atan2(dy, dx);
-                const arrowDist = Math.min(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 - 50;
-                const ax = this.player.x + Math.cos(angle) * arrowDist;
-                const ay = this.player.y + Math.sin(angle) * arrowDist;
-                
-                this.ctx.save();
-                this.ctx.translate(ax, ay);
-                this.ctx.rotate(angle);
-                this.ctx.fillStyle = this.characterPickup.color;
-                this.ctx.beginPath();
-                this.ctx.moveTo(15, 0);
-                this.ctx.lineTo(-10, 10);
-                this.ctx.lineTo(-10, -10);
-                this.ctx.fill();
-                this.ctx.restore();
-            }
-        }
-
-        drawProjectiles(this.ctx, this.projectiles, this.particleManager, this.time, camX, camY, vWidth, vHeight);
-
-        if (this.hazards) {
-            this.hazards.forEach(h => {
-                this.ctx.save(); this.ctx.translate(h.x, h.y);
-                if (!h.active) {
-                    const p = 1 - (h.timer / 2.0);
-                    this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
-                    this.ctx.strokeStyle = `rgba(255,50,0,${0.3 + p * 0.5})`; this.ctx.lineWidth = 2; this.ctx.stroke();
-                    this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius * p, 0, Math.PI * 2);
-                    this.ctx.fillStyle = `rgba(255,50,0,${0.1 + p * 0.2})`; this.ctx.fill();
-                    this.ctx.fillStyle = `rgba(255,0,0,${Math.sin(this.time * 15) * 0.5 + 0.5})`;
-                    this.ctx.font = 'bold 24px Arial'; this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle'; this.ctx.fillText('⚠', 0, 0);
-                } else {
-                    this.ctx.globalCompositeOperation = 'screen';
-                    const g = this.ctx.createRadialGradient(0, 0, 0, 0, 0, h.radius * 1.2);
-                    g.addColorStop(0, '#fff'); g.addColorStop(0.2, 'rgba(255,100,0,0.8)'); g.addColorStop(0.6, 'rgba(255,0,0,0.4)'); g.addColorStop(1, 'transparent');
-                    this.ctx.fillStyle = g; this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius * 1.2, 0, Math.PI * 2); this.ctx.fill();
-                    this.ctx.rotate(this.time * 10); this.ctx.fillStyle = '#fff'; this.ctx.beginPath();
-                    for (let i = 0; i < 16; i++) {
-                        const a = (Math.PI / 16) * i; const r = i % 2 === 0 ? h.radius * 0.8 : h.radius * 0.3;
-                        this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-                    }
-                    this.ctx.fill(); this.ctx.globalCompositeOperation = 'source-over';
-                }
-                this.ctx.restore();
-            });
-        }
-
-        if (this.enemyProjectiles) {
-            this.ctx.globalCompositeOperation = 'screen';
-            const texStar = this.particleManager?.textures?.star;
-            this.enemyProjectiles.forEach(p => {
-                this.ctx.save();
-                this.ctx.translate(p.x, p.y);
-                if (p.vx || p.vy) {
-                    this.ctx.rotate(Math.atan2(p.vy, p.vx));
-                }
-                
-                this.ctx.globalAlpha = 0.3;
-                this.ctx.fillStyle = p.color || '#ff0000';
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius * 2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalAlpha = 0.6;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, p.radius * 1.2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalAlpha = 1.0;
-
-                if (texStar && texStar.isReady) {
-                    this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-                } else {
-                    this.ctx.fillStyle = '#ffffff';
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(p.radius, 0);
-                    this.ctx.lineTo(-p.radius, p.radius*0.5);
-                    this.ctx.lineTo(-p.radius*0.5, 0);
-                    this.ctx.lineTo(-p.radius, -p.radius*0.5);
-                    this.ctx.fill();
-                }
-                this.ctx.restore();
-            });
-            this.ctx.globalCompositeOperation = 'source-over';
-        }
-
-        const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
-        if (swarm) {
-            const getWeaponUpgrade = (wId, stat) => {
-                const perm = this.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
-                const week = this.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
-                const season = this.save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
-                return perm + week + season;
-            };
-            const dmgLevel = getWeaponUpgrade('slothSwarm', 'damage');
-            const areaLevel = getWeaponUpgrade('slothSwarm', 'area');
-            const cdLevel = getWeaponUpgrade('slothSwarm', 'cooldown');
-            const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
-            
-            const count = 1 + Math.floor(swarm.level / 2);
-            const area = swarm.baseArea * this.player.areaMult * (1 + (swarm.level-1)*0.1) * (1 + areaLevel * 0.1);
-            const speedMult = isMastered ? 6 : 3;
-            for(let i=0; i<count; i++) {
-                const angle = (Math.PI * 2 / count) * i + this.time * speedMult;
-                const px = this.player.x + Math.cos(angle) * (60 * area);
-                const py = this.player.y + Math.sin(angle) * (60 * area);
-                
-                this.ctx.save();
-                this.ctx.translate(px, py);
-                this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
-
-                // Add HD aura - optimized
-                this.ctx.globalCompositeOperation = 'lighter';
-                const auraCol = isMastered ? '#ff0000' : '#8B4513';
-                this.ctx.fillStyle = auraCol;
-                this.ctx.globalAlpha = 0.1;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalAlpha = 0.2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.globalAlpha = 1.0;
-                
-                // Draw Sloth Head shape
-                this.ctx.fillStyle = isMastered ? '#FF0000' : '#8B4513';
-                this.ctx.beginPath();
-                this.ctx.ellipse(0, 0, 8, 6, 0, 0, Math.PI*2); // Head
-                this.ctx.fill();
-                // Ears
-                this.ctx.beginPath(); this.ctx.arc(-6, -4, 3, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.arc(6, -4, 3, 0, Math.PI*2); this.ctx.fill();
-                // Face
-                this.ctx.fillStyle = '#d2b48c';
-                this.ctx.beginPath(); this.ctx.ellipse(0, 1, 5, 4, 0, 0, Math.PI*2); this.ctx.fill();
-                
-                this.ctx.restore();
-            }
-        }
-
-        const thornySwarm = this.player.weapons.find(w => w.id === 'thornySwarm');
-        if (thornySwarm) {
-            const count = 2 + Math.floor(thornySwarm.level / 2);
-            const area = thornySwarm.baseArea * this.player.areaMult * (1 + (thornySwarm.level-1)*0.1);
-            for(let i=0; i<count; i++) {
-                const angle = (Math.PI * 2 / count) * i + this.time * 4;
-                const px = this.player.x + Math.cos(angle) * (80 * area);
-                const py = this.player.y + Math.sin(angle) * (80 * area);
-                
-                this.ctx.save();
-                this.ctx.translate(px, py);
-                this.ctx.rotate(this.time * 5); // Spin
-                
-                // Add HD aura - optimized
-                this.ctx.globalCompositeOperation = 'lighter';
-                this.ctx.fillStyle = '#32CD32';
-                this.ctx.globalAlpha = 0.1;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalAlpha = 0.2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.globalAlpha = 1.0;
-                
-                // Spiky Ball
-                this.ctx.fillStyle = '#32CD32';
-                this.ctx.beginPath();
-                const spikes = 8;
-                for(let j=0; j<spikes*2; j++) {
-                    const a = (Math.PI*2/(spikes*2))*j;
-                    const r = j%2===0 ? 10 : 5;
-                    this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
-                }
-                this.ctx.fill();
-                this.ctx.strokeStyle = '#006400';
-                this.ctx.lineWidth = 1;
-                this.ctx.stroke();
-                
-                this.ctx.restore();
-            }
-        }
-
-        const orbitalLasers = this.player.weapons.find(w => w.id === 'orbitalLasers');
-        if (orbitalLasers) {
-            const count = 2 + Math.floor(orbitalLasers.level / 2);
-            const area = orbitalLasers.baseArea * this.player.areaMult * (1 + (orbitalLasers.level-1)*0.1);
-            for(let i=0; i<count; i++) {
-                const angle = (Math.PI * 2 / count) * i + this.time * 2;
-                const px = this.player.x + Math.cos(angle) * (60 * area);
-                const py = this.player.y + Math.sin(angle) * (60 * area);
-                
-                this.ctx.save();
-                this.ctx.translate(px, py);
-                this.ctx.rotate(this.time * 3);
-                
-                this.ctx.globalCompositeOperation = 'lighter';
-                this.ctx.fillStyle = '#00ffff';
-                this.ctx.globalAlpha = 0.15;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.globalAlpha = 1.0;
-                this.ctx.globalCompositeOperation = 'source-over';
-                
-                this.ctx.fillStyle = '#00ffff';
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 6, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.stroke();
-                
-                this.ctx.restore();
-            }
-        }
-
-        const orbitalDefense = this.player.weapons.find(w => w.id === 'orbitalDefense');
-        if (orbitalDefense) {
-            const count = 4 + Math.floor(orbitalDefense.level / 2);
-            const area = orbitalDefense.baseArea * this.player.areaMult * (1 + (orbitalDefense.level-1)*0.1);
-            for(let i=0; i<count; i++) {
-                const angle = (Math.PI * 2 / count) * i + this.time * 3;
-                const px = this.player.x + Math.cos(angle) * (70 * area);
-                const py = this.player.y + Math.sin(angle) * (70 * area);
-                
-                this.ctx.save();
-                this.ctx.translate(px, py);
-                this.ctx.rotate(this.time * -4);
-                
-                this.ctx.globalCompositeOperation = 'lighter';
-                this.ctx.fillStyle = '#ff00ff';
-                this.ctx.globalAlpha = 0.2;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
-                this.ctx.globalAlpha = 1.0;
-                this.ctx.globalCompositeOperation = 'source-over';
-                
-                this.ctx.fillStyle = '#111111';
-                this.ctx.beginPath();
-                this.ctx.moveTo(15, 0);
-                this.ctx.lineTo(0, 15);
-                this.ctx.lineTo(-15, 0);
-                this.ctx.lineTo(0, -15);
-                this.ctx.fill();
-                
-                this.ctx.strokeStyle = '#ff00ff';
-                this.ctx.lineWidth = 3;
-                this.ctx.stroke();
-                
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 5, 0, Math.PI * 2);
-                this.ctx.fill();
-                
-                this.ctx.restore();
-            }
-        }
-
-        this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
-
-        this.enemies.forEach(e => {
-            if (!e.burrowed) {
-                drawEnemy(this.ctx, e, this.time, this.player.x);
-                
-                if (e.hp < e.maxHp || e.isBoss) {
-                    const barW = e.isBoss ? 80 : 20;
-                    const barH = e.isBoss ? 6 : 4;
-                    const yOffset = e.isBoss ? 16 : 8;
-                    this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW, barH);
-                    this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW * (e.hp / e.maxHp), barH);
-                }
-                if (e.isBoss && e.weakSide && e.weakDesc) {
-                    this.ctx.fillStyle = '#ffdd00';
-                    this.ctx.font = 'bold 11px monospace';
-                    this.ctx.textAlign = 'center';
-                    this.ctx.fillText(`⚡ WEAK: ${e.weakDesc}`, e.x, e.y - e.radius - 28);
-                }
-            } else {
-                // Draw burrowed indicator
-                this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                this.ctx.beginPath(); this.ctx.ellipse(e.x, e.y, e.radius, e.radius * 0.5, 0, 0, Math.PI * 2); this.ctx.fill();
-            }
-        });
-
-        if (this.player.trail !== 'default' && this.frameCount % 6 === 0) {
-            this.particleManager.createTrail(this.player.x, this.player.y, this.player.trail, this.frameCount);
-        }
-
-        // Advance sprite animation frame
-        const SPRITE_FRAMES = 25;
-        const FRAME_DURATION = 1 / 12; // 12 fps
-        this.player.frameTimer += this.lastDt || 0;
-        if (this.player.frameTimer >= FRAME_DURATION) {
-            this.player.frameTimer -= FRAME_DURATION;
-            this.player.currentFrame = (this.player.currentFrame + 1) % SPRITE_FRAMES;
-        }
-
-        const spriteSheet = this.player.isMoving
-            ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
-            : (this.player.idleImage && this.player.idleImage.complete ? this.player.idleImage : null);
-
-        if (this.player.iFrames > 0 && Math.floor(this.time * 15) % 2 === 0) {
-            this.ctx.globalAlpha = 0.5;
-        }
-
-        if (spriteSheet) {
-            const size = this.player.radius * 5;
-            const frame = this.player.currentFrame;
-            const col = frame % 5;
-            const row = Math.floor(frame / 5);
-            const frameWidth = spriteSheet.width / 5;
-            const frameHeight = spriteSheet.height / 5;
-            const sx = col * frameWidth;
-            const sy = row * frameHeight;
-            
-            this.ctx.save();
-            this.ctx.translate(this.player.x, this.player.y);
-            // The base sprite sheets are drawn facing left. 
-            // So if we are facing right (!facingLeft), we need to mirror them.
-            if (!this.player.facingLeft) this.ctx.scale(-1, 1);
-            
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 20;
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-            this.ctx.shadowBlur = 0;
-            
-            this.ctx.restore();
-        } else if (this.player.image && this.player.image.complete) {
-            const size = this.player.radius * 3;
-            
-            this.ctx.save();
-            this.ctx.translate(this.player.x, this.player.y);
-            
-            if (this.player.facingLeft) {
-                this.ctx.scale(-1, 1);
-            }
-            
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 20;
-            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
-            this.ctx.shadowBlur = 0;
-            
-            this.ctx.restore();
-        } else {
-            this.ctx.fillStyle = this.player.color;
-            this.ctx.beginPath();
-            this.ctx.roundRect(this.player.x - this.player.radius, this.player.y - this.player.radius, this.player.radius * 2, this.player.radius * 2, 8);
-            this.ctx.fill();
-            this.ctx.fillStyle = 'rgba(173, 216, 230, 0.5)';
-            this.ctx.beginPath();
-            this.ctx.roundRect(this.player.x - this.player.radius + 2, this.player.y - this.player.radius + 2, this.player.radius * 2 - 4, this.player.radius - 2, 4);
-            this.ctx.fill();
-        }
-
-        this.ctx.globalAlpha = 1.0;
-
-        if (this.player.invincibleTimer > 0) {
-            this.ctx.strokeStyle = '#ffff00';
-            this.ctx.lineWidth = 3;
-            this.ctx.beginPath();
-            this.ctx.arc(this.player.x, this.player.y, this.player.radius + 10 + Math.sin(this.time * 10) * 5, 0, Math.PI * 2);
-            this.ctx.stroke();
-            this.ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
-            this.ctx.fill();
-        }
-
-        this.ctx.textAlign = 'center';
-        this.damageTexts.forEach(t => {
-            this.ctx.globalAlpha = Math.max(0, t.life);
-            this.ctx.strokeStyle = '#000000';
-            this.ctx.lineWidth = t.isCrit ? 4 : 3;
-            this.ctx.font = t.isCrit ? 'bold 20px "Courier New", Courier, monospace' : 'bold 14px "Courier New", Courier, monospace';
-            const displayY = t.isCrit ? t.y - 10 * (1 - t.life) : t.y;
-            const textToDraw = t.text + (t.isCrit ? '!' : '');
-            this.ctx.strokeText(textToDraw, t.x, displayY);
-            this.ctx.fillStyle = t.color;
-            this.ctx.fillText(textToDraw, t.x, displayY);
-            this.ctx.globalAlpha = 1.0;
-        });
-
-        // Draw Environmental Effects
-        this.ctx.globalCompositeOperation = 'screen';
-        const texSmoke = this.particleManager?.textures?.smoke;
-
-        if (this.envEffect === 'neon_rain') {
-            this.ctx.globalCompositeOperation = 'screen';
-            this.envParticles.forEach(p => {
-                this.ctx.globalAlpha = (p.life / 2) * 0.8;
-                this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 3;
-                this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05); this.ctx.stroke();
-                this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); this.ctx.fill();
-                if (p.life < 0.1) {
-                    this.ctx.beginPath(); this.ctx.arc(p.x, p.y, (0.1 - p.life) * 100, 0, Math.PI * 2);
-                    this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 1; this.ctx.stroke();
-                }
-            });
-            this.ctx.globalAlpha = 1.0; this.ctx.globalCompositeOperation = 'source-over';
-        } else if (this.envEffect === 'fog') {
-            this.envParticles.forEach(p => {
-                this.ctx.globalAlpha = 0.15 * (p.life / 10);
-                if (texSmoke && texSmoke.isReady) {
-                    this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
-                } else {
-                    const g = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                    g.addColorStop(0, 'rgba(200,200,220,1)'); g.addColorStop(1, 'transparent');
-                    this.ctx.fillStyle = g; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); this.ctx.fill();
-                }
-            });
-            this.ctx.globalAlpha = 1.0;
-        } else if (this.envEffect === 'solar_flare') {
-            this.envParticles.forEach(p => {
-                const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.4;
-                this.ctx.globalAlpha = alpha;
-                
-                if (texSmoke && texSmoke.isReady) {
-                    // Tint the smoke orange
-                    this.ctx.fillStyle = '#ff6600';
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    
-                    this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
-                } else {
-                    const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                    gradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
-                    gradient.addColorStop(1, 'transparent');
-                    this.ctx.fillStyle = gradient;
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    this.ctx.fill();
-                }
-            });
-            this.ctx.globalAlpha = 1.0;
-            this.ctx.globalCompositeOperation = 'source-over';
-            
-            // Global orange tint pulsing
-            this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.05 + 0.05})`;
-            this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width / this.zoom, this.canvas.height / this.zoom);
-        }
-        this.ctx.globalCompositeOperation = 'source-over';
-
-        this.ctx.restore();
-
-        drawUI(this.ctx, this.canvas, this.time, this.player, this.hazards, this.enemies, this.characterPickup, this.camera, this.zoom);
+        renderGame.call(this);
     }
 }
