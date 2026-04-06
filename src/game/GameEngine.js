@@ -694,8 +694,11 @@ export class GameEngine {
 
             if (!p.isAoe) {
                 this.enemies.forEach(e => {
-                    if (p.pierce > 0 && Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
-                        if (e.id === 'boss_supernova') {
+                    // Fast bounding box check to avoid expensive hypot calculations
+                    if (p.pierce > 0) {
+                        if (Math.abs(e.x - p.x) > e.radius + p.radius || Math.abs(e.y - p.y) > e.radius + p.radius) return;
+                        if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
+                            if (e.id === 'boss_supernova') {
                             p.pierce = 0;
                             p.dead = true;
                             const angle = Math.atan2(this.player.y - e.y, this.player.x - e.x);
@@ -738,7 +741,8 @@ export class GameEngine {
                             if (p.weaponId === 'supernovaBeam') {
                                 this.particleManager.createExplosion(e.x, e.y, '#ffaa00', 1.5);
                                 this.enemies.forEach(ce => {
-                                    if (ce !== e && Math.hypot(ce.x - e.x, ce.y - e.y) < 60) {
+                                    if (ce === e || Math.abs(ce.x - e.x) > 60 || Math.abs(ce.y - e.y) > 60) return;
+                                    if (Math.hypot(ce.x - e.x, ce.y - e.y) < 60) {
                                         this.damageEnemy(ce, p.damage * 0.3);
                                     }
                                 });
@@ -775,11 +779,13 @@ export class GameEngine {
                             }
                         }
                     }
+                    }
                 });
             } else {
                 if (p.pulse) {
                     p.radius += 500 * dt;
                     this.enemies.forEach(e => {
+                        if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
                             if (!p.hitList) p.hitList = new Set();
                             if (!p.hitList.has(e)) {
@@ -793,6 +799,7 @@ export class GameEngine {
                     p.x = this.player.x;
                     p.y = this.player.y;
                     this.enemies.forEach(e => {
+                        if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         const dist = Math.hypot(e.x - p.x, e.y - p.y);
                         if (dist < p.radius) {
                             if (this.frameCount % 15 === 0) {
@@ -832,6 +839,7 @@ export class GameEngine {
                 } else {
                     if (this.frameCount % 15 === 0) {
                         this.enemies.forEach(e => {
+                            if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                             if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
                                 this.damageEnemy(e, p.damage);
                                 this.addParticle(e.x, e.y, p.weaponId === 'napalm' ? '#ff4500' : p.color, 2);
@@ -1837,13 +1845,17 @@ export class GameEngine {
             // So if we are facing right (!facingLeft), we need to mirror them.
             if (!this.player.facingLeft) this.ctx.scale(-1, 1);
             
-            // Neon Silhouette Outline
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 15;
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+            // High-Performance Outline (removed expensive shadowBlur)
+            this.ctx.globalAlpha = 0.3;
+            this.ctx.globalCompositeOperation = 'lighter';
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2 - 2, -size/2, size, size);
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2 + 2, -size/2, size, size);
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2 - 2, size, size);
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2 + 2, size, size);
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.globalCompositeOperation = 'source-over';
             
-            // Draw again with a tighter blur to create a solid neon edge
-            this.ctx.shadowBlur = 5;
+            // Draw main sprite
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
             
             this.ctx.restore();
@@ -1857,13 +1869,17 @@ export class GameEngine {
                 this.ctx.scale(-1, 1);
             }
             
-            // Neon Silhouette Outline
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 15;
-            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+            // High-Performance Outline (removed expensive shadowBlur)
+            this.ctx.globalAlpha = 0.3;
+            this.ctx.globalCompositeOperation = 'lighter';
+            this.ctx.drawImage(this.player.image, -size/2 - 2, -size/2, size, size);
+            this.ctx.drawImage(this.player.image, -size/2 + 2, -size/2, size, size);
+            this.ctx.drawImage(this.player.image, -size/2, -size/2 - 2, size, size);
+            this.ctx.drawImage(this.player.image, -size/2, -size/2 + 2, size, size);
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.globalCompositeOperation = 'source-over';
             
-            // Tighter blur for solid edge
-            this.ctx.shadowBlur = 5;
+            // Draw main sprite
             this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
             
             this.ctx.restore();
