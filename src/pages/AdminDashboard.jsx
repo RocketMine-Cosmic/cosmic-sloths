@@ -37,8 +37,19 @@ export default function AdminDashboard() {
 
     if (!user || user.role !== 'admin') return null;
 
-    const weeklyData = pools?.filter(p => p.period_type === 'weekly').sort((a, b) => a.period_id.localeCompare(b.period_id)) || [];
-    const seasonalData = pools?.filter(p => p.period_type === 'seasonal').sort((a, b) => a.period_id.localeCompare(b.period_id)) || [];
+    const aggregateData = (data) => {
+        const grouped = {};
+        data.forEach(item => {
+            if (!grouped[item.period_id]) {
+                grouped[item.period_id] = { period_id: item.period_id, total_spent: 0 };
+            }
+            grouped[item.period_id].total_spent += item.total_spent;
+        });
+        return Object.values(grouped);
+    };
+
+    const weeklyData = aggregateData(pools?.filter(p => p.period_type === 'weekly') || []).sort((a, b) => a.period_id.localeCompare(b.period_id));
+    const seasonalData = aggregateData(pools?.filter(p => p.period_type === 'seasonal') || []).sort((a, b) => a.period_id.localeCompare(b.period_id));
 
     return (
         <div className="min-h-screen relative text-slate-200 p-2 pb-20 md:p-6 font-sans">
