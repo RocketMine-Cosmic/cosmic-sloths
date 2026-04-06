@@ -31,26 +31,26 @@ export const ARENAS = [
 ];
 
 export const WEAPONS = {
-  neoBlaster: { id: 'neoBlaster', name: 'Blaster', type: 'weapon', desc: 'Fires reliable energy blasts.', masteryDesc: 'MASTERY: Fires a spread of 3 blasts.', baseDamage: 8, baseCooldown: 50, baseArea: 1 },
-  napBeam: { id: 'napBeam', name: 'Cosmic Nap Beam', type: 'weapon', desc: 'Fires a piercing beam.', masteryDesc: 'MASTERY: Beam chains to nearby enemies. (Blue Beam)', baseDamage: 7, baseCooldown: 60, baseArea: 1 },
-  vineWhip: { id: 'vineWhip', name: 'Plasma Whip', type: 'weapon', desc: 'Swipes nearby enemies.', masteryDesc: 'MASTERY: Heals player for 5% of damage dealt. (Red Whip)', baseDamage: 10, baseCooldown: 45, baseArea: 1 },
-  slothSwarm: { id: 'slothSwarm', name: 'Orbital Drones', type: 'weapon', desc: 'Orbiting defense drones.', masteryDesc: 'MASTERY: Drones move faster and shoot lasers. (Red Drones)', baseDamage: 3, baseCooldown: 120, baseArea: 1 },
-  napalm: { id: 'napalm', name: 'Zero-G Napalm', type: 'weapon', desc: 'Leaves burning pools.', masteryDesc: 'MASTERY: Blue fire that slows enemies by 50%.', baseDamage: 3, baseCooldown: 90, baseArea: 1 },
-  novaPulse: { id: 'novaPulse', name: 'Nova Pulse', type: 'weapon', desc: 'A massive expanding energy blast.', masteryDesc: 'MASTERY: Triggers a second echo pulse. (Purple Blast)', baseDamage: 18, baseCooldown: 180, baseArea: 1 },
-  shieldBubble: { id: 'shieldBubble', name: 'Shield Bubble', type: 'weapon', desc: 'Pushes enemies away and damages them.', masteryDesc: 'MASTERY: Fires retaliatory lasers at enemies. (Golden Shield)', baseDamage: 8, baseCooldown: 240, baseArea: 1 },
+  neoBlaster: { id: 'neoBlaster', name: 'Blaster', type: 'weapon', desc: 'Fires reliable energy blasts.', masteryDesc: 'MASTERY: Fires a spread of 3 blasts.', baseDamage: 12, baseCooldown: 45, baseArea: 1 },
+  napBeam: { id: 'napBeam', name: 'Cosmic Nap Beam', type: 'weapon', desc: 'Fires a piercing beam.', masteryDesc: 'MASTERY: Beam chains to nearby enemies. (Blue Beam)', baseDamage: 10, baseCooldown: 50, baseArea: 1 },
+  vineWhip: { id: 'vineWhip', name: 'Plasma Whip', type: 'weapon', desc: 'Swipes nearby enemies.', masteryDesc: 'MASTERY: Heals player for 5% of damage dealt. (Red Whip)', baseDamage: 15, baseCooldown: 40, baseArea: 1 },
+  slothSwarm: { id: 'slothSwarm', name: 'Orbital Drones', type: 'weapon', desc: 'Orbiting defense drones.', masteryDesc: 'MASTERY: Drones move faster and shoot lasers. (Red Drones)', baseDamage: 6, baseCooldown: 90, baseArea: 1 },
+  napalm: { id: 'napalm', name: 'Zero-G Napalm', type: 'weapon', desc: 'Leaves burning pools.', masteryDesc: 'MASTERY: Blue fire that slows enemies by 50%.', baseDamage: 5, baseCooldown: 75, baseArea: 1 },
+  novaPulse: { id: 'novaPulse', name: 'Nova Pulse', type: 'weapon', desc: 'A massive expanding energy blast.', masteryDesc: 'MASTERY: Triggers a second echo pulse. (Purple Blast)', baseDamage: 25, baseCooldown: 150, baseArea: 1 },
+  shieldBubble: { id: 'shieldBubble', name: 'Shield Bubble', type: 'weapon', desc: 'Pushes enemies away and damages them.', masteryDesc: 'MASTERY: Fires retaliatory lasers at enemies. (Golden Shield)', baseDamage: 15, baseCooldown: 180, baseArea: 1 },
   // Synergies
-  burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 8, baseCooldown: 180, baseArea: 1.5, isSynergy: true },
-  laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 30, baseCooldown: 150, baseArea: 1.2, isSynergy: true },
-  thornySwarm: { id: 'thornySwarm', name: 'Plasma Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting drones armed with plasma whips.', baseDamage: 12, baseCooldown: 90, baseArea: 1.5, isSynergy: true },
-  orbitalLasers: { id: 'orbitalLasers', name: 'Orbital Lasers', type: 'weapon', desc: 'SYNERGY: Drones that rapidly fire piercing beams.', baseDamage: 15, baseCooldown: 60, baseArea: 1.2, isSynergy: true },
-  seismicWhip: { id: 'seismicWhip', name: 'Seismic Whip', type: 'weapon', desc: 'SYNERGY: Whip strikes generate expanding shockwaves.', baseDamage: 25, baseCooldown: 40, baseArea: 1.5, isSynergy: true },
-  flamingLash: { id: 'flamingLash', name: 'Flaming Lash', type: 'weapon', desc: 'SYNERGY: A molten whip that leaves persistent fire.', baseDamage: 20, baseCooldown: 40, baseArea: 1.5, isSynergy: true },
-  supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 40, baseCooldown: 80, baseArea: 1.5, isEvolution: true },
-  vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals slightly and covers screen.', baseDamage: 30, baseCooldown: 70, baseArea: 2.2, isEvolution: true },
-  orbitalDefense: { id: 'orbitalDefense', name: 'Orbital Defense Network', type: 'weapon', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.', baseDamage: 20, baseCooldown: 60, baseArea: 2, isEvolution: true },
-  hellfire: { id: 'hellfire', name: 'Hellfire', type: 'weapon', desc: 'EVOLVED: Blue flames that persist and melt everything.', baseDamage: 12, baseCooldown: 100, baseArea: 1.5, isEvolution: true },
-  quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Constant rapid pulses of dark energy.', baseDamage: 40, baseCooldown: 100, baseArea: 2, isEvolution: true },
-  aegisMatrix: { id: 'aegisMatrix', name: 'Aegis Matrix', type: 'weapon', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.', baseDamage: 25, baseCooldown: 140, baseArea: 2, isEvolution: true },
+  burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 18, baseCooldown: 150, baseArea: 1.5, isSynergy: true },
+  laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 45, baseCooldown: 120, baseArea: 1.2, isSynergy: true },
+  thornySwarm: { id: 'thornySwarm', name: 'Plasma Swarm', type: 'weapon', desc: 'SYNERGY: Orbiting drones armed with plasma whips.', baseDamage: 20, baseCooldown: 75, baseArea: 1.5, isSynergy: true },
+  orbitalLasers: { id: 'orbitalLasers', name: 'Orbital Lasers', type: 'weapon', desc: 'SYNERGY: Drones that rapidly fire piercing beams.', baseDamage: 25, baseCooldown: 50, baseArea: 1.2, isSynergy: true },
+  seismicWhip: { id: 'seismicWhip', name: 'Seismic Whip', type: 'weapon', desc: 'SYNERGY: Whip strikes generate expanding shockwaves.', baseDamage: 35, baseCooldown: 35, baseArea: 1.5, isSynergy: true },
+  flamingLash: { id: 'flamingLash', name: 'Flaming Lash', type: 'weapon', desc: 'SYNERGY: A molten whip that leaves persistent fire.', baseDamage: 28, baseCooldown: 35, baseArea: 1.5, isSynergy: true },
+  supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 60, baseCooldown: 60, baseArea: 1.5, isEvolution: true },
+  vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals slightly and covers screen.', baseDamage: 45, baseCooldown: 50, baseArea: 2.2, isEvolution: true },
+  orbitalDefense: { id: 'orbitalDefense', name: 'Orbital Defense Network', type: 'weapon', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.', baseDamage: 35, baseCooldown: 40, baseArea: 2, isEvolution: true },
+  hellfire: { id: 'hellfire', name: 'Hellfire', type: 'weapon', desc: 'EVOLVED: Blue flames that persist and melt everything.', baseDamage: 25, baseCooldown: 80, baseArea: 1.5, isEvolution: true },
+  quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Constant rapid pulses of dark energy.', baseDamage: 75, baseCooldown: 80, baseArea: 2, isEvolution: true },
+  aegisMatrix: { id: 'aegisMatrix', name: 'Aegis Matrix', type: 'weapon', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.', baseDamage: 40, baseCooldown: 100, baseArea: 2, isEvolution: true },
 };
 
 export const BOUNTIES_POOL = [
@@ -241,12 +241,12 @@ export const ENEMIES = [
   { id: 't10_crystal_vortex', name: 'Crystal Vortex', hp: 480, speed: 1.6, damage: 130, color: '#d946ef', radius: 86, xp: 10, tier: 10, isRanged: true, spriteImage: loadSprite('703e0a56e_crystal_vortex_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Bosses (spawn anywhere at the end)
-  { id: 'boss_nebula_devourer', name: 'Nebula Devourer', hp: 4000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 124, xp: 800, isBoss: true, spriteImage: loadSprite('34fdca1a0_nebula_devourer_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
-  { id: 'boss_plasma_kraken', name: 'Plasma Kraken', hp: 3500, speed: 0.6, damage: 70, color: '#ef4444', radius: 113, xp: 700, isBoss: true, spriteImage: loadSprite('7464748bb_plasma_kraken_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' },
-  { id: 'boss_stellar_colossus', name: 'Stellar Colossus', hp: 4500, speed: 1.0, damage: 55, color: '#f59e0b', radius: 135, xp: 900, isBoss: true, spriteImage: loadSprite('d39368909_stellar_colossus_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
-  { id: 'boss_cosmic_wyrm', name: 'Cosmic Wyrm Lord', hp: 5000, speed: 0.9, damage: 80, color: '#0ea5e9', radius: 146, xp: 1000, isBoss: true, spriteImage: loadSprite('88e8a0d84_cosmic_wyrm_lord_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' },
-  { id: 'boss_supernova_empress', name: 'Supernova Empress', hp: 5500, speed: 1.2, damage: 90, color: '#ec4899', radius: 110, xp: 1200, isBoss: true, spriteImage: loadSprite('4d3a1f090_supernova_empress_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
-  { id: 'boss_nexus_annihilator', name: 'Nexus Annihilator', hp: 7500, speed: 0.5, damage: 120, color: '#1e293b', radius: 160, xp: 1500, isBoss: true, spriteImage: loadSprite('29ea7426c_nexus_annihilator_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' }
+  { id: 'boss_nebula_devourer', name: 'Nebula Devourer', hp: 12000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 124, xp: 800, isBoss: true, spriteImage: loadSprite('34fdca1a0_nebula_devourer_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
+  { id: 'boss_plasma_kraken', name: 'Plasma Kraken', hp: 10000, speed: 0.6, damage: 70, color: '#ef4444', radius: 113, xp: 700, isBoss: true, spriteImage: loadSprite('7464748bb_plasma_kraken_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' },
+  { id: 'boss_stellar_colossus', name: 'Stellar Colossus', hp: 15000, speed: 1.0, damage: 55, color: '#f59e0b', radius: 135, xp: 900, isBoss: true, spriteImage: loadSprite('d39368909_stellar_colossus_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
+  { id: 'boss_cosmic_wyrm', name: 'Cosmic Wyrm Lord', hp: 18000, speed: 0.9, damage: 80, color: '#0ea5e9', radius: 146, xp: 1000, isBoss: true, spriteImage: loadSprite('88e8a0d84_cosmic_wyrm_lord_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' },
+  { id: 'boss_supernova_empress', name: 'Supernova Empress', hp: 22000, speed: 1.2, damage: 90, color: '#ec4899', radius: 110, xp: 1200, isBoss: true, spriteImage: loadSprite('4d3a1f090_supernova_empress_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
+  { id: 'boss_nexus_annihilator', name: 'Nexus Annihilator', hp: 30000, speed: 0.5, damage: 120, color: '#1e293b', radius: 160, xp: 1500, isBoss: true, spriteImage: loadSprite('29ea7426c_nexus_annihilator_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' }
 ];
 
 export const CHARACTER_TALENTS = {
