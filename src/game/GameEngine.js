@@ -1845,18 +1845,10 @@ export class GameEngine {
             // So if we are facing right (!facingLeft), we need to mirror them.
             if (!this.player.facingLeft) this.ctx.scale(-1, 1);
             
-            // High-Performance Outline (removed expensive shadowBlur)
-            this.ctx.globalAlpha = 0.3;
-            this.ctx.globalCompositeOperation = 'lighter';
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2 - 2, -size/2, size, size);
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2 + 2, -size/2, size, size);
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2 - 2, size, size);
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2 + 2, size, size);
-            this.ctx.globalAlpha = 1.0;
-            this.ctx.globalCompositeOperation = 'source-over';
-            
-            // Draw main sprite
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 20;
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+            this.ctx.shadowBlur = 0;
             
             this.ctx.restore();
         } else if (this.player.image && this.player.image.complete) {
@@ -1869,18 +1861,10 @@ export class GameEngine {
                 this.ctx.scale(-1, 1);
             }
             
-            // High-Performance Outline (removed expensive shadowBlur)
-            this.ctx.globalAlpha = 0.3;
-            this.ctx.globalCompositeOperation = 'lighter';
-            this.ctx.drawImage(this.player.image, -size/2 - 2, -size/2, size, size);
-            this.ctx.drawImage(this.player.image, -size/2 + 2, -size/2, size, size);
-            this.ctx.drawImage(this.player.image, -size/2, -size/2 - 2, size, size);
-            this.ctx.drawImage(this.player.image, -size/2, -size/2 + 2, size, size);
-            this.ctx.globalAlpha = 1.0;
-            this.ctx.globalCompositeOperation = 'source-over';
-            
-            // Draw main sprite
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 20;
             this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+            this.ctx.shadowBlur = 0;
             
             this.ctx.restore();
         } else {
