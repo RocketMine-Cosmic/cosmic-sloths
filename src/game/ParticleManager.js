@@ -214,52 +214,63 @@ export class ParticleManager {
     createKillEffect(x, y, effectId) {
         switch (effectId) {
             case 'explosion':
-                this.addParticle(x, y, '#ff4500', 8, 'spark', 1.5, { speed: 250 });
-                this.addParticle(x, y, '#ffdd00', 4, 'spark', 1.5, { speed: 150 });
+                this.addParticle(x, y, '#ffaa00', 1, 'flash', 3.0, { speed: 0, lifeBonus: -0.2 });
+                this.addParticle(x, y, '#ff4500', 12, 'flame', 2.0, { speed: 250 });
+                this.addParticle(x, y, '#555555', 8, 'smoke', 1.5, { speed: 150 });
                 break;
             case 'pixel_burst':
-                this.addParticle(x, y, '#00ffff', 8, 'spark', 1.8, { speed: 350 });
-                this.addParticle(x, y, '#ff00ff', 8, 'spark', 1.5, { speed: 250 });
+                this.addParticle(x, y, '#00ffff', 10, 'spark', 1.8, { speed: 350 });
+                this.addParticle(x, y, '#ff00ff', 10, 'slash', 1.5, { speed: 250 });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
                 break;
             case 'blood_splatter':
-                this.addParticle(x, y, '#ff0000', 12, 'spark', 2.0, { speed: 300 });
+                this.addParticle(x, y, '#8a0303', 15, 'blood', 2.5, { speed: 300, gravity: true });
+                this.addParticle(x, y, '#ff0000', 10, 'spark', 1.5, { speed: 200, gravity: true });
                 break;
             case 'black_hole':
-                this.addParticle(x, y, '#4b0082', 15, 'spark', 2.0, { speed: 200 });
+                this.addParticle(x, y, '#000000', 1, 'shockwave', 1.0, { speed: 0, lineWidth: 10, growthRate: -200 });
+                this.addParticle(x, y, '#4b0082', 20, 'implode', 2.0, { speed: 200, targetX: x, targetY: y });
                 break;
             case 'freeze':
-                this.addParticle(x, y, '#aaeeff', 10, 'spark', 1.5, { speed: 220 });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
+                this.addParticle(x, y, '#00cfff', 15, 'shatter', 1.5, { speed: 250, gravity: true });
+                this.addParticle(x, y, '#aaf0ff', 10, 'spark', 1.0, { speed: 150 });
                 break;
             case 'vaporize':
-                this.addParticle(x, y, '#39ff14', 10, 'spark', 1.8, { speed: 150 });
+                this.addParticle(x, y, '#39ff14', 15, 'smoke', 2.0, { speed: 150 });
+                this.addParticle(x, y, '#00ff88', 10, 'spark', 1.5, { speed: 200 });
+                this.addParticle(x, y, '#aaff00', 1, 'flash', 1.5, { speed: 0 });
                 break;
             case 'implode':
-                this.addParticle(x, y, '#8a2be2', 10, 'spark', 1.5, { speed: 200 });
+                this.addParticle(x, y, '#8a2be2', 15, 'implode', 1.5, { speed: 250, targetX: x, targetY: y });
+                this.addParticle(x, y, '#cc00ff', 1, 'shockwave', 1.0, { speed: 0, lineWidth: 5, growthRate: -150 });
                 break;
             case 'golden':
-                this.addParticle(x, y, '#ffd700', 10, 'spark', 1.8, { speed: 200 });
+                this.addParticle(x, y, '#ffd700', 15, 'star', 2.0, { speed: 300, gravity: true });
+                this.addParticle(x, y, '#ffec6e', 10, 'spark', 1.5, { speed: 200, gravity: true });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
                 break;
         }
     }
 
     createTrail(x, y, trailId, frameCount) {
         const trailConfigs = {
-            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'spark', count: 1, size: 1.4 },
-            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'spark', count: 1, size: 1.0 },
-            'void':    { colors: ['#8a2be2', '#6600cc', '#cc00ff'], type: 'spark', count: 1, size: 1.1 },
-            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'spark', count: 1, size: 2.0 },
-            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 1, size: 1.6 },
-            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'star', count: 1, size: 1.3 },
-            'shadow':  { colors: ['#222244', '#333355', '#0a0a20'], type: 'spark', count: 1, size: 2.2 },
-            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'circle', count: 1, size: 1.5 },
-            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 1, size: 1.2 },
-            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'star', count: 1, size: 1.5 },
-            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 1, size: 1.4 },
+            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame', count: 2, size: 1.8, options: { speed: 30, lifeBonus: 0.2 } },
+            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter', count: 2, size: 1.2, options: { speed: 40, gravity: true, lifeBonus: 0.5 } },
+            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'smoke', count: 1, size: 1.5, options: { speed: 10, lifeBonus: 0.8 } },
+            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 1, size: 2.0, options: { speed: 15, lifeBonus: 0.7 } },
+            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 2, size: 1.8, options: { speed: 30, gravity: true, lifeBonus: 0.4 } },
+            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 2, size: 1.5, options: { speed: 50, lifeBonus: 0.3 } },
+            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'smoke', count: 2, size: 2.5, options: { speed: 5, lifeBonus: 1.0 } },
+            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood', count: 2, size: 1.6, options: { speed: 20, gravity: true, lifeBonus: 0.5 } },
+            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 2, size: 1.4, options: { speed: 40, rotSpeed: 10, lifeBonus: 0.3 } },
+            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke', count: 1, size: 1.8, options: { speed: 10, lifeBonus: 0.9 } },
+            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 2, size: 1.5, options: { speed: 40, lifeBonus: 0.5 } },
         };
         const config = trailConfigs[trailId];
         if (config) {
             const color = config.colors[frameCount % config.colors.length];
-            this.addParticle(x, y, color, config.count, config.type, config.size, { speed: 20, lifeBonus: 0.6 });
+            this.addParticle(x, y, color, config.count, config.type, config.size, config.options);
         }
     }
 }
