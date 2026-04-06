@@ -505,9 +505,9 @@ export class GameEngine {
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
                     const progress = this.time / 300;
-                    const bossHpMult = 1.5 * this.difficulty.enemyHpMult * (1.0 + progress) * (this.bossModifiers.hide ? 2.0 : 1.0);
-                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5) * (this.bossModifiers.fury ? 1.5 : 1.0);
-                    const speedMult = this.bossModifiers.frenzy ? 1.5 : 1.0;
+                    const bossHpMult = 1.0 * this.difficulty.enemyHpMult * (1.0 + progress * 0.5) * (this.bossModifiers.hide ? 1.5 : 1.0);
+                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (1.0 + progress * 0.5) * (this.bossModifiers.fury ? 1.3 : 1.0);
+                    const speedMult = this.bossModifiers.frenzy ? 1.3 : 1.0;
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
                     this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
@@ -530,11 +530,11 @@ export class GameEngine {
                     const ex = this.player.x + Math.cos(angle) * dist;
                     const ey = this.player.y + Math.sin(angle) * dist;
                     
-                    const sectorDifficultyScale = Math.pow(1.2, arenaIndex);
+                    const sectorDifficultyScale = Math.pow(1.15, arenaIndex);
                     
-                    const bossHpMult = 1.5 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 2.0 : 1.0) * sectorDifficultyScale;
-                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.5 : 1.0) * sectorDifficultyScale;
-                    const speedMult = this.bossModifiers.frenzy ? 1.5 : 1.0;
+                    const bossHpMult = 1.0 * this.difficulty.enemyHpMult * (this.bossModifiers.hide ? 1.5 : 1.0) * sectorDifficultyScale;
+                    const bossDmgMult = 1.0 * this.difficulty.enemyDmgMult * (this.bossModifiers.fury ? 1.3 : 1.0) * sectorDifficultyScale;
+                    const speedMult = this.bossModifiers.frenzy ? 1.3 : 1.0;
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
                     this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
