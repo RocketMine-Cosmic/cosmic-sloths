@@ -290,6 +290,7 @@ export default function Hub({ isCarousel }) {
                                                                                 trailId={save.cosmetics?.trail || 'default'} 
                                                                                 killEffectId={save.cosmetics?.killEffect || 'none'}
                                                                                 playerColor={SKIN_COSMETICS.find(s => s.id === (save.cosmetics?.skins?.[char.id] || `${char.id}_default`))?.color || char.color}
+                                                                                charId={char.id}
                                                                             />
                                                                         </div>
                                                                         <select
