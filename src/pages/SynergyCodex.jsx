@@ -95,49 +95,47 @@ export default function SynergyCodex({ isCarousel }) {
                                         </div>
 
                                         {isDiscovered && (
-                                            <>
-                                                <div className="mt-2 md:mt-3 grid grid-cols-3 gap-1.5 md:gap-2 text-center text-[10px] md:text-xs">
-                                                    <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
-                                                        <div className="text-slate-500 mb-0.5 md:mb-1">Base Dmg</div>
-                                                        <div className="font-mono text-rose-400">{resultWeapon.baseDamage}</div>
-                                                    </div>
-                                                    <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
-                                                        <div className="text-slate-500 mb-0.5 md:mb-1">Cooldown</div>
-                                                        <div className="font-mono text-cyan-400">{resultWeapon.baseCooldown}s</div>
-                                                    </div>
-                                                    <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
-                                                        <div className="text-slate-500 mb-0.5 md:mb-1">Area</div>
-                                                        <div className="font-mono text-amber-400">{resultWeapon.baseArea}x</div>
-                                                    </div>
+                                            <div className="mt-2 md:mt-3 grid grid-cols-3 gap-1.5 md:gap-2 text-center text-[10px] md:text-xs">
+                                                <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                    <div className="text-slate-500 mb-0.5 md:mb-1">Base Dmg</div>
+                                                    <div className="font-mono text-rose-400">{resultWeapon.baseDamage}</div>
                                                 </div>
-                                                
-                                                <div className="mt-3 pt-2 border-t border-slate-800/50">
-                                                    <button 
-                                                        onClick={() => {
-                                                            SoundManager.playUIClick();
-                                                            setPreviewWeapon(previewWeapon === resultWeapon.id ? null : resultWeapon.id);
-                                                        }}
-                                                        className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
-                                                            previewWeapon === resultWeapon.id 
-                                                            ? 'bg-slate-700 text-white' 
-                                                            : 'bg-rose-600 hover:bg-rose-500 text-white'
-                                                        }`}
-                                                    >
-                                                        <Crosshair className="w-4 h-4" /> 
-                                                        {previewWeapon === resultWeapon.id ? 'Close Simulation' : 'Enter Simulation Chamber'}
-                                                    </button>
-                                                    
-                                                    {previewWeapon === resultWeapon.id && (
-                                                        <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                            <WeaponSimulation weaponId={resultWeapon.id} isMastered={true} />
-                                                            <div className="text-[10px] text-slate-500 text-center mt-2 italic">
-                                                                Showing synergy weapon in action.
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                    <div className="text-slate-500 mb-0.5 md:mb-1">Cooldown</div>
+                                                    <div className="font-mono text-cyan-400">{resultWeapon.baseCooldown}s</div>
                                                 </div>
-                                            </>
+                                                <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                    <div className="text-slate-500 mb-0.5 md:mb-1">Area</div>
+                                                    <div className="font-mono text-amber-400">{resultWeapon.baseArea}x</div>
+                                                </div>
+                                            </div>
                                         )}
+                                        
+                                        <div className="mt-3 pt-2 border-t border-slate-800/50">
+                                            <button 
+                                                onClick={() => {
+                                                    SoundManager.playUIClick();
+                                                    setPreviewWeapon(previewWeapon === resultWeapon.id ? null : resultWeapon.id);
+                                                }}
+                                                className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
+                                                    previewWeapon === resultWeapon.id 
+                                                    ? 'bg-slate-700 text-white' 
+                                                    : 'bg-rose-600 hover:bg-rose-500 text-white'
+                                                }`}
+                                            >
+                                                <Crosshair className="w-4 h-4" /> 
+                                                {previewWeapon === resultWeapon.id ? 'Close Simulation' : 'Preview Synergy Power'}
+                                            </button>
+                                            
+                                            {previewWeapon === resultWeapon.id && (
+                                                <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    <WeaponSimulation weaponId={resultWeapon.id} isMastered={true} />
+                                                    <div className="text-[10px] text-slate-500 text-center mt-2 italic">
+                                                        Previewing fully realized synergy power.
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -223,18 +221,18 @@ export default function SynergyCodex({ isCarousel }) {
                                                     className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
                                                         isPreviewing 
                                                         ? 'bg-slate-700 text-white' 
-                                                        : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                                                        : 'bg-amber-600 hover:bg-amber-500 text-white'
                                                     }`}
                                                 >
                                                     <Crosshair className="w-4 h-4" /> 
-                                                    {isPreviewing ? 'Close Simulation' : 'Enter Simulation Chamber'}
+                                                    {isPreviewing ? 'Close Simulation' : 'Preview Mastery Form'}
                                                 </button>
                                                 
                                                 {isPreviewing && (
                                                     <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                        <WeaponSimulation weaponId={weapon.id} isMastered={isMastered} />
+                                                        <WeaponSimulation weaponId={weapon.id} isMastered={true} />
                                                         <div className="text-[10px] text-slate-500 text-center mt-2 italic">
-                                                            {isMastered ? "Showing fully mastered potential." : "Showing base Level 1 potential."}
+                                                            Previewing fully mastered potential.
                                                         </div>
                                                     </div>
                                                 )}
