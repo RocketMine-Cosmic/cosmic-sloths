@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { ArrowLeft, BarChart3 } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
+import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
 
 export default function AdminDashboard() {
@@ -20,11 +21,19 @@ export default function AdminDashboard() {
         });
     }, [navigate]);
 
-    const { data: pools, isLoading } = useQuery({
+    const { data: pools, isLoading: poolsLoading } = useQuery({
         queryKey: ['tokenPools'],
         queryFn: () => base44.entities.TokenPool.list('-created_date', 100),
         enabled: !!user && user.role === 'admin'
     });
+
+    const { data: spendLogs, isLoading: logsLoading } = useQuery({
+        queryKey: ['tokenSpendLogs'],
+        queryFn: () => base44.entities.TokenSpendLog.list('-created_date', 50),
+        enabled: !!user && user.role === 'admin'
+    });
+
+    const isLoading = poolsLoading || logsLoading;
 
     if (!user || user.role !== 'admin') return null;
 
@@ -55,6 +64,7 @@ export default function AdminDashboard() {
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
                     </div>
                 ) : (
+                    <>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-red-900/50 p-4 md:p-6 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
                             <h2 className="text-lg font-bold text-red-400 mb-4 tracking-widest uppercase">Weekly Token Spend</h2>
@@ -92,6 +102,55 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </div>
+
+                    <div className="mt-6 bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 md:p-6 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                        <h2 className="text-lg font-bold text-slate-300 mb-4 tracking-widest uppercase flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-slate-400" /> Audit Trail
+                        </h2>
+                        
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-900/50 text-slate-400 font-mono tracking-wider border-b border-slate-700/50">
+                                    <tr>
+                                        <th className="p-3 font-semibold">Timestamp</th>
+                                        <th className="p-3 font-semibold">Player</th>
+                                        <th className="p-3 font-semibold text-right">Tokens Spent</th>
+                                        <th className="p-3 font-semibold">Season</th>
+                                        <th className="p-3 font-semibold">Week</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800/50">
+                                    {spendLogs?.map((log) => (
+                                        <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
+                                            <td className="p-3 text-slate-400 font-mono text-xs whitespace-nowrap">
+                                                {moment(log.created_date).format('MMM D, YYYY HH:mm:ss')}
+                                            </td>
+                                            <td className="p-3 font-bold text-white whitespace-nowrap">
+                                                {log.player_name}
+                                            </td>
+                                            <td className="p-3 text-right font-mono font-bold text-cyan-400">
+                                                {log.amount}
+                                            </td>
+                                            <td className="p-3 text-slate-500 font-mono text-xs">
+                                                {log.season_id || '-'}
+                                            </td>
+                                            <td className="p-3 text-slate-500 font-mono text-xs">
+                                                {log.week_id || '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {!spendLogs?.length && (
+                                        <tr>
+                                            <td colSpan="5" className="p-6 text-center text-slate-500 font-mono">
+                                                No token spend logs found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </>
                 )}
             </div>
         </div>
