@@ -8,8 +8,27 @@ const loadTexture = (url, name) => {
         const img = new Image();
         img.crossOrigin = "Anonymous";
         img.onload = () => {
-            // Center crop and scale down to 128x128 for extreme performance
-            ctx.drawImage(img, 0, 0, 1024, 1024, 0, 0, 128, 128);
+            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 128, 128);
+            
+            try {
+                const imgData = ctx.getImageData(0, 0, 128, 128);
+                const data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i+1];
+                    const b = data[i+2];
+                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                    
+                    data[i] = 255;
+                    data[i+1] = 255;
+                    data[i+2] = 255;
+                    data[i+3] = lum; // Convert black background to transparent
+                }
+                ctx.putImageData(imgData, 0, 0);
+            } catch (e) {
+                console.error("Failed to process texture alpha:", e);
+            }
+            
             canvas.isReady = true;
         };
         img.src = url;
