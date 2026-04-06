@@ -153,7 +153,8 @@ export class ParticleManager {
             else if (p.type === 'explosion' || p.type === 'flash' || p.type === 'blood') { tex = this.textures.explosion; scaleMult = 2.2; }
             else if (p.type === 'smoke' || p.type === 'dark_smoke' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 2.2; }
             else if (p.type === 'slash' || p.type === 'shatter') { tex = this.textures.slash; scaleMult = 2.5; }
-            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
+            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode' || p.type === 'circle' || p.type === 'ring') { tex = this.textures.shockwave; scaleMult = 1.8; }
+            else { tex = this.textures.star; scaleMult = 1.5; } // Catch-all fallback to prevent flat shapes
             
             if (tex && tex.isReady && color !== '#ffffff') {
                 tex = this.getTintedTexture(tex, color);
