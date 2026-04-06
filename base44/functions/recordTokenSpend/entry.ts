@@ -8,6 +8,12 @@ Deno.serve(async (req) => {
         if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { amount, week_id, season_id } = await req.json();
+
+        if (typeof amount !== 'number' || amount <= 0 || !Number.isInteger(amount) || amount > 1000) {
+            console.warn(`Suspicious token spend attempt by ${user.full_name || user.email}: amount=${amount}`);
+            return Response.json({ error: 'Invalid amount' }, { status: 400 });
+        }
+
         console.log(`User ${user.full_name || user.email} is logging a spend of ${amount} tokens.`);
 
         // Update Weekly Pool
