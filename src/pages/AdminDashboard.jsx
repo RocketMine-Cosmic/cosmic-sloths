@@ -11,6 +11,8 @@ import SpaceBackground from '../components/game/SpaceBackground';
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     useEffect(() => {
         base44.auth.me().then(me => {
@@ -48,8 +50,24 @@ export default function AdminDashboard() {
         return Object.values(grouped);
     };
 
-    const weeklyData = aggregateData(pools?.filter(p => p.period_type === 'weekly') || []).sort((a, b) => a.period_id.localeCompare(b.period_id));
-    const seasonalData = aggregateData(pools?.filter(p => p.period_type === 'seasonal') || []).sort((a, b) => a.period_id.localeCompare(b.period_id));
+    const filteredPools = pools?.filter(p => {
+        if (!startDate && !endDate) return true;
+        const pDate = moment(p.created_date);
+        if (startDate && pDate.isBefore(moment(startDate).startOf('day'))) return false;
+        if (endDate && pDate.isAfter(moment(endDate).endOf('day'))) return false;
+        return true;
+    }) || [];
+
+    const filteredLogs = spendLogs?.filter(log => {
+        if (!startDate && !endDate) return true;
+        const logDate = moment(log.created_date);
+        if (startDate && logDate.isBefore(moment(startDate).startOf('day'))) return false;
+        if (endDate && logDate.isAfter(moment(endDate).endOf('day'))) return false;
+        return true;
+    }) || [];
+
+    const weeklyData = aggregateData(filteredPools.filter(p => p.period_type === 'weekly')).sort((a, b) => a.period_id.localeCompare(b.period_id));
+    const seasonalData = aggregateData(filteredPools.filter(p => p.period_type === 'seasonal')).sort((a, b) => a.period_id.localeCompare(b.period_id));
 
     return (
         <div className="min-h-screen relative text-slate-200 p-2 pb-20 md:p-6 font-sans">
@@ -67,6 +85,38 @@ export default function AdminDashboard() {
                             <BarChart3 className="w-6 h-6 md:w-8 md:h-8" /> ADMIN DASHBOARD
                         </h1>
                         <p className="text-slate-500 mt-1 md:text-sm text-[10px] tracking-widest uppercase">System Analytics & Token Spending</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0">
+                        <div className="flex flex-col">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Start Date</label>
+                            <input 
+                                type="date" 
+                                value={startDate}
+                                onChange={e => setStartDate(e.target.value)}
+                                className="bg-[#0b0416]/80 backdrop-blur-md border border-slate-700 text-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 transition-colors cursor-pointer"
+                                style={{ colorScheme: 'dark' }}
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">End Date</label>
+                            <input 
+                                type="date" 
+                                value={endDate}
+                                onChange={e => setEndDate(e.target.value)}
+                                className="bg-[#0b0416]/80 backdrop-blur-md border border-slate-700 text-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 transition-colors cursor-pointer"
+                                style={{ colorScheme: 'dark' }}
+                            />
+                        </div>
+                        {(startDate || endDate) && (
+                            <div className="flex flex-col justify-end h-full pt-4">
+                                <button 
+                                    onClick={() => { setStartDate(''); setEndDate(''); }}
+                                    className="text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-wider border border-red-900/50 hover:bg-red-900/20 px-3 py-1.5 rounded-md transition-colors"
+                                >
+                                    Clear
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </header>
 
@@ -131,7 +181,7 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800/50">
-                                    {spendLogs?.map((log) => (
+                                    {filteredLogs.map((log) => (
                                         <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
                                             <td className="p-3 text-slate-400 font-mono text-xs whitespace-nowrap">
                                                 {moment(log.created_date).format('MMM D, YYYY HH:mm:ss')}
@@ -150,10 +200,10 @@ export default function AdminDashboard() {
                                             </td>
                                         </tr>
                                     ))}
-                                    {!spendLogs?.length && (
+                                    {!filteredLogs.length && (
                                         <tr>
                                             <td colSpan="5" className="p-6 text-center text-slate-500 font-mono">
-                                                No token spend logs found.
+                                                No token spend logs found for the selected dates.
                                             </td>
                                         </tr>
                                     )}
