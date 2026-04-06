@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SoundManager } from '../../game/SoundManager';
+import { SFXManager } from '../../game/SFXManager';
 import { X, Volume2, VolumeX } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
     const [bgmVol, setBgmVol] = useState(SoundManager.bgm.volume);
-    const [sfxVol, setSfxVol] = useState(SoundManager.sfxVolume);
+    const [sfxVol, setSfxVol] = useState(SFXManager.sfxVolume);
     const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
 
     const handleBgmChange = (e) => {
@@ -17,16 +18,18 @@ export default function SettingsModal({ onClose }) {
     const handleSfxChange = (e) => {
         const val = parseFloat(e.target.value);
         setSfxVol(val);
-        SoundManager.setSfxVolume(val);
+        SFXManager.setSfxVolume(val);
     };
 
     const handleSfxRelease = () => {
-        SoundManager.playUIClick(); // Feedback when they stop dragging
+        SFXManager.playUIClick(); // Feedback when they stop dragging
     };
 
     const handleToggleMute = () => {
+        const isNowMuted = !SoundManager.isMuted();
         SoundManager.toggleMute();
-        setIsMuted(SoundManager.isMuted());
+        SFXManager.toggleMute(!isNowMuted);
+        setIsMuted(isNowMuted);
     };
 
     return (

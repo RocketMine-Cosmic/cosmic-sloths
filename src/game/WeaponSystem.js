@@ -1,7 +1,8 @@
 import { SoundManager } from './SoundManager';
+import { SFXManager } from './SFXManager';
 
 export function fireWeaponLogic(engine, w) {
-    SoundManager.playWeaponFire(w.id);
+    SFXManager.playWeaponFire(w.id);
     const getWeaponUpgrade = (wId, stat) => {
         const perm = engine.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
         const week = engine.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;

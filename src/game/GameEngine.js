@@ -1,6 +1,7 @@
 import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, getCharacterMastery } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
+import { SFXManager } from './SFXManager';
 import { ParticleManager } from './ParticleManager';
 import { selectBossForArena, updateBossAbilities } from './BossSystem';
 import { SaveManager } from './SaveManager';
@@ -232,7 +233,7 @@ export class GameEngine {
         this.player.iFrames = 0.2;
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
         this.addDamageText(this.player.x, this.player.y - 20, actualDmg, '#ff0000');
-        SoundManager.playPlayerHit();
+        SFXManager.playPlayerHit();
         
         const aegis = this.player.weapons.find(w => w.id === 'aegisMatrix');
         if (aegis && Math.random() < 0.5) {
@@ -487,7 +488,7 @@ export class GameEngine {
                 this.enemies.push(boss);
                 this.isBossActive = true;
                 this.addDamageText(this.player.x, this.player.y - 60, `WARNING: WORLD BOSS DETECTED!`, '#ff0000');
-                SoundManager.playBossSpawn();
+                SFXManager.playBossSpawn();
             }
             return;
         }
@@ -511,7 +512,7 @@ export class GameEngine {
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
                     this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
-                    SoundManager.playBossSpawn();
+                    SFXManager.playBossSpawn();
                 }
             }
         } else if (this.time >= this.arena.duration - 30 && !this.bossSpawned) {
@@ -538,7 +539,7 @@ export class GameEngine {
                     this.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
                     this.encounteredEnemies.add(boss.id);
                     this.addDamageText(this.player.x, this.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
-                    SoundManager.playBossSpawn();
+                    SFXManager.playBossSpawn();
                 }
             }
         }
@@ -599,7 +600,7 @@ export class GameEngine {
                         eliteGoldBonus: 3,
                     });
                     this.encounteredEnemies.add(elite.id);
-                    SoundManager.playEnemySpawn();
+                    SFXManager.playEnemySpawn();
                     return;
                 }
             }
@@ -859,7 +860,7 @@ export class GameEngine {
     updateEnemies(dt) {
         this.enemies = this.enemies.filter(e => {
             if (e.hp <= 0) {
-                SoundManager.playEnemyDeath();
+                SFXManager.playEnemyDeath();
                 this.kills++;
                 this.enemyKills[e.id] = (this.enemyKills[e.id] || 0) + 1;
                 
@@ -1060,20 +1061,20 @@ export class GameEngine {
             if (dist < this.player.radius + 10) {
                 this.particleManager.createPickup(p.x, p.y, p.color); // Collection burst
                 if (p.type === 'xp') {
-                    SoundManager.playPickup();
+                    SFXManager.playPickup();
                     this.xp += p.value * this.player.xpMult;
                     if (this.xp >= this.xpRequired && !this.isPaused) this.levelUp();
                 } else if (p.type === 'gold') {
-                    SoundManager.playGoldPickup();
+                    SFXManager.playGoldPickup();
                     this.gold += Math.floor(p.value * this.player.goldMult);
                     this.callbacks.onGoldChange(this.gold);
                 } else if (p.type === 'fragment') {
-                    SoundManager.playGoldPickup();
+                    SFXManager.playGoldPickup();
                     if (this.callbacks.onFragmentFound) this.callbacks.onFragmentFound(p.value || 1);
                     this.addDamageText(this.player.x, this.player.y - 40, `+${p.value || 1} Relic Fragment!`, '#a855f7');
 
                 } else if (p.type === 'nuke') {
-                    SoundManager.playWeaponFire('novaPulse');
+                    SFXManager.playWeaponFire('novaPulse');
                     this.enemies.forEach(e => {
                         if (!e.isBoss) {
                             e.hp = 0;
@@ -1082,7 +1083,7 @@ export class GameEngine {
                     this.addDamageText(this.player.x, this.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
                     this.shake(1.0);
                 } else if (p.type === 'magnet_power') {
-                    SoundManager.playLevelUp();
+                    SFXManager.playLevelUp();
                     this.pickups.forEach(otherP => {
                         if (otherP.type === 'xp' || otherP.type === 'gold') {
                             otherP.x = this.player.x;
@@ -1091,7 +1092,7 @@ export class GameEngine {
                     });
                     this.addDamageText(this.player.x, this.player.y - 60, `MAGNETIC SURGE`, '#0000ff');
                 } else if (p.type === 'shield_power') {
-                    SoundManager.playGoldPickup();
+                    SFXManager.playGoldPickup();
                     this.player.invincibleTimer = 10;
                     this.addDamageText(this.player.x, this.player.y - 60, `SHIELD OVERCHARGE`, '#ffff00');
                 }
@@ -1207,7 +1208,7 @@ export class GameEngine {
                 enemy.hadWeakInBuffer = false;
                 enemy.lastDamageTextTime = this.time;
             }
-            if (Math.random() < 0.1) SoundManager.playEnemyHit(); // Throttle sound
+            if (Math.random() < 0.1) SFXManager.playEnemyHit(); // Throttle sound
             return;
         }
 
@@ -1217,7 +1218,7 @@ export class GameEngine {
             this.addDamageText(enemy.x, enemy.y - 30, 'WEAK SPOT!', '#ffdd00', false);
         }
         this.addDamageText(enemy.x, enemy.y - 10, Math.floor(finalDamage), color, isCrit);
-        SoundManager.playEnemyHit();
+        SFXManager.playEnemyHit();
     }
 
     shake(amount) {
@@ -1254,7 +1255,7 @@ export class GameEngine {
         
         // Skip VFX/SFX entirely in Global Raids, or if leveling up instantly at the start to prevent lag bursts
         if (this.time > 0.5 && this.arena.id !== 'world_boss_arena') {
-            SoundManager.playLevelUp();
+            SFXManager.playLevelUp();
             this.particleManager.createLevelUp(this.player.x, this.player.y);
         }
         
@@ -1413,7 +1414,7 @@ export class GameEngine {
 
     gameOver() {
         this.isGameOver = true;
-        SoundManager.playGameOver();
+        SFXManager.playGameOver();
         this.callbacks.onGameOver({
             time: Math.floor(this.time),
             level: this.level,
@@ -1429,7 +1430,7 @@ export class GameEngine {
 
     victory() {
         this.isVictory = true;
-        SoundManager.playVictory();
+        SFXManager.playVictory();
         this.callbacks.onVictory({
             time: Math.floor(this.time),
             level: this.level,
