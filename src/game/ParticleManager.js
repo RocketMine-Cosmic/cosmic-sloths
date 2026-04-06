@@ -150,9 +150,9 @@ export class ParticleManager {
             let scaleMult = 1.5;
 
             if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 2.0; }
-            else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 2.2; }
-            else if (p.type === 'smoke' || p.type === 'dark_smoke') { tex = this.textures.smoke; scaleMult = 2.2; }
-            else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 2.5; }
+            else if (p.type === 'explosion' || p.type === 'flash' || p.type === 'blood') { tex = this.textures.explosion; scaleMult = 2.2; }
+            else if (p.type === 'smoke' || p.type === 'dark_smoke' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 2.2; }
+            else if (p.type === 'slash' || p.type === 'shatter') { tex = this.textures.slash; scaleMult = 2.5; }
             else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
             
             if (tex && tex.isReady && color !== '#ffffff') {
