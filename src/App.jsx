@@ -22,6 +22,7 @@ import Profile from './pages/Profile';
 import LeviathanTrials from './pages/LeviathanTrials';
 import Dailys from './pages/Dailys';
 import GlobalRaid from './pages/GlobalRaid';
+import Mastery from './pages/Mastery';
 import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
@@ -94,6 +95,7 @@ const AuthenticatedApp = () => {
       <Route path="/trials" element={<LeviathanTrials />} />
       <Route path="/dailys" element={<Dailys />} />
       <Route path="/global-raid" element={<GlobalRaid />} />
+      <Route path="/mastery" element={<Mastery />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     {needsProfileName && (
