@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { ParticleManager } from '../../game/ParticleManager';
+import { CHARACTERS } from '../../game/Constants';
 
-export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none', playerColor = '#00cfff' }) {
+export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none', playerColor = '#00cfff', charId }) {
     const canvasRef = useRef(null);
     const stateRef = useRef({ animId: null });
 
@@ -16,6 +17,22 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
         let frame = 0;
         
         const pm = new ParticleManager();
+
+        let walkImage = null;
+        let staticImage = null;
+        if (charId) {
+            const charData = CHARACTERS.find(c => c.id === charId);
+            if (charData) {
+                if (charData.walkSprite) {
+                    walkImage = new Image();
+                    walkImage.src = charData.walkSprite;
+                }
+                if (charData.image) {
+                    staticImage = new Image();
+                    staticImage.src = charData.image;
+                }
+            }
+        }
 
         const dummies = [
             { x: W * 0.22, y: H * 0.3,  alive: true, respawn: 0 },
@@ -88,16 +105,51 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.fillText('✕', d.x, d.y);
             });
 
-            // Player — simple circle
-            const pc = playerColor;
-            ctx.fillStyle = pc;
-            ctx.beginPath();
-            ctx.arc(px, py, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(px - 3, py - 3, 3, 0, Math.PI * 2);
-            ctx.fill();
+            // Player Character Render
+            const vx = Math.cos(time * 0.8);
+            const facingLeft = vx < 0;
+            const radius = 10;
+            
+            ctx.save();
+            ctx.translate(px, py);
+            if (!facingLeft) ctx.scale(-1, 1);
+            
+            if (walkImage && walkImage.complete) {
+                const SPRITE_FRAMES = 25;
+                const spriteFrame = Math.floor(time * 12) % SPRITE_FRAMES;
+                const col = spriteFrame % 5;
+                const row = Math.floor(spriteFrame / 5);
+                const frameWidth = walkImage.width / 5;
+                const frameHeight = walkImage.height / 5;
+                const sx = col * frameWidth;
+                const sy = row * frameHeight;
+                const size = radius * 5;
+                
+                ctx.shadowColor = playerColor;
+                ctx.shadowBlur = 20;
+                ctx.drawImage(walkImage, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+                ctx.shadowBlur = 0;
+            } else if (staticImage && staticImage.complete) {
+                const size = radius * 3;
+                ctx.shadowColor = playerColor;
+                ctx.shadowBlur = 20;
+                ctx.drawImage(staticImage, -size/2, -size/2, size, size);
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.fillStyle = playerColor;
+                ctx.shadowColor = playerColor;
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(-3, -3, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
 
             // Label
             ctx.fillStyle = 'rgba(255,255,255,0.25)';
@@ -111,7 +163,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
 
         stateRef.current.animId = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(stateRef.current.animId);
-    }, [trailId, killEffectId]);
+    }, [trailId, killEffectId, playerColor, charId]);
 
     return (
         <canvas
