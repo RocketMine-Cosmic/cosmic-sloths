@@ -1,13 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
+    let user;
     try {
         const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+        user = await base44.auth.me();
         if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { amount, week_id, season_id } = await req.json();
-        console.log(`User ${user.email} is logging a spend of ${amount} tokens.`);
+        console.log(`User ${user.full_name || user.email} is logging a spend of ${amount} tokens.`);
 
         // Update Weekly Pool
         const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
@@ -27,6 +28,7 @@ Deno.serve(async (req) => {
 
         return Response.json({ success: true });
     } catch (error) {
+        console.error(`Error recording token spend for user ${user?.full_name || user?.player_name || user?.email || 'Unknown'}:`, error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
