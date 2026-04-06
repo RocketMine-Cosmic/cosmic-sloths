@@ -4,8 +4,8 @@ class SoundManagerClass {
         this.bgm = new Audio();
         this.bgmTracks = [
             'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=8-bit-background-music-for-arcade-game-come-on-mario-164702.mp3',
-            'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=space-trip-114102.mp3',
-            'https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730e64.mp3?filename=stranger-things-124008.mp3'
+            'https://opengameart.org/sites/default/files/8bit-spaceshooter.mp3',
+            'https://opengameart.org/sites/default/files/space_quest_looped_section.mp3'
         ];
         this.currentTrackIndex = Math.floor(Math.random() * this.bgmTracks.length);
         this.bgm.src = this.bgmTracks[this.currentTrackIndex];
