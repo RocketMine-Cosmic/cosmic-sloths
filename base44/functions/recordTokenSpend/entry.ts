@@ -16,6 +16,15 @@ Deno.serve(async (req) => {
 
         console.log(`User ${user.full_name || user.email} is logging a spend of ${amount} tokens.`);
 
+        // Log the individual spend
+        await base44.asServiceRole.entities.TokenSpendLog.create({
+            user_id: user.id,
+            player_name: user.full_name || user.player_name || user.email || 'Unknown',
+            amount: amount,
+            week_id: week_id || null,
+            season_id: season_id || null
+        });
+
         // Update Weekly Pool
         const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
         if (weeklyPools.length > 0) {
