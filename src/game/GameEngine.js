@@ -396,6 +396,19 @@ export class GameEngine {
 
         this.spawnEnemies(dt);
         this.updateWeapons(dt);
+        
+        // Build Spatial Hash for Collision Optimization
+        this.spatialHash = new Map();
+        const cellSize = 100;
+        this.enemies.forEach(e => {
+            if (e.hp <= 0) return;
+            const cx = Math.floor(e.x / cellSize);
+            const cy = Math.floor(e.y / cellSize);
+            const key = `${cx},${cy}`;
+            if (!this.spatialHash.has(key)) this.spatialHash.set(key, []);
+            this.spatialHash.get(key).push(e);
+        });
+
         this.updateProjectiles(dt);
         this.updateEnemies(dt);
         this.updatePickups(dt);
@@ -693,94 +706,104 @@ export class GameEngine {
             }
 
             if (!p.isAoe) {
-                this.enemies.forEach(e => {
-                    // Fast bounding box check to avoid expensive hypot calculations
-                    if (p.pierce > 0) {
-                        if (Math.abs(e.x - p.x) > e.radius + p.radius || Math.abs(e.y - p.y) > e.radius + p.radius) return;
-                        if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
-                            if (e.id === 'boss_supernova') {
-                            p.pierce = 0;
-                            p.dead = true;
-                            const angle = Math.atan2(this.player.y - e.y, this.player.x - e.x);
-                            this.enemyProjectiles.push({
-                                x: e.x, y: e.y,
-                                vx: Math.cos(angle) * 300,
-                                vy: Math.sin(angle) * 300,
-                                radius: p.radius * 1.5,
-                                damage: e.damage,
-                                life: 3,
-                                color: '#ff4500'
-                            });
-                            return;
-                        }
+                if (p.pierce > 0) {
+                    const cellSize = 100;
+                    const cx = Math.floor(p.x / cellSize);
+                    const cy = Math.floor(p.y / cellSize);
+                    for (let x = cx - 1; x <= cx + 1; x++) {
+                        for (let y = cy - 1; y <= cy + 1; y++) {
+                            const cellEnemies = this.spatialHash?.get(`${x},${y}`);
+                            if (cellEnemies) {
+                                cellEnemies.forEach(e => {
+                                    if (p.pierce <= 0) return;
+                                    if (Math.abs(e.x - p.x) > e.radius + (p.radius || 5) || Math.abs(e.y - p.y) > e.radius + (p.radius || 5)) return;
+                                    if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + (p.radius || 5)) {
+                                        if (e.id === 'boss_supernova') {
+                                            p.pierce = 0;
+                                            p.dead = true;
+                                            const angle = Math.atan2(this.player.y - e.y, this.player.x - e.x);
+                                            this.enemyProjectiles.push({
+                                                x: e.x, y: e.y,
+                                                vx: Math.cos(angle) * 300,
+                                                vy: Math.sin(angle) * 300,
+                                                radius: p.radius * 1.5,
+                                                damage: e.damage,
+                                                life: 3,
+                                                color: '#ff4500'
+                                            });
+                                            return;
+                                        }
 
-                        if (!p.hitList) p.hitList = new Set();
-                        if (!p.hitList.has(e)) {
-                            p.hitList.add(e);
-                            this.damageEnemy(e, p.damage, p);
-                            
-                            // Impact Effects
-                            if (!e.isWorldBoss || Math.random() < 0.1) {
-                                this.shake(0.1);
-                                this.hitStopTimer = 0.02;
-                                this.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
-                            }
-                            
-                            if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
-                            if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'spark', 2);
-                            if (p.type === 'glitch_slash') this.addParticle(e.x, e.y, p.color, 8, 'spark', 2);
-                            if (p.type === 'missile') this.particleManager.createExplosion(e.x, e.y, '#ff4500', 1.0, 'drone');
-                            if (p.type === 'data_pulse') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
-                            if (p.type === 'phantom_orb') this.addParticle(e.x, e.y, p.color, 15, 'spark', 1.5);
-                            if (p.type === 'railgun') this.addParticle(e.x, e.y, '#ffffff', 20, 'spark', 3);
-                            if (p.type === 'sonic_wave') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
+                                        if (!p.hitList) p.hitList = new Set();
+                                        if (!p.hitList.has(e)) {
+                                            p.hitList.add(e);
+                                            this.damageEnemy(e, p.damage, p);
+                                            
+                                            // Impact Effects
+                                            if (!e.isWorldBoss || Math.random() < 0.1) {
+                                                this.shake(0.1);
+                                                this.hitStopTimer = 0.02;
+                                                this.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
+                                            }
+                                            
+                                            if (p.type === 'dual_laser') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
+                                            if (p.type === 'stomp') this.addParticle(e.x, e.y, '#888888', 10, 'spark', 2);
+                                            if (p.type === 'glitch_slash') this.addParticle(e.x, e.y, p.color, 8, 'spark', 2);
+                                            if (p.type === 'missile') this.particleManager.createExplosion(e.x, e.y, '#ff4500', 1.0, 'drone');
+                                            if (p.type === 'data_pulse') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
+                                            if (p.type === 'phantom_orb') this.addParticle(e.x, e.y, p.color, 15, 'spark', 1.5);
+                                            if (p.type === 'railgun') this.addParticle(e.x, e.y, '#ffffff', 20, 'spark', 3);
+                                            if (p.type === 'sonic_wave') this.addParticle(e.x, e.y, p.color, 10, 'spark', 2);
 
-                            p.pierce--;
-                            if (p.pierce <= 0) p.dead = true;
-                            
-                            if (p.weaponId === 'supernovaBeam') {
-                                this.particleManager.createExplosion(e.x, e.y, '#ffaa00', 1.5);
-                                this.enemies.forEach(ce => {
-                                    if (ce === e || Math.abs(ce.x - e.x) > 60 || Math.abs(ce.y - e.y) > 60) return;
-                                    if (Math.hypot(ce.x - e.x, ce.y - e.y) < 60) {
-                                        this.damageEnemy(ce, p.damage * 0.3);
+                                            p.pierce--;
+                                            if (p.pierce <= 0) p.dead = true;
+                                            
+                                            if (p.weaponId === 'supernovaBeam') {
+                                                this.particleManager.createExplosion(e.x, e.y, '#ffaa00', 1.5);
+                                                this.enemies.forEach(ce => {
+                                                    if (ce === e || Math.abs(ce.x - e.x) > 60 || Math.abs(ce.y - e.y) > 60) return;
+                                                    if (Math.hypot(ce.x - e.x, ce.y - e.y) < 60) {
+                                                        this.damageEnemy(ce, p.damage * 0.3);
+                                                    }
+                                                });
+                                            }
+                                            
+                                            if (p.isMastered && p.weaponId === 'napBeam') {
+                                                let nearest = null;
+                                                let minDist = 150;
+                                                this.enemies.forEach(ce => {
+                                                    if (ce !== e && !p.hitList.has(ce)) {
+                                                        const d = Math.hypot(ce.x - e.x, ce.y - e.y);
+                                                        if (d < minDist) { minDist = d; nearest = ce; }
+                                                    }
+                                                });
+                                                if (nearest) {
+                                                    this.damageEnemy(nearest, p.damage * 0.5);
+                                                    p.hitList.add(nearest);
+                                                    this.addParticle(nearest.x, nearest.y, '#4169E1', 5);
+                                                    const distToNearest = Math.hypot(nearest.x - e.x, nearest.y - e.y);
+                                                    const chainAngle = Math.atan2(nearest.y - e.y, nearest.x - e.x);
+                                                    this.projectiles.push({
+                                            x: e.x + (nearest.x - e.x) / 2,
+                                            y: e.y + (nearest.y - e.y) / 2,
+                                            vx: Math.cos(chainAngle) * 0.01,
+                                            vy: Math.sin(chainAngle) * 0.01,
+                                            radius: distToNearest / 3,
+                                            damage: 0,
+                                            pierce: 0,
+                                            life: 0.15,
+                                            color: '#4169E1',
+                                            type: 'lightning'
+                                        });
                                     }
-                                });
-                            }
-                            
-                            if (p.isMastered && p.weaponId === 'napBeam') {
-                                let nearest = null;
-                                let minDist = 150;
-                                this.enemies.forEach(ce => {
-                                    if (ce !== e && !p.hitList.has(ce)) {
-                                        const d = Math.hypot(ce.x - e.x, ce.y - e.y);
-                                        if (d < minDist) { minDist = d; nearest = ce; }
-                                    }
-                                });
-                                if (nearest) {
-                                    this.damageEnemy(nearest, p.damage * 0.5);
-                                    p.hitList.add(nearest);
-                                    this.addParticle(nearest.x, nearest.y, '#4169E1', 5);
-                                    const distToNearest = Math.hypot(nearest.x - e.x, nearest.y - e.y);
-                                    const chainAngle = Math.atan2(nearest.y - e.y, nearest.x - e.x);
-                                    this.projectiles.push({
-                                        x: e.x + (nearest.x - e.x) / 2,
-                                        y: e.y + (nearest.y - e.y) / 2,
-                                        vx: Math.cos(chainAngle) * 0.01,
-                                        vy: Math.sin(chainAngle) * 0.01,
-                                        radius: distToNearest / 3,
-                                        damage: 0,
-                                        pierce: 0,
-                                        life: 0.15,
-                                        color: '#4169E1',
-                                        type: 'lightning'
-                                    });
                                 }
                             }
                         }
+                                });
+                            }
+                        }
                     }
-                    }
-                });
+                }
             } else {
                 if (p.pulse) {
                     p.radius += 500 * dt;
