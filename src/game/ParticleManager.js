@@ -41,7 +41,7 @@ export class ParticleManager {
 
             if (p.rotation !== undefined) p.rotation += (p.rotSpeed || 0) * dt;
 
-            if (p.type === 'smoke') {
+            if (p.type === 'smoke' || p.type === 'dark_smoke') {
                 p.size += dt * 20;
                 p.vx *= 0.90;
                 p.vy *= 0.90;
@@ -64,7 +64,7 @@ export class ParticleManager {
                 }
                 p.vx *= 0.88;
                 p.vy *= 0.88;
-            } else if (p.type === 'shockwave') {
+            } else if (p.type === 'shockwave' || p.type === 'dark_shockwave') {
                 p.size += (p.growthRate || 400) * dt;
                 p.lineWidth = Math.max(0.1, (p.lineWidth || 4) - dt * 8);
             } else if (p.type === 'flame') {
@@ -80,46 +80,33 @@ export class ParticleManager {
 
     draw(ctx, camX, camY, vWidth, vHeight) {
         ctx.save();
-        ctx.globalCompositeOperation = 'screen';
 
         this.particles.forEach(p => {
-            const size = p.size || 8;
             const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
 
             ctx.save();
-            ctx.globalAlpha = alpha;
             ctx.translate(p.x, p.y);
             ctx.rotate(p.rotation || 0);
 
             const color = p.color || p.tint || '#ffffff';
             const sBase = p.size || 8;
 
-            // DRAW BASE TINT (colorize the HD texture below)
-            ctx.globalAlpha = alpha * 0.05;
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, sBase));
-            grad.addColorStop(0, color);
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, sBase), 0, Math.PI * 2);
-            ctx.fill();
-
+            // Determine blend mode per particle type
+            const isOpaque = p.type === 'blood' || p.type === 'dark_smoke' || p.type === 'dark_shockwave';
+            const blendMode = isOpaque ? 'source-over' : 'screen';
+            ctx.globalCompositeOperation = blendMode;
             ctx.globalAlpha = alpha;
 
             // DRAW HD TEXTURE
             let tex = null;
             let scaleMult = 1.5;
 
-            if (p.type === 'blood') {
-                ctx.globalCompositeOperation = 'source-over';
-            }
-
             if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 2.0; }
             else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 2.2; }
-            else if (p.type === 'smoke') { tex = this.textures.smoke; scaleMult = 2.2; }
+            else if (p.type === 'smoke' || p.type === 'dark_smoke') { tex = this.textures.smoke; scaleMult = 2.2; }
             else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 2.5; }
-            else if (p.type === 'shockwave' || p.type === 'implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
+            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
             
             // For simple geometry fallback
             if (!tex || !tex.isReady) {
@@ -127,6 +114,7 @@ export class ParticleManager {
                     case 'circle':
                     case 'ring':
                     case 'shockwave':
+                    case 'dark_shockwave':
                         ctx.strokeStyle = color;
                         ctx.lineWidth = p.lineWidth || 2;
                         ctx.beginPath();
@@ -244,7 +232,7 @@ export class ParticleManager {
                 this.addParticle(x, y, '#ff0000', 10, 'spark', 1.5, { speed: 200, gravity: true });
                 break;
             case 'black_hole':
-                this.addParticle(x, y, '#000000', 1, 'shockwave', 1.0, { speed: 0, lineWidth: 10, growthRate: -200 });
+                this.addParticle(x, y, '#000000', 1, 'dark_shockwave', 1.0, { speed: 0, lineWidth: 10, growthRate: -200 });
                 this.addParticle(x, y, '#4b0082', 20, 'implode', 2.0, { speed: 200, targetX: x, targetY: y });
                 break;
             case 'freeze':
@@ -277,7 +265,7 @@ export class ParticleManager {
             'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 1, size: 2.0, options: { speed: 15, lifeBonus: 0.7 } },
             'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 2, size: 1.8, options: { speed: 30, gravity: true, lifeBonus: 0.4 } },
             'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 2, size: 1.5, options: { speed: 50, lifeBonus: 0.3 } },
-            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'smoke', count: 2, size: 2.5, options: { speed: 5, lifeBonus: 1.0 } },
+            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'dark_smoke', count: 2, size: 2.5, options: { speed: 5, lifeBonus: 1.0 } },
             'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood', count: 2, size: 1.6, options: { speed: 20, gravity: true, lifeBonus: 0.5 } },
             'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 2, size: 1.4, options: { speed: 40, rotSpeed: 10, lifeBonus: 0.3 } },
             'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke', count: 1, size: 1.8, options: { speed: 10, lifeBonus: 0.9 } },
