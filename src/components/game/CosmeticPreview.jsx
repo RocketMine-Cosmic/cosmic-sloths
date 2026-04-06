@@ -18,6 +18,17 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
         
         const pm = new ParticleManager();
 
+        let isVisible = false;
+        let last = performance.now();
+        const observer = new IntersectionObserver((entries) => {
+            isVisible = entries[0].isIntersecting;
+            if (isVisible && !stateRef.current.animId) {
+                last = performance.now();
+                stateRef.current.animId = requestAnimationFrame(loop);
+            }
+        });
+        observer.observe(canvas);
+
         let walkImage = null;
         let staticImage = null;
         if (charId) {
@@ -40,8 +51,11 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             { x: W * 0.5,  y: H * 0.72, alive: true, respawn: 0 },
         ];
 
-        let last = performance.now();
         const loop = (now) => {
+            if (!isVisible) {
+                stateRef.current.animId = null;
+                return;
+            }
             const dt = Math.min((now - last) / 1000, 0.05);
             last = now;
             time += dt;
@@ -161,8 +175,10 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             stateRef.current.animId = requestAnimationFrame(loop);
         };
 
-        stateRef.current.animId = requestAnimationFrame(loop);
-        return () => cancelAnimationFrame(stateRef.current.animId);
+        return () => {
+            observer.disconnect();
+            if (stateRef.current.animId) cancelAnimationFrame(stateRef.current.animId);
+        };
     }, [trailId, killEffectId, playerColor, charId]);
 
     return (
