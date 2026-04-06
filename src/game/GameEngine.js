@@ -460,8 +460,13 @@ export class GameEngine {
             this.envParticles.push({ x: this.player.x + (Math.random() * vWidth * 1.5 - vWidth * 0.75), y: this.player.y - vHeight/2 - 50, vx: 100, vy: 600 + Math.random() * 300, life: 2, color: Math.random() > 0.5 ? '#00ffff' : '#ff00ff', length: 20 + Math.random() * 20 });
         } else if (this.envEffect === 'fog' && Math.random() < 0.05) {
             this.envParticles.push({ x: this.player.x + (Math.random() * vWidth * 2 - vWidth), y: this.player.y + (Math.random() * vHeight * 2 - vHeight), vx: 20 + Math.random() * 30, vy: 10 + Math.random() * 20, life: 10, size: 200 + Math.random() * 300 });
-        } else if (this.envEffect === 'solar_flare' && Math.random() < 0.02) {
-            this.envParticles.push({ x: this.player.x + (Math.random() * vWidth - vWidth/2), y: this.player.y + (Math.random() * vHeight - vHeight/2), life: 1.5, maxLife: 1.5, size: 50 + Math.random() * 100 });
+        } else if (this.envEffect === 'solar_flare') {
+            if (Math.random() < 0.05) {
+                this.envParticles.push({ type: 'flare', x: this.player.x + (Math.random() * vWidth * 1.5 - vWidth * 0.75), y: this.player.y + (Math.random() * vHeight * 1.5 - vHeight * 0.75), life: 2.0, maxLife: 2.0, size: 100 + Math.random() * 200, angle: Math.random() * Math.PI * 2 });
+            }
+            if (Math.random() < 0.3) {
+                this.envParticles.push({ type: 'ember', x: this.player.x + (Math.random() * vWidth * 1.5 - vWidth * 0.75), y: this.player.y + vHeight / 2 + 50, vx: (Math.random() - 0.5) * 200, vy: -200 - Math.random() * 200, life: 3.0, maxLife: 3.0, size: 2 + Math.random() * 3 });
+            }
         }
 
         this.envParticles = this.envParticles.filter(p => {
@@ -1535,26 +1540,26 @@ export class GameEngine {
 
         if (this.hazards) {
             this.hazards.forEach(h => {
-                this.ctx.save();
-                this.ctx.translate(h.x, h.y);
-                this.ctx.rotate(this.time);
-                this.ctx.beginPath();
-                const spikes = 12;
-                for (let i = 0; i < spikes * 2; i++) {
-                    const a = (Math.PI * 2 / (spikes * 2)) * i;
-                    const r = i % 2 === 0 ? h.radius : h.radius * 0.8;
-                    this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-                }
-                this.ctx.closePath();
-                if (h.active) {
-                    this.ctx.fillStyle = 'rgba(255, 69, 0, 0.8)';
-                    this.ctx.fill();
+                this.ctx.save(); this.ctx.translate(h.x, h.y);
+                if (!h.active) {
+                    const p = 1 - (h.timer / 2.0);
+                    this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = `rgba(255,50,0,${0.3 + p * 0.5})`; this.ctx.lineWidth = 2; this.ctx.stroke();
+                    this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius * p, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255,50,0,${0.1 + p * 0.2})`; this.ctx.fill();
+                    this.ctx.fillStyle = `rgba(255,0,0,${Math.sin(this.time * 15) * 0.5 + 0.5})`;
+                    this.ctx.font = 'bold 24px Arial'; this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle'; this.ctx.fillText('⚠', 0, 0);
                 } else {
-                    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + (2 - h.timer) * 0.2})`;
-                    this.ctx.fill();
-                    this.ctx.strokeStyle = '#ff0000';
-                    this.ctx.lineWidth = 2;
-                    this.ctx.stroke();
+                    this.ctx.globalCompositeOperation = 'screen';
+                    const g = this.ctx.createRadialGradient(0, 0, 0, 0, 0, h.radius * 1.2);
+                    g.addColorStop(0, '#fff'); g.addColorStop(0.2, 'rgba(255,100,0,0.8)'); g.addColorStop(0.6, 'rgba(255,0,0,0.4)'); g.addColorStop(1, 'transparent');
+                    this.ctx.fillStyle = g; this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius * 1.2, 0, Math.PI * 2); this.ctx.fill();
+                    this.ctx.rotate(this.time * 10); this.ctx.fillStyle = '#fff'; this.ctx.beginPath();
+                    for (let i = 0; i < 16; i++) {
+                        const a = (Math.PI / 16) * i; const r = i % 2 === 0 ? h.radius * 0.8 : h.radius * 0.3;
+                        this.ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                    }
+                    this.ctx.fill(); this.ctx.globalCompositeOperation = 'source-over';
                 }
                 this.ctx.restore();
             });
@@ -1904,35 +1909,27 @@ export class GameEngine {
         const texSmoke = this.particleManager?.textures?.smoke;
 
         if (this.envEffect === 'neon_rain') {
+            this.ctx.globalCompositeOperation = 'screen';
             this.envParticles.forEach(p => {
-                this.ctx.strokeStyle = p.color;
-                this.ctx.lineWidth = 3;
                 this.ctx.globalAlpha = (p.life / 2) * 0.8;
-                this.ctx.beginPath();
-                this.ctx.moveTo(p.x, p.y);
-                this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05);
-                this.ctx.stroke();
-                
-                // Add a little glow at the tip
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 3;
+                this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05); this.ctx.stroke();
+                this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); this.ctx.fill();
+                if (p.life < 0.1) {
+                    this.ctx.beginPath(); this.ctx.arc(p.x, p.y, (0.1 - p.life) * 100, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 1; this.ctx.stroke();
+                }
             });
-            this.ctx.globalAlpha = 1.0;
+            this.ctx.globalAlpha = 1.0; this.ctx.globalCompositeOperation = 'source-over';
         } else if (this.envEffect === 'fog') {
             this.envParticles.forEach(p => {
                 this.ctx.globalAlpha = 0.15 * (p.life / 10);
                 if (texSmoke && texSmoke.isReady) {
                     this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
                 } else {
-                    const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                    gradient.addColorStop(0, 'rgba(200, 200, 220, 1)');
-                    gradient.addColorStop(1, 'transparent');
-                    this.ctx.fillStyle = gradient;
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    this.ctx.fill();
+                    const g = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                    g.addColorStop(0, 'rgba(200,200,220,1)'); g.addColorStop(1, 'transparent');
+                    this.ctx.fillStyle = g; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); this.ctx.fill();
                 }
             });
             this.ctx.globalAlpha = 1.0;
