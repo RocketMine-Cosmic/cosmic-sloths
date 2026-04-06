@@ -62,19 +62,14 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (!boss.spiralTimer) boss.spiralTimer = 5;
         boss.spiralTimer -= dt;
         if (boss.spiralTimer <= 0) {
-            boss.spiralTimer = enraged ? 3 : 5;
+            boss.spiralTimer = enraged ? 2.5 : 4;
             const count = modifiers.bullet_hell ? 40 : 20;
+            boss.spiralPhase = (boss.spiralPhase || 0) + 0.3;
             for (let i = 0; i < count; i++) {
                 const angle = (Math.PI * 2 / count) * i + boss.spiralPhase;
-                boss.spiralPhase = (boss.spiralPhase || 0) + 0.15;
                 enemyProjectiles.push({
-                    x: boss.x, y: boss.y,
-                    vx: Math.cos(angle) * 160,
-                    vy: Math.sin(angle) * 160,
-                    radius: 8,
-                    damage: boss.damage * 0.3,
-                    life: 4,
-                    color: '#a855f7'
+                    x: boss.x, y: boss.y, vx: Math.cos(angle) * 180, vy: Math.sin(angle) * 180,
+                    radius: 8, damage: boss.damage * 0.3, life: 4, color: '#a855f7'
                 });
             }
             addDamageText(boss.x, boss.y - boss.radius - 20, 'TENTACLE SPIRAL!', '#a855f7');
@@ -84,16 +79,29 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (!boss.pullTimer) boss.pullTimer = 8;
         boss.pullTimer -= dt;
         if (boss.pullTimer <= 0) {
-            boss.pullTimer = 8;
+            boss.pullTimer = enraged ? 5 : 8;
             const dx = boss.x - player.x;
             const dy = boss.y - player.y;
             const dist = Math.hypot(dx, dy);
-            if (dist < 600) {
-                player.x += (dx / dist) * 80 * dt * 60;
-                player.y += (dy / dist) * 80 * dt * 60;
-                addParticle(boss.x, boss.y, '#a855f7', 15, 'glow', 2);
+            if (dist < 800) {
+                player.x += (dx / dist) * 120 * dt * 60;
+                player.y += (dy / dist) * 120 * dt * 60;
+                addParticle(boss.x, boss.y, '#a855f7', 30, 'glow', 3);
                 addDamageText(boss.x, boss.y - boss.radius - 30, 'DEVOUR!', '#a855f7');
             }
+        }
+        
+        // NEW: Void Bomb
+        if (!boss.bombTimer) boss.bombTimer = 6;
+        boss.bombTimer -= dt;
+        if (boss.bombTimer <= 0) {
+            boss.bombTimer = enraged ? 4 : 7;
+            const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
+            enemyProjectiles.push({
+                x: boss.x, y: boss.y, vx: Math.cos(angle) * 80, vy: Math.sin(angle) * 80,
+                radius: 45, damage: boss.damage * 1.5, life: 8, color: '#581c87'
+            });
+            addDamageText(boss.x, boss.y - boss.radius - 40, 'VOID BOMB!', '#581c87');
         }
     }
 
@@ -102,267 +110,322 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (!boss.krakTimer) boss.krakTimer = 2.5;
         boss.krakTimer -= dt;
         if (boss.krakTimer <= 0) {
-            boss.krakTimer = enraged ? 1.2 : 2.5;
+            boss.krakTimer = enraged ? 1.0 : 2.0;
             const baseAngle = Math.atan2(player.y - boss.y, player.x - boss.x);
             const spread = (enraged ? 5 : 3) * (modifiers.bullet_hell ? 2 : 1);
             for (let i = -spread; i <= spread; i += (enraged ? 1 : 2)) {
                 const a = baseAngle + (i * Math.PI / 16);
                 enemyProjectiles.push({
-                    x: boss.x, y: boss.y,
-                    vx: Math.cos(a) * 220,
-                    vy: Math.sin(a) * 220,
-                    radius: 10,
-                    damage: boss.damage * 0.6,
-                    life: 3,
-                    color: '#ef4444'
+                    x: boss.x, y: boss.y, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260,
+                    radius: 12, damage: boss.damage * 0.6, life: 3, color: '#ef4444'
                 });
             }
-            addParticle(boss.x, boss.y, '#ef4444', 10, 'glow', 2);
+            addParticle(boss.x, boss.y, '#ef4444', 15, 'glow', 2);
         }
 
         // "Fiery core" — periodic explosion burst at player location
-        if (!boss.novaTimer) boss.novaTimer = 10;
+        if (!boss.novaTimer) boss.novaTimer = 8;
         boss.novaTimer -= dt;
         if (boss.novaTimer <= 0) {
-            boss.novaTimer = enraged ? 6 : 10;
-            // Telegraphed: mark player position, explode after 1.5s
+            boss.novaTimer = enraged ? 5 : 8;
             const tx = player.x, ty = player.y;
             boss._novaWarning = boss._novaWarning || [];
-            boss._novaWarning.push({ x: tx, y: ty, timer: 1.5 });
+            boss._novaWarning.push({ x: tx, y: ty, timer: 1.2 });
             addDamageText(tx, ty - 30, '⚠ PLASMA NOVA!', '#ef4444');
         }
         if (boss._novaWarning) {
             boss._novaWarning = boss._novaWarning.filter(w => {
                 w.timer -= dt;
-                addParticle(w.x, w.y, '#ef4444', 2, 'glow', 1.5);
+                addParticle(w.x, w.y, '#ef4444', 3, 'glow', 1.5);
                 if (w.timer <= 0) {
                     const dist = Math.hypot(player.x - w.x, player.y - w.y);
-                    if (dist < 80) takeDamage(boss.damage * 1.5);
-                    const novaCount = modifiers.bullet_hell ? 24 : 12;
+                    if (dist < 100) takeDamage(boss.damage * 1.5);
+                    const novaCount = modifiers.bullet_hell ? 30 : 16;
                     for (let i = 0; i < novaCount; i++) {
                         const a = (Math.PI * 2 / novaCount) * i;
-                        enemyProjectiles.push({ x: w.x, y: w.y, vx: Math.cos(a) * 180, vy: Math.sin(a) * 180, radius: 7, damage: boss.damage * 0.5, life: 2, color: '#ff4500' });
+                        enemyProjectiles.push({ x: w.x, y: w.y, vx: Math.cos(a) * 200, vy: Math.sin(a) * 200, radius: 8, damage: boss.damage * 0.5, life: 2.5, color: '#ff4500' });
                     }
                     return false;
                 }
                 return true;
             });
         }
+        
+        // NEW: Flame Trails
+        if (!boss.trailTimer) boss.trailTimer = 0.1;
+        boss.trailTimer -= dt;
+        if (boss.trailTimer <= 0) {
+            boss.trailTimer = 0.2;
+            if (Math.random() < 0.3) {
+                enemyProjectiles.push({
+                    x: boss.x + (Math.random() - 0.5) * boss.radius, 
+                    y: boss.y + (Math.random() - 0.5) * boss.radius,
+                    vx: 0, vy: 0, radius: 25, damage: boss.damage * 0.2, life: 2, color: 'rgba(239, 68, 68, 0.5)'
+                });
+            }
+        }
     }
 
     if (bossId === 'boss_stellar_colossus') {
         // "Rotating arms" — spinning laser arms
-        if (!boss.armTimer) boss.armTimer = 4;
+        if (!boss.armTimer) boss.armTimer = 3;
         boss.armTimer -= dt;
         if (boss.armTimer <= 0) {
-            boss.armTimer = enraged ? 2.5 : 4;
-            const arms = (enraged ? 6 : 4) * (modifiers.bullet_hell ? 2 : 1);
+            boss.armTimer = enraged ? 2.0 : 3;
+            const arms = (enraged ? 8 : 5) * (modifiers.bullet_hell ? 2 : 1);
             for (let i = 0; i < arms; i++) {
                 const a = (Math.PI * 2 / arms) * i + (boss.armPhase || 0);
-                for (let j = 1; j <= 3; j++) {
+                for (let j = 1; j <= 4; j++) {
                     enemyProjectiles.push({
-                        x: boss.x, y: boss.y,
-                        vx: Math.cos(a) * 200 * j * 0.4,
-                        vy: Math.sin(a) * 200 * j * 0.4,
-                        radius: 9,
-                        damage: boss.damage * 0.5,
-                        life: 3,
-                        color: '#f59e0b'
+                        x: boss.x, y: boss.y, vx: Math.cos(a) * 250 * j * 0.35, vy: Math.sin(a) * 250 * j * 0.35,
+                        radius: 10, damage: boss.damage * 0.5, life: 3, color: '#f59e0b'
                     });
                 }
             }
-            boss.armPhase = ((boss.armPhase || 0) + Math.PI / 6) % (Math.PI * 2);
+            boss.armPhase = ((boss.armPhase || 0) + Math.PI / 5) % (Math.PI * 2);
             addDamageText(boss.x, boss.y - boss.radius - 20, 'STELLAR ARMS!', '#f59e0b');
         }
 
         // "Blazing central eye" — screen-wide beam aimed at player
-        if (!boss.eyeTimer) boss.eyeTimer = 12;
+        if (!boss.eyeTimer) boss.eyeTimer = 10;
         boss.eyeTimer -= dt;
         if (boss.eyeTimer <= 0) {
-            boss.eyeTimer = enraged ? 7 : 12;
+            boss.eyeTimer = enraged ? 6 : 10;
             const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
-            const eyeCount = modifiers.bullet_hell ? 16 : 8;
+            const eyeCount = modifiers.bullet_hell ? 20 : 12;
             for (let i = 0; i < eyeCount; i++) {
                 enemyProjectiles.push({
-                    x: boss.x, y: boss.y,
-                    vx: Math.cos(angle) * (300 + i * 30),
-                    vy: Math.sin(angle) * (300 + i * 30),
-                    radius: 12,
-                    damage: boss.damage * 0.9,
-                    life: 2.5,
-                    color: '#fbbf24'
+                    x: boss.x, y: boss.y, vx: Math.cos(angle) * (400 + i * 40), vy: Math.sin(angle) * (400 + i * 40),
+                    radius: 15, damage: boss.damage * 0.9, life: 2.5, color: '#fbbf24'
                 });
             }
-            addParticle(boss.x, boss.y, '#fbbf24', 20, 'glow', 3);
+            addParticle(boss.x, boss.y, '#fbbf24', 30, 'glow', 4);
             addDamageText(boss.x, boss.y - boss.radius - 30, '☀ SOLAR GAZE!', '#fbbf24');
+        }
+        
+        // NEW: Meteor Strike
+        if (!boss.meteorTimer) boss.meteorTimer = 5;
+        boss.meteorTimer -= dt;
+        if (boss.meteorTimer <= 0) {
+            boss.meteorTimer = enraged ? 3 : 5;
+            for(let i=0; i<3; i++) {
+                const tx = player.x + (Math.random() - 0.5) * 300;
+                const ty = player.y + (Math.random() - 0.5) * 300;
+                boss._novaWarning = boss._novaWarning || [];
+                boss._novaWarning.push({ x: tx, y: ty, timer: 1.5 });
+            }
+            addDamageText(boss.x, boss.y - boss.radius - 40, 'METEOR SHOWER!', '#f59e0b');
         }
     }
 
     if (bossId === 'boss_cosmic_wyrm') {
         // "Serpentine dragon" — charge dash in player direction
-        if (!boss.chargeTimer) boss.chargeTimer = 6;
+        if (!boss.chargeTimer) boss.chargeTimer = 5;
         boss.chargeTimer -= dt;
         if (boss.chargeTimer <= 0) {
-            boss.chargeTimer = enraged ? 3.5 : 6;
+            boss.chargeTimer = enraged ? 3 : 5;
             const dx = player.x - boss.x;
             const dy = player.y - boss.y;
             const dist = Math.hypot(dx, dy);
-            boss.chargeDash = { vx: (dx / dist) * 700, vy: (dy / dist) * 700, timer: 0.35 };
+            boss.chargeDash = { vx: (dx / dist) * 850, vy: (dy / dist) * 850, timer: 0.4 };
             addDamageText(boss.x, boss.y - boss.radius - 30, '🐉 WYRM CHARGE!', '#0ea5e9');
-            addParticle(boss.x, boss.y, '#0ea5e9', 15, 'glow', 2.5);
+            addParticle(boss.x, boss.y, '#0ea5e9', 20, 'glow', 3);
         }
         if (boss.chargeDash) {
             boss.x += boss.chargeDash.vx * dt;
             boss.y += boss.chargeDash.vy * dt;
             boss.chargeDash.timer -= dt;
-            addParticle(boss.x, boss.y, '#0ea5e9', 3, 'glow', 1);
+            addParticle(boss.x, boss.y, '#0ea5e9', 5, 'glow', 1.5);
+            
+            // NEW: Leave ice shards behind during dash
+            if (Math.random() < 0.4) {
+                 enemyProjectiles.push({
+                    x: boss.x, y: boss.y, vx: 0, vy: 0,
+                    radius: 12, damage: boss.damage * 0.4, life: 3, color: '#38bdf8'
+                });
+            }
+
             const dist = Math.hypot(player.x - boss.x, player.y - boss.y);
-            if (dist < boss.radius + player.radius + 5) {
-                takeDamage(boss.damage * 2);
+            if (dist < boss.radius + player.radius + 10) {
+                takeDamage(boss.damage * 2.5);
                 boss.chargeDash = null;
             }
             if (boss.chargeDash && boss.chargeDash.timer <= 0) boss.chargeDash = null;
         }
 
         // "Crystal fins" — crystal shards in 3-burst
-        if (!boss.shardTimer) boss.shardTimer = 5;
+        if (!boss.shardTimer) boss.shardTimer = 4;
         boss.shardTimer -= dt;
         if (boss.shardTimer <= 0) {
-            boss.shardTimer = enraged ? 3 : 5;
+            boss.shardTimer = enraged ? 2 : 4;
             const base = Math.atan2(player.y - boss.y, player.x - boss.x);
-            const offsets = modifiers.bullet_hell ? [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6] : [-0.4, 0, 0.4];
+            const offsets = modifiers.bullet_hell ? [-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8] : [-0.5, -0.25, 0, 0.25, 0.5];
             offsets.forEach(off => {
                 enemyProjectiles.push({
-                    x: boss.x, y: boss.y,
-                    vx: Math.cos(base + off) * 280,
-                    vy: Math.sin(base + off) * 280,
-                    radius: 8,
-                    damage: boss.damage * 0.7,
-                    life: 2.5,
-                    color: '#38bdf8'
+                    x: boss.x, y: boss.y, vx: Math.cos(base + off) * 320, vy: Math.sin(base + off) * 320,
+                    radius: 9, damage: boss.damage * 0.7, life: 2.5, color: '#38bdf8'
                 });
             });
+        }
+        
+        // NEW: Blizzard Aura
+        if (enraged) {
+            if (Math.random() < 0.1) {
+                addParticle(boss.x + (Math.random() - 0.5) * 200, boss.y + (Math.random() - 0.5) * 200, '#ffffff', 1, 'spark', 1);
+            }
+            const dist = Math.hypot(player.x - boss.x, player.y - boss.y);
+            if (dist < 200 && Math.random() < 0.05) {
+                takeDamage(boss.damage * 0.1);
+            }
         }
     }
 
     if (bossId === 'boss_supernova_empress') {
         // "Flowing energy wings" — wide sweeping arcs
-        if (!boss.wingTimer) boss.wingTimer = 3.5;
+        if (!boss.wingTimer) boss.wingTimer = 3;
         boss.wingTimer -= dt;
         if (boss.wingTimer <= 0) {
-            boss.wingTimer = enraged ? 2 : 3.5;
+            boss.wingTimer = enraged ? 1.5 : 3;
             const base = Math.atan2(player.y - boss.y, player.x - boss.x);
-            const count = (enraged ? 16 : 10) * (modifiers.bullet_hell ? 2 : 1);
+            const count = (enraged ? 20 : 12) * (modifiers.bullet_hell ? 2 : 1);
             for (let i = 0; i < count; i++) {
-                const a = base - Math.PI / 3 + (Math.PI * 2 / 3 / count) * i;
+                const a = base - Math.PI / 2.5 + (Math.PI * 2 / 2.5 / count) * i;
                 enemyProjectiles.push({
-                    x: boss.x, y: boss.y,
-                    vx: Math.cos(a) * 200,
-                    vy: Math.sin(a) * 200,
-                    radius: 8,
-                    damage: boss.damage * 0.45,
-                    life: 3,
-                    color: '#ec4899'
+                    x: boss.x, y: boss.y, vx: Math.cos(a) * 240, vy: Math.sin(a) * 240,
+                    radius: 9, damage: boss.damage * 0.45, life: 3, color: '#ec4899'
                 });
             }
             addDamageText(boss.x, boss.y - boss.radius - 20, '✨ EMPRESS SWEEP!', '#ec4899');
         }
 
         // "Crown of flames" — orbiting fire projectiles that explode outward
-        if (!boss.crownTimer) boss.crownTimer = 8;
+        if (!boss.crownTimer) boss.crownTimer = 7;
         boss.crownTimer -= dt;
         if (boss.crownTimer <= 0) {
-            boss.crownTimer = enraged ? 5 : 8;
-            const crownCount = modifiers.bullet_hell ? 16 : 8;
+            boss.crownTimer = enraged ? 4 : 7;
+            const crownCount = modifiers.bullet_hell ? 20 : 10;
             for (let i = 0; i < crownCount; i++) {
                 const a = (Math.PI * 2 / crownCount) * i;
                 enemyProjectiles.push({
                     x: boss.x + Math.cos(a) * boss.radius,
                     y: boss.y + Math.sin(a) * boss.radius,
-                    vx: Math.cos(a) * 250,
-                    vy: Math.sin(a) * 250,
-                    radius: 10,
-                    damage: boss.damage * 0.6,
-                    life: 2.5,
-                    color: '#fbbf24'
+                    vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
+                    radius: 12, damage: boss.damage * 0.6, life: 2.5, color: '#fbbf24'
                 });
             }
-            addParticle(boss.x, boss.y, '#fbbf24', 20, 'glow', 2);
+            addParticle(boss.x, boss.y, '#fbbf24', 30, 'glow', 3);
             addDamageText(boss.x, boss.y - boss.radius - 30, '👑 CROWN OF FLAMES!', '#fbbf24');
         }
 
-        // Enrage: rapidly blinks (teleports near player)
-        if (enraged && !boss.blinkTimer) boss.blinkTimer = 4;
+        // Enrage: rapidly blinks (teleports near player) AND shoots on blink
+        if (enraged && !boss.blinkTimer) boss.blinkTimer = 3;
         if (boss.blinkTimer) {
             boss.blinkTimer -= dt;
             if (boss.blinkTimer <= 0) {
-                boss.blinkTimer = 4;
+                boss.blinkTimer = 3;
                 const angle = Math.random() * Math.PI * 2;
-                boss.x = player.x + Math.cos(angle) * 200;
-                boss.y = player.y + Math.sin(angle) * 200;
-                addParticle(boss.x, boss.y, '#ec4899', 20, 'glow', 3);
+                boss.x = player.x + Math.cos(angle) * 250;
+                boss.y = player.y + Math.sin(angle) * 250;
+                addParticle(boss.x, boss.y, '#ec4899', 30, 'glow', 4);
                 addDamageText(boss.x, boss.y - boss.radius - 20, 'EMPRESS BLINK!', '#ec4899');
+                
+                // Shoot circle on blink
+                for(let i=0; i<12; i++) {
+                    const a = (Math.PI * 2 / 12) * i;
+                    enemyProjectiles.push({
+                        x: boss.x, y: boss.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150,
+                        radius: 8, damage: boss.damage * 0.5, life: 2, color: '#ec4899'
+                    });
+                }
             }
+        }
+        
+        // NEW: Starfall
+        if (!boss.starTimer) boss.starTimer = 9;
+        boss.starTimer -= dt;
+        if (boss.starTimer <= 0) {
+            boss.starTimer = enraged ? 5 : 9;
+            for(let i=0; i<8; i++) {
+                enemyProjectiles.push({
+                    x: player.x + (Math.random() - 0.5) * 800, y: player.y - 600 - Math.random() * 200,
+                    vx: (Math.random() - 0.5) * 50, vy: 400 + Math.random() * 200,
+                    radius: 18, damage: boss.damage * 0.8, life: 5, color: '#fbcfe8'
+                });
+            }
+            addDamageText(boss.x, boss.y - boss.radius - 40, '🌟 STARFALL!', '#fbcfe8');
         }
     }
 
     if (bossId === 'boss_nexus_annihilator') {
         // "Rotating metallic rings" — dense ring attacks
-        if (!boss.ringTimer) boss.ringTimer = 2;
+        if (!boss.ringTimer) boss.ringTimer = 1.5;
         boss.ringTimer -= dt;
         if (boss.ringTimer <= 0) {
-            boss.ringTimer = enraged ? 1.0 : 2.0;
-            const count = (enraged ? 24 : 16) * (modifiers.bullet_hell ? 2 : 1);
+            boss.ringTimer = enraged ? 0.8 : 1.5;
+            const count = (enraged ? 30 : 20) * (modifiers.bullet_hell ? 2 : 1);
             const phase = boss.ringPhase || 0;
             for (let i = 0; i < count; i++) {
                 const a = (Math.PI * 2 / count) * i + phase;
                 enemyProjectiles.push({
-                    x: boss.x, y: boss.y,
-                    vx: Math.cos(a) * 180,
-                    vy: Math.sin(a) * 180,
-                    radius: 7,
-                    damage: boss.damage * 0.5,
-                    life: 4,
-                    color: '#7c3aed'
+                    x: boss.x, y: boss.y, vx: Math.cos(a) * 220, vy: Math.sin(a) * 220,
+                    radius: 8, damage: boss.damage * 0.5, life: 4, color: '#7c3aed'
                 });
             }
             boss.ringPhase = (phase + Math.PI / count);
         }
 
         // "Massive energy tendrils" — long tracking beams
-        if (!boss.tendrilTimer) boss.tendrilTimer = 5;
+        if (!boss.tendrilTimer) boss.tendrilTimer = 4;
         boss.tendrilTimer -= dt;
         if (boss.tendrilTimer <= 0) {
-            boss.tendrilTimer = enraged ? 3 : 5;
+            boss.tendrilTimer = enraged ? 2.5 : 4;
             const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
-            const tendrils = (enraged ? 5 : 3) * (modifiers.bullet_hell ? 2 : 1);
+            const tendrils = (enraged ? 7 : 4) * (modifiers.bullet_hell ? 2 : 1);
             for (let t = 0; t < tendrils; t++) {
-                const a = angle + (t - Math.floor(tendrils / 2)) * 0.25;
-                for (let j = 0; j < 5; j++) {
+                const a = angle + (t - Math.floor(tendrils / 2)) * 0.2;
+                for (let j = 0; j < 6; j++) {
                     enemyProjectiles.push({
-                        x: boss.x, y: boss.y,
-                        vx: Math.cos(a) * (250 + j * 40),
-                        vy: Math.sin(a) * (250 + j * 40),
-                        radius: 10,
-                        damage: boss.damage * 0.8,
-                        life: 2.5,
-                        color: '#c084fc'
+                        x: boss.x, y: boss.y, vx: Math.cos(a) * (300 + j * 50), vy: Math.sin(a) * (300 + j * 50),
+                        radius: 12, damage: boss.damage * 0.8, life: 2.5, color: '#c084fc'
                     });
                 }
             }
-            addParticle(boss.x, boss.y, '#c084fc', 20, 'glow', 3);
+            addParticle(boss.x, boss.y, '#c084fc', 30, 'glow', 4);
             addDamageText(boss.x, boss.y - boss.radius - 30, '⚡ ANNIHILATOR TENDRIL!', '#c084fc');
         }
 
         // "Glowing purple energy core" — periodic shockwave
-        if (!boss.shockTimer) boss.shockTimer = 9;
+        if (!boss.shockTimer) boss.shockTimer = 8;
         boss.shockTimer -= dt;
         if (boss.shockTimer <= 0) {
-            boss.shockTimer = enraged ? 5 : 9;
+            boss.shockTimer = enraged ? 4 : 8;
             const dist = Math.hypot(player.x - boss.x, player.y - boss.y);
-            if (dist < 300) takeDamage(boss.damage * 1.2);
-            addParticle(boss.x, boss.y, '#7c3aed', 30, 'glow', 4);
+            if (dist < 400) {
+                takeDamage(boss.damage * 1.5);
+                // Push back player
+                const pushAngle = Math.atan2(player.y - boss.y, player.x - boss.x);
+                player.x += Math.cos(pushAngle) * 300;
+                player.y += Math.sin(pushAngle) * 300;
+            }
+            addParticle(boss.x, boss.y, '#7c3aed', 50, 'glow', 6);
             addDamageText(boss.x, boss.y - boss.radius - 30, '💥 NEXUS SHOCKWAVE!', '#7c3aed');
+        }
+        
+        // NEW: Reality Tear - sweeping lasers across the field
+        if (!boss.tearTimer) boss.tearTimer = 12;
+        boss.tearTimer -= dt;
+        if (boss.tearTimer <= 0) {
+            boss.tearTimer = enraged ? 8 : 12;
+            for(let i=0; i<4; i++) {
+                const a = (Math.PI * 2 / 4) * i + Math.random();
+                for(let d=1; d<15; d++) {
+                    enemyProjectiles.push({
+                        x: boss.x, y: boss.y, vx: Math.cos(a) * 150 * d * 0.2, vy: Math.sin(a) * 150 * d * 0.2,
+                        radius: 15, damage: boss.damage * 1.2, life: 5, color: '#ffffff'
+                    });
+                }
+            }
+            addDamageText(boss.x, boss.y - boss.radius - 40, '🌌 REALITY TEAR!', '#ffffff');
         }
     }
 }
