@@ -1419,6 +1419,8 @@ export class GameEngine {
             level: this.level,
             kills: this.kills,
             gold: this.gold,
+            characterId: this.characterId,
+            arenaId: this.arena?.id,
             encountered: Array.from(this.encounteredEnemies),
             enemyKills: this.enemyKills,
             worldBossDamage: this.worldBossDamage || 0
