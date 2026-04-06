@@ -894,7 +894,7 @@ export class GameEngine {
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                     this.isBossActive = false;
                 } else {
-                    const baseGoldChance = this.arena.duration === Infinity ? 0.40 : 0.60;
+                    const baseGoldChance = this.arena.duration === Infinity ? 0.30 : 0.50;
                     if (Math.random() < baseGoldChance + (this.player.luck * 0.02)) {
                         const goldValue = 5 + Math.floor(this.time / 30) * 2;
                         const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 2) : 1;
