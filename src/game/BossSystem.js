@@ -72,6 +72,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
                     radius: 8, damage: boss.damage * 0.3, life: 4, color: '#a855f7'
                 });
             }
+            addParticle(boss.x, boss.y, '#a855f7', 20, 'glow', 2);
             addDamageText(boss.x, boss.y - boss.radius - 20, 'TENTACLE SPIRAL!', '#a855f7');
         }
 
@@ -83,25 +84,41 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
             const dx = boss.x - player.x;
             const dy = boss.y - player.y;
             const dist = Math.hypot(dx, dy);
-            if (dist < 800) {
-                player.x += (dx / dist) * 120 * dt * 60;
-                player.y += (dy / dist) * 120 * dt * 60;
+            if (dist < 600) {
+                player.x += (dx / dist) * 70 * dt * 60;
+                player.y += (dy / dist) * 70 * dt * 60;
                 addParticle(boss.x, boss.y, '#a855f7', 30, 'glow', 3);
                 addDamageText(boss.x, boss.y - boss.radius - 30, 'DEVOUR!', '#a855f7');
             }
         }
         
-        // NEW: Void Bomb
+        // NEW: Void Bomb (Telegraphed Explosion)
         if (!boss.bombTimer) boss.bombTimer = 6;
         boss.bombTimer -= dt;
         if (boss.bombTimer <= 0) {
             boss.bombTimer = enraged ? 4 : 7;
-            const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
-            enemyProjectiles.push({
-                x: boss.x, y: boss.y, vx: Math.cos(angle) * 80, vy: Math.sin(angle) * 80,
-                radius: 45, damage: boss.damage * 1.5, life: 8, color: '#581c87'
+            const tx = player.x, ty = player.y;
+            boss._bombWarning = boss._bombWarning || [];
+            boss._bombWarning.push({ x: tx, y: ty, timer: 2.0 });
+            addDamageText(tx, ty - 40, '⚠ VOID BOMB!', '#581c87');
+        }
+        if (boss._bombWarning) {
+            boss._bombWarning = boss._bombWarning.filter(w => {
+                w.timer -= dt;
+                addParticle(w.x, w.y, '#581c87', 4, 'glow', 2.0);
+                if (w.timer <= 0) {
+                    const dist = Math.hypot(player.x - w.x, player.y - w.y);
+                    if (dist < 120) takeDamage(boss.damage * 1.5);
+                    const count = modifiers.bullet_hell ? 20 : 12;
+                    for (let i = 0; i < count; i++) {
+                        const a = (Math.PI * 2 / count) * i;
+                        enemyProjectiles.push({ x: w.x, y: w.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150, radius: 15, damage: boss.damage * 0.8, life: 3, color: '#581c87' });
+                    }
+                    addParticle(w.x, w.y, '#581c87', 40, 'glow', 5);
+                    return false;
+                }
+                return true;
             });
-            addDamageText(boss.x, boss.y - boss.radius - 40, 'VOID BOMB!', '#581c87');
         }
     }
 
@@ -145,6 +162,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
                         const a = (Math.PI * 2 / novaCount) * i;
                         enemyProjectiles.push({ x: w.x, y: w.y, vx: Math.cos(a) * 200, vy: Math.sin(a) * 200, radius: 8, damage: boss.damage * 0.5, life: 2.5, color: '#ff4500' });
                     }
+                    addParticle(w.x, w.y, '#ff4500', 30, 'glow', 4);
                     return false;
                 }
                 return true;
@@ -155,13 +173,14 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (!boss.trailTimer) boss.trailTimer = 0.1;
         boss.trailTimer -= dt;
         if (boss.trailTimer <= 0) {
-            boss.trailTimer = 0.2;
-            if (Math.random() < 0.3) {
+            boss.trailTimer = 0.15;
+            if (Math.random() < (enraged ? 0.6 : 0.3)) {
                 enemyProjectiles.push({
-                    x: boss.x + (Math.random() - 0.5) * boss.radius, 
-                    y: boss.y + (Math.random() - 0.5) * boss.radius,
-                    vx: 0, vy: 0, radius: 25, damage: boss.damage * 0.2, life: 2, color: 'rgba(239, 68, 68, 0.5)'
+                    x: boss.x + (Math.random() - 0.5) * boss.radius * 1.5, 
+                    y: boss.y + (Math.random() - 0.5) * boss.radius * 1.5,
+                    vx: 0, vy: 0, radius: 25, damage: boss.damage * 0.3, life: 2.5, color: 'rgba(239, 68, 68, 0.6)'
                 });
+                addParticle(boss.x, boss.y, '#ef4444', 3, 'spark', 1.5);
             }
         }
     }
@@ -195,7 +214,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
             const eyeCount = modifiers.bullet_hell ? 20 : 12;
             for (let i = 0; i < eyeCount; i++) {
                 enemyProjectiles.push({
-                    x: boss.x, y: boss.y, vx: Math.cos(angle) * (400 + i * 40), vy: Math.sin(angle) * (400 + i * 40),
+                    x: boss.x, y: boss.y, vx: Math.cos(angle) * (300 + i * 20), vy: Math.sin(angle) * (300 + i * 20),
                     radius: 15, damage: boss.damage * 0.9, life: 2.5, color: '#fbbf24'
                 });
             }
@@ -208,13 +227,31 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         boss.meteorTimer -= dt;
         if (boss.meteorTimer <= 0) {
             boss.meteorTimer = enraged ? 3 : 5;
-            for(let i=0; i<3; i++) {
-                const tx = player.x + (Math.random() - 0.5) * 300;
-                const ty = player.y + (Math.random() - 0.5) * 300;
-                boss._novaWarning = boss._novaWarning || [];
-                boss._novaWarning.push({ x: tx, y: ty, timer: 1.5 });
+            boss._meteorWarning = boss._meteorWarning || [];
+            for(let i=0; i< (enraged ? 5 : 3); i++) {
+                const tx = player.x + (Math.random() - 0.5) * 400;
+                const ty = player.y + (Math.random() - 0.5) * 400;
+                boss._meteorWarning.push({ x: tx, y: ty, timer: 1.5 + Math.random() * 0.5 });
+                addParticle(tx, ty, '#f59e0b', 5, 'glow', 2);
             }
             addDamageText(boss.x, boss.y - boss.radius - 40, 'METEOR SHOWER!', '#f59e0b');
+        }
+        if (boss._meteorWarning) {
+            boss._meteorWarning = boss._meteorWarning.filter(w => {
+                w.timer -= dt;
+                addParticle(w.x, w.y, '#f59e0b', 3, 'spark', 1.5);
+                if (w.timer <= 0) {
+                    const dist = Math.hypot(player.x - w.x, player.y - w.y);
+                    if (dist < 90) takeDamage(boss.damage * 1.5);
+                    for(let i=0; i<8; i++) {
+                        const a = (Math.PI * 2 / 8) * i;
+                        enemyProjectiles.push({ x: w.x, y: w.y, vx: Math.cos(a) * 200, vy: Math.sin(a) * 200, radius: 6, damage: boss.damage * 0.5, life: 1.5, color: '#fbbf24' });
+                    }
+                    addParticle(w.x, w.y, '#f59e0b', 20, 'glow', 3);
+                    return false;
+                }
+                return true;
+            });
         }
     }
 
@@ -227,7 +264,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
             const dx = player.x - boss.x;
             const dy = player.y - boss.y;
             const dist = Math.hypot(dx, dy);
-            boss.chargeDash = { vx: (dx / dist) * 850, vy: (dy / dist) * 850, timer: 0.4 };
+            boss.chargeDash = { vx: (dx / dist) * 750, vy: (dy / dist) * 750, timer: 0.45 };
             addDamageText(boss.x, boss.y - boss.radius - 30, '🐉 WYRM CHARGE!', '#0ea5e9');
             addParticle(boss.x, boss.y, '#0ea5e9', 20, 'glow', 3);
         }
@@ -243,6 +280,7 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
                     x: boss.x, y: boss.y, vx: 0, vy: 0,
                     radius: 12, damage: boss.damage * 0.4, life: 3, color: '#38bdf8'
                 });
+                addParticle(boss.x, boss.y, '#ffffff', 5, 'spark', 1);
             }
 
             const dist = Math.hypot(player.x - boss.x, player.y - boss.y);
@@ -270,11 +308,11 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         
         // NEW: Blizzard Aura
         if (enraged) {
-            if (Math.random() < 0.1) {
-                addParticle(boss.x + (Math.random() - 0.5) * 200, boss.y + (Math.random() - 0.5) * 200, '#ffffff', 1, 'spark', 1);
+            if (Math.random() < 0.3) {
+                addParticle(boss.x + (Math.random() - 0.5) * 300, boss.y + (Math.random() - 0.5) * 300, '#ffffff', 2, 'spark', 1.5);
             }
             const dist = Math.hypot(player.x - boss.x, player.y - boss.y);
-            if (dist < 200 && Math.random() < 0.05) {
+            if (dist < 250 && Math.random() < 0.1) {
                 takeDamage(boss.damage * 0.1);
             }
         }
@@ -345,14 +383,19 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         boss.starTimer -= dt;
         if (boss.starTimer <= 0) {
             boss.starTimer = enraged ? 5 : 9;
-            for(let i=0; i<8; i++) {
+            const starCount = enraged ? 12 : 8;
+            for(let i=0; i<starCount; i++) {
+                const tx = player.x + (Math.random() - 0.5) * 800;
+                const ty = player.y - 600 - Math.random() * 200;
                 enemyProjectiles.push({
-                    x: player.x + (Math.random() - 0.5) * 800, y: player.y - 600 - Math.random() * 200,
-                    vx: (Math.random() - 0.5) * 50, vy: 400 + Math.random() * 200,
-                    radius: 18, damage: boss.damage * 0.8, life: 5, color: '#fbcfe8'
+                    x: tx, y: ty,
+                    vx: (Math.random() - 0.5) * 50, vy: 500 + Math.random() * 300,
+                    radius: 15, damage: boss.damage * 0.8, life: 5, color: '#fbcfe8'
                 });
+                addParticle(tx, ty, '#fbcfe8', 10, 'glow', 2);
             }
             addDamageText(boss.x, boss.y - boss.radius - 40, '🌟 STARFALL!', '#fbcfe8');
+            addParticle(boss.x, boss.y, '#fbcfe8', 30, 'glow', 3);
         }
     }
 
@@ -416,16 +459,19 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         boss.tearTimer -= dt;
         if (boss.tearTimer <= 0) {
             boss.tearTimer = enraged ? 8 : 12;
-            for(let i=0; i<4; i++) {
-                const a = (Math.PI * 2 / 4) * i + Math.random();
+            const tearCount = enraged ? 6 : 4;
+            for(let i=0; i<tearCount; i++) {
+                const a = (Math.PI * 2 / tearCount) * i + Math.random();
                 for(let d=1; d<15; d++) {
                     enemyProjectiles.push({
                         x: boss.x, y: boss.y, vx: Math.cos(a) * 150 * d * 0.2, vy: Math.sin(a) * 150 * d * 0.2,
-                        radius: 15, damage: boss.damage * 1.2, life: 5, color: '#ffffff'
+                        radius: 12, damage: boss.damage * 1.2, life: 4, color: '#ffffff'
                     });
+                    addParticle(boss.x + Math.cos(a) * d * 30, boss.y + Math.sin(a) * d * 30, '#c084fc', 2, 'glow', 1);
                 }
             }
             addDamageText(boss.x, boss.y - boss.radius - 40, '🌌 REALITY TEAR!', '#ffffff');
+            addParticle(boss.x, boss.y, '#ffffff', 40, 'glow', 4);
         }
     }
 }
