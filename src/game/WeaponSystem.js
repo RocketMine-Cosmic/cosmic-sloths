@@ -142,7 +142,8 @@ export function fireWeaponLogic(engine, w) {
                         damage: dmg * 0.5,
                         pierce: 1,
                         life: 1,
-                        color: '#FF0000'
+                        color: '#FF0000',
+                        type: 'beam'
                     });
                 }
             }

@@ -729,6 +729,15 @@ export class GameEngine {
                             p.pierce--;
                             if (p.pierce <= 0) p.dead = true;
                             
+                            if (p.weaponId === 'supernovaBeam') {
+                                this.particleManager.createExplosion(e.x, e.y, '#ffaa00', 1.5);
+                                this.enemies.forEach(ce => {
+                                    if (ce !== e && Math.hypot(ce.x - e.x, ce.y - e.y) < 60) {
+                                        this.damageEnemy(ce, p.damage * 0.3);
+                                    }
+                                });
+                            }
+                            
                             if (p.isMastered && p.weaponId === 'napBeam') {
                                 let nearest = null;
                                 let minDist = 150;
@@ -742,6 +751,20 @@ export class GameEngine {
                                     this.damageEnemy(nearest, p.damage * 0.5);
                                     p.hitList.add(nearest);
                                     this.addParticle(nearest.x, nearest.y, '#4169E1', 5);
+                                    const distToNearest = Math.hypot(nearest.x - e.x, nearest.y - e.y);
+                                    const chainAngle = Math.atan2(nearest.y - e.y, nearest.x - e.x);
+                                    this.projectiles.push({
+                                        x: e.x + (nearest.x - e.x) / 2,
+                                        y: e.y + (nearest.y - e.y) / 2,
+                                        vx: Math.cos(chainAngle) * 0.01,
+                                        vy: Math.sin(chainAngle) * 0.01,
+                                        radius: distToNearest / 3,
+                                        damage: 0,
+                                        pierce: 0,
+                                        life: 0.15,
+                                        color: '#4169E1',
+                                        type: 'lightning'
+                                    });
                                 }
                             }
                         }
@@ -795,7 +818,8 @@ export class GameEngine {
                                 damage: p.damage * 0.5,
                                 pierce: 1,
                                 life: 1,
-                                color: '#FFD700'
+                                color: '#FFD700',
+                                type: 'beam'
                             });
                         }
                     }
