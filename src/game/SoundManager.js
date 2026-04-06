@@ -2,9 +2,23 @@ class SoundManagerClass {
     constructor() {
         this.audioContext = null;
         this.bgm = new Audio();
-        this.bgm.loop = true;
-        // Space-themed 8-bit background music
-        this.bgm.src = 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=8-bit-background-music-for-arcade-game-come-on-mario-164702.mp3';
+        this.bgmTracks = [
+            'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=8-bit-background-music-for-arcade-game-come-on-mario-164702.mp3',
+            'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=space-trip-114102.mp3',
+            'https://cdn.pixabay.com/download/audio/2022/10/18/audio_31c2730e64.mp3?filename=stranger-things-124008.mp3',
+            'https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b3cb3982.mp3?filename=retro-wave-style-track-104953.mp3'
+        ];
+        this.currentTrackIndex = Math.floor(Math.random() * this.bgmTracks.length);
+        this.bgm.src = this.bgmTracks[this.currentTrackIndex];
+        this.bgm.loop = false; // Use ended event to play next track
+        
+        this.bgm.addEventListener('ended', () => {
+            this.currentTrackIndex = (this.currentTrackIndex + 1) % this.bgmTracks.length;
+            this.bgm.src = this.bgmTracks[this.currentTrackIndex];
+            if (this.enabled) {
+                this.bgm.play().catch(e => console.log("Audio play failed:", e));
+            }
+        });
         
         let savedSettings = {};
         try {
