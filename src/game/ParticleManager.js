@@ -1,8 +1,9 @@
-const loadTexture = (url) => {
+const loadTexture = (url, name) => {
     if (typeof window !== 'undefined') {
         const canvas = document.createElement('canvas');
         canvas.width = 128;
         canvas.height = 128;
+        canvas.texName = name;
         const ctx = canvas.getContext('2d');
         const img = new Image();
         img.crossOrigin = "Anonymous";
@@ -21,12 +22,39 @@ export class ParticleManager {
     constructor() {
         this.particles = [];
         this.textures = {
-            star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png'),
-            explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png'),
-            smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png'),
-            slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png'),
-            shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png'),
+            star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png', 'star'),
+            explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png', 'explosion'),
+            smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png', 'smoke'),
+            slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png', 'slash'),
+            shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png', 'shockwave'),
         };
+        this.tintCache = {};
+    }
+
+    getTintedTexture(tex, color) {
+        if (!tex || !tex.isReady) return tex;
+        if (!this.tintCache) this.tintCache = {};
+        if (!this.tintCache[color]) this.tintCache[color] = {};
+        
+        const texKey = tex.texName;
+        if (!texKey) return tex;
+
+        if (this.tintCache[color][texKey]) return this.tintCache[color][texKey];
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = tex.width;
+        canvas.height = tex.height;
+        canvas.texName = texKey;
+        canvas.isReady = true;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.drawImage(tex, 0, 0);
+        ctx.globalCompositeOperation = 'source-in';
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        this.tintCache[color][texKey] = canvas;
+        return canvas;
     }
 
     update(dt) {
@@ -54,7 +82,7 @@ export class ParticleManager {
                 p.vy *= 0.93;
                 p.size *= 0.98;
                 if (p.gravity) p.vy += 400 * dt;
-            } else if (p.type === 'implode' || p.type === 'imploding_star') {
+            } else if (p.type === 'implode' || p.type === 'imploding_star' || p.type === 'dark_implode') {
                 const dx = p.targetX - p.x;
                 const dy = p.targetY - p.y;
                 const dist = Math.hypot(dx, dy);
@@ -93,7 +121,7 @@ export class ParticleManager {
             const sBase = p.size || 8;
 
             // Determine blend mode per particle type
-            const isOpaque = p.type === 'blood' || p.type === 'dark_smoke' || p.type === 'dark_shockwave';
+            const isOpaque = p.type === 'blood' || p.type === 'dark_smoke' || p.type === 'dark_shockwave' || p.type === 'dark_implode';
             const blendMode = isOpaque ? 'source-over' : 'screen';
             ctx.globalCompositeOperation = blendMode;
             ctx.globalAlpha = alpha;
@@ -106,8 +134,12 @@ export class ParticleManager {
             else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 2.2; }
             else if (p.type === 'smoke' || p.type === 'dark_smoke') { tex = this.textures.smoke; scaleMult = 2.2; }
             else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 2.5; }
-            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
+            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode') { tex = this.textures.shockwave; scaleMult = 1.8; }
             
+            if (tex && tex.isReady && color !== '#ffffff') {
+                tex = this.getTintedTexture(tex, color);
+            }
+
             // For simple geometry fallback
             if (!tex || !tex.isReady) {
                 switch (p.type) {
@@ -233,7 +265,7 @@ export class ParticleManager {
                 break;
             case 'black_hole':
                 this.addParticle(x, y, '#000000', 1, 'dark_shockwave', 1.0, { speed: 0, lineWidth: 10, growthRate: -200 });
-                this.addParticle(x, y, '#4b0082', 20, 'implode', 2.0, { speed: 200, targetX: x, targetY: y });
+                this.addParticle(x, y, '#1a0033', 20, 'dark_implode', 2.0, { speed: 200, targetX: x, targetY: y });
                 break;
             case 'freeze':
                 this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
@@ -261,7 +293,7 @@ export class ParticleManager {
         const trailConfigs = {
             'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame', count: 2, size: 1.8, options: { speed: 30, lifeBonus: 0.2 } },
             'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter', count: 2, size: 1.2, options: { speed: 40, gravity: true, lifeBonus: 0.5 } },
-            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'smoke', count: 1, size: 1.5, options: { speed: 10, lifeBonus: 0.8 } },
+            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'dark_smoke', count: 1, size: 1.5, options: { speed: 10, lifeBonus: 0.8 } },
             'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 1, size: 2.0, options: { speed: 15, lifeBonus: 0.7 } },
             'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 2, size: 1.8, options: { speed: 30, gravity: true, lifeBonus: 0.4 } },
             'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 2, size: 1.5, options: { speed: 50, lifeBonus: 0.3 } },
