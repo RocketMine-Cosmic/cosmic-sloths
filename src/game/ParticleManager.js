@@ -111,7 +111,11 @@ export class ParticleManager {
             let tex = null;
             let scaleMult = 1.5;
 
-            if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star' || p.type === 'blood' || p.type === 'flame') { tex = this.textures.star; scaleMult = 2.0; }
+            if (p.type === 'blood') {
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 2.0; }
             else if (p.type === 'explosion' || p.type === 'flash') { tex = this.textures.explosion; scaleMult = 2.2; }
             else if (p.type === 'smoke') { tex = this.textures.smoke; scaleMult = 2.2; }
             else if (p.type === 'slash') { tex = this.textures.slash; scaleMult = 2.5; }
@@ -136,6 +140,18 @@ export class ParticleManager {
                         ctx.moveTo(-sBase * 0.5, -sBase * 0.2);
                         ctx.lineTo(sBase * 0.5, sBase * 0.2);
                         ctx.stroke();
+                        break;
+                    case 'blood':
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.6), 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'flame':
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.7), 0, Math.PI * 2);
+                        ctx.fill();
                         break;
                     default:
                         ctx.fillStyle = color;
