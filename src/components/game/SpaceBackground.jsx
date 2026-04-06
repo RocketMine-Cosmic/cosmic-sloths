@@ -10,6 +10,15 @@ export default function SpaceBackground() {
 
         let animId;
         let time = 0;
+        let isVisible = false;
+
+        const observer = new IntersectionObserver((entries) => {
+            isVisible = entries[0].isIntersecting;
+            if (isVisible && !animId) {
+                animId = requestAnimationFrame(draw);
+            }
+        });
+        observer.observe(canvas);
 
         const stars = Array.from({ length: 220 }, () => ({
             x: Math.random(),
@@ -35,6 +44,10 @@ export default function SpaceBackground() {
         window.addEventListener('resize', resize);
 
         const draw = () => {
+            if (!isVisible) {
+                animId = null;
+                return;
+            }
             const W = canvas.width;
             const H = canvas.height;
             time += 0.016;
@@ -127,7 +140,8 @@ export default function SpaceBackground() {
 
         animId = requestAnimationFrame(draw);
         return () => {
-            cancelAnimationFrame(animId);
+            observer.disconnect();
+            if (animId) cancelAnimationFrame(animId);
             window.removeEventListener('resize', resize);
         };
     }, []);
