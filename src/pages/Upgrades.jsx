@@ -798,12 +798,7 @@ export default function Upgrades({ isCarousel }) {
                 {/* Live Preview — hidden on skins tab */}
                 {cosmeticTab !== 'skin' && (
                     <div className="mb-4">
-                        <CosmeticPreview 
-                            trailId={previewTrail} 
-                            killEffectId={previewKill}
-                            charId={selectedChar}
-                            playerColor={SKIN_COSMETICS.find(s => s.id === (save.cosmetics?.skins?.[selectedChar] || `${selectedChar}_default`))?.color || CHARACTERS.find(c => c.id === selectedChar)?.color || '#00cfff'}
-                        />
+                        <CosmeticPreview trailId={previewTrail} killEffectId={previewKill} />
                         <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center">
                             <span>Trail: <strong className="text-pink-400">{TRAIL_COSMETICS.find(t => t.id === equippedTrail)?.name}</strong></span>
                             <span>Kill Effect: <strong className="text-pink-400">{KILL_COSMETICS.find(k => k.id === equippedKill)?.name}</strong></span>

@@ -10,15 +10,6 @@ export default function SpaceBackground() {
 
         let animId;
         let time = 0;
-        let isVisible = false;
-
-        const observer = new IntersectionObserver((entries) => {
-            isVisible = entries[0].isIntersecting;
-            if (isVisible && !animId) {
-                animId = requestAnimationFrame(draw);
-            }
-        });
-        observer.observe(canvas);
 
         const stars = Array.from({ length: 220 }, () => ({
             x: Math.random(),
@@ -43,74 +34,53 @@ export default function SpaceBackground() {
         resize();
         window.addEventListener('resize', resize);
 
-        let preRenderedNebulae = null;
-        let lastW = 0, lastH = 0;
-
         const draw = () => {
-            if (!isVisible) {
-                animId = null;
-                return;
-            }
             const W = canvas.width;
             const H = canvas.height;
             time += 0.016;
 
-            if (!preRenderedNebulae || lastW !== W || lastH !== H) {
-                lastW = W;
-                lastH = H;
-                preRenderedNebulae = document.createElement('canvas');
-                preRenderedNebulae.width = W;
-                preRenderedNebulae.height = H;
-                const pCtx = preRenderedNebulae.getContext('2d');
-                
-                // Deep space background gradient
-                const bg = pCtx.createLinearGradient(0, 0, W * 0.4, H);
-                bg.addColorStop(0, '#020408');
-                bg.addColorStop(0.5, '#050c18');
-                bg.addColorStop(1, '#030710');
-                pCtx.fillStyle = bg;
-                pCtx.fillRect(0, 0, W, H);
+            // Deep space background gradient
+            const bg = ctx.createLinearGradient(0, 0, W * 0.4, H);
+            bg.addColorStop(0, '#020408');
+            bg.addColorStop(0.5, '#050c18');
+            bg.addColorStop(1, '#030710');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
 
-                // Nebula blobs
-                pCtx.globalCompositeOperation = 'lighter';
-                nebulae.forEach(n => {
-                    pCtx.save();
-                    pCtx.scale(1, n.ry / n.rx);
-                    
-                    const baseX = n.x * W;
-                    const baseY = (n.y * H) * (n.rx / n.ry);
-                    
-                    for (let i = 0; i < 6; i++) {
-                        const pulse = 1 + Math.sin(time * 0.15 + n.x * 10 + i) * 0.05;
-                        const angle = (i / 6) * Math.PI * 2 + (n.x * 10);
-                        const dist = n.rx * W * 0.35 * Math.abs(Math.sin(i * 1234.5));
-                        
-                        const cx = baseX + Math.cos(angle) * dist;
-                        const cy = baseY + Math.sin(angle) * dist;
-                        
-                        const radius = n.rx * W * pulse * (0.5 + Math.abs(Math.cos(i * 5678)) * 0.4);
-                        
-                        const grd = pCtx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                        grd.addColorStop(0, `rgba(${n.color},${n.opacity * 1.5})`);
-                        grd.addColorStop(0.4, `rgba(${n.color},${n.opacity * 0.8})`);
-                        grd.addColorStop(1, `rgba(${n.color},0)`);
-                        
-                        pCtx.fillStyle = grd;
-                        pCtx.beginPath();
-                        pCtx.arc(cx, cy, radius, 0, Math.PI * 2);
-                        pCtx.fill();
-                    }
-                    pCtx.restore();
-                });
-            }
-
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.drawImage(preRenderedNebulae, 0, 0);
-
+            // Nebula blobs
             ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.5 + Math.sin(time) * 0.1;
-            ctx.drawImage(preRenderedNebulae, 0, 0); // Adds the subtle pulsating effect cheaply
-            ctx.globalAlpha = 1.0;
+            nebulae.forEach(n => {
+                ctx.save();
+                ctx.scale(1, n.ry / n.rx);
+                
+                const baseX = n.x * W;
+                const baseY = (n.y * H) * (n.rx / n.ry);
+                
+                // Draw multiple overlapping soft gradients to create a cloudy nebula structure
+                for (let i = 0; i < 6; i++) {
+                    const pulse = 1 + Math.sin(time * 0.15 + n.x * 10 + i) * 0.05;
+                    const angle = (i / 6) * Math.PI * 2 + (n.x * 10);
+                    // Scatter blobs around the center
+                    const dist = n.rx * W * 0.35 * Math.abs(Math.sin(i * 1234.5));
+                    
+                    const cx = baseX + Math.cos(angle) * dist;
+                    const cy = baseY + Math.sin(angle) * dist;
+                    
+                    const radius = n.rx * W * pulse * (0.5 + Math.abs(Math.cos(i * 5678)) * 0.4);
+                    
+                    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    // Core is slightly brighter, fading out softly
+                    grd.addColorStop(0, `rgba(${n.color},${n.opacity * 1.5})`);
+                    grd.addColorStop(0.4, `rgba(${n.color},${n.opacity * 0.8})`);
+                    grd.addColorStop(1, `rgba(${n.color},0)`);
+                    
+                    ctx.fillStyle = grd;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
             ctx.globalCompositeOperation = 'source-over';
 
             // Stars
@@ -157,8 +127,7 @@ export default function SpaceBackground() {
 
         animId = requestAnimationFrame(draw);
         return () => {
-            observer.disconnect();
-            if (animId) cancelAnimationFrame(animId);
+            cancelAnimationFrame(animId);
             window.removeEventListener('resize', resize);
         };
     }, []);

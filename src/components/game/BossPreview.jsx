@@ -24,21 +24,8 @@ export default function BossPreview({ bossId }) {
 
         let animationId;
         let startTime = performance.now();
-        let isVisible = false;
-
-        const observer = new IntersectionObserver((entries) => {
-            isVisible = entries[0].isIntersecting;
-            if (isVisible && !animationId) {
-                animationId = requestAnimationFrame(loop);
-            }
-        });
-        observer.observe(canvas);
 
         const loop = (timestamp) => {
-            if (!isVisible) {
-                animationId = null;
-                return;
-            }
             const time = (timestamp - startTime) / 1000;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
@@ -57,10 +44,7 @@ export default function BossPreview({ bossId }) {
         
         animationId = requestAnimationFrame(loop);
 
-        return () => {
-            observer.disconnect();
-            if (animationId) cancelAnimationFrame(animationId);
-        };
+        return () => cancelAnimationFrame(animationId);
     }, [bossId]);
 
     return (
