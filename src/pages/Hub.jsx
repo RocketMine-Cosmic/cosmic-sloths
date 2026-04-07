@@ -278,13 +278,21 @@ export default function Hub({ isCarousel }) {
                                                                             {char.desc}
                                                                         </p>
                                                                         <div className="flex gap-1.5 md:gap-2 text-[9px] md:text-[10px] mb-1 bg-[#0b0416]/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/30 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
-                                                                            <span className="text-slate-300">HP: <span className="text-white">{char.hp}</span></span>
-                                                                            <span className="text-slate-300">SPD: <span className="text-white">{char.speed}</span></span>
-                                                                            <span className="text-slate-300">ARM: <span className="text-white">{char.armor}</span></span>
+                                                                            <span className="text-slate-300">HP: <span className={char.hp > CHARACTERS[0].hp ? 'text-green-400 font-bold' : char.hp < CHARACTERS[0].hp ? 'text-red-400 font-bold' : 'text-white'}>{char.hp}{char.hp > CHARACTERS[0].hp ? '↑' : char.hp < CHARACTERS[0].hp ? '↓' : ''}</span></span>
+                                                                            <span className="text-slate-300">SPD: <span className={char.speed > CHARACTERS[0].speed ? 'text-green-400 font-bold' : char.speed < CHARACTERS[0].speed ? 'text-red-400 font-bold' : 'text-white'}>{char.speed}{char.speed > CHARACTERS[0].speed ? '↑' : char.speed < CHARACTERS[0].speed ? '↓' : ''}</span></span>
+                                                                            <span className="text-slate-300">ARM: <span className={char.armor > CHARACTERS[0].armor ? 'text-green-400 font-bold' : char.armor < CHARACTERS[0].armor ? 'text-red-400 font-bold' : 'text-white'}>{char.armor}{char.armor > CHARACTERS[0].armor ? '↑' : char.armor < CHARACTERS[0].armor ? '↓' : ''}</span></span>
                                                                         </div>
                                                                     </>
                                                                 ) : (
                                                                     <div className="w-full pr-4 flex flex-col gap-2 relative z-50">
+                                                                        <div className="h-[60px] md:h-[80px] w-full rounded-md overflow-hidden border border-pink-500/30 shrink-0 shadow-[0_0_15px_rgba(217,70,239,0.2)]">
+                                                                            <CosmeticPreview 
+                                                                                trailId={save.cosmetics?.trail || 'default'} 
+                                                                                killEffectId={save.cosmetics?.killEffect || 'none'}
+                                                                                playerColor={SKIN_COSMETICS.find(s => s.id === (save.cosmetics?.skins?.[char.id] || `${char.id}_default`))?.color || char.color}
+                                                                                charId={char.id}
+                                                                            />
+                                                                        </div>
                                                                         <select
                                                                             value={save.cosmetics?.skins?.[char.id] || `${char.id}_default`}
                                                                             onChange={(e) => {
