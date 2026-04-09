@@ -30,6 +30,7 @@ export default function Game() {
     const [gameOverStats, setGameOverStats] = useState(null);
     const [victoryStats, setVictoryStats] = useState(null);
     const [isPaused, setIsPaused] = useState(false);
+    const [showRevivePrompt, setShowRevivePrompt] = useState(false);
 
     useEffect(() => {
         const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
@@ -196,6 +197,9 @@ export default function Game() {
                 currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + 1;
                 SaveManager.save(currentSave);
                 setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
+            },
+            onDeathPrompt: () => {
+                setShowRevivePrompt(true);
             },
             onCharacterFound: (charId) => {
                 const currentSave = SaveManager.load();
@@ -391,6 +395,39 @@ export default function Game() {
         }
     };
 
+    const handleRevive = () => {
+        const currentSave = SaveManager.load();
+        if ((currentSave.cosmicTokens || 0) >= 4) {
+            currentSave.cosmicTokens -= 4;
+            SaveManager.save(currentSave);
+            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
+            
+            const week_id = moment().format('YYYY-[W]ww');
+            const seasonNum = Math.floor(moment().week() / 4) + 1;
+            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            base44.functions.invoke('recordTokenSpend', { amount: 4, week_id, season_id }).catch(console.error);
+
+            if (engineRef.current) {
+                engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
+                engineRef.current.player.iFrames = 3.0;
+                engineRef.current.player.invincibleTimer = 3.0;
+                engineRef.current.player.hasRevivedWithTokens = true;
+                engineRef.current.isPaused = false;
+                setShowRevivePrompt(false);
+            }
+        }
+    };
+
+    const handleDeclineRevive = () => {
+        setShowRevivePrompt(false);
+        if (engineRef.current) {
+            engineRef.current.isPaused = false;
+            engineRef.current.player.hasRevivedWithTokens = true;
+            engineRef.current.particleManager.createExplosion(engineRef.current.player.x, engineRef.current.player.y, engineRef.current.player.color, 3, engineRef.current.characterId);
+            engineRef.current.gameOver();
+        }
+    };
+
     return (
         <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none">
             <canvas 
@@ -408,6 +445,29 @@ export default function Game() {
 
             {levelUpChoices && (
                 <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={gameState.cosmicTokens} onReroll={handleReroll} onBanish={handleBanish} />
+            )}
+            
+            {showRevivePrompt && (
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[60] p-4">
+                    <div className="bg-slate-900 border-2 border-emerald-500 p-6 md:p-8 rounded-xl max-w-md w-full text-center">
+                        <h2 className="text-2xl font-bold text-white mb-2 font-mono">CRITICAL DAMAGE</h2>
+                        <p className="text-slate-400 mb-6">Operative system failing. Use an Emergency Revive?</p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={handleRevive}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg font-bold flex flex-wrap items-center justify-center gap-2 transition-colors"
+                            >
+                                REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: 4 Tokens</span>
+                            </button>
+                            <button
+                                onClick={handleDeclineRevive}
+                                className="bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-lg font-bold border border-slate-700 transition-colors"
+                            >
+                                ACCEPT FATE
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
             
             {gameOverStats && (

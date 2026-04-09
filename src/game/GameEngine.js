@@ -181,6 +181,14 @@ export class GameEngine {
             passiveLevels: {}
         };
         
+        const sessionBuffs = save.sessionBuffs || {};
+        const now = Date.now();
+        const hasGoldBuff = sessionBuffs.goldExpiry > now;
+        const hasXpBuff = sessionBuffs.xpExpiry > now;
+
+        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (hasGoldBuff ? 0.5 : 0)) * this.difficulty.goldMult;
+        this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (hasXpBuff ? 0.5 : 0)) * this.difficulty.xpMult;
+
         if (hasAug('dat_ghost')) {
             this.player.iFrames = 5.0;
             this.player.invincibleTimer = 5.0;
@@ -336,6 +344,13 @@ export class GameEngine {
         }
 
         if (this.player.hp <= 0) {
+            const currentTokens = this.save.cosmicTokens || 0;
+            if (!this.player.hasRevivedWithTokens && this.callbacks.onDeathPrompt && currentTokens >= 4) {
+                 this.isPaused = true;
+                 this.callbacks.onDeathPrompt();
+                 return;
+            }
+
             if (this.player.charAugments?.includes('holo_revive') && !this.player.holoRevived) {
                 this.player.holoRevived = true;
                 this.player.hp = this.player.maxHp * 0.1;
