@@ -66,7 +66,7 @@ export class WebGLBackground {
             
             // Highlight bloom on base color
             float luminance = dot(baseColor.rgb, vec3(0.299, 0.587, 0.114));
-            vec3 bloom = baseColor.rgb * smoothstep(0.6, 1.0, luminance) * 0.4;
+            vec3 bloom = baseColor.rgb * smoothstep(0.6, 1.0, luminance) * 0.15;
             baseColor.rgb += bloom;
             
             // Layer 2: Dense Twinkling Stars (medium parallax)
@@ -76,17 +76,17 @@ export class WebGLBackground {
             float starGlow = 0.0;
             if (starGrid > 0.95) {
                 float twinkle = sin(u_time * 2.0 + starGrid * 100.0) * 0.5 + 0.5;
-                starGlow = smoothstep(0.4, 0.05, starDist) * twinkle * 1.5;
+                starGlow = smoothstep(0.4, 0.05, starDist) * twinkle * 0.6;
             } else if (starGrid > 0.8) {
                 float twinkle = sin(u_time * 1.5 + starGrid * 50.0) * 0.5 + 0.5;
-                starGlow = smoothstep(0.2, 0.02, starDist) * twinkle * 0.8;
+                starGlow = smoothstep(0.2, 0.02, starDist) * twinkle * 0.3;
             }
-            vec3 starColor = vec3(0.8, 0.9, 1.0) * starGlow;
+            vec3 starColor = vec3(0.6, 0.7, 0.8) * starGlow;
             
             // Layer 3: Faint Glowing Dust (fastest parallax)
             vec2 dustUV = uvCover * u_texResolution * 0.005 + worldCenterUV * 0.6;
             float dustNoise = noise(dustUV + vec2(u_time * 0.05, u_time * 0.05));
-            vec3 dustColor = vec3(0.4, 0.7, 1.0) * smoothstep(0.5, 0.9, dustNoise) * 0.25;
+            vec3 dustColor = vec3(0.4, 0.7, 1.0) * smoothstep(0.5, 0.9, dustNoise) * 0.1;
             
             // Combine
             vec3 finalColor = baseColor.rgb + starColor + dustColor;
