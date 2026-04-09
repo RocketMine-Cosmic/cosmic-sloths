@@ -160,6 +160,15 @@ export class GameEngine {
 
         const initialWeaponId = startingWeaponId || 'neoBlaster';
 
+        let sectorPenalty = 1.0;
+        if (arenaId !== 'world_boss_arena' && !isEndless) {
+            const currentIndex = ARENAS.findIndex(a => a.id === arenaId);
+            const unlockedCount = save.unlockedArenasByCharacter?.[characterId]?.length || 1;
+            const maxUnlockedIndex = unlockedCount - 1;
+            const diff = Math.max(0, maxUnlockedIndex - currentIndex);
+            sectorPenalty = Math.max(0.1, 1.0 - (diff * 0.20));
+        }
+
         this.player = {
             name: baseChar.name,
             image: playerImage,
@@ -179,7 +188,7 @@ export class GameEngine {
             areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0) + augBonus.areaMult,
             cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0),
             projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0) + (relicBonus.projSpeedMult || 0),
-            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult,
+            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult * sectorPenalty,
             xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult) * this.difficulty.xpMult,
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0),
             critBonus: augBonus.critBonus,
@@ -195,7 +204,7 @@ export class GameEngine {
         const now = Date.now();
         const hasXpBuff = sessionBuffs.xpExpiry > now;
 
-        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult;
+        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult * sectorPenalty;
         this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (hasXpBuff ? 0.5 : 0)) * this.difficulty.xpMult;
 
         if (hasAug('dat_ghost')) {

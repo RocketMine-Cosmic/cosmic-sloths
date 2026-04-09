@@ -446,9 +446,21 @@ export default function Hub({ isCarousel }) {
                                                             🔒 LOCKED
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 text-cyan-300 font-black tracking-widest text-[9px] md:text-[10px] bg-cyan-950/60 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/50 backdrop-blur-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]">
-                                                            ✓ UNLOCKED
-                                                        </span>
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <span className="inline-flex items-center gap-1 text-cyan-300 font-black tracking-widest text-[9px] md:text-[10px] bg-cyan-950/60 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/50 backdrop-blur-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                                                                ✓ UNLOCKED
+                                                            </span>
+                                                            {(() => {
+                                                                const currentIndex = ARENAS.findIndex(a => a.id === selectedArena);
+                                                                const unlockedCount = (save.unlockedArenasByCharacter[selectedChar] || ['station']).length;
+                                                                const diff = Math.max(0, unlockedCount - 1 - currentIndex);
+                                                                const penalty = diff * 20;
+                                                                if (penalty > 0) {
+                                                                    return <span className="text-[9px] text-yellow-500 font-bold tracking-wider uppercase">-{Math.min(90, penalty)}% Gold Penalty</span>;
+                                                                }
+                                                                return null;
+                                                            })()}
+                                                        </div>
                                                     )}
                                                 </div>
 
