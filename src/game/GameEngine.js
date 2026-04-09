@@ -10,22 +10,11 @@ import { drawPickups } from './PickupRenderer';
 import { fireWeaponLogic } from './WeaponSystem';
 import { drawProjectiles } from './ProjectileRenderer';
 import { renderGame } from './GameEngineDraw';
-import { CosmicBackground } from './CosmicBackground';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        
-        this.bgCanvas = document.createElement('canvas');
-        this.bgCanvas.style.position = 'absolute';
-        this.bgCanvas.style.inset = '0';
-        this.bgCanvas.style.width = '100%';
-        this.bgCanvas.style.height = '100%';
-        this.bgCanvas.style.zIndex = '0';
-        this.bgCanvas.style.pointerEvents = 'none';
-        this.canvas.parentElement.insertBefore(this.bgCanvas, this.canvas);
-        
         this.callbacks = callbacks;
         this.characterId = characterId;
         this.save = save;
@@ -111,8 +100,6 @@ export class GameEngine {
             enemySpawnRate: 1,
             enemySpeed: 1
         };
-
-        this.cosmicBg = new CosmicBackground(this.bgCanvas, this.arena.id);
 
         if (this.envEffect === 'neon_rain') {
             this.envModifiers.playerSpeed = 1.1;
@@ -329,9 +316,6 @@ export class GameEngine {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
         cancelAnimationFrame(this.animationId);
-        if (this.bgCanvas && this.bgCanvas.parentElement) {
-            this.bgCanvas.parentElement.removeChild(this.bgCanvas);
-        }
     }
 
     loop(timestamp) {
