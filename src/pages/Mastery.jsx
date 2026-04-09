@@ -61,6 +61,9 @@ export default function Mastery({ isCarousel }) {
                                             <h3 className="font-black text-xl tracking-widest uppercase truncate" style={{ color: char.color, textShadow: `0 0 10px ${char.color}80` }}>
                                                 {char.name}
                                             </h3>
+                                            <div className="text-xs text-slate-400 italic mb-2 break-words whitespace-normal leading-snug">
+                                                {char.desc}
+                                            </div>
                                             <div className="flex items-center gap-2 text-sm text-slate-400">
                                                 <span className="font-bold text-white">{kills.toLocaleString()}</span> Total Kills
                                             </div>
