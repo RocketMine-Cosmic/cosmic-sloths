@@ -4,50 +4,15 @@ import { drawPickups } from './PickupRenderer';
 import { drawProjectiles } from './ProjectileRenderer';
 
 export function renderGame() {
-    if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
-        // Cache the rendered background to avoid expensive scaling and blending every frame
-        if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
-            this.cachedArenaImage = document.createElement('canvas');
-            this.cachedArenaImage.width = this.canvas.width;
-            this.cachedArenaImage.height = this.canvas.height;
-            const oCtx = this.cachedArenaImage.getContext('2d');
-            
-            // Draw base color
-            oCtx.fillStyle = this.arena.bg;
-            oCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            // Draw scaled image with opacity
-            const scale = Math.max(this.canvas.width / this.arenaImage.naturalWidth, this.canvas.height / this.arenaImage.naturalHeight);
-            const drawW = this.arenaImage.naturalWidth * scale;
-            const drawH = this.arenaImage.naturalHeight * scale;
-            const x = (this.canvas.width - drawW) / 2;
-            const y = (this.canvas.height - drawH) / 2;
-            
-            oCtx.globalAlpha = 0.9;
-            oCtx.drawImage(this.arenaImage, x, y, drawW, drawH);
-            oCtx.globalAlpha = 1.0;
-        }
-        // Draw the pre-rendered, screen-sized background (extremely fast)
-        this.ctx.drawImage(this.cachedArenaImage, 0, 0);
-    } else {
-        this.ctx.fillStyle = this.arena.bg;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    }
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.ctx.fillStyle = '#ffffff';
-    this.stars.forEach(star => {
-        let sx = (star.x - this.camera.x * star.parallax) % 2000;
-        let sy = (star.y - this.camera.y * star.parallax) % 2000;
-        if (sx < 0) sx += 2000;
-        if (sy < 0) sy += 2000;
-        
-        const screenX = (sx / 2000) * this.canvas.width;
-        const screenY = (sy / 2000) * this.canvas.height;
-        
-        this.ctx.globalAlpha = star.parallax;
-        this.ctx.fillRect(screenX, screenY, star.size, star.size);
-    });
-    this.ctx.globalAlpha = 1.0;
+    if (this.cosmicBg && this.bgCanvas) {
+        if (this.bgCanvas.width !== this.canvas.width || this.bgCanvas.height !== this.canvas.height) {
+            this.bgCanvas.width = this.canvas.width;
+            this.bgCanvas.height = this.canvas.height;
+        }
+        this.cosmicBg.draw(this.camera.x, this.camera.y, this.zoom, this.time);
+    }
 
     this.ctx.save();
     this.ctx.scale(this.zoom, this.zoom);
