@@ -77,9 +77,9 @@ export class ParticleManager {
     }
 
     update(dt) {
-        // Hard cap to prevent spiral lag, stricter for mobile optimization
-        if (this.particles.length > 250) {
-            this.particles.splice(0, this.particles.length - 250);
+        // Increased cap since we optimized the spatial hash collision loop
+        if (this.particles.length > 1500) {
+            this.particles.splice(0, this.particles.length - 1500);
         }
         this.particles = this.particles.filter(p => {
             p.life -= dt;
