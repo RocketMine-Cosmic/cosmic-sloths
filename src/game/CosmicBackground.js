@@ -130,19 +130,23 @@ void main() {
     vec3 color = vec3(0.0);
 
     // LAYER 1: Slow Distant Nebula
-    vec2 pNebula = p * 2.5 + camDist * 0.1 + vec2(u_time * 0.015, u_time * 0.01);
+    vec2 pNebula = p * 3.0 + camDist * 0.1 + vec2(u_time * 0.015, u_time * 0.01);
     float n1 = fbm(pNebula);
     float n2 = fbm(pNebula * 2.0 - vec2(u_time * 0.02));
+    float n3 = fbm(pNebula * 4.0 + vec2(u_time * 0.03));
     
     // Explosive vibrant nebula math
-    float cloud1 = smoothstep(0.3, 0.8, n1);
-    float cloud2 = smoothstep(0.4, 0.9, n2);
+    float cloud1 = smoothstep(0.35, 0.75, n1);
+    float cloud2 = smoothstep(0.45, 0.85, n2);
+    float cloud3 = smoothstep(0.55, 0.95, n3);
     
     vec3 nebulaColor = mix(cBase3, cBase1, cloud1);
-    nebulaColor += cBase2 * cloud2 * 1.2;
+    nebulaColor += cBase2 * cloud2 * 1.5;
+    nebulaColor += cStarGlow * cloud3 * 0.8;
+    
     // Glowing edges
-    float edgeGlow = smoothstep(0.4, 0.5, n1) - smoothstep(0.5, 0.6, n1);
-    nebulaColor += cBase1 * edgeGlow * 1.5;
+    float edgeGlow = smoothstep(0.4, 0.45, n1) - smoothstep(0.45, 0.5, n1);
+    nebulaColor += cBase1 * edgeGlow * 2.5;
     
     color += nebulaColor;
 
@@ -167,26 +171,26 @@ void main() {
     // LAYER 4: Close Asteroid / Debris Field
     vec2 pAstBase = p * 15.0 + camDist * 1.5 + vec2(u_time * 0.05, -u_time * 0.03);
     float nAst = fbm(pAstBase * 3.0);
-    vec2 pAst = pAstBase + nAst * 0.4; // Distort space for jagged asteroids
+    vec2 pAst = pAstBase + nAst * 0.5; // Distort space for jagged asteroids
     float a = voronoi(pAst);
     float astThresh = 0.12 * min(1.0, asteroidDensity);
     
     if (a < astThresh && asteroidDensity > 0.1) {
         float z = sqrt(max(0.0, (astThresh * astThresh) - (a * a))) / astThresh;
-        float surfNoise = fbm(pAstBase * 15.0);
-        z *= (0.7 + 0.6 * surfNoise);
+        float surfNoise = fbm(pAstBase * 20.0) * 0.6 + fbm(pAstBase * 40.0) * 0.4;
+        z *= (0.6 + 0.8 * surfNoise);
         
-        vec3 normal = normalize(vec3(nAst - 0.5, surfNoise - 0.5, z + 0.2));
+        vec3 normal = normalize(vec3(nAst - 0.5, surfNoise - 0.5, z + 0.1));
         vec3 lightDir = normalize(vec3(-1.0, 1.0, 1.0));
         float diff = max(0.0, dot(normal, lightDir));
         
-        vec3 rockColor = mix(vec3(0.1, 0.08, 0.12), vec3(0.2, 0.2, 0.25), surfNoise);
-        vec3 astColor = rockColor * diff * 2.0;
+        vec3 rockColor = mix(vec3(0.08, 0.06, 0.1), vec3(0.25, 0.25, 0.3), surfNoise);
+        vec3 astColor = rockColor * diff * 3.0;
         
-        // Subtle edge lighting to blend with nebula
-        astColor += cBase1 * pow(1.0 - z, 4.0) * 0.8;
+        // Stronger edge lighting to blend with nebula
+        astColor += cBase1 * pow(1.0 - z, 3.0) * 1.5;
         
-        float alphaAst = smoothstep(astThresh, astThresh * 0.7, a);
+        float alphaAst = smoothstep(astThresh, astThresh * 0.5, a);
         color = mix(color, astColor, alphaAst);
     }
 
@@ -196,16 +200,16 @@ void main() {
     float distToStar = length(pStarCenter);
     
     // Core glow
-    color += cStarGlow * glowPower * 0.05 / (distToStar + 0.01);
+    color += cStarGlow * glowPower * 0.08 / (distToStar + 0.005);
     
     // Lens Flare Rays
     float angle = atan(pStarCenter.y, pStarCenter.x);
     float rays = noise(vec2(angle * 8.0, u_time * 0.1)) + noise(vec2(angle * 16.0, u_time * 0.15)) * 0.5;
-    color += cStarGlow * glowPower * smoothstep(0.0, 1.0, rays) * 0.02 / (distToStar + 0.05);
+    color += cStarGlow * glowPower * smoothstep(0.0, 1.0, rays) * 0.04 / (distToStar + 0.02);
 
     // Global Tone Mapping / Contrast
-    color = smoothstep(0.0, 1.2, color); // increase contrast slightly
-    color = pow(color, vec3(1.0 / 1.2)); // gamma correction
+    color = smoothstep(0.0, 1.1, color); // increase contrast for sharper look
+    color = pow(color, vec3(1.0 / 1.3)); // brighter gamma
 
     fragColor = vec4(color, 1.0);
 }
