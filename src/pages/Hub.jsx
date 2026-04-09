@@ -180,7 +180,7 @@ export default function Hub({ isCarousel }) {
                                 onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
                                 className="mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
                             >
-                                <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
+                                <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Spaceship Hub
                             </button>
                         )}
                         <h1 className="text-xl md:text-4xl font-black tracking-widest uppercase" style={{ background: 'linear-gradient(90deg, #0CA7B8, #D946EF, #0CA7B8)', backgroundSize: '200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', dropShadow: '0 0 10px rgba(217,70,239,0.5)' }}>SLOTH LOUNGE</h1>

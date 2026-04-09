@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
 import MainMenu from './pages/MainMenu';
+import InteractiveHub from './pages/InteractiveHub';
 import Hub from './pages/Hub';
 import Upgrades from './pages/Upgrades.jsx';
 import LeaderboardPage from './pages/LeaderboardPage';
@@ -81,7 +82,8 @@ const AuthenticatedApp = () => {
   return (
     <>
     <Routes>
-      <Route path="/" element={<PlayCarousel />} />
+      <Route path="/" element={<InteractiveHub />} />
+      <Route path="/menu" element={<MainMenu />} />
       <Route path="/hub" element={<Hub />} />
       <Route path="/upgrades" element={<Upgrades />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
