@@ -1146,6 +1146,10 @@ export class GameEngine {
                 if (e.isBoss && this.bossModifiers.hide) {
                     xpValue *= 1.5;
                 }
+                
+                const progress = this.arena?.duration === Infinity ? this.time / 300 : Math.min(1, this.time / (this.arena?.duration || 300));
+                xpValue *= (1.0 + (progress * 2.0)); // Scale XP heavily in late game
+                
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc' });
                 
                 // Death Splatter + Kill Effect cosmetic
@@ -1655,7 +1659,7 @@ export class GameEngine {
     levelUp() {
         this.xp -= this.xpRequired;
         this.level++;
-        this.xpRequired = Math.floor(this.xpRequired * 1.2 + 40);
+        this.xpRequired = Math.floor(this.xpRequired * 1.15 + 25);
         
         // Scale stats slightly and heal a bit (no longer full heal + god mode)
         this.player.maxHp = Math.floor(this.player.maxHp * 1.02);

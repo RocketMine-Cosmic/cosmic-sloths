@@ -39,6 +39,8 @@ export const WEAPONS = {
   napalm: { id: 'napalm', name: 'Zero-G Napalm', type: 'weapon', desc: 'Leaves burning pools.', masteryDesc: 'MASTERY: Blue fire that slows enemies by 50%.', baseDamage: 5, baseCooldown: 75, baseArea: 1 },
   novaPulse: { id: 'novaPulse', name: 'Nova Pulse', type: 'weapon', desc: 'A massive expanding energy blast.', masteryDesc: 'MASTERY: Triggers a second echo pulse. (Purple Blast)', baseDamage: 25, baseCooldown: 150, baseArea: 1 },
   shieldBubble: { id: 'shieldBubble', name: 'Shield Bubble', type: 'weapon', desc: 'Pushes enemies away and damages them.', masteryDesc: 'MASTERY: Fires retaliatory lasers at enemies. (Golden Shield)', baseDamage: 15, baseCooldown: 180, baseArea: 1 },
+  bouncingBlade: { id: 'bouncingBlade', name: 'Ricochet Blade', type: 'weapon', desc: 'Fires a bouncing sawblade.', masteryDesc: 'MASTERY: Blades bounce more times. (Silver Blade)', baseDamage: 15, baseCooldown: 60, baseArea: 1 },
+  toxicCloud: { id: 'toxicCloud', name: 'Toxic Emitter', type: 'weapon', desc: 'Leaves a lingering poison cloud.', masteryDesc: 'MASTERY: Clouds grow larger over time. (Green Cloud)', baseDamage: 8, baseCooldown: 90, baseArea: 1 },
   // Synergies
   burningBarrier: { id: 'burningBarrier', name: 'Burning Barrier', type: 'weapon', desc: 'SYNERGY: A fiery shield that burns and pushes enemies.', baseDamage: 18, baseCooldown: 150, baseArea: 1.5, isSynergy: true },
   laserNova: { id: 'laserNova', name: 'Laser Nova', type: 'weapon', desc: 'SYNERGY: An expanding blast of piercing lasers.', baseDamage: 45, baseCooldown: 120, baseArea: 1.2, isSynergy: true },
@@ -46,12 +48,14 @@ export const WEAPONS = {
   orbitalLasers: { id: 'orbitalLasers', name: 'Orbital Lasers', type: 'weapon', desc: 'SYNERGY: Drones that rapidly fire piercing beams.', baseDamage: 25, baseCooldown: 50, baseArea: 1.2, isSynergy: true },
   seismicWhip: { id: 'seismicWhip', name: 'Seismic Whip', type: 'weapon', desc: 'SYNERGY: Whip strikes generate expanding shockwaves.', baseDamage: 35, baseCooldown: 35, baseArea: 1.5, isSynergy: true },
   flamingLash: { id: 'flamingLash', name: 'Flaming Lash', type: 'weapon', desc: 'SYNERGY: A molten whip that leaves persistent fire.', baseDamage: 28, baseCooldown: 35, baseArea: 1.5, isSynergy: true },
+  venomLash: { id: 'venomLash', name: 'Venom Lash', type: 'weapon', desc: 'SYNERGY: A whip that applies toxic damage and slows.', baseDamage: 25, baseCooldown: 40, baseArea: 1.5, isSynergy: true },
   supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 60, baseCooldown: 60, baseArea: 1.5, isEvolution: true },
   vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals slightly and covers screen.', baseDamage: 45, baseCooldown: 50, baseArea: 2.2, isEvolution: true },
   orbitalDefense: { id: 'orbitalDefense', name: 'Orbital Defense Network', type: 'weapon', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.', baseDamage: 35, baseCooldown: 40, baseArea: 2, isEvolution: true },
   hellfire: { id: 'hellfire', name: 'Hellfire', type: 'weapon', desc: 'EVOLVED: Blue flames that persist and melt everything.', baseDamage: 25, baseCooldown: 80, baseArea: 1.5, isEvolution: true },
   quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Constant rapid pulses of dark energy.', baseDamage: 75, baseCooldown: 80, baseArea: 2, isEvolution: true },
   aegisMatrix: { id: 'aegisMatrix', name: 'Aegis Matrix', type: 'weapon', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.', baseDamage: 40, baseCooldown: 100, baseArea: 2, isEvolution: true },
+  buzzsawSwarm: { id: 'buzzsawSwarm', name: 'Buzzsaw Swarm', type: 'weapon', desc: 'EVOLVED: Multiple massive blades that ricochet wildly.', baseDamage: 30, baseCooldown: 50, baseArea: 1.5, isEvolution: true },
 };
 
 export const BOUNTIES_POOL = [
@@ -77,7 +81,8 @@ export const SYNERGIES = [
   { weapon1: 'vineWhip', weapon2: 'slothSwarm', result: 'thornySwarm' },
   { weapon1: 'napBeam', weapon2: 'slothSwarm', result: 'orbitalLasers' },
   { weapon1: 'vineWhip', weapon2: 'novaPulse', result: 'seismicWhip' },
-  { weapon1: 'napalm', weapon2: 'vineWhip', result: 'flamingLash' }
+  { weapon1: 'napalm', weapon2: 'vineWhip', result: 'flamingLash' },
+  { weapon1: 'toxicCloud', weapon2: 'vineWhip', result: 'venomLash' }
 ];
 
 export const TRAIL_COSMETICS = [
@@ -150,7 +155,8 @@ export const EVOLUTIONS = [
     { baseWeapon: 'slothSwarm', passive: 'spd_up', evolvedWeapon: 'orbitalDefense', name: 'Orbital Defense Network', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.' },
     { baseWeapon: 'napalm', passive: 'dmg_up', evolvedWeapon: 'hellfire', name: 'Hellfire', desc: 'EVOLVED: Blue flames that persist and melt everything.' },
     { baseWeapon: 'novaPulse', passive: 'cd_down', evolvedWeapon: 'quantumCollapse', name: 'Quantum Collapse', desc: 'EVOLVED: Constant rapid pulses of dark energy.' },
-    { baseWeapon: 'shieldBubble', passive: 'hp_up', evolvedWeapon: 'aegisMatrix', name: 'Aegis Matrix', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.' }
+    { baseWeapon: 'shieldBubble', passive: 'hp_up', evolvedWeapon: 'aegisMatrix', name: 'Aegis Matrix', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.' },
+    { baseWeapon: 'bouncingBlade', passive: 'proj_spd', evolvedWeapon: 'buzzsawSwarm', name: 'Buzzsaw Swarm', desc: 'EVOLVED: Multiple massive blades that ricochet wildly.' }
 ];
 
 export const UPGRADES = [
@@ -177,6 +183,8 @@ export const UPGRADES = [
   { id: 'w_novaPulse', name: 'Nova Pulse', desc: 'A massive expanding energy blast.', type: 'weapon', weaponId: 'novaPulse' },
   { id: 'w_shieldBubble', name: 'Shield Bubble', desc: 'Pushes enemies away and damages them.', type: 'weapon', weaponId: 'shieldBubble' },
   { id: 'w_neoBlaster', name: 'Blaster', desc: 'Fires reliable energy blasts.', type: 'weapon', weaponId: 'neoBlaster' },
+  { id: 'w_bouncingBlade', name: 'Ricochet Blade', desc: 'Fires a bouncing sawblade.', type: 'weapon', weaponId: 'bouncingBlade' },
+  { id: 'w_toxicCloud', name: 'Toxic Emitter', desc: 'Leaves a lingering poison cloud.', type: 'weapon', weaponId: 'toxicCloud' },
 ];
 
 const loadSprite = (filename) => {
@@ -202,6 +210,7 @@ export const ENEMIES = [
   { id: 't2_rock', name: 'Rock Fragment', hp: 35, speed: 0.8, damage: 14, color: '#f97316', radius: 41, xp: 2, tier: 2, isTank: true, spriteImage: loadSprite('0452ce6df_rock_fragment_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 3
+  { id: 'healer_drone', name: 'Support Drone', hp: 25, speed: 1.8, damage: 5, color: '#22c55e', radius: 30, xp: 3, tier: 3, spriteImage: null, frameCount: 1, animationSpeed: 0.15 },
   { id: 't3_manta', name: 'Void Manta', hp: 30, speed: 2.0, damage: 16, color: '#8b5cf6', radius: 41, xp: 3, tier: 3, spriteImage: loadSprite('9842135cf_void_mantra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't3_energy_phantom', name: 'Energy Phantom', hp: 28, speed: 1.8, damage: 15, color: '#0ea5e9', radius: 36, xp: 3, tier: 3, spriteImage: loadSprite('74d31fdc0_energy_phantom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't3_starfish', name: 'Stellar Starfish', hp: 35, speed: 1.2, damage: 18, color: '#eab308', radius: 36, xp: 3, tier: 3, spriteImage: loadSprite('bdcbfb6bd_stellar_starfish_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
@@ -214,6 +223,7 @@ export const ENEMIES = [
   { id: 't4_mothra', name: 'Neon Mothra', hp: 38, speed: 2.4, damage: 18, color: '#14b8a6', radius: 36, xp: 4, tier: 4, isRanged: true, spriteImage: loadSprite('23d933892_neon_mothra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
   // Tier 5
+  { id: 'rift_stalker', name: 'Rift Stalker', hp: 55, speed: 1.4, damage: 35, color: '#9333ea', radius: 36, xp: 5, tier: 5, spriteImage: null, frameCount: 1, animationSpeed: 0.15 },
   { id: 't5_spike_virus', name: 'Spike Virus', hp: 65, speed: 1.8, damage: 28, color: '#a855f7', radius: 45, xp: 5, tier: 5, spriteImage: loadSprite('9b4da0034_spike_virus_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't5_coral', name: 'Coral Bloom', hp: 80, speed: 1.2, damage: 25, color: '#f43f5e', radius: 50, xp: 5, tier: 5, spriteImage: loadSprite('c045ec43a_coral_bloom_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't5_blade', name: 'Blade Arrowhead', hp: 60, speed: 2.5, damage: 30, color: '#94a3b8', radius: 41, xp: 5, tier: 5, isRanged: true, spriteImage: loadSprite('e573c6ccc_blade_arrowhead_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
