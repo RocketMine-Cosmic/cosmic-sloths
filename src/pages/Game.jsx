@@ -385,6 +385,22 @@ export default function Game() {
         }
     };
 
+    const handleSquadUltimate = () => {
+        const currentSave = SaveManager.load();
+        if ((currentSave.cosmicTokens || 0) >= 4 && engineRef.current && !engineRef.current.isPaused) {
+            currentSave.cosmicTokens -= 4;
+            SaveManager.save(currentSave);
+            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
+            
+            const week_id = moment().format('YYYY-[W]ww');
+            const seasonNum = Math.floor(moment().week() / 4) + 1;
+            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            base44.functions.invoke('recordTokenSpend', { amount: 4, week_id, season_id }).catch(console.error);
+
+            engineRef.current.triggerSquadUltimate();
+        }
+    };
+
     const handlePause = () => {
         if (engineRef.current && !engineRef.current.isGameOver && !engineRef.current.isVictory && !levelUpChoices) {
             engineRef.current.isPaused = true;
@@ -441,7 +457,7 @@ export default function Game() {
             
             <VirtualJoystick onChange={handleJoystickChange} />
             
-            <UIOverlay {...gameState} onPause={handlePause} />
+            <UIOverlay {...gameState} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />
             
             {isPaused && (
                 <PauseModal onResume={handleResume} />

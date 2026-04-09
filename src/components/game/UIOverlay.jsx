@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pause, Heart, CircleDollarSign } from 'lucide-react';
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, cosmicTokens, weapons = [], passives = [], onPause }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, cosmicTokens, weapons = [], passives = [], onPause, onSquadUltimate }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -79,6 +79,16 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     </div>
                     
                     <div className="flex flex-col gap-1 md:gap-2 justify-center">
+                        <button 
+                            id="squad-ult-btn"
+                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate(); }}
+                            disabled={cosmicTokens < 4}
+                            className="bg-[#0b0416]/90 p-1.5 md:p-2 rounded-lg border border-purple-500/50 hover:bg-purple-900 hover:border-purple-400 transition-all flex items-center justify-center touch-none h-full disabled:opacity-50"
+                            style={{ touchAction: 'none' }}
+                            title="Squad Ultimate (Cost: 4 Tokens)"
+                        >
+                            <span className="text-xs font-black text-purple-400">ULT</span>
+                        </button>
                         <button 
                             id="pause-game-btn"
                             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}

@@ -405,6 +405,55 @@ export function renderGame() {
         this.particleManager.createTrail(this.player.x, this.player.y, this.player.trail, this.frameCount);
     }
 
+    if (this.squadClones) {
+        this.squadClones.forEach(clone => {
+            const spriteSheet = clone.isMoving
+                ? (clone.walkImage && clone.walkImage.complete ? clone.walkImage : null)
+                : (clone.idleImage && clone.idleImage.complete ? clone.idleImage : null);
+
+            this.ctx.save();
+            this.ctx.translate(clone.x, clone.y);
+            if (!clone.facingLeft) this.ctx.scale(-1, 1);
+            
+            this.ctx.globalCompositeOperation = 'lighter';
+            this.ctx.fillStyle = clone.color;
+            this.ctx.globalAlpha = 0.3 * Math.min(1, clone.life);
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, clone.radius * 2, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.globalAlpha = Math.min(1, clone.life);
+
+            if (spriteSheet) {
+                const size = clone.radius * 5;
+                const frame = clone.currentFrame;
+                const col = frame % 5;
+                const row = Math.floor(frame / 5);
+                const frameWidth = spriteSheet.width / 5;
+                const frameHeight = spriteSheet.height / 5;
+                const sx = col * frameWidth;
+                const sy = row * frameHeight;
+                
+                this.ctx.shadowColor = clone.color;
+                this.ctx.shadowBlur = 10;
+                this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+                this.ctx.shadowBlur = 0;
+            } else if (clone.image && clone.image.complete) {
+                const size = clone.radius * 3;
+                this.ctx.shadowColor = clone.color;
+                this.ctx.shadowBlur = 10;
+                this.ctx.drawImage(clone.image, -size/2, -size/2, size, size);
+                this.ctx.shadowBlur = 0;
+            } else {
+                this.ctx.fillStyle = clone.color;
+                this.ctx.beginPath();
+                this.ctx.roundRect(-clone.radius, -clone.radius, clone.radius * 2, clone.radius * 2, 8);
+                this.ctx.fill();
+            }
+            this.ctx.restore();
+        });
+    }
+
     // Advance sprite animation frame
     const SPRITE_FRAMES = 25;
     const FRAME_DURATION = 1 / 12; // 12 fps

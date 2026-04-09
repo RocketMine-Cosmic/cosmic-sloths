@@ -10,6 +10,7 @@ import { drawPickups } from './PickupRenderer';
 import { fireWeaponLogic } from './WeaponSystem';
 import { drawProjectiles } from './ProjectileRenderer';
 import { renderGame } from './GameEngineDraw';
+import { triggerSquadUltimate, updateSquadClones } from './SquadUltimate';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null, isNGPlus = false) {
@@ -272,6 +273,10 @@ export class GameEngine {
         this.bindEvents();
         this.lastTime = performance.now();
         this.animationId = requestAnimationFrame(this.loop.bind(this));
+    }
+
+    triggerSquadUltimate() {
+        triggerSquadUltimate(this);
     }
 
     triggerSonicBoom() {
@@ -558,6 +563,7 @@ export class GameEngine {
         this.updateEnemies(dt);
         this.updatePickups(dt);
         this.updateHazards(dt);
+        updateSquadClones(this, dt);
         
         // --- Character Mechanics Update ---
         if (this.characterId === 'neobyte') {
