@@ -167,28 +167,27 @@ export function renderGame() {
                 this.ctx.rotate(Math.atan2(p.vy, p.vx));
             }
             
-            this.ctx.globalAlpha = 0.3;
-            this.ctx.fillStyle = p.color || '#ff0000';
+            this.ctx.globalCompositeOperation = 'lighter';
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 3));
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.2, p.color || '#ff0000');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, p.radius * 2, 0, Math.PI * 2);
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 3), 0, Math.PI * 2);
             this.ctx.fill();
-            this.ctx.globalAlpha = 0.6;
+
+            this.ctx.fillStyle = '#ffffff';
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, p.radius * 1.2, 0, Math.PI * 2);
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.8), 0, Math.PI * 2);
             this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
 
             if (texStar && texStar.isReady) {
-                this.ctx.drawImage(texStar, -p.radius*1.5, -p.radius*1.5, p.radius*3, p.radius*3);
-            } else {
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath();
-                this.ctx.moveTo(p.radius, 0);
-                this.ctx.lineTo(-p.radius, p.radius*0.5);
-                this.ctx.lineTo(-p.radius*0.5, 0);
-                this.ctx.lineTo(-p.radius, -p.radius*0.5);
-                this.ctx.fill();
+                this.ctx.globalAlpha = 0.8;
+                this.ctx.drawImage(texStar, -p.radius*2.5, -p.radius*2.5, p.radius*5, p.radius*5);
+                this.ctx.globalAlpha = 1.0;
             }
+            this.ctx.globalCompositeOperation = 'screen';
             this.ctx.restore();
         });
         this.ctx.globalCompositeOperation = 'source-over';

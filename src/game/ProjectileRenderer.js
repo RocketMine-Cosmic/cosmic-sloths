@@ -51,15 +51,18 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
 
         if (p.type === 'blaster_shot') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = p.color || '#ffffff';
-            ctx.globalAlpha = 0.8;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.5), Math.max(0.1, p.radius * 0.8), 0, 0, Math.PI * 2); ctx.fill();
+            const grad = ctx.createLinearGradient(p.radius, 0, -p.radius * 3, 0);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.2, p.color || '#00ffff');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.ellipse(-p.radius * 0.5, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 1.0;
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.8), Math.max(0.1, p.radius * 0.3), 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.2), Math.max(0.1, p.radius * 0.5), 0, 0, Math.PI * 2); ctx.fill();
             if (texStar && texStar.isReady) {
-                ctx.globalAlpha = 0.6;
-                ctx.drawImage(texStar, -p.radius * 2, -p.radius * 2, p.radius * 4, p.radius * 4);
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
+                ctx.globalAlpha = 1.0;
             }
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'wrench_swing') {
@@ -99,18 +102,21 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'beam' || p.type === 'dual_laser') {
-            ctx.fillStyle = p.color || '#ffffff';
-            ctx.globalAlpha = 0.7;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.globalCompositeOperation = 'lighter';
+            const trailGrad = ctx.createLinearGradient(p.radius, 0, -p.radius * 4, 0);
+            trailGrad.addColorStop(0, '#ffffff');
+            trailGrad.addColorStop(0.2, p.color || '#00ffff');
+            trailGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = trailGrad;
+            ctx.beginPath(); ctx.ellipse(-p.radius, 0, p.radius * 3.5, p.radius * 1.2, 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 1.0;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
             if (texSlash && texSlash.isReady) {
-                ctx.globalCompositeOperation = 'lighter';
-                ctx.globalAlpha = 0.8;
-                ctx.drawImage(texSlash, -p.radius * 3, -p.radius * 1.5, p.radius * 6, p.radius * 3);
-                ctx.globalCompositeOperation = 'screen';
+                ctx.globalAlpha = 0.9;
+                ctx.drawImage(texSlash, -p.radius * 4, -p.radius * 2, p.radius * 8, p.radius * 4);
+                ctx.globalAlpha = 1.0;
             }
+            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'lightning') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
@@ -170,27 +176,31 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.stroke();
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'missile') {
-            ctx.fillStyle = p.color || '#ff4400';
-            ctx.globalAlpha = 0.9;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#2a2a35';
             ctx.beginPath();
-            ctx.moveTo(p.radius * 1.5, 0);
-            ctx.lineTo(-p.radius, p.radius * 0.8);
-            ctx.lineTo(-p.radius * 0.5, 0);
-            ctx.lineTo(-p.radius, -p.radius * 0.8);
+            ctx.moveTo(p.radius * 1.8, 0);
+            ctx.lineTo(-p.radius, p.radius * 0.9);
+            ctx.lineTo(-p.radius * 0.4, 0);
+            ctx.lineTo(-p.radius, -p.radius * 0.9);
             ctx.closePath();
             ctx.fill();
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = p.color || '#ff4400';
             ctx.beginPath();
-            ctx.moveTo(p.radius * 1.5, 0);
-            ctx.lineTo(-p.radius * 0.2, p.radius * 0.3);
+            ctx.moveTo(p.radius * 1.2, 0);
+            ctx.lineTo(-p.radius * 0.2, p.radius * 0.4);
             ctx.lineTo(0, 0);
-            ctx.lineTo(-p.radius * 0.2, -p.radius * 0.3);
+            ctx.lineTo(-p.radius * 0.2, -p.radius * 0.4);
             ctx.closePath();
             ctx.fill();
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#ffaa00';
+            const thrust = ctx.createLinearGradient(-p.radius * 0.4, 0, -p.radius * 3.5, 0);
+            thrust.addColorStop(0, '#ffffff');
+            thrust.addColorStop(0.2, '#ffaa00');
+            thrust.addColorStop(1, 'transparent');
+            ctx.fillStyle = thrust;
             ctx.beginPath();
-            ctx.ellipse(-p.radius * 1.2, 0, p.radius * 0.8 + Math.random() * 2, p.radius * 0.4, 0, 0, Math.PI * 2);
+            ctx.ellipse(-p.radius * 1.5, 0, p.radius * 2 + Math.random() * p.radius, p.radius * 0.7, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'data_pulse' || p.type === 'phantom_orb') {
@@ -218,19 +228,26 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'railgun') {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = p.color || '#00aaff';
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 4, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+            const railGrad = ctx.createLinearGradient(p.radius * 2, 0, -p.radius * 6, 0);
+            railGrad.addColorStop(0, '#ffffff');
+            railGrad.addColorStop(0.1, p.color || '#00aaff');
+            railGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = railGrad;
+            ctx.beginPath(); ctx.ellipse(-p.radius, 0, p.radius * 5, p.radius * 1.5, 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 1.0;
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 3, p.radius * 0.2, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = p.color || '#00aaff';
-            ctx.lineWidth = 1;
-            for(let i=0; i<3; i++) {
-                const offset = (time * 200 + i * 10) % (p.radius * 3);
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 3, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            for(let i=0; i<4; i++) {
+                const offset = (time * 400 + i * 15) % (p.radius * 4);
                 ctx.beginPath();
-                ctx.ellipse(-p.radius * 2 + offset, 0, p.radius * 0.4, p.radius * 1.2, 0, 0, Math.PI * 2);
+                ctx.ellipse(-p.radius * 2.5 + offset, 0, p.radius * 0.5, p.radius * 1.8, 0, 0, Math.PI * 2);
                 ctx.stroke();
+            }
+            if (texSlash && texSlash.isReady) {
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(texSlash, -p.radius * 6, -p.radius * 3, p.radius * 12, p.radius * 6);
+                ctx.globalAlpha = 1.0;
             }
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'sonic_wave') {
@@ -397,15 +414,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
         } else {
-            // Default projectile
+            // Default projectile - HD Upgrade
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ffff';
-            ctx.shadowBlur = 10;
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 2.5));
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.2, '#ffffff');
+            grad.addColorStop(0.5, p.color || '#00ffff');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+            ctx.arc(0, 0, Math.max(0.1, p.radius * 2.5), 0, Math.PI*2);
             ctx.fill();
-            ctx.shadowBlur = 0;
+            if (texStar && texStar.isReady) {
+                ctx.globalAlpha = 0.7;
+                ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
+                ctx.globalAlpha = 1.0;
+            }
             ctx.globalCompositeOperation = 'screen';
         }
         ctx.restore();
