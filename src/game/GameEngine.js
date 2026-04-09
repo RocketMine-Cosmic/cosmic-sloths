@@ -266,6 +266,7 @@ export class GameEngine {
         this.characterMechanics.sonicCharge = 0;
         this.addDamageText(this.player.x, this.player.y - 40, "SONIC BOOM!", '#00D4FF');
         this.particleManager.createExplosion(this.player.x, this.player.y, '#00D4FF', 2.0, 'default');
+        this.addParticle(this.player.x, this.player.y, '#00D4FF', 1, 'shockwave', 3.0, { growthRate: 800, lineWidth: 8 });
         this.shake(0.5);
         this.enemies.forEach(e => {
             if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < 300) {
@@ -310,6 +311,7 @@ export class GameEngine {
             this.player.iFrames = 2.0;
             this.player.invincibleTimer = 2.0;
             this.addDamageText(this.player.x, this.player.y - 20, "PHASE SHIFT!", '#FF00FF');
+            this.addParticle(this.player.x, this.player.y, '#FF00FF', 15, 'slash', 1.5);
             this.player.weapons.forEach(w => w.timer = 0);
             return;
         }
@@ -539,6 +541,7 @@ export class GameEngine {
             if (this.characterMechanics.decoyTimer >= threshold) {
                 this.characterMechanics.decoyTimer = 0;
                 this.characterMechanics.decoys.push({ x: this.player.x, y: this.player.y, hp: 100, maxHp: 100, life: 15 });
+                this.addParticle(this.player.x, this.player.y, this.characterId === 'holodrift' ? '#00FA9A' : '#FF00FF', 15, 'spark', 1.5);
             }
             this.characterMechanics.decoys = this.characterMechanics.decoys.filter(d => d.hp > 0 && d.life > 0);
             this.characterMechanics.decoys.forEach(d => {
@@ -558,6 +561,7 @@ export class GameEngine {
                     target.color = '#39FF14';
                     this.characterMechanics.hackedEnemies.push(target);
                     this.addDamageText(target.x, target.y - 20, "HACKED", '#39FF14');
+                    this.addParticle(target.x, target.y, '#39FF14', 15, 'spark', 2.0);
                 }
             }
             this.characterMechanics.hackedEnemies = this.characterMechanics.hackedEnemies.filter(e => e.hp > 0 && this.enemies.includes(e));
@@ -1366,11 +1370,13 @@ export class GameEngine {
             }
             if (e.slowTimer > 0) e.slowTimer -= dt;
             
-            if (this.characterId === 'dataphantom' && dist < this.player.radius + e.radius && !e.burrowed && !e.dataLeeched) {
+            if (this.characterId === 'dataphantom' && dist < 150 && !e.burrowed && !e.dataLeeched) {
                 e.dataLeeched = true;
                 e.speedMult = (e.speedMult || 1) * 0.7;
                 this.player.phantomBoostTimer = 2.0;
-                this.addParticle(e.x, e.y, '#98FF98', 5, 'spark');
+                this.addParticle(e.x, e.y, '#98FF98', 10, 'spark');
+                this.addParticle(e.x, e.y, '#98FF98', 5, 'implode', 1.5, { targetX: this.player.x, targetY: this.player.y });
+                this.addDamageText(e.x, e.y - 20, "LEECHED", '#98FF98');
             }
 
             if (isTargetingDecoy) {
