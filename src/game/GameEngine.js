@@ -10,6 +10,7 @@ import { drawPickups } from './PickupRenderer';
 import { fireWeaponLogic } from './WeaponSystem';
 import { drawProjectiles } from './ProjectileRenderer';
 import { renderGame } from './GameEngineDraw';
+import { WebGLBackground } from './WebGLBackground';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
@@ -114,7 +115,12 @@ export class GameEngine {
         this.arenaImage = null;
         if (this.arena.image) {
             this.arenaImage = new Image();
+            this.arenaImage.crossOrigin = "Anonymous";
+            this.arenaImage.onload = () => {
+                if (this.webglBg) this.webglBg.setImage(this.arenaImage);
+            };
             this.arenaImage.src = this.arena.image;
+            this.webglBg = new WebGLBackground();
         }
 
         let playerImage = null;

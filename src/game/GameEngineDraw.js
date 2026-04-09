@@ -4,7 +4,13 @@ import { drawPickups } from './PickupRenderer';
 import { drawProjectiles } from './ProjectileRenderer';
 
 export function renderGame() {
-    if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
+    if (this.webglBg && this.webglBg.gl && this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
+        const camCenterX = this.camera.x + (this.canvas.width / this.zoom) / 2;
+        const camCenterY = this.camera.y + (this.canvas.height / this.zoom) / 2;
+        this.webglBg.resize(this.canvas.width, this.canvas.height);
+        const bgCanvas = this.webglBg.render(this.time, camCenterX, camCenterY, this.zoom);
+        this.ctx.drawImage(bgCanvas, 0, 0);
+    } else if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
         // Cache the rendered background to avoid expensive scaling and blending every frame
         if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
             this.cachedArenaImage = document.createElement('canvas');
@@ -34,20 +40,22 @@ export function renderGame() {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    this.ctx.fillStyle = '#ffffff';
-    this.stars.forEach(star => {
-        let sx = (star.x - this.camera.x * star.parallax) % 2000;
-        let sy = (star.y - this.camera.y * star.parallax) % 2000;
-        if (sx < 0) sx += 2000;
-        if (sy < 0) sy += 2000;
-        
-        const screenX = (sx / 2000) * this.canvas.width;
-        const screenY = (sy / 2000) * this.canvas.height;
-        
-        this.ctx.globalAlpha = star.parallax;
-        this.ctx.fillRect(screenX, screenY, star.size, star.size);
-    });
-    this.ctx.globalAlpha = 1.0;
+    if (!this.webglBg || !this.webglBg.gl) {
+        this.ctx.fillStyle = '#ffffff';
+        this.stars.forEach(star => {
+            let sx = (star.x - this.camera.x * star.parallax) % 2000;
+            let sy = (star.y - this.camera.y * star.parallax) % 2000;
+            if (sx < 0) sx += 2000;
+            if (sy < 0) sy += 2000;
+            
+            const screenX = (sx / 2000) * this.canvas.width;
+            const screenY = (sy / 2000) * this.canvas.height;
+            
+            this.ctx.globalAlpha = star.parallax;
+            this.ctx.fillRect(screenX, screenY, star.size, star.size);
+        });
+        this.ctx.globalAlpha = 1.0;
+    }
 
     this.ctx.save();
     this.ctx.scale(this.zoom, this.zoom);
