@@ -159,6 +159,37 @@ export const EVOLUTIONS = [
     { baseWeapon: 'bouncingBlade', passive: 'proj_spd', evolvedWeapon: 'buzzsawSwarm', name: 'Buzzsaw Swarm', desc: 'EVOLVED: Multiple massive blades that ricochet wildly.' }
 ];
 
+export const CONSTELLATION_NODES = [
+  { id: 'c_start', name: 'Cosmic Awakening', desc: '+5 Max HP', stat: 'maxHp', value: 5, costGold: 0, costFrags: 0, x: 750, y: 750, req: [] },
+
+  // Offense Path (Top Right)
+  { id: 'c_dmg1', name: 'Plasma Tuning', desc: '+5% Damage', stat: 'damageMult', value: 0.05, costGold: 1000, costFrags: 1, x: 850, y: 650, req: ['c_start'] },
+  { id: 'c_area1', name: 'Spatial Warp', desc: '+5% Area', stat: 'areaMult', value: 0.05, costGold: 1500, costFrags: 2, x: 950, y: 600, req: ['c_dmg1'] },
+  { id: 'c_dmg2', name: 'Core Overclock', desc: '+10% Damage', stat: 'damageMult', value: 0.1, costGold: 3000, costFrags: 3, x: 1050, y: 550, req: ['c_area1'] },
+  { id: 'c_key_pierce', name: 'Keystone: Penetration', desc: 'All projectiles gain +1 Pierce.', effect: 'pierce_up', costGold: 10000, costFrags: 10, x: 1150, y: 450, req: ['c_dmg2'], isKeystone: true },
+
+  // Defense Path (Top Left)
+  { id: 'c_hp1', name: 'Alloy Plating', desc: '+10 Max HP', stat: 'maxHp', value: 10, costGold: 1000, costFrags: 1, x: 650, y: 650, req: ['c_start'] },
+  { id: 'c_armor1', name: 'Deflector Shield', desc: '+1 Armor', stat: 'armor', value: 1, costGold: 1500, costFrags: 2, x: 550, y: 600, req: ['c_hp1'] },
+  { id: 'c_regen1', name: 'Nano-Mending', desc: '+0.2 HP/sec', stat: 'regen', value: 0.2, costGold: 3000, costFrags: 3, x: 450, y: 550, req: ['c_armor1'] },
+  { id: 'c_key_revive', name: 'Keystone: Rebirth', desc: 'Revive once per run with 50% HP.', effect: 'revive', costGold: 10000, costFrags: 10, x: 350, y: 450, req: ['c_regen1'], isKeystone: true },
+
+  // Utility Path (Bottom)
+  { id: 'c_spd1', name: 'Thruster Tweaks', desc: '+5% Speed', stat: 'speedMult', value: 0.05, costGold: 1000, costFrags: 1, x: 750, y: 850, req: ['c_start'] },
+  { id: 'c_cd1', name: 'Cooling Systems', desc: '-5% Cooldowns', stat: 'cooldownMult', value: -0.05, costGold: 1500, costFrags: 2, x: 750, y: 950, req: ['c_spd1'] },
+  { id: 'c_luck1', name: 'Probability Drive', desc: '+1 Luck', stat: 'luck', value: 1, costGold: 3000, costFrags: 3, x: 750, y: 1050, req: ['c_cd1'] },
+  { id: 'c_key_bounce', name: 'Keystone: Ricochet', desc: 'Projectiles chain/bounce +1 time.', effect: 'bounce_up', costGold: 10000, costFrags: 10, x: 750, y: 1170, req: ['c_luck1'], isKeystone: true },
+
+  // Economy Path (Bottom Right)
+  { id: 'c_gold1', name: 'Greed Algorithm', desc: '+10% Gold', stat: 'goldMult', value: 0.1, costGold: 1000, costFrags: 1, x: 850, y: 850, req: ['c_start'] },
+  { id: 'c_xp1', name: 'Learning Matrix', desc: '+10% XP', stat: 'xpMult', value: 0.1, costGold: 1500, costFrags: 2, x: 950, y: 900, req: ['c_gold1'] },
+  { id: 'c_key_wealth', name: 'Keystone: Midas Touch', desc: 'Gold pickups have a 10% chance to heal you.', effect: 'gold_heal', costGold: 10000, costFrags: 10, x: 1050, y: 1000, req: ['c_xp1'], isKeystone: true },
+  
+  // Cross Connections
+  { id: 'c_magnet1', name: 'Tractor Field', desc: '+20 Magnet', stat: 'magnetRange', value: 20, costGold: 2000, costFrags: 2, x: 650, y: 850, req: ['c_spd1'] },
+  { id: 'c_armor2', name: 'Hardlight Shield', desc: '+2 Armor', stat: 'armor', value: 2, costGold: 5000, costFrags: 5, x: 550, y: 750, req: ['c_magnet1', 'c_hp1'] }
+];
+
 export const UPGRADES = [
   { id: 'dmg_up', name: 'Plasma Core', desc: '+10% Damage', type: 'passive', stat: 'damageMult', value: 0.1 },
   { id: 'spd_up', name: 'Hyperdrive Fuel', desc: '+10% Move Speed', type: 'passive', stat: 'speedMult', value: 0.1 },

@@ -569,6 +569,9 @@ export function fireWeaponLogic(engine, w) {
         if (engine.player.charAugments?.includes('neo_pierce') && p.pierce !== undefined) p.pierce += 1;
         if (isBeatPush && !p.isAoe) p.pushback = (p.pushback || 0) + 150;
         if (engine.player.charAugments?.includes('neo_chain') && !p.isAoe && p.pierce !== undefined) p.chainCount = 1;
+
+        if (engine.player.constellationNodes?.includes('c_key_pierce') && p.pierce !== undefined && !p.isAoe) p.pierce += 1;
+        if (engine.player.constellationNodes?.includes('c_key_bounce') && p.pierce !== undefined && !p.isAoe) p.chainCount = (p.chainCount || 0) + 1;
     }
     
     // sky_twin: Twin Laser Array - Always fires dual lasers along with any weapon

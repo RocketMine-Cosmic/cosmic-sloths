@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, getCharacterMastery, getWeaponStatsAndMastery, CONSTELLATION_NODES } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { SFXManager } from './SFXManager';
@@ -89,6 +89,14 @@ export class GameEngine {
             }
         });
 
+        const constellationNodes = save.constellationNodes || [];
+        constellationNodes.forEach(nId => {
+            const node = CONSTELLATION_NODES.find(n => n.id === nId);
+            if (node && node.stat) {
+                talentBonus[node.stat] = (talentBonus[node.stat] || 0) + node.value;
+            }
+        });
+
         const baseCharRaw = CHARACTERS.find(c => c.id === characterId) || CHARACTERS[0];
         const skinId = save.cosmetics?.skins?.[characterId] || `${characterId}_default`;
         const skinColor = SKIN_COSMETICS.find(s => s.id === skinId)?.color;
@@ -158,6 +166,7 @@ export class GameEngine {
             frameTimer: 0,
             currentFrame: 0,
             x: 0, y: 0, radius: 16,
+            constellationNodes: constellationNodes,
             maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
             speed: baseChar.speed,
@@ -336,6 +345,15 @@ export class GameEngine {
         }
 
         if (this.player.hp <= 0) {
+            if (this.player.constellationNodes?.includes('c_key_revive') && !this.player.constellationRevived) {
+                this.player.constellationRevived = true;
+                this.player.hp = this.player.maxHp * 0.5;
+                this.player.iFrames = 3.0;
+                this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                this.addDamageText(this.player.x, this.player.y - 40, "REBIRTH", '#ffff00');
+                this.particleManager.createExplosion(this.player.x, this.player.y, '#ffff00', 3);
+                return;
+            }
             if (this.player.charAugments?.includes('holo_revive') && !this.player.holoRevived) {
                 this.player.holoRevived = true;
                 this.player.hp = this.player.maxHp * 0.1;
@@ -1449,6 +1467,12 @@ export class GameEngine {
                     SFXManager.playGoldPickup();
                     this.gold += Math.floor(p.value * this.player.goldMult);
                     this.callbacks.onGoldChange(this.gold);
+                    
+                    if (this.player.constellationNodes?.includes('c_key_wealth') && Math.random() < 0.1) {
+                        this.player.hp = Math.min(this.player.maxHp, this.player.hp + 1);
+                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                        this.addParticle(this.player.x, this.player.y, '#00ff00', 3);
+                    }
                 } else if (p.type === 'fragment') {
                     SFXManager.playGoldPickup();
                     if (this.callbacks.onFragmentFound) this.callbacks.onFragmentFound(p.value || 1);
