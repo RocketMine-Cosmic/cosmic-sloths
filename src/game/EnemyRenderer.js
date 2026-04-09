@@ -87,10 +87,39 @@ export function drawEnemy(ctx, e, time, playerX) {
         }
     };
 
-    switch (e.originalBossId || e.id) {
-        case 't1_parasite':
-        case 't4_worm':
-        case 't8_wyrm':
+    let shapeCategory = 'default';
+    const id = e.originalBossId || e.id;
+    if (id.includes('serpent') || id.includes('wyrm') || id.includes('worm')) shapeCategory = 'slug';
+    else if (id.includes('phantom') || id.includes('specter') || id.includes('shambler') || id.includes('god') || id.includes('whisper')) shapeCategory = 'stars';
+    else if (id.includes('rock') || id.includes('turret') || id.includes('blob')) shapeCategory = 'rock';
+    else if (id.includes('jelly') || id.includes('vortex')) shapeCategory = 'jelly';
+    else if (id.includes('probe') || id.includes('drone') || id.includes('wasp') || id.includes('swarm')) shapeCategory = 'insect';
+    else if (id.includes('stalker') || id.includes('shadow')) shapeCategory = 'shadow';
+    else if (id.includes('flare') || id.includes('seraph') || id.includes('blade')) shapeCategory = 'angular';
+    else if (id.includes('horror') || id.includes('bloom') || id.includes('coral')) shapeCategory = 'blob';
+    else if (id.includes('fiend') || id.includes('manta')) shapeCategory = 'sleek';
+    else if (id.includes('brute') || id.includes('golem') || id.includes('thunder')) shapeCategory = 'turtle';
+    else if (id.includes('mite') || id.includes('monolith') || id.includes('glow') || id.includes('orb')) shapeCategory = 'crystal';
+    else if (id.includes('whale') || id.includes('leviathan') || id.includes('eater')) shapeCategory = 'whale';
+    else if (id.includes('wraith') || id.includes('mothra')) shapeCategory = 'ghost';
+    else if (id.includes('scout') || id.includes('ray') || id.includes('angler')) shapeCategory = 'fish';
+    else if (id.includes('floater') || id.includes('eye')) shapeCategory = 'tentacle';
+    else if (id.includes('cyborg') || id.includes('crawler') || id.includes('gear')) shapeCategory = 'beetle';
+    else if (id.includes('entity') || id.includes('ribbon')) shapeCategory = 'flat';
+    else if (id.includes('bat') || id.includes('spinner')) shapeCategory = 'bat';
+    else if (id.includes('tick') || id.includes('starfish')) shapeCategory = 'round';
+    else if (id.includes('elemental') || id.includes('virus')) shapeCategory = 'ethereal';
+    else if (id.includes('dragon')) shapeCategory = 'dragon';
+    else if (id.includes('spawn') || id.includes('slug')) shapeCategory = 'fatslug';
+    else if (id.includes('nebula_devourer') || id.includes('alien_queen')) shapeCategory = 'multihead';
+    else if (id.includes('supernova') || id.includes('empress')) shapeCategory = 'wormboss';
+    else if (id.includes('blackhole') || id.includes('annihilator')) shapeCategory = 'blackhole';
+    else if (id.includes('sniper') || id.includes('artillery')) shapeCategory = 'sniper';
+    else if (id.includes('tank') || id.includes('juggernaut')) shapeCategory = 'tank';
+    else if (e.isBoss) shapeCategory = 'multihead';
+
+    switch (shapeCategory) {
+        case 'slug':
             // Long writhing slug
             ctx.fillStyle = '#1a0b2e'; // Dark purple-black
             ctx.beginPath();
@@ -118,9 +147,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
-        case 't5_shambler':
-        case 't7_weaver':
-        case 't10_god':
+        case 'stars':
             // Translucent body with stars
             for (let i = 0; i < 6; i++) {
                 const offset = Math.sin(t - i) * 8;
@@ -140,9 +167,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.fill();
             break;
 
-        case 't3_turret':
-        case 't7_kraken':
-        case 't10_ripper':
+        case 'rock':
             // Rocky head
             ctx.fillStyle = '#8b7355';
             ctx.beginPath(); 
@@ -162,7 +187,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't2_jelly':
+        case 'jelly':
             // Translucent dome
             ctx.fillStyle = `rgba(0, 255, 255, ${0.4 + pulse * 0.2})`;
             ctx.beginPath(); 
@@ -187,11 +212,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
-        case 't1_drone':
-        case 't4_grunt':
-        case 't6_wasp':
-        case 't9_apex_drone':
-        case 't10_swarm':
+        case 'insect':
             // Insectoid
             ctx.fillStyle = '#00ff00';
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius, e.radius*0.5, 0, 0, Math.PI*2); ctx.fill();
@@ -201,8 +222,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.ellipse(0, 5, e.radius*1.5, e.radius*0.5, -Math.sin(t*20)*0.5, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't3_stalker':
-        case 't8_overlord':
+        case 'shadow':
             // Panther-like shadow
             ctx.fillStyle = '#1a0033';
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius*1.2, e.radius*0.6, 0, 0, Math.PI*2); ctx.fill();
@@ -214,8 +234,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(-5, 2, 2, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't2_flare':
-        case 't7_seraph':
+        case 'angular':
             // Angular body
             ctx.fillStyle = '#ff4500';
             ctx.beginPath();
@@ -235,8 +254,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.moveTo(10, 5); ctx.lineTo(20, 10); ctx.stroke();
             break;
 
-        case 't5_horror':
-        case 't9_apex_horror':
+        case 'blob':
             // Blobby baby
             ctx.fillStyle = '#800080';
             ctx.beginPath(); 
@@ -249,8 +267,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(3, 3, 1, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't5_fiend':
-        case 't9_apex_fiend':
+        case 'sleek':
             // Sleek body
             ctx.fillStyle = '#1a1a1a';
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius, e.radius*0.4, 0, 0, Math.PI*2); ctx.fill();
@@ -266,10 +283,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.fill(); ctx.stroke();
             break;
 
-        case 't5_brute':
-        case 't5_golem':
-        case 't7_behemoth':
-        case 't8_titan':
+        case 'turtle':
             // Turtle shell
             ctx.fillStyle = '#2f4f4f';
             ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI*2); ctx.fill();
@@ -284,8 +298,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(e.radius+5, 0, 8, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't1_mite':
-        case 't8_monolith':
+        case 'crystal':
             // Crystalline ball
             ctx.fillStyle = '#00ced1';
             ctx.beginPath(); ctx.arc(0, 0, e.radius*0.7, 0, Math.PI*2); ctx.fill();
@@ -301,9 +314,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
-        case 't6_whale':
-        case 't8_leviathan':
-        case 't10_eater':
+        case 'whale':
             // Ghost whale
             ctx.fillStyle = `rgba(224, 255, 255, ${0.5 + pulse*0.2})`;
             ctx.beginPath();
@@ -316,8 +327,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.moveTo(0, e.radius*0.5); ctx.lineTo(-5, e.radius*1.2); ctx.lineTo(5, e.radius*0.5); ctx.fill();
             break;
 
-        case 't3_wraith':
-        case 't7_phantom':
+        case 'ghost':
             // Ice ghost
             ctx.fillStyle = `rgba(173, 216, 230, ${0.6 + pulse*0.2})`;
             ctx.beginPath();
@@ -333,8 +343,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(-3, -5, 2, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't2_scout':
-        case 't6_ray':
+        case 'fish':
             // Fish body
             ctx.fillStyle = '#ff1493';
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius, e.radius*0.7, 0, 0, Math.PI*2); ctx.fill();
@@ -346,7 +355,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(20, -5, 3 + pulse, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't3_floater':
+        case 'tentacle':
             // Torso
             ctx.fillStyle = '#dda0dd';
             ctx.beginPath(); ctx.arc(0, -5, 8, 0, Math.PI*2); ctx.fill();
@@ -354,8 +363,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             drawTentacle(5, 20, 2, '#ee82ee', 0.8);
             break;
 
-        case 't2_cyborg':
-        case 't3_crawler':
+        case 'beetle':
             // Beetle shell
             ctx.fillStyle = '#2f0000';
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius, e.radius*1.2, 0, 0, Math.PI*2); ctx.fill();
@@ -369,7 +377,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
-        case 't4_entity':
+        case 'flat':
             // Flat body
             ctx.fillStyle = '#00fa9a';
             ctx.beginPath();
@@ -383,7 +391,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.moveTo(-e.radius*0.5, 0); ctx.lineTo(-e.radius*2, Math.sin(t*5)*5); ctx.stroke();
             break;
 
-        case 't1_bat':
+        case 'bat':
             // Fractal wings
             ctx.fillStyle = '#000000';
             ctx.beginPath(); ctx.ellipse(0, 0, 3, 10, 0, 0, Math.PI*2); ctx.fill();
@@ -395,8 +403,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.restore();
             break;
 
-        case 't1_tick':
-        case 't2_eye':
+        case 'round':
             // Round body
             ctx.fillStyle = '#000000';
             ctx.strokeStyle = '#800080';
@@ -411,8 +418,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
-        case 't4_elemental':
-        case 't9_apex_elemental':
+        case 'ethereal':
             // Ethereal form
             ctx.fillStyle = `rgba(127, 255, 212, ${0.5 + pulse*0.3})`;
             ctx.beginPath();
@@ -425,8 +431,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.ellipse(0, -3, 2, 4 + pulse*2, 0, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't6_dragon':
-        case 't9_apex_dragon':
+        case 'dragon':
             // Dragon shape
             ctx.fillStyle = '#ffd700';
             ctx.beginPath();
@@ -442,9 +447,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(18, 0, 2 + Math.random()*2, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 't4_spawn':
-        case 't6_slug':
-        case 't10_terror':
+        case 'fatslug':
             // Fat slug
             ctx.fillStyle = '#483d8b';
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius, e.radius*0.6, 0, 0, Math.PI*2); ctx.fill();
@@ -454,8 +457,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(0, -5, 8, 0, Math.PI*2); ctx.fill(); ctx.stroke();
             break;
 
-        case 'boss_nebula_lord':
-        case 'boss_alien_queen':
+        case 'multihead':
             // Central body
             ctx.fillStyle = '#32cd32';
             ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.fill();
@@ -480,7 +482,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
-        case 'boss_supernova':
+        case 'wormboss':
             // Segmented worm
             for(let i=8; i>=0; i--) {
                 const x = -i * 15;
@@ -493,7 +495,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(5, Math.sin(t)*10, 12, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 'boss_blackhole':
+        case 'blackhole':
             ctx.fillStyle = e.color;
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius, e.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#000000';
@@ -502,9 +504,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             }
             break;
 
-        case 't2_sniper':
-        case 't4_artillery':
-        case 't6_launcher':
+        case 'sniper':
             // Ranged enemy: sleek body with a long barrel
             ctx.fillStyle = e.color;
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius * 0.8, e.radius * 0.6, 0, 0, Math.PI * 2); ctx.fill();
@@ -516,9 +516,7 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.arc(e.radius * 1.6, 0, 3 + Math.sin(t * 4) * 1, 0, Math.PI * 2); ctx.fill();
             break;
 
-        case 't2_tank':
-        case 't4_juggernaut':
-        case 't6_goliath':
+        case 'tank':
             // Tank enemy: heavy armored shell
             ctx.fillStyle = '#333333';
             ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill();
