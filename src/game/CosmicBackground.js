@@ -165,26 +165,28 @@ void main() {
     }
 
     // LAYER 4: Close Asteroid / Debris Field
-    vec2 pAst = p * 15.0 + camDist * 1.5 + vec2(u_time * 0.05, -u_time * 0.03);
+    vec2 pAstBase = p * 15.0 + camDist * 1.5 + vec2(u_time * 0.05, -u_time * 0.03);
+    float nAst = fbm(pAstBase * 3.0);
+    vec2 pAst = pAstBase + nAst * 0.4; // Distort space for jagged asteroids
     float a = voronoi(pAst);
     float astThresh = 0.12 * min(1.0, asteroidDensity);
     
     if (a < astThresh && asteroidDensity > 0.1) {
-        vec2 cellCenter = fract(pAst) - 0.5;
-        float d = length(cellCenter);
-        // Soft spherical normal
-        float z = sqrt(max(0.0, (astThresh * astThresh) - d*d)) / astThresh;
-        vec3 normal = normalize(vec3(cellCenter.x, cellCenter.y, z * 0.5));
+        float z = sqrt(max(0.0, (astThresh * astThresh) - (a * a))) / astThresh;
+        float surfNoise = fbm(pAstBase * 15.0);
+        z *= (0.7 + 0.6 * surfNoise);
+        
+        vec3 normal = normalize(vec3(nAst - 0.5, surfNoise - 0.5, z + 0.2));
         vec3 lightDir = normalize(vec3(-1.0, 1.0, 1.0));
         float diff = max(0.0, dot(normal, lightDir));
-        float spec = pow(max(0.0, dot(reflect(-lightDir, normal), vec3(0.0,0.0,1.0))), 8.0);
         
-        vec3 astColor = mix(cBase3, cBase1, 0.3) * diff * 1.5 + vec3(spec * 0.5);
+        vec3 rockColor = mix(vec3(0.1, 0.08, 0.12), vec3(0.2, 0.2, 0.25), surfNoise);
+        vec3 astColor = rockColor * diff * 2.0;
         
-        // Glowing edges on asteroids from nebula
-        astColor += cBase2 * pow(1.0 - z, 3.0) * 1.5;
+        // Subtle edge lighting to blend with nebula
+        astColor += cBase1 * pow(1.0 - z, 4.0) * 0.8;
         
-        float alphaAst = smoothstep(astThresh, astThresh * 0.8, a);
+        float alphaAst = smoothstep(astThresh, astThresh * 0.7, a);
         color = mix(color, astColor, alphaAst);
     }
 
