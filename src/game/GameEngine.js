@@ -22,7 +22,7 @@ export class GameEngine {
         this.bgCanvas.style.inset = '0';
         this.bgCanvas.style.width = '100%';
         this.bgCanvas.style.height = '100%';
-        this.bgCanvas.style.zIndex = '-1';
+        this.bgCanvas.style.zIndex = '0';
         this.bgCanvas.style.pointerEvents = 'none';
         this.canvas.parentElement.insertBefore(this.bgCanvas, this.canvas);
         
