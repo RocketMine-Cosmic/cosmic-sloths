@@ -39,13 +39,12 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
     };
 
     return (
-        <div className="absolute inset-0 bg-[#040108]/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div className="absolute inset-0 bg-black/95 flex items-center justify-center z-50 p-4">
             <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-[#0b0416] border-2 border-cyan-500/80 shadow-[0_0_50px_rgba(6,182,212,0.3)] p-3 md:p-8 rounded-xl max-w-3xl w-full max-h-[95vh] overflow-y-auto flex flex-col items-center relative overflow-hidden"
+                className="bg-slate-900 border-2 border-cyan-500 p-3 md:p-8 rounded-xl max-w-3xl w-full max-h-[95vh] overflow-y-auto flex flex-col items-center relative"
             >
-                <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-purple-500/10 pointer-events-none"></div>
                 <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-emerald-950/50 border border-emerald-500/50 px-2 py-1 md:px-3 md:py-1 rounded-lg text-emerald-400 font-bold font-mono text-xs md:text-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1.5">
                     <Hexagon className="w-3 h-3 md:w-4 md:h-4 fill-emerald-400 text-emerald-400" /> {cosmicTokens || 0}
                 </div>
@@ -72,10 +71,10 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                 key={i}
                                 onClick={() => handleSelect(i)}
                                 disabled={revealedIndex !== null}
-                                className={`relative p-3 md:p-6 rounded-xl text-left transition-all duration-300 flex flex-col min-h-[90px] md:min-h-[160px] border-2 group ${
+                                className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-300 flex flex-col min-h-[90px] md:min-h-[160px] border-2 ${
                                     isRevealed 
                                     ? `${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ')[1]} ${rarityColors[choice.rarity].split(' ')[2] || ''}` 
-                                    : 'bg-[#110822] border-slate-700 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] cursor-pointer overflow-hidden'
+                                    : 'bg-slate-800 border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer'
                                 }`}
                             >
                                 <AnimatePresence mode="wait">
