@@ -22,7 +22,7 @@ export default function InteractiveHub() {
     const navigate = useNavigate();
     const [save] = useState(SaveManager.load());
     const [activeTerminal, setActiveTerminal] = useState(null);
-    const [joystick, setJoystick] = useState({ x: 0, y: 0 });
+    const joystickRef = useRef({ x: 0, y: 0 });
     
     const engineRef = useRef(null);
 
@@ -108,9 +108,9 @@ export default function InteractiveHub() {
                 }
             }
 
-            if (joystick.x !== 0 || joystick.y !== 0) {
-                dx = joystick.x;
-                dy = joystick.y;
+            if (joystickRef.current.x !== 0 || joystickRef.current.y !== 0) {
+                dx = joystickRef.current.x;
+                dy = joystickRef.current.y;
             } else if (!usingGamepad && (dx !== 0 || dy !== 0)) {
                 const len = Math.hypot(dx, dy);
                 dx /= len; dy /= len;
@@ -140,7 +140,7 @@ export default function InteractiveHub() {
                     nearest = t;
                 }
             });
-            setActiveTerminal(nearest);
+            setActiveTerminal(prev => (prev?.id !== nearest?.id ? nearest : prev));
 
             if (engine.keys['e'] && nearest) {
                 engine.keys['e'] = false;
@@ -253,7 +253,7 @@ export default function InteractiveHub() {
             window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('resize', resize);
         };
-    }, [save.lastSelectedChar, joystick, navigate]);
+    }, [save.lastSelectedChar, navigate]);
 
     return (
         <div className="h-[100dvh] w-full bg-[#05020a] relative overflow-hidden font-sans select-none">
@@ -290,7 +290,7 @@ export default function InteractiveHub() {
             )}
 
             <div className="md:hidden">
-                <VirtualJoystick onChange={(data) => setJoystick({ x: data.x, y: data.y })} />
+                <VirtualJoystick onChange={(data) => { joystickRef.current = data; }} />
             </div>
             
             <div className="absolute bottom-4 text-center w-full text-slate-500/50 font-mono text-[10px] pointer-events-none hidden md:block">
