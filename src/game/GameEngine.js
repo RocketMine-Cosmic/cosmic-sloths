@@ -152,7 +152,7 @@ export class GameEngine {
             speed: baseChar.speed,
             speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0)) * this.envModifiers.playerSpeed,
             damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0),
-            magnetRange: (baseChar.magnetRange || 60) + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0),
+            magnetRange: (baseChar.magnetRange || 60) + 30 + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0), // +30 base buffer for easier early game XP collection
             regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0),
             armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0),
             areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0),
@@ -182,7 +182,7 @@ export class GameEngine {
         this.time = 0;
         this.frameCount = 0;
         this.level = 1;
-        this.xp = 0;
+        this.xp = 25; // Immediate free level-up at start for fun build crafting
         this.banishedUpgrades = new Set();
         this.xpRequired = 25;
         this.gold = 0;
@@ -722,6 +722,7 @@ export class GameEngine {
             
             const hpMult = (1.0 + (2.0 * Math.pow(progress, 1.6))) * this.difficulty.enemyHpMult * sectorDifficultyScale;
             const dmgMult = (1.0 + (1.5 * Math.pow(progress, 1.4))) * this.difficulty.enemyDmgMult * sectorDifficultyScale;
+            const spdMult = this.difficulty.speedMult || 1.0;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
@@ -734,7 +735,7 @@ export class GameEngine {
                         hp: elite.hp * hpMult * 2.5,
                         damage: elite.damage * dmgMult * 1.5,
                         radius: elite.radius * 1.4,
-                        speed: elite.speed * 1.2,
+                        speed: elite.speed * 1.2 * spdMult,
                         xp: elite.xp * 4,
                         isElite: true,
                         eliteGoldBonus: 3,
@@ -745,7 +746,7 @@ export class GameEngine {
                 }
             }
             
-            this.enemies.push({ ...type, x: ex, y: ey, maxHp: type.hp * hpMult, hp: type.hp * hpMult, damage: type.damage * dmgMult });
+            this.enemies.push({ ...type, x: ex, y: ey, speed: type.speed * spdMult, maxHp: type.hp * hpMult, hp: type.hp * hpMult, damage: type.damage * dmgMult });
             this.encounteredEnemies.add(type.id);
         }
     }
