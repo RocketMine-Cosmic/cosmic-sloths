@@ -95,27 +95,27 @@ void main() {
     float glowPower = 1.0;
     
     if (u_arenaId == 0) { // station: Azure Expanse
-        cBase1 = vec3(0.0, 0.4, 0.8); cBase2 = vec3(0.6, 0.2, 0.9); cBase3 = vec3(0.0, 0.1, 0.3); cStarGlow = vec3(0.0, 0.8, 1.0);
+        cBase1 = vec3(0.0, 0.5, 1.0); cBase2 = vec3(0.0, 0.8, 0.9); cBase3 = vec3(0.0, 0.1, 0.4); cStarGlow = vec3(0.6, 0.9, 1.0); asteroidDensity = 0.8; glowPower = 1.5;
     } else if (u_arenaId == 1) { // asteroid: Mystic Cosmos
-        cBase1 = vec3(0.8, 0.3, 0.1); cBase2 = vec3(0.5, 0.1, 0.3); cBase3 = vec3(0.2, 0.05, 0.0); cStarGlow = vec3(1.0, 0.5, 0.2); asteroidDensity = 2.5;
+        cBase1 = vec3(0.9, 0.4, 0.1); cBase2 = vec3(1.0, 0.6, 0.2); cBase3 = vec3(0.3, 0.1, 0.0); cStarGlow = vec3(1.0, 0.8, 0.5); asteroidDensity = 3.5; glowPower = 1.2;
     } else if (u_arenaId == 2) { // nebula: Ethereal Nebula
-        cBase1 = vec3(0.9, 0.1, 0.5); cBase2 = vec3(0.2, 0.0, 0.8); cBase3 = vec3(0.1, 0.0, 0.2); cStarGlow = vec3(1.0, 0.2, 0.8); glowPower = 1.5;
+        cBase1 = vec3(1.0, 0.0, 0.7); cBase2 = vec3(0.6, 0.0, 1.0); cBase3 = vec3(0.2, 0.0, 0.3); cStarGlow = vec3(1.0, 0.5, 0.9); glowPower = 2.0; asteroidDensity = 0.3;
     } else if (u_arenaId == 3) { // void: Crimson Void
-        cBase1 = vec3(0.7, 0.0, 0.0); cBase2 = vec3(0.3, 0.0, 0.0); cBase3 = vec3(0.05, 0.0, 0.0); cStarGlow = vec3(1.0, 0.1, 0.1); asteroidDensity = 0.5;
+        cBase1 = vec3(0.8, 0.0, 0.0); cBase2 = vec3(1.0, 0.2, 0.0); cBase3 = vec3(0.15, 0.0, 0.0); cStarGlow = vec3(1.0, 0.3, 0.2); asteroidDensity = 0.2; starDensity = 0.5; glowPower = 0.8;
     } else if (u_arenaId == 4) { // plasma: Solar Storm
-        cBase1 = vec3(1.0, 0.4, 0.0); cBase2 = vec3(1.0, 0.8, 0.1); cBase3 = vec3(0.3, 0.0, 0.0); cStarGlow = vec3(1.0, 0.9, 0.3); glowPower = 2.0;
+        cBase1 = vec3(1.0, 0.6, 0.0); cBase2 = vec3(1.0, 0.9, 0.2); cBase3 = vec3(0.5, 0.1, 0.0); cStarGlow = vec3(1.0, 1.0, 0.9); glowPower = 3.5; asteroidDensity = 0.6;
     } else if (u_arenaId == 5) { // crystal: Emerald Galaxy
-        cBase1 = vec3(0.0, 0.8, 0.4); cBase2 = vec3(0.0, 0.4, 0.6); cBase3 = vec3(0.0, 0.1, 0.2); cStarGlow = vec3(0.2, 1.0, 0.6); asteroidDensity = 1.5;
+        cBase1 = vec3(0.0, 1.0, 0.4); cBase2 = vec3(0.0, 0.9, 0.7); cBase3 = vec3(0.0, 0.2, 0.15); cStarGlow = vec3(0.5, 1.0, 0.8); asteroidDensity = 1.2; glowPower = 1.6;
     } else if (u_arenaId == 6) { // moon: Shattered Core
-        cBase1 = vec3(0.3, 0.5, 0.7); cBase2 = vec3(0.1, 0.2, 0.4); cBase3 = vec3(0.05, 0.1, 0.2); cStarGlow = vec3(0.6, 0.8, 1.0); asteroidDensity = 3.0;
+        cBase1 = vec3(0.5, 0.6, 0.8); cBase2 = vec3(0.7, 0.8, 0.9); cBase3 = vec3(0.1, 0.15, 0.25); cStarGlow = vec3(0.8, 0.9, 1.0); asteroidDensity = 4.5; glowPower = 1.1;
     } else if (u_arenaId == 7) { // blackhole: Abyssal Vortex
-        cBase1 = vec3(0.3, 0.0, 0.6); cBase2 = vec3(0.1, 0.0, 0.3); cBase3 = vec3(0.0, 0.0, 0.0); cStarGlow = vec3(0.5, 0.0, 1.0); glowPower = 0.5;
+        cBase1 = vec3(0.3, 0.0, 0.7); cBase2 = vec3(0.5, 0.0, 0.9); cBase3 = vec3(0.0, 0.0, 0.1); cStarGlow = vec3(0.7, 0.3, 1.0); glowPower = 0.4; asteroidDensity = 1.8; starDensity = 0.7;
     } else if (u_arenaId == 8) { // mothership: Turquoise Drift
-        cBase1 = vec3(0.0, 0.7, 0.7); cBase2 = vec3(0.7, 0.1, 0.7); cBase3 = vec3(0.1, 0.0, 0.2); cStarGlow = vec3(0.0, 1.0, 0.8);
+        cBase1 = vec3(0.0, 0.9, 0.9); cBase2 = vec3(0.9, 0.2, 0.9); cBase3 = vec3(0.0, 0.3, 0.4); cStarGlow = vec3(0.6, 1.0, 0.9); asteroidDensity = 0.6; glowPower = 1.8;
     } else if (u_arenaId == 9) { // dimension: Rainbow Rift
-        cBase1 = vec3(1.0, 0.0, 0.0); cBase2 = vec3(0.0, 1.0, 0.0); cBase3 = vec3(0.0, 0.0, 1.0); cStarGlow = vec3(1.0, 1.0, 1.0); glowPower = 2.0;
+        cBase1 = vec3(1.0, 0.0, 0.0); cBase2 = vec3(0.0, 1.0, 0.0); cBase3 = vec3(0.0, 0.0, 1.0); cStarGlow = vec3(1.0, 1.0, 1.0); glowPower = 2.5; asteroidDensity = 1.0;
     } else {
-        cBase1 = vec3(0.0, 0.4, 0.8); cBase2 = vec3(0.6, 0.2, 0.9); cBase3 = vec3(0.0, 0.1, 0.3); cStarGlow = vec3(0.0, 0.8, 1.0);
+        cBase1 = vec3(0.0, 0.5, 1.0); cBase2 = vec3(0.0, 0.8, 0.9); cBase3 = vec3(0.0, 0.1, 0.4); cStarGlow = vec3(0.6, 0.9, 1.0);
     }
     
     // Dynamic Rainbow for dimension
