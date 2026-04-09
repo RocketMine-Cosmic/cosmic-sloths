@@ -60,7 +60,8 @@ export default function BountiesPanel({ save, setSave }) {
 
     return (
         <div className="flex flex-col md:flex-row gap-2 md:gap-4">
-        <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] rounded-xl p-3 md:p-4">
+        <div className="flex-1 bg-[#040108]/90 backdrop-blur-2xl border-t border-cyan-500/50 border-b-2 border-b-cyan-500/20 shadow-[0_0_30px_rgba(6,182,212,0.2)] rounded-xl p-3 md:p-4 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent pointer-events-none"></div>
             <h3 className="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
                 🎯 Daily Bounties
             </h3>
@@ -88,7 +89,7 @@ export default function BountiesPanel({ save, setSave }) {
                                         <span className="font-mono bg-slate-900 px-1.5 py-0.5 rounded text-[10px]">
                                             {Math.min(bounty.progress, bounty.target)} / {bounty.target}
                                         </span>
-                                        <span className={`${bounty.currency === 'gold' ? 'text-yellow-500' : bounty.currency === 'fragment' ? 'text-fuchsia-400' : 'text-emerald-400'} font-bold flex items-center gap-1`}>
+                                        <span className={`${bounty.currency === 'gold' ? 'text-yellow-400' : bounty.currency === 'fragment' ? 'text-fuchsia-400' : 'text-emerald-400'} font-bold flex items-center gap-1 drop-shadow-[0_0_5px_currentColor]`}>
                                             {bounty.currency === 'gold' ? <Coins className="w-3 h-3 fill-yellow-500" /> : bounty.currency === 'fragment' ? <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> : <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400" />} {bounty.reward}
                                         </span>
                                     </div>
@@ -121,8 +122,8 @@ export default function BountiesPanel({ save, setSave }) {
         </div>
         
         <div className="w-full md:w-80 flex flex-col gap-2 md:gap-4">
-            <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.25)] rounded-xl p-3 md:p-4 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-transparent pointer-events-none" />
+            <div className="bg-[#040108]/90 backdrop-blur-2xl border-t border-purple-500/50 border-b-2 border-b-purple-500/20 shadow-[0_0_30px_rgba(168,85,247,0.3)] rounded-xl p-3 md:p-4 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent pointer-events-none"></div>
                 <h3 className="text-xl font-bold text-purple-400 mb-4 flex items-center gap-2 relative z-10">
                     <ShieldAlert className="w-5 h-5" /> Daily Mission
                 </h3>
@@ -176,7 +177,8 @@ export default function BountiesPanel({ save, setSave }) {
                 })()}
             </div>
 
-            <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.15)] rounded-xl p-3 md:p-4 flex flex-col justify-between">
+            <div className="bg-[#040108]/90 backdrop-blur-2xl border-t border-yellow-500/50 border-b-2 border-b-yellow-500/20 shadow-[0_0_30px_rgba(234,179,8,0.2)] rounded-xl p-3 md:p-4 flex flex-col justify-between relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent pointer-events-none"></div>
                 <div>
                     <h3 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
                         <Star className="w-4 h-4 text-yellow-400" /> Seasonal Skin Reward

@@ -170,8 +170,9 @@ export default function Hub({ isCarousel }) {
 
 
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans bg-[#040108]`}>
             {!isCarousel && <SpaceBackground />}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-fuchsia-900/10 via-transparent to-transparent pointer-events-none z-0"></div>
             <div className="max-w-6xl mx-auto relative z-10">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-1.5 md:gap-4 mb-2 md:mb-6 border-b border-fuchsia-900/40 pb-1.5 md:pb-4">
                     <div>
@@ -189,17 +190,21 @@ export default function Hub({ isCarousel }) {
                     <CurrencyHeader />
                 </header>
 
-                <div className="flex flex-col gap-4 md:gap-8">
-                    <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-2 md:p-6 border border-[#D946EF]/30 shadow-[0_0_50px_rgba(217,70,239,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]">
-                        <div className="h-full flex flex-col justify-between">
+                <div className="flex flex-col gap-4 md:gap-8 relative z-10">
+                    <BountiesPanel save={save} setSave={setSave} />
+                    <div className="relative flex-1 bg-[#040108]/90 backdrop-blur-2xl rounded-xl md:rounded-2xl p-3 md:p-6 border-t border-cyan-500/50 border-b-2 border-cyan-500/20 shadow-[0_0_50px_rgba(6,182,212,0.15),inset_0_0_20px_rgba(217,70,239,0.1)] overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-fuchsia-500/5 pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-600/10 blur-[80px] rounded-full pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-600/10 blur-[80px] rounded-full pointer-events-none"></div>
+                        <div className="h-full flex flex-col justify-between relative z-10">
                                 <div>
                                     <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4 tracking-widest uppercase flex items-center gap-2"><span className="text-cyan-400">▶</span> Mission Briefing</h2>
                                     
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6 mb-2 md:mb-6">
                                         <div>
-                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Operative</h3>
+                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2 font-bold tracking-widest uppercase">Select Operative</h3>
                                         <div 
-                                            className="relative bg-[#0b0416]/80 backdrop-blur-xl rounded-lg md:rounded-xl border border-cyan-500/50 hover:border-cyan-400 overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.2)] select-none touch-pan-y transition-colors"
+                                            className="relative bg-[#0b0416]/90 backdrop-blur-2xl rounded-lg md:rounded-xl border border-cyan-500/50 hover:border-cyan-400 overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] select-none touch-pan-y transition-all duration-300"
                                             onTouchStart={(e) => {
                                                 touchStartX.current = e.changedTouches[0].screenX;
                                             }}
@@ -245,7 +250,7 @@ export default function Hub({ isCarousel }) {
                                                                     setSelectedChar(CHARACTERS[newIdx].id);
                                                                     SoundManager.playUIClick();
                                                                 }}
-                                                                className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                                                                className="p-1.5 md:p-2 bg-[#040108]/90 border border-cyan-400/50 rounded-full hover:border-cyan-300 hover:bg-cyan-400/20 text-cyan-200 transition-all z-10 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                                                             >
                                                                 <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                                             </button>
@@ -269,15 +274,15 @@ export default function Hub({ isCarousel }) {
                                                                     );
                                                                 })()}
                                                                 <div className="flex gap-2 mb-2 w-full pr-4 relative z-20">
-                                                                    <button onClick={(e) => { e.stopPropagation(); setCharTab('loadout'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-colors ${charTab === 'loadout' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700/50'}`}>LOADOUT</button>
-                                                                    <button onClick={(e) => { e.stopPropagation(); setCharTab('cosmetics'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-colors ${charTab === 'cosmetics' ? 'bg-pink-500/20 text-pink-300 border-pink-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700/50'}`}>COSMETICS</button>
+                                                                <button onClick={(e) => { e.stopPropagation(); setCharTab('loadout'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-all ${charTab === 'loadout' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.3)]' : 'bg-[#040108]/60 text-slate-400 border-slate-700/50 hover:bg-slate-800/80 hover:text-white'}`}>LOADOUT</button>
+                                                                <button onClick={(e) => { e.stopPropagation(); setCharTab('cosmetics'); SoundManager.playUIClick(); }} className={`text-[10px] font-bold px-3 py-1.5 rounded border transition-all ${charTab === 'cosmetics' ? 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/50 shadow-[0_0_10px_rgba(217,70,239,0.3)]' : 'bg-[#040108]/60 text-slate-400 border-slate-700/50 hover:bg-slate-800/80 hover:text-white'}`}>COSMETICS</button>
                                                                 </div>
                                                                 {charTab === 'loadout' ? (
                                                                     <>
                                                                         <p className="text-[10px] md:text-xs text-slate-300 mb-1 max-w-[80%] leading-tight">
                                                                             {char.desc}
                                                                         </p>
-                                                                        <div className="flex gap-1.5 md:gap-2 text-[9px] md:text-[10px] mb-1 bg-[#0b0416]/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/30 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
+                                                                        <div className="flex gap-1.5 md:gap-2 text-[9px] md:text-[10px] mb-1 bg-[#040108]/90 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/30 shadow-[inset_0_0_10px_rgba(6,182,212,0.2)]">
                                                                             <span className="text-slate-300">HP: <span className={char.hp > CHARACTERS[0].hp ? 'text-green-400 font-bold' : char.hp < CHARACTERS[0].hp ? 'text-red-400 font-bold' : 'text-white'}>{char.hp}{char.hp > CHARACTERS[0].hp ? '↑' : char.hp < CHARACTERS[0].hp ? '↓' : ''}</span></span>
                                                                             <span className="text-slate-300">SPD: <span className={char.speed > CHARACTERS[0].speed ? 'text-green-400 font-bold' : char.speed < CHARACTERS[0].speed ? 'text-red-400 font-bold' : 'text-white'}>{char.speed}{char.speed > CHARACTERS[0].speed ? '↑' : char.speed < CHARACTERS[0].speed ? '↓' : ''}</span></span>
                                                                             <span className="text-slate-300">ARM: <span className={char.armor > CHARACTERS[0].armor ? 'text-green-400 font-bold' : char.armor < CHARACTERS[0].armor ? 'text-red-400 font-bold' : 'text-white'}>{char.armor}{char.armor > CHARACTERS[0].armor ? '↑' : char.armor < CHARACTERS[0].armor ? '↓' : ''}</span></span>
@@ -377,9 +382,9 @@ export default function Hub({ isCarousel }) {
                                                                     setSelectedChar(CHARACTERS[newIdx].id);
                                                                     SoundManager.playUIClick();
                                                                 }}
-                                                                className="p-2 bg-slate-900/80 rounded-full hover:bg-slate-700 text-white transition-colors z-10"
+                                                                className="p-1.5 md:p-2 bg-[#040108]/90 border border-cyan-400/50 rounded-full hover:border-cyan-300 hover:bg-cyan-400/20 text-cyan-200 transition-all z-10 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                                                             >
-                                                                <ChevronRight className="w-6 h-6" />
+                                                                <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                                                             </button>
                                                         </div>
                                                     </>
@@ -389,9 +394,9 @@ export default function Hub({ isCarousel }) {
                                         </div>
 
                                         <div>
-                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Sector</h3>
+                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2 font-bold tracking-widest uppercase">Select Sector</h3>
                                         <div 
-                                            className="relative bg-[#0b0416]/80 backdrop-blur-xl rounded-lg md:rounded-xl border border-cyan-500/50 hover:border-cyan-400 overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.2)] select-none touch-pan-y transition-colors"
+                                            className="relative bg-[#0b0416]/90 backdrop-blur-2xl rounded-lg md:rounded-xl border border-cyan-500/50 hover:border-cyan-400 overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] select-none touch-pan-y transition-all duration-300"
                                             onTouchStart={(e) => {
                                                 touchStartX.current = e.changedTouches[0].screenX;
                                             }}
@@ -425,7 +430,7 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedArena(ARENAS[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                                                    className="p-1.5 md:p-2 bg-[#040108]/90 border border-cyan-400/50 rounded-full hover:border-cyan-300 hover:bg-cyan-400/20 text-cyan-200 transition-all z-10 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                                                 >
                                                     <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
@@ -452,7 +457,7 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedArena(ARENAS[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                                                    className="p-1.5 md:p-2 bg-[#040108]/90 border border-cyan-400/50 rounded-full hover:border-cyan-300 hover:bg-cyan-400/20 text-cyan-200 transition-all z-10 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                                                 >
                                                     <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
@@ -461,7 +466,7 @@ export default function Hub({ isCarousel }) {
                                         </div>
 
                                         <div>
-                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Cosmic Difficulty</h3>
+                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2 font-bold tracking-widest uppercase">Cosmic Difficulty</h3>
                                         {(() => {
                                             const diffColors = {
                                                 normal: { border: 'border-cyan-400', text: 'text-cyan-400', shadow: 'shadow-[0_0_15px_rgba(34,211,238,0.4)]' },
@@ -501,7 +506,7 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedDifficulty(DIFFICULTIES[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                                                    className="p-1.5 md:p-2 bg-[#040108]/90 border border-cyan-400/50 rounded-full hover:border-cyan-300 hover:bg-cyan-400/20 text-cyan-200 transition-all z-10 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                                                 >
                                                     <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
@@ -522,7 +527,7 @@ export default function Hub({ isCarousel }) {
                                                         setSelectedDifficulty(DIFFICULTIES[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
-                                                    className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                                                    className="p-1.5 md:p-2 bg-[#040108]/90 border border-cyan-400/50 rounded-full hover:border-cyan-300 hover:bg-cyan-400/20 text-cyan-200 transition-all z-10 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                                                 >
                                                     <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                                                 </button>
@@ -560,8 +565,8 @@ export default function Hub({ isCarousel }) {
                                     return (
                                         <div className="flex flex-col gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
                                             
-                                            <div className="flex flex-col sm:flex-row gap-2 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
-                                                <div className="text-xs text-slate-400 font-bold mb-1 sm:mb-0 sm:w-24 shrink-0 flex items-center">SESSION BUFFS</div>
+                                            <div className="flex flex-col sm:flex-row gap-2 bg-[#0b0416] p-3 rounded-lg border border-cyan-500/20 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
+                                                <div className="text-xs text-cyan-400/70 font-bold mb-1 sm:mb-0 sm:w-24 shrink-0 flex items-center tracking-widest uppercase">SESSION BUFFS</div>
                                                 <button onClick={() => buyBuff('gold')} disabled={hasGoldBuff || (save.cosmicTokens || 0) < 5 || selectedDifficulty !== 'easy'} className={`flex-1 flex justify-between items-center px-3 py-2 rounded text-xs font-bold border transition-all ${hasGoldBuff ? 'bg-yellow-900/40 border-yellow-500/50 text-yellow-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-yellow-500 hover:text-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
                                                     <span className="flex items-center gap-2">💰 +50% Gold {hasGoldBuff ? '(ACTIVE)' : (selectedDifficulty !== 'easy' ? '(EASY ONLY)' : '')}</span>
                                                     {!hasGoldBuff && <span className="flex items-center gap-1"><Hexagon className="w-3 h-3 fill-current text-emerald-400" /> 5</span>}
@@ -572,22 +577,23 @@ export default function Hub({ isCarousel }) {
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+                                            <div className="flex flex-col md:flex-row gap-2 md:gap-4 relative group/launch">
                                             <button
                                                 onClick={startGame}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-xl font-black py-3 md:py-5 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase relative overflow-hidden ${
                                                     canLaunch
-                                                    ? 'bg-gradient-to-r from-[#0CA7B8] to-cyan-400 hover:from-cyan-400 hover:to-[#0CA7B8] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(12,167,184,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
-                                                    : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
+                                                    ? 'bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/50 hover:border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]'
+                                                    : 'bg-slate-900/80 text-slate-600 cursor-not-allowed border border-slate-800'
                                                 }`}
                                             >
+                                                {canLaunch && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000"></div>}
                                                 {!isCharUnlocked ? (
                                                     <>OPERATIVE LOCKED</>
                                                 ) : !isArenaUnlocked ? (
                                                     <>SECTOR LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH MISSION <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
+                                                    <><span className="relative z-10 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)] text-cyan-50">LAUNCH MISSION</span> <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-cyan-300 relative z-10" /></>
                                                 )}
                                             </button>
                                             
@@ -597,18 +603,19 @@ export default function Hub({ isCarousel }) {
                                                     navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isEndless: true } });
                                                 }}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-xl font-black py-3 md:py-5 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase relative overflow-hidden ${
                                                     canLaunch
-                                                    ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
-                                                    : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
+                                                    ? 'bg-fuchsia-500/20 hover:bg-fuchsia-500/40 border border-fuchsia-400/50 hover:border-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_30px_rgba(217,70,239,0.6)]'
+                                                    : 'bg-slate-900/80 text-slate-600 cursor-not-allowed border border-slate-800'
                                                 }`}
                                             >
+                                                {canLaunch && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000"></div>}
                                                 {!isCharUnlocked ? (
                                                     <>OPERATIVE LOCKED</>
                                                 ) : !isArenaUnlocked ? (
                                                     <>SECTOR LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH ENDLESS MODE <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
+                                                    <><span className="relative z-10 drop-shadow-[0_0_8px_rgba(217,70,239,0.8)] text-fuchsia-50">LAUNCH ENDLESS MODE</span> <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-fuchsia-300 relative z-10" /></>
                                                 )}
                                             </button>
                                         </div>

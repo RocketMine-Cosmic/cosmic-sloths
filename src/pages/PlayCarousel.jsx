@@ -39,21 +39,23 @@ export default function PlayCarousel() {
     }, [emblaApi]);
 
     return (
-        <div className="h-[100dvh] bg-[#0b0416] flex flex-col overflow-hidden select-none relative font-sans">
+        <div className="h-[100dvh] bg-[#040108] flex flex-col overflow-hidden select-none relative font-sans">
             <SpaceBackground />
-            <div className="p-3 md:p-6 flex flex-col md:flex-row justify-center items-center gap-2 z-10 relative shrink-0 pointer-events-none">
-                <div className="flex items-center justify-between w-full md:w-[600px] bg-[#0b0416]/80 backdrop-blur-xl rounded-full border border-[#D946EF]/50 p-1 md:p-2 shadow-[0_0_30px_rgba(217,70,239,0.3),inset_0_0_15px_rgba(12,167,184,0.2)] relative overflow-hidden pointer-events-auto">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D946EF]/10 to-transparent animate-pulse pointer-events-none" />
+            <div className="p-4 md:p-6 flex flex-col md:flex-row justify-center items-center gap-2 z-10 relative shrink-0 pointer-events-none">
+                <div className="flex items-center justify-between w-full md:w-[600px] bg-[#040108]/90 backdrop-blur-2xl rounded-full border border-cyan-500/50 p-1 md:p-2 shadow-[0_0_30px_rgba(6,182,212,0.3),inset_0_0_15px_rgba(217,70,239,0.2)] relative overflow-hidden pointer-events-auto group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-fuchsia-500/10 to-cyan-500/10 animate-pulse pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-70"></div>
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent opacity-30"></div>
                     <button 
                         onClick={() => { 
                             SoundManager.playUIClick(); 
                             emblaApi?.scrollPrev();
                         }}
-                        className="p-2 md:p-3 hover:bg-[#D946EF]/20 rounded-full text-[#D946EF] hover:text-white transition-colors z-10"
+                        className="p-2 md:p-3 hover:bg-cyan-500/20 rounded-full text-cyan-400 hover:text-cyan-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.6)] transition-all z-10"
                     >
                         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
-                    <div className="flex-1 text-center font-black text-sm md:text-base tracking-widest uppercase select-none z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex-1 text-center font-black text-sm md:text-base tracking-widest uppercase select-none z-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
                         {selectedIndex === 0 && <span className="text-white">Main Menu</span>}
                         {selectedIndex === 1 && <span className="text-cyan-300">Sloth Lounge</span>}
                         {selectedIndex === 2 && <span className="text-emerald-300">Mission Board</span>}
@@ -72,7 +74,7 @@ export default function PlayCarousel() {
                             SoundManager.playUIClick(); 
                             emblaApi?.scrollNext();
                         }}
-                        className="p-2 md:p-3 hover:bg-[#D946EF]/20 rounded-full text-[#D946EF] hover:text-white transition-colors z-10"
+                        className="p-2 md:p-3 hover:bg-fuchsia-500/20 rounded-full text-fuchsia-400 hover:text-fuchsia-200 hover:shadow-[0_0_15px_rgba(217,70,239,0.6)] transition-all z-10"
                     >
                         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
