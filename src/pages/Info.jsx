@@ -539,9 +539,15 @@ export default function Info() {
 
     return (
         <div className="min-h-screen relative text-slate-200 font-sans overflow-hidden">
+            <SpaceBackground />
 
             <div className="relative z-10 max-w-3xl mx-auto px-4 pt-4 pb-20">
-
+                <button
+                    onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
+                    className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700"
+                >
+                    <ArrowLeft size={16} /> Back
+                </button>
 
                 <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
                     <h1 className="text-3xl md:text-4xl font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#0CA7B8] to-[#D946EF] mb-1 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]">

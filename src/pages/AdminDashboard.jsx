@@ -71,10 +71,16 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen relative text-slate-200 p-2 pb-20 md:p-6 font-sans">
+            <SpaceBackground />
             <div className="max-w-6xl mx-auto relative z-10">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 md:mb-6 border-b border-red-900/40 pb-2 md:pb-4">
                     <div>
-
+                        <button 
+                            onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
+                            className="mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
+                        >
+                            <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Main Menu
+                        </button>
                         <h1 className="text-xl md:text-4xl font-black tracking-widest uppercase flex items-center gap-3" style={{ color: '#ef4444', textShadow: '0 0 10px rgba(239,68,68,0.5)' }}>
                             <BarChart3 className="w-6 h-6 md:w-8 md:h-8" /> ADMIN DASHBOARD
                         </h1>
