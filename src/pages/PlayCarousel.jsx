@@ -14,7 +14,6 @@ import Mastery from './Mastery';
 import LeviathanTrials from './LeviathanTrials';
 import Profile from './Profile';
 import GlobalRaid from './GlobalRaid';
-import Companions from './Companions';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 
@@ -67,7 +66,6 @@ export default function PlayCarousel() {
                         {selectedIndex === 9 && <span className="text-red-400">Leviathan Trials</span>}
                         {selectedIndex === 10 && <span className="text-red-500">Global Raid</span>}
                         {selectedIndex === 11 && <span className="text-violet-300">Pilot Profile</span>}
-                        {selectedIndex === 12 && <span className="text-cyan-300">Companions & Pets</span>}
                     </div>
                     <button 
                         onClick={() => { 
@@ -118,9 +116,6 @@ export default function PlayCarousel() {
                     </div>
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <Profile isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Companions isCarousel={true} />
                     </div>
                 </div>
             </div>

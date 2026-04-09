@@ -418,37 +418,6 @@ export function renderGame() {
         ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
         : (this.player.idleImage && this.player.idleImage.complete ? this.player.idleImage : null);
 
-    // Draw Companion
-    if (this.companion) {
-        this.ctx.save();
-        this.ctx.translate(this.companion.x, this.companion.y);
-        this.ctx.fillStyle = this.companion.color;
-        
-        // Glow
-        this.ctx.shadowColor = this.companion.color;
-        this.ctx.shadowBlur = 10;
-        
-        if (this.companion.type === 'orbit') {
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, 10, 0, Math.PI * 2);
-            this.ctx.fill();
-        } else {
-            // Little floating drone look
-            this.ctx.beginPath();
-            this.ctx.ellipse(0, Math.sin(this.time * 3) * 3, 12, 8, 0, 0, Math.PI * 2);
-            this.ctx.fill();
-        }
-        
-        this.ctx.shadowBlur = 0;
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = '14px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(this.companion.icon, 0, Math.sin(this.time * 3) * 3);
-        
-        this.ctx.restore();
-    }
-
     if (this.player.iFrames > 0 && Math.floor(this.time * 15) % 2 === 0) {
         this.ctx.globalAlpha = 0.5;
     }

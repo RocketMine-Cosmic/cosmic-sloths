@@ -24,7 +24,6 @@ import Dailys from './pages/Dailys';
 import GlobalRaid from './pages/GlobalRaid';
 import Mastery from './pages/Mastery';
 import AdminDashboard from './pages/AdminDashboard';
-import Companions from './pages/Companions';
 import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
@@ -99,7 +98,6 @@ const AuthenticatedApp = () => {
       <Route path="/global-raid" element={<GlobalRaid />} />
       <Route path="/mastery" element={<Mastery />} />
       <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/companions" element={<Companions />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     {needsProfileName && (

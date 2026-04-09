@@ -144,13 +144,6 @@ export const SKIN_COSMETICS = [
     { charId: 'skybyte',     id: 'skybyte_solar',      name: 'Solar Ace',     goldCost: 5000,  tokenCost: 50,  color: '#FF6600', icon: '🔶', desc: 'Blazing sunset variant.' },
 ];
 
-export const COMPANIONS = [
-    { id: 'comp_drone', name: 'Support Drone', desc: 'Fires small lasers at nearby enemies.', type: 'attack', baseDamage: 10, attackSpeed: 1.5, baseCost: 5000, icon: '🛸', color: '#00FFFF' },
-    { id: 'comp_medic', name: 'Med-Bot', desc: 'Heals you periodically.', type: 'heal', healAmount: 5, healInterval: 10, baseCost: 8000, icon: '💊', color: '#00FF00' },
-    { id: 'comp_sloth', name: 'Mini-Sloth', desc: 'Pulls distant XP and gold towards you.', type: 'loot', magnetRange: 250, baseCost: 15000, icon: '🦥', color: '#8B4513' },
-    { id: 'comp_plasma', name: 'Plasma Orb', desc: 'Orbits you, damaging enemies on contact.', type: 'orbit', baseDamage: 15, orbitSpeed: 2, baseCost: 12000, icon: '🔮', color: '#FF00FF' }
-];
-
 export const EVOLUTIONS = [
     { baseWeapon: 'napBeam', passive: 'area_up', evolvedWeapon: 'supernovaBeam', name: 'Supernova Beam', desc: 'EVOLVED: Massive piercing beam that explodes on impact.' },
     { baseWeapon: 'vineWhip', passive: 'regen_up', evolvedWeapon: 'vampiricLash', name: 'Vampiric Lash', desc: 'EVOLVED: Heals massively and covers screen.' },
