@@ -454,9 +454,9 @@ export default function Hub({ isCarousel }) {
                                                                 const currentIndex = ARENAS.findIndex(a => a.id === selectedArena);
                                                                 const unlockedCount = (save.unlockedArenasByCharacter[selectedChar] || ['station']).length;
                                                                 const diff = Math.max(0, unlockedCount - 1 - currentIndex);
-                                                                const penalty = diff * 20;
+                                                                const penalty = diff * 10;
                                                                 if (penalty > 0) {
-                                                                    return <span className="text-[9px] text-yellow-500 font-bold tracking-wider uppercase">-{Math.min(90, penalty)}% Gold Penalty</span>;
+                                                                    return <span className="text-[9px] text-yellow-500 font-bold tracking-wider uppercase">-{Math.min(50, penalty)}% Gold Penalty</span>;
                                                                 }
                                                                 return null;
                                                             })()}

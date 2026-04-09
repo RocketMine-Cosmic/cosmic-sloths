@@ -166,7 +166,7 @@ export class GameEngine {
             const unlockedCount = save.unlockedArenasByCharacter?.[characterId]?.length || 1;
             const maxUnlockedIndex = unlockedCount - 1;
             const diff = Math.max(0, maxUnlockedIndex - currentIndex);
-            sectorPenalty = Math.max(0.1, 1.0 - (diff * 0.20));
+            sectorPenalty = Math.max(0.5, 1.0 - (diff * 0.10));
         }
 
         this.player = {
