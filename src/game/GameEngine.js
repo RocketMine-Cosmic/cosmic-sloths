@@ -1334,16 +1334,6 @@ export class GameEngine {
                 }
                 e.speedMult = 1 + (nearby * 0.2);
             }
-            if (e.id === 'rift_stalker') {
-                if (!e.teleportTimer) e.teleportTimer = 4;
-                e.teleportTimer -= dt;
-                if (e.teleportTimer <= 0 && dist > 100 && dist < 400) {
-                    e.x += (dx / dist) * 100;
-                    e.y += (dy / dist) * 100;
-                    e.teleportTimer = 4;
-                    this.addParticle(e.x, e.y, e.color, 10);
-                }
-            }
             if (e.id === 'eclipse_harpy') {
                 if (!e.diveTimer) e.diveTimer = 5;
                 e.diveTimer -= dt;

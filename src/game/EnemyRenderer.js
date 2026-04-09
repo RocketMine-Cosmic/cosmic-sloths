@@ -190,7 +190,6 @@ export function drawEnemy(ctx, e, time, playerX) {
         case 't1_probe':
         case 't2_spore_wasp':
         case 't7_gear_swarm':
-        case 'healer_drone':
             // Insectoid
             ctx.fillStyle = '#00ff00';
             ctx.beginPath(); ctx.ellipse(0, 0, e.radius, e.radius*0.5, 0, 0, Math.PI*2); ctx.fill();
@@ -200,7 +199,6 @@ export function drawEnemy(ctx, e, time, playerX) {
             ctx.beginPath(); ctx.ellipse(0, 5, e.radius*1.5, e.radius*0.5, -Math.sin(t*20)*0.5, 0, Math.PI*2); ctx.fill();
             break;
 
-        case 'rift_stalker':
         case 't10_shadow':
             // Panther-like shadow
             ctx.fillStyle = '#1a0033';
