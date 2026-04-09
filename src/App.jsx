@@ -6,11 +6,11 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
+import Layout from './components/Layout';
 import MainMenu from './pages/MainMenu';
 import Hub from './pages/Hub';
 import Upgrades from './pages/Upgrades.jsx';
 import LeaderboardPage from './pages/LeaderboardPage';
-import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
 import Info from './pages/Info';
 import Credits from './pages/Credits';
@@ -81,24 +81,26 @@ const AuthenticatedApp = () => {
   return (
     <>
     <Routes>
-      <Route path="/" element={<PlayCarousel />} />
-      <Route path="/hub" element={<Hub />} />
-      <Route path="/upgrades" element={<Upgrades />} />
-      <Route path="/leaderboard" element={<LeaderboardPage />} />
-      <Route path="/game" element={<Game />} />
-      <Route path="/info" element={<Info />} />
-      <Route path="/credits" element={<Credits />} />
-      <Route path="/achievements" element={<Achievements />} />
-      <Route path="/squads" element={<Squads />} />
-      <Route path="/bestiary" element={<Bestiary />} />
-      <Route path="/synergy-codex" element={<SynergyCodex />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/trials" element={<LeviathanTrials />} />
-      <Route path="/dailys" element={<Dailys />} />
-      <Route path="/global-raid" element={<GlobalRaid />} />
-      <Route path="/mastery" element={<Mastery />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="*" element={<PageNotFound />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Hub />} />
+        <Route path="/menu" element={<MainMenu />} />
+        <Route path="/upgrades" element={<Upgrades />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/game" element={<Game />} />
+        <Route path="/info" element={<Info />} />
+        <Route path="/credits" element={<Credits />} />
+        <Route path="/achievements" element={<Achievements />} />
+        <Route path="/squads" element={<Squads />} />
+        <Route path="/bestiary" element={<Bestiary />} />
+        <Route path="/synergy-codex" element={<SynergyCodex />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/trials" element={<LeviathanTrials />} />
+        <Route path="/dailys" element={<Dailys />} />
+        <Route path="/global-raid" element={<GlobalRaid />} />
+        <Route path="/mastery" element={<Mastery />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Route>
     </Routes>
     {needsProfileName && (
       <SetProfileNameModal onComplete={() => {
