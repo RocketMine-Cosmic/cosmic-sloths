@@ -151,7 +151,8 @@ export default function Hub({ isCarousel }) {
             const newSave = { 
                 ...save, 
                 gold: save.gold - char.cost,
-                unlockedCharacters: [...save.unlockedCharacters, char.id]
+                unlockedCharacters: [...save.unlockedCharacters, char.id],
+                foundCharacters: [...(save.foundCharacters || []), char.id]
             };
             SaveManager.save(newSave);
             setSave(newSave);
@@ -160,7 +161,8 @@ export default function Hub({ isCarousel }) {
             const newSave = { 
                 ...save, 
                 cosmicTokens: (save.cosmicTokens || 0) - tokenCost,
-                unlockedCharacters: [...save.unlockedCharacters, char.id]
+                unlockedCharacters: [...save.unlockedCharacters, char.id],
+                foundCharacters: [...(save.foundCharacters || []), char.id]
             };
             SaveManager.save(newSave);
             setSave(newSave);
