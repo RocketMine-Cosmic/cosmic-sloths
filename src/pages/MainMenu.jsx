@@ -59,20 +59,14 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 className="z-10 grid grid-cols-2 gap-3 w-[90%] max-w-md md:max-w-lg px-4 font-sans relative"
             >
                 <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/'); }}
-                    className="col-span-2 w-full bg-[#10B981]/20 hover:bg-[#10B981]/40 backdrop-blur-md text-emerald-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#10B981]/60 hover:border-[#10B981] rounded-t-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2"
-                >
-                    RETURN TO SPACESHIP
-                </button>
-                <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/info'); }}
-                    className="w-full bg-[#0CA7B8]/20 hover:bg-[#0CA7B8]/40 backdrop-blur-md text-cyan-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#0CA7B8]/60 hover:border-[#0CA7B8] shadow-[0_0_20px_rgba(12,167,184,0.3)] hover:shadow-[0_0_30px_rgba(12,167,184,0.6)]"
+                    className="w-full bg-[#0CA7B8]/20 hover:bg-[#0CA7B8]/40 backdrop-blur-md text-cyan-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#0CA7B8]/60 hover:border-[#0CA7B8] rounded-tl-2xl shadow-[0_0_20px_rgba(12,167,184,0.3)] hover:shadow-[0_0_30px_rgba(12,167,184,0.6)]"
                 >
                     INFO
                 </button>
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); setShowSettings(true); }}
-                    className="w-full bg-[#D946EF]/20 hover:bg-[#D946EF]/40 backdrop-blur-md text-fuchsia-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#D946EF]/60 hover:border-[#D946EF] shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_30px_rgba(217,70,239,0.6)]"
+                    className="w-full bg-[#D946EF]/20 hover:bg-[#D946EF]/40 backdrop-blur-md text-fuchsia-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#D946EF]/60 hover:border-[#D946EF] rounded-tr-2xl shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_30px_rgba(217,70,239,0.6)]"
                 >
                     SETTINGS
                 </button>
