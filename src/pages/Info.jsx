@@ -77,8 +77,11 @@ const TABS_CONTENT = {
                     <div className="bg-slate-900/60 rounded-lg p-2 text-center"><kbd className="text-purple-400 font-bold">Left Stick</kbd><div className="text-slate-400 mt-1">Move / Steer</div></div>
                     <div className="bg-slate-900/60 rounded-lg p-2 text-center"><kbd className="text-purple-400 font-bold">Right Stick</kbd><div className="text-slate-400 mt-1">Scroll Menus</div></div>
                 </div>
-                <div className="bg-slate-900/40 rounded-lg p-3 border border-slate-700/50 text-xs text-slate-400">
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-slate-700/50 text-xs text-slate-400 mb-3">
                     <strong className="text-white">Full Gamepad Support:</strong> Connect an Xbox, PlayStation, or generic controller to play from the couch! Use the <strong className="text-fuchsia-400">Virtual Cursor</strong> to navigate the Hub and menus seamlessly, and the <strong className="text-cyan-400">Snap-to-Grid</strong> system for quick selections during gameplay.
+                </div>
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-fuchsia-700/50 text-xs text-slate-400">
+                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, spend 10 Cosmic Tokens to activate your <strong className="text-fuchsia-400">Squad Ultimate</strong> (via the button above the XP bar) to summon a clone from your unlocked roster!
                 </div>
             </SectionCard>
 
@@ -117,7 +120,7 @@ const TABS_CONTENT = {
     progression: (
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏠 Sloth Lounge (Meta Progression)" color="cyan">
-                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and Cosmic Tokens on persistent upgrades.</p>
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and Cosmic Tokens on persistent upgrades, or purchase a 60-minute <strong className="text-emerald-400">+50% XP Session Buff</strong> for 10 Cosmic Tokens.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
@@ -459,10 +462,13 @@ const TABS_CONTENT = {
 
     combat: (
         <div className="space-y-4">
-            <SectionCard title="⚔️ Sectors" color="cyan">
+            <SectionCard title="⚔️ Sectors & Penalties" color="cyan">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Each sector has a unique environment, enemy pool, and difficulty. Unlock new sectors by completing runs with each character. Every sector has its own environmental effect:
                 </p>
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-yellow-700/50 text-xs text-slate-400 mb-4">
+                    <strong className="text-yellow-400">Sector Level Penalty:</strong> Playing older sectors applies a <strong className="text-white">-10% Gold Penalty</strong> per sector below your maximum unlocked arena (capped at -50%). Keep pushing forward to maximize your wealth!
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-sm">
                     <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-cyan-900/40 text-center flex flex-col justify-center">
                         <div className="text-cyan-400 font-bold mb-1">Neon Rain</div>
