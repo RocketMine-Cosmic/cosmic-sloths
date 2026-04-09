@@ -58,7 +58,7 @@ export class WebGLBackground {
             vec2 worldCenterUV = u_cameraCenter / u_texResolution;
             
             // Layer 1: Base Image (slowest)
-            vec2 baseUV = uvCover + 0.5 + worldCenterUV * 0.05;
+            vec2 baseUV = (uvCover * 0.35) + 0.5 + worldCenterUV * 0.2;
             
             // Nebula Drift (subtle warping)
             float drift = noise(baseUV * 2.0 + u_time * 0.05) * 0.02;
@@ -70,7 +70,7 @@ export class WebGLBackground {
             baseColor.rgb += bloom;
             
             // Layer 2: Dense Twinkling Stars (medium parallax)
-            vec2 starUV = uvCover * u_texResolution * 0.01 + worldCenterUV * 0.15;
+            vec2 starUV = uvCover * u_texResolution * 0.01 + worldCenterUV * 0.4;
             float starGrid = random(floor(starUV));
             float starDist = length(fract(starUV) - 0.5);
             float starGlow = 0.0;
@@ -84,7 +84,7 @@ export class WebGLBackground {
             vec3 starColor = vec3(0.8, 0.9, 1.0) * starGlow;
             
             // Layer 3: Faint Glowing Dust (fastest parallax)
-            vec2 dustUV = uvCover * u_texResolution * 0.005 + worldCenterUV * 0.25;
+            vec2 dustUV = uvCover * u_texResolution * 0.005 + worldCenterUV * 0.6;
             float dustNoise = noise(dustUV + vec2(u_time * 0.05, u_time * 0.05));
             vec3 dustColor = vec3(0.4, 0.7, 1.0) * smoothstep(0.5, 0.9, dustNoise) * 0.25;
             
