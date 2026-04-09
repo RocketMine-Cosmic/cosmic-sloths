@@ -2,6 +2,7 @@ import { drawEnemy } from './EnemyRenderer';
 import { drawUI } from './UIRenderer';
 import { drawPickups } from './PickupRenderer';
 import { drawProjectiles } from './ProjectileRenderer';
+import { getWeaponStatsAndMastery } from './Constants';
 
 export function renderGame() {
     if (this.webglBg && this.webglBg.gl && this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
@@ -203,19 +204,11 @@ export function renderGame() {
 
     const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
     if (swarm) {
-        const getWeaponUpgrade = (wId, stat) => {
-            const perm = this.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
-            const week = this.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
-            const season = this.save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
-            return perm + week + season;
-        };
-        const dmgLevel = getWeaponUpgrade('slothSwarm', 'damage');
-        const areaLevel = getWeaponUpgrade('slothSwarm', 'area');
-        const cdLevel = getWeaponUpgrade('slothSwarm', 'cooldown');
-        const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
+        const stats = getWeaponStatsAndMastery(this.save, 'slothSwarm');
+        const isMastered = stats.isMastered;
         
         const count = 1 + Math.floor(swarm.level / 2);
-        const area = swarm.baseArea * this.player.areaMult * (1 + (swarm.level-1)*0.1) * (1 + areaLevel * 0.1);
+        const area = swarm.baseArea * this.player.areaMult * (1 + (swarm.level-1)*0.1) * stats.areaMult;
         const speedMult = isMastered ? 6 : 3;
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + this.time * speedMult;
@@ -259,8 +252,9 @@ export function renderGame() {
 
     const thornySwarm = this.player.weapons.find(w => w.id === 'thornySwarm');
     if (thornySwarm) {
+        const stats = getWeaponStatsAndMastery(this.save, 'thornySwarm');
         const count = 2 + Math.floor(thornySwarm.level / 2);
-        const area = thornySwarm.baseArea * this.player.areaMult * (1 + (thornySwarm.level-1)*0.1);
+        const area = thornySwarm.baseArea * this.player.areaMult * (1 + (thornySwarm.level-1)*0.1) * stats.areaMult;
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + this.time * 4;
             const px = this.player.x + Math.cos(angle) * (80 * area);
@@ -304,8 +298,9 @@ export function renderGame() {
 
     const orbitalLasers = this.player.weapons.find(w => w.id === 'orbitalLasers');
     if (orbitalLasers) {
+        const stats = getWeaponStatsAndMastery(this.save, 'orbitalLasers');
         const count = 2 + Math.floor(orbitalLasers.level / 2);
-        const area = orbitalLasers.baseArea * this.player.areaMult * (1 + (orbitalLasers.level-1)*0.1);
+        const area = orbitalLasers.baseArea * this.player.areaMult * (1 + (orbitalLasers.level-1)*0.1) * stats.areaMult;
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + this.time * 2;
             const px = this.player.x + Math.cos(angle) * (60 * area);
@@ -334,8 +329,9 @@ export function renderGame() {
 
     const orbitalDefense = this.player.weapons.find(w => w.id === 'orbitalDefense');
     if (orbitalDefense) {
+        const stats = getWeaponStatsAndMastery(this.save, 'orbitalDefense');
         const count = 4 + Math.floor(orbitalDefense.level / 2);
-        const area = orbitalDefense.baseArea * this.player.areaMult * (1 + (orbitalDefense.level-1)*0.1);
+        const area = orbitalDefense.baseArea * this.player.areaMult * (1 + (orbitalDefense.level-1)*0.1) * stats.areaMult;
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + this.time * 3;
             const px = this.player.x + Math.cos(angle) * (70 * area);

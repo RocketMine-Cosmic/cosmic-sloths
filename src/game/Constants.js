@@ -395,3 +395,40 @@ export const getCharacterMastery = (kills) => {
     }
     return { current, next };
 };
+
+export const getWeaponStatsAndMastery = (save, wId) => {
+    if (!save) return { dmgMult: 1, areaMult: 1, cdMult: 1, isMastered: false };
+    const perm = save.permanentWeaponUpgrades?.[wId] || {};
+    const week = save.weeklyWeaponUpgrades?.[wId] || {};
+    const season = save.seasonalWeaponUpgrades?.[wId] || {};
+    
+    const dmgUpgradeLevel = (perm.damage || 0) + (week.damage || 0) + (season.damage || 0);
+    const areaUpgradeLevel = (perm.area || 0) + (week.area || 0) + (season.area || 0);
+    const cdUpgradeLevel = (perm.cooldown || 0) + (week.cooldown || 0) + (season.cooldown || 0);
+    
+    const forgeAugments = save.forgeWeaponAugments?.[wId] || [];
+    let forgeDmg = 0;
+    if (forgeAugments.includes('damage_1')) forgeDmg += 0.15;
+    if (forgeAugments.includes('damage_2')) forgeDmg += 0.35;
+    if (forgeAugments.includes('damage_3')) forgeDmg += 0.60;
+
+    let forgeArea = 0;
+    if (forgeAugments.includes('area_1')) forgeArea += 0.15;
+    if (forgeAugments.includes('area_2')) forgeArea += 0.35;
+    if (forgeAugments.includes('area_3')) forgeArea += 0.60;
+    
+    let forgeCd = 0;
+    if (forgeAugments.includes('cd_1')) forgeCd += 0.10;
+    if (forgeAugments.includes('cd_2')) forgeCd += 0.20;
+    if (forgeAugments.includes('cd_3')) forgeCd += 0.35;
+
+    const isMastered = (dmgUpgradeLevel >= 5 && areaUpgradeLevel >= 5 && cdUpgradeLevel >= 5) || 
+                       (forgeAugments.includes('damage_3') && forgeAugments.includes('area_3') && forgeAugments.includes('cd_3'));
+                       
+    return {
+        dmgMult: 1 + (dmgUpgradeLevel * 0.1) + forgeDmg,
+        areaMult: 1 + (areaUpgradeLevel * 0.1) + forgeArea,
+        cdMult: 1 - (cdUpgradeLevel * 0.05) - forgeCd,
+        isMastered
+    };
+};

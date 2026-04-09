@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, getCharacterMastery } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { SFXManager } from './SFXManager';
@@ -792,14 +792,8 @@ export class GameEngine {
             if (w.timer <= 0) {
                 this.fireWeapon(w);
                 
-                const getWeaponUpgrade = (wId, stat) => {
-                    const perm = this.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
-                    const week = this.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
-                    const season = this.save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
-                    return perm + week + season;
-                };
-                const cdUpgradeLevel = getWeaponUpgrade(w.id, 'cooldown');
-                const cdMultiplier = 1 - (cdUpgradeLevel * 0.05); // -5% per level
+                const stats = getWeaponStatsAndMastery(this.save, w.id);
+                const cdMultiplier = stats.cdMult;
                 
                 w.timer = (w.baseCooldown / 60) * Math.max(0.2, this.player.cooldownMult) * cdMultiplier;
             }

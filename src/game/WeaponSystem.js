@@ -1,22 +1,14 @@
 import { SoundManager } from './SoundManager';
 import { SFXManager } from './SFXManager';
+import { getWeaponStatsAndMastery } from './Constants';
 
 export function fireWeaponLogic(engine, w) {
     SFXManager.playWeaponFire(w.id);
-    const getWeaponUpgrade = (wId, stat) => {
-        const perm = engine.save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
-        const week = engine.save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
-        const season = engine.save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
-        return perm + week + season;
-    };
-    const dmgUpgradeLevel = getWeaponUpgrade(w.id, 'damage');
-    const areaUpgradeLevel = getWeaponUpgrade(w.id, 'area');
-    const cdUpgradeLevel = getWeaponUpgrade(w.id, 'cooldown');
+    const stats = getWeaponStatsAndMastery(engine.save, w.id);
     
-    const isMastered = dmgUpgradeLevel >= 5 && areaUpgradeLevel >= 5 && cdUpgradeLevel >= 5;
-    
-    const wDmgMult = 1 + (dmgUpgradeLevel * 0.1);
-    const wAreaMult = 1 + (areaUpgradeLevel * 0.1);
+    const isMastered = stats.isMastered;
+    const wDmgMult = stats.dmgMult;
+    const wAreaMult = stats.areaMult;
 
     const dmg = w.baseDamage * engine.player.damageMult * (1 + (w.level-1)*0.2) * wDmgMult;
     const area = w.baseArea * engine.player.areaMult * (1 + (w.level-1)*0.1) * wAreaMult;
