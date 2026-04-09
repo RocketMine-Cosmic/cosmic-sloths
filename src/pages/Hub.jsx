@@ -344,31 +344,8 @@ export default function Hub({ isCarousel }) {
                                                                     </div>
                                                                 )}
                                                                 
-                                                                {!isUnlocked && !isFindable && (
-                                                                    <div className="flex gap-2 mt-1">
-                                                                        <button
-                                                                            onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'gold'); }}
-                                                                            disabled={!canAfford}
-                                                                            className={`px-3 py-1 rounded font-bold text-xs border transition-colors flex items-center justify-center gap-1.5 ${
-                                                                                canAfford ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 hover:bg-yellow-500/40' : 'bg-[#0b0416]/50 border-slate-700/50 text-slate-600'
-                                                                            }`}
-                                                                        >
-                                                                            <Coins className="w-3 h-3 fill-current" /> {char.cost.toLocaleString()} Gold
-                                                                        </button>
-                                                                        <div className="text-slate-500 text-[10px] font-bold flex items-center justify-center">OR</div>
-                                                                        <button
-                                                                            onClick={(e) => { e.stopPropagation(); handleBuyCharacter(char, 'token'); }}
-                                                                            disabled={(save.cosmicTokens || 0) < Math.max(1, Math.floor(char.cost / 4))}
-                                                                            className={`px-3 py-1 rounded font-bold text-xs border transition-colors flex items-center justify-center gap-1.5 ${
-                                                                                (save.cosmicTokens || 0) >= Math.max(1, Math.floor(char.cost / 4)) ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 hover:bg-emerald-500/40' : 'bg-[#0b0416]/50 border-slate-700/50 text-slate-600'
-                                                                            }`}
-                                                                        >
-                                                                            <Hexagon className="w-3 h-3 fill-current" /> {Math.max(1, Math.floor(char.cost / 4)).toLocaleString()} Tokens
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                                {!isUnlocked && isFindable && (
-                                                                    <div className="px-3 py-1 rounded font-bold text-xs bg-[#0b0416]/50 text-slate-400 border border-slate-700/50 mt-1">
+                                                                {!isUnlocked && (
+                                                                    <div className="px-3 py-1 rounded font-bold text-xs bg-[#0b0416]/50 text-slate-400 border border-slate-700/50 mt-1 inline-flex items-center gap-1.5 w-fit">
                                                                         🔍 Find in Maps
                                                                     </div>
                                                                 )}
