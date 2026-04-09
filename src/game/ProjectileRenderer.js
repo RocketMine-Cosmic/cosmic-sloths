@@ -6,6 +6,12 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
     const texSmoke = particleManager?.textures?.smoke;
 
     projectiles.forEach(p => {
+        const originalRadius = p.radius;
+        // Keep VFX a tad smaller and prevent visual scaling with area of attack for standard projectiles
+        if (!p.isAoe) {
+            p.radius = Math.min(originalRadius, p.type === 'supernova_beam' ? 12 : (p.type === 'railgun' ? 6 : 4.5));
+        }
+
         ctx.save();
         ctx.translate(p.x, p.y);
         if (p.vx || p.vy) {
@@ -433,6 +439,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         }
         ctx.restore();
+        p.radius = originalRadius;
     });
     ctx.globalCompositeOperation = 'source-over';
 }
