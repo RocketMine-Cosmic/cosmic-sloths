@@ -9,15 +9,9 @@ export default function Credits() {
 
     return (
         <div className="min-h-screen relative text-slate-200 p-4 md:p-8 font-mono overflow-hidden">
-            <SpaceBackground />
 
             <div className="max-w-4xl mx-auto relative z-10 text-center">
-                <button 
-                    onClick={() => navigate('/')}
-                    className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors font-bold"
-                >
-                    <ArrowLeft size={20} /> Back to Main Menu
-                </button>
+
 
                 <motion.div 
                     initial={{ y: 20, opacity: 0 }}
