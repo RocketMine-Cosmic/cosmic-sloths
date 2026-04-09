@@ -151,36 +151,43 @@ void main() {
     color += nebulaColor;
 
     // LAYER 2: Mid Stars
-    vec2 pStars = p * 120.0 + camDist * 0.4;
+    vec2 pStars = p * 120.0 + camDist * 0.8 + vec2(u_time * 0.05, u_time * 0.02);
     float s = hash12(floor(pStars));
-    if (s > 0.98 / starDensity) {
+    if (s > 0.98 / max(0.1, starDensity)) {
         float twinkle = 0.5 + 0.5 * sin(u_time * 5.0 + s * 100.0);
         float starDist = length(fract(pStars) - 0.5);
         color += cStarGlow * twinkle * smoothstep(0.5, 0.0, starDist) * 2.0;
     }
 
     // LAYER 3: Distant Stars
-    vec2 pStars2 = p * 250.0 + camDist * 0.2;
+    vec2 pStars2 = p * 250.0 + camDist * 0.3 + vec2(u_time * 0.02, u_time * 0.01);
     float s2 = hash12(floor(pStars2));
-    if (s2 > 0.95 / starDensity) {
+    if (s2 > 0.95 / max(0.1, starDensity)) {
         float twinkle = 0.5 + 0.5 * sin(u_time * 3.0 + s2 * 50.0);
         float starDist = length(fract(pStars2) - 0.5);
         color += vec3(1.0) * twinkle * smoothstep(0.5, 0.0, starDist);
     }
 
     // LAYER 4: Close Asteroid / Debris Field
-    vec2 pAstBase = p * 15.0 + camDist * 1.5 + vec2(u_time * 0.05, -u_time * 0.03);
-    float nAst = fbm(pAstBase * 3.0);
-    vec2 pAst = pAstBase + nAst * 0.5; // Distort space for jagged asteroids
-    float a = voronoi(pAst);
-    float astThresh = 0.12 * min(1.0, asteroidDensity);
+    // Increased base scale for more density, much stronger parallax, and constant drift
+    vec2 pAstBase = p * 22.0 + camDist * 3.5 + vec2(u_time * 0.15, -u_time * 0.08);
     
-    if (a < astThresh && asteroidDensity > 0.1) {
+    // Heavy 2D distortion to completely shatter the uniform square voronoi grid
+    vec2 astDistort = vec2(fbm(pAstBase * 1.2), fbm(pAstBase * 1.2 + vec2(10.0, 10.0))) * 3.0;
+    vec2 pAst = pAstBase + astDistort; 
+    
+    float a = voronoi(pAst);
+    float astThresh = 0.16 * min(1.0, asteroidDensity); // Slightly larger asteroids to match density
+    
+    // Random masking to create organic clusters instead of an even spread
+    float clusterNoise = fbm(pAstBase * 0.5);
+    
+    if (a < astThresh && asteroidDensity > 0.1 && clusterNoise > 0.4) {
         float z = sqrt(max(0.0, (astThresh * astThresh) - (a * a))) / astThresh;
-        float surfNoise = fbm(pAstBase * 20.0) * 0.6 + fbm(pAstBase * 40.0) * 0.4;
+        float surfNoise = fbm(pAstBase * 25.0) * 0.6 + fbm(pAstBase * 50.0) * 0.4;
         z *= (0.6 + 0.8 * surfNoise);
         
-        vec3 normal = normalize(vec3(nAst - 0.5, surfNoise - 0.5, z + 0.1));
+        vec3 normal = normalize(vec3(astDistort.x * 0.5 - 0.5, surfNoise - 0.5, z + 0.1));
         vec3 lightDir = normalize(vec3(-1.0, 1.0, 1.0));
         float diff = max(0.0, dot(normal, lightDir));
         
