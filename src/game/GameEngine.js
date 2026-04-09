@@ -193,10 +193,9 @@ export class GameEngine {
         
         const sessionBuffs = save.sessionBuffs || {};
         const now = Date.now();
-        const hasGoldBuff = sessionBuffs.goldExpiry > now && difficultyId === 'easy';
         const hasXpBuff = sessionBuffs.xpExpiry > now;
 
-        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (hasGoldBuff ? 0.5 : 0)) * this.difficulty.goldMult;
+        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult;
         this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (hasXpBuff ? 0.5 : 0)) * this.difficulty.xpMult;
 
         if (hasAug('dat_ghost')) {

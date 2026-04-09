@@ -34,6 +34,12 @@ export default function Hub({ isCarousel }) {
     const [charTab, setCharTab] = useState('loadout');
     const { toast } = useToast();
     const touchStartX = React.useRef(null);
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     const getAvailableWeapons = (charId) => {
         return [WEAPONS['neoBlaster']].filter(Boolean);
@@ -561,20 +567,27 @@ export default function Hub({ isCarousel }) {
                                     const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
                                     const sessionBuffs = save.sessionBuffs || {};
-                                    const now = Date.now();
-                                    const hasGoldBuff = sessionBuffs.goldExpiry > now;
-                                    const hasXpBuff = sessionBuffs.xpExpiry > now;
+                                    const hasXpBuff = sessionBuffs.xpExpiry > currentTime;
                                     
-                                    const buyBuff = (type) => {
+                                    const formatTimeLeft = (ms) => {
+                                        const totalSeconds = Math.floor(ms / 1000);
+                                        const mins = Math.floor(totalSeconds / 60);
+                                        const secs = totalSeconds % 60;
+                                        return `${mins}:${secs.toString().padStart(2, '0')}`;
+                                    };
+                                    
+                                    const timeLeft = hasXpBuff ? formatTimeLeft(sessionBuffs.xpExpiry - currentTime) : '';
+                                    
+                                    const buyBuff = () => {
                                         if ((save.cosmicTokens || 0) >= 5) {
                                             SoundManager.playUIClick();
                                             const newSave = { ...save, cosmicTokens: save.cosmicTokens - 5 };
                                             newSave.sessionBuffs = newSave.sessionBuffs || {};
-                                            newSave.sessionBuffs[type === 'gold' ? 'goldExpiry' : 'xpExpiry'] = now + 60 * 60 * 1000;
+                                            newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
                                             SaveManager.save(newSave);
                                             setSave(newSave);
                                             recordTokenSpend(5);
-                                            toast({ title: "Buff Activated", description: `+50% ${type === 'gold' ? 'Gold' : 'XP'} for 60 minutes!` });
+                                            toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
                                         }
                                     };
                                     
@@ -583,12 +596,8 @@ export default function Hub({ isCarousel }) {
                                             
                                             <div className="flex flex-col sm:flex-row gap-2 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
                                                 <div className="text-xs text-slate-400 font-bold mb-1 sm:mb-0 sm:w-24 shrink-0 flex items-center">SESSION BUFFS</div>
-                                                <button onClick={() => buyBuff('gold')} disabled={hasGoldBuff || (save.cosmicTokens || 0) < 5 || selectedDifficulty !== 'easy'} className={`flex-1 flex justify-between items-center px-3 py-2 rounded text-xs font-bold border transition-all ${hasGoldBuff ? 'bg-yellow-900/40 border-yellow-500/50 text-yellow-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-yellow-500 hover:text-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
-                                                    <span className="flex items-center gap-2">💰 +50% Gold {hasGoldBuff ? '(ACTIVE)' : (selectedDifficulty !== 'easy' ? '(EASY ONLY)' : '')}</span>
-                                                    {!hasGoldBuff && <span className="flex items-center gap-1"><Hexagon className="w-3 h-3 fill-current text-emerald-400" /> 5</span>}
-                                                </button>
-                                                <button onClick={() => buyBuff('xp')} disabled={hasXpBuff || (save.cosmicTokens || 0) < 5} className={`flex-1 flex justify-between items-center px-3 py-2 rounded text-xs font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
-                                                    <span className="flex items-center gap-2">✨ +50% XP {hasXpBuff && '(ACTIVE)'}</span>
+                                                <button onClick={buyBuff} disabled={hasXpBuff || (save.cosmicTokens || 0) < 5} className={`flex-1 flex justify-between items-center px-3 py-2 rounded text-xs font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
+                                                    <span className="flex items-center gap-2">✨ +50% XP {hasXpBuff && `(ACTIVE: ${timeLeft})`}</span>
                                                     {!hasXpBuff && <span className="flex items-center gap-1"><Hexagon className="w-3 h-3 fill-current text-emerald-400" /> 5</span>}
                                                 </button>
                                             </div>
