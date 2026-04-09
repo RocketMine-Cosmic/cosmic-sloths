@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pause, Heart, CircleDollarSign } from 'lucide-react';
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, cosmicTokens, weapons = [], passives = [], onPause, onSquadUltimate }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, cosmicTokens, weapons = [], passives = [], score = 0, onPause, onSquadUltimate }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -56,10 +56,13 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 </div>
                 
                 {/* Top Center: Timer */}
-                <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-cyan-500/30 text-center pointer-events-auto shrink-0">
+                <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-cyan-500/30 text-center pointer-events-auto shrink-0 flex flex-col">
                     <div className="text-[8px] md:text-xs font-black tracking-widest text-cyan-500/80 uppercase mb-0.5">SURVIVE</div>
                     <div className="text-sm md:text-2xl font-black text-white font-mono tracking-wider">
                         {formatTime(time)} {duration === Infinity ? '' : <span className="text-slate-500 text-xs md:text-lg">/ {formatTime(duration || 300)}</span>}
+                    </div>
+                    <div className="text-[10px] md:text-sm font-black text-fuchsia-400 font-mono mt-0.5">
+                        SCORE: {score.toLocaleString()}
                     </div>
                 </div>
 
@@ -78,21 +81,11 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         </div>
                     </div>
                     
-                    <div className="flex flex-col gap-1 md:gap-2 justify-center">
-                        <button 
-                            id="squad-ult-btn"
-                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate(); }}
-                            disabled={cosmicTokens < 4}
-                            className="bg-[#0b0416]/90 p-1.5 md:p-2 rounded-lg border border-purple-500/50 hover:bg-purple-900 hover:border-purple-400 transition-all flex items-center justify-center touch-none h-full disabled:opacity-50"
-                            style={{ touchAction: 'none' }}
-                            title="Squad Ultimate (Cost: 4 Tokens)"
-                        >
-                            <span className="text-xs font-black text-purple-400">ULT</span>
-                        </button>
+                    <div className="flex flex-col justify-center">
                         <button 
                             id="pause-game-btn"
                             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
-                            className="bg-[#0b0416]/90 p-1.5 md:p-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none h-full"
+                            className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none h-full"
                             style={{ touchAction: 'none' }}
                         >
                             <Pause className="w-4 h-4 md:w-6 md:h-6 text-white" />
@@ -101,8 +94,19 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 </div>
             </div>
 
-            {/* Bottom: XP Bar */}
-            <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full">
+            {/* Bottom: XP Bar & ULT */}
+            <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full flex flex-col gap-2">
+                <button 
+                    id="squad-ult-btn"
+                    onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate(); }}
+                    disabled={cosmicTokens < 4}
+                    className="mx-auto w-40 md:w-56 bg-[#0b0416]/90 p-2 md:p-3 rounded-xl border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_15px_rgba(217,70,239,0.3)]"
+                    style={{ touchAction: 'none' }}
+                >
+                    <span className="text-sm md:text-base font-black text-fuchsia-300 tracking-widest uppercase">SQUAD ULT</span>
+                    <span className="text-[10px] md:text-xs font-bold text-slate-300 flex items-center gap-1">COST: 4 <span className="text-emerald-400">💠</span></span>
+                </button>
+
                 <div className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-cyan-500/30">
                     <div className="flex justify-between items-end mb-1">
                         <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider">LVL {level}</span>
