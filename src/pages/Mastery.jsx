@@ -61,9 +61,14 @@ export default function Mastery({ isCarousel }) {
                                             <h3 className="font-black text-xl tracking-widest uppercase truncate" style={{ color: char.color, textShadow: `0 0 10px ${char.color}80` }}>
                                                 {char.name}
                                             </h3>
-                                            <div className="text-xs text-slate-400 italic mb-2 break-words whitespace-normal leading-snug">
+                                            <div className="text-xs text-slate-400 italic mb-1 break-words whitespace-normal leading-snug">
                                                 {char.desc}
                                             </div>
+                                            {char.skillDesc && (
+                                                <div className="text-xs font-semibold mb-2 break-words whitespace-normal leading-snug" style={{ color: char.color }}>
+                                                    Skill: {char.skillDesc}
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-2 text-sm text-slate-400">
                                                 <span className="font-bold text-white">{kills.toLocaleString()}</span> Total Kills
                                             </div>
