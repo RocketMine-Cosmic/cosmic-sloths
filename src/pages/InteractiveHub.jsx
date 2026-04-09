@@ -290,7 +290,7 @@ export default function InteractiveHub() {
             )}
 
             <div className="md:hidden">
-                <VirtualJoystick onMove={(data) => setJoystick({ x: data.x, y: data.y })} />
+                <VirtualJoystick onChange={(data) => setJoystick({ x: data.x, y: data.y })} />
             </div>
             
             <div className="absolute bottom-4 text-center w-full text-slate-500/50 font-mono text-[10px] pointer-events-none hidden md:block">
