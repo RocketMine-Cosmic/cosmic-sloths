@@ -10,8 +10,23 @@ export function fireWeaponLogic(engine, w) {
     const wDmgMult = stats.dmgMult;
     const wAreaMult = stats.areaMult;
 
-    const dmg = w.baseDamage * engine.player.damageMult * (1 + (w.level-1)*0.2) * wDmgMult;
-    const area = w.baseArea * engine.player.areaMult * (1 + (w.level-1)*0.1) * wAreaMult;
+    let dmg = w.baseDamage * engine.player.damageMult * (1 + (w.level-1)*0.2) * wDmgMult;
+    let area = w.baseArea * engine.player.areaMult * (1 + (w.level-1)*0.1) * wAreaMult;
+    
+    if (engine.player.synAmpTimer > 0) area *= 2.0;
+    
+    if (engine.player.charAugments?.includes('neo_rail')) {
+        engine.player.railCount = (engine.player.railCount || 0) + 1;
+        if (engine.player.railCount % 5 === 0) dmg *= 3.0;
+    }
+    
+    let isBeatPush = false;
+    if (engine.player.charAugments?.includes('syn_beat')) {
+        engine.player.beatCount = (engine.player.beatCount || 0) + 1;
+        if (engine.player.beatCount % 4 === 0) isBeatPush = true;
+    }
+
+    const startIndex = engine.projectiles.length;
     
     if (w.id === 'neoBlaster') {
         let nearest = null;
@@ -98,6 +113,7 @@ export function fireWeaponLogic(engine, w) {
                 engine.damageEnemy(e, dmg);
                 engine.addParticle(e.x, e.y, color1, 10, 'spark', 1.5);
                 engine.addParticle(e.x, e.y, color2, 5, 'spark', 1);
+                if (engine.player.charAugments?.includes('pan_stomp')) e.slowTimer = 2.0;
                 if (isMastered) {
                     engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + (dmg * 0.05));
                     engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
@@ -160,6 +176,18 @@ export function fireWeaponLogic(engine, w) {
     else if (w.id === 'novaPulse') {
         const primaryColor = isMastered ? '#ff00ff' : '#00ffff';
         const secondaryColor = isMastered ? '#8a2be2' : '#ffffff';
+        
+        if (engine.player.charAugments?.includes('nova_chain')) {
+            for(let i=0; i<2; i++) {
+                const a = Math.random() * Math.PI * 2;
+                engine.projectiles.push({
+                    x: engine.player.x, y: engine.player.y,
+                    vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
+                    radius: 5, damage: dmg * 0.5, pierce: 1, life: 2, color: '#ff0000', type: 'missile'
+                });
+            }
+        }
+        
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -224,6 +252,17 @@ export function fireWeaponLogic(engine, w) {
         });
     }
     else if (w.id === 'laserNova') {
+        if (engine.player.charAugments?.includes('nova_chain')) {
+            for(let i=0; i<2; i++) {
+                const a = Math.random() * Math.PI * 2;
+                engine.projectiles.push({
+                    x: engine.player.x, y: engine.player.y,
+                    vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
+                    radius: 5, damage: dmg * 0.5, pierce: 1, life: 2, color: '#ff0000', type: 'missile'
+                });
+            }
+        }
+        
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -521,5 +560,33 @@ export function fireWeaponLogic(engine, w) {
             weaponId: 'shieldBubble',
             type: 'aegis_matrix'
         });
+    }
+
+    // Apply Augments to newly created projectiles
+    for (let i = startIndex; i < engine.projectiles.length; i++) {
+        let p = engine.projectiles[i];
+        if (engine.player.charAugments?.includes('neo_range')) p.life *= 1.2;
+        if (engine.player.charAugments?.includes('neo_pierce') && p.pierce !== undefined) p.pierce += 1;
+        if (isBeatPush && !p.isAoe) p.pushback = (p.pushback || 0) + 150;
+        if (engine.player.charAugments?.includes('neo_chain') && !p.isAoe && p.pierce !== undefined) p.chainCount = 1;
+    }
+    
+    // sky_twin: Twin Laser Array - Always fires dual lasers along with any weapon
+    if (engine.player.charAugments?.includes('sky_twin') && Math.random() < 0.5) {
+        let nearest = null;
+        let minDist = Infinity;
+        engine.enemies.forEach(e => {
+            const d = Math.hypot(e.x - engine.player.x, e.y - engine.player.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+        if (nearest) {
+            const angle = Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x);
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: Math.cos(angle) * 400 * engine.player.projSpeedMult,
+                vy: Math.sin(angle) * 400 * engine.player.projSpeedMult,
+                radius: 4 * area, damage: dmg * 0.5, pierce: 2, life: 2, color: '#00D4FF', type: 'dual_laser', isMastered: false, weaponId: 'twinLaser'
+            });
+        }
     }
 }

@@ -70,6 +70,16 @@ export class GameEngine {
             maxHp: 0, speedMult: 0, damageMult: 0, magnetRange: 0, regen: 0, armor: 0, areaMult: 0, cooldownMult: 0, projSpeedMult: 0, goldMult: 0, xpMult: 0, luck: 0
         };
 
+        const charAugments = save.forgeCharAugments?.[characterId] || [];
+        const hasAug = (id) => charAugments.includes(id);
+        const augBonus = {
+            maxHp: 0, speedMult: (hasAug('holo_speed') ? 0.1 : 0) + (hasAug('sky_speed') ? 0.15 : 0),
+            damageMult: 0, magnetRange: 0, regen: hasAug('holo_regen') ? 0.3 : 0,
+            armor: hasAug('pan_armor') ? 3 : 0, areaMult: hasAug('nova_aoe') ? 0.2 : 0,
+            cooldownMult: 0, projSpeedMult: 0, goldMult: hasAug('syn_gold') ? 0.2 : 0,
+            xpMult: hasAug('code_xp') ? 0.15 : 0, luck: 0, critBonus: hasAug('neo_crit') ? 0.08 : 0
+        };
+
         const relicLevels = save.relicLevels || {};
         equippedRelics.forEach(rId => {
             const r = RELICS.find(rd => rd.id === rId);
@@ -156,23 +166,30 @@ export class GameEngine {
             maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
             speed: baseChar.speed,
-            speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0)) * this.envModifiers.playerSpeed,
+            speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0) + augBonus.speedMult) * this.envModifiers.playerSpeed,
             damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0),
-            magnetRange: (baseChar.magnetRange || 60) + 30 + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0), // +30 base buffer for easier early game XP collection
-            regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0),
-            armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0),
-            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0),
+            magnetRange: (baseChar.magnetRange || 60) + 30 + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0),
+            regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0) + augBonus.regen,
+            armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0) + augBonus.armor,
+            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0) + augBonus.areaMult,
             cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0),
             projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0) + (relicBonus.projSpeedMult || 0),
-            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0)) * this.difficulty.goldMult,
-            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0)) * this.difficulty.xpMult,
+            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult,
+            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult) * this.difficulty.xpMult,
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0),
+            critBonus: augBonus.critBonus,
+            charAugments: charAugments,
             color: baseChar.color,
             trail: save.cosmetics?.trail || 'default',
             weapons: [{ ...WEAPONS[initialWeaponId], level: 1, timer: 0 }],
             passives: [],
             passiveLevels: {}
         };
+        
+        if (hasAug('dat_ghost')) {
+            this.player.iFrames = 5.0;
+            this.player.invincibleTimer = 5.0;
+        }
         
         this.camera = { x: 0, y: 0 };
         this.joystick = { x: 0, y: 0 };
@@ -263,6 +280,23 @@ export class GameEngine {
     takeDamage(amount) {
         if (this.player.invincibleTimer > 0 || this.player.iFrames > 0) return;
 
+        if (this.player.charAugments?.includes('glt_phase') && Math.random() < 0.1) {
+            this.player.iFrames = 2.0;
+            this.addDamageText(this.player.x, this.player.y - 20, "PHASE SHIFT", '#FF00FF');
+            return;
+        }
+        
+        if (this.player.charAugments?.includes('dat_shade')) {
+            this.player.phantomBoostTimer = 2.0;
+            this.player.iFrames = Math.max(this.player.iFrames || 0, 2.0);
+            this.addParticle(this.player.x, this.player.y, '#C0C0C0', 20, 'smoke', 2);
+        }
+
+        let actualDmg = Math.max(1, amount - this.player.armor - (this.characterMechanics.scrapArmor || 0));
+        if (this.player.charAugments?.includes('pan_fortress') && this.player.hp >= this.player.maxHp) {
+            actualDmg = Math.max(1, Math.floor(actualDmg * 0.85));
+        }
+
         if (this.characterId === 'synthbeats' && this.gold >= 5) {
             this.gold -= 5;
             if (this.callbacks.onGoldChange) this.callbacks.onGoldChange(this.gold);
@@ -280,7 +314,6 @@ export class GameEngine {
             return;
         }
 
-        const actualDmg = Math.max(1, amount - this.player.armor - (this.characterMechanics.scrapArmor || 0));
         this.player.hp -= actualDmg;
         this.player.iFrames = 0.2;
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
@@ -306,6 +339,15 @@ export class GameEngine {
         }
 
         if (this.player.hp <= 0) {
+            if (this.player.charAugments?.includes('holo_revive') && !this.player.holoRevived) {
+                this.player.holoRevived = true;
+                this.player.hp = this.player.maxHp * 0.1;
+                this.player.iFrames = 3.0;
+                this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                this.addDamageText(this.player.x, this.player.y - 40, "EMERGENCY REVIVE", '#00FA9A');
+                this.particleManager.createExplosion(this.player.x, this.player.y, '#00FA9A', 2);
+                return;
+            }
             this.particleManager.createExplosion(this.player.x, this.player.y, this.player.color, 3, this.characterId);
             this.gameOver();
         }
@@ -444,6 +486,9 @@ export class GameEngine {
         if (this.player.iFrames > 0) {
             this.player.iFrames -= dt;
         }
+        if (this.player.synAmpTimer > 0) {
+            this.player.synAmpTimer -= dt;
+        }
         
         this.zoom = window.innerWidth < 768 ? 0.55 : 1;
         this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
@@ -488,16 +533,17 @@ export class GameEngine {
             this.player.bannerBuff = nearBanner;
         }
 
-        if (this.characterId === 'holodrift') {
+        if (this.characterId === 'holodrift' || this.player.charAugments?.includes('glt_copy')) {
             this.characterMechanics.decoyTimer += dt;
-            if (this.characterMechanics.decoyTimer >= 20) {
+            const threshold = this.characterId === 'holodrift' ? 20 : 60;
+            if (this.characterMechanics.decoyTimer >= threshold) {
                 this.characterMechanics.decoyTimer = 0;
                 this.characterMechanics.decoys.push({ x: this.player.x, y: this.player.y, hp: 100, maxHp: 100, life: 15 });
             }
             this.characterMechanics.decoys = this.characterMechanics.decoys.filter(d => d.hp > 0 && d.life > 0);
             this.characterMechanics.decoys.forEach(d => {
                 d.life -= dt;
-                if (this.frameCount % 15 === 0) this.addParticle(d.x, d.y, '#00FA9A', 1, 'glow', 0.5);
+                if (this.frameCount % 15 === 0) this.addParticle(d.x, d.y, this.characterId === 'holodrift' ? '#00FA9A' : '#FF00FF', 1, 'glow', 0.5);
             });
         }
 
@@ -882,6 +928,30 @@ export class GameEngine {
                                             p.pierce--;
                                             if (p.pierce <= 0) p.dead = true;
                                             
+                                            if (p.chainCount > 0) {
+                                                p.chainCount--;
+                                                let chainTarget = null;
+                                                let minChainDist = 200;
+                                                this.enemies.forEach(ce => {
+                                                    if (ce !== e && !p.hitList.has(ce)) {
+                                                        const d = Math.hypot(ce.x - e.x, ce.y - e.y);
+                                                        if (d < minChainDist) { minChainDist = d; chainTarget = ce; }
+                                                    }
+                                                });
+                                                if (chainTarget) {
+                                                    const chainAngle = Math.atan2(chainTarget.y - e.y, chainTarget.x - e.x);
+                                                    p.x = e.x; p.y = e.y;
+                                                    const speed = Math.hypot(p.vx, p.vy) || 300;
+                                                    p.vx = Math.cos(chainAngle) * speed;
+                                                    p.vy = Math.sin(chainAngle) * speed;
+                                                    this.addParticle(e.x, e.y, p.color, 5, 'spark', 1.5);
+                                                    if (p.dead) {
+                                                        p.dead = false; // keep alive for the chain bounce
+                                                        p.pierce = 1;
+                                                    }
+                                                }
+                                            }
+                                            
                                             if (p.weaponId === 'supernovaBeam') {
                                                 this.particleManager.createExplosion(e.x, e.y, '#ffaa00', 1.5);
                                                 this.enemies.forEach(ce => {
@@ -1041,6 +1111,24 @@ export class GameEngine {
                 SFXManager.playEnemyDeath();
                 this.kills++;
                 this.enemyKills[e.id] = (this.enemyKills[e.id] || 0) + 1;
+                
+                if (this.player.charAugments?.includes('dat_drain')) {
+                    this.player.drainCount = (this.player.drainCount || 0) + 1;
+                    if (this.player.drainCount >= 10) {
+                        this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * 0.01);
+                        this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                        this.addParticle(this.player.x, this.player.y, '#8A2BE2', 5, 'glow');
+                        this.player.drainCount = 0;
+                    }
+                }
+                if (this.player.charAugments?.includes('code_virus')) {
+                    this.enemies.forEach(other => {
+                        if (other !== e && Math.hypot(other.x - e.x, other.y - e.y) < 100) {
+                            other.hacked = true;
+                            other.color = '#39FF14';
+                        }
+                    });
+                }
 
                 if (this.characterId === 'novabyte' && Math.random() < 0.10 && !e.isBoss) {
                     this.particleManager.createExplosion(e.x, e.y, '#FF007F', 1.5 * this.player.areaMult, 'default');
@@ -1074,6 +1162,10 @@ export class GameEngine {
                     const fragmentReward = 1 + (this.bossModifiers.frenzy ? 1 : 0);
                     this.pickups.push({ x: e.x, y: e.y, type: 'fragment', value: fragmentReward, color: '#a855f7' });
                     
+                    if (this.player.charAugments?.includes('nova_nuke')) {
+                        this.pickups.push({ x: e.x - 20, y: e.y + 20, type: 'nuke', color: '#ff0000', icon: '☢️' });
+                    }
+                    
                     let extraGold = 1000; // Base boss gold
                     if (this.bossModifiers.fury) extraGold += 500;
                     if (this.bossModifiers.unstoppable) extraGold += 1000;
@@ -1094,6 +1186,9 @@ export class GameEngine {
                         for (let gi = 0; gi < goldCount; gi++) {
                             this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });
                         }
+                    }
+                    if (this.player.charAugments?.includes('code_hack') && Math.random() < 0.05) {
+                        this.pickups.push({ x: e.x, y: e.y, type: 'gold', value: 10, color: '#ffd700' });
                     }
                     if (Math.random() < 0.01 + (this.player.luck * 0.001)) {
                         const pickupTypes = [
@@ -1401,6 +1496,9 @@ export class GameEngine {
         if (this.characterId === 'neobyte' && this.player.bannerBuff) {
             damageMult *= 1.3;
         }
+        if (this.player.charAugments?.includes('neo_surge') && this.time <= 30) {
+            damageMult *= 1.25;
+        }
         
         if (enemy && enemy.id) {
             const pastKills = this.save?.enemyKills?.[enemy.id] || 0;
@@ -1468,13 +1566,18 @@ export class GameEngine {
             }
         }
 
-        const critChance = 0.05 + (this.player.luck * 0.02); // 5% base + 2% per luck
+        const critChance = 0.05 + (this.player.luck * 0.02) + (this.player.critBonus || 0);
         if (Math.random() < critChance) {
             isCrit = true;
             finalDamage *= 1.5;
         }
         
         enemy.hp -= finalDamage;
+        
+        if (this.player.charAugments?.includes('glt_corrupt') && Math.random() < 0.15 && !enemy.isBoss) {
+            enemy.hacked = true;
+            enemy.color = '#39FF14';
+        }
 
         if (this.characterId === 'neonvortex' && !enemy.isBoss && enemy.hp > 0 && enemy.hp <= enemy.maxHp * 0.2) {
             enemy.hp = 0;
@@ -1559,6 +1662,15 @@ export class GameEngine {
         this.player.armor += 0.25;
         this.player.hp = Math.min(this.player.maxHp, this.player.hp + (this.player.maxHp * 0.2));
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+        
+        if (this.player.charAugments?.includes('sky_ace')) {
+            this.player.invincibleTimer = Math.max(this.player.invincibleTimer || 0, 3.0);
+            this.player.iFrames = Math.max(this.player.iFrames || 0, 3.0);
+            this.addDamageText(this.player.x, this.player.y - 40, "ACE MANEUVER", '#00D4FF');
+        }
+        if (this.player.charAugments?.includes('syn_amp')) {
+            this.player.synAmpTimer = 5.0;
+        }
         
         this.isPaused = true;
         
