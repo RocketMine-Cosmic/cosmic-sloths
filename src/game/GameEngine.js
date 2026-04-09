@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
+import { CHARACTERS, WEAPONS, UPGRADES, ENEMIES, ARENAS, SYNERGIES, CHARACTER_TALENTS, DIFFICULTIES, EVOLUTIONS, SKIN_COSMETICS, RELICS, COMPANIONS, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
 import { drawEnemy } from './EnemyRenderer';
 import { SoundManager } from './SoundManager';
 import { SFXManager } from './SFXManager';
@@ -189,6 +189,15 @@ export class GameEngine {
         if (hasAug('dat_ghost')) {
             this.player.iFrames = 5.0;
             this.player.invincibleTimer = 5.0;
+        }
+        
+        const equippedCompanionId = save.equippedCompanion;
+        if (equippedCompanionId) {
+            const compDef = COMPANIONS.find(c => c.id === equippedCompanionId);
+            if (compDef) {
+                const compLevel = save.companionLevels?.[equippedCompanionId] || 1;
+                this.companion = { ...compDef, level: compLevel, x: this.player.x, y: this.player.y, timer: 0, angle: 0 };
+            }
         }
         
         this.camera = { x: 0, y: 0 };
@@ -515,6 +524,82 @@ export class GameEngine {
         this.updateEnemies(dt);
         this.updatePickups(dt);
         this.updateHazards(dt);
+
+        // Update Companion
+        if (this.companion) {
+            this.companion.timer += dt;
+            const targetX = this.player.x - 40;
+            const targetY = this.player.y - 40;
+            
+            if (this.companion.type === 'orbit') {
+                this.companion.angle += dt * this.companion.orbitSpeed * (1 + this.companion.level * 0.1);
+                this.companion.x = this.player.x + Math.cos(this.companion.angle) * 60;
+                this.companion.y = this.player.y + Math.sin(this.companion.angle) * 60;
+                
+                if (this.frameCount % 10 === 0) {
+                    this.enemies.forEach(e => {
+                        if (Math.hypot(e.x - this.companion.x, e.y - this.companion.y) < 30) {
+                            this.damageEnemy(e, this.companion.baseDamage * (1 + this.companion.level * 0.2) * this.player.damageMult);
+                            this.addParticle(e.x, e.y, this.companion.color, 3);
+                        }
+                    });
+                }
+            } else {
+                const dxComp = targetX - this.companion.x;
+                const dyComp = targetY - this.companion.y;
+                this.companion.x += dxComp * dt * 3;
+                this.companion.y += dyComp * dt * 3;
+                
+                if (this.companion.type === 'attack') {
+                    if (this.companion.timer >= this.companion.attackSpeed * Math.max(0.5, (1 - this.companion.level * 0.05))) {
+                        this.companion.timer = 0;
+                        let nearest = null;
+                        let minDist = 300;
+                        this.enemies.forEach(e => {
+                            const d = Math.hypot(e.x - this.companion.x, e.y - this.companion.y);
+                            if (d < minDist) { minDist = d; nearest = e; }
+                        });
+                        if (nearest) {
+                            const angle = Math.atan2(nearest.y - this.companion.y, nearest.x - this.companion.x);
+                            this.projectiles.push({
+                                x: this.companion.x, y: this.companion.y,
+                                vx: Math.cos(angle) * 400, vy: Math.sin(angle) * 400,
+                                radius: 4, damage: this.companion.baseDamage * (1 + this.companion.level * 0.2) * this.player.damageMult,
+                                pierce: 1, life: 1.5, color: this.companion.color, type: 'beam'
+                            });
+                            SFXManager.playWeaponFire('neoBlaster');
+                        }
+                    }
+                } else if (this.companion.type === 'heal') {
+                    if (this.companion.timer >= Math.max(2, this.companion.healInterval - this.companion.level * 0.5)) {
+                        this.companion.timer = 0;
+                        if (this.player.hp < this.player.maxHp) {
+                            const heal = this.companion.healAmount * (1 + this.companion.level * 0.2);
+                            this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+                            if (this.callbacks.onHpChange) this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                            this.addDamageText(this.player.x, this.player.y - 20, `+${Math.floor(heal)}`, '#00FF00');
+                            this.addParticle(this.player.x, this.player.y, '#00FF00', 5, 'glow');
+                        }
+                    }
+                } else if (this.companion.type === 'loot') {
+                    if (this.frameCount % 5 === 0) {
+                        const mRange = this.companion.magnetRange * (1 + this.companion.level * 0.2);
+                        this.pickups.forEach(p => {
+                            const dist = Math.hypot(this.companion.x - p.x, this.companion.y - p.y);
+                            if (dist < mRange) {
+                                const speed = 800 * dt;
+                                p.x += ((this.player.x - p.x) / Math.max(1, dist)) * speed;
+                                p.y += ((this.player.y - p.y) / Math.max(1, dist)) * speed;
+                            }
+                        });
+                    }
+                }
+            }
+            
+            if (this.frameCount % 10 === 0) {
+                this.addParticle(this.companion.x, this.companion.y, this.companion.color, 1, 'glow', 0.5);
+            }
+        }
         
         // --- Character Mechanics Update ---
         if (this.characterId === 'neobyte') {
