@@ -12,10 +12,10 @@ export const CHARACTERS = [
 ];
 
 export const DIFFICULTIES = [
-  { id: 'easy', name: 'Easy', desc: 'Forgiving start for new pilots. Slower enemies.', xpMult: 0.8, goldMult: 0.8, enemyHpMult: 0.7, enemyDmgMult: 0.6, hazardChance: 0, speedMult: 0.85 },
+  { id: 'easy', name: 'Easy', desc: 'Forgiving start for new pilots. -50% XP & Gold.', xpMult: 0.5, goldMult: 0.5, enemyHpMult: 0.7, enemyDmgMult: 0.6, hazardChance: 0, speedMult: 0.85 },
   { id: 'normal', name: 'Normal', desc: 'Standard cosmic experience.', xpMult: 1.0, goldMult: 1.0, enemyHpMult: 1.0, enemyDmgMult: 1.0, hazardChance: 0, speedMult: 1.0 },
-  { id: 'hard', name: 'Hard', desc: 'Tougher enemies. Occasional hazards. +50% XP & Gold.', xpMult: 1.5, goldMult: 1.5, enemyHpMult: 1.5, enemyDmgMult: 1.5, hazardChance: 0.05, speedMult: 1.1 },
-  { id: 'cosmic', name: 'Cosmic', desc: 'Extreme danger. Frequent hazards. +150% XP & Gold.', xpMult: 2.5, goldMult: 2.5, enemyHpMult: 2.5, enemyDmgMult: 2.5, hazardChance: 0.15, speedMult: 1.25 }
+  { id: 'hard', name: 'Hard', desc: 'Tougher enemies. Occasional hazards. +100% XP & Gold.', xpMult: 2.0, goldMult: 2.0, enemyHpMult: 1.5, enemyDmgMult: 1.5, hazardChance: 0.05, speedMult: 1.1 },
+  { id: 'cosmic', name: 'Cosmic', desc: 'Extreme danger. Frequent hazards. +200% XP & Gold.', xpMult: 3.0, goldMult: 3.0, enemyHpMult: 2.5, enemyDmgMult: 2.5, hazardChance: 0.15, speedMult: 1.25 }
 ];
 
 export const ARENAS = [
