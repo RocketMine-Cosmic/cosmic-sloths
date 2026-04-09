@@ -547,9 +547,19 @@ export function drawEnemy(ctx, e, time, playerX) {
             break;
 
         default:
-            // Fallback circle
+            // Generic alien shape instead of a fallback circle
             ctx.fillStyle = e.color;
-            ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(0, 0, e.radius, e.radius * 0.75, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Alien eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(e.radius * 0.3, -e.radius * 0.2, e.radius * 0.2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(e.radius * 0.3, e.radius * 0.2, e.radius * 0.2, 0, Math.PI * 2); ctx.fill();
+            // Pupil
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.arc(e.radius * 0.4, -e.radius * 0.2, e.radius * 0.1, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(e.radius * 0.4, e.radius * 0.2, e.radius * 0.1, 0, Math.PI * 2); ctx.fill();
             break;
     }
 

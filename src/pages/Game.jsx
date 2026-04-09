@@ -31,7 +31,6 @@ export default function Game() {
     const [victoryStats, setVictoryStats] = useState(null);
     const [isPaused, setIsPaused] = useState(false);
     const [showRevivePrompt, setShowRevivePrompt] = useState(false);
-    const [guideDialogue, setGuideDialogue] = useState(null);
 
     useEffect(() => {
         const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
@@ -320,27 +319,6 @@ export default function Game() {
     }, [location.state]);
 
     useEffect(() => {
-        const fetchGuide = async () => {
-            if (!engineRef.current || engineRef.current.isPaused) return;
-            try {
-                const res = await base44.functions.invoke('getGuideDialogue', {
-                    hpPercent: Math.round((engineRef.current.player.hp / engineRef.current.player.maxHp) * 100),
-                    time: Math.floor(engineRef.current.time),
-                    level: engineRef.current.level,
-                    isNGPlus: location.state?.isNGPlus || false
-                });
-                if (res.data?.dialogue) {
-                    setGuideDialogue(res.data.dialogue);
-                    setTimeout(() => setGuideDialogue(null), 5000);
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        };
-        
-        const initialTimer = setTimeout(fetchGuide, 3000);
-        const guideInterval = setInterval(fetchGuide, 60000);
-
         const interval = setInterval(() => {
             if (engineRef.current && !engineRef.current.isPaused) {
                 setGameState(s => ({
@@ -352,12 +330,8 @@ export default function Game() {
                 }));
             }
         }, 100);
-        return () => {
-            clearInterval(interval);
-            clearInterval(guideInterval);
-            clearTimeout(initialTimer);
-        };
-    }, [location.state]);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleUpgradeSelect = (upgrade) => {
         if (engineRef.current) {
@@ -467,7 +441,7 @@ export default function Game() {
             
             <VirtualJoystick onChange={handleJoystickChange} />
             
-            <UIOverlay {...gameState} onPause={handlePause} guideDialogue={guideDialogue} />
+            <UIOverlay {...gameState} onPause={handlePause} />
             
             {isPaused && (
                 <PauseModal onResume={handleResume} />
