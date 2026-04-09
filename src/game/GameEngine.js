@@ -12,15 +12,24 @@ import { drawProjectiles } from './ProjectileRenderer';
 import { renderGame } from './GameEngineDraw';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
+    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null, isNGPlus = false) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
         this.characterId = characterId;
         this.save = save;
+        this.isNGPlus = isNGPlus;
         this.worldBossId = worldBossId || 'world_boss_0';
         this.worldBossName = worldBossName || 'The World Eater';
-        this.difficulty = DIFFICULTIES.find(d => d.id === difficultyId) || DIFFICULTIES[0];
+        this.difficulty = { ...(DIFFICULTIES.find(d => d.id === difficultyId) || DIFFICULTIES[0]) };
+        
+        if (this.isNGPlus) {
+            this.difficulty.enemyHpMult *= 3.0;
+            this.difficulty.enemyDmgMult *= 2.0;
+            this.difficulty.goldMult *= 2.0;
+            this.difficulty.xpMult *= 1.5;
+            this.difficulty.speedMult = (this.difficulty.speedMult || 1.0) * 1.2;
+        }
         
         const saveStats = save.permanentUpgrades || {};
         const weeklyStats = save.weeklyUpgrades || {};
@@ -397,6 +406,30 @@ export class GameEngine {
         if (dt > 0.1) dt = 0.1; // Cap dt to prevent huge jumps
         this.lastDt = dt;
         
+        // Dynamic Difficulty
+        if (!this.dynamicDifficulty) this.dynamicDifficulty = {
+            timer: 0, lastKills: 0, damageTaken: 0, lastHp: this.player.hp, speedMult: 1.0, spawnRateMult: 1.0
+        };
+        this.dynamicDifficulty.timer += dt;
+        if (this.player.hp < this.dynamicDifficulty.lastHp) {
+            this.dynamicDifficulty.damageTaken += (this.dynamicDifficulty.lastHp - this.player.hp);
+        }
+        this.dynamicDifficulty.lastHp = this.player.hp;
+
+        if (this.dynamicDifficulty.timer >= 15) {
+            const killsDelta = this.kills - this.dynamicDifficulty.lastKills;
+            if (this.dynamicDifficulty.damageTaken > this.player.maxHp * 0.3) {
+                this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - 0.1);
+                this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - 0.1);
+            } else if (killsDelta > 30 && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
+                this.dynamicDifficulty.speedMult = Math.min(1.5, this.dynamicDifficulty.speedMult + 0.1);
+                this.dynamicDifficulty.spawnRateMult = Math.min(1.5, this.dynamicDifficulty.spawnRateMult + 0.1);
+            }
+            this.dynamicDifficulty.lastKills = this.kills;
+            this.dynamicDifficulty.damageTaken = 0;
+            this.dynamicDifficulty.timer = 0;
+        }
+
         if (this.hitStopTimer > 0) {
             this.hitStopTimer -= dt;
             return; // Pause logic for hit-stop
@@ -754,7 +787,8 @@ export class GameEngine {
 
         const progress = this.arena.duration === Infinity ? this.time / 300 : Math.min(1, this.time / this.arena.duration);
         const effectiveProgress = Math.min(1, progress);
-        const spawnRate = Math.max(0.05, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / this.envModifiers.enemySpawnRate);
+        const dynamicRate = this.envModifiers.enemySpawnRate * (this.dynamicDifficulty?.spawnRateMult || 1.0);
+        const spawnRate = Math.max(0.05, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
         
         if (Math.random() < dt / spawnRate) {
             const angle = Math.random() * Math.PI * 2;
@@ -1378,7 +1412,7 @@ export class GameEngine {
                 if (e.slowTimer > 0 && !(e.isBoss && this.bossModifiers.unstoppable)) {
                     currentSpeed *= 0.5;
                 }
-                currentSpeed *= this.envModifiers.enemySpeed;
+                currentSpeed *= this.envModifiers.enemySpeed * (this.dynamicDifficulty?.speedMult || 1.0);
                 e.x += (targetDx / targetDist) * currentSpeed * 60 * dt;
                 e.y += (targetDy / targetDist) * currentSpeed * 60 * dt;
             }

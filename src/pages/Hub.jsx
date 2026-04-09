@@ -30,6 +30,7 @@ export default function Hub({ isCarousel }) {
     const [selectedArena, setSelectedArena] = useState(save.lastSelectedArena || 'station');
     const [selectedDifficulty, setSelectedDifficulty] = useState(save.lastSelectedDifficulty || 'normal');
     const [selectedWeapon, setSelectedWeapon] = useState(save.lastSelectedWeapon || 'neoBlaster');
+    const [isNGPlus, setIsNGPlus] = useState(save.isNGPlus || false);
     const [charTab, setCharTab] = useState('loadout');
     const { toast } = useToast();
     const touchStartX = React.useRef(null);
@@ -164,7 +165,7 @@ export default function Hub({ isCarousel }) {
 
     const startGame = () => {
         SoundManager.playUIClick();
-        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon } });
+        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isNGPlus: isNGPlus } });
     };
 
 
@@ -530,6 +531,26 @@ export default function Hub({ isCarousel }) {
                                         </div>
                                         );
                                         })()}
+                                        {save.newGamePlusUnlocked && (
+                                            <div className="mt-3 flex items-center justify-center gap-2 bg-red-950/40 p-2 rounded-lg border border-red-500/30">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="ngplus" 
+                                                    checked={isNGPlus} 
+                                                    onChange={(e) => {
+                                                        SoundManager.playUIClick();
+                                                        setIsNGPlus(e.target.checked);
+                                                        const newSave = { ...save, isNGPlus: e.target.checked };
+                                                        SaveManager.save(newSave);
+                                                        setSave(newSave);
+                                                    }} 
+                                                    className="w-4 h-4 accent-red-500 cursor-pointer" 
+                                                />
+                                                <label htmlFor="ngplus" className="text-xs md:text-sm font-bold text-red-400 uppercase tracking-widest cursor-pointer drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">
+                                                    Activate New Game+
+                                                </label>
+                                            </div>
+                                        )}
                                         </div>
                                     </div>
                                 </div>
@@ -594,7 +615,7 @@ export default function Hub({ isCarousel }) {
                                             <button
                                                 onClick={() => {
                                                     SoundManager.playUIClick();
-                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isEndless: true } });
+                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isEndless: true, isNGPlus: isNGPlus } });
                                                 }}
                                                 disabled={!canLaunch}
                                                 className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${

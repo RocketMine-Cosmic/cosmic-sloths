@@ -31,6 +31,7 @@ export default function Game() {
     const [victoryStats, setVictoryStats] = useState(null);
     const [isPaused, setIsPaused] = useState(false);
     const [showRevivePrompt, setShowRevivePrompt] = useState(false);
+    const [guideDialogue, setGuideDialogue] = useState(null);
 
     useEffect(() => {
         const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
@@ -276,6 +277,10 @@ export default function Game() {
                     if (!currentSave.unlockedArenasByCharacter[stats.characterId].includes(nextArena.id)) {
                         currentSave.unlockedArenasByCharacter[stats.characterId].push(nextArena.id);
                     }
+                } else if (currentIndex === ARENAS.length - 1) {
+                    if (!currentSave.newGamePlusUnlocked) {
+                        currentSave.newGamePlusUnlocked = true;
+                    }
                 }
                 SaveManager.save(currentSave);
                 const currentSaveForVictory = SaveManager.load();
@@ -293,7 +298,7 @@ export default function Game() {
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }
-        }, isEndless, worldBossId, worldBossName, startingWeaponId);
+        }, isEndless, worldBossId, worldBossName, startingWeaponId, location.state?.isNGPlus || false);
         
         engineRef.current = engine;
         
@@ -315,6 +320,27 @@ export default function Game() {
     }, [location.state]);
 
     useEffect(() => {
+        const fetchGuide = async () => {
+            if (!engineRef.current || engineRef.current.isPaused) return;
+            try {
+                const res = await base44.functions.invoke('getGuideDialogue', {
+                    hpPercent: Math.round((engineRef.current.player.hp / engineRef.current.player.maxHp) * 100),
+                    time: Math.floor(engineRef.current.time),
+                    level: engineRef.current.level,
+                    isNGPlus: location.state?.isNGPlus || false
+                });
+                if (res.data?.dialogue) {
+                    setGuideDialogue(res.data.dialogue);
+                    setTimeout(() => setGuideDialogue(null), 5000);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        
+        const initialTimer = setTimeout(fetchGuide, 3000);
+        const guideInterval = setInterval(fetchGuide, 60000);
+
         const interval = setInterval(() => {
             if (engineRef.current && !engineRef.current.isPaused) {
                 setGameState(s => ({
@@ -326,8 +352,12 @@ export default function Game() {
                 }));
             }
         }, 100);
-        return () => clearInterval(interval);
-    }, []);
+        return () => {
+            clearInterval(interval);
+            clearInterval(guideInterval);
+            clearTimeout(initialTimer);
+        };
+    }, [location.state]);
 
     const handleUpgradeSelect = (upgrade) => {
         if (engineRef.current) {
@@ -437,7 +467,7 @@ export default function Game() {
             
             <VirtualJoystick onChange={handleJoystickChange} />
             
-            <UIOverlay {...gameState} onPause={handlePause} />
+            <UIOverlay {...gameState} onPause={handlePause} guideDialogue={guideDialogue} />
             
             {isPaused && (
                 <PauseModal onResume={handleResume} />

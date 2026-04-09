@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pause, Heart, CircleDollarSign } from 'lucide-react';
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, cosmicTokens, weapons = [], passives = [], onPause }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, cosmicTokens, weapons = [], passives = [], onPause, guideDialogue }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -91,8 +91,14 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 </div>
             </div>
 
-            {/* Bottom: XP Bar */}
-            <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full">
+            {/* Bottom: Guide Dialogue & XP Bar */}
+            <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full flex flex-col gap-2">
+                {guideDialogue && (
+                    <div className="bg-cyan-950/90 border border-cyan-500/50 p-3 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.3)] animate-in slide-in-from-bottom-5 fade-in duration-300">
+                        <div className="text-[10px] md:text-xs font-black tracking-widest text-cyan-400 uppercase mb-1">Commander Nova</div>
+                        <div className="text-sm md:text-base text-white font-mono leading-tight">"{typeof guideDialogue === 'string' ? guideDialogue : guideDialogue.content || JSON.stringify(guideDialogue)}"</div>
+                    </div>
+                )}
                 <div className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-cyan-500/30">
                     <div className="flex justify-between items-end mb-1">
                         <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider">LVL {level}</span>
