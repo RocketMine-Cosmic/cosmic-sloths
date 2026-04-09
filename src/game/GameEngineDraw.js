@@ -368,7 +368,13 @@ export function renderGame() {
 
     this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
 
+    const viewMinX = camX - 150;
+    const viewMaxX = camX + vWidth + 150;
+    const viewMinY = camY - 150;
+    const viewMaxY = camY + vHeight + 150;
+
     this.enemies.forEach(e => {
+        if (e.x < viewMinX || e.x > viewMaxX || e.y < viewMinY || e.y > viewMaxY) return;
         if (!e.burrowed) {
             drawEnemy(this.ctx, e, this.time, this.player.x);
             

@@ -928,9 +928,24 @@ export class GameEngine {
                     }
                 }
             } else {
+                const checkAoe = (callback, extraRadius = 0) => {
+                    const cellSize = 100;
+                    const r = p.radius + extraRadius;
+                    const minX = Math.floor((p.x - r - 50) / cellSize);
+                    const maxX = Math.floor((p.x + r + 50) / cellSize);
+                    const minY = Math.floor((p.y - r - 50) / cellSize);
+                    const maxY = Math.floor((p.y + r + 50) / cellSize);
+                    for (let x = minX; x <= maxX; x++) {
+                        for (let y = minY; y <= maxY; y++) {
+                            const cellEnemies = this.spatialHash?.get(`${x},${y}`);
+                            if (cellEnemies) cellEnemies.forEach(callback);
+                        }
+                    }
+                };
+
                 if (p.pulse) {
                     p.radius += 500 * dt;
-                    this.enemies.forEach(e => {
+                    checkAoe(e => {
                         if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
                             if (!p.hitList) p.hitList = new Set();
@@ -944,7 +959,7 @@ export class GameEngine {
                 } else if (p.pushback) {
                     p.x = this.player.x;
                     p.y = this.player.y;
-                    this.enemies.forEach(e => {
+                    checkAoe(e => {
                         if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         const dist = Math.hypot(e.x - p.x, e.y - p.y);
                         if (dist < p.radius) {
@@ -965,7 +980,10 @@ export class GameEngine {
                     });
                     
                     if (p.isMastered && p.weaponId === 'shieldBubble' && this.frameCount % 30 === 0) {
-                        const inRange = this.enemies.filter(e => Math.hypot(e.x - p.x, e.y - p.y) < p.radius * 2);
+                        const inRange = [];
+                        checkAoe(e => {
+                            if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius * 2) inRange.push(e);
+                        }, p.radius);
                         if (inRange.length > 0) {
                             const target = inRange[Math.floor(Math.random() * inRange.length)];
                             const angle = Math.atan2(target.y - p.y, target.x - p.x);
@@ -984,7 +1002,7 @@ export class GameEngine {
                     }
                 } else {
                     if (this.frameCount % 15 === 0) {
-                        this.enemies.forEach(e => {
+                        checkAoe(e => {
                             if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                             if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
                                 this.damageEnemy(e, p.damage);
@@ -1148,9 +1166,19 @@ export class GameEngine {
             }
             if (e.id === 'quantum_swarm') {
                 let nearby = 0;
-                this.enemies.forEach(other => {
-                    if (other.id === 'quantum_swarm' && Math.hypot(other.x - e.x, other.y - e.y) < 100) nearby++;
-                });
+                const cellSize = 100;
+                const cx = Math.floor(e.x / cellSize);
+                const cy = Math.floor(e.y / cellSize);
+                for (let x = cx - 1; x <= cx + 1; x++) {
+                    for (let y = cy - 1; y <= cy + 1; y++) {
+                        const cellEnemies = this.spatialHash?.get(`${x},${y}`);
+                        if (cellEnemies) {
+                            cellEnemies.forEach(other => {
+                                if (other.id === 'quantum_swarm' && Math.hypot(other.x - e.x, other.y - e.y) < 100) nearby++;
+                            });
+                        }
+                    }
+                }
                 e.speedMult = 1 + (nearby * 0.2);
             }
             if (e.id === 'rift_stalker') {
