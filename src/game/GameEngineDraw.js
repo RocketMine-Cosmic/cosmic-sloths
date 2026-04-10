@@ -524,6 +524,14 @@ export function renderGame() {
         const sx = col * frameWidth;
         const sy = row * frameHeight;
         
+        let drawSheet = spriteSheet;
+        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getTintedTexture === 'function') {
+            const tinted = this.particleManager.getTintedTexture(spriteSheet, this.player.color);
+            if (tinted && tinted.isReady) {
+                drawSheet = tinted;
+            }
+        }
+        
         this.ctx.save();
         this.ctx.translate(this.player.x, this.player.y);
         // The base sprite sheets are drawn facing left. 
@@ -550,11 +558,19 @@ export function renderGame() {
         this.ctx.globalAlpha = 1.0;
         this.ctx.globalCompositeOperation = 'source-over';
         
-        this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+        this.ctx.drawImage(drawSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
         
         this.ctx.restore();
     } else if (this.player.image && this.player.image.complete) {
         const size = this.player.radius * 3;
+        
+        let drawImg = this.player.image;
+        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getTintedTexture === 'function') {
+            const tinted = this.particleManager.getTintedTexture(this.player.image, this.player.color);
+            if (tinted && tinted.isReady) {
+                drawImg = tinted;
+            }
+        }
         
         this.ctx.save();
         this.ctx.translate(this.player.x, this.player.y);
@@ -583,7 +599,7 @@ export function renderGame() {
         this.ctx.globalAlpha = 1.0;
         this.ctx.globalCompositeOperation = 'source-over';
         
-        this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+        this.ctx.drawImage(drawImg, -size/2, -size/2, size, size);
         
         this.ctx.restore();
     } else {

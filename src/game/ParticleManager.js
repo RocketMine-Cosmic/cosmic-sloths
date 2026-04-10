@@ -37,6 +37,8 @@ const loadTexture = (url, name) => {
     return { isReady: false };
 };
 
+let proceduralSpriteSheetsCache = null;
+
 export class ParticleManager {
     constructor() {
         this.particles = [];
@@ -48,14 +50,14 @@ export class ParticleManager {
             slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png', 'slash'),
             shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png', 'shockwave'),
         };
-        
+
         const loadSprite = (url) => {
             const img = new Image();
             img.crossOrigin = "Anonymous";
             img.src = url;
             return img;
         };
-        
+
         const createProceduralSpriteSheet = (type) => {
             if (typeof window === 'undefined') return { complete: false };
             const canvas = document.createElement('canvas');
@@ -133,16 +135,20 @@ export class ParticleManager {
             return canvas;
         };
 
-        this.spriteSheets = {
-            explosion_anim: {
-                img: createProceduralSpriteSheet('explosion'),
-                frames: 16, cols: 4, rows: 4, duration: 0.4
-            },
-            magic_impact: {
-                img: createProceduralSpriteSheet('magic'),
-                frames: 16, cols: 4, rows: 4, duration: 0.3
-            }
-        };
+        if (!proceduralSpriteSheetsCache) {
+            proceduralSpriteSheetsCache = {
+                explosion_anim: {
+                    img: createProceduralSpriteSheet('explosion'),
+                    frames: 16, cols: 4, rows: 4, duration: 0.4
+                },
+                magic_impact: {
+                    img: createProceduralSpriteSheet('magic'),
+                    frames: 16, cols: 4, rows: 4, duration: 0.3
+                }
+            };
+        }
+
+        this.spriteSheets = proceduralSpriteSheetsCache;
 
         this.tintCache = {};
         this.glowCache = {};
@@ -176,28 +182,36 @@ export class ParticleManager {
     }
 
     getTintedTexture(tex, color) {
-        if (!tex || !tex.isReady) return tex;
+        if (!tex || (!tex.isReady && !tex.complete)) return tex;
         if (!this.tintCache) this.tintCache = {};
         if (!this.tintCache[color]) this.tintCache[color] = {};
         
-        const texKey = tex.texName;
-        if (!texKey) return tex;
+        const texKey = tex.texName || tex.src || 'unknown';
+        if (!texKey || texKey === 'unknown') {
+            if (!tex._tempId) tex._tempId = Math.random().toString();
+            tex.texName = tex._tempId;
+        }
 
-        if (this.tintCache[color][texKey]) return this.tintCache[color][texKey];
+        if (this.tintCache[color][tex.texName]) return this.tintCache[color][tex.texName];
         
         const canvas = document.createElement('canvas');
-        canvas.width = tex.width;
-        canvas.height = tex.height;
-        canvas.texName = texKey;
+        canvas.width = tex.width || tex.naturalWidth || 128;
+        canvas.height = tex.height || tex.naturalHeight || 128;
+        if(canvas.width === 0 || canvas.height === 0) return tex;
+        canvas.texName = tex.texName;
         canvas.isReady = true;
         const ctx = canvas.getContext('2d');
         
-        ctx.drawImage(tex, 0, 0);
-        ctx.globalCompositeOperation = 'source-in';
+        ctx.drawImage(tex, 0, 0, canvas.width, canvas.height);
+        
+        ctx.globalCompositeOperation = 'multiply';
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        this.tintCache[color][texKey] = canvas;
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(tex, 0, 0, canvas.width, canvas.height);
+        
+        this.tintCache[color][tex.texName] = canvas;
         return canvas;
     }
 

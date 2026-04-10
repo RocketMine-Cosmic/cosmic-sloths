@@ -141,13 +141,27 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 
                 ctx.shadowColor = playerColor;
                 ctx.shadowBlur = 20;
-                ctx.drawImage(walkImage, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+                
+                let drawImg = walkImage;
+                if (playerColor && playerColor !== '#ffffff' && pm.getTintedTexture) {
+                    const tinted = pm.getTintedTexture(walkImage, playerColor);
+                    if (tinted && tinted.isReady) drawImg = tinted;
+                }
+                
+                ctx.drawImage(drawImg, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
                 ctx.shadowBlur = 0;
             } else if (staticImage && staticImage.complete) {
                 const size = radius * 3;
                 ctx.shadowColor = playerColor;
                 ctx.shadowBlur = 20;
-                ctx.drawImage(staticImage, -size/2, -size/2, size, size);
+                
+                let drawImg = staticImage;
+                if (playerColor && playerColor !== '#ffffff' && pm.getTintedTexture) {
+                    const tinted = pm.getTintedTexture(staticImage, playerColor);
+                    if (tinted && tinted.isReady) drawImg = tinted;
+                }
+                
+                ctx.drawImage(drawImg, -size/2, -size/2, size, size);
                 ctx.shadowBlur = 0;
             } else {
                 ctx.fillStyle = playerColor;
