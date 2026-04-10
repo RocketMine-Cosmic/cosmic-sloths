@@ -1700,8 +1700,10 @@ export class GameEngine {
     }
 
     addDamageText(x, y, text, color, isCrit = false) {
+        if (this.damageTexts.length > 40 && !isCrit && text !== 'WEAK SPOT!') return;
         const offsetX = (Math.random() - 0.5) * 20;
         this.damageTexts.push({ x: x + offsetX, y, text, color, life: 0.8, isCrit });
+        if (this.damageTexts.length > 60) this.damageTexts.shift();
     }
 
     banishUpgrade(upgradeId) {

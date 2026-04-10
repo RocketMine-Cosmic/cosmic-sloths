@@ -77,9 +77,8 @@ export class ParticleManager {
     }
 
     update(dt) {
-        // Increased cap since we optimized the spatial hash collision loop
-        if (this.particles.length > 1500) {
-            this.particles.splice(0, this.particles.length - 1500);
+        if (this.particles.length > 600) {
+            this.particles.splice(0, this.particles.length - 600);
         }
         this.particles = this.particles.filter(p => {
             p.life -= dt;
