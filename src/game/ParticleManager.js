@@ -56,13 +56,90 @@ export class ParticleManager {
             return img;
         };
         
+        const createProceduralSpriteSheet = (type) => {
+            if (typeof window === 'undefined') return { complete: false };
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            canvas.complete = true;
+            canvas.naturalWidth = 512;
+            canvas.naturalHeight = 512;
+            
+            const cols = 4;
+            const fw = 128;
+            const fh = 128;
+            
+            for (let i = 0; i < 16; i++) {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const cx = col * fw + fw/2;
+                const cy = row * fh + fh/2;
+                
+                const progress = i / 15;
+                
+                ctx.save();
+                ctx.translate(cx, cy);
+                
+                if (type === 'explosion') {
+                    const radius = 20 + progress * 40;
+                    const alpha = 1 - Math.pow(progress, 1.5);
+                    ctx.globalAlpha = alpha;
+                    
+                    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+                    grad.addColorStop(0, '#ffffff');
+                    grad.addColorStop(0.2, '#ffdd00');
+                    grad.addColorStop(0.6, '#ff4400');
+                    grad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad;
+                    
+                    ctx.beginPath();
+                    const spikes = 12;
+                    for (let j = 0; j < spikes * 2; j++) {
+                        const angle = (Math.PI * 2 / (spikes * 2)) * j;
+                        const r = j % 2 === 0 ? radius : radius * 0.4 * (1 + Math.sin(j * 123) * 0.3);
+                        if (j === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                        else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                    }
+                    ctx.fill();
+                    
+                } else if (type === 'magic') {
+                    const radius = 10 + progress * 45;
+                    const alpha = 1 - Math.pow(progress, 2);
+                    ctx.globalAlpha = alpha;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 4 * (1 - progress);
+                    
+                    ctx.rotate(progress * Math.PI);
+                    ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.stroke();
+                    
+                    ctx.rotate(-progress * Math.PI * 0.5);
+                    ctx.beginPath();
+                    for(let j=0; j<6; j++) {
+                        const a = (Math.PI * 2 / 6) * j;
+                        ctx.lineTo(Math.cos(a) * radius * 1.2, Math.sin(a) * radius * 1.2);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = alpha * 0.5;
+                    ctx.beginPath(); ctx.arc(0, 0, radius * 0.8, 0, Math.PI * 2); ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+            
+            return canvas;
+        };
+
         this.spriteSheets = {
             explosion_anim: {
-                img: loadSprite('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/f01e56245_lava_rock_blob_sheet.png'), // Placeholder URL (swap with actual explosion 4x4 sheet)
+                img: createProceduralSpriteSheet('explosion'),
                 frames: 16, cols: 4, rows: 4, duration: 0.4
             },
             magic_impact: {
-                img: loadSprite('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/c045ec43a_coral_bloom_sheet.png'), // Placeholder URL (swap with actual magic 4x4 sheet)
+                img: createProceduralSpriteSheet('magic'),
                 frames: 16, cols: 4, rows: 4, duration: 0.3
             }
         };
@@ -368,6 +445,7 @@ export class ParticleManager {
 
     createLevelUp(x, y) {
         // Clean and vibrant sparks only
+        this.addAnim(x, y, 'magic_impact', 3.0, 0, '#00e5ff');
         this.addParticle(x, y, '#00e5ff', 20, 'spark', 2.5, { speed: 450 });
         this.addParticle(x, y, '#ff00e5', 20, 'spark', 2.0, { speed: 350 });
         this.addParticle(x, y, '#ffff00', 20, 'spark', 2.5, { speed: 300 });
