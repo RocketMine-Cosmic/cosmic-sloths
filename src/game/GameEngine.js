@@ -555,6 +555,9 @@ export class GameEngine {
         this.spawnEnemies(dt);
         this.updateWeapons(dt);
         
+        // Enemy object pool setup (initialize once)
+        if (!this.enemyPool) this.enemyPool = [];
+
         // Build Spatial Hash for Collision Optimization
         this.spatialHash = new Map();
         const cellSize = 100;
@@ -842,25 +845,34 @@ export class GameEngine {
                 const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
                 if (elites.length > 0) {
                     const elite = elites[Math.floor(Math.random() * elites.length)];
-                    this.enemies.push({
-                        ...elite,
-                        x: ex, y: ey,
-                        maxHp: elite.hp * hpMult * 2.5,
-                        hp: elite.hp * hpMult * 2.5,
-                        damage: elite.damage * dmgMult * 1.5,
-                        radius: elite.radius * 1.4,
-                        speed: elite.speed * 1.2 * spdMult,
-                        xp: elite.xp * 4,
-                        isElite: true,
-                        eliteGoldBonus: 3,
-                    });
+                    let newElite = this.enemyPool.length > 0 ? this.enemyPool.pop() : {};
+                    Object.assign(newElite, elite);
+                    newElite.x = ex; newElite.y = ey;
+                    newElite.maxHp = elite.hp * hpMult * 2.5;
+                    newElite.hp = newElite.maxHp;
+                    newElite.damage = elite.damage * dmgMult * 1.5;
+                    newElite.radius = elite.radius * 1.4;
+                    newElite.speed = elite.speed * 1.2 * spdMult;
+                    newElite.xp = elite.xp * 4;
+                    newElite.isElite = true;
+                    newElite.eliteGoldBonus = 3;
+                    
+                    this.enemies.push(newElite);
                     this.encounteredEnemies.add(elite.id);
                     SFXManager.playEnemySpawn();
                     return;
                 }
             }
             
-            this.enemies.push({ ...type, x: ex, y: ey, speed: type.speed * spdMult, maxHp: type.hp * hpMult, hp: type.hp * hpMult, damage: type.damage * dmgMult });
+            let newEnemy = this.enemyPool.length > 0 ? this.enemyPool.pop() : {};
+            Object.assign(newEnemy, type);
+            newEnemy.x = ex; newEnemy.y = ey;
+            newEnemy.speed = type.speed * spdMult;
+            newEnemy.maxHp = type.hp * hpMult;
+            newEnemy.hp = newEnemy.maxHp;
+            newEnemy.damage = type.damage * dmgMult;
+            
+            this.enemies.push(newEnemy);
             this.encounteredEnemies.add(type.id);
         }
     }
@@ -1169,7 +1181,8 @@ export class GameEngine {
     }
 
     updateEnemies(dt) {
-        this.enemies = this.enemies.filter(e => {
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            let e = this.enemies[i];
             if (e.hp <= 0) {
                 SFXManager.playEnemyDeath();
                 this.kills++;
@@ -1267,7 +1280,11 @@ export class GameEngine {
                         this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: pt.type, color: pt.color, icon: pt.icon });
                     }
                 }
-                return false;
+                
+                this.enemyPool.push(e);
+                this.enemies[i] = this.enemies[this.enemies.length - 1];
+                this.enemies.pop();
+                continue;
             }
             
             const dx = this.player.x - e.x;
@@ -1312,7 +1329,7 @@ export class GameEngine {
                 }
                 if (e.attackTimer > 0) e.attackTimer -= dt;
                 e.hp -= e.maxHp * 0.05 * dt; // Die over 20 seconds
-                return true;
+                continue;
             }
 
             if (e.isWorldBoss) {
@@ -1482,9 +1499,7 @@ export class GameEngine {
                     updateBossAbilities(e, dt, this.player, this.enemyProjectiles, this.addParticle.bind(this), this.addDamageText.bind(this), this.takeDamage.bind(this), this.enemies, this.frameCount, this.arena.id, this.bossModifiers);
                 }
             }
-
-            return true;
-        });
+        }
     }
 
     updatePickups(dt) {

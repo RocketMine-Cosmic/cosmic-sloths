@@ -434,16 +434,30 @@ export function renderGame() {
                 const sx = col * frameWidth;
                 const sy = row * frameHeight;
                 
-                this.ctx.shadowColor = clone.color;
-                this.ctx.shadowBlur = 10;
+                this.ctx.globalCompositeOperation = 'lighter';
+                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+                grad.addColorStop(0, clone.color);
+                grad.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = grad;
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
+                this.ctx.globalCompositeOperation = 'source-over';
+                
                 this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-                this.ctx.shadowBlur = 0;
             } else if (clone.image && clone.image.complete) {
                 const size = clone.radius * 3;
-                this.ctx.shadowColor = clone.color;
-                this.ctx.shadowBlur = 10;
+                this.ctx.globalCompositeOperation = 'lighter';
+                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+                grad.addColorStop(0, clone.color);
+                grad.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = grad;
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
+                this.ctx.globalCompositeOperation = 'source-over';
+                
                 this.ctx.drawImage(clone.image, -size/2, -size/2, size, size);
-                this.ctx.shadowBlur = 0;
             } else {
                 this.ctx.fillStyle = clone.color;
                 this.ctx.beginPath();
@@ -487,10 +501,17 @@ export function renderGame() {
         // So if we are facing right (!facingLeft), we need to mirror them.
         if (!this.player.facingLeft) this.ctx.scale(-1, 1);
         
-        this.ctx.shadowColor = this.player.color;
-        this.ctx.shadowBlur = 20;
+        this.ctx.globalCompositeOperation = 'screen';
+        const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+        grad.addColorStop(0, this.player.color);
+        grad.addColorStop(1, 'transparent');
+        this.ctx.fillStyle = grad;
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+        this.ctx.globalAlpha = 1.0;
+        this.ctx.globalCompositeOperation = 'source-over';
+        
         this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-        this.ctx.shadowBlur = 0;
         
         this.ctx.restore();
     } else if (this.player.image && this.player.image.complete) {
@@ -503,10 +524,17 @@ export function renderGame() {
             this.ctx.scale(-1, 1);
         }
         
-        this.ctx.shadowColor = this.player.color;
-        this.ctx.shadowBlur = 20;
+        this.ctx.globalCompositeOperation = 'screen';
+        const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+        grad.addColorStop(0, this.player.color);
+        grad.addColorStop(1, 'transparent');
+        this.ctx.fillStyle = grad;
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+        this.ctx.globalAlpha = 1.0;
+        this.ctx.globalCompositeOperation = 'source-over';
+        
         this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
-        this.ctx.shadowBlur = 0;
         
         this.ctx.restore();
     } else {

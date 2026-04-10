@@ -1,3 +1,31 @@
+const glowCache = {};
+function getGlowTexture(color, radius) {
+    if (radius <= 0) return null;
+    const key = `${color}_${Math.round(radius)}`;
+    if (glowCache[key]) return glowCache[key];
+    
+    const size = Math.ceil(radius * 2.5); // Provide enough padding for glow
+    if (size <= 0) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    
+    const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.2, color);
+    grad.addColorStop(1, 'transparent');
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    glowCache[key] = canvas;
+    return canvas;
+}
+
 export function drawProjectiles(ctx, projectiles, particleManager, time, camX, camY, vWidth, vHeight) {
     ctx.globalCompositeOperation = 'screen';
     const texStar = particleManager?.textures?.star;
@@ -20,22 +48,24 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         
         const isElongated = p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot';
 
-        // High Quality Glowing Aura
+        // High Quality Glowing Aura (Pre-rendered)
         if (!p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
             const auraRadius = Math.max(0.1, p.radius * 3);
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, auraRadius);
-            grad.addColorStop(0, p.color || '#ffffff');
-            grad.addColorStop(0.2, p.color || '#ffffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
+            
             ctx.globalAlpha = 0.4; // Boosted aura alpha
             
             if (isElongated) {
-                ctx.beginPath();
-                ctx.ellipse(0, 0, auraRadius * 1.2, auraRadius * 0.6, 0, 0, Math.PI * 2);
-                ctx.fill();
-                // Tail
+                // For elongated, we scale the pre-rendered circle
+                const glow = getGlowTexture(p.color || '#ffffff', auraRadius);
+                if (glow) {
+                    ctx.save();
+                    ctx.scale(1.2, 0.6);
+                    ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                    ctx.restore();
+                }
+                
+                // Tail (Pre-rendered or simple shape)
                 const tailGrad = ctx.createLinearGradient(0, 0, -auraRadius * 2, 0);
                 tailGrad.addColorStop(0, p.color || '#ffffff');
                 tailGrad.addColorStop(1, 'transparent');
@@ -47,9 +77,10 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.lineTo(0, -auraRadius * 0.4);
                 ctx.fill();
             } else {
-                ctx.beginPath();
-                ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
-                ctx.fill();
+                const glow = getGlowTexture(p.color || '#ffffff', auraRadius);
+                if (glow) {
+                    ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                }
             }
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
@@ -89,10 +120,14 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             const swingAngle = (1 - (p.life / 0.2)) * Math.PI * 1.5; 
             ctx.rotate(swingAngle);
             ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 15;
+            // Pre-rendered glow approach for blade_swing
+            const glow = getGlowTexture(p.color, p.radius * 1.5);
+            if (glow) {
+                ctx.globalAlpha = ctx.globalAlpha * 0.5;
+                ctx.drawImage(glow, p.radius*0.4 - glow.width/2, -glow.height/2);
+                ctx.globalAlpha = ctx.globalAlpha * 2;
+            }
             ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(p.radius * 0.8, -p.radius * 0.2, p.radius * 0.8, 0); ctx.quadraticCurveTo(p.radius * 0.8, p.radius * 0.2, 0, 0); ctx.fill();
-            ctx.shadowBlur = 0;
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'grenade_explosion') {
@@ -126,31 +161,49 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         } else if (p.type === 'lightning') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00aaff';
-            ctx.shadowBlur = 15;
+            const pathPoints = [
+                {x: -p.radius * 1.5, y: 0},
+                {x: -p.radius*0.5, y: (Math.random()-0.5)*p.radius*1.5},
+                {x: p.radius*0.5, y: (Math.random()-0.5)*p.radius*1.5},
+                {x: p.radius * 1.5, y: 0}
+            ];
+            
+            // Draw glow instead of shadowBlur
+            const glow = getGlowTexture(p.color || '#00aaff', p.radius * 2);
+            if (glow) {
+                ctx.globalAlpha = 0.6;
+                pathPoints.forEach(pt => ctx.drawImage(glow, pt.x - glow.width/2, pt.y - glow.height/2));
+                ctx.globalAlpha = 1.0;
+            }
+            
             ctx.lineWidth = Math.max(2, p.radius * 0.4);
             ctx.beginPath();
-            ctx.moveTo(-p.radius * 1.5, 0);
-            ctx.lineTo(-p.radius*0.5, (Math.random()-0.5)*p.radius*1.5);
-            ctx.lineTo(p.radius*0.5, (Math.random()-0.5)*p.radius*1.5);
-            ctx.lineTo(p.radius * 1.5, 0);
+            ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+            ctx.lineTo(pathPoints[1].x, pathPoints[1].y);
+            ctx.lineTo(pathPoints[2].x, pathPoints[2].y);
+            ctx.lineTo(pathPoints[3].x, pathPoints[3].y);
             ctx.stroke();
             ctx.strokeStyle = p.color || '#00aaff';
             ctx.lineWidth = Math.max(1, p.radius * 0.8);
             ctx.stroke();
-            ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'glitch_slash') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.fillStyle = '#ffffff'; 
-            ctx.shadowColor = p.color || '#00ff00';
-            ctx.shadowBlur = 20;
+            const glow = getGlowTexture(p.color || '#00ff00', p.radius * 2);
+            if (glow) {
+                ctx.globalAlpha = 0.7;
+                ctx.save();
+                ctx.scale(2, 0.5);
+                ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                ctx.restore();
+                ctx.globalAlpha = 1.0;
+            }
             ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2, p.radius*0.4, 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = p.color || '#00ff00';
             for(let i=0; i<3; i++) {
                 ctx.fillRect((Math.random()-0.5)*p.radius*3, (Math.random()-0.5)*p.radius, p.radius*0.8, p.radius*0.2);
             }
-            ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'stomp') {
             ctx.globalCompositeOperation = 'lighter';
@@ -444,14 +497,20 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
         } else if (p.isAoe) {
             ctx.globalCompositeOperation = 'lighter';
+            
+            // Draw glow instead of shadowBlur
+            const glow = getGlowTexture(p.color || '#00ffff', p.radius * 1.5);
+            if (glow) {
+                ctx.globalAlpha = 0.5;
+                ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                ctx.globalAlpha = 1.0;
+            }
+            
             ctx.strokeStyle = '#ffffff';
-            ctx.shadowColor = p.color || '#00ffff';
-            ctx.shadowBlur = 15;
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(0, 0, p.radius, 0, Math.PI*2);
             ctx.stroke();
-            ctx.shadowBlur = 0;
             ctx.globalCompositeOperation = 'screen';
         } else {
             // Default projectile - HD Upgrade

@@ -40,6 +40,7 @@ const loadTexture = (url, name) => {
 export class ParticleManager {
     constructor() {
         this.particles = [];
+        this.pool = [];
         this.textures = {
             star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png', 'star'),
             explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png', 'explosion'),
@@ -77,10 +78,14 @@ export class ParticleManager {
     }
 
     update(dt) {
-        if (this.particles.length > 600) {
-            this.particles.splice(0, this.particles.length - 600);
+        if (this.particles.length > 800) {
+            const removed = this.particles.splice(0, this.particles.length - 800);
+            for (let i = 0; i < removed.length; i++) {
+                this.pool.push(removed[i]);
+            }
         }
-        this.particles = this.particles.filter(p => {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            let p = this.particles[i];
             p.life -= dt;
             p.x += p.vx * dt;
             p.y += p.vy * dt;
@@ -120,8 +125,12 @@ export class ParticleManager {
                 p.size += dt * 10;
             }
 
-            return p.life > 0;
-        });
+            if (p.life <= 0) {
+                this.pool.push(p);
+                this.particles[i] = this.particles[this.particles.length - 1];
+                this.particles.pop();
+            }
+        }
     }
 
     draw(ctx, camX, camY, vWidth, vHeight) {
@@ -224,23 +233,28 @@ export class ParticleManager {
             const speed = options.speed !== undefined ? options.speed * (0.7 + Math.random() * 0.6) : Math.random() * 150 * sizeMult + 50;
 
             const lifeBase = Math.random() * 0.5 + 0.3 + (options.lifeBonus || 0);
-            this.particles.push({
-                x, y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                life: lifeBase,
-                maxLife: lifeBase,
-                color,
-                tint: color,
-                type,
-                size: (Math.random() * 24 + 12) * sizeMult,
-                rotation: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 12,
-                gravity: options.gravity || false,
-                lineWidth: options.lineWidth,
-                growthRate: options.growthRate,
-                ...options
-            });
+            
+            let p = this.pool.length > 0 ? this.pool.pop() : {};
+            
+            p.x = x;
+            p.y = y;
+            p.vx = Math.cos(angle) * speed;
+            p.vy = Math.sin(angle) * speed;
+            p.life = lifeBase;
+            p.maxLife = lifeBase;
+            p.color = color;
+            p.tint = color;
+            p.type = type;
+            p.size = (Math.random() * 24 + 12) * sizeMult;
+            p.rotation = Math.random() * Math.PI * 2;
+            p.rotSpeed = (Math.random() - 0.5) * 12;
+            p.gravity = options.gravity || false;
+            p.lineWidth = options.lineWidth;
+            p.growthRate = options.growthRate;
+            p.targetX = options.targetX;
+            p.targetY = options.targetY;
+            
+            this.particles.push(p);
         }
     }
 
