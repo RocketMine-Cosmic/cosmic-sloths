@@ -473,19 +473,37 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.stroke();
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool' || p.type === 'hellfire') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = Math.min(1, p.life) * (p.type === 'hellfire' ? 0.15 : 0.08); // Transparent core
-            ctx.fillStyle = p.color || '#ffffff';
+            ctx.globalCompositeOperation = 'source-over';
             
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
-            ctx.fill();
+            const alpha = Math.min(1, p.life) * (p.type === 'hellfire' ? 0.4 : 0.3);
+            ctx.globalAlpha = alpha;
             
-            ctx.globalAlpha = Math.min(1, p.life) * 0.7;
+            if (texSmoke && texSmoke.isReady) {
+                const tintedSmoke = particleManager.getTintedTexture(texSmoke, p.color);
+                const drawTex = (tintedSmoke && tintedSmoke.isReady) ? tintedSmoke : texSmoke;
+                
+                for(let i=0; i<2; i++) {
+                    ctx.save();
+                    const rot = time * (0.5 + i * 0.2) * (i % 2 === 0 ? 1 : -1) + p.x;
+                    ctx.rotate(rot);
+                    const scale = 1.0 + Math.sin(time * 2 + i) * 0.1;
+                    const r = p.radius * scale;
+                    
+                    ctx.drawImage(drawTex, -r, -r, r * 2, r * 2);
+                    ctx.restore();
+                }
+            } else {
+                ctx.fillStyle = p.color || '#ffffff';
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+                ctx.fill();
+            }
+            
+            ctx.globalAlpha = alpha * 1.5;
             ctx.strokeStyle = p.color;
             ctx.lineWidth = p.type === 'hellfire' ? 3 : 2;
             
-            // Segmented bio-hazard ring instead of a solid blob
+            // Segmented ring instead of a solid blob
             const segments = p.type === 'hellfire' ? 5 : 4;
             const segmentSize = (Math.PI * 2) / segments;
             const gap = 0.4;
