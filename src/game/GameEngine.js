@@ -918,6 +918,7 @@ export class GameEngine {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
             p.life -= dt;
+            if (p.rotSpeed) p.rotation = (p.rotation || 0) + p.rotSpeed * dt;
             
             // Trails
             if (!p.isAoe && this.frameCount % 2 === 0) {
@@ -993,7 +994,7 @@ export class GameEngine {
                                             if (p.chainCount > 0) {
                                                 p.chainCount--;
                                                 let chainTarget = null;
-                                                let minChainDist = 200;
+                                                let minChainDist = p.type === 'buzzsaw' ? 600 : 200;
                                                 this.enemies.forEach(ce => {
                                                     if (ce !== e && !p.hitList.has(ce)) {
                                                         const d = Math.hypot(ce.x - e.x, ce.y - e.y);

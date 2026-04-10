@@ -325,6 +325,40 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.setLineDash([]);
             }
             ctx.globalAlpha = 1.0;
+        } else if (p.type === 'buzzsaw') {
+            ctx.rotate((p.rotation || time * 15) * (p.vx < 0 ? -1 : 1));
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            const spikes = p.type === 'buzzsaw_swarm' ? 12 : 8;
+            for(let i=0; i<spikes*2; i++) {
+                const a = (Math.PI*2/(spikes*2))*i;
+                const r = i%2===0 ? p.radius : p.radius*0.6;
+                ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+            }
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(0, 0, p.radius*0.3, 0, Math.PI*2); ctx.fill();
+            ctx.globalCompositeOperation = 'screen';
+        } else if (p.type === 'toxic_cloud') {
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = Math.min(1, p.life) * 0.15;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(
+                    Math.cos(time * 2 + i) * p.radius * 0.3, 
+                    Math.sin(time * 2 + i) * p.radius * 0.3, 
+                    p.radius * 0.8, 0, Math.PI*2
+                );
+                ctx.fill();
+            }
+            ctx.globalAlpha = Math.min(1, p.life) * 0.8;
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.stroke();
+            ctx.globalAlpha = 1.0;
         } else if (p.type === 'aegis_matrix') {
             ctx.globalCompositeOperation = 'screen';
             ctx.globalAlpha = 0.05; // Faint background

@@ -561,6 +561,89 @@ export function fireWeaponLogic(engine, w) {
             type: 'aegis_matrix'
         });
     }
+    else if (w.id === 'bouncingBlade') {
+        const count = isMastered ? 3 : 1;
+        for (let i = 0; i < count; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: Math.cos(angle) * 400 * engine.player.projSpeedMult,
+                vy: Math.sin(angle) * 400 * engine.player.projSpeedMult,
+                radius: 15 * area,
+                damage: dmg,
+                pierce: 999,
+                chainCount: isMastered ? 8 : 4,
+                life: 4,
+                color: isMastered ? '#c0c0c0' : '#888888',
+                weaponId: 'bouncingBlade',
+                type: 'buzzsaw',
+                rotation: 0,
+                rotSpeed: 15
+            });
+        }
+    }
+    else if (w.id === 'buzzsawSwarm') {
+        const count = 3 + Math.floor(w.level / 2);
+        for (let i = 0; i < count; i++) {
+            let angle = (Math.PI * 2 / count) * i;
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: Math.cos(angle) * 600 * engine.player.projSpeedMult,
+                vy: Math.sin(angle) * 600 * engine.player.projSpeedMult,
+                radius: 25 * area,
+                damage: dmg,
+                pierce: 999,
+                chainCount: 15,
+                life: 6,
+                color: '#ff0000',
+                weaponId: 'buzzsawSwarm',
+                type: 'buzzsaw',
+                rotation: 0,
+                rotSpeed: 25
+            });
+        }
+    }
+    else if (w.id === 'toxicCloud') {
+        engine.projectiles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: 0, vy: 0,
+            radius: 50 * area,
+            damage: dmg * 0.4,
+            pierce: 999,
+            life: 4 + w.level,
+            color: isMastered ? '#00ff00' : '#32cd32',
+            isAoe: true,
+            isMastered: isMastered,
+            weaponId: 'toxicCloud',
+            type: 'toxic_cloud'
+        });
+    }
+    else if (w.id === 'venomLash') {
+        engine.particleManager.particles.push({
+            x: engine.player.x, y: engine.player.y,
+            vx: 0, vy: 0, life: 0.25, maxLife: 0.25,
+            color: '#ffffff', tint: '#00ff88', type: 'slash', size: 80 * area, rotation: Math.random() * Math.PI * 2
+        });
+        engine.enemies.forEach(e => {
+            if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
+                engine.damageEnemy(e, dmg);
+                e.slowTimer = 2.0;
+                if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#00ff88', 4, 'spark', 1.5);
+                
+                engine.projectiles.push({
+                    x: e.x, y: e.y,
+                    vx: 0, vy: 0,
+                    radius: 30 * area,
+                    damage: dmg * 0.3,
+                    pierce: 999,
+                    life: 2.5 + (w.level * 0.5),
+                    color: '#00ff88',
+                    isAoe: true,
+                    type: 'toxic_cloud'
+                });
+            }
+        });
+    }
 
     // Apply Augments to newly created projectiles
     for (let i = startIndex; i < engine.projectiles.length; i++) {
