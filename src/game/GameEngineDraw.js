@@ -245,25 +245,25 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * 5); // Spin
             
-            // Add HD aura
-            this.ctx.fillStyle = '#32CD32';
-            this.ctx.globalAlpha = 0.2;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
-            
-            // Spiky Ball
-            this.ctx.fillStyle = '#32CD32';
+            // Sharp Spiky Plasma Drone
+            this.ctx.fillStyle = '#228B22';
             this.ctx.beginPath();
-            const spikes = 8;
+            const spikes = 6;
             for(let j=0; j<spikes*2; j++) {
                 const a = (Math.PI*2/(spikes*2))*j;
-                const r = j%2===0 ? 10 : 5;
-                this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+                const r = j%2===0 ? 12 : 4;
+                if(j===0) this.ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+                else this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
             }
-            this.ctx.fill();
-            this.ctx.strokeStyle = '#006400';
-            this.ctx.lineWidth = 1;
+            this.ctx.closePath(); this.ctx.fill();
+            
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 1.5;
             this.ctx.stroke();
+
+            // Inner Core
+            this.ctx.fillStyle = '#39FF14';
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 4, 0, Math.PI * 2); this.ctx.fill();
             
             this.ctx.restore();
         }
@@ -283,16 +283,18 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * 3);
             
-            this.ctx.fillStyle = '#00ffff';
-            this.ctx.globalAlpha = 0.2;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 10, 0, Math.PI * 2); this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
+            // Sleek blue laser drone
+            this.ctx.fillStyle = '#00aaff';
+            this.ctx.beginPath(); 
+            this.ctx.moveTo(8, 0); this.ctx.lineTo(0, 8); this.ctx.lineTo(-8, 0); this.ctx.lineTo(0, -8);
+            this.ctx.closePath(); this.ctx.fill();
             
-            this.ctx.fillStyle = '#00ffff';
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 6, 0, Math.PI * 2); this.ctx.fill();
-            this.ctx.strokeStyle = '#ffffff';
-            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 1.5;
             this.ctx.stroke();
+
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 3, 0, Math.PI * 2); this.ctx.fill();
             
             this.ctx.restore();
         }
@@ -312,26 +314,25 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * -4);
             
-            this.ctx.fillStyle = '#ff00ff';
-            this.ctx.globalAlpha = 0.2;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI * 2); this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
-            
-            this.ctx.fillStyle = '#111111';
+            // "Indestructible Drones" - Hexagonal shield plates
+            this.ctx.fillStyle = '#222222';
             this.ctx.beginPath();
-            this.ctx.moveTo(15, 0);
-            this.ctx.lineTo(0, 15);
-            this.ctx.lineTo(-15, 0);
-            this.ctx.lineTo(0, -15);
-            this.ctx.fill();
+            for(let j=0; j<6; j++) {
+                const a = (Math.PI/3)*j;
+                const r = 12;
+                if(j===0) this.ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+                else this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+            }
+            this.ctx.closePath(); this.ctx.fill();
             
             this.ctx.strokeStyle = '#ff00ff';
-            this.ctx.lineWidth = 3;
+            this.ctx.lineWidth = 2.5;
             this.ctx.stroke();
             
-            this.ctx.fillStyle = '#ffffff';
+            // Pink laser core
+            this.ctx.fillStyle = '#ff00ff';
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, 5, 0, Math.PI * 2);
+            this.ctx.arc(0, 0, 4, 0, Math.PI * 2);
             this.ctx.fill();
             
             this.ctx.restore();

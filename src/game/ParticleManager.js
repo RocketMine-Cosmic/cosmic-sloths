@@ -52,8 +52,13 @@ export class ParticleManager {
                         ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
                     }),
                     slash: this.createCanvasTexture(64, (ctx, s) => {
+                        // Sharp, crescent-shaped slash for whips
                         ctx.fillStyle = '#ffffff';
-                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.1, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath();
+                        ctx.moveTo(0, s/2);
+                        ctx.quadraticCurveTo(s/2, s*0.2, s, s/2);
+                        ctx.quadraticCurveTo(s/2, s*0.4, 0, s/2);
+                        ctx.fill();
                     }),
                     spark_line: this.createCanvasTexture(64, (ctx, s) => {
                         ctx.fillStyle = '#ffffff';

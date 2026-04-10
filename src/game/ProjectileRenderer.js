@@ -154,57 +154,80 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.beginPath(); ctx.moveTo(-p.radius * 3, 0); ctx.lineTo(0, -p.radius * 0.6); ctx.lineTo(p.radius, 0); ctx.lineTo(0, p.radius * 0.6); ctx.closePath(); ctx.fill();
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
             ctx.globalAlpha = Math.min(1, p.life * 2);
-            ctx.strokeStyle = p.color || '#ffffff';
             
             if (p.type === 'shield_bubble') {
-                ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2); ctx.stroke();
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = 0.15;
-                ctx.fill();
-                ctx.globalAlpha = Math.min(1, p.life * 2);
+                // High-tech hex grid shield
+                ctx.fillStyle = p.color || '#ffffff';
+                ctx.globalAlpha = 0.1;
+                ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2); ctx.fill();
                 
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.8;
+                ctx.strokeStyle = p.color || '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2); ctx.stroke();
+
+                // Inner rotating ring
                 ctx.lineWidth = 2;
-                ctx.setLineDash([10, 15]);
-                ctx.lineDashOffset = -time * 40;
-                ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius * 0.8), 0, Math.PI*2); ctx.stroke();
+                ctx.setLineDash([15, 20]);
+                ctx.lineDashOffset = -time * 60;
+                ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius * 0.85), 0, Math.PI*2); ctx.stroke();
                 ctx.setLineDash([]);
             } else {
-                ctx.lineWidth = 5;
+                // Burning Barrier: jagged fire-like hexagon
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.9;
+                ctx.strokeStyle = '#ff4500';
+                ctx.lineWidth = 4;
                 ctx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i + time;
-                    const px = Math.cos(angle) * p.radius;
-                    const py = Math.sin(angle) * p.radius;
+                for (let i = 0; i < 12; i++) {
+                    const angle = (Math.PI / 6) * i + time * 1.5;
+                    const variance = i % 2 === 0 ? 1 : 0.85 + Math.sin(time * 10 + i) * 0.05;
+                    const px = Math.cos(angle) * p.radius * variance;
+                    const py = Math.sin(angle) * p.radius * variance;
                     if (i === 0) ctx.moveTo(px, py);
                     else ctx.lineTo(px, py);
                 }
                 ctx.closePath(); ctx.stroke();
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = 0.2;
+                
+                ctx.fillStyle = '#ff8800';
+                ctx.globalAlpha = 0.15;
                 ctx.fill();
             }
         } else if (p.type === 'buzzsaw') {
             ctx.rotate((p.rotation || time * 25) * (p.vx < 0 ? -1 : 1));
-            ctx.fillStyle = '#222222';
-            ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = p.color || '#ff0000';
+            
+            // Sharp 2D-HD metallic sawblade
+            ctx.fillStyle = p.color || '#c0c0c0'; // Should be silver or red based on mastery
             ctx.beginPath();
-            const spikes = p.type === 'buzzsaw_swarm' ? 12 : 8;
+            const spikes = p.weaponId === 'buzzsawSwarm' ? 12 : 8;
             for(let i=0; i<spikes*2; i++) {
                 const a = (Math.PI*2/(spikes*2))*i;
-                const r = i%2===0 ? p.radius * 1.2 : p.radius*0.8;
+                const r = i%2===0 ? p.radius * 1.3 : p.radius*0.7;
+                
+                // Curve the teeth slightly for a saw look
                 if(i===0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
-                else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+                else {
+                    if (i%2===0) {
+                        const prevA = (Math.PI*2/(spikes*2))*(i-1);
+                        const prevR = p.radius*0.7;
+                        ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+                    } else {
+                        ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+                    }
+                }
             }
             ctx.closePath(); ctx.fill();
+            
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Inner mechanical details
+            ctx.fillStyle = '#333333';
+            ctx.beginPath(); ctx.arc(0, 0, p.radius*0.6, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#000000'; ctx.stroke();
+            
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.arc(0, 0, p.radius*0.3, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#444444';
-            ctx.beginPath(); ctx.arc(0, 0, p.radius*0.15, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, 0, p.radius*0.2, 0, Math.PI*2); ctx.fill();
         } else if (p.type === 'toxic_cloud') {
             ctx.globalAlpha = Math.min(1, p.life * 2) * 0.7;
             ctx.fillStyle = p.color;
@@ -253,37 +276,64 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.fill();
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool' || p.type === 'hellfire') {
             ctx.fillStyle = p.color || '#ff4500';
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.4;
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.25;
+            
+            const isHellfire = p.type === 'hellfire';
+            const segments = isHellfire ? 10 : 7;
+            const timeMult = isHellfire ? 8 : 4;
+            
             ctx.beginPath();
-            const segments = p.type === 'hellfire' ? 8 : 6;
             for (let i = 0; i < segments; i++) {
-                const a = (Math.PI * 2 / segments) * i + time * 0.5;
-                const r = p.radius * (0.8 + Math.sin(time * 5 + i) * 0.2);
+                const a = (Math.PI * 2 / segments) * i + time * 0.3;
+                const r = p.radius * (0.75 + Math.sin(time * timeMult + i * 2) * 0.25);
                 if (i === 0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
                 else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
             }
             ctx.closePath(); ctx.fill();
             
-            ctx.globalAlpha = Math.min(1, p.life * 2);
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.9;
             ctx.strokeStyle = p.color;
-            ctx.lineWidth = 3;
+            ctx.lineWidth = isHellfire ? 4 : 2;
             ctx.stroke();
+            
+            if (isHellfire) {
+                // Inner intense core for hellfire
+                ctx.fillStyle = '#ffffff';
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.5;
+                ctx.beginPath();
+                for (let i = 0; i < segments; i++) {
+                    const a = (Math.PI * 2 / segments) * i - time * 0.5;
+                    const r = p.radius * 0.4 * (0.8 + Math.cos(time * 12 + i) * 0.2);
+                    if (i === 0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+                    else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+                }
+                ctx.closePath(); ctx.fill();
+            }
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave' || p.type === 'quantum_collapse') {
             ctx.strokeStyle = p.color || '#ff00ff';
             ctx.lineWidth = p.type === 'quantum_collapse' ? 5 : Math.max(2, 6 * p.life);
             ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
             
             if (p.type === 'quantum_collapse') {
+                // Dark energy pulse - sharp geometric
+                ctx.strokeStyle = '#8a2be2';
                 ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2); ctx.stroke();
+                
                 ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
                 ctx.beginPath();
                 for(let i=0; i<8; i++) {
-                    const a = (Math.PI/4)*i + time;
-                    const r = p.radius * 0.8;
+                    const a = (Math.PI/4)*i - time * 2;
+                    const r = p.radius * 0.85;
                     if(i===0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
                     else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
                 }
                 ctx.closePath(); ctx.stroke();
+            } else if (p.type === 'seismic_shockwave') {
+                // Ground crack/shockwave
+                ctx.setLineDash([20, 10, 5, 10]);
+                ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2); ctx.stroke();
+                ctx.setLineDash([]);
             } else {
                 ctx.beginPath(); ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2); ctx.stroke();
             }
