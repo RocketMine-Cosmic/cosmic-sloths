@@ -49,6 +49,34 @@ export class ParticleManager {
             shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png', 'shockwave'),
         };
         this.tintCache = {};
+        this.glowCache = {};
+    }
+
+    getGlowTexture(color, radius) {
+        if (radius <= 0) return null;
+        const key = `${color}_${Math.round(radius)}`;
+        if (this.glowCache[key]) return this.glowCache[key];
+        
+        const size = Math.ceil(radius * 2.5); // Enough padding
+        if (size <= 0) return null;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        
+        const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+        grad.addColorStop(0, color);
+        grad.addColorStop(0.2, color);
+        grad.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        this.glowCache[key] = canvas;
+        return canvas;
     }
 
     getTintedTexture(tex, color) {

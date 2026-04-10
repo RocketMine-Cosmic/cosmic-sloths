@@ -416,11 +416,22 @@ export function renderGame() {
             if (!clone.facingLeft) this.ctx.scale(-1, 1);
             
             this.ctx.globalCompositeOperation = 'lighter';
-            this.ctx.fillStyle = clone.color;
-            this.ctx.globalAlpha = 0.3 * Math.min(1, clone.life);
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, clone.radius * 2, 0, Math.PI * 2);
-            this.ctx.fill();
+            
+            // Use pre-rendered glow if particleManager exists
+            if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
+                const glow = this.particleManager.getGlowTexture(clone.color, clone.radius * 2);
+                if (glow) {
+                    this.ctx.globalAlpha = 0.3 * Math.min(1, clone.life);
+                    this.ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                }
+            } else {
+                this.ctx.fillStyle = clone.color;
+                this.ctx.globalAlpha = 0.3 * Math.min(1, clone.life);
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, clone.radius * 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.globalAlpha = Math.min(1, clone.life);
 
@@ -435,12 +446,20 @@ export function renderGame() {
                 const sy = row * frameHeight;
                 
                 this.ctx.globalCompositeOperation = 'lighter';
-                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
-                grad.addColorStop(0, clone.color);
-                grad.addColorStop(1, 'transparent');
-                this.ctx.fillStyle = grad;
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+                if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
+                    const glow = this.particleManager.getGlowTexture(clone.color, size * 0.8);
+                    if (glow) {
+                        this.ctx.globalAlpha = 0.5;
+                        this.ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                    }
+                } else {
+                    const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+                    grad.addColorStop(0, clone.color);
+                    grad.addColorStop(1, 'transparent');
+                    this.ctx.fillStyle = grad;
+                    this.ctx.globalAlpha = 0.5;
+                    this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+                }
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.globalCompositeOperation = 'source-over';
                 
@@ -448,12 +467,22 @@ export function renderGame() {
             } else if (clone.image && clone.image.complete) {
                 const size = clone.radius * 3;
                 this.ctx.globalCompositeOperation = 'lighter';
-                const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
-                grad.addColorStop(0, clone.color);
-                grad.addColorStop(1, 'transparent');
-                this.ctx.fillStyle = grad;
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+                
+                if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
+                    const glow = this.particleManager.getGlowTexture(clone.color, size * 0.8);
+                    if (glow) {
+                        this.ctx.globalAlpha = 0.5;
+                        this.ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                    }
+                } else {
+                    const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+                    grad.addColorStop(0, clone.color);
+                    grad.addColorStop(1, 'transparent');
+                    this.ctx.fillStyle = grad;
+                    this.ctx.globalAlpha = 0.5;
+                    this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+                }
+                
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.globalCompositeOperation = 'source-over';
                 
@@ -502,12 +531,22 @@ export function renderGame() {
         if (!this.player.facingLeft) this.ctx.scale(-1, 1);
         
         this.ctx.globalCompositeOperation = 'screen';
-        const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
-        grad.addColorStop(0, this.player.color);
-        grad.addColorStop(1, 'transparent');
-        this.ctx.fillStyle = grad;
-        this.ctx.globalAlpha = 0.5;
-        this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+        
+        if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
+            const glow = this.particleManager.getGlowTexture(this.player.color, size * 0.8);
+            if (glow) {
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+            }
+        } else {
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+            grad.addColorStop(0, this.player.color);
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = 0.5;
+            this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+        }
+        
         this.ctx.globalAlpha = 1.0;
         this.ctx.globalCompositeOperation = 'source-over';
         
@@ -525,12 +564,22 @@ export function renderGame() {
         }
         
         this.ctx.globalCompositeOperation = 'screen';
-        const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
-        grad.addColorStop(0, this.player.color);
-        grad.addColorStop(1, 'transparent');
-        this.ctx.fillStyle = grad;
-        this.ctx.globalAlpha = 0.5;
-        this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+        
+        if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
+            const glow = this.particleManager.getGlowTexture(this.player.color, size * 0.8);
+            if (glow) {
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+            }
+        } else {
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+            grad.addColorStop(0, this.player.color);
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = 0.5;
+            this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
+        }
+        
         this.ctx.globalAlpha = 1.0;
         this.ctx.globalCompositeOperation = 'source-over';
         
