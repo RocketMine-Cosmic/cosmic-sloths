@@ -13,8 +13,9 @@ import { renderGame } from './GameEngineDraw';
 import { triggerSquadUltimate, updateSquadClones } from './SquadUltimate';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null, isNGPlus = false) {
+    constructor(canvas, pixiCanvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null, isNGPlus = false) {
         this.canvas = canvas;
+        this.pixiCanvas = pixiCanvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
         this.characterId = characterId;
@@ -217,7 +218,7 @@ export class GameEngine {
         this.enemies = [];
         this.projectiles = [];
         this.pickups = [];
-        this.particleManager = new ParticleManager();
+        this.particleManager = new ParticleManager(this.pixiCanvas);
         this.damageTexts = [];
         
         this.stars = Array.from({length: 150}, () => ({ x: Math.random() * 2000, y: Math.random() * 2000, size: Math.random() * 2 + 0.5, parallax: Math.random() * 0.4 + 0.1 }));
@@ -398,6 +399,9 @@ export class GameEngine {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
         cancelAnimationFrame(this.animationId);
+        if (this.particleManager && this.particleManager.app) {
+            this.particleManager.app.destroy(true, { children: true, texture: true, baseTexture: true });
+        }
     }
 
     loop(timestamp) {

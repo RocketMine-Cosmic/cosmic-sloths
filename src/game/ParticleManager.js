@@ -1,85 +1,81 @@
-const loadTexture = (url, name) => {
-    if (typeof window !== 'undefined') {
-        const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
-        canvas.texName = name;
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 128, 128);
-            
-            try {
-                const imgData = ctx.getImageData(0, 0, 128, 128);
-                const data = imgData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i+1];
-                    const b = data[i+2];
-                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                    
-                    data[i] = 255;
-                    data[i+1] = 255;
-                    data[i+2] = 255;
-                    data[i+3] = lum; // Convert black background to transparent
-                }
-                ctx.putImageData(imgData, 0, 0);
-            } catch (e) {
-                console.error("Failed to process texture alpha:", e);
-            }
-            
-            canvas.isReady = true;
-        };
-        img.src = url;
-        return canvas;
-    }
-    return { isReady: false };
-};
+import * as PIXI from 'pixi.js';
 
 export class ParticleManager {
-    constructor() {
+    constructor(pixiCanvas) {
         this.particles = [];
         this.pool = [];
-        this.textures = {
-            star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png', 'star'),
-            explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png', 'explosion'),
-            smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png', 'smoke'),
-            slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png', 'slash'),
-            shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png', 'shockwave'),
-        };
-        this.tintCache = {};
+        this.isReady = false;
+        this.sprites = [];
+        this.spritePool = [];
+        
+        if (pixiCanvas) {
+            this.app = new PIXI.Application();
+            this.app.init({
+                canvas: pixiCanvas,
+                backgroundAlpha: 0,
+                resizeTo: window,
+                clearBeforeRender: true,
+                antialias: true
+            }).then(() => {
+                this.container = new PIXI.Container();
+                this.app.stage.addChild(this.container);
+                
+                this.textures = {
+                    glow: this.createCanvasTexture(64, (ctx, s) => {
+                        const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+                        grad.addColorStop(0, 'rgba(255,255,255,1)');
+                        grad.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+                        grad.addColorStop(1, 'rgba(255,255,255,0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
+                    }),
+                    star: this.createCanvasTexture(64, (ctx, s) => {
+                        const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+                        grad.addColorStop(0, 'rgba(255,255,255,1)');
+                        grad.addColorStop(0.1, 'rgba(255,255,255,0.8)');
+                        grad.addColorStop(1, 'rgba(255,255,255,0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.08, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s*0.08, s/2, 0, 0, Math.PI*2); ctx.fill();
+                    }),
+                    ring: this.createCanvasTexture(64, (ctx, s) => {
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 6;
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 6, 0, Math.PI*2); ctx.stroke();
+                    }),
+                    smoke: this.createCanvasTexture(64, (ctx, s) => {
+                        const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+                        grad.addColorStop(0, 'rgba(255,255,255,0.6)');
+                        grad.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+                        grad.addColorStop(1, 'rgba(255,255,255,0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
+                    }),
+                    slash: this.createCanvasTexture(64, (ctx, s) => {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.15, 0, 0, Math.PI*2); ctx.fill();
+                    })
+                };
+                
+                this.isReady = true;
+            });
+        }
     }
-
-    getTintedTexture(tex, color) {
-        if (!tex || !tex.isReady) return tex;
-        if (!this.tintCache) this.tintCache = {};
-        if (!this.tintCache[color]) this.tintCache[color] = {};
-        
-        const texKey = tex.texName;
-        if (!texKey) return tex;
-
-        if (this.tintCache[color][texKey]) return this.tintCache[color][texKey];
-        
+    
+    createCanvasTexture(size, drawFn) {
         const canvas = document.createElement('canvas');
-        canvas.width = tex.width;
-        canvas.height = tex.height;
-        canvas.texName = texKey;
-        canvas.isReady = true;
+        canvas.width = size;
+        canvas.height = size;
         const ctx = canvas.getContext('2d');
-        
-        ctx.drawImage(tex, 0, 0);
-        ctx.globalCompositeOperation = 'source-in';
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        this.tintCache[color][texKey] = canvas;
-        return canvas;
+        drawFn(ctx, size);
+        return PIXI.Texture.from(canvas);
     }
-
+    
     update(dt) {
-        if (this.particles.length > 800) {
-            const removed = this.particles.splice(0, this.particles.length - 800);
+        if (this.particles.length > 2000) {
+            const removed = this.particles.splice(0, this.particles.length - 2000);
             for (let i = 0; i < removed.length; i++) {
                 this.pool.push(removed[i]);
             }
@@ -117,7 +113,6 @@ export class ParticleManager {
                 p.vy *= 0.88;
             } else if (p.type === 'shockwave' || p.type === 'dark_shockwave') {
                 p.size += (p.growthRate || 400) * dt;
-                p.lineWidth = Math.max(0.1, (p.lineWidth || 4) - dt * 8);
             } else if (p.type === 'flame') {
                 p.vx *= 0.92;
                 p.vy *= 0.92;
@@ -132,101 +127,60 @@ export class ParticleManager {
             }
         }
     }
-
-    draw(ctx, camX, camY, vWidth, vHeight) {
-        ctx.save();
-
-        this.particles.forEach(p => {
-            const alpha = Math.max(0, p.life / (p.maxLife || 1));
-            if (alpha <= 0) return;
-
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.rotation || 0);
-
-            const color = p.color || p.tint || '#ffffff';
-            const sBase = p.size || 8;
-
-            // Determine blend mode per particle type
-            const isOpaque = p.type === 'blood' || p.type === 'dark_smoke' || p.type === 'dark_shockwave' || p.type === 'dark_implode';
-            const blendMode = isOpaque ? 'source-over' : 'screen';
-            ctx.globalCompositeOperation = blendMode;
-            ctx.globalAlpha = alpha;
-
-            // DRAW HD TEXTURE
-            let tex = null;
-            let scaleMult = 1.5;
-
-            if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 2.0; }
-            else if (p.type === 'explosion' || p.type === 'flash' || p.type === 'blood') { tex = this.textures.explosion; scaleMult = 2.2; }
-            else if (p.type === 'smoke' || p.type === 'dark_smoke' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 2.2; }
-            else if (p.type === 'slash' || p.type === 'shatter') { tex = this.textures.slash; scaleMult = 2.5; }
-            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode' || p.type === 'circle' || p.type === 'ring') { tex = this.textures.shockwave; scaleMult = 1.8; }
-            else { tex = this.textures.star; scaleMult = 1.5; } // Catch-all fallback to prevent flat shapes
+    
+    draw(ctx, camX, camY, vWidth, vHeight, zoom = 1, shakeX = 0, shakeY = 0) {
+        if (!this.isReady) return;
+        
+        this.container.scale.set(zoom, zoom);
+        this.container.position.set((-camX + shakeX) * zoom, (-camY + shakeY) * zoom);
+        
+        while (this.sprites.length < this.particles.length) {
+            let sprite = this.spritePool.pop();
+            if (!sprite) {
+                sprite = new PIXI.Sprite();
+                sprite.anchor.set(0.5);
+            }
+            this.container.addChild(sprite);
+            this.sprites.push(sprite);
+        }
+        while (this.sprites.length > this.particles.length) {
+            const sprite = this.sprites.pop();
+            this.container.removeChild(sprite);
+            this.spritePool.push(sprite);
+        }
+        
+        for (let i = 0; i < this.particles.length; i++) {
+            const p = this.particles[i];
+            const sprite = this.sprites[i];
             
-            if (tex && tex.isReady && color !== '#ffffff') {
-                tex = this.getTintedTexture(tex, color);
-            }
-
-            // For simple geometry fallback
-            if (!tex || !tex.isReady) {
-                switch (p.type) {
-                    case 'circle':
-                    case 'ring':
-                    case 'shockwave':
-                    case 'dark_shockwave':
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = p.lineWidth || 2;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.5), 0, Math.PI * 2);
-                        ctx.stroke();
-                        break;
-                    case 'slash':
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = 3;
-                        ctx.beginPath();
-                        ctx.moveTo(-sBase * 0.5, -sBase * 0.2);
-                        ctx.lineTo(sBase * 0.5, sBase * 0.2);
-                        ctx.stroke();
-                        break;
-                    case 'blood':
-                        ctx.fillStyle = color;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.6), 0, Math.PI * 2);
-                        ctx.fill();
-                        break;
-                    case 'flame':
-                        ctx.fillStyle = color;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.7), 0, Math.PI * 2);
-                        ctx.fill();
-                        break;
-                    default:
-                        ctx.fillStyle = color;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, Math.max(0.1, sBase * 0.5), 0, Math.PI * 2);
-                        ctx.fill();
-                }
-            } else {
-                const ts = sBase * scaleMult; 
-                ctx.drawImage(tex, -ts/2, -ts/2, ts, ts);
-                
-                // Add a small solid core for impact
-                if (p.type === 'star' || p.type === 'explosion' || p.type === 'flash') {
-                    ctx.globalAlpha = alpha * 0.8;
-                    ctx.fillStyle = '#ffffff';
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.max(0.1, sBase * 0.2), 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            ctx.restore();
-        });
-
-        ctx.restore();
+            sprite.x = p.x;
+            sprite.y = p.y;
+            sprite.rotation = p.rotation || 0;
+            
+            const alpha = Math.max(0, p.life / (p.maxLife || 1));
+            sprite.alpha = alpha;
+            
+            const sBase = p.size || 8;
+            let tex = this.textures.glow;
+            let scaleMult = 1.5;
+            
+            if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 2.0; }
+            else if (p.type === 'explosion' || p.type === 'flash' || p.type === 'blood') { tex = this.textures.glow; scaleMult = 3.0; }
+            else if (p.type === 'smoke' || p.type === 'dark_smoke' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 2.5; }
+            else if (p.type === 'slash' || p.type === 'shatter') { tex = this.textures.slash; scaleMult = 3.0; }
+            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode' || p.type === 'circle' || p.type === 'ring') { tex = this.textures.ring; scaleMult = 2.0; }
+            
+            sprite.texture = tex;
+            sprite.width = sBase * scaleMult;
+            sprite.height = sBase * scaleMult;
+            
+            sprite.tint = p.color ? PIXI.Color.shared.setValue(p.color).toNumber() : 0xffffff;
+            
+            const isOpaque = p.type === 'blood' || p.type === 'dark_smoke' || p.type === 'dark_shockwave' || p.type === 'dark_implode';
+            sprite.blendMode = isOpaque ? 'normal' : 'add';
+        }
     }
-
+    
     addParticle(x, y, color, count, type = 'star', sizeMult = 1, options = {}) {
         for (let i = 0; i < count; i++) {
             const angle = options.angle !== undefined ? options.angle + (Math.random() - 0.5) * 0.8 : Math.random() * Math.PI * 2;
@@ -243,13 +197,11 @@ export class ParticleManager {
             p.life = lifeBase;
             p.maxLife = lifeBase;
             p.color = color;
-            p.tint = color;
             p.type = type;
             p.size = (Math.random() * 24 + 12) * sizeMult;
             p.rotation = Math.random() * Math.PI * 2;
             p.rotSpeed = (Math.random() - 0.5) * 12;
             p.gravity = options.gravity || false;
-            p.lineWidth = options.lineWidth;
             p.growthRate = options.growthRate;
             p.targetX = options.targetX;
             p.targetY = options.targetY;
@@ -257,84 +209,85 @@ export class ParticleManager {
             this.particles.push(p);
         }
     }
-
+    
     createExplosion(x, y, color, scale = 1, sourceId = '') {
         const s = Math.min(scale, 2);
-        this.addParticle(x, y, color, 12 * s, 'spark', 2 * s, { speed: 300 * s });
-        this.addParticle(x, y, '#ffffff', 8 * s, 'star', 1.5 * s, { speed: 400 * s });
+        this.addParticle(x, y, color, 15 * s, 'spark', 2.5 * s, { speed: 400 * s });
+        this.addParticle(x, y, '#ffffff', 10 * s, 'star', 2.0 * s, { speed: 500 * s });
+        this.addParticle(x, y, color, 1, 'flash', 4.0 * s, { speed: 0 });
     }
 
     createHitEffect(x, y, color, angle, scale = 1) {
-        this.addParticle(x, y, color, 4, 'spark', 1.2 * scale, { angle, speed: 260 * scale });
-        this.addParticle(x, y, '#ffffff', 2, 'spark', 0.8 * scale, { angle, speed: 360 * scale });
+        this.addParticle(x, y, color, 5, 'spark', 1.5 * scale, { angle, speed: 300 * scale });
+        this.addParticle(x, y, '#ffffff', 3, 'spark', 1.0 * scale, { angle, speed: 450 * scale });
     }
 
     createLevelUp(x, y) {
-        // Clean and vibrant sparks only
-        this.addParticle(x, y, '#00e5ff', 20, 'spark', 2.5, { speed: 450 });
-        this.addParticle(x, y, '#ff00e5', 20, 'spark', 2.0, { speed: 350 });
-        this.addParticle(x, y, '#ffff00', 20, 'spark', 2.5, { speed: 300 });
+        this.addParticle(x, y, '#00e5ff', 30, 'spark', 3.0, { speed: 500 });
+        this.addParticle(x, y, '#ff00e5', 30, 'spark', 2.5, { speed: 400 });
+        this.addParticle(x, y, '#ffff00', 30, 'spark', 3.0, { speed: 350 });
+        this.addParticle(x, y, '#ffffff', 2, 'flash', 5.0, { speed: 0 });
     }
 
     createPickup(x, y, color) {
-        this.addParticle(x, y, color, 6, 'spark', 1.5, { speed: 120 });
+        this.addParticle(x, y, color, 8, 'spark', 1.8, { speed: 150 });
     }
 
     createKillEffect(x, y, effectId) {
         switch (effectId) {
             case 'explosion':
-                this.addParticle(x, y, '#ffaa00', 1, 'flash', 3.0, { speed: 0, lifeBonus: -0.2 });
-                this.addParticle(x, y, '#ff4500', 12, 'flame', 2.0, { speed: 250 });
-                this.addParticle(x, y, '#555555', 8, 'smoke', 1.5, { speed: 150 });
+                this.addParticle(x, y, '#ffaa00', 1, 'flash', 4.0, { speed: 0, lifeBonus: -0.2 });
+                this.addParticle(x, y, '#ff4500', 15, 'flame', 2.5, { speed: 300 });
+                this.addParticle(x, y, '#555555', 10, 'smoke', 2.0, { speed: 180 });
                 break;
             case 'pixel_burst':
-                this.addParticle(x, y, '#00ffff', 10, 'spark', 1.8, { speed: 350 });
-                this.addParticle(x, y, '#ff00ff', 10, 'slash', 1.5, { speed: 250 });
-                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
+                this.addParticle(x, y, '#00ffff', 15, 'spark', 2.0, { speed: 400 });
+                this.addParticle(x, y, '#ff00ff', 15, 'slash', 1.8, { speed: 300 });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.5, { speed: 0 });
                 break;
             case 'blood_splatter':
-                this.addParticle(x, y, '#8a0303', 15, 'blood', 2.5, { speed: 300, gravity: true });
-                this.addParticle(x, y, '#ff0000', 10, 'spark', 1.5, { speed: 200, gravity: true });
+                this.addParticle(x, y, '#8a0303', 20, 'blood', 3.0, { speed: 350, gravity: true });
+                this.addParticle(x, y, '#ff0000', 12, 'spark', 1.8, { speed: 250, gravity: true });
                 break;
             case 'black_hole':
-                this.addParticle(x, y, '#000000', 1, 'dark_shockwave', 1.0, { speed: 0, lineWidth: 10, growthRate: -200 });
-                this.addParticle(x, y, '#1a0033', 20, 'dark_implode', 2.0, { speed: 200, targetX: x, targetY: y });
+                this.addParticle(x, y, '#000000', 1, 'dark_shockwave', 1.5, { speed: 0, growthRate: -250 });
+                this.addParticle(x, y, '#1a0033', 25, 'dark_implode', 2.5, { speed: 250, targetX: x, targetY: y });
                 break;
             case 'freeze':
-                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
-                this.addParticle(x, y, '#00cfff', 15, 'shatter', 1.5, { speed: 250, gravity: true });
-                this.addParticle(x, y, '#aaf0ff', 10, 'spark', 1.0, { speed: 150 });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.5, { speed: 0 });
+                this.addParticle(x, y, '#00cfff', 20, 'shatter', 1.8, { speed: 300, gravity: true });
+                this.addParticle(x, y, '#aaf0ff', 15, 'spark', 1.2, { speed: 200 });
                 break;
             case 'vaporize':
-                this.addParticle(x, y, '#39ff14', 15, 'smoke', 2.0, { speed: 150 });
-                this.addParticle(x, y, '#00ff88', 10, 'spark', 1.5, { speed: 200 });
-                this.addParticle(x, y, '#aaff00', 1, 'flash', 1.5, { speed: 0 });
+                this.addParticle(x, y, '#39ff14', 20, 'smoke', 2.5, { speed: 200 });
+                this.addParticle(x, y, '#00ff88', 15, 'spark', 1.8, { speed: 250 });
+                this.addParticle(x, y, '#aaff00', 1, 'flash', 2.0, { speed: 0 });
                 break;
             case 'implode':
-                this.addParticle(x, y, '#8a2be2', 15, 'implode', 1.5, { speed: 250, targetX: x, targetY: y });
-                this.addParticle(x, y, '#cc00ff', 1, 'shockwave', 1.0, { speed: 0, lineWidth: 5, growthRate: -150 });
+                this.addParticle(x, y, '#8a2be2', 20, 'implode', 1.8, { speed: 300, targetX: x, targetY: y });
+                this.addParticle(x, y, '#cc00ff', 1, 'shockwave', 1.5, { speed: 0, growthRate: -200 });
                 break;
             case 'golden':
-                this.addParticle(x, y, '#ffd700', 15, 'star', 2.0, { speed: 300, gravity: true });
-                this.addParticle(x, y, '#ffec6e', 10, 'spark', 1.5, { speed: 200, gravity: true });
-                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
+                this.addParticle(x, y, '#ffd700', 20, 'star', 2.5, { speed: 350, gravity: true });
+                this.addParticle(x, y, '#ffec6e', 15, 'spark', 1.8, { speed: 250, gravity: true });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 2.5, { speed: 0 });
                 break;
         }
     }
 
     createTrail(x, y, trailId, frameCount) {
         const trailConfigs = {
-            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame', count: 2, size: 1.8, options: { speed: 30, lifeBonus: 0.2 } },
-            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter', count: 2, size: 1.2, options: { speed: 40, gravity: true, lifeBonus: 0.5 } },
-            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'dark_smoke', count: 1, size: 1.5, options: { speed: 10, lifeBonus: 0.8 } },
-            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 1, size: 2.0, options: { speed: 15, lifeBonus: 0.7 } },
-            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 2, size: 1.8, options: { speed: 30, gravity: true, lifeBonus: 0.4 } },
-            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 2, size: 1.5, options: { speed: 50, lifeBonus: 0.3 } },
-            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'dark_smoke', count: 2, size: 2.5, options: { speed: 5, lifeBonus: 1.0 } },
-            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood', count: 2, size: 1.6, options: { speed: 20, gravity: true, lifeBonus: 0.5 } },
-            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 2, size: 1.4, options: { speed: 40, rotSpeed: 10, lifeBonus: 0.3 } },
-            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke', count: 1, size: 1.8, options: { speed: 10, lifeBonus: 0.9 } },
-            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 2, size: 1.5, options: { speed: 40, lifeBonus: 0.5 } },
+            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame', count: 2, size: 2.0, options: { speed: 40, lifeBonus: 0.2 } },
+            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter', count: 2, size: 1.5, options: { speed: 50, gravity: true, lifeBonus: 0.5 } },
+            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'dark_smoke', count: 2, size: 1.8, options: { speed: 15, lifeBonus: 0.8 } },
+            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 2, size: 2.2, options: { speed: 20, lifeBonus: 0.7 } },
+            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 2, size: 2.0, options: { speed: 40, gravity: true, lifeBonus: 0.4 } },
+            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 3, size: 1.8, options: { speed: 60, lifeBonus: 0.3 } },
+            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'dark_smoke', count: 2, size: 3.0, options: { speed: 10, lifeBonus: 1.0 } },
+            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood', count: 2, size: 1.8, options: { speed: 25, gravity: true, lifeBonus: 0.5 } },
+            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 2, size: 1.6, options: { speed: 50, rotSpeed: 15, lifeBonus: 0.3 } },
+            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke', count: 2, size: 2.0, options: { speed: 15, lifeBonus: 0.9 } },
+            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 3, size: 1.8, options: { speed: 50, lifeBonus: 0.5 } },
         };
         const config = trailConfigs[trailId];
         if (config) {

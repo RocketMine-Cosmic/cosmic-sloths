@@ -369,7 +369,7 @@ export function renderGame() {
         }
     }
 
-    this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
+    this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight, this.zoom, this.shakeX, this.shakeY);
 
     const viewMinX = camX - 150;
     const viewMaxX = camX + vWidth + 150;

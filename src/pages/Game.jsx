@@ -15,6 +15,7 @@ import { SoundManager } from '../game/SoundManager';
 
 export default function Game() {
     const canvasRef = useRef(null);
+    const pixiCanvasRef = useRef(null);
     const engineRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
@@ -178,7 +179,7 @@ export default function Game() {
             }
         }
 
-        const engine = new GameEngine(canvas, characterId, arenaId, difficultyId, save, {
+        const engine = new GameEngine(canvas, pixiCanvasRef.current, characterId, arenaId, difficultyId, save, {
             onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
             onTimeChange: (time) => setGameState(s => ({ ...s, time })),
             onGoldChange: (gold) => setGameState(s => ({ ...s, gold })),
@@ -462,7 +463,11 @@ export default function Game() {
         <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none">
             <canvas 
                 ref={canvasRef} 
-                className="absolute inset-0"
+                className="absolute inset-0 z-0"
+            />
+            <canvas 
+                ref={pixiCanvasRef} 
+                className="absolute inset-0 z-10 pointer-events-none"
             />
             
             <VirtualJoystick onChange={handleJoystickChange} />
