@@ -558,7 +558,13 @@ export function renderGame() {
         this.ctx.globalAlpha = 1.0;
         this.ctx.globalCompositeOperation = 'source-over';
         
+        // Draw the outline/tint first
         this.ctx.drawImage(drawSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+        
+        // Then draw the original sprite on top, so the outline is just a border
+        if (drawSheet !== spriteSheet) {
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+        }
         
         this.ctx.restore();
     } else if (this.player.image && this.player.image.complete) {
@@ -599,7 +605,13 @@ export function renderGame() {
         this.ctx.globalAlpha = 1.0;
         this.ctx.globalCompositeOperation = 'source-over';
         
+        // Draw the outline/tint first
         this.ctx.drawImage(drawImg, -size/2, -size/2, size, size);
+        
+        // Then draw the original sprite on top
+        if (drawImg !== this.player.image) {
+            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+        }
         
         this.ctx.restore();
     } else {

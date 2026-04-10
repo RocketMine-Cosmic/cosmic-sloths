@@ -149,7 +149,12 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 }
                 
                 ctx.drawImage(drawImg, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-                ctx.shadowBlur = 0;
+                if (drawImg !== walkImage) {
+                    ctx.shadowBlur = 0; // Turn off glow for the inner sprite
+                    ctx.drawImage(walkImage, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+                } else {
+                    ctx.shadowBlur = 0;
+                }
             } else if (staticImage && staticImage.complete) {
                 const size = radius * 3;
                 ctx.shadowColor = playerColor;
@@ -162,7 +167,12 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 }
                 
                 ctx.drawImage(drawImg, -size/2, -size/2, size, size);
-                ctx.shadowBlur = 0;
+                if (drawImg !== staticImage) {
+                    ctx.shadowBlur = 0;
+                    ctx.drawImage(staticImage, -size/2, -size/2, size, size);
+                } else {
+                    ctx.shadowBlur = 0;
+                }
             } else {
                 ctx.fillStyle = playerColor;
                 ctx.shadowColor = playerColor;
