@@ -83,8 +83,8 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 }
             });
 
-            // Trail particles — every 4 frames
-            if (trailId !== 'default' && frame % 4 === 0) {
+            // Trail particles — dense continuous trail
+            if (trailId !== 'default' && frame % 2 === 0) {
                 pm.createTrail(px, py, trailId, frame);
             }
 
@@ -152,18 +152,34 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.drawImage(staticImage, -size/2, -size/2, size, size);
                 ctx.shadowBlur = 0;
             } else {
+                const r = radius;
+                
+                ctx.globalCompositeOperation = 'screen';
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3);
+                grad.addColorStop(0, playerColor);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath(); ctx.arc(0, 0, r * 3, 0, Math.PI * 2); ctx.fill();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1.0;
+                
                 ctx.fillStyle = playerColor;
-                ctx.shadowColor = playerColor;
-                ctx.shadowBlur = 20;
                 ctx.beginPath();
-                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.moveTo(r * 1.5, 0);
+                ctx.lineTo(-r * 0.5, -r * 0.8);
+                ctx.lineTo(-r, -r * 0.4);
+                ctx.lineTo(-r * 0.8, 0);
+                ctx.lineTo(-r, r * 0.4);
+                ctx.lineTo(-r * 0.5, r * 0.8);
+                ctx.closePath();
                 ctx.fill();
-                ctx.shadowBlur = 0;
                 
                 ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(-3, -3, 3, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.ellipse(r * 0.2, 0, r * 0.6, r * 0.3, 0, 0, Math.PI*2); ctx.fill();
+                
+                ctx.fillStyle = '#00ffff';
+                ctx.beginPath(); ctx.arc(-r * 0.8, 0, r * 0.4, 0, Math.PI*2); ctx.fill();
             }
             ctx.restore();
 

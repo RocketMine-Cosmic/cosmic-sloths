@@ -442,7 +442,7 @@ export function renderGame() {
         }
     });
 
-    if (this.player.trail !== 'default' && this.frameCount % 6 === 0) {
+    if (this.player.trail !== 'default' && this.frameCount % 2 === 0) {
         this.particleManager.createTrail(this.player.x, this.player.y, this.player.trail, this.frameCount);
     }
 
@@ -579,14 +579,51 @@ export function renderGame() {
         
         this.ctx.restore();
     } else {
+        const r = this.player.radius;
+        
+        this.ctx.save();
+        this.ctx.translate(this.player.x, this.player.y);
+        
+        // Aura
+        this.ctx.globalCompositeOperation = 'screen';
+        const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3);
+        grad.addColorStop(0, this.player.color);
+        grad.addColorStop(1, 'transparent');
+        this.ctx.fillStyle = grad;
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.beginPath(); this.ctx.arc(0, 0, r * 3, 0, Math.PI * 2); this.ctx.fill();
+        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.globalAlpha = 1.0;
+        
+        if (this.player.facingLeft) {
+            this.ctx.scale(-1, 1);
+        }
+        
+        // Futuristic Ship Hull
         this.ctx.fillStyle = this.player.color;
         this.ctx.beginPath();
-        this.ctx.roundRect(this.player.x - this.player.radius, this.player.y - this.player.radius, this.player.radius * 2, this.player.radius * 2, 8);
+        this.ctx.moveTo(r * 1.5, 0); // nose
+        this.ctx.lineTo(-r * 0.5, -r * 0.8); // top wing
+        this.ctx.lineTo(-r, -r * 0.4); 
+        this.ctx.lineTo(-r * 0.8, 0); // engine back
+        this.ctx.lineTo(-r, r * 0.4);
+        this.ctx.lineTo(-r * 0.5, r * 0.8); // bottom wing
+        this.ctx.closePath();
         this.ctx.fill();
-        this.ctx.fillStyle = 'rgba(173, 216, 230, 0.5)';
+
+        // Cockpit canopy
+        this.ctx.fillStyle = '#ffffff';
         this.ctx.beginPath();
-        this.ctx.roundRect(this.player.x - this.player.radius + 2, this.player.y - this.player.radius + 2, this.player.radius * 2 - 4, this.player.radius - 2, 4);
+        this.ctx.ellipse(r * 0.2, 0, r * 0.6, r * 0.3, 0, 0, Math.PI * 2);
         this.ctx.fill();
+
+        // Engine Thruster Glow
+        this.ctx.fillStyle = '#00ffff';
+        this.ctx.beginPath();
+        this.ctx.arc(-r * 0.8, 0, r * 0.4, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.restore();
     }
 
     this.ctx.globalAlpha = 1.0;

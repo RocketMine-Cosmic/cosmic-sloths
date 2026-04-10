@@ -338,17 +338,17 @@ export class ParticleManager {
 
     createTrail(x, y, trailId, frameCount) {
         const trailConfigs = {
-            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame', count: 1, size: 2.0, options: { speed: 20, lifeBonus: 0.2 } },
-            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter', count: 1, size: 1.5, options: { speed: 25, gravity: true, lifeBonus: 0.4 } },
-            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'dark_smoke', count: 1, size: 1.8, options: { speed: 10, lifeBonus: 0.6 } },
-            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 1, size: 2.0, options: { speed: 10, lifeBonus: 0.5 } },
-            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 1, size: 1.8, options: { speed: 20, gravity: true, lifeBonus: 0.3 } },
-            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 1, size: 1.8, options: { speed: 30, lifeBonus: 0.3 } },
-            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'dark_smoke', count: 1, size: 2.5, options: { speed: 5, lifeBonus: 0.8 } },
-            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood', count: 1, size: 1.6, options: { speed: 15, gravity: true, lifeBonus: 0.4 } },
-            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 1, size: 1.5, options: { speed: 25, rotSpeed: 10, lifeBonus: 0.3 } },
-            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke', count: 1, size: 1.8, options: { speed: 10, lifeBonus: 0.7 } },
-            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 1, size: 1.6, options: { speed: 25, lifeBonus: 0.4 } },
+            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame', count: 2, size: 3.5, options: { speed: 10, lifeBonus: 0.4 } },
+            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter', count: 2, size: 2.5, options: { speed: 15, gravity: true, lifeBonus: 0.5 } },
+            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'dark_smoke', count: 2, size: 3.0, options: { speed: 5, lifeBonus: 0.8 } },
+            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 2, size: 3.5, options: { speed: 5, lifeBonus: 0.6 } },
+            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 2, size: 3.0, options: { speed: 10, gravity: true, lifeBonus: 0.4 } },
+            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 2, size: 3.0, options: { speed: 15, lifeBonus: 0.5 } },
+            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'dark_smoke', count: 2, size: 4.0, options: { speed: 5, lifeBonus: 1.0 } },
+            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood', count: 2, size: 3.0, options: { speed: 10, gravity: true, lifeBonus: 0.5 } },
+            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 2, size: 2.5, options: { speed: 15, rotSpeed: 10, lifeBonus: 0.5 } },
+            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke', count: 2, size: 3.0, options: { speed: 5, lifeBonus: 0.9 } },
+            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 2, size: 2.8, options: { speed: 15, lifeBonus: 0.5 } },
         };
         const config = trailConfigs[trailId];
         if (config) {
