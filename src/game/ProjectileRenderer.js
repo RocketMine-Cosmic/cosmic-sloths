@@ -20,14 +20,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         }
 
         if (p.type === 'blaster_shot') {
-            ctx.globalAlpha = 0.3;
+            ctx.globalAlpha = 0.5;
             ctx.fillStyle = p.color || '#00ffff';
-            ctx.beginPath(); ctx.roundRect(-p.radius * 4.0, -p.radius * 1.2, p.radius * 8.0, p.radius * 2.4, p.radius * 1.2); ctx.fill();
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath(); ctx.roundRect(-p.radius * 2.5, -p.radius * 0.7, p.radius * 5.0, p.radius * 1.4, p.radius * 0.7); ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(-p.radius * 2, 0, p.radius * 4, p.radius * 1.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.ellipse(-p.radius, 0, p.radius * 2, p.radius * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
             ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.roundRect(-p.radius * 1.2, -p.radius * 0.3, p.radius * 2.4, p.radius * 0.6, p.radius * 0.3); ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(0, 0, p.radius * 1.2, p.radius * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
         } else if (p.type === 'wrench_swing') {
             ctx.globalAlpha = Math.max(0, p.life / 0.25) * 0.6;
             const swingAngle = (1 - (p.life / 0.25)) * Math.PI * 1.5; 
@@ -67,14 +75,25 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             }
             ctx.closePath(); ctx.fill();
         } else if (p.type === 'beam' || p.type === 'dual_laser') {
-            ctx.globalAlpha = 0.3;
+            const length = p.radius * 12;
+            const width = p.radius * 1.5;
+            
+            ctx.globalAlpha = 0.5;
             ctx.fillStyle = p.color || '#00ffff';
-            ctx.beginPath(); ctx.moveTo(-p.radius * 8.0, 0); ctx.lineTo(0, -p.radius * 2.5); ctx.lineTo(p.radius * 2.5, 0); ctx.lineTo(0, p.radius * 2.5); ctx.closePath(); ctx.fill();
-            ctx.globalAlpha = 0.7;
-            ctx.beginPath(); ctx.moveTo(-p.radius * 4.0, 0); ctx.lineTo(0, -p.radius * 1.2); ctx.lineTo(p.radius * 1.2, 0); ctx.lineTo(0, p.radius * 1.2); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(-length/2, 0, length, width, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.ellipse(-length/2 + p.radius*2, 0, length * 0.6, width * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
             ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.moveTo(-p.radius * 2.0, 0); ctx.lineTo(0, -p.radius * 0.4); ctx.lineTo(p.radius * 0.6, 0); ctx.lineTo(0, p.radius * 0.4); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(-length/2 + p.radius*4, 0, length * 0.3, width * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
         } else if (p.type === 'lightning') {
             ctx.globalAlpha = 0.3;
             ctx.strokeStyle = p.color || '#00aaff';
@@ -164,14 +183,30 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.fillStyle = '#ffffff';
             ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.6, 0, Math.PI * 2); ctx.fill();
         } else if (p.type === 'railgun') {
+            const length = p.radius * 20;
+            
+            // Energy rings around the trail
             ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = p.color || '#00aaff';
+            ctx.lineWidth = 2;
+            for(let i=0; i<3; i++) {
+                ctx.beginPath();
+                ctx.ellipse(-length * (0.2 + i*0.2), 0, p.radius*1.5, p.radius*4, 0, 0, Math.PI*2);
+                ctx.stroke();
+            }
+
+            ctx.globalAlpha = 0.6;
             ctx.fillStyle = p.color || '#00aaff';
-            ctx.beginPath(); ctx.roundRect(-p.radius * 10, -p.radius * 2.5, p.radius * 14, p.radius * 5.0, p.radius * 2.5); ctx.fill();
-            ctx.globalAlpha = 0.7;
-            ctx.beginPath(); ctx.roundRect(-p.radius * 7, -p.radius * 1.2, p.radius * 10, p.radius * 2.4, p.radius * 1.2); ctx.fill();
+            ctx.beginPath();
+            ctx.fillRect(-length, -p.radius * 0.8, length + p.radius*2, p.radius * 1.6);
+            
             ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.roundRect(-p.radius * 4, -p.radius * 0.5, p.radius * 6, p.radius * 1.0, p.radius * 0.5); ctx.fill();
+            ctx.beginPath();
+            ctx.fillRect(-length * 0.8, -p.radius * 0.3, length * 0.8 + p.radius, p.radius * 0.6);
+            ctx.beginPath();
+            ctx.arc(p.radius, 0, p.radius * 0.8, 0, Math.PI * 2);
+            ctx.fill();
         } else if (p.type === 'sonic_wave') {
             ctx.globalAlpha = 0.5;
             ctx.strokeStyle = p.color || '#00ffff';
@@ -184,14 +219,37 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.stroke();
             }
         } else if (p.type === 'supernova_beam') {
-            ctx.globalAlpha = 0.3;
+            const length = p.radius * 15;
+            const width = p.radius * 2.5;
+
+            ctx.globalAlpha = 0.4;
             ctx.fillStyle = p.color || '#ffaa00';
-            ctx.beginPath(); ctx.moveTo(-p.radius * 8, 0); ctx.lineTo(0, -p.radius * 3.5); ctx.lineTo(p.radius * 4, 0); ctx.lineTo(0, p.radius * 3.5); ctx.closePath(); ctx.fill();
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath(); ctx.moveTo(-p.radius * 5, 0); ctx.lineTo(0, -p.radius * 2.0); ctx.lineTo(p.radius * 2.5, 0); ctx.lineTo(0, p.radius * 2.0); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(p.radius*2, 0);
+            ctx.lineTo(-length, -width);
+            ctx.lineTo(-length*1.2, 0);
+            ctx.lineTo(-length, width);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(p.radius, 0);
+            ctx.lineTo(-length*0.7, -width*0.4);
+            ctx.lineTo(-length*0.8, 0);
+            ctx.lineTo(-length*0.7, width*0.4);
+            ctx.closePath();
+            ctx.fill();
+            
             ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.moveTo(-p.radius * 2.5, 0); ctx.lineTo(0, -p.radius * 0.8); ctx.lineTo(p.radius * 1.2, 0); ctx.lineTo(0, p.radius * 0.8); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(p.radius*0.5, 0);
+            ctx.lineTo(-length*0.4, -width*0.15);
+            ctx.lineTo(-length*0.5, 0);
+            ctx.lineTo(-length*0.4, width*0.15);
+            ctx.closePath();
+            ctx.fill();
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
             ctx.globalAlpha = Math.min(1, p.life * 2);
             
