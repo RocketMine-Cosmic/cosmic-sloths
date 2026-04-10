@@ -24,38 +24,52 @@ export class ParticleManager {
                     glow: this.createCanvasTexture(64, (ctx, s) => {
                         const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
                         grad.addColorStop(0, 'rgba(255,255,255,1)');
-                        grad.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+                        grad.addColorStop(0.2, 'rgba(255,255,255,0.6)');
+                        grad.addColorStop(0.6, 'rgba(255,255,255,0.1)');
                         grad.addColorStop(1, 'rgba(255,255,255,0)');
                         ctx.fillStyle = grad;
                         ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
                     }),
                     star: this.createCanvasTexture(64, (ctx, s) => {
-                        const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-                        grad.addColorStop(0, 'rgba(255,255,255,1)');
-                        grad.addColorStop(0.1, 'rgba(255,255,255,0.8)');
-                        grad.addColorStop(1, 'rgba(255,255,255,0)');
-                        ctx.fillStyle = grad;
-                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
                         ctx.fillStyle = '#ffffff';
-                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.08, 0, 0, Math.PI*2); ctx.fill();
-                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s*0.08, s/2, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath();
+                        ctx.moveTo(s/2, 0); ctx.quadraticCurveTo(s/2, s/2, s, s/2);
+                        ctx.quadraticCurveTo(s/2, s/2, s/2, s); ctx.quadraticCurveTo(s/2, s/2, 0, s/2);
+                        ctx.quadraticCurveTo(s/2, s/2, s/2, 0); ctx.fill();
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s*0.15, 0, Math.PI*2); ctx.fill();
                     }),
                     ring: this.createCanvasTexture(64, (ctx, s) => {
                         ctx.strokeStyle = '#ffffff';
-                        ctx.lineWidth = 6;
-                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 6, 0, Math.PI*2); ctx.stroke();
+                        ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 3, 0, Math.PI*2); ctx.stroke();
                     }),
                     smoke: this.createCanvasTexture(64, (ctx, s) => {
                         const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-                        grad.addColorStop(0, 'rgba(255,255,255,0.6)');
-                        grad.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+                        grad.addColorStop(0, 'rgba(255,255,255,0.3)');
+                        grad.addColorStop(0.5, 'rgba(255,255,255,0.1)');
                         grad.addColorStop(1, 'rgba(255,255,255,0)');
                         ctx.fillStyle = grad;
                         ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
                     }),
                     slash: this.createCanvasTexture(64, (ctx, s) => {
                         ctx.fillStyle = '#ffffff';
-                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.15, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.1, 0, 0, Math.PI*2); ctx.fill();
+                    }),
+                    spark_line: this.createCanvasTexture(64, (ctx, s) => {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.06, 0, 0, Math.PI*2); ctx.fill();
+                    }),
+                    hex: this.createCanvasTexture(64, (ctx, s) => {
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const a = (Math.PI / 3) * i;
+                            const r = s/2 - 2;
+                            if (i===0) ctx.moveTo(s/2 + Math.cos(a)*r, s/2 + Math.sin(a)*r);
+                            else ctx.lineTo(s/2 + Math.cos(a)*r, s/2 + Math.sin(a)*r);
+                        }
+                        ctx.closePath(); ctx.stroke();
                     })
                 };
                 
@@ -86,7 +100,7 @@ export class ParticleManager {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
 
-            if (p.rotation !== undefined) p.rotation += (p.rotSpeed || 0) * dt;
+            if (p.rotation !== undefined && p.type !== 'spark') p.rotation += (p.rotSpeed || 0) * dt;
 
             if (p.type === 'smoke' || p.type === 'dark_smoke') {
                 p.size += dt * 20;
@@ -162,13 +176,19 @@ export class ParticleManager {
             
             const sBase = p.size || 8;
             let tex = this.textures.glow;
-            let scaleMult = 1.5;
+            let scaleMult = 1.0;
             
-            if (p.type === 'star' || p.type === 'spark' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 2.0; }
-            else if (p.type === 'explosion' || p.type === 'flash' || p.type === 'blood') { tex = this.textures.glow; scaleMult = 3.0; }
-            else if (p.type === 'smoke' || p.type === 'dark_smoke' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 2.5; }
-            else if (p.type === 'slash' || p.type === 'shatter') { tex = this.textures.slash; scaleMult = 3.0; }
-            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode' || p.type === 'circle' || p.type === 'ring') { tex = this.textures.ring; scaleMult = 2.0; }
+            if (p.type === 'star' || p.type === 'imploding_star') { tex = this.textures.star; scaleMult = 1.5; }
+            else if (p.type === 'spark') { 
+                tex = this.textures.spark_line; 
+                scaleMult = 1.2; 
+                sprite.rotation = Math.atan2(p.vy, p.vx); // align velocity
+            }
+            else if (p.type === 'explosion' || p.type === 'flash' || p.type === 'blood') { tex = this.textures.glow; scaleMult = 1.5; }
+            else if (p.type === 'smoke' || p.type === 'dark_smoke' || p.type === 'flame') { tex = this.textures.smoke; scaleMult = 1.5; }
+            else if (p.type === 'slash' || p.type === 'shatter') { tex = this.textures.slash; scaleMult = 1.8; }
+            else if (p.type === 'shockwave' || p.type === 'dark_shockwave' || p.type === 'implode' || p.type === 'dark_implode' || p.type === 'circle' || p.type === 'ring') { tex = this.textures.ring; scaleMult = 1.5; }
+            else if (p.type === 'tech' || p.type === 'hex') { tex = this.textures.hex; scaleMult = 1.0; }
             
             sprite.texture = tex;
             sprite.width = sBase * scaleMult;
@@ -212,25 +232,25 @@ export class ParticleManager {
     
     createExplosion(x, y, color, scale = 1, sourceId = '') {
         const s = Math.min(scale, 2);
-        this.addParticle(x, y, color, 15 * s, 'spark', 2.5 * s, { speed: 400 * s });
-        this.addParticle(x, y, '#ffffff', 10 * s, 'star', 2.0 * s, { speed: 500 * s });
-        this.addParticle(x, y, color, 1, 'flash', 4.0 * s, { speed: 0 });
+        this.addParticle(x, y, color, 10 * s, 'spark', 1.5 * s, { speed: 300 * s });
+        this.addParticle(x, y, '#ffffff', 5 * s, 'star', 1.0 * s, { speed: 400 * s });
+        this.addParticle(x, y, color, 1, 'ring', 2.0 * s, { speed: 0, growthRate: 300 * s, lifeBonus: -0.2 });
     }
 
     createHitEffect(x, y, color, angle, scale = 1) {
-        this.addParticle(x, y, color, 5, 'spark', 1.5 * scale, { angle, speed: 300 * scale });
-        this.addParticle(x, y, '#ffffff', 3, 'spark', 1.0 * scale, { angle, speed: 450 * scale });
+        this.addParticle(x, y, color, 3, 'spark', 1.0 * scale, { angle, speed: 200 * scale });
+        this.addParticle(x, y, '#ffffff', 2, 'spark', 0.8 * scale, { angle, speed: 350 * scale });
     }
 
     createLevelUp(x, y) {
-        this.addParticle(x, y, '#00e5ff', 30, 'spark', 3.0, { speed: 500 });
-        this.addParticle(x, y, '#ff00e5', 30, 'spark', 2.5, { speed: 400 });
-        this.addParticle(x, y, '#ffff00', 30, 'spark', 3.0, { speed: 350 });
-        this.addParticle(x, y, '#ffffff', 2, 'flash', 5.0, { speed: 0 });
+        this.addParticle(x, y, '#00e5ff', 20, 'spark', 2.0, { speed: 400 });
+        this.addParticle(x, y, '#ff00e5', 20, 'spark', 1.5, { speed: 300 });
+        this.addParticle(x, y, '#ffff00', 10, 'star', 1.5, { speed: 250 });
+        this.addParticle(x, y, '#ffffff', 1, 'ring', 3.0, { speed: 0, growthRate: 600 });
     }
 
     createPickup(x, y, color) {
-        this.addParticle(x, y, color, 8, 'spark', 1.8, { speed: 150 });
+        this.addParticle(x, y, color, 5, 'spark', 1.0, { speed: 100 });
     }
 
     createKillEffect(x, y, effectId) {

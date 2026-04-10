@@ -14,7 +14,8 @@ function getGlowTexture(color, radius) {
     
     const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
     grad.addColorStop(0, color);
-    grad.addColorStop(0.2, color);
+    grad.addColorStop(0.1, color);
+    grad.addColorStop(0.8, 'transparent');
     grad.addColorStop(1, 'transparent');
     
     ctx.fillStyle = grad;
@@ -53,28 +54,28 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'lighter';
             const auraRadius = Math.max(0.1, p.radius * 3);
             
-            ctx.globalAlpha = 0.4; // Boosted aura alpha
+            ctx.globalAlpha = 0.15; // Muted aura alpha for visibility
             
             if (isElongated) {
                 // For elongated, we scale the pre-rendered circle
                 const glow = getGlowTexture(p.color || '#ffffff', auraRadius);
                 if (glow) {
                     ctx.save();
-                    ctx.scale(1.2, 0.6);
+                    ctx.scale(1.2, 0.4);
                     ctx.drawImage(glow, -glow.width/2, -glow.height/2);
                     ctx.restore();
                 }
                 
                 // Tail (Pre-rendered or simple shape)
-                const tailGrad = ctx.createLinearGradient(0, 0, -auraRadius * 2, 0);
+                const tailGrad = ctx.createLinearGradient(0, 0, -auraRadius * 1.5, 0);
                 tailGrad.addColorStop(0, p.color || '#ffffff');
                 tailGrad.addColorStop(1, 'transparent');
                 ctx.fillStyle = tailGrad;
-                ctx.globalAlpha = 0.3;
+                ctx.globalAlpha = 0.2;
                 ctx.beginPath();
-                ctx.moveTo(0, auraRadius * 0.4);
-                ctx.lineTo(-auraRadius * 2.5, 0);
-                ctx.lineTo(0, -auraRadius * 0.4);
+                ctx.moveTo(0, auraRadius * 0.3);
+                ctx.lineTo(-auraRadius * 1.5, 0);
+                ctx.lineTo(0, -auraRadius * 0.3);
                 ctx.fill();
             } else {
                 const glow = getGlowTexture(p.color || '#ffffff', auraRadius);
@@ -87,21 +88,20 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         }
 
         if (p.type === 'blaster_shot') {
-            ctx.globalCompositeOperation = 'lighter';
-            const grad = ctx.createLinearGradient(p.radius, 0, -p.radius * 3, 0);
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, p.color || '#00ffff');
+            ctx.globalCompositeOperation = 'source-over';
+            const grad = ctx.createLinearGradient(p.radius, 0, -p.radius * 2, 0);
+            grad.addColorStop(0, p.color || '#00ffff');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.ellipse(-p.radius * 0.5, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(-p.radius * 0.5, 0, Math.max(0.1, p.radius * 1.8), Math.max(0.1, p.radius * 0.8), 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.2), Math.max(0.1, p.radius * 0.5), 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.8), Math.max(0.1, p.radius * 0.4), 0, 0, Math.PI * 2); ctx.fill();
+            ctx.globalCompositeOperation = 'screen';
             if (texStar && texStar.isReady) {
-                ctx.globalAlpha = 0.8;
-                ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
+                ctx.globalAlpha = 0.4;
+                ctx.drawImage(texStar, -p.radius * 2, -p.radius * 2, p.radius * 4, p.radius * 4);
                 ctx.globalAlpha = 1.0;
             }
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'wrench_swing') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = Math.max(0, p.life / 0.25);
@@ -143,21 +143,20 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'beam' || p.type === 'dual_laser') {
-            ctx.globalCompositeOperation = 'lighter';
-            const trailGrad = ctx.createLinearGradient(p.radius, 0, -p.radius * 4, 0);
-            trailGrad.addColorStop(0, '#ffffff');
-            trailGrad.addColorStop(0.2, p.color || '#00ffff');
+            ctx.globalCompositeOperation = 'source-over';
+            const trailGrad = ctx.createLinearGradient(p.radius, 0, -p.radius * 3, 0);
+            trailGrad.addColorStop(0, p.color || '#00ffff');
             trailGrad.addColorStop(1, 'transparent');
             ctx.fillStyle = trailGrad;
-            ctx.beginPath(); ctx.ellipse(-p.radius, 0, p.radius * 3.5, p.radius * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(-p.radius*0.5, 0, p.radius * 2.5, p.radius * 0.8, 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.5, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 1.2, p.radius * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.globalCompositeOperation = 'screen';
             if (texSlash && texSlash.isReady) {
-                ctx.globalAlpha = 0.9;
-                ctx.drawImage(texSlash, -p.radius * 4, -p.radius * 2, p.radius * 8, p.radius * 4);
+                ctx.globalAlpha = 0.4;
+                ctx.drawImage(texSlash, -p.radius * 3, -p.radius * 1.5, p.radius * 6, p.radius * 3);
                 ctx.globalAlpha = 1.0;
             }
-            ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'lightning') {
             ctx.globalCompositeOperation = 'lighter';
             ctx.strokeStyle = '#ffffff';
@@ -513,23 +512,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.stroke();
             ctx.globalCompositeOperation = 'screen';
         } else {
-            // Default projectile - HD Upgrade
-            ctx.globalCompositeOperation = 'lighter';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 2.5));
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, '#ffffff');
-            grad.addColorStop(0.5, p.color || '#00ffff');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
+            // Default projectile - Crisp Update
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = p.color || '#00ffff';
             ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.1, p.radius * 2.5), 0, Math.PI*2);
+            ctx.arc(0, 0, Math.max(0.1, p.radius * 1.2), 0, Math.PI*2);
             ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, Math.max(0.1, p.radius * 0.6), 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'screen';
             if (texStar && texStar.isReady) {
-                ctx.globalAlpha = 0.7;
-                ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
+                ctx.globalAlpha = 0.3;
+                ctx.drawImage(texStar, -p.radius * 2, -p.radius * 2, p.radius * 4, p.radius * 4);
                 ctx.globalAlpha = 1.0;
             }
-            ctx.globalCompositeOperation = 'screen';
         }
         ctx.restore();
         p.radius = originalRadius;
