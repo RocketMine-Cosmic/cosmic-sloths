@@ -6,11 +6,13 @@ import { ParticleManager } from '../../game/ParticleManager';
 
 export default function WeaponSimulation({ weaponId, isMastered }) {
     const canvasRef = useRef(null);
+    const pixiCanvasRef = useRef(null);
     const stateRef = useRef({ animId: null });
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        const pixiCanvas = pixiCanvasRef.current;
+        if (!canvas || !pixiCanvas) return;
         const ctx = canvas.getContext('2d');
         const W = canvas.width;
         const H = canvas.height;
@@ -26,7 +28,7 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
             { x: W * 0.2, y: H * 0.7, radius: 15, hp: 100, maxHp: 100, color: '#ff4444', isBoss: false }
         ];
 
-        const particleManager = new ParticleManager();
+        const particleManager = new ParticleManager(pixiCanvas);
 
         const mockEngine = {
             save: {
@@ -229,16 +231,32 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
         stateRef.current.animId = requestAnimationFrame(loop);
         return () => {
             observer.disconnect();
-            if (stateRef.current.animId) cancelAnimationFrame(stateRef.current.animId);
+            if (stateRef.current.animId) {
+                cancelAnimationFrame(stateRef.current.animId);
+                stateRef.current.animId = null;
+            }
+            if (particleManager && particleManager.app) {
+                try {
+                    particleManager.app.destroy(true, { children: true, texture: true, baseTexture: true });
+                } catch(e) {}
+            }
         };
     }, [weaponId, isMastered]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            width={400}
-            height={200}
-            className="w-full rounded-xl border border-slate-700 bg-slate-950"
-        />
+        <div className="relative w-full h-[200px] rounded-xl border border-slate-700 bg-slate-950 overflow-hidden">
+            <canvas
+                ref={canvasRef}
+                width={400}
+                height={200}
+                className="absolute inset-0 w-full h-full object-cover z-0"
+            />
+            <canvas
+                ref={pixiCanvasRef}
+                width={400}
+                height={200}
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
+            />
+        </div>
     );
 }

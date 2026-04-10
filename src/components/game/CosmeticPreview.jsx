@@ -4,11 +4,13 @@ import { CHARACTERS } from '../../game/Constants';
 
 export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none', playerColor = '#00cfff', charId }) {
     const canvasRef = useRef(null);
+    const pixiCanvasRef = useRef(null);
     const stateRef = useRef({ animId: null });
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        const pixiCanvas = pixiCanvasRef.current;
+        if (!canvas || !pixiCanvas) return;
         const ctx = canvas.getContext('2d');
         const W = canvas.width;
         const H = canvas.height;
@@ -16,7 +18,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
         let time = 0;
         let frame = 0;
         
-        const pm = new ParticleManager();
+        const pm = new ParticleManager(pixiCanvas);
 
         let isVisible = false;
         let last = performance.now();
@@ -177,16 +179,32 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
 
         return () => {
             observer.disconnect();
-            if (stateRef.current.animId) cancelAnimationFrame(stateRef.current.animId);
+            if (stateRef.current.animId) {
+                cancelAnimationFrame(stateRef.current.animId);
+                stateRef.current.animId = null;
+            }
+            if (pm && pm.app) {
+                try {
+                    pm.app.destroy(true, { children: true, texture: true, baseTexture: true });
+                } catch(e) {}
+            }
         };
     }, [trailId, killEffectId, playerColor, charId]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            width={320}
-            height={160}
-            className="w-full h-full object-cover rounded-md border border-slate-700 bg-slate-950"
-        />
+        <div className="relative w-full h-[160px] rounded-md border border-slate-700 bg-slate-950 overflow-hidden">
+            <canvas
+                ref={canvasRef}
+                width={320}
+                height={160}
+                className="absolute inset-0 w-full h-full object-cover z-0"
+            />
+            <canvas
+                ref={pixiCanvasRef}
+                width={320}
+                height={160}
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
+            />
+        </div>
     );
 }

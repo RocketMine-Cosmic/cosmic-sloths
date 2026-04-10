@@ -13,7 +13,7 @@ export class ParticleManager {
             this.app.init({
                 canvas: pixiCanvas,
                 backgroundAlpha: 0,
-                resizeTo: window,
+                resizeTo: pixiCanvas.parentElement || window,
                 clearBeforeRender: true,
                 antialias: true
             }).then(() => {
