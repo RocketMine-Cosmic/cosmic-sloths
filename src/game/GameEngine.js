@@ -453,8 +453,8 @@ export class GameEngine {
         }
         
         if (this.shakeTimer > 0) {
-            this.shakeX = (Math.random() - 0.5) * this.shakeTimer * 20;
-            this.shakeY = (Math.random() - 0.5) * this.shakeTimer * 20;
+            this.shakeX = (Math.random() - 0.5) * this.shakeTimer * 6;
+            this.shakeY = (Math.random() - 0.5) * this.shakeTimer * 6;
             this.shakeTimer -= dt;
         } else {
             this.shakeX = 0;

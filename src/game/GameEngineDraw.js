@@ -451,8 +451,8 @@ export function renderGame() {
         ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
         : (this.player.idleImage && this.player.idleImage.complete ? this.player.idleImage : null);
 
-    if (this.player.iFrames > 0 && Math.floor(this.time * 15) % 2 === 0) {
-        this.ctx.globalAlpha = 0.5;
+    if (this.player.iFrames > 0 && Math.floor(this.time * 10) % 2 === 0) {
+        this.ctx.globalAlpha = 0.7;
     }
 
     if (spriteSheet) {
