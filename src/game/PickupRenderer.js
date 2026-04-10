@@ -11,133 +11,122 @@ export function drawPickups(ctx, pickups, time) {
             ctx.rotate(time * 2);
             
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 35);
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 24);
             grad.addColorStop(0, p.color);
-            grad.addColorStop(0.3, p.color);
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
-            ctx.globalAlpha = 0.5;
             ctx.beginPath();
-            ctx.arc(0, 0, 35, 0, Math.PI * 2);
+            ctx.arc(0, 0, 24, 0, Math.PI * 2);
             ctx.fill();
             
             ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 0.8;
+            
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.moveTo(0, -18);
-            ctx.lineTo(9, 0);
-            ctx.lineTo(0, 18);
-            ctx.lineTo(-9, 0);
+            ctx.moveTo(0, -14);
+            ctx.lineTo(7, 0);
+            ctx.lineTo(0, 14);
+            ctx.lineTo(-7, 0);
             ctx.closePath();
             ctx.fill();
             
-            ctx.globalAlpha = 1.0;
-            ctx.fillStyle = p.color;
+            ctx.fillStyle = '#ccffff';
             ctx.beginPath();
-            ctx.moveTo(0, -9);
-            ctx.lineTo(4.5, 0);
-            ctx.lineTo(0, 9);
-            ctx.lineTo(-4.5, 0);
+            ctx.moveTo(0, -7);
+            ctx.lineTo(3.5, 0);
+            ctx.lineTo(0, 7);
+            ctx.lineTo(-3.5, 0);
             ctx.closePath();
             ctx.fill();
 
         } else if (p.type === 'gold') {
-            const bounce = Math.sin(time * 6 + p.x) * 5;
+            const bounce = Math.sin(time * 6 + p.x) * 4;
             ctx.translate(0, bounce);
             ctx.rotate(Math.sin(time * 3 + p.y) * 0.3);
             
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 40);
-            grad.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
-            grad.addColorStop(0.4, 'rgba(255, 150, 0, 0.4)');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 28);
+            grad.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
-            ctx.globalAlpha = 0.6;
             ctx.beginPath();
-            ctx.arc(0, 0, 40, 0, Math.PI * 2);
+            ctx.arc(0, 0, 28, 0, Math.PI * 2);
             ctx.fill();
             
             ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 0.8;
+
             ctx.fillStyle = '#ffaa00';
             ctx.beginPath();
             for (let i = 0; i < 6; i++) {
                 const a = (Math.PI / 3) * i + Math.PI/2;
-                ctx.lineTo(Math.cos(a) * 18, Math.sin(a) * 18);
+                ctx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14);
             }
             ctx.closePath();
             ctx.fill();
             
-            ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#ffe100';
             ctx.beginPath();
             for (let i = 0; i < 6; i++) {
                 const a = (Math.PI / 3) * i + Math.PI/2;
-                ctx.lineTo(Math.cos(a) * 13, Math.sin(a) * 13);
+                ctx.lineTo(Math.cos(a) * 10.5, Math.sin(a) * 10.5);
             }
             ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             ctx.beginPath();
-            ctx.moveTo(-6, -9);
-            ctx.lineTo(3, -9);
-            ctx.lineTo(-3, 9);
-            ctx.lineTo(-11, 9);
+            ctx.moveTo(-5, -7);
+            ctx.lineTo(2, -7);
+            ctx.lineTo(-2, 7);
+            ctx.lineTo(-9, 7);
             ctx.closePath();
             ctx.fill();
             
         } else if (p.type === 'reroll') {
-            const bounce = Math.sin(time * 6 + p.x) * 5;
+            const bounce = Math.sin(time * 6 + p.x) * 4;
             ctx.translate(0, bounce);
             ctx.rotate(Math.sin(time * 3 + p.y) * 0.3);
             
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 40);
-            grad.addColorStop(0, 'rgba(255, 0, 255, 0.8)');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 28);
+            grad.addColorStop(0, 'rgba(255, 0, 255, 0.6)');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
-            ctx.globalAlpha = 0.6;
             ctx.beginPath();
-            ctx.arc(0, 0, 40, 0, Math.PI * 2);
+            ctx.arc(0, 0, 28, 0, Math.PI * 2);
             ctx.fill();
             
             ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 0.8;
             ctx.fillStyle = '#ff00ff';
             ctx.beginPath();
             for (let i = 0; i < 5; i++) {
                 const a = (Math.PI * 2 / 5) * i - Math.PI/2;
-                ctx.lineTo(Math.cos(a) * 18, Math.sin(a) * 18);
+                ctx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14);
             }
             ctx.closePath();
             ctx.fill();
             
-            ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px Arial';
+            ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('R', 0, 1);
             
         } else if (p.icon) {
-            ctx.font = '50px Arial';
+            ctx.font = '42px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
             // Pre-rendered glow behind icon
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 45);
-            grad.addColorStop(0, p.color || 'rgba(255, 255, 255, 0.8)');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
-            ctx.globalAlpha = 0.5;
             ctx.beginPath();
-            ctx.arc(0, 0, 45, 0, Math.PI * 2);
+            ctx.arc(0, 0, 30, 0, Math.PI * 2);
             ctx.fill();
             ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1.0;
 
             ctx.fillText(p.icon, 0, 0);
         } else {

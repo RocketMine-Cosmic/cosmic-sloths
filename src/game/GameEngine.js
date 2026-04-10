@@ -13,9 +13,8 @@ import { renderGame } from './GameEngineDraw';
 import { triggerSquadUltimate, updateSquadClones } from './SquadUltimate';
 
 export class GameEngine {
-    constructor(canvas, pixiCanvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null, isNGPlus = false) {
+    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null, isNGPlus = false) {
         this.canvas = canvas;
-        this.pixiCanvas = pixiCanvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
         this.characterId = characterId;
@@ -218,7 +217,7 @@ export class GameEngine {
         this.enemies = [];
         this.projectiles = [];
         this.pickups = [];
-        this.particleManager = new ParticleManager(this.pixiCanvas);
+        this.particleManager = new ParticleManager();
         this.damageTexts = [];
         
         this.stars = Array.from({length: 150}, () => ({ x: Math.random() * 2000, y: Math.random() * 2000, size: Math.random() * 2 + 0.5, parallax: Math.random() * 0.4 + 0.1 }));
@@ -399,9 +398,6 @@ export class GameEngine {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
         cancelAnimationFrame(this.animationId);
-        if (this.particleManager && this.particleManager.app) {
-            this.particleManager.app.destroy(true, { children: true, texture: true, baseTexture: true });
-        }
     }
 
     loop(timestamp) {
@@ -453,8 +449,8 @@ export class GameEngine {
         }
         
         if (this.shakeTimer > 0) {
-            this.shakeX = (Math.random() - 0.5) * this.shakeTimer * 6;
-            this.shakeY = (Math.random() - 0.5) * this.shakeTimer * 6;
+            this.shakeX = (Math.random() - 0.5) * this.shakeTimer * 20;
+            this.shakeY = (Math.random() - 0.5) * this.shakeTimer * 20;
             this.shakeTimer -= dt;
         } else {
             this.shakeX = 0;
@@ -939,19 +935,19 @@ export class GameEngine {
             // Trails
             if (!p.isAoe && this.frameCount % 2 === 0) {
                 if (p.type === 'dual_laser') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
-                else if (p.type === 'lightning') this.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'star', 0.5);
-                else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 1, 'slash', 0.8);
-                else if (p.type === 'repair_beam') this.addParticle(p.x, p.y, '#ffffff', 1, 'hex', 0.5);
-                else if (p.type === 'missile') this.addParticle(p.x, p.y, '#cccccc', 1, 'smoke', 0.6, { speed: 10 });
-                else if (p.type === 'data_pulse') this.addParticle(p.x, p.y, p.color, 1, 'hex', 0.5);
-                else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 1, 'glow', 0.6);
+                else if (p.type === 'lightning') this.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'spark', 0.8);
+                else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 2, 'spark', 1.0);
+                else if (p.type === 'repair_beam') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 0.5);
+                else if (p.type === 'missile') this.addParticle(p.x, p.y, '#ff4500', 3, 'spark', 1.0);
+                else if (p.type === 'data_pulse') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
+                else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 2, 'spark', 0.8);
                 else if (p.type === 'railgun') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 1.2);
-                else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'ring', 0.5);
+                else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
                 else if (p.type === 'supernova_beam') {
-                    this.addParticle(p.x, p.y, '#ffffff', 1, 'star', 1.0);
-                    this.addParticle(p.x, p.y, p.color, 1, 'spark', 1.0);
+                    this.addParticle(p.x, p.y, '#ffffff', 2, 'spark', 1.5);
+                    this.addParticle(p.x, p.y, p.color, 2, 'spark', 1.0);
                 }
-                else this.addParticle(p.x, p.y, p.color, 1, 'glow', 0.5);
+                else this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
             }
 
             if (!p.isAoe) {

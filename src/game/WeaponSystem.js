@@ -44,7 +44,7 @@ export function fireWeaponLogic(engine, w) {
                 x: engine.player.x, y: engine.player.y,
                 vx: Math.cos(a) * 500 * engine.player.projSpeedMult,
                 vy: Math.sin(a) * 500 * engine.player.projSpeedMult,
-                radius: 12 * area, damage: dmg, pierce: 1, life: 1.5, color: engine.player.color, type: 'blaster_shot'
+                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: engine.player.color, type: 'blaster_shot'
             });
         }
     }
@@ -71,14 +71,6 @@ export function fireWeaponLogic(engine, w) {
         else if (engine.characterId === 'dataphantom') { projType = 'phantom_orb'; }
         else if (engine.characterId === 'neonvortex') { projType = 'railgun'; }
         else if (engine.characterId === 'synthbeats') { projType = 'sonic_wave'; }
-        
-        // Increase base radius for more glow visually (ProjectileRenderer handles scaling too)
-        const baseRadiusMap = {
-            'beam': 6, 'dual_laser': 6, 'lightning': 15, 'glitch_slash': 12, 'stomp': 25, 
-            'repair_beam': 8, 'missile': 10, 'data_pulse': 18, 'phantom_orb': 18, 
-            'railgun': 12, 'sonic_wave': 25
-        };
-        const activeRadius = (baseRadiusMap[projType] || 6) * area;
 
         const spawnOffset = engine.player.radius + 5;
         engine.projectiles.push({
@@ -86,7 +78,7 @@ export function fireWeaponLogic(engine, w) {
             y: engine.player.y + Math.sin(angle) * spawnOffset,
             vx: Math.cos(angle) * 300 * engine.player.projSpeedMult,
             vy: Math.sin(angle) * 300 * engine.player.projSpeedMult,
-            radius: activeRadius,
+            radius: 5 * area,
             damage: dmg,
             pierce: 2 + Math.floor(w.level/2),
             life: 2,
@@ -98,10 +90,10 @@ export function fireWeaponLogic(engine, w) {
         
         if (projType === 'dual_laser') {
              engine.projectiles.push({
-                x: engine.player.x + Math.cos(angle) * spawnOffset + Math.cos(angle + Math.PI/2)*15,
-                y: engine.player.y + Math.sin(angle) * spawnOffset + Math.sin(angle + Math.PI/2)*15,
+                x: engine.player.x + Math.cos(angle) * spawnOffset + Math.cos(angle + Math.PI/2)*10,
+                y: engine.player.y + Math.sin(angle) * spawnOffset + Math.sin(angle + Math.PI/2)*10,
                 vx: Math.cos(angle) * 300 * engine.player.projSpeedMult, vy: Math.sin(angle) * 300 * engine.player.projSpeedMult,
-                radius: activeRadius * 0.8, damage: dmg, pierce: 2 + Math.floor(w.level/2), life: 2, color: projColor, type: projType, isMastered, weaponId: 'napBeam'
+                radius: 4 * area, damage: dmg, pierce: 2 + Math.floor(w.level/2), life: 2, color: projColor, type: projType, isMastered, weaponId: 'napBeam'
             });
         }
     }
@@ -349,7 +341,7 @@ export function fireWeaponLogic(engine, w) {
                     x: px, y: py,
                     vx: Math.cos(lAngle) * 400 * engine.player.projSpeedMult,
                     vy: Math.sin(lAngle) * 400 * engine.player.projSpeedMult,
-                    radius: 8 * area,
+                    radius: 4,
                     damage: dmg,
                     pierce: 3 + Math.floor(w.level/2),
                     life: 1.5,
@@ -504,7 +496,7 @@ export function fireWeaponLogic(engine, w) {
                     x: px, y: py,
                     vx: Math.cos(lAngle) * 500 * engine.player.projSpeedMult,
                     vy: Math.sin(lAngle) * 500 * engine.player.projSpeedMult,
-                    radius: 10 * area,
+                    radius: 5,
                     damage: dmg,
                     pierce: 5 + Math.floor(w.level/2),
                     life: 2.0,

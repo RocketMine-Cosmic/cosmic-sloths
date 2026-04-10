@@ -4,13 +4,11 @@ import { CHARACTERS } from '../../game/Constants';
 
 export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none', playerColor = '#00cfff', charId }) {
     const canvasRef = useRef(null);
-    const pixiCanvasRef = useRef(null);
     const stateRef = useRef({ animId: null });
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        const pixiCanvas = pixiCanvasRef.current;
-        if (!canvas || !pixiCanvas) return;
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const W = canvas.width;
         const H = canvas.height;
@@ -18,7 +16,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
         let time = 0;
         let frame = 0;
         
-        const pm = new ParticleManager(pixiCanvas);
+        const pm = new ParticleManager();
 
         let isVisible = false;
         let last = performance.now();
@@ -83,8 +81,8 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 }
             });
 
-            // Trail particles — dense continuous trail
-            if (trailId !== 'default' && frame % 2 === 0) {
+            // Trail particles — every 4 frames
+            if (trailId !== 'default' && frame % 4 === 0) {
                 pm.createTrail(px, py, trailId, frame);
             }
 
@@ -152,34 +150,18 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.drawImage(staticImage, -size/2, -size/2, size, size);
                 ctx.shadowBlur = 0;
             } else {
-                const r = radius;
-                
-                ctx.globalCompositeOperation = 'screen';
-                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3);
-                grad.addColorStop(0, playerColor);
-                grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad;
-                ctx.globalAlpha = 0.5;
-                ctx.beginPath(); ctx.arc(0, 0, r * 3, 0, Math.PI * 2); ctx.fill();
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.globalAlpha = 1.0;
-                
                 ctx.fillStyle = playerColor;
+                ctx.shadowColor = playerColor;
+                ctx.shadowBlur = 20;
                 ctx.beginPath();
-                ctx.moveTo(r * 1.5, 0);
-                ctx.lineTo(-r * 0.5, -r * 0.8);
-                ctx.lineTo(-r, -r * 0.4);
-                ctx.lineTo(-r * 0.8, 0);
-                ctx.lineTo(-r, r * 0.4);
-                ctx.lineTo(-r * 0.5, r * 0.8);
-                ctx.closePath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.shadowBlur = 0;
                 
                 ctx.fillStyle = '#ffffff';
-                ctx.beginPath(); ctx.ellipse(r * 0.2, 0, r * 0.6, r * 0.3, 0, 0, Math.PI*2); ctx.fill();
-                
-                ctx.fillStyle = '#00ffff';
-                ctx.beginPath(); ctx.arc(-r * 0.8, 0, r * 0.4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath();
+                ctx.arc(-3, -3, 3, 0, Math.PI * 2);
+                ctx.fill();
             }
             ctx.restore();
 
@@ -195,32 +177,16 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
 
         return () => {
             observer.disconnect();
-            if (stateRef.current.animId) {
-                cancelAnimationFrame(stateRef.current.animId);
-                stateRef.current.animId = null;
-            }
-            if (pm) {
-                pm.destroy();
-            }
+            if (stateRef.current.animId) cancelAnimationFrame(stateRef.current.animId);
         };
     }, [trailId, killEffectId, playerColor, charId]);
 
     return (
-        <div className="relative w-full h-[160px] rounded-md border border-slate-700 bg-slate-950 overflow-hidden">
-            <canvas
-                key={`2d-${trailId}-${killEffectId}-${charId}`}
-                ref={canvasRef}
-                width={320}
-                height={160}
-                className="absolute inset-0 w-full h-full object-cover z-0"
-            />
-            <canvas
-                key={`pixi-${trailId}-${killEffectId}-${charId}`}
-                ref={pixiCanvasRef}
-                width={320}
-                height={160}
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
-            />
-        </div>
+        <canvas
+            ref={canvasRef}
+            width={320}
+            height={160}
+            className="w-full h-full object-cover rounded-md border border-slate-700 bg-slate-950"
+        />
     );
 }
