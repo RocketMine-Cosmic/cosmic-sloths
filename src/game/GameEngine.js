@@ -1527,7 +1527,8 @@ export class GameEngine {
                     SFXManager.playWeaponFire('novaPulse');
                     this.enemies.forEach(e => {
                         if (!e.isBoss) {
-                            e.hp = 0;
+                            // Attribute the kill properly by dealing massive damage
+                            this.damageEnemy(e, e.maxHp * 10);
                         }
                     });
                     this.addDamageText(this.player.x, this.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
