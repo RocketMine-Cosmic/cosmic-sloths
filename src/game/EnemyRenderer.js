@@ -41,8 +41,8 @@ export function drawEnemy(ctx, e, time, playerX) {
         ctx.globalCompositeOperation = 'screen';
         ctx.globalAlpha = elitePulse;
         const eliteGrad = ctx.createRadialGradient(0, 0, e.radius * 0.5, 0, 0, auraRadius);
-        eliteGrad.addColorStop(0, '#ff6600');
-        eliteGrad.addColorStop(0.5, '#ff2200');
+        eliteGrad.addColorStop(0, 'rgba(255, 0, 255, 0.8)');
+        eliteGrad.addColorStop(0.5, 'rgba(138, 43, 226, 0.4)');
         eliteGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = eliteGrad;
         ctx.beginPath();
@@ -50,7 +50,7 @@ export function drawEnemy(ctx, e, time, playerX) {
         ctx.fill();
         // Spinning rune rings
         ctx.globalAlpha = 0.5;
-        ctx.strokeStyle = '#ffaa00';
+        ctx.strokeStyle = '#00ffff';
         ctx.lineWidth = 2;
         for (let ri = 0; ri < 2; ri++) {
             const rot = eliteT * (ri === 0 ? 1 : -0.7) + ri * Math.PI * 0.5;

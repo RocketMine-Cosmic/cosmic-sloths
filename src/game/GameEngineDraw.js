@@ -102,40 +102,60 @@ export function renderGame() {
     drawProjectiles(this.ctx, this.projectiles, this.particleManager, this.time, camX, camY, vWidth, vHeight);
 
     if (this.characterId === 'neobyte' && this.characterMechanics?.banners) {
+        this.ctx.globalCompositeOperation = 'screen';
         this.characterMechanics.banners.forEach(b => {
-            this.ctx.globalAlpha = Math.min(1, b.life / 2);
-            this.ctx.strokeStyle = '#0066FF';
-            this.ctx.lineWidth = 2;
+            this.ctx.globalAlpha = Math.min(1, b.life / 2) * 0.8;
+            this.ctx.strokeStyle = '#00D4FF';
+            this.ctx.lineWidth = 4;
             this.ctx.beginPath();
             this.ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
             this.ctx.stroke();
-            this.ctx.fillStyle = 'rgba(0, 102, 255, 0.1)';
+            
+            const grad = this.ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.radius);
+            grad.addColorStop(0, 'rgba(0, 212, 255, 0.3)');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
             this.ctx.fill();
-            this.ctx.fillStyle = '#0066FF';
-            this.ctx.font = '20px Arial';
+            
+            this.ctx.fillStyle = '#00D4FF';
+            this.ctx.font = '24px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
-            this.ctx.fillText('🚩', b.x, b.y);
-            this.ctx.globalAlpha = 1.0;
+            this.ctx.fillText('📡', b.x, b.y);
         });
+        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.globalAlpha = 1.0;
     }
 
     if (this.characterId === 'holodrift' && this.characterMechanics?.decoys) {
+        this.ctx.globalCompositeOperation = 'screen';
         this.characterMechanics.decoys.forEach(d => {
             this.ctx.globalAlpha = Math.min(0.8, d.life / 2);
-            this.ctx.fillStyle = '#00FA9A';
+            
+            const grad = this.ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, 25);
+            grad.addColorStop(0, '#00FA9A');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
             this.ctx.beginPath();
-            this.ctx.arc(d.x, d.y, 15, 0, Math.PI * 2);
+            this.ctx.arc(d.x, d.y, 25, 0, Math.PI * 2);
             this.ctx.fill();
+            
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(d.x, d.y, 16, 0, Math.PI * 2);
+            this.ctx.stroke();
+
+            this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = '14px Arial';
+            this.ctx.font = '16px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('👤', d.x, d.y + 2);
             this.ctx.globalAlpha = 1.0;
             
-            this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(d.x - 10, d.y - 20, 20, 4);
-            this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(d.x - 10, d.y - 20, 20 * (d.hp / d.maxHp), 4);
+            this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(d.x - 10, d.y - 24, 20, 4);
+            this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(d.x - 10, d.y - 24, 20 * (d.hp / d.maxHp), 4);
         });
     }
 
@@ -167,7 +187,7 @@ export function renderGame() {
     }
 
     if (this.enemyProjectiles) {
-        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.globalCompositeOperation = 'screen';
         this.enemyProjectiles.forEach(p => {
             this.ctx.save();
             this.ctx.translate(p.x, p.y);
@@ -175,21 +195,36 @@ export function renderGame() {
                 this.ctx.rotate(Math.atan2(p.vy, p.vx));
             }
             
-            this.ctx.fillStyle = p.color || '#ff0000';
+            const color = p.color || '#ff4500';
+            const visualRadius = Math.max(0.1, p.radius * 2.0);
+            
+            // Glow aura
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, visualRadius);
+            grad.addColorStop(0, color);
+            grad.addColorStop(1, 'transparent');
+            
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = 0.6;
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 1.5), 0, Math.PI * 2);
+            this.ctx.arc(0, 0, visualRadius, 0, Math.PI * 2);
             this.ctx.fill();
-            this.ctx.strokeStyle = '#000000';
-            this.ctx.lineWidth = 1.5;
-            this.ctx.stroke();
+            
+            // Inner Core
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.fillStyle = color;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 1.2), 0, Math.PI * 2);
+            this.ctx.fill();
 
+            // Hot Center
             this.ctx.fillStyle = '#ffffff';
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.7), 0, Math.PI * 2);
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.6), 0, Math.PI * 2);
             this.ctx.fill();
 
             this.ctx.restore();
         });
+        this.ctx.globalCompositeOperation = 'source-over';
     }
 
     const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
@@ -210,14 +245,19 @@ export function renderGame() {
             this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
 
             // Sloth aura 
-            const auraCol = isMastered ? '#ff0000' : '#8B4513';
-            this.ctx.fillStyle = auraCol;
-            this.ctx.globalAlpha = 0.2;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
+            const auraCol = isMastered ? '#ff0000' : '#d2b48c';
+            this.ctx.globalCompositeOperation = 'screen';
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+            grad.addColorStop(0, auraCol);
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = 0.4;
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.globalAlpha = 1.0;
             
             // Draw Sloth Head shape
-            this.ctx.fillStyle = isMastered ? '#FF0000' : '#8B4513';
+            this.ctx.fillStyle = isMastered ? '#ff4444' : '#8B4513';
             this.ctx.beginPath(); this.ctx.ellipse(0, 0, 8, 6, 0, 0, Math.PI*2); this.ctx.fill();
             this.ctx.strokeStyle = '#000000'; this.ctx.lineWidth = 1; this.ctx.stroke();
             // Ears
@@ -245,13 +285,24 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * 5); // Spin
             
+            // Aura
+            this.ctx.globalCompositeOperation = 'screen';
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 20);
+            grad.addColorStop(0, '#39FF14');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = 0.5;
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.globalAlpha = 1.0;
+
             // Sharp Spiky Plasma Drone
             this.ctx.fillStyle = '#228B22';
             this.ctx.beginPath();
             const spikes = 6;
             for(let j=0; j<spikes*2; j++) {
                 const a = (Math.PI*2/(spikes*2))*j;
-                const r = j%2===0 ? 12 : 4;
+                const r = j%2===0 ? 14 : 5;
                 if(j===0) this.ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
                 else this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
             }
@@ -262,7 +313,7 @@ export function renderGame() {
             this.ctx.stroke();
 
             // Inner Core
-            this.ctx.fillStyle = '#39FF14';
+            this.ctx.fillStyle = '#ffffff';
             this.ctx.beginPath(); this.ctx.arc(0, 0, 4, 0, Math.PI * 2); this.ctx.fill();
             
             this.ctx.restore();
@@ -283,18 +334,28 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * 3);
             
+            this.ctx.globalCompositeOperation = 'screen';
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 20);
+            grad.addColorStop(0, '#00aaff');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = 0.5;
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.globalAlpha = 1.0;
+
             // Sleek blue laser drone
             this.ctx.fillStyle = '#00aaff';
             this.ctx.beginPath(); 
-            this.ctx.moveTo(8, 0); this.ctx.lineTo(0, 8); this.ctx.lineTo(-8, 0); this.ctx.lineTo(0, -8);
+            this.ctx.moveTo(12, 0); this.ctx.lineTo(0, 10); this.ctx.lineTo(-12, 0); this.ctx.lineTo(0, -10);
             this.ctx.closePath(); this.ctx.fill();
             
-            this.ctx.strokeStyle = '#000000';
-            this.ctx.lineWidth = 1.5;
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 2.0;
             this.ctx.stroke();
 
             this.ctx.fillStyle = '#ffffff';
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 3, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 4, 0, Math.PI * 2); this.ctx.fill();
             
             this.ctx.restore();
         }
@@ -314,25 +375,35 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * -4);
             
+            this.ctx.globalCompositeOperation = 'screen';
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+            grad.addColorStop(0, '#ff00ff');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = 0.4;
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.globalAlpha = 1.0;
+
             // "Indestructible Drones" - Hexagonal shield plates
-            this.ctx.fillStyle = '#222222';
+            this.ctx.fillStyle = '#111111';
             this.ctx.beginPath();
             for(let j=0; j<6; j++) {
                 const a = (Math.PI/3)*j;
-                const r = 12;
+                const r = 15;
                 if(j===0) this.ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
                 else this.ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
             }
             this.ctx.closePath(); this.ctx.fill();
             
             this.ctx.strokeStyle = '#ff00ff';
-            this.ctx.lineWidth = 2.5;
+            this.ctx.lineWidth = 3.0;
             this.ctx.stroke();
             
             // Pink laser core
-            this.ctx.fillStyle = '#ff00ff';
+            this.ctx.fillStyle = '#ffffff';
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, 4, 0, Math.PI * 2);
+            this.ctx.arc(0, 0, 5, 0, Math.PI * 2);
             this.ctx.fill();
             
             this.ctx.restore();
@@ -521,13 +592,19 @@ export function renderGame() {
     this.ctx.globalAlpha = 1.0;
 
     if (this.player.invincibleTimer > 0) {
+        this.ctx.globalCompositeOperation = 'screen';
         this.ctx.strokeStyle = '#ffff00';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 4;
         this.ctx.beginPath();
-        this.ctx.arc(this.player.x, this.player.y, this.player.radius + 10 + Math.sin(this.time * 10) * 5, 0, Math.PI * 2);
+        this.ctx.arc(this.player.x, this.player.y, this.player.radius + 12 + Math.sin(this.time * 10) * 6, 0, Math.PI * 2);
         this.ctx.stroke();
-        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+        
+        const grad = this.ctx.createRadialGradient(this.player.x, this.player.y, 0, this.player.x, this.player.y, this.player.radius + 18);
+        grad.addColorStop(0, 'rgba(255, 255, 0, 0.4)');
+        grad.addColorStop(1, 'transparent');
+        this.ctx.fillStyle = grad;
         this.ctx.fill();
+        this.ctx.globalCompositeOperation = 'source-over';
     }
 
     this.ctx.textAlign = 'center';
@@ -550,42 +627,43 @@ export function renderGame() {
 
     if (this.envEffect === 'neon_rain') {
         this.envParticles.forEach(p => {
-            this.ctx.globalAlpha = (p.life / 2) * 0.6;
-            this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 3;
+            this.ctx.globalAlpha = (p.life / 2) * 0.4;
+            this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 4;
             this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05); this.ctx.stroke();
-            this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); this.ctx.fill();
             if (p.life < 0.1) {
-                this.ctx.beginPath(); this.ctx.arc(p.x, p.y, (0.1 - p.life) * 100, 0, Math.PI * 2);
-                this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 1; this.ctx.stroke();
+                this.ctx.beginPath(); this.ctx.arc(p.x, p.y, (0.1 - p.life) * 120, 0, Math.PI * 2);
+                this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 2; this.ctx.stroke();
             }
         });
         this.ctx.globalAlpha = 1.0;
     } else if (this.envEffect === 'fog') {
         this.envParticles.forEach(p => {
-            this.ctx.globalAlpha = 0.1 * (p.life / 10);
+            this.ctx.globalAlpha = 0.05 * (p.life / 10);
             if (texSmoke && texSmoke.isReady) {
                 this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
             } else {
                 const g = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                g.addColorStop(0, 'rgba(200,200,220,0.8)'); g.addColorStop(1, 'transparent');
+                g.addColorStop(0, 'rgba(200,200,220,0.6)'); g.addColorStop(1, 'transparent');
                 this.ctx.fillStyle = g; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); this.ctx.fill();
             }
         });
         this.ctx.globalAlpha = 1.0;
     } else if (this.envEffect === 'solar_flare') {
         this.envParticles.forEach(p => {
-            const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.2;
+            const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.15;
             this.ctx.globalAlpha = alpha;
             
             if (texSmoke && texSmoke.isReady) {
-                this.ctx.fillStyle = '#ff6600';
+                this.ctx.fillStyle = '#ff4500';
                 this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+                this.ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
                 this.ctx.fill();
+                this.ctx.globalAlpha = alpha * 0.5;
                 this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
             } else {
                 const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                gradient.addColorStop(0, 'rgba(255, 100, 0, 0.8)');
+                gradient.addColorStop(0, 'rgba(255, 69, 0, 0.6)');
                 gradient.addColorStop(1, 'transparent');
                 this.ctx.fillStyle = gradient;
                 this.ctx.beginPath();
@@ -597,7 +675,7 @@ export function renderGame() {
         this.ctx.globalCompositeOperation = 'source-over';
         
         // Global orange tint pulsing
-        this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.03 + 0.02})`;
+        this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.02 + 0.01})`;
         this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width / this.zoom, this.canvas.height / this.zoom);
     }
     this.ctx.globalCompositeOperation = 'source-over';

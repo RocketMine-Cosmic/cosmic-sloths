@@ -26,75 +26,88 @@ export class ParticleManager {
                 this.app.stage.addChild(this.container);
                 
                 this.textures = {
-                    glow: this.createCanvasTexture(64, (ctx, s) => {
+                    glow: this.createCanvasTexture(128, (ctx, s) => {
                         const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
                         g.addColorStop(0, 'rgba(255,255,255,1)');
-                        g.addColorStop(0.3, 'rgba(255,255,255,0.6)');
+                        g.addColorStop(0.15, 'rgba(255,255,255,0.9)');
+                        g.addColorStop(0.4, 'rgba(255,255,255,0.4)');
+                        g.addColorStop(0.7, 'rgba(255,255,255,0.1)');
                         g.addColorStop(1, 'rgba(255,255,255,0)');
                         ctx.fillStyle = g;
                         ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
                     }),
-                    star: this.createCanvasTexture(64, (ctx, s) => {
+                    star: this.createCanvasTexture(128, (ctx, s) => {
                         const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
                         g.addColorStop(0, 'rgba(255,255,255,1)');
-                        g.addColorStop(0.2, 'rgba(255,255,255,0.7)');
+                        g.addColorStop(0.1, 'rgba(255,255,255,0.9)');
+                        g.addColorStop(0.3, 'rgba(255,255,255,0.5)');
                         g.addColorStop(1, 'rgba(255,255,255,0)');
                         ctx.fillStyle = g;
                         ctx.beginPath();
-                        ctx.moveTo(s/2, 0); ctx.lineTo(s/2 + s*0.1, s/2 - s*0.1);
-                        ctx.lineTo(s, s/2); ctx.lineTo(s/2 + s*0.1, s/2 + s*0.1);
-                        ctx.lineTo(s/2, s); ctx.lineTo(s/2 - s*0.1, s/2 + s*0.1);
-                        ctx.lineTo(0, s/2); ctx.lineTo(s/2 - s*0.1, s/2 - s*0.1);
+                        ctx.moveTo(s/2, 0); ctx.quadraticCurveTo(s/2 + s*0.05, s/2 - s*0.05, s, s/2);
+                        ctx.quadraticCurveTo(s/2 + s*0.05, s/2 + s*0.05, s/2, s);
+                        ctx.quadraticCurveTo(s/2 - s*0.05, s/2 + s*0.05, 0, s/2);
+                        ctx.quadraticCurveTo(s/2 - s*0.05, s/2 - s*0.05, s/2, 0);
                         ctx.fill();
                     }),
-                    ring: this.createCanvasTexture(64, (ctx, s) => {
-                        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-                        ctx.lineWidth = 3;
+                    ring: this.createCanvasTexture(128, (ctx, s) => {
+                        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                        ctx.lineWidth = 6;
                         ctx.shadowColor = '#ffffff';
-                        ctx.shadowBlur = 8;
-                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 4, 0, Math.PI*2); ctx.stroke();
+                        ctx.shadowBlur = 15;
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 10, 0, Math.PI*2); ctx.stroke();
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = 'rgba(255,255,255,1)';
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 10, 0, Math.PI*2); ctx.stroke();
                     }),
-                    smoke: this.createCanvasTexture(64, (ctx, s) => {
+                    smoke: this.createCanvasTexture(128, (ctx, s) => {
                         const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-                        g.addColorStop(0, 'rgba(255,255,255,0.3)');
-                        g.addColorStop(0.5, 'rgba(255,255,255,0.1)');
+                        g.addColorStop(0, 'rgba(255,255,255,0.4)');
+                        g.addColorStop(0.4, 'rgba(255,255,255,0.2)');
+                        g.addColorStop(0.8, 'rgba(255,255,255,0.05)');
                         g.addColorStop(1, 'rgba(255,255,255,0)');
                         ctx.fillStyle = g;
                         ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
                     }),
-                    slash: this.createCanvasTexture(64, (ctx, s) => {
+                    slash: this.createCanvasTexture(128, (ctx, s) => {
                         const g = ctx.createLinearGradient(0, s/2, s, s/2);
                         g.addColorStop(0, 'rgba(255,255,255,0)');
-                        g.addColorStop(0.5, 'rgba(255,255,255,0.8)');
+                        g.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+                        g.addColorStop(0.5, 'rgba(255,255,255,1)');
+                        g.addColorStop(0.7, 'rgba(255,255,255,0.5)');
                         g.addColorStop(1, 'rgba(255,255,255,0)');
                         ctx.fillStyle = g;
                         ctx.beginPath();
                         ctx.moveTo(0, s/2);
-                        ctx.quadraticCurveTo(s/2, s*0.1, s, s/2);
-                        ctx.quadraticCurveTo(s/2, s*0.3, 0, s/2);
+                        ctx.quadraticCurveTo(s/2, s*0.15, s, s/2);
+                        ctx.quadraticCurveTo(s/2, s*0.35, 0, s/2);
                         ctx.fill();
                     }),
-                    spark_line: this.createCanvasTexture(64, (ctx, s) => {
+                    spark_line: this.createCanvasTexture(128, (ctx, s) => {
                         const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
                         g.addColorStop(0, 'rgba(255,255,255,1)');
-                        g.addColorStop(0.2, 'rgba(255,255,255,0.5)');
+                        g.addColorStop(0.1, 'rgba(255,255,255,0.8)');
+                        g.addColorStop(0.4, 'rgba(255,255,255,0.3)');
                         g.addColorStop(1, 'rgba(255,255,255,0)');
                         ctx.fillStyle = g;
                         ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.15, 0, 0, Math.PI*2); ctx.fill();
                     }),
-                    hex: this.createCanvasTexture(64, (ctx, s) => {
-                        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-                        ctx.lineWidth = 2;
+                    hex: this.createCanvasTexture(128, (ctx, s) => {
+                        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                        ctx.lineWidth = 4;
                         ctx.shadowColor = '#ffffff';
-                        ctx.shadowBlur = 5;
+                        ctx.shadowBlur = 10;
                         ctx.beginPath();
                         for (let i = 0; i < 6; i++) {
                             const a = (Math.PI / 3) * i;
-                            const r = s/2 - 5;
+                            const r = s/2 - 8;
                             if (i===0) ctx.moveTo(s/2 + Math.cos(a)*r, s/2 + Math.sin(a)*r);
                             else ctx.lineTo(s/2 + Math.cos(a)*r, s/2 + Math.sin(a)*r);
                         }
                         ctx.closePath(); ctx.stroke();
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = 'rgba(255,255,255,1)';
+                        ctx.stroke();
                     })
                 };
                 
@@ -255,26 +268,30 @@ export class ParticleManager {
     }
     
     createExplosion(x, y, color, scale = 1, sourceId = '') {
-        const s = Math.min(scale, 2);
-        this.addParticle(x, y, color, 5 * s, 'spark', 1.6 * s, { speed: 180 * s });
-        this.addParticle(x, y, '#ffffff', 3 * s, 'star', 1.2 * s, { speed: 240 * s });
-        this.addParticle(x, y, color, 1, 'ring', 2.5 * s, { speed: 0, growthRate: 150 * s, lifeBonus: 0.2 });
+        const s = Math.min(scale, 2.5);
+        this.addParticle(x, y, color, 6 * s, 'spark', 2.0 * s, { speed: 220 * s, lifeBonus: 0.2 });
+        this.addParticle(x, y, '#ffffff', 4 * s, 'star', 1.8 * s, { speed: 280 * s, lifeBonus: 0.1 });
+        this.addParticle(x, y, color, 1, 'ring', 3.5 * s, { speed: 0, growthRate: 200 * s, lifeBonus: 0.3 });
+        this.addParticle(x, y, color, 1, 'glow', 6.0 * s, { speed: 0, lifeBonus: 0.2 });
     }
 
     createHitEffect(x, y, color, angle, scale = 1) {
-        this.addParticle(x, y, color, 2, 'spark', 1.2 * scale, { angle, speed: 120 * scale });
-        this.addParticle(x, y, '#ffffff', 1, 'spark', 0.9 * scale, { angle, speed: 180 * scale });
+        this.addParticle(x, y, color, 3, 'spark', 1.6 * scale, { angle, speed: 180 * scale });
+        this.addParticle(x, y, '#ffffff', 2, 'spark', 1.2 * scale, { angle, speed: 250 * scale });
+        this.addParticle(x, y, color, 1, 'glow', 3.0 * scale, { speed: 0, lifeBonus: -0.2 });
     }
 
     createLevelUp(x, y) {
-        this.addParticle(x, y, '#00e5ff', 12, 'spark', 2.2, { speed: 150 });
-        this.addParticle(x, y, '#ff00e5', 10, 'spark', 1.8, { speed: 120 });
-        this.addParticle(x, y, '#ffff00', 6, 'star', 2.0, { speed: 100 });
-        this.addParticle(x, y, '#ffffff', 1, 'ring', 3.5, { speed: 0, growthRate: 200, lifeBonus: 0.3 });
+        this.addParticle(x, y, '#00e5ff', 15, 'spark', 3.0, { speed: 200 });
+        this.addParticle(x, y, '#ff00e5', 12, 'spark', 2.5, { speed: 160 });
+        this.addParticle(x, y, '#ffff00', 8, 'star', 2.8, { speed: 140 });
+        this.addParticle(x, y, '#ffffff', 1, 'ring', 4.5, { speed: 0, growthRate: 250, lifeBonus: 0.5 });
+        this.addParticle(x, y, '#00e5ff', 1, 'glow', 8.0, { speed: 0, lifeBonus: 0.4 });
     }
 
     createPickup(x, y, color) {
-        this.addParticle(x, y, color, 3, 'spark', 1.3, { speed: 60 });
+        this.addParticle(x, y, color, 4, 'spark', 1.8, { speed: 80 });
+        this.addParticle(x, y, '#ffffff', 1, 'glow', 2.5, { speed: 0, lifeBonus: -0.3 });
     }
 
     createKillEffect(x, y, effectId) {
