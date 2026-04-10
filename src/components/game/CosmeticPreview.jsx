@@ -139,40 +139,25 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 const sy = row * frameHeight;
                 const size = radius * 5;
                 
-                ctx.shadowColor = playerColor;
-                ctx.shadowBlur = 20;
-                
-                let drawImg = walkImage;
-                if (playerColor && playerColor !== '#ffffff' && pm.getOutlineTexture) {
-                    const outlined = pm.getOutlineTexture(walkImage, playerColor);
-                    if (outlined && outlined.isReady) drawImg = outlined;
-                }
-                
-                ctx.drawImage(drawImg, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-                if (drawImg !== walkImage) {
-                    ctx.shadowBlur = 0; // Turn off glow for the inner sprite
+                if (playerColor && playerColor !== '#ffffff') {
+                    ctx.shadowColor = playerColor;
+                    ctx.shadowBlur = 20;
                     ctx.drawImage(walkImage, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-                } else {
                     ctx.shadowBlur = 0;
                 }
+                
+                ctx.drawImage(walkImage, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
             } else if (staticImage && staticImage.complete) {
                 const size = radius * 3;
-                ctx.shadowColor = playerColor;
-                ctx.shadowBlur = 20;
                 
-                let drawImg = staticImage;
-                if (playerColor && playerColor !== '#ffffff' && pm.getOutlineTexture) {
-                    const outlined = pm.getOutlineTexture(staticImage, playerColor);
-                    if (outlined && outlined.isReady) drawImg = outlined;
-                }
-                
-                ctx.drawImage(drawImg, -size/2, -size/2, size, size);
-                if (drawImg !== staticImage) {
-                    ctx.shadowBlur = 0;
+                if (playerColor && playerColor !== '#ffffff') {
+                    ctx.shadowColor = playerColor;
+                    ctx.shadowBlur = 20;
                     ctx.drawImage(staticImage, -size/2, -size/2, size, size);
-                } else {
                     ctx.shadowBlur = 0;
                 }
+                
+                ctx.drawImage(staticImage, -size/2, -size/2, size, size);
             } else {
                 ctx.fillStyle = playerColor;
                 ctx.shadowColor = playerColor;

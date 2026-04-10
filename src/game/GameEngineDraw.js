@@ -524,59 +524,28 @@ export function renderGame() {
         const sx = col * frameWidth;
         const sy = row * frameHeight;
         
-        let drawSheet = spriteSheet;
-        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getOutlineTexture === 'function') {
-            const outlined = this.particleManager.getOutlineTexture(spriteSheet, this.player.color);
-            if (outlined && outlined.isReady) {
-                drawSheet = outlined;
-            }
-        }
-        
         this.ctx.save();
         this.ctx.translate(this.player.x, this.player.y);
         // The base sprite sheets are drawn facing left. 
         // So if we are facing right (!facingLeft), we need to mirror them.
         if (!this.player.facingLeft) this.ctx.scale(-1, 1);
         
-        this.ctx.globalCompositeOperation = 'screen';
-        
-        if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
-            const glow = this.particleManager.getGlowTexture(this.player.color, size * 0.8);
-            if (glow) {
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.drawImage(glow, -glow.width/2, -glow.height/2);
-            }
-        } else {
-            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
-            grad.addColorStop(0, this.player.color);
-            grad.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = grad;
-            this.ctx.globalAlpha = 0.5;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
-        }
-        
-        this.ctx.globalAlpha = 1.0;
-        this.ctx.globalCompositeOperation = 'source-over';
-        
-        // Draw the outline/tint first
-        this.ctx.drawImage(drawSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-        
-        // Then draw the original sprite on top, so the outline is just a border
-        if (drawSheet !== spriteSheet) {
+        if (this.player.color && this.player.color !== '#ffffff') {
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 15;
+            // Draw once to create the neon glow
             this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+            // Draw again to intensify the glow
+            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
+            this.ctx.shadowBlur = 0;
         }
+        
+        // Draw the actual sprite
+        this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
         
         this.ctx.restore();
     } else if (this.player.image && this.player.image.complete) {
         const size = this.player.radius * 3;
-        
-        let drawImg = this.player.image;
-        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getOutlineTexture === 'function') {
-            const outlined = this.particleManager.getOutlineTexture(this.player.image, this.player.color);
-            if (outlined && outlined.isReady) {
-                drawImg = outlined;
-            }
-        }
         
         this.ctx.save();
         this.ctx.translate(this.player.x, this.player.y);
@@ -585,33 +554,15 @@ export function renderGame() {
             this.ctx.scale(-1, 1);
         }
         
-        this.ctx.globalCompositeOperation = 'screen';
-        
-        if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
-            const glow = this.particleManager.getGlowTexture(this.player.color, size * 0.8);
-            if (glow) {
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.drawImage(glow, -glow.width/2, -glow.height/2);
-            }
-        } else {
-            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
-            grad.addColorStop(0, this.player.color);
-            grad.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = grad;
-            this.ctx.globalAlpha = 0.5;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); this.ctx.fill();
-        }
-        
-        this.ctx.globalAlpha = 1.0;
-        this.ctx.globalCompositeOperation = 'source-over';
-        
-        // Draw the outline/tint first
-        this.ctx.drawImage(drawImg, -size/2, -size/2, size, size);
-        
-        // Then draw the original sprite on top
-        if (drawImg !== this.player.image) {
+        if (this.player.color && this.player.color !== '#ffffff') {
+            this.ctx.shadowColor = this.player.color;
+            this.ctx.shadowBlur = 15;
             this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
+            this.ctx.shadowBlur = 0;
         }
+        
+        this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
         
         this.ctx.restore();
     } else {
