@@ -229,22 +229,24 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.fillStyle = '#ffffff';
             ctx.beginPath(); ctx.arc(0, 0, p.radius*0.2, 0, Math.PI*2); ctx.fill();
         } else if (p.type === 'toxic_cloud') {
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.7;
-            ctx.fillStyle = p.color;
-            for (let i = 0; i < 4; i++) {
-                ctx.beginPath();
-                ctx.arc(
-                    Math.cos(time * 2 + i) * p.radius * 0.4, 
-                    Math.sin(time * 2 + i) * p.radius * 0.4, 
-                    p.radius * 0.6, 0, Math.PI*2
-                );
-                ctx.fill();
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 2;
-                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.3;
-                ctx.stroke();
-                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.7;
-            }
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.8;
+            ctx.fillStyle = p.color || '#32cd32';
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Inner bubble
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.3;
+            ctx.beginPath();
+            ctx.arc(p.radius * 0.2, -p.radius * 0.2, p.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = Math.min(1, p.life * 2);
         } else if (p.type === 'aegis_matrix') {
             ctx.globalAlpha = Math.min(1, p.life * 2);
             ctx.strokeStyle = p.color || '#00ff88';
@@ -275,39 +277,43 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 0.1;
             ctx.fill();
         } else if (p.type === 'napalm_pool' || p.type === 'flaming_lash_pool' || p.type === 'hellfire') {
-            ctx.fillStyle = p.color || '#ff4500';
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.25;
-            
+            ctx.globalAlpha = Math.min(1, p.life * 2);
             const isHellfire = p.type === 'hellfire';
-            const segments = isHellfire ? 10 : 7;
-            const timeMult = isHellfire ? 8 : 4;
+            const baseColor = p.color || (isHellfire ? '#00bfff' : '#ff4500');
+            const innerColor = isHellfire ? '#ffffff' : '#ffaa00';
             
-            ctx.beginPath();
-            for (let i = 0; i < segments; i++) {
-                const a = (Math.PI * 2 / segments) * i + time * 0.3;
-                const r = p.radius * (0.75 + Math.sin(time * timeMult + i * 2) * 0.25);
-                if (i === 0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
-                else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
-            }
-            ctx.closePath(); ctx.fill();
-            
-            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.9;
-            ctx.strokeStyle = p.color;
-            ctx.lineWidth = isHellfire ? 4 : 2;
-            ctx.stroke();
-            
-            if (isHellfire) {
-                // Inner intense core for hellfire
-                ctx.fillStyle = '#ffffff';
-                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.5;
+            // Base circular pool
+            ctx.fillStyle = baseColor;
+            ctx.globalAlpha = Math.min(1, p.life * 2) * 0.5;
+            ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.fill();
+
+            // Stylized 2D flames around the pool
+            ctx.globalAlpha = Math.min(1, p.life * 2);
+            const flameCount = isHellfire ? 6 : 5;
+            for (let i = 0; i < flameCount; i++) {
+                const angle = (Math.PI * 2 / flameCount) * i + time * 1.5;
+                const dist = p.radius * 0.4;
+                const fx = Math.cos(angle) * dist;
+                const fy = Math.sin(angle) * dist;
+                const size = p.radius * 0.6 + Math.sin(time * 8 + i) * p.radius * 0.2;
+                
+                ctx.fillStyle = baseColor;
                 ctx.beginPath();
-                for (let i = 0; i < segments; i++) {
-                    const a = (Math.PI * 2 / segments) * i - time * 0.5;
-                    const r = p.radius * 0.4 * (0.8 + Math.cos(time * 12 + i) * 0.2);
-                    if (i === 0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
-                    else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
-                }
-                ctx.closePath(); ctx.fill();
+                ctx.moveTo(fx - size*0.5, fy + size*0.2);
+                ctx.quadraticCurveTo(fx, fy - size, fx + size*0.5, fy + size*0.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.fillStyle = innerColor;
+                ctx.beginPath();
+                ctx.moveTo(fx - size*0.25, fy + size*0.1);
+                ctx.quadraticCurveTo(fx, fy - size*0.6, fx + size*0.25, fy + size*0.1);
+                ctx.closePath();
+                ctx.fill();
             }
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave' || p.type === 'quantum_collapse') {
             ctx.strokeStyle = p.color || '#ff00ff';

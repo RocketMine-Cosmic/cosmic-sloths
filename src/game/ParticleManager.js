@@ -22,55 +22,46 @@ export class ParticleManager {
                 
                 this.textures = {
                     glow: this.createCanvasTexture(64, (ctx, s) => {
-                        const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-                        grad.addColorStop(0, 'rgba(255,255,255,1)');
-                        grad.addColorStop(0.2, 'rgba(255,255,255,0.6)');
-                        grad.addColorStop(0.6, 'rgba(255,255,255,0.1)');
-                        grad.addColorStop(1, 'rgba(255,255,255,0)');
-                        ctx.fillStyle = grad;
-                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 1, 0, Math.PI*2); ctx.fill();
                     }),
                     star: this.createCanvasTexture(64, (ctx, s) => {
                         ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
-                        ctx.moveTo(s/2, 0); ctx.quadraticCurveTo(s/2, s/2, s, s/2);
-                        ctx.quadraticCurveTo(s/2, s/2, s/2, s); ctx.quadraticCurveTo(s/2, s/2, 0, s/2);
-                        ctx.quadraticCurveTo(s/2, s/2, s/2, 0); ctx.fill();
-                        ctx.beginPath(); ctx.arc(s/2, s/2, s*0.15, 0, Math.PI*2); ctx.fill();
+                        ctx.moveTo(s/2, 0); ctx.lineTo(s/2 + s*0.1, s/2 - s*0.1);
+                        ctx.lineTo(s, s/2); ctx.lineTo(s/2 + s*0.1, s/2 + s*0.1);
+                        ctx.lineTo(s/2, s); ctx.lineTo(s/2 - s*0.1, s/2 + s*0.1);
+                        ctx.lineTo(0, s/2); ctx.lineTo(s/2 - s*0.1, s/2 - s*0.1);
+                        ctx.fill();
                     }),
                     ring: this.createCanvasTexture(64, (ctx, s) => {
                         ctx.strokeStyle = '#ffffff';
-                        ctx.lineWidth = 3;
-                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 3, 0, Math.PI*2); ctx.stroke();
+                        ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 4, 0, Math.PI*2); ctx.stroke();
                     }),
                     smoke: this.createCanvasTexture(64, (ctx, s) => {
-                        const grad = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-                        grad.addColorStop(0, 'rgba(255,255,255,0.3)');
-                        grad.addColorStop(0.5, 'rgba(255,255,255,0.1)');
-                        grad.addColorStop(1, 'rgba(255,255,255,0)');
-                        ctx.fillStyle = grad;
-                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath(); ctx.arc(s/2, s/2, s/2 - 2, 0, Math.PI*2); ctx.fill();
                     }),
                     slash: this.createCanvasTexture(64, (ctx, s) => {
-                        // Sharp, crescent-shaped slash for whips
                         ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
                         ctx.moveTo(0, s/2);
-                        ctx.quadraticCurveTo(s/2, s*0.2, s, s/2);
-                        ctx.quadraticCurveTo(s/2, s*0.4, 0, s/2);
+                        ctx.quadraticCurveTo(s/2, s*0.1, s, s/2);
+                        ctx.quadraticCurveTo(s/2, s*0.3, 0, s/2);
                         ctx.fill();
                     }),
                     spark_line: this.createCanvasTexture(64, (ctx, s) => {
                         ctx.fillStyle = '#ffffff';
-                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.06, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(s/2, s/2, s/2, s*0.15, 0, 0, Math.PI*2); ctx.fill();
                     }),
                     hex: this.createCanvasTexture(64, (ctx, s) => {
                         ctx.strokeStyle = '#ffffff';
-                        ctx.lineWidth = 2;
+                        ctx.lineWidth = 3;
                         ctx.beginPath();
                         for (let i = 0; i < 6; i++) {
                             const a = (Math.PI / 3) * i;
-                            const r = s/2 - 2;
+                            const r = s/2 - 3;
                             if (i===0) ctx.moveTo(s/2 + Math.cos(a)*r, s/2 + Math.sin(a)*r);
                             else ctx.lineTo(s/2 + Math.cos(a)*r, s/2 + Math.sin(a)*r);
                         }
@@ -201,8 +192,7 @@ export class ParticleManager {
             
             sprite.tint = p.color ? PIXI.Color.shared.setValue(p.color).toNumber() : 0xffffff;
             
-            const isOpaque = p.type === 'blood' || p.type === 'dark_smoke' || p.type === 'dark_shockwave' || p.type === 'dark_implode';
-            sprite.blendMode = isOpaque ? 'normal' : 'add';
+            sprite.blendMode = 'normal';
         }
     }
     

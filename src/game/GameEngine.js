@@ -939,19 +939,19 @@ export class GameEngine {
             // Trails
             if (!p.isAoe && this.frameCount % 2 === 0) {
                 if (p.type === 'dual_laser') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
-                else if (p.type === 'lightning') this.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'spark', 0.8);
-                else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 2, 'spark', 1.0);
-                else if (p.type === 'repair_beam') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 0.5);
-                else if (p.type === 'missile') this.addParticle(p.x, p.y, '#ff4500', 3, 'spark', 1.0);
-                else if (p.type === 'data_pulse') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
-                else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 2, 'spark', 0.8);
+                else if (p.type === 'lightning') this.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'star', 0.5);
+                else if (p.type === 'glitch_slash') this.addParticle(p.x, p.y, p.color, 1, 'slash', 0.8);
+                else if (p.type === 'repair_beam') this.addParticle(p.x, p.y, '#ffffff', 1, 'hex', 0.5);
+                else if (p.type === 'missile') this.addParticle(p.x, p.y, '#cccccc', 1, 'smoke', 0.6, { speed: 10 });
+                else if (p.type === 'data_pulse') this.addParticle(p.x, p.y, p.color, 1, 'hex', 0.5);
+                else if (p.type === 'phantom_orb') this.addParticle(p.x, p.y, p.color, 1, 'glow', 0.6);
                 else if (p.type === 'railgun') this.addParticle(p.x, p.y, '#ffffff', 1, 'spark', 1.2);
-                else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
+                else if (p.type === 'sonic_wave') this.addParticle(p.x, p.y, p.color, 1, 'ring', 0.5);
                 else if (p.type === 'supernova_beam') {
-                    this.addParticle(p.x, p.y, '#ffffff', 2, 'spark', 1.5);
-                    this.addParticle(p.x, p.y, p.color, 2, 'spark', 1.0);
+                    this.addParticle(p.x, p.y, '#ffffff', 1, 'star', 1.0);
+                    this.addParticle(p.x, p.y, p.color, 1, 'spark', 1.0);
                 }
-                else this.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
+                else this.addParticle(p.x, p.y, p.color, 1, 'glow', 0.5);
             }
 
             if (!p.isAoe) {
