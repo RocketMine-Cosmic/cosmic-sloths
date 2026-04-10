@@ -48,6 +48,25 @@ export class ParticleManager {
             slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png', 'slash'),
             shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png', 'shockwave'),
         };
+        
+        const loadSprite = (url) => {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.src = url;
+            return img;
+        };
+        
+        this.spriteSheets = {
+            explosion_anim: {
+                img: loadSprite('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/f01e56245_lava_rock_blob_sheet.png'), // Placeholder URL (swap with actual explosion 4x4 sheet)
+                frames: 16, cols: 4, rows: 4, duration: 0.4
+            },
+            magic_impact: {
+                img: loadSprite('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/c045ec43a_coral_bloom_sheet.png'), // Placeholder URL (swap with actual magic 4x4 sheet)
+                frames: 16, cols: 4, rows: 4, duration: 0.3
+            }
+        };
+
         this.tintCache = {};
         this.glowCache = {};
     }
@@ -181,6 +200,30 @@ export class ParticleManager {
             ctx.globalCompositeOperation = blendMode;
             ctx.globalAlpha = alpha;
 
+            if (p.type.startsWith('anim_')) {
+                const sheet = this.spriteSheets[p.animName];
+                if (sheet && sheet.img.complete && sheet.img.naturalWidth > 0) {
+                    const progress = 1 - (p.life / p.maxLife);
+                    let frame = Math.floor(progress * sheet.frames);
+                    if (frame >= sheet.frames) frame = sheet.frames - 1;
+                    
+                    const col = frame % sheet.cols;
+                    const row = Math.floor(frame / sheet.cols);
+                    const fw = sheet.img.width / sheet.cols;
+                    const fh = sheet.img.height / sheet.rows;
+                    
+                    if (p.color && p.color !== '#ffffff') {
+                        ctx.shadowColor = p.color;
+                        ctx.shadowBlur = 15;
+                    }
+                    
+                    ctx.drawImage(sheet.img, col * fw, row * fh, fw, fh, -p.size/2, -p.size/2, p.size, p.size);
+                    ctx.shadowBlur = 0;
+                }
+                ctx.restore();
+                return; // Skip rest of the drawing for animated sprites
+            }
+
             // DRAW HD TEXTURE
             let tex = null;
             let scaleMult = 1.5;
@@ -255,6 +298,30 @@ export class ParticleManager {
         ctx.restore();
     }
 
+    addAnim(x, y, animName, scale = 1, rotation = 0, color = null) {
+        const sheet = this.spriteSheets[animName];
+        if (!sheet) return;
+        
+        let p = this.pool.length > 0 ? this.pool.pop() : {};
+        
+        p.x = x;
+        p.y = y;
+        p.vx = 0;
+        p.vy = 0;
+        p.life = sheet.duration;
+        p.maxLife = sheet.duration;
+        p.color = color || '#ffffff';
+        p.tint = color || '#ffffff';
+        p.type = 'anim_' + animName;
+        p.size = 100 * scale;
+        p.rotation = rotation;
+        p.rotSpeed = 0;
+        p.animName = animName;
+        p.gravity = false;
+        
+        this.particles.push(p);
+    }
+
     addParticle(x, y, color, count, type = 'star', sizeMult = 1, options = {}) {
         for (let i = 0; i < count; i++) {
             const angle = options.angle !== undefined ? options.angle + (Math.random() - 0.5) * 0.8 : Math.random() * Math.PI * 2;
@@ -288,11 +355,13 @@ export class ParticleManager {
 
     createExplosion(x, y, color, scale = 1, sourceId = '') {
         const s = Math.min(scale, 2);
+        this.addAnim(x, y, 'explosion_anim', 2.0 * s, Math.random() * Math.PI * 2, color);
         this.addParticle(x, y, color, 12 * s, 'spark', 2 * s, { speed: 300 * s });
         this.addParticle(x, y, '#ffffff', 8 * s, 'star', 1.5 * s, { speed: 400 * s });
     }
 
     createHitEffect(x, y, color, angle, scale = 1) {
+        this.addAnim(x, y, 'magic_impact', 1.5 * scale, angle, color);
         this.addParticle(x, y, color, 4, 'spark', 1.2 * scale, { angle, speed: 260 * scale });
         this.addParticle(x, y, '#ffffff', 2, 'spark', 0.8 * scale, { angle, speed: 360 * scale });
     }
@@ -311,6 +380,7 @@ export class ParticleManager {
     createKillEffect(x, y, effectId) {
         switch (effectId) {
             case 'explosion':
+                this.addAnim(x, y, 'explosion_anim', 3.0, Math.random() * Math.PI * 2, '#ff4500');
                 this.addParticle(x, y, '#ffaa00', 1, 'flash', 3.0, { speed: 0, lifeBonus: -0.2 });
                 this.addParticle(x, y, '#ff4500', 12, 'flame', 2.0, { speed: 250 });
                 this.addParticle(x, y, '#555555', 8, 'smoke', 1.5, { speed: 150 });
