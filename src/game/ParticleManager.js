@@ -238,9 +238,6 @@ export class ParticleManager {
         const ctx = canvas.getContext('2d');
         
         ctx.drawImage(tex, 0, 0, canvas.width, canvas.height);
-        ctx.globalCompositeOperation = 'source-in';
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         const outlineCanvas = document.createElement('canvas');
         outlineCanvas.width = canvas.width;
