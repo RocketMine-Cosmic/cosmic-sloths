@@ -143,9 +143,9 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.shadowBlur = 20;
                 
                 let drawImg = walkImage;
-                if (playerColor && playerColor !== '#ffffff' && pm.getTintedTexture) {
-                    const tinted = pm.getTintedTexture(walkImage, playerColor);
-                    if (tinted && tinted.isReady) drawImg = tinted;
+                if (playerColor && playerColor !== '#ffffff' && pm.getOutlineTexture) {
+                    const outlined = pm.getOutlineTexture(walkImage, playerColor);
+                    if (outlined && outlined.isReady) drawImg = outlined;
                 }
                 
                 ctx.drawImage(drawImg, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
@@ -156,9 +156,9 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.shadowBlur = 20;
                 
                 let drawImg = staticImage;
-                if (playerColor && playerColor !== '#ffffff' && pm.getTintedTexture) {
-                    const tinted = pm.getTintedTexture(staticImage, playerColor);
-                    if (tinted && tinted.isReady) drawImg = tinted;
+                if (playerColor && playerColor !== '#ffffff' && pm.getOutlineTexture) {
+                    const outlined = pm.getOutlineTexture(staticImage, playerColor);
+                    if (outlined && outlined.isReady) drawImg = outlined;
                 }
                 
                 ctx.drawImage(drawImg, -size/2, -size/2, size, size);

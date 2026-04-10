@@ -525,10 +525,10 @@ export function renderGame() {
         const sy = row * frameHeight;
         
         let drawSheet = spriteSheet;
-        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getTintedTexture === 'function') {
-            const tinted = this.particleManager.getTintedTexture(spriteSheet, this.player.color);
-            if (tinted && tinted.isReady) {
-                drawSheet = tinted;
+        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getOutlineTexture === 'function') {
+            const outlined = this.particleManager.getOutlineTexture(spriteSheet, this.player.color);
+            if (outlined && outlined.isReady) {
+                drawSheet = outlined;
             }
         }
         
@@ -565,10 +565,10 @@ export function renderGame() {
         const size = this.player.radius * 3;
         
         let drawImg = this.player.image;
-        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getTintedTexture === 'function') {
-            const tinted = this.particleManager.getTintedTexture(this.player.image, this.player.color);
-            if (tinted && tinted.isReady) {
-                drawImg = tinted;
+        if (this.player.color && this.player.color !== '#ffffff' && this.particleManager && typeof this.particleManager.getOutlineTexture === 'function') {
+            const outlined = this.particleManager.getOutlineTexture(this.player.image, this.player.color);
+            if (outlined && outlined.isReady) {
+                drawImg = outlined;
             }
         }
         

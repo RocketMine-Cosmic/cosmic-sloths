@@ -152,6 +152,7 @@ export class ParticleManager {
 
         this.tintCache = {};
         this.glowCache = {};
+        this.outlineCache = {};
     }
 
     getGlowTexture(color, radius) {
@@ -212,6 +213,66 @@ export class ParticleManager {
         ctx.drawImage(tex, 0, 0, canvas.width, canvas.height);
         
         this.tintCache[color][tex.texName] = canvas;
+        return canvas;
+    }
+
+    getOutlineTexture(tex, color) {
+        if (!tex || (!tex.isReady && !tex.complete)) return tex;
+        if (!this.outlineCache) this.outlineCache = {};
+        if (!this.outlineCache[color]) this.outlineCache[color] = {};
+        
+        const texKey = tex.texName || tex.src || 'unknown';
+        if (!texKey || texKey === 'unknown') {
+            if (!tex._tempId) tex._tempId = Math.random().toString();
+            tex.texName = tex._tempId;
+        }
+
+        if (this.outlineCache[color][tex.texName]) return this.outlineCache[color][tex.texName];
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = tex.width || tex.naturalWidth || 128;
+        canvas.height = tex.height || tex.naturalHeight || 128;
+        if(canvas.width === 0 || canvas.height === 0) return tex;
+        canvas.texName = tex.texName;
+        canvas.isReady = true;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.drawImage(tex, 0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-in';
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const outlineCanvas = document.createElement('canvas');
+        outlineCanvas.width = canvas.width;
+        outlineCanvas.height = canvas.height;
+        const oCtx = outlineCanvas.getContext('2d');
+        
+        const d = 1;
+        
+        oCtx.drawImage(tex, -d, 0, canvas.width, canvas.height);
+        oCtx.drawImage(tex, d, 0, canvas.width, canvas.height);
+        oCtx.drawImage(tex, 0, -d, canvas.width, canvas.height);
+        oCtx.drawImage(tex, 0, d, canvas.width, canvas.height);
+        oCtx.drawImage(tex, -d, -d, canvas.width, canvas.height);
+        oCtx.drawImage(tex, d, -d, canvas.width, canvas.height);
+        oCtx.drawImage(tex, -d, d, canvas.width, canvas.height);
+        oCtx.drawImage(tex, d, d, canvas.width, canvas.height);
+        
+        oCtx.globalCompositeOperation = 'source-in';
+        oCtx.fillStyle = color;
+        oCtx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        oCtx.globalCompositeOperation = 'destination-out';
+        oCtx.drawImage(tex, 0, 0, canvas.width, canvas.height);
+        
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(outlineCanvas, 0, 0);
+        
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 3;
+        ctx.drawImage(outlineCanvas, 0, 0);
+        
+        this.outlineCache[color][tex.texName] = canvas;
         return canvas;
     }
 
