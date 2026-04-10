@@ -167,8 +167,7 @@ export function renderGame() {
     }
 
     if (this.enemyProjectiles) {
-        this.ctx.globalCompositeOperation = 'screen';
-        const texStar = this.particleManager?.textures?.star;
+        this.ctx.globalCompositeOperation = 'source-over';
         this.enemyProjectiles.forEach(p => {
             this.ctx.save();
             this.ctx.translate(p.x, p.y);
@@ -176,30 +175,21 @@ export function renderGame() {
                 this.ctx.rotate(Math.atan2(p.vy, p.vx));
             }
             
-            this.ctx.globalCompositeOperation = 'lighter';
-            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 3));
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, p.color || '#ff0000');
-            grad.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = grad;
+            this.ctx.fillStyle = p.color || '#ff0000';
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 3), 0, Math.PI * 2);
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 1.5), 0, Math.PI * 2);
             this.ctx.fill();
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 1.5;
+            this.ctx.stroke();
 
             this.ctx.fillStyle = '#ffffff';
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.8), 0, Math.PI * 2);
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.7), 0, Math.PI * 2);
             this.ctx.fill();
 
-            if (texStar && texStar.isReady) {
-                this.ctx.globalAlpha = 0.8;
-                this.ctx.drawImage(texStar, -p.radius*2.5, -p.radius*2.5, p.radius*5, p.radius*5);
-                this.ctx.globalAlpha = 1.0;
-            }
-            this.ctx.globalCompositeOperation = 'screen';
             this.ctx.restore();
         });
-        this.ctx.globalCompositeOperation = 'source-over';
     }
 
     const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
@@ -219,26 +209,17 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(angle + Math.PI/2); // Face direction of orbit
 
-            // Add HD aura - optimized
-            this.ctx.globalCompositeOperation = 'lighter';
+            // Sloth aura 
             const auraCol = isMastered ? '#ff0000' : '#8B4513';
             this.ctx.fillStyle = auraCol;
-            this.ctx.globalAlpha = 0.1;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
-            this.ctx.fill();
             this.ctx.globalAlpha = 0.2;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
             this.ctx.globalAlpha = 1.0;
             
             // Draw Sloth Head shape
             this.ctx.fillStyle = isMastered ? '#FF0000' : '#8B4513';
-            this.ctx.beginPath();
-            this.ctx.ellipse(0, 0, 8, 6, 0, 0, Math.PI*2); // Head
-            this.ctx.fill();
+            this.ctx.beginPath(); this.ctx.ellipse(0, 0, 8, 6, 0, 0, Math.PI*2); this.ctx.fill();
+            this.ctx.strokeStyle = '#000000'; this.ctx.lineWidth = 1; this.ctx.stroke();
             // Ears
             this.ctx.beginPath(); this.ctx.arc(-6, -4, 3, 0, Math.PI*2); this.ctx.fill();
             this.ctx.beginPath(); this.ctx.arc(6, -4, 3, 0, Math.PI*2); this.ctx.fill();
@@ -264,18 +245,10 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * 5); // Spin
             
-            // Add HD aura - optimized
-            this.ctx.globalCompositeOperation = 'lighter';
+            // Add HD aura
             this.ctx.fillStyle = '#32CD32';
-            this.ctx.globalAlpha = 0.1;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
-            this.ctx.fill();
             this.ctx.globalAlpha = 0.2;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, 15, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
             this.ctx.globalAlpha = 1.0;
             
             // Spiky Ball
@@ -310,12 +283,10 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * 3);
             
-            this.ctx.globalCompositeOperation = 'lighter';
             this.ctx.fillStyle = '#00ffff';
-            this.ctx.globalAlpha = 0.15;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 15, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.globalAlpha = 0.2;
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 10, 0, Math.PI * 2); this.ctx.fill();
             this.ctx.globalAlpha = 1.0;
-            this.ctx.globalCompositeOperation = 'source-over';
             
             this.ctx.fillStyle = '#00ffff';
             this.ctx.beginPath(); this.ctx.arc(0, 0, 6, 0, Math.PI * 2); this.ctx.fill();
@@ -341,12 +312,10 @@ export function renderGame() {
             this.ctx.translate(px, py);
             this.ctx.rotate(this.time * -4);
             
-            this.ctx.globalCompositeOperation = 'lighter';
             this.ctx.fillStyle = '#ff00ff';
             this.ctx.globalAlpha = 0.2;
-            this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
+            this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI * 2); this.ctx.fill();
             this.ctx.globalAlpha = 1.0;
-            this.ctx.globalCompositeOperation = 'source-over';
             
             this.ctx.fillStyle = '#111111';
             this.ctx.beginPath();
