@@ -549,9 +549,8 @@ export function renderGame() {
     const texSmoke = this.particleManager?.textures?.smoke;
 
     if (this.envEffect === 'neon_rain') {
-        this.ctx.globalCompositeOperation = 'screen';
         this.envParticles.forEach(p => {
-            this.ctx.globalAlpha = (p.life / 2) * 0.8;
+            this.ctx.globalAlpha = (p.life / 2) * 0.6;
             this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 3;
             this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05); this.ctx.stroke();
             this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); this.ctx.fill();
@@ -560,35 +559,33 @@ export function renderGame() {
                 this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 1; this.ctx.stroke();
             }
         });
-        this.ctx.globalAlpha = 1.0; this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.globalAlpha = 1.0;
     } else if (this.envEffect === 'fog') {
         this.envParticles.forEach(p => {
-            this.ctx.globalAlpha = 0.15 * (p.life / 10);
+            this.ctx.globalAlpha = 0.1 * (p.life / 10);
             if (texSmoke && texSmoke.isReady) {
                 this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
             } else {
                 const g = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                g.addColorStop(0, 'rgba(200,200,220,1)'); g.addColorStop(1, 'transparent');
+                g.addColorStop(0, 'rgba(200,200,220,0.8)'); g.addColorStop(1, 'transparent');
                 this.ctx.fillStyle = g; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); this.ctx.fill();
             }
         });
         this.ctx.globalAlpha = 1.0;
     } else if (this.envEffect === 'solar_flare') {
         this.envParticles.forEach(p => {
-            const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.4;
+            const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.2;
             this.ctx.globalAlpha = alpha;
             
             if (texSmoke && texSmoke.isReady) {
-                // Tint the smoke orange
                 this.ctx.fillStyle = '#ff6600';
                 this.ctx.beginPath();
                 this.ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
                 this.ctx.fill();
-                
                 this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
             } else {
                 const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-                gradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
+                gradient.addColorStop(0, 'rgba(255, 100, 0, 0.8)');
                 gradient.addColorStop(1, 'transparent');
                 this.ctx.fillStyle = gradient;
                 this.ctx.beginPath();
@@ -600,7 +597,7 @@ export function renderGame() {
         this.ctx.globalCompositeOperation = 'source-over';
         
         // Global orange tint pulsing
-        this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.05 + 0.05})`;
+        this.ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(this.time * 0.5) * 0.03 + 0.02})`;
         this.ctx.fillRect(this.camera.x - this.shakeX, this.camera.y - this.shakeY, this.canvas.width / this.zoom, this.canvas.height / this.zoom);
     }
     this.ctx.globalCompositeOperation = 'source-over';
