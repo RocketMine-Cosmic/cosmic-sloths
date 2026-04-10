@@ -1684,11 +1684,13 @@ export class GameEngine {
         }
 
         let color = isCrit ? '#ff4444' : (isFullyMastered ? '#ff00ff' : '#ffffff');
-        if (isWeakHit) {
-            color = '#ffdd00';
-            this.addDamageText(enemy.x, enemy.y - 30, 'WEAK SPOT!', '#ffdd00', false);
+        if (enemy.isBoss) {
+            if (isWeakHit) {
+                color = '#ffdd00';
+                this.addDamageText(enemy.x, enemy.y - 30, 'WEAK SPOT!', '#ffdd00', false);
+            }
+            this.addDamageText(enemy.x, enemy.y - 10, Math.floor(finalDamage), color, isCrit);
         }
-        this.addDamageText(enemy.x, enemy.y - 10, Math.floor(finalDamage), color, isCrit);
         SFXManager.playEnemyHit();
     }
 
