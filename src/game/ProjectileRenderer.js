@@ -394,23 +394,48 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.beginPath(); ctx.arc(0, 0, p.radius*0.3, 0, Math.PI*2); ctx.fill();
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'toxic_cloud') {
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = Math.min(1, p.life) * 0.15;
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            for (let i = 0; i < 5; i++) {
-                ctx.beginPath();
-                ctx.arc(
-                    Math.cos(time * 2 + i) * p.radius * 0.3, 
-                    Math.sin(time * 2 + i) * p.radius * 0.3, 
-                    p.radius * 0.8, 0, Math.PI*2
-                );
-                ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Fade in and fade out
+            const alpha = Math.min(1, p.life) * 0.35;
+            ctx.globalAlpha = alpha;
+            
+            if (texSmoke && texSmoke.isReady) {
+                const tintedSmoke = particleManager.getTintedTexture(texSmoke, p.color);
+                const drawTex = (tintedSmoke && tintedSmoke.isReady) ? tintedSmoke : texSmoke;
+                
+                for(let i=0; i<3; i++) {
+                    ctx.save();
+                    const rot = time * (0.3 + i * 0.15) * (i % 2 === 0 ? 1 : -1) + p.x;
+                    ctx.rotate(rot);
+                    const scale = 1.1 + Math.sin(time * 1.5 + i) * 0.15;
+                    const r = p.radius * scale;
+                    
+                    ctx.drawImage(drawTex, -r, -r, r * 2, r * 2);
+                    ctx.restore();
+                }
+            } else {
+                ctx.fillStyle = p.color;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.cos(time + i) * p.radius * 0.2, 
+                        Math.sin(time + i) * p.radius * 0.2, 
+                        p.radius * 0.8, 0, Math.PI*2
+                    );
+                    ctx.fill();
+                }
             }
-            ctx.globalAlpha = Math.min(1, p.life) * 0.8;
+            
+            // Soft boundary
+            ctx.globalAlpha = alpha * 1.2;
             ctx.strokeStyle = p.color;
             ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.stroke();
+            ctx.setLineDash([15, 20]);
+            ctx.lineDashOffset = -time * 15;
+            ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.95, 0, Math.PI*2); ctx.stroke();
+            ctx.setLineDash([]);
+            
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'aegis_matrix') {
             ctx.globalCompositeOperation = 'screen';
