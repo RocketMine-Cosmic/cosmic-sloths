@@ -183,10 +183,8 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 cancelAnimationFrame(stateRef.current.animId);
                 stateRef.current.animId = null;
             }
-            if (pm && pm.app) {
-                try {
-                    pm.app.destroy(true, { children: true, texture: true, baseTexture: true });
-                } catch(e) {}
+            if (pm) {
+                pm.destroy();
             }
         };
     }, [trailId, killEffectId, playerColor, charId]);
@@ -194,12 +192,14 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
     return (
         <div className="relative w-full h-[160px] rounded-md border border-slate-700 bg-slate-950 overflow-hidden">
             <canvas
+                key={`2d-${trailId}-${killEffectId}-${charId}`}
                 ref={canvasRef}
                 width={320}
                 height={160}
                 className="absolute inset-0 w-full h-full object-cover z-0"
             />
             <canvas
+                key={`pixi-${trailId}-${killEffectId}-${charId}`}
                 ref={pixiCanvasRef}
                 width={320}
                 height={160}

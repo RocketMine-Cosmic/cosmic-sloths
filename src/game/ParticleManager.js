@@ -7,6 +7,7 @@ export class ParticleManager {
         this.isReady = false;
         this.sprites = [];
         this.spritePool = [];
+        this.isDestroyed = false;
         
         if (pixiCanvas) {
             this.app = new PIXI.Application();
@@ -17,6 +18,10 @@ export class ParticleManager {
                 clearBeforeRender: true,
                 antialias: true
             }).then(() => {
+                if (this.isDestroyed) {
+                    try { this.app.destroy(true, { children: true, texture: true, baseTexture: true }); } catch(e) {}
+                    return;
+                }
                 this.container = new PIXI.Container();
                 this.app.stage.addChild(this.container);
                 
@@ -308,6 +313,19 @@ export class ParticleManager {
         if (config) {
             const color = config.colors[frameCount % config.colors.length];
             this.addParticle(x, y, color, config.count, config.type, config.size, config.options);
+        }
+    }
+
+    destroy() {
+        this.isDestroyed = true;
+        this.isReady = false;
+        if (this.app) {
+            try {
+                this.app.destroy(true, { children: true, texture: true, baseTexture: true });
+            } catch (e) {
+                console.error("PIXI destroy error:", e);
+            }
+            this.app = null;
         }
     }
 }

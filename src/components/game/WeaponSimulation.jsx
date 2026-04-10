@@ -235,10 +235,8 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
                 cancelAnimationFrame(stateRef.current.animId);
                 stateRef.current.animId = null;
             }
-            if (particleManager && particleManager.app) {
-                try {
-                    particleManager.app.destroy(true, { children: true, texture: true, baseTexture: true });
-                } catch(e) {}
+            if (particleManager) {
+                particleManager.destroy();
             }
         };
     }, [weaponId, isMastered]);
@@ -246,12 +244,14 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
     return (
         <div className="relative w-full h-[200px] rounded-xl border border-slate-700 bg-slate-950 overflow-hidden">
             <canvas
+                key={`2d-${weaponId}-${isMastered}`}
                 ref={canvasRef}
                 width={400}
                 height={200}
                 className="absolute inset-0 w-full h-full object-cover z-0"
             />
             <canvas
+                key={`pixi-${weaponId}-${isMastered}`}
                 ref={pixiCanvasRef}
                 width={400}
                 height={200}
