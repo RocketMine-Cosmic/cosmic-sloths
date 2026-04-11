@@ -5,13 +5,17 @@ export default function DownloadSkus() {
     const [downloaded, setDownloaded] = useState(false);
 
     const handleDownload = () => {
-        let csv = "Category,Item Name,Price (Tokens)\n";
+        const generateSku = (category, name) => {
+            return `${category.substring(0, 3).toUpperCase()}-${name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}`;
+        };
+
+        let csv = "SKU,Category,Item Name,Price (Tokens)\n";
         
-        csv += "In-Game,Banish Upgrade,1\n";
-        csv += "In-Game,Reroll Upgrades,2\n";
-        csv += "In-Game,Squad Ultimate,4\n";
-        csv += "In-Game,Emergency Revive,4\n";
-        csv += "In-Game,XP Session Buff,10\n";
+        csv += `IG-BANISH,In-Game,Banish Upgrade,1\n`;
+        csv += `IG-REROLL,In-Game,Reroll Upgrades,2\n`;
+        csv += `IG-SQUADULT,In-Game,Squad Ultimate,4\n`;
+        csv += `IG-EMREVIVE,In-Game,Emergency Revive,4\n`;
+        csv += `IG-XPSESSION,In-Game,XP Session Buff,10\n`;
 
         const stats = ['Damage', 'Health', 'Speed', 'Magnet', 'Regen', 'Cooldown', 'Luck'];
         const tiers = [
@@ -23,7 +27,9 @@ export default function DownloadSkus() {
         stats.forEach(stat => {
             tiers.forEach(tier => {
                 for(let i=1; i<=5; i++) {
-                    csv += `Stat Upgrades,${tier.name} ${stat} Lv. ${i},${tier.costs[i-1]}\n`;
+                    const itemName = `${tier.name} ${stat} Lv. ${i}`;
+                    const sku = `STAT-${tier.name.substring(0,3).toUpperCase()}-${stat.substring(0,4).toUpperCase()}-L${i}`;
+                    csv += `${sku},Stat Upgrades,${itemName},${tier.costs[i-1]}\n`;
                 }
             });
         });
@@ -34,7 +40,9 @@ export default function DownloadSkus() {
             wStats.forEach(ws => {
                 tiers.forEach(tier => {
                     for(let i=1; i<=5; i++) {
-                        csv += `Weapon Upgrades,${tier.name} ${w} ${ws} Lv. ${i},${tier.costs[i-1]}\n`;
+                        const itemName = `${tier.name} ${w} ${ws} Lv. ${i}`;
+                        const sku = `WEAP-${tier.name.substring(0,3).toUpperCase()}-${w.replace(/[^a-zA-Z0-9]/g, '').substring(0,6).toUpperCase()}-${ws.substring(0,3).toUpperCase()}-L${i}`;
+                        csv += `${sku},Weapon Upgrades,${itemName},${tier.costs[i-1]}\n`;
                     }
                 });
             });
@@ -62,7 +70,9 @@ export default function DownloadSkus() {
         chars.forEach(c => {
             c.t.forEach((talent, idx) => {
                 talentTiers.forEach(tier => {
-                    csv += `Character Talents,${tier.name} ${c.name} - ${talent},${tier.costs[idx]}\n`;
+                    const itemName = `${tier.name} ${c.name} - ${talent}`;
+                    const sku = `TALENT-${tier.name.substring(0,3).toUpperCase()}-${c.name.substring(0,4).toUpperCase()}-${talent.replace(/[^a-zA-Z0-9]/g, '').substring(0,6).toUpperCase()}`;
+                    csv += `${sku},Character Talents,${itemName},${tier.costs[idx]}\n`;
                 });
             });
         });
@@ -80,7 +90,10 @@ export default function DownloadSkus() {
             {name: 'SkyByte: Solar Ace', cost: 50}
         ];
 
-        skins.forEach(s => csv += `Character Skins,${s.name},${s.cost}\n`);
+        skins.forEach(s => {
+            const sku = `SKIN-${s.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}`;
+            csv += `${sku},Character Skins,${s.name},${s.cost}\n`;
+        });
 
         const trails = [
             {name: 'Fire Trail', cost: 25}, {name: 'Ice Trail', cost: 25}, {name: 'Toxic Trail', cost: 25},
@@ -89,7 +102,10 @@ export default function DownloadSkus() {
             {name: 'Nebula Dust', cost: 380}, {name: 'Rainbow Trail', cost: 500}
         ];
 
-        trails.forEach(t => csv += `Player Trails,${t.name},${t.cost}\n`);
+        trails.forEach(t => {
+            const sku = `TRAIL-${t.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}`;
+            csv += `${sku},Player Trails,${t.name},${t.cost}\n`;
+        });
 
         const kills = [
             {name: 'Explosion', cost: 30}, {name: 'Freeze Burst', cost: 30}, {name: 'Vaporize', cost: 30},
@@ -97,7 +113,10 @@ export default function DownloadSkus() {
             {name: 'Black Hole', cost: 250}, {name: 'Gold Shatter', cost: 300}
         ];
 
-        kills.forEach(k => csv += `Kill Effects,${k.name},${k.cost}\n`);
+        kills.forEach(k => {
+            const sku = `KILLEFF-${k.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}`;
+            csv += `${sku},Kill Effects,${k.name},${k.cost}\n`;
+        });
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
