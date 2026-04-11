@@ -186,7 +186,10 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
 
         return () => {
             observer.disconnect();
-            if (stateRef.current.animId) cancelAnimationFrame(stateRef.current.animId);
+            if (stateRef.current.animId) {
+                cancelAnimationFrame(stateRef.current.animId);
+                stateRef.current.animId = null;
+            }
         };
     }, [trailId, killEffectId, playerColor, charId]);
 
