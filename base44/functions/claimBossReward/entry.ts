@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
         const uniqueMilestones = [...new Set(claimed_milestones)].sort((a,b) => a - b);
         await base44.asServiceRole.entities.GlobalBossContribution.update(cont.id, { claimed_milestones: uniqueMilestones });
         
-        const goldReward = levelNum * 1000;
+        const goldReward = levelNum * 250;
         return Response.json({ status: 'success', reward: { type: 'gold', id: goldReward.toString() } });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

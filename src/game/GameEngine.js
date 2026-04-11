@@ -1333,8 +1333,8 @@ export class GameEngine {
             }
 
             if (e.isWorldBoss) {
-                e.damage += dt * 2; // Damage scales infinitely over time
-                e.speedMult = (e.speedMult || 1) + (dt * 0.01); // Slowly gets faster over time to ensure it catches the player
+                e.damage += dt * 15; // Damage scales infinitely over time much faster
+                e.speedMult = (e.speedMult || 1) + (dt * 0.05); // Quickly gets faster over time to ensure it catches the player
             }
             if (e.id === 'void_crawler') {
                 if (!e.burrowTimer) e.burrowTimer = 3;

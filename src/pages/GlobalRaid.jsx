@@ -234,7 +234,7 @@ export default function GlobalRaid({ isCarousel }) {
                                                         {unclaimedLevels.map(lvl => (
                                                             <div key={lvl} className="p-2 rounded-lg border border-emerald-500/50 bg-emerald-950/20 flex flex-col items-center justify-center text-center gap-1">
                                                                 <div className="text-xs font-bold text-slate-300">Level {lvl}</div>
-                                                                <div className="text-yellow-400 text-xs font-mono mb-1">{lvl * 1000} Gold</div>
+                                                                <div className="text-yellow-400 text-xs font-mono mb-1">{lvl * 250} Gold</div>
                                                                 <button 
                                                                     onClick={() => handleClaimBossReward(lvl)}
                                                                     disabled={claimingLevel !== null}
