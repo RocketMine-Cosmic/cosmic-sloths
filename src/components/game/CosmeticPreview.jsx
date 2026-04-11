@@ -72,7 +72,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             // Kill on contact
             dummies.forEach(d => {
                 if (!d.alive) return;
-                if (Math.hypot(d.x - px, d.y - py) < 28) {
+                if (Math.hypot(d.x - px, d.y - py) < 40) {
                     d.alive = false;
                     d.respawn = 2.5;
                     if (killEffectId !== 'none') {
@@ -95,8 +95,8 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             // Grid (drawn once cheaply)
             ctx.strokeStyle = 'rgba(255,255,255,0.04)';
             ctx.lineWidth = 1;
-            for (let gx = 0; gx < W; gx += 30) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
-            for (let gy = 0; gy < H; gy += 30) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+            for (let gx = 0; gx < W; gx += 50) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+            for (let gy = 0; gy < H; gy += 50) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
             // Draw particles
             pm.draw(ctx, 0, 0, W, H);
@@ -109,11 +109,11 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.lineWidth = 2;
                 ctx.fillStyle = 'rgba(255,50,50,0.15)';
                 ctx.beginPath();
-                ctx.arc(d.x, d.y, 13, 0, Math.PI * 2);
+                ctx.arc(d.x, d.y, 20, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
                 ctx.fillStyle = '#ff6666';
-                ctx.font = 'bold 13px monospace';
+                ctx.font = 'bold 16px monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('✕', d.x, d.y);
@@ -122,7 +122,7 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             // Player Character Render
             const vx = Math.cos(time * 0.8);
             const facingLeft = vx < 0;
-            const radius = 10;
+            const radius = 16;
             
             ctx.save();
             ctx.translate(px, py);
@@ -176,10 +176,10 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
 
             // Label
             ctx.fillStyle = 'rgba(255,255,255,0.25)';
-            ctx.font = '9px monospace';
+            ctx.font = '14px monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'alphabetic';
-            ctx.fillText('fly into enemies to trigger kill effect', W / 2, H - 6);
+            ctx.fillText('fly into enemies to trigger kill effect', W / 2, H - 12);
 
             stateRef.current.animId = requestAnimationFrame(loop);
         };
@@ -196,8 +196,8 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
     return (
         <canvas
             ref={canvasRef}
-            width={320}
-            height={160}
+            width={640}
+            height={320}
             className="w-full h-full object-cover rounded-md border border-slate-700 bg-slate-950"
         />
     );
