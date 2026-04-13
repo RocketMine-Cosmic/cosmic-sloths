@@ -37,7 +37,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         const originalRadius = p.radius;
         // Keep VFX a tad smaller and prevent visual scaling with area of attack for standard projectiles
         if (!p.isAoe) {
-            p.radius = Math.min(originalRadius, p.type === 'supernova_beam' ? 12 : (p.type === 'railgun' ? 6 : 4.5));
+            p.radius = Math.min(originalRadius, p.type === 'supernova_beam' ? 15 : (p.type === 'railgun' ? 8 : 6));
         }
 
         ctx.save();
