@@ -987,7 +987,10 @@ export class GameEngine {
                                             // Impact Effects
                                             if (!e.isWorldBoss || Math.random() < 0.1) {
                                                 this.shake(0.1);
-                                                this.hitStopTimer = 0.02;
+                                                // Only trigger hit-stop on crits or very rarely to prevent movement slowdowns
+                                                if (Math.random() < 0.05) {
+                                                    this.hitStopTimer = 0.01;
+                                                }
                                                 this.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
                                             }
                                             
