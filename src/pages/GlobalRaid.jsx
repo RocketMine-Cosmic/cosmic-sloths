@@ -127,7 +127,15 @@ export default function GlobalRaid({ isCarousel }) {
         const week_id = moment().format('YYYY-[W]ww');
         const seasonNum = Math.floor(moment().week() / 4) + 1;
         const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-        base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id }).catch(console.error);
+        
+        if (!window.tokenSpendQueue) window.tokenSpendQueue = 0;
+        window.tokenSpendQueue += 5;
+        if (window.tokenSpendTimeout) clearTimeout(window.tokenSpendTimeout);
+        window.tokenSpendTimeout = setTimeout(() => {
+            const amountToSend = window.tokenSpendQueue;
+            window.tokenSpendQueue = 0;
+            base44.functions.invoke('recordTokenSpend', { amount: amountToSend, week_id, season_id }).catch(console.error);
+        }, 1000);
 
         toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
     };
