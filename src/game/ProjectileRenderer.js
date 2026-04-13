@@ -519,8 +519,17 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         } else if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse' || p.type === 'seismic_shockwave' || p.type === 'quantum_collapse') {
             ctx.globalCompositeOperation = 'screen';
             ctx.strokeStyle = p.color || '#ff00ff';
-            ctx.lineWidth = p.type === 'quantum_collapse' ? 4 : Math.max(1, 4 * p.life);
-            ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
+            ctx.lineWidth = p.type === 'quantum_collapse' ? 4 : Math.max(3, 8 * p.life);
+            ctx.globalAlpha = Math.max(0.2, Math.min(1, p.life * 3));
+            
+            if (p.type === 'nova_pulse' || p.type === 'laser_nova_pulse') {
+                const glow = getGlowTexture(p.color || '#ff00ff', p.radius * 1.2);
+                if (glow) {
+                    ctx.globalAlpha = ctx.globalAlpha * 0.4;
+                    ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+                    ctx.globalAlpha = ctx.globalAlpha / 0.4;
+                }
+            }
             
             // Clean shockwave rings
             if (p.type === 'quantum_collapse') {
