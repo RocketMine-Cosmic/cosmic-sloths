@@ -9,7 +9,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
     };
 
     return (
-        <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none" style={{ zIndex: 100 }}>
+        <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
             <div className="flex justify-between items-start gap-1 md:gap-4">
                 {/* Top Left: HP & Equipped */}
                 <div className="w-24 md:w-48 pointer-events-auto shrink-0 flex flex-col gap-2">
