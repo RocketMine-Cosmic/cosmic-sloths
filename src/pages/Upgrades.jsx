@@ -13,8 +13,8 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [15, 30, 60, 120, 240] },
-    { id: 'weekly', name: 'Weekly', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [8, 15, 30, 60, 120] },
-    { id: 'seasonal', name: 'Seasonal', goldCosts: [1500, 3000, 6000, 12000, 24000], tokenCosts: [20, 40, 80, 160, 320] }
+    { id: 'weekly', name: 'Weekly', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [4, 8, 15, 30, 60] },
+    { id: 'seasonal', name: 'Seasonal', goldCosts: [1500, 3000, 6000, 12000, 24000], tokenCosts: [10, 20, 40, 80, 160] }
 ];
 
 const STATS = [
