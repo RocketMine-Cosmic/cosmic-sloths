@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
         const { amount, week_id, season_id } = await req.json();
 
         if (typeof amount !== 'number' || amount <= 0 || !Number.isInteger(amount) || amount > 100000) {
-            console.warn(`Suspicious token spend attempt by ${user.full_name || user.email}: amount=${amount}`);
+            console.warn(`Suspicious token spend attempt by ${user?.full_name || user?.email}: amount=${amount}`);
             return Response.json({ error: 'Invalid amount' }, { status: 400 });
         }
 

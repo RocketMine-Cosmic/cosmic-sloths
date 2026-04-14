@@ -135,10 +135,12 @@ export default function Hub({ isCarousel }) {
         tokenSpendTimeout = setTimeout(() => {
             const amountToSend = tokenSpendQueue;
             tokenSpendQueue = 0;
-            const week_id = moment().format('YYYY-[W]ww');
-            const seasonNum = Math.floor(moment().week() / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            base44.functions.invoke('recordTokenSpend', { amount: amountToSend, week_id, season_id }).catch(console.error);
+            if (amountToSend > 0) {
+                const week_id = moment().format('YYYY-[W]ww');
+                const seasonNum = Math.floor(moment().week() / 4) + 1;
+                const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+                base44.functions.invoke('recordTokenSpend', { amount: amountToSend, week_id, season_id }).catch(console.error);
+            }
         }, 1000);
     };
 

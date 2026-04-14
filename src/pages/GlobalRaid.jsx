@@ -134,7 +134,9 @@ export default function GlobalRaid({ isCarousel }) {
         window.tokenSpendTimeout = setTimeout(() => {
             const amountToSend = window.tokenSpendQueue;
             window.tokenSpendQueue = 0;
-            base44.functions.invoke('recordTokenSpend', { amount: amountToSend, week_id, season_id }).catch(console.error);
+            if (amountToSend > 0) {
+                base44.functions.invoke('recordTokenSpend', { amount: amountToSend, week_id, season_id }).catch(console.error);
+            }
         }, 1000);
 
         toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
