@@ -13,9 +13,6 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 
-let tokenSpendQueue = 0;
-let tokenSpendTimeout = null;
-
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
@@ -130,18 +127,12 @@ export default function Hub({ isCarousel }) {
     }, []);
 
     const recordTokenSpend = (amount) => {
-        tokenSpendQueue += amount;
-        if (tokenSpendTimeout) clearTimeout(tokenSpendTimeout);
-        tokenSpendTimeout = setTimeout(() => {
-            const amountToSend = tokenSpendQueue;
-            tokenSpendQueue = 0;
-            if (amountToSend > 0) {
-                const week_id = moment().format('YYYY-[W]ww');
-                const seasonNum = Math.floor(moment().week() / 4) + 1;
-                const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-                base44.functions.invoke('recordTokenSpend', { amount: amountToSend, week_id, season_id }).catch(console.error);
-            }
-        }, 1000);
+        if (amount > 0) {
+            const week_id = moment().format('YYYY-[W]ww');
+            const seasonNum = Math.floor(moment().week() / 4) + 1;
+            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
+        }
     };
 
     const handleBuyCharacter = (char, currency = 'gold') => {
