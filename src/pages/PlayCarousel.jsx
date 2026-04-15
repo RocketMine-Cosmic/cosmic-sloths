@@ -16,7 +16,6 @@ import Profile from './Profile';
 import GlobalRaid from './GlobalRaid';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
-import BottomTabBar from '../components/game/BottomTabBar';
 
 export default function PlayCarousel() {
     const navigate = useNavigate();
@@ -38,10 +37,6 @@ export default function PlayCarousel() {
         emblaApi.on('select', onSelect);
         onSelect();
     }, [emblaApi]);
-
-    const scrollToTab = (index) => {
-        emblaApi?.scrollTo(index, true);
-    };
 
     return (
         <div className="h-[100dvh] bg-[#0b0416] flex flex-col overflow-hidden select-none relative font-sans">
@@ -84,7 +79,7 @@ export default function PlayCarousel() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden pb-[56px] md:pb-0" ref={emblaRef}>
+            <div className="flex-1 overflow-hidden" ref={emblaRef}>
                 <div className="flex h-full touch-pan-y">
                     <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
                         <MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} />
@@ -124,7 +119,6 @@ export default function PlayCarousel() {
                     </div>
                 </div>
             </div>
-            <BottomTabBar selectedIndex={selectedIndex} onSelect={scrollToTab} />
         </div>
     );
 }
