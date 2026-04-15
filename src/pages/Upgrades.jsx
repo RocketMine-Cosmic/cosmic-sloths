@@ -448,9 +448,9 @@ export default function Upgrades({ isCarousel }) {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                         {upgradeTypes.map(stat => {
                             const level = save[saveKey]?.[weapon.id]?.[stat.id] || 0;
-                            const cost = typeConfig.goldCosts[level];
-                            const tokenCost = typeConfig.tokenCosts[level];
                             const isMax = level >= typeConfig.goldCosts.length;
+                            const cost = isMax ? 0 : (typeConfig.goldCosts[level] || 0);
+                            const tokenCost = isMax ? 0 : (typeConfig.tokenCosts[level] || 0);
                             const canAffordGold = save.gold >= cost;
                             const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
                             const Icon = stat.icon;
@@ -608,9 +608,9 @@ export default function Upgrades({ isCarousel }) {
                             (talent.requires && allUnlocked.includes(talent.requires) && (!talent.excludes || !allUnlocked.includes(talent.excludes)))
                         );
                         
-                        const costTier = (talent.tier - 1) * 2;
-                        const goldCost = typeConfig.goldCosts[costTier];
-                        const tokenCost = typeConfig.tokenCosts[costTier];
+                        const costTier = Math.min((talent.tier - 1) * 2, typeConfig.goldCosts.length - 1);
+                        const goldCost = typeConfig.goldCosts[costTier] || 0;
+                        const tokenCost = typeConfig.tokenCosts[costTier] || 0;
                         const canAffordGold = save.gold >= goldCost;
                         const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
                         
