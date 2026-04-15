@@ -296,13 +296,13 @@ export default function Upgrades({ isCarousel }) {
 
     const renderStats = () => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
-        if (!typeConfig) return null;
+        if (!typeConfig || !typeConfig.goldCosts || !typeConfig.tokenCosts) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
         
         return (
             <div className="space-y-2 md:space-y-4">
                 <h2 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">Base Stats</h2>
-                {STATS.map(stat => {
+                {STATS.filter(Boolean).map(stat => {
                     const upgrades = save[saveKey] || {};
                     const level = upgrades[stat.id] || 0;
                     const isMax = level >= typeConfig.goldCosts.length;
