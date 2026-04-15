@@ -8,6 +8,7 @@ import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import ForgePanel from '../components/game/ForgePanel';
+import StatPips, { SmallStatPips } from '../components/game/StatPips';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 
@@ -328,11 +329,7 @@ export default function Upgrades({ isCarousel }) {
                                         {activeCategory === 'weekly' && `${stat.week} per level`}
                                         {activeCategory === 'seasonal' && `${stat.season} per level`}
                                     </div>
-                                    <div className="flex gap-1 mt-1">
-                                        {Array.from({length: 5}, (_, i) => (
-                                            <div key={`${stat.id}-pip-${i}`} className={`w-2 h-2 md:w-4 md:h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
-                                        ))}
-                                    </div>
+                                    <StatPips level={level} statId={stat.id} />
                                 </div>
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
@@ -467,11 +464,7 @@ export default function Upgrades({ isCarousel }) {
                                                 <div className="text-[10px] text-slate-500 leading-tight">{stat.desc}</div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-1">
-                                             {Array.from({length: 5}, (_, i) => (
-                                                 <div key={`${stat.id}-pip-${i}`} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
-                                             ))}
-                                         </div>
+                                        <SmallStatPips level={level} statId={stat.id} />
                                     </div>
                                     <div className="flex gap-2 w-full">
                                         <button
