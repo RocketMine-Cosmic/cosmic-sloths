@@ -296,6 +296,7 @@ export default function Upgrades({ isCarousel }) {
 
     const renderStats = () => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
         
         return (
@@ -377,6 +378,7 @@ export default function Upgrades({ isCarousel }) {
         ];
         
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
 
         const weapon = baseWeapons.find(w => w.id === selectedWeapon) || baseWeapons[0];
@@ -506,6 +508,7 @@ export default function Upgrades({ isCarousel }) {
 
     const renderTalents = () => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
 
         const unlockedChars = save.unlockedCharacters || ['neobyte'];
