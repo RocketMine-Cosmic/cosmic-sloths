@@ -299,8 +299,7 @@ export default function Upgrades({ isCarousel }) {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
         if (!typeConfig || !typeConfig.goldCosts || !typeConfig.tokenCosts) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
-        const upgradesObj = save[saveKey];
-        if (!upgradesObj || typeof upgradesObj !== 'object') return null;
+        const upgradesObj = save[saveKey] || {};
         
         return (
             <div className="space-y-2 md:space-y-4">
