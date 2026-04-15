@@ -328,7 +328,7 @@ export default function Upgrades({ isCarousel }) {
                                     </div>
                                     <div className="flex gap-1 mt-1">
                                         {Array.from({length: 5}, (_, i) => (
-                                            <div key={i} className={`w-2 h-2 md:w-4 md:h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
+                                            <div key={`${stat.id}-pip-${i}`} className={`w-2 h-2 md:w-4 md:h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
                                         ))}
                                     </div>
                                 </div>
@@ -467,9 +467,9 @@ export default function Upgrades({ isCarousel }) {
                                         </div>
                                         <div className="flex gap-1">
                                              {Array.from({length: 5}, (_, i) => (
-                                                 <div key={i} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                                                 <div key={`${stat.id}-pip-${i}`} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
                                              ))}
-                                        </div>
+                                         </div>
                                     </div>
                                     <div className="flex gap-2 w-full">
                                         <button
