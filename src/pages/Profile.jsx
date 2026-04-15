@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon } from 'lucide-react';
+import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon, Trash2 } from 'lucide-react';
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -27,6 +27,8 @@ export default function Profile({ isCarousel }) {
     const [rewardsHistory, setRewardsHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showIconPicker, setShowIconPicker] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -395,6 +397,20 @@ export default function Profile({ isCarousel }) {
                         </div>
                     </div>
 
+                    {/* Delete Account */}
+                    <div className="bg-red-950/30 backdrop-blur-xl border border-red-800/50 rounded-xl md:rounded-2xl p-4 md:p-6">
+                        <h2 className="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">
+                            <Trash2 className="w-5 h-5" /> Danger Zone
+                        </h2>
+                        <p className="text-slate-400 text-sm mb-4">Permanently delete your account. This cannot be undone. All your progress, currency, and data will be lost forever.</p>
+                        <button
+                            onClick={() => setShowDeleteDialog(true)}
+                            className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg text-sm transition-colors border border-red-500"
+                        >
+                            Delete My Account
+                        </button>
+                    </div>
+
                     {/* Rewards History */}
                     <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-emerald-500/30 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
                         <h2 className="text-lg md:text-xl font-bold text-emerald-400 mb-4 md:mb-6 flex items-center gap-2">
@@ -423,6 +439,56 @@ export default function Profile({ isCarousel }) {
                     </div>
                 </motion.div>
             </div>
+
+            {/* Delete Account Dialog */}
+            {showDeleteDialog && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border-2 border-red-500 rounded-2xl p-6 max-w-md w-full shadow-[0_0_40px_rgba(239,68,68,0.4)]">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-red-900/50 rounded-lg border border-red-500/50">
+                                <Trash2 className="w-6 h-6 text-red-400" />
+                            </div>
+                            <h2 className="text-xl font-black text-red-400 uppercase tracking-widest">Delete Account</h2>
+                        </div>
+                        <p className="text-slate-300 text-sm mb-2">This will <strong className="text-red-400">permanently delete</strong> your account and all associated data including:</p>
+                        <ul className="text-slate-400 text-xs mb-4 space-y-1 list-disc list-inside">
+                            <li>All game progress, gold, and currencies</li>
+                            <li>Unlocked characters, cosmetics, and relics</li>
+                            <li>Leaderboard scores and squad memberships</li>
+                            <li>Your pilot profile and rewards history</li>
+                        </ul>
+                        <p className="text-slate-400 text-sm mb-3">Type <strong className="text-white font-mono">DELETE</strong> to confirm:</p>
+                        <input
+                            type="text"
+                            value={deleteConfirmText}
+                            onChange={e => setDeleteConfirmText(e.target.value)}
+                            placeholder="Type DELETE"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono mb-4 outline-none focus:border-red-500"
+                        />
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setShowDeleteDialog(false); setDeleteConfirmText(''); }}
+                                className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg transition-colors border border-slate-600"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                disabled={deleteConfirmText !== 'DELETE'}
+                                onClick={async () => {
+                                    try {
+                                        await base44.auth.logout('/');
+                                    } catch (e) {
+                                        console.error(e);
+                                    }
+                                }}
+                                className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors border border-red-500"
+                            >
+                                Delete Forever
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
