@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
-import { Zap, Timer, Sparkles, ArrowLeft, Coffee, Shield, Heart, Magnet, ChevronLeft, ChevronRight, Coins, Hexagon, Puzzle } from 'lucide-react';
+import { Zap, Timer, Sparkles, ArrowLeft, Wind, Shield, Heart, Magnet, ChevronLeft, ChevronRight, Coins, Hexagon, Puzzle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
@@ -20,7 +20,7 @@ const UPGRADE_TYPES = [
 const STATS = [
     { id: 'damage', name: 'Plasma Output', icon: Zap, perm: '+2%', week: '+5%', season: '+10%' },
     { id: 'health', name: 'Hull Integrity', icon: Heart, perm: '+5', week: '+10', season: '+20' },
-    { id: 'speed', name: 'Thruster Speed', icon: Coffee, perm: '+2%', week: '+5%', season: '+10%' },
+    { id: 'speed', name: 'Thruster Speed', icon: Wind, perm: '+2%', week: '+5%', season: '+10%' },
     { id: 'magnet', name: 'Tractor Range', icon: Magnet, perm: '+5', week: '+15', season: '+30' },
     { id: 'regen', name: 'Nano-Repair', icon: Shield, perm: '+0.1', week: '+0.2', season: '+0.5' },
     { id: 'cooldown', name: 'System Cooling', icon: Timer, perm: '-2%', week: '-5%', season: '-10%' },
