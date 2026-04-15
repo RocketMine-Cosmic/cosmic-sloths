@@ -327,7 +327,7 @@ export default function Upgrades({ isCarousel }) {
                                         {activeCategory === 'seasonal' && `${stat.season} per level`}
                                     </div>
                                     <div className="flex gap-1 mt-1">
-                                        {[...Array(5)].map((_, i) => (
+                                        {Array.from({length: 5}, (_, i) => (
                                             <div key={i} className={`w-2 h-2 md:w-4 md:h-4 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-600'}`} />
                                         ))}
                                     </div>
@@ -466,9 +466,9 @@ export default function Upgrades({ isCarousel }) {
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <div key={i} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
-                                            ))}
+                                             {Array.from({length: 5}, (_, i) => (
+                                                 <div key={i} className={`w-2 h-2 rounded-sm ${i < level ? 'bg-cyan-500' : 'bg-slate-700'}`} />
+                                             ))}
                                         </div>
                                     </div>
                                     <div className="flex gap-2 w-full">
