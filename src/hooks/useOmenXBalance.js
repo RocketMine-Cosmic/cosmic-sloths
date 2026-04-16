@@ -30,39 +30,13 @@ export function useOmenXBalance() {
     const fetchBalance = useCallback(async () => {
         const auth = getAuthData();
         if (!auth) {
-            console.warn('[useOmenXBalance] No auth data found');
             setLoading(false);
             return;
         }
 
-        const token = auth.access_token || auth.accessToken;
         const walletAddress = auth.walletAddress || auth.wallet_address;
-        console.log('[useOmenXBalance] Auth found, wallet:', walletAddress?.slice(0, 6) + '...');
 
-        // 1. Try direct OmenX API calls with user's OAuth token
-        if (token) {
-            const BASE = 'https://staging.api.omen.foundation';
-            const endpoints = ['/v1/wallet', '/v1/users/me/wallet', '/v1/users/me', '/v1/profile'];
-            for (const ep of endpoints) {
-                try {
-                    const res = await fetch(`${BASE}${ep}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        const bal = extractBalance(data);
-                        console.log(`[useOmenXBalance] Direct API ${ep}: balance=${bal}`);
-                        if (bal !== null) {
-                            setBalance(bal);
-                            setLoading(false);
-                            return;
-                        }
-                    }
-                } catch {}
-            }
-        }
-
-        // 2. Fall back to backend function (server SDK, uses API key)
+        // Use backend function (server SDK, uses API key, no CORS issues)
         if (walletAddress) {
             try {
                 const res = await base44.functions.invoke('getOmenXBalance', {
@@ -70,18 +44,16 @@ export function useOmenXBalance() {
                     chainId: '56'
                 });
                 const bal = extractBalance(res.data);
-                console.log('[useOmenXBalance] Backend balance:', bal, 'raw:', res.data);
                 if (bal !== null) {
                     setBalance(bal);
                     setLoading(false);
                     return;
                 }
             } catch (e) {
-                console.error('[useOmenXBalance] backend fallback error', e);
+                console.error('[useOmenXBalance] fetch error', e);
             }
         }
 
-        console.warn('[useOmenXBalance] Could not fetch balance from any source');
         setLoading(false);
     }, []);
 
