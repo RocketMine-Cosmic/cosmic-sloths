@@ -1,25 +1,13 @@
 /**
- * useOmenXBalance — fetches the user's OMENX token balance.
- * Tries the OmenX API directly first (via the SDK's apiCall),
- * then falls back to a backend function that uses the server SDK.
+ * useOmenXBalance — fetches the user's OMENX token balance from OmenX API.
+ * In OmenX-only mode, bypasses Base44 backend entirely.
  *
  * Returns: { balance: number | null, loading: boolean, refresh: () => void }
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { omenx } from '@/lib/omenx';
-import { base44 } from '@/api/base44Client';
 
 function getAuthData() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
-}
-
-function extractBalance(data) {
-    if (!data) return null;
-    const bal = data.balance ?? data.omenx ?? data.sparks
-        ?? data.tokens ?? data.amount
-        ?? data.wallet?.balance ?? data.wallet?.omenx
-        ?? data.user?.balance ?? null;
-    return typeof bal === 'number' ? bal : null;
 }
 
 export function useOmenXBalance() {
@@ -35,23 +23,30 @@ export function useOmenXBalance() {
         }
 
         const walletAddress = auth.walletAddress || auth.wallet_address;
-
-        if (walletAddress) {
-            try {
-                const res = await base44.functions.invoke('getOmenXBalance', {
-                    walletAddress,
-                    chainId: '56'  // BSC (Binance Smart Chain)
-                });
-                const bal = extractBalance(res.data);
-                setBalance(bal);
-                setLoading(false);
-            } catch (e) {
-                console.error('[useOmenXBalance] fetch error', e);
-                setLoading(false);
-            }
+        if (!walletAddress) {
+            setLoading(false);
             return;
         }
 
+        try {
+            // Call OmenX API directly (no Base44 backend needed)
+            const res = await fetch(`https://staging.api.omen.foundation/v1/players/${walletAddress}/balances?chainId=56`, {
+                headers: {
+                    'Authorization': `Bearer ${auth.access_token}`,
+                }
+            });
+            if (!res.ok) {
+                console.warn('[useOmenXBalance] API returned', res.status);
+                setLoading(false);
+                return;
+            }
+            const data = await res.json();
+            const bal = data.balance ?? data.omenx ?? 0;
+            setBalance(typeof bal === 'number' ? bal : 0);
+        } catch (e) {
+            console.error('[useOmenXBalance] fetch error', e);
+            setBalance(0);
+        }
         setLoading(false);
     }, []);
 
