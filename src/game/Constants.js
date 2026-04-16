@@ -87,29 +87,29 @@ export const SYNERGIES = [
 
 export const TRAIL_COSMETICS = [
     { id: 'default', name: 'No Trail',     goldCost: 0,     tokenCost: 0,   icon: '⚪', desc: 'Clean and simple.' },
-    { id: 'fire',    name: 'Fire Trail',   goldCost: 2000,  tokenCost: 20,  icon: '🔥', desc: 'A blazing inferno follows your every move.' },
-    { id: 'ice',     name: 'Ice Trail',    goldCost: 2000,  tokenCost: 20,  icon: '❄️', desc: 'Leaves a crystalline frost in your wake.' },
-    { id: 'toxic',   name: 'Toxic Trail',  goldCost: 2000,  tokenCost: 20,  icon: '🧪', desc: 'Neon green slime marks your path.' },
-    { id: 'plasma',  name: 'Plasma Trail', goldCost: 6000,  tokenCost: 60,  icon: '⚡', desc: 'Crackling cyan and magenta energy.' },
-    { id: 'void',    name: 'Void Trail',   goldCost: 9000,  tokenCost: 90,  icon: '🌌', desc: 'Dark energy that bends space itself.' },
-    { id: 'shadow',  name: 'Shadow Trail', goldCost: 12000, tokenCost: 120, icon: '🌑', desc: 'A shroud of absolute darkness.' },
-    { id: 'gold',    name: 'Golden Trail', goldCost: 16000, tokenCost: 160, icon: '✨', desc: 'Pure wealth made visible.' },
+    { id: 'fire',    name: 'Fire Trail',   goldCost: 3000,  tokenCost: 30,  icon: '🔥', desc: 'A blazing inferno follows your every move.' },
+    { id: 'ice',     name: 'Ice Trail',    goldCost: 3000,  tokenCost: 30,  icon: '❄️', desc: 'Leaves a crystalline frost in your wake.' },
+    { id: 'toxic',   name: 'Toxic Trail',  goldCost: 3000,  tokenCost: 30,  icon: '🧪', desc: 'Neon green slime marks your path.' },
+    { id: 'plasma',  name: 'Plasma Trail', goldCost: 10000, tokenCost: 100, icon: '⚡', desc: 'Crackling cyan and magenta energy.' },
+    { id: 'void',    name: 'Void Trail',   goldCost: 10000, tokenCost: 100, icon: '🌌', desc: 'Dark energy that bends space itself.' },
+    { id: 'shadow',  name: 'Shadow Trail', goldCost: 10000, tokenCost: 100, icon: '🌑', desc: 'A shroud of absolute darkness.' },
+    { id: 'gold',    name: 'Golden Trail', goldCost: 20000, tokenCost: 200, icon: '✨', desc: 'Pure wealth made visible.' },
     { id: 'blood',   name: 'Blood Trail',  goldCost: 20000, tokenCost: 200, icon: '🩸', desc: 'Leave a visceral red path.' },
-    { id: 'pixel',   name: 'Pixel Trail',  goldCost: 22000, tokenCost: 220, icon: '👾', desc: 'Retro 8-bit digital fragments.' },
-    { id: 'nebula',  name: 'Nebula Dust',  goldCost: 25000, tokenCost: 250, icon: '☄️', desc: 'Sprinkle cosmic stardust.' },
-    { id: 'rainbow', name: 'Rainbow Trail',goldCost: 28000, tokenCost: 280, icon: '🌈', desc: 'All colors at once. Maximum flex.' },
+    { id: 'pixel',   name: 'Pixel Trail',  goldCost: 20000, tokenCost: 200, icon: '👾', desc: 'Retro 8-bit digital fragments.' },
+    { id: 'nebula',  name: 'Nebula Dust',  goldCost: 30000, tokenCost: 300, icon: '☄️', desc: 'Sprinkle cosmic stardust.' },
+    { id: 'rainbow', name: 'Rainbow Trail',goldCost: 30000, tokenCost: 300, icon: '🌈', desc: 'All colors at once. Maximum flex.' },
 ];
 
 export const KILL_COSMETICS = [
     { id: 'none',      name: 'No Effect',     goldCost: 0,     tokenCost: 0,   icon: '⚫', desc: 'Enemies die quietly.' },
-    { id: 'explosion', name: 'Explosion',     goldCost: 2500,  tokenCost: 25,  icon: '💥', desc: 'Every kill bursts into flames.' },
-    { id: 'freeze',    name: 'Freeze Burst',  goldCost: 2500,  tokenCost: 25,  icon: '🧊', desc: 'Enemies shatter into icy shards.' },
-    { id: 'vaporize',  name: 'Vaporize',      goldCost: 2500,  tokenCost: 25,  icon: '☠️', desc: 'Enemies dissolve in toxic mist.' },
-    { id: 'pixel_burst',name: 'Pixel Burst',  goldCost: 7000,  tokenCost: 70,  icon: '👾', desc: 'Enemies break into retro pixels.' },
-    { id: 'implode',   name: 'Implode',       goldCost: 11000, tokenCost: 110, icon: '🌀', desc: 'Enemies collapse into a void singularity.' },
-    { id: 'blood_splatter', name: 'Blood Splatter', goldCost: 15000, tokenCost: 150, icon: '🩸', desc: 'Messy biological destruction.' },
-    { id: 'black_hole',name: 'Black Hole',    goldCost: 18000, tokenCost: 180, icon: '🕳️', desc: 'Sucks enemies into oblivion.' },
-    { id: 'golden',    name: 'Gold Shatter',  goldCost: 22000, tokenCost: 220, icon: '💰', desc: 'Enemies explode into golden coins.' },
+    { id: 'explosion', name: 'Explosion',     goldCost: 3000,  tokenCost: 30,  icon: '💥', desc: 'Every kill bursts into flames.' },
+    { id: 'freeze',    name: 'Freeze Burst',  goldCost: 3000,  tokenCost: 30,  icon: '🧊', desc: 'Enemies shatter into icy shards.' },
+    { id: 'vaporize',  name: 'Vaporize',      goldCost: 3000,  tokenCost: 30,  icon: '☠️', desc: 'Enemies dissolve in toxic mist.' },
+    { id: 'pixel_burst',name: 'Pixel Burst',  goldCost: 12000, tokenCost: 120, icon: '👾', desc: 'Enemies break into retro pixels.' },
+    { id: 'implode',   name: 'Implode',       goldCost: 12000, tokenCost: 120, icon: '🌀', desc: 'Enemies collapse into a void singularity.' },
+    { id: 'blood_splatter', name: 'Blood Splatter', goldCost: 12000, tokenCost: 120, icon: '🩸', desc: 'Messy biological destruction.' },
+    { id: 'black_hole',name: 'Black Hole',    goldCost: 25000, tokenCost: 250, icon: '🕳️', desc: 'Sucks enemies into oblivion.' },
+    { id: 'golden',    name: 'Gold Shatter',  goldCost: 25000, tokenCost: 250, icon: '💰', desc: 'Enemies explode into golden coins.' },
 ];
 
 export const SKIN_COSMETICS = [
