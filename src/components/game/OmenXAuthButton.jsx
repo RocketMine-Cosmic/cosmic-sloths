@@ -22,7 +22,7 @@ export default function OmenXAuthButton({ fullWidth = false }) {
             setLoading(true);
             try {
                 await omenx.authenticate({
-                    redirectUri: `${window.location.origin}/auth/callback`,
+                    redirectUri: 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback',
                     enablePKCE: true,
                 });
                 const data = omenx.getAuthData();
