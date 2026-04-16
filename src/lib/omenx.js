@@ -2,6 +2,7 @@ import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
+  chainId: 56,  // BSC (Binance Smart Chain)
   onAuth: (authData) => {
     console.log('[OmenX] Authenticated', authData);
   },

@@ -40,7 +40,7 @@ export function useOmenXBalance() {
             try {
                 const res = await base44.functions.invoke('getOmenXBalance', {
                     walletAddress,
-                    chainId: '56'
+                    chainId: '56'  // BSC (Binance Smart Chain)
                 });
                 const bal = extractBalance(res.data);
                 setBalance(bal);
