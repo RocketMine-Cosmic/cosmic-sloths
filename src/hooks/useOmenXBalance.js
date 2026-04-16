@@ -18,53 +18,14 @@ export function useOmenXBalance() {
     const fetchBalance = useCallback(async () => {
         const auth = getAuthData();
         if (!auth) {
+            setBalance(null);
             setLoading(false);
             return;
         }
 
-        const walletAddress = auth.walletAddress || auth.wallet_address;
-        if (!walletAddress) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            // Try multiple API endpoints to find balance
-            console.log('[useOmenXBalance] Fetching for wallet:', walletAddress);
-            
-            const endpoints = [
-                `https://staging.api.omen.foundation/v1/players/${walletAddress}/balances`,
-                `https://staging.api.omen.foundation/v1/wallets/${walletAddress}/balance`,
-                `https://staging.api.omen.foundation/v1/players/${walletAddress}`,
-            ];
-
-            for (const endpoint of endpoints) {
-                try {
-                    const res = await fetch(endpoint, {
-                        headers: {
-                            'Authorization': `Bearer ${auth.access_token}`,
-                        }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        console.log('[useOmenXBalance] Response from', endpoint, data);
-                        const bal = data.balance ?? data.omenx ?? data.sparks ?? 0;
-                        setBalance(typeof bal === 'number' ? bal : 0);
-                        setLoading(false);
-                        return;
-                    }
-                } catch (e) {
-                    // Try next endpoint
-                    console.debug('[useOmenXBalance] Endpoint failed:', endpoint, e.message);
-                }
-            }
-            
-            console.warn('[useOmenXBalance] All endpoints failed');
-            setBalance(0);
-        } catch (e) {
-            console.error('[useOmenXBalance] unexpected error', e);
-            setBalance(0);
-        }
+        // In OmenX-only mode, balance is unavailable (would need server-side query)
+        // Just show null as "unknown" rather than making failing API calls
+        setBalance(null);
         setLoading(false);
     }, []);
 
