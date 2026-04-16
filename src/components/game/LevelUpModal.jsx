@@ -141,7 +141,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             }}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 2 ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
                         >
-                            Reroll Choices (2 <Hexagon className="w-4 h-4 fill-current inline" />)
+                            Reroll (2 OMENX)
                         </motion.button>
                     )}
                     
@@ -156,7 +156,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             }}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 1 ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
                         >
-                            Banish (1 <Hexagon className="w-4 h-4 fill-current inline" />)
+                            Banish (1 OMENX)
                         </motion.button>
                     )}
                 </div>

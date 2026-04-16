@@ -13,12 +13,14 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
+import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 
 export default function Game() {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
+    const { balance: omenxBalance, refresh: refreshOmenX } = useOmenXBalance();
     
     const [gameState, setGameState] = useState({
         hp: 100, maxHp: 100,
@@ -362,18 +364,13 @@ export default function Game() {
     };
 
     const handleReroll = () => {
-        const currentSave = SaveManager.load();
         const REROLL_COST = 2;
-        if ((currentSave.cosmicTokens || 0) >= REROLL_COST) {
-            currentSave.cosmicTokens -= REROLL_COST;
-            SaveManager.save(currentSave);
-            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
-            
+        if ((omenxBalance ?? 0) >= REROLL_COST) {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
             purchaseSku(IN_GAME_SKUS.reroll, REROLL_COST, week_id, season_id);
-
+            refreshOmenX();
             if (engineRef.current) {
                 engineRef.current.rerollChoices();
             }
@@ -381,18 +378,13 @@ export default function Game() {
     };
 
     const handleBanish = (choice) => {
-        const currentSave = SaveManager.load();
         const BANISH_COST = 1;
-        if ((currentSave.cosmicTokens || 0) >= BANISH_COST) {
-            currentSave.cosmicTokens -= BANISH_COST;
-            SaveManager.save(currentSave);
-            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
-            
+        if ((omenxBalance ?? 0) >= BANISH_COST) {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
             purchaseSku(IN_GAME_SKUS.banish, BANISH_COST, week_id, season_id);
-
+            refreshOmenX();
             if (engineRef.current) {
                 engineRef.current.banishUpgrade(choice.id);
                 engineRef.current.rerollChoices();
@@ -407,17 +399,12 @@ export default function Game() {
     };
 
     const handleSquadUltimate = () => {
-        const currentSave = SaveManager.load();
-        if ((currentSave.cosmicTokens || 0) >= 4 && engineRef.current && !engineRef.current.isPaused) {
-            currentSave.cosmicTokens -= 4;
-            SaveManager.save(currentSave);
-            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
-            
+        if ((omenxBalance ?? 0) >= 4 && engineRef.current && !engineRef.current.isPaused) {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
             purchaseSku(IN_GAME_SKUS.squadUltimate, 4, week_id, season_id);
-
+            refreshOmenX();
             engineRef.current.triggerSquadUltimate();
         }
     };
@@ -437,17 +424,12 @@ export default function Game() {
     };
 
     const handleRevive = () => {
-        const currentSave = SaveManager.load();
-        if ((currentSave.cosmicTokens || 0) >= 4) {
-            currentSave.cosmicTokens -= 4;
-            SaveManager.save(currentSave);
-            setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
-            
+        if ((omenxBalance ?? 0) >= 4) {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
             purchaseSku(IN_GAME_SKUS.revive, 4, week_id, season_id);
-
+            refreshOmenX();
             if (engineRef.current) {
                 engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
                 engineRef.current.player.iFrames = 3.0;
@@ -478,14 +460,14 @@ export default function Game() {
             
             <VirtualJoystick onChange={handleJoystickChange} />
             
-            <UIOverlay {...gameState} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />
+            <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />
             
             {isPaused && (
                 <PauseModal onResume={handleResume} />
             )}
 
             {levelUpChoices && (
-                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={gameState.cosmicTokens} onReroll={handleReroll} onBanish={handleBanish} />
+                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} />
             )}
             
             {showRevivePrompt && (
@@ -496,9 +478,10 @@ export default function Game() {
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={handleRevive}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg font-bold flex flex-wrap items-center justify-center gap-2 transition-colors"
+                                disabled={(omenxBalance ?? 0) < 4}
+                                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold flex flex-wrap items-center justify-center gap-2 transition-colors"
                             >
-                                REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: 4 Tokens</span>
+                                REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: 4 OMENX</span>
                             </button>
                             <button
                                 onClick={handleDeclineRevive}
