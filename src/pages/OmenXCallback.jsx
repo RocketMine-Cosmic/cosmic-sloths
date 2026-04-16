@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 // It reads the ?code and ?state from the URL, exchanges the code for tokens
 // via the OmenX API, then posts the result back to the opener and closes.
 
-const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
+// Matches what's registered in the Omen Developer Portal
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Connecting to OmenX…');

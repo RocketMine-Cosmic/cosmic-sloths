@@ -13,17 +13,15 @@ Deno.serve(async (req) => {
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
 
-        const res = await fetch('https://api.omen.foundation/v1/oauth/token', {
+        const res = await fetch('https://omen.dog/api/token', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                client_id: 'cosmic-sloths',
-                code,
-                redirect_uri: REDIRECT_URI,
                 grant_type: 'authorization_code',
+                code,
+                client_id: 'cosmic-sloths',
+                client_secret: apiKey,
+                redirect_uri: REDIRECT_URI,
             }),
         });
 
