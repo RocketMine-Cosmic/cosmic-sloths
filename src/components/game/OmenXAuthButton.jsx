@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { omenx } from '@/lib/omenx';
 
-export default function OmenXAuthButton() {
+export default function OmenXAuthButton({ fullWidth = false }) {
     const [authData, setAuthData] = useState(null);
     const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
@@ -42,22 +42,25 @@ export default function OmenXAuthButton() {
     };
 
     return (
-        <div className="flex flex-col items-end gap-1">
+        <div className={`flex flex-col ${fullWidth ? 'items-center w-full' : 'items-end'} gap-1`}>
             <button
                 onClick={handleClick}
                 disabled={loading}
-                className={`px-3 py-1.5 rounded-lg font-bold text-xs tracking-widest uppercase transition-all border flex items-center gap-2 ${
+                className={`font-black tracking-widest uppercase transition-all border flex items-center justify-center gap-2 backdrop-blur-md ${
+                    fullWidth
+                        ? 'w-full py-4 md:py-5 text-sm md:text-lg px-4'
+                        : 'px-3 py-1.5 rounded-lg text-xs'
+                } ${
                     authData
-                        ? 'bg-red-900/40 hover:bg-red-900/70 border-red-500/60 text-red-300 hover:text-red-100'
-                        : 'bg-purple-900/40 hover:bg-purple-900/70 border-purple-500/60 text-purple-300 hover:text-purple-100 shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+                        ? 'bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 border-[#F59E0B]/60 hover:border-[#F59E0B] text-amber-100 hover:text-white shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)]'
+                        : 'bg-purple-900/20 hover:bg-purple-900/40 border-purple-500/60 hover:border-purple-400 text-purple-100 hover:text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]'
                 }`}
             >
-                {loading ? (
-                    <span className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin inline-block" />
-                ) : (
-                    <span>{authData ? '⚡' : '🔗'}</span>
-                )}
-                {loading ? 'Connecting…' : authData ? 'OmenX Logout' : 'Login with OmenX'}
+                {loading
+                    ? <span className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin inline-block" />
+                    : <span>{authData ? '⚡' : '🔗'}</span>
+                }
+                {loading ? 'Connecting…' : authData ? 'OmenX — Logout' : 'Login with OmenX'}
             </button>
             {successMsg && (
                 <div className="text-[10px] text-green-400 font-bold bg-green-950/50 border border-green-700/50 px-2 py-1 rounded max-w-[200px] text-right truncate">

@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Pencil, Check, X, LogOut } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import OmenXAuthButton from '../components/game/OmenXAuthButton';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
@@ -90,12 +90,9 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                         ADMIN DASHBOARD
                     </button>
                 )}
-                <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
-                    className="col-span-2 w-full bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 backdrop-blur-md text-amber-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#F59E0B]/60 hover:border-[#F59E0B] rounded-b-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center justify-center gap-2"
-                >
-                    <LogOut size={20} /> LOGOUT
-                </button>
+                <div className="col-span-2 w-full flex justify-center rounded-b-2xl overflow-hidden">
+                    <OmenXAuthButton fullWidth />
+                </div>
             </motion.div>
             
             <div className="absolute bottom-4 text-slate-500/70 text-[10px] md:text-xs z-10 tracking-widest uppercase">
