@@ -35,6 +35,16 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
       
+      // If no token at all, redirect immediately
+      if (!appParams.token) {
+        console.log('[Auth] No token found, redirecting to login');
+        setIsLoadingPublicSettings(false);
+        setIsLoadingAuth(false);
+        setIsAuthenticated(false);
+        base44.auth.redirectToLogin(window.location.href);
+        return;
+      }
+      
       // First, check app public settings (with token if available)
       // This will tell us if auth is required, user not registered, etc.
       const appClient = createAxiosClient({
@@ -53,11 +63,6 @@ export const AuthProvider = ({ children }) => {
         // If we got the app public settings successfully, check if user is authenticated
         if (appParams.token) {
           await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          // Redirect to Base44 login
-          base44.auth.redirectToLogin(window.location.href);
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
