@@ -29,22 +29,40 @@ export function useOmenXBalance() {
         }
 
         try {
-            // Call OmenX API directly (no Base44 backend needed)
-            const res = await fetch(`https://staging.api.omen.foundation/v1/players/${walletAddress}/balances?chainId=56`, {
-                headers: {
-                    'Authorization': `Bearer ${auth.access_token}`,
+            // Try multiple API endpoints to find balance
+            console.log('[useOmenXBalance] Fetching for wallet:', walletAddress);
+            
+            const endpoints = [
+                `https://staging.api.omen.foundation/v1/players/${walletAddress}/balances`,
+                `https://staging.api.omen.foundation/v1/wallets/${walletAddress}/balance`,
+                `https://staging.api.omen.foundation/v1/players/${walletAddress}`,
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const res = await fetch(endpoint, {
+                        headers: {
+                            'Authorization': `Bearer ${auth.access_token}`,
+                        }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        console.log('[useOmenXBalance] Response from', endpoint, data);
+                        const bal = data.balance ?? data.omenx ?? data.sparks ?? 0;
+                        setBalance(typeof bal === 'number' ? bal : 0);
+                        setLoading(false);
+                        return;
+                    }
+                } catch (e) {
+                    // Try next endpoint
+                    console.debug('[useOmenXBalance] Endpoint failed:', endpoint, e.message);
                 }
-            });
-            if (!res.ok) {
-                console.warn('[useOmenXBalance] API returned', res.status);
-                setLoading(false);
-                return;
             }
-            const data = await res.json();
-            const bal = data.balance ?? data.omenx ?? 0;
-            setBalance(typeof bal === 'number' ? bal : 0);
+            
+            console.warn('[useOmenXBalance] All endpoints failed');
+            setBalance(0);
         } catch (e) {
-            console.error('[useOmenXBalance] fetch error', e);
+            console.error('[useOmenXBalance] unexpected error', e);
             setBalance(0);
         }
         setLoading(false);
