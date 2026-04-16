@@ -12,10 +12,19 @@ import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
+import OmenXAuthButton from '../components/game/OmenXAuthButton';
+import SetProfileNameModal from '../components/game/SetProfileNameModal';
+
+function getOmenXAuth() {
+    try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
+}
 
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
+    const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
+    const [showNameModal, setShowNameModal] = useState(false);
+    const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -164,10 +173,30 @@ export default function Hub({ isCarousel }) {
         }
     };
 
-    const startGame = () => {
+    const checkAndLaunch = async (mode) => {
         SoundManager.playUIClick();
-        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isNGPlus: isNGPlus } });
+        if (!getOmenXAuth()) {
+            toast({ title: "Login Required", description: "Please login with OmenX to play!" });
+            return;
+        }
+        // Check pilot name
+        try {
+            const user = await base44.auth.me();
+            const displayName = user?.player_name || user?.data?.player_name;
+            if (!displayName || displayName.includes('@')) {
+                setPendingLaunch(mode);
+                setShowNameModal(true);
+                return;
+            }
+        } catch(e) { /* continue */ }
+        launchGame(mode);
     };
+
+    const launchGame = (mode) => {
+        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isNGPlus: isNGPlus, isEndless: mode === 'endless' } });
+    };
+
+    const startGame = () => checkAndLaunch('normal');
 
 
 
@@ -588,7 +617,7 @@ export default function Hub({ isCarousel }) {
 
                                             <div className="flex flex-col md:flex-row gap-2 md:gap-4">
                                             <button
-                                                onClick={startGame}
+                                                onClick={() => canLaunch && checkAndLaunch('normal')}
                                                 disabled={!canLaunch}
                                                 className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
@@ -606,10 +635,7 @@ export default function Hub({ isCarousel }) {
                                             </button>
                                             
                                             <button
-                                                onClick={() => {
-                                                    SoundManager.playUIClick();
-                                                    navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isEndless: true, isNGPlus: isNGPlus } });
-                                                }}
+                                                onClick={() => canLaunch && checkAndLaunch('endless')}
                                                 disabled={!canLaunch}
                                                 className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
@@ -634,6 +660,15 @@ export default function Hub({ isCarousel }) {
 
                 </div>
             </div>
+        {showNameModal && (
+            <SetProfileNameModal onComplete={(name) => {
+                const s = SaveManager.load();
+                s.hasSetProfileName = true;
+                SaveManager.save(s);
+                setShowNameModal(false);
+                if (pendingLaunch) { launchGame(pendingLaunch); setPendingLaunch(null); }
+            }} />
+        )}
         </div>
     );
 }

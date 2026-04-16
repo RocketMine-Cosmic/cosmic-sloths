@@ -14,29 +14,45 @@ function setAuthData(data) {
     else localStorage.removeItem(STORAGE_KEY);
 }
 
-export default function OmenXAuthButton({ fullWidth = false }) {
+export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [authData, setAuthState] = useState(getAuthData);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
+    const applyAuthData = (data) => {
+        setAuthData(data);
+        setAuthState(data);
+        setLoading(false);
+        if (data) {
+            setSuccessMsg(`Connected as ${data.username || data.walletAddress || 'OmenX User'}`);
+            setTimeout(() => setSuccessMsg(''), 5000);
+        }
+        onAuthChange?.(data);
+    };
+
     useEffect(() => {
+        // postMessage from popup
         const handler = (e) => {
             if (e.origin !== window.location.origin) return;
-            if (e.data?.type === 'OMENX_AUTH_SUCCESS') {
-                const data = e.data.payload;
-                setAuthData(data);
-                setAuthState(data);
-                setLoading(false);
-                setSuccessMsg(`Connected as ${data.username || data.walletAddress || 'OmenX User'}`);
-                setTimeout(() => setSuccessMsg(''), 5000);
-            }
-            if (e.data?.type === 'OMENX_AUTH_ERROR') {
-                console.error('[OmenX] auth error', e.data.error);
-                setLoading(false);
-            }
+            if (e.data?.type === 'OMENX_AUTH_SUCCESS') applyAuthData(e.data.payload);
+            if (e.data?.type === 'OMENX_AUTH_ERROR') { console.error('[OmenX] auth error', e.data.error); setLoading(false); }
         };
         window.addEventListener('message', handler);
-        return () => window.removeEventListener('message', handler);
+
+        // storage event from OTHER tabs/windows writing to localStorage
+        const storageHandler = (e) => {
+            if (e.key === STORAGE_KEY) {
+                const data = e.newValue ? JSON.parse(e.newValue) : null;
+                setAuthState(data);
+                onAuthChange?.(data);
+            }
+        };
+        window.addEventListener('storage', storageHandler);
+
+        return () => {
+            window.removeEventListener('message', handler);
+            window.removeEventListener('storage', storageHandler);
+        };
     }, []);
 
     const handleLogin = () => {
@@ -46,25 +62,18 @@ export default function OmenXAuthButton({ fullWidth = false }) {
         const popup = window.open(url, 'omenx_auth', 'width=500,height=700');
         if (!popup) { console.error('[OmenX] popup blocked'); return; }
         setLoading(true);
-        // Poll for popup close, then check localStorage for auth data
+        // Poll for popup close, then sync state from localStorage
         const timer = setInterval(() => {
             if (popup.closed) {
                 clearInterval(timer);
-                setLoading(false);
-                // Check if auth data was written to localStorage by the callback
                 const stored = getAuthData();
-                if (stored) {
-                    setAuthState(stored);
-                    setSuccessMsg(`Connected as ${stored.username || stored.walletAddress || 'OmenX User'}`);
-                    setTimeout(() => setSuccessMsg(''), 5000);
-                }
+                applyAuthData(stored);
             }
         }, 500);
     };
 
     const handleLogout = () => {
-        setAuthData(null);
-        setAuthState(null);
+        applyAuthData(null);
         setSuccessMsg('');
     };
 
