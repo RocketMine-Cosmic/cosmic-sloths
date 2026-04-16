@@ -5,12 +5,6 @@ const GAME_ID = 'cosmic-sloths';
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
         const { walletAddress, chainId = '56' } = await req.json().catch(() => ({}));
 
         if (!walletAddress) {
