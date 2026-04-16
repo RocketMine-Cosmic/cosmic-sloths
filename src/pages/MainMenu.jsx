@@ -126,27 +126,16 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                         ADMIN DASHBOARD
                     </button>
                 )}
-                {omenAuthData ? (
-                    <div className="col-span-2 w-full bg-emerald-900/40 backdrop-blur-md border border-emerald-500/60 rounded-xl px-4 py-3 text-emerald-300 text-xs font-bold text-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                        ✓ OmenX Logged In as {omenAuthData.userId || omenAuthData.walletAddress || 'User'}
-                    </div>
-                ) : (
-                    <button
-                        onClick={handleOmenLogin}
-                        className="col-span-2 w-full bg-purple-900/40 hover:bg-purple-800/60 backdrop-blur-md text-purple-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-purple-500/60 hover:border-purple-400 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] flex items-center justify-center gap-2"
-                    >
-                        🔮 LOGIN WITH OMENX
-                    </button>
-                )}
+                <button
+                    onClick={omenAuthData ? () => { SoundManager.playUIClick(); setOmenAuthData(null); } : handleOmenLogin}
+                    className="col-span-2 w-full backdrop-blur-md text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all rounded-b-2xl flex items-center justify-center gap-2 bg-purple-900/40 hover:bg-purple-800/60 text-purple-100 hover:text-white border border-purple-500/60 hover:border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]"
+                >
+                    <LogOut size={20} />
+                    {omenAuthData ? `LOGOUT (${omenAuthData.userId || omenAuthData.walletAddress || 'OmenX'})` : '🔮 LOGIN WITH OMENX'}
+                </button>
                 {omenError && (
                     <div className="col-span-2 text-center text-red-400 text-xs font-bold">{omenError}</div>
                 )}
-                <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
-                    className="col-span-2 w-full bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 backdrop-blur-md text-amber-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#F59E0B]/60 hover:border-[#F59E0B] rounded-b-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center justify-center gap-2"
-                >
-                    <LogOut size={20} /> LOGOUT
-                </button>
             </motion.div>
             
             <div className="absolute bottom-4 text-slate-500/70 text-[10px] md:text-xs z-10 tracking-widest uppercase">
