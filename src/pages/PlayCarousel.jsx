@@ -16,12 +16,49 @@ import Profile from './Profile';
 import GlobalRaid from './GlobalRaid';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+import { base44 } from '@/api/base44Client';
 
 export default function PlayCarousel() {
     const navigate = useNavigate();
     const location = useLocation();
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [selectedIndex, setSelectedIndex] = useState(0);
+
+    // Handle OmenX OAuth callback when redirected back to /?omenx_callback=1
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('omenx_callback') !== '1') return;
+
+        const code = params.get('code');
+        const state = params.get('state');
+        const savedState = sessionStorage.getItem('omenx_state');
+
+        // Clean URL immediately
+        window.history.replaceState({}, document.title, '/');
+
+        if (!code) {
+            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'no_code' }, window.location.origin);
+            return;
+        }
+        if (state !== savedState) {
+            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'state_mismatch' }, window.location.origin);
+            return;
+        }
+        sessionStorage.removeItem('omenx_state');
+
+        base44.functions.invoke('omenxTokenExchange', { code })
+            .then(res => {
+                const data = res.data;
+                if (data.error) throw new Error(data.error);
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
+                }
+                setTimeout(() => window.close(), 500);
+            })
+            .catch(err => {
+                if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: err.message }, window.location.origin);
+            });
+    }, []);
 
     useEffect(() => {
         if (emblaApi && location.state?.slide !== undefined) {
