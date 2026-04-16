@@ -30,22 +30,37 @@ export default function OmenXCallback() {
 
         localStorage.removeItem('omenx_state');
 
-        // Exchange code for token via backend (keeps API key secret)
+        // Exchange code for token via backend
         console.log('[Callback] Invoking omenxTokenExchange with code:', code);
         base44.functions.invoke('omenxTokenExchange', { code })
-            .then(res => {
+            .then(async res => {
                 console.log('[Callback] Response received:', res);
-                const data = res.data;
-                if (data.error) throw new Error(data.error);
+                const tokenData = res.data;
+                if (tokenData.error) throw new Error(tokenData.error);
+                
+                // Fetch wallet balance using the access token
+                let walletData = {};
+                try {
+                    const balanceRes = await fetch('https://api.omen.foundation/v1/players/me', {
+                        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+                    });
+                    if (balanceRes.ok) {
+                        walletData = await balanceRes.json();
+                        console.log('[Callback] Wallet data:', walletData);
+                    }
+                } catch (err) {
+                    console.error('[Callback] Failed to fetch wallet data:', err);
+                }
+
+                const fullData = { ...tokenData, ...walletData };
                 setStatus('Connected! You can close this window now.');
-                // Save to localStorage so the parent can pick it up even without postMessage
-                localStorage.setItem('omenx_auth_data', JSON.stringify(data));
+                localStorage.setItem('omenx_auth_data', JSON.stringify(fullData));
                 if (window.opener) {
-                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
+                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: fullData }, window.location.origin);
                 }
             })
             .catch(err => {
-                console.error('[Callback] token exchange error', err);
+                console.error('[Callback] error', err);
                 setStatus('Connection failed: ' + err.message);
                 if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: err.message }, window.location.origin);
             });
