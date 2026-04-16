@@ -33,11 +33,14 @@ import { initOmenX } from '@/lib/omenx';
 import GamepadManager from './components/GamepadManager';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated, authError, navigateToLogin, user } = useAuth();
   const [saveInitialized, setSaveInitialized] = useState(false);
   const [needsProfileName, setNeedsProfileName] = useState(false);
 
   useEffect(() => {
+    if (!isLoadingAuth && !isAuthenticated) {
+      return; // Block rendering until authenticated
+    }
     if (!isLoadingAuth && !authError) {
       SaveManager.initialize().then(() => {
           setSaveInitialized(true);
@@ -59,7 +62,12 @@ const AuthenticatedApp = () => {
     } else if (authError) {
       setSaveInitialized(true);
     }
-  }, [isLoadingAuth, authError, user]);
+  }, [isLoadingAuth, isAuthenticated, authError, user]);
+
+  // Block rendering if not authenticated (wait for redirect)
+  if (!isLoadingAuth && !isAuthenticated) {
+    return null;
+  }
 
   // In preview mode, bypass all auth gates
   const isPreview = window.self !== window.top;
