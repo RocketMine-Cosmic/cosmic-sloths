@@ -100,15 +100,6 @@ export default function Hub({ isCarousel }) {
         claimRewards();
     }, []);
 
-    const recordTokenSpend = (amount) => {
-        if (amount > 0) {
-            const week_id = moment().format('YYYY-[W]ww');
-            const seasonNum = Math.floor(moment().week() / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
-        }
-    };
-
     const handleBuyCharacter = (char, currency = 'gold') => {
         if (save.unlockedCharacters.includes(char.id)) return;
         
@@ -134,7 +125,6 @@ export default function Hub({ isCarousel }) {
             SaveManager.save(newSave);
             setSave(newSave);
             setSelectedChar(char.id);
-            recordTokenSpend(tokenCost);
         }
     };
 
@@ -571,7 +561,6 @@ export default function Hub({ isCarousel }) {
                                             newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
                                             SaveManager.save(newSave);
                                             setSave(newSave);
-                                            recordTokenSpend(10);
                                             toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
                                         }
                                     };

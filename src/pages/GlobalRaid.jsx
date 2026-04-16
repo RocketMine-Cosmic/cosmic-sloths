@@ -130,7 +130,7 @@ export default function GlobalRaid({ isCarousel }) {
 
         try {
             if (!authData?.walletAddress) throw new Error('No wallet address');
-            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id });
+            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id, amount: 5 });
             if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
 
             // Only grant runs after confirmed charge
@@ -138,7 +138,6 @@ export default function GlobalRaid({ isCarousel }) {
             currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
             SaveManager.save(currentSave);
             setSave(currentSave);
-            base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id, currency: 'omenx' }).catch(console.error);
             refreshOmenX();
             toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
         } catch (err) {

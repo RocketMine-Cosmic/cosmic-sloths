@@ -83,20 +83,14 @@ export default function Upgrades({ isCarousel }) {
         return { week_id, season_id };
     };
 
-    const recordTokenSpend = (amount) => {
-        if (amount > 0) {
-            const { week_id, season_id } = getWeekSeason();
-            base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
-        }
-    };
-
     const purchaseSku = async (skuId, amount) => {
         if (!skuId) return { success: false, error: 'No SKU' };
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress) { console.warn('[purchaseSku] No wallet address found'); return { success: false, error: 'No wallet' }; }
         const { week_id, season_id } = getWeekSeason();
-        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id });
+        // amount is passed to the backend so pool accounting is done server-side, atomically, after confirmed OmenX charge
+        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id, amount });
         if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
         return res.data;
     };
@@ -124,7 +118,6 @@ export default function Upgrades({ isCarousel }) {
                 currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
                 SaveManager.save(currentSave);
                 setSave(currentSave);
-                recordTokenSpend(tokenCost);
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyStat] purchase failed, not granting item:', err));
         }
@@ -159,7 +152,6 @@ export default function Upgrades({ isCarousel }) {
                 currentSave[saveKey][weaponId][stat] = currentLevel + 1;
                 SaveManager.save(currentSave);
                 setSave(currentSave);
-                recordTokenSpend(tokenCost);
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyWeapon] purchase failed, not granting item:', err));
         }
@@ -193,7 +185,6 @@ export default function Upgrades({ isCarousel }) {
                 currentSave[saveKey][selectedChar].push(talent.id);
                 SaveManager.save(currentSave);
                 setSave(currentSave);
-                recordTokenSpend(tokenCost);
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyTalent] purchase failed, not granting item:', err));
         }
@@ -276,7 +267,6 @@ export default function Upgrades({ isCarousel }) {
                     newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
                     SaveManager.save(newSave);
                     setSave(newSave);
-                    recordTokenSpend(cosmetic.tokenCost);
                     SoundManager.playUIClick();
                 }).catch(err => console.error('[handleBuyCosmetic skin] purchase failed, not granting item:', err));
             }
@@ -318,7 +308,6 @@ export default function Upgrades({ isCarousel }) {
                 newSave.cosmetics = { ...cosmetics, [cosmeticKey]: cosmetic.id };
                 SaveManager.save(newSave);
                 setSave(newSave);
-                recordTokenSpend(cosmetic.tokenCost);
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed, not granting item:', err));
         }

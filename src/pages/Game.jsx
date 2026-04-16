@@ -346,11 +346,12 @@ export default function Game() {
         return () => clearInterval(interval);
     }, []);
 
-    const purchaseSku = (skuId, week_id, season_id) => {
+    const purchaseSku = (skuId, amount, week_id, season_id) => {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress || !skuId) return;
-        base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id }).catch(console.error);
+        // amount passed so backend owns all pool accounting server-side after confirmed charge
+        base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id, amount }).catch(console.error);
     };
 
     const handleUpgradeSelect = (upgrade) => {
@@ -371,8 +372,7 @@ export default function Game() {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            base44.functions.invoke('recordTokenSpend', { amount: REROLL_COST, week_id, season_id }).catch(console.error);
-            purchaseSku(IN_GAME_SKUS.reroll, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.reroll, REROLL_COST, week_id, season_id);
 
             if (engineRef.current) {
                 engineRef.current.rerollChoices();
@@ -391,8 +391,7 @@ export default function Game() {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            base44.functions.invoke('recordTokenSpend', { amount: BANISH_COST, week_id, season_id }).catch(console.error);
-            purchaseSku(IN_GAME_SKUS.banish, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.banish, BANISH_COST, week_id, season_id);
 
             if (engineRef.current) {
                 engineRef.current.banishUpgrade(choice.id);
@@ -417,8 +416,7 @@ export default function Game() {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            base44.functions.invoke('recordTokenSpend', { amount: 4, week_id, season_id }).catch(console.error);
-            purchaseSku(IN_GAME_SKUS.squadUltimate, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.squadUltimate, 4, week_id, season_id);
 
             engineRef.current.triggerSquadUltimate();
         }
@@ -448,8 +446,7 @@ export default function Game() {
             const week_id = moment().format('YYYY-[W]ww');
             const seasonNum = Math.floor(moment().week() / 4) + 1;
             const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            base44.functions.invoke('recordTokenSpend', { amount: 4, week_id, season_id }).catch(console.error);
-            purchaseSku(IN_GAME_SKUS.revive, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.revive, 4, week_id, season_id);
 
             if (engineRef.current) {
                 engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
