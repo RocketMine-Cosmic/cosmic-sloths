@@ -6,6 +6,7 @@ import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Hexa
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
+import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import ForgePanel from '../components/game/ForgePanel';
@@ -75,13 +76,28 @@ export default function Upgrades({ isCarousel }) {
         return () => clearInterval(interval);
     }, [activeCategory]);
 
+    const getWeekSeason = () => {
+        const week_id = moment().format('YYYY-[W]ww');
+        const seasonNum = Math.floor(moment().week() / 4) + 1;
+        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+        return { week_id, season_id };
+    };
+
     const recordTokenSpend = (amount) => {
         if (amount > 0) {
-            const week_id = moment().format('YYYY-[W]ww');
-            const seasonNum = Math.floor(moment().week() / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            const { week_id, season_id } = getWeekSeason();
             base44.functions.invoke('recordTokenSpend', { amount, week_id, season_id }).catch(console.error);
         }
+    };
+
+    const purchaseSku = (skuId, amount) => {
+        if (!skuId) return;
+        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        const walletAddress = authData?.walletAddress;
+        if (!walletAddress) { console.warn('[purchaseSku] No wallet address found'); return; }
+        const { week_id, season_id } = getWeekSeason();
+        base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id })
+            .catch(err => console.error('[purchaseSku] failed:', err));
     };
 
     const handleBuyStat = (stat, currency) => {
@@ -107,6 +123,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(currentSave);
             setSave(currentSave);
             recordTokenSpend(tokenCost);
+            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1), tokenCost);
             SoundManager.playUIClick();
         }
     };
@@ -139,6 +156,8 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(currentSave);
             setSave(currentSave);
             recordTokenSpend(tokenCost);
+            const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
+            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1), tokenCost);
             SoundManager.playUIClick();
         }
     };
@@ -170,6 +189,8 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(currentSave);
             setSave(currentSave);
             recordTokenSpend(tokenCost);
+            const charObj = CHARACTERS.find(c => c.id === selectedChar);
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name), tokenCost);
             SoundManager.playUIClick();
         }
     };
@@ -251,6 +272,7 @@ export default function Upgrades({ isCarousel }) {
                 SaveManager.save(newSave);
                 setSave(newSave);
                 recordTokenSpend(cosmetic.tokenCost);
+                purchaseSku(getCosmeticSku('skin', cosmetic.name), cosmetic.tokenCost);
                 SoundManager.playUIClick();
             }
             return;
@@ -291,6 +313,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(newSave);
             setSave(newSave);
             recordTokenSpend(cosmetic.tokenCost);
+            purchaseSku(getCosmeticSku(slot, cosmetic.name), cosmetic.tokenCost);
             SoundManager.playUIClick();
         }
     };

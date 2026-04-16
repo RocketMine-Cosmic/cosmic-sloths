@@ -11,6 +11,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import { CHARACTERS } from '../game/Constants';
+import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 
 export default function GlobalRaid({ isCarousel }) {
@@ -131,6 +132,10 @@ export default function GlobalRaid({ isCarousel }) {
         const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
         
         base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id, currency: 'omenx' }).catch(console.error);
+        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        if (authData?.walletAddress) {
+            base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id }).catch(console.error);
+        }
         refreshOmenX();
 
         toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
