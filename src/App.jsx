@@ -28,6 +28,7 @@ import DownloadSkus from './pages/DownloadSkus';
 import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
+import { initOmenX } from '@/lib/omenx';
 import GamepadManager from './components/GamepadManager';
 
 const AuthenticatedApp = () => {
@@ -116,6 +117,9 @@ const AuthenticatedApp = () => {
 
 
 function App() {
+  useEffect(() => {
+    initOmenX().catch(err => console.error('[OmenX] init failed', err));
+  }, []);
 
   return (
     <AuthProvider>
