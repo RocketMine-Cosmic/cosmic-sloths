@@ -10,6 +10,7 @@ import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
+import OmenXGate from '../components/game/OmenXGate';
 
 export default function Profile({ isCarousel }) {
     const navigate = useNavigate();
@@ -215,6 +216,7 @@ export default function Profile({ isCarousel }) {
     }
 
     return (
+        <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-2 md:p-6 font-sans overflow-hidden`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0 relative z-10">
@@ -425,5 +427,6 @@ export default function Profile({ isCarousel }) {
                 </motion.div>
             </div>
         </div>
+        </OmenXGate>
     );
 }

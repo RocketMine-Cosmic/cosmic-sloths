@@ -6,6 +6,7 @@ import { SaveManager } from '../game/SaveManager';
 import { ENEMIES } from '../game/Constants';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 
 const BOSS_MODIFIERS = [
@@ -44,6 +45,7 @@ export default function LeviathanTrials({ isCarousel }) {
     };
 
     return (
+        <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-2 md:p-6 font-sans overflow-hidden`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0">
@@ -107,5 +109,6 @@ export default function LeviathanTrials({ isCarousel }) {
                 </div>
             </div>
         </div>
+        </OmenXGate>
     );
 }

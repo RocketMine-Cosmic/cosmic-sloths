@@ -8,6 +8,7 @@ import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import SpaceBackground from '../components/game/SpaceBackground';
+import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 
 function EnemySprite({ enemy, size = 64 }) {
@@ -81,6 +82,7 @@ export default function Bestiary({ isCarousel }) {
     const encounteredCount = ENEMIES.filter(e => encountered.includes(e.id)).length;
 
     return (
+        <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto h-full flex flex-col">
@@ -288,5 +290,6 @@ export default function Bestiary({ isCarousel }) {
                 </div>
             </div>
         </div>
+        </OmenXGate>
     );
 }

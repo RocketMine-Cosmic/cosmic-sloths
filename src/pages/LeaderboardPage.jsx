@@ -5,11 +5,13 @@ import Leaderboard from '../components/game/Leaderboard';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import OmenXGate from '../components/game/OmenXGate';
 
 export default function LeaderboardPage({ isCarousel }) {
     const navigate = useNavigate();
 
     return (
+        <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto">
@@ -34,5 +36,6 @@ export default function LeaderboardPage({ isCarousel }) {
                 </div>
             </div>
         </div>
+        </OmenXGate>
     );
 }

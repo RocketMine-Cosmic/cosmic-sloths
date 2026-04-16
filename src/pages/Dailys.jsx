@@ -7,6 +7,7 @@ import BountiesPanel from '../components/game/BountiesPanel';
 import DailyLoginPanel from '../components/game/DailyLoginPanel';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import OmenXGate from '../components/game/OmenXGate';
 
 export default function Dailys({ isCarousel }) {
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function Dailys({ isCarousel }) {
     }, []);
 
     return (
+        <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto h-full flex flex-col">
@@ -46,5 +48,7 @@ export default function Dailys({ isCarousel }) {
                 </div>
             </div>
         </div>
+        </div>
+        </OmenXGate>
     );
 }

@@ -11,6 +11,7 @@ import ForgePanel from '../components/game/ForgePanel';
 import StatPips, { SmallStatPips } from '../components/game/StatPips';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import OmenXGate from '../components/game/OmenXGate';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [15, 30, 60, 120, 240] },
@@ -1000,6 +1001,7 @@ export default function Upgrades({ isCarousel }) {
     };
 
     return (
+        <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto">
@@ -1102,5 +1104,6 @@ export default function Upgrades({ isCarousel }) {
                 </div>
             </div>
         </div>
+        </OmenXGate>
     );
 }
