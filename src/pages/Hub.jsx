@@ -80,38 +80,6 @@ export default function Hub({ isCarousel }) {
     React.useEffect(() => {
         const claimRewards = async () => {
             try {
-                const user = getOmenXUser();
-                if (!user) return;
-                const displayName = user.player_name || user.data?.player_name || user.full_name;
-                const pendingByUserId = await base44.entities.PendingReward.filter({ user_id: user.id, claimed: false });
-                const pendingByName = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: false });
-                const pending = [...new Map([...pendingByUserId, ...pendingByName].map(item => [item.id, item])).values()];
-                
-                if (pending.length > 0) {
-                    let totalAmount = 0;
-                    for (const reward of pending) {
-                        totalAmount += reward.amount;
-                    }
-
-                    const currentSave = SaveManager.load();
-                    const newSave = { ...currentSave, cosmicTokens: (currentSave.cosmicTokens || 0) + totalAmount };
-                    SaveManager.save(newSave);
-                    setSave(newSave);
-                    
-                    if (SaveManager.syncToBackendNow) {
-                        await SaveManager.syncToBackendNow(newSave);
-                    }
-
-                    for (const reward of pending) {
-                        await base44.entities.PendingReward.update(reward.id, { claimed: true });
-                    }
-
-                    toast({
-                        title: "Rewards Claimed!",
-                        description: `You received ${totalAmount} Cosmic Tokens from leaderboards!`,
-                    });
-                }
-
                 // Automatically claim any missed Global Raid rewards from past weeks
                 const raidRes = await base44.functions.invoke('claimPastRaidRewards', {});
                 if (raidRes.data?.status === 'success' && raidRes.data.totalGold > 0) {
@@ -119,11 +87,7 @@ export default function Hub({ isCarousel }) {
                     const newSave = { ...currentSave, gold: (currentSave.gold || 0) + raidRes.data.totalGold };
                     SaveManager.save(newSave);
                     setSave(newSave);
-                    
-                    if (SaveManager.syncToBackendNow) {
-                        await SaveManager.syncToBackendNow(newSave);
-                    }
-
+                    if (SaveManager.syncToBackendNow) await SaveManager.syncToBackendNow(newSave);
                     toast({
                         title: "Past Raid Rewards Claimed!",
                         description: `You received ${raidRes.data.totalGold.toLocaleString()} Gold from past Global Raids!`,

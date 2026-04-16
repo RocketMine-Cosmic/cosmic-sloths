@@ -6,6 +6,10 @@
       "type": "string",
       "description": "ID of the user"
     },
+    "wallet_address": {
+      "type": "string",
+      "description": "OmenX wallet address \u2014 canonical identity for rewards"
+    },
     "player_name": {
       "type": "string",
       "description": "Name of the player"

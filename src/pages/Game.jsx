@@ -134,8 +134,10 @@ export default function Game() {
                     : rawExisting.filter(e => e.arena_id !== 'endless');
 
                 const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
+                const walletAddress = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.walletAddress || null; } catch { return null; } })();
                 const scoreData = {
                     user_id: user.id,
+                    wallet_address: walletAddress,
                     player_name: displayName,
                     player_title: user.data?.player_title || '',
                     pilot_icon: pilotIcon,
