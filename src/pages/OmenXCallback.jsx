@@ -31,8 +31,10 @@ export default function OmenXCallback() {
         localStorage.removeItem('omenx_state');
 
         // Exchange code for token via backend (keeps API key secret)
+        console.log('[Callback] Invoking omenxTokenExchange with code:', code);
         base44.functions.invoke('omenxTokenExchange', { code })
             .then(res => {
+                console.log('[Callback] Response received:', res);
                 const data = res.data;
                 if (data.error) throw new Error(data.error);
                 setStatus('Connected! You can close this window.');
@@ -44,8 +46,8 @@ export default function OmenXCallback() {
                 setTimeout(() => window.close(), 1000);
             })
             .catch(err => {
-                console.error('[OmenX] token exchange error', err);
-                setStatus('Connection failed. Please try again.');
+                console.error('[Callback] token exchange error', err);
+                setStatus('Connection failed: ' + err.message);
                 if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: err.message }, window.location.origin);
             });
     }, []);
