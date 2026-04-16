@@ -14,6 +14,10 @@ import { CHARACTERS } from '../game/Constants';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 
+function OmenXIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+}
+
 export default function GlobalRaid({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
