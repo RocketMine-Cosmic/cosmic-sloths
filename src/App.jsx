@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
+import OmenXCallback from './pages/OmenXCallback';
 import MainMenu from './pages/MainMenu';
 import Hub from './pages/Hub';
 import Upgrades from './pages/Upgrades.jsx';
@@ -101,6 +102,7 @@ const AuthenticatedApp = () => {
       <Route path="/mastery" element={<Mastery />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/download-skus" element={<DownloadSkus />} />
+      <Route path="/auth/callback" element={<OmenXCallback />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     {needsProfileName && (

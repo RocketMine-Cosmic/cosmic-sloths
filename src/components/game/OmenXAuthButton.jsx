@@ -11,12 +11,7 @@ export default function OmenXAuthButton({ fullWidth = false }) {
         setAuthData(omenx.getAuthData());
     }, []);
 
-    // Keep in sync with sdk lifecycle callbacks
-    useEffect(() => {
-        const origOnAuth = omenx.config?.onAuth;
-        const origOnLogout = omenx.config?.onLogout;
-        // Poll-free: re-check after any known state change
-    }, []);
+
 
     const handleClick = async () => {
         if (authData) {
@@ -26,7 +21,10 @@ export default function OmenXAuthButton({ fullWidth = false }) {
         } else {
             setLoading(true);
             try {
-                await omenx.authenticate();
+                await omenx.authenticate({
+                    redirectUri: `${window.location.origin}/auth/callback`,
+                    enablePKCE: true,
+                });
                 const data = omenx.getAuthData();
                 setAuthData(data);
                 if (data) {
