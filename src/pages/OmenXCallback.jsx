@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 import { base44 } from '@/api/base44Client';
-
-// This page is opened as a popup by OmenXAuthButton.
-// It reads the ?code and ?state from the URL, exchanges the code for tokens
-// via the OmenX API, then posts the result back to the opener and closes.
-
-// Matches what's registered in the Omen Developer Portal
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Connecting to OmenX…');
@@ -30,31 +25,24 @@ export default function OmenXCallback() {
 
         localStorage.removeItem('omenx_state');
 
-        // Exchange code for token via backend
+        // Exchange code for token
         console.log('[Callback] Invoking omenxTokenExchange with code:', code);
         base44.functions.invoke('omenxTokenExchange', { code })
             .then(async res => {
-                console.log('[Callback] Response received:', res);
+                console.log('[Callback] Token response:', res.data);
                 const tokenData = res.data;
                 if (tokenData.error) throw new Error(tokenData.error);
                 
-                // Fetch user info to get wallet address
-                let walletData = {};
-                try {
-                    const userRes = await fetch('https://api.omen.foundation/v1/oauth/userinfo', {
-                        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-                    });
-                    const text = await userRes.text();
-                    console.log('[Callback] /oauth/userinfo status:', userRes.status, 'body:', text);
-                    if (userRes.ok && text) {
-                        walletData = JSON.parse(text);
-                        console.log('[Callback] User info:', walletData);
-                    }
-                } catch (err) {
-                    console.error('[Callback] Failed to fetch user info:', err);
-                }
+                // Use SDK client-side to verify token and get wallet
+                const sdk = new OmenXGameSDK({ gameId: 'cosmic-sloths' });
+                const verifyResult = await sdk.apiCall('/v1/oauth/userinfo', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+                });
+                const userInfo = await verifyResult.json();
+                console.log('[Callback] User info:', userInfo);
 
-                const fullData = { ...tokenData, ...walletData };
+                const fullData = { ...tokenData, ...userInfo };
                 setStatus('Connected! You can close this window now.');
                 localStorage.setItem('omenx_auth_data', JSON.stringify(fullData));
                 if (window.opener) {
