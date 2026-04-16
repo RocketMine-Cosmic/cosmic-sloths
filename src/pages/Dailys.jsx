@@ -48,7 +48,6 @@ export default function Dailys({ isCarousel }) {
                 </div>
             </div>
         </div>
-        </div>
         </OmenXGate>
     );
 }
