@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
             redirect_uri: REDIRECT_URI,
         });
 
-        const res = await fetch('https://api.omen.foundation/v1/oauth/token', {
+        const res = await fetch('https://staging.api.omen.foundation/v1/oauth/token', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/x-www-form-urlencoded',
