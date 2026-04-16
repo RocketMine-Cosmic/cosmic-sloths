@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { ArrowLeft, Skull, Crosshair, Trophy, Activity, Zap, Hexagon } from 'lucide-react';
+import { ArrowLeft, Skull, Crosshair, Trophy, Activity, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import moment from 'moment';
@@ -11,10 +11,12 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import { CHARACTERS } from '../game/Constants';
+import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 
 export default function GlobalRaid({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
+    const { balance: omenxBalance, refresh: refreshOmenX } = useOmenXBalance();
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -115,11 +117,10 @@ export default function GlobalRaid({ isCarousel }) {
     const handleBuyMoreRuns = () => {
         SoundManager.playUIClick();
         const currentSave = SaveManager.load();
-        if ((currentSave.cosmicTokens || 0) < 5) {
-            toast({ title: 'Not enough tokens', description: 'You need 5 Cosmic Tokens to buy more runs.', variant: 'destructive' });
+        if ((omenxBalance ?? 0) < 5) {
+            toast({ title: 'Not enough OMENX', description: 'You need 5 OMENX to buy more runs.', variant: 'destructive' });
             return;
         }
-        currentSave.cosmicTokens -= 5;
         if (!currentSave.extraRaidRuns) currentSave.extraRaidRuns = {};
         currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
         SaveManager.save(currentSave);
@@ -129,7 +130,8 @@ export default function GlobalRaid({ isCarousel }) {
         const seasonNum = Math.floor(moment().week() / 4) + 1;
         const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
         
-        base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id }).catch(console.error);
+        base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id, currency: 'omenx' }).catch(console.error);
+        refreshOmenX();
 
         toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
     };
@@ -291,7 +293,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     <Zap className="w-4 h-4 md:w-5 md:h-5" /> BUY 5 MORE RUNS
                                 </div>
                                 <span className="text-[10px] md:text-xs text-purple-200 flex items-center gap-1 font-normal tracking-normal normal-case">
-                                    Cost: 5 <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400 inline" /> <span className="text-emerald-400 font-bold">Cosmic Tokens</span>
+                                    Cost: 5 <span className="text-purple-300 font-bold">OMENX</span>
                                 </span>
                             </button>
                         ) : (

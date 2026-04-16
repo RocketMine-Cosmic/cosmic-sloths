@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
 import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Hexagon, Puzzle } from 'lucide-react';
+import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
@@ -34,6 +35,7 @@ const STATS = [
 export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
+    const { balance: omenxBalance } = useOmenXBalance();
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -100,8 +102,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(currentSave);
             setSave(currentSave);
             SoundManager.playUIClick();
-        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= tokenCost) {
-            currentSave.cosmicTokens -= tokenCost;
+        } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
             SaveManager.save(currentSave);
             setSave(currentSave);
@@ -131,8 +132,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(currentSave);
             setSave(currentSave);
             SoundManager.playUIClick();
-        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= tokenCost) {
-            currentSave.cosmicTokens -= tokenCost;
+        } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             if (!currentSave[saveKey]) currentSave[saveKey] = {};
             if (!currentSave[saveKey][weaponId]) currentSave[saveKey][weaponId] = {};
             currentSave[saveKey][weaponId][stat] = currentLevel + 1;
@@ -163,8 +163,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(currentSave);
             setSave(currentSave);
             SoundManager.playUIClick();
-        } else if (currency === 'token' && (currentSave.cosmicTokens || 0) >= tokenCost) {
-            currentSave.cosmicTokens -= tokenCost;
+        } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             if (!currentSave[saveKey]) currentSave[saveKey] = {};
             if (!currentSave[saveKey][selectedChar]) currentSave[saveKey][selectedChar] = [];
             currentSave[saveKey][selectedChar].push(talent.id);
@@ -246,8 +245,8 @@ export default function Upgrades({ isCarousel }) {
                 SaveManager.save(newSave);
                 setSave(newSave);
                 SoundManager.playUIClick();
-            } else if (currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.tokenCost) {
-                const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.tokenCost, unlockedSkins: [...unlocked, cosmetic.id] };
+            } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+                const newSave = { ...save, unlockedSkins: [...unlocked, cosmetic.id] };
                 newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
                 SaveManager.save(newSave);
                 setSave(newSave);
@@ -285,8 +284,8 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(newSave);
             setSave(newSave);
             SoundManager.playUIClick();
-        } else if (currency === 'token' && (save.cosmicTokens || 0) >= cosmetic.tokenCost) {
-            const newSave = { ...save, cosmicTokens: (save.cosmicTokens || 0) - cosmetic.tokenCost };
+        } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+            const newSave = { ...save };
             newSave[unlockKey] = [...unlocked, cosmetic.id];
             newSave.cosmetics = { ...cosmetics, [cosmeticKey]: cosmetic.id };
             SaveManager.save(newSave);
@@ -314,7 +313,7 @@ export default function Upgrades({ isCarousel }) {
                     const tokenCost = isMax ? 0 : typeConfig.tokenCosts[level];
                     
                     const canAffordGold = save.gold >= goldCost;
-                    const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
+                    const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
 
                     return (
                         <div key={stat.id} className="bg-slate-800 p-1.5 md:p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 border border-slate-700">
@@ -451,7 +450,7 @@ export default function Upgrades({ isCarousel }) {
                             const cost = isMax ? 0 : (typeConfig.goldCosts[level] || 0);
                             const tokenCost = isMax ? 0 : (typeConfig.tokenCosts[level] || 0);
                             const canAffordGold = save.gold >= cost;
-                            const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
+                            const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
                             const Icon = stat.icon;
 
                             return (
@@ -607,7 +606,7 @@ export default function Upgrades({ isCarousel }) {
                         const goldCost = typeConfig.goldCosts[costTier] || 0;
                         const tokenCost = typeConfig.tokenCosts[costTier] || 0;
                         const canAffordGold = save.gold >= goldCost;
-                        const canAffordToken = (save.cosmicTokens || 0) >= tokenCost;
+                        const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
                         
                         // Determine branch visual
                         const isBranchA = talent.id.endsWith('a');
@@ -883,7 +882,7 @@ export default function Upgrades({ isCarousel }) {
                                     const isOwned = skin.goldCost === 0 || unlockedSkins.includes(skin.id);
                                     const isEquipped = equippedSkinId === skin.id;
                                     const canAffordGold = save.gold >= skin.goldCost;
-                                    const canAffordToken = (save.cosmicTokens || 0) >= skin.tokenCost;
+                                    const canAffordToken = (omenxBalance ?? 0) >= skin.tokenCost;
                                     return (
                                         <div key={skin.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
                                             <div className="flex items-center gap-2">
@@ -935,7 +934,7 @@ export default function Upgrades({ isCarousel }) {
                         const isOwned = unlocked.includes(cosmetic.id);
                         const isEquipped = isTrail ? equippedTrail === cosmetic.id : equippedKill === cosmetic.id;
                         const canAffordGold = save.gold >= cosmetic.goldCost;
-                        const canAffordToken = (save.cosmicTokens || 0) >= cosmetic.tokenCost;
+                        const canAffordToken = (omenxBalance ?? 0) >= cosmetic.tokenCost;
 
                         return (
                             <div key={cosmetic.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
