@@ -33,47 +33,11 @@ Deno.serve(async (req) => {
             return Response.json(tokenData, { status: tokenRes.status });
         }
 
-        // Fetch user profile with the access token to get wallet address
-        let profileData = {};
-        try {
-            const accessToken = tokenData.access_token;
-            if (accessToken) {
-                const profileRes = await fetch(`${BASE_URL}/oauth/userinfo`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                if (profileRes.ok) {
-                    profileData = await profileRes.json();
-                    console.log('[OmenX] userinfo response:', profileData);
-                }
-
-                // Also try /me endpoint
-                if (!profileData.walletAddress && !profileData.wallet_address) {
-                    const meRes = await fetch(`${BASE_URL}/users/me`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-                    if (meRes.ok) {
-                        const meData = await meRes.json();
-                        console.log('[OmenX] /me response:', meData);
-                        profileData = { ...profileData, ...meData };
-                    }
-                }
-            }
-        } catch (profileErr) {
-            console.error('[OmenX] Failed to fetch profile', profileErr.message);
-        }
-
-        // Merge token data with profile (wallet address etc.)
-        const merged = {
-            ...tokenData,
-            ...profileData,
-            // Normalise wallet address field
-            walletAddress: profileData.walletAddress || profileData.wallet_address || tokenData.walletAddress || tokenData.wallet_address || null,
-            username: profileData.username || profileData.name || tokenData.username || null,
-            userId: profileData.id || profileData.userId || profileData.sub || tokenData.userId || null,
-        };
-
-        console.log('[OmenX] Final merged data:', merged);
-        return Response.json(merged);
+        console.log('[OmenX] Token response keys:', Object.keys(tokenData));
+        console.log('[OmenX] Full token data:', JSON.stringify(tokenData, null, 2));
+        
+        // Return raw token data as-is for inspection
+        return Response.json(tokenData);
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
