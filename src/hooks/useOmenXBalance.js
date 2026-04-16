@@ -25,21 +25,17 @@ function extractBalance(data) {
 export function useOmenXBalance() {
     const [balance, setBalance] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [retryCount, setRetryCount] = useState(0);
     const intervalRef = useRef(null);
-    const retryTimeoutRef = useRef(null);
 
     const fetchBalance = useCallback(async () => {
         const auth = getAuthData();
         if (!auth) {
             setLoading(false);
-            setRetryCount(0);
             return;
         }
 
         const walletAddress = auth.walletAddress || auth.wallet_address;
 
-        // Use backend function (server SDK, uses API key, no CORS issues)
         if (walletAddress) {
             try {
                 const res = await base44.functions.invoke('getOmenXBalance', {
@@ -47,51 +43,35 @@ export function useOmenXBalance() {
                     chainId: '56'
                 });
                 const bal = extractBalance(res.data);
-                if (bal !== null) {
-                    setBalance(bal);
-                    setLoading(false);
-                    setRetryCount(0);
-                    return;
-                } else if (res.data?.error) {
-                    // API returned an error, retry with exponential backoff
-                    const newRetryCount = retryCount + 1;
-                    if (newRetryCount <= 3) {
-                        setRetryCount(newRetryCount);
-                        const delayMs = Math.min(1000 * Math.pow(2, newRetryCount), 10000);
-                        if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
-                        retryTimeoutRef.current = setTimeout(fetchBalance, delayMs);
-                        return;
-                    }
-                }
+                setBalance(bal);
+                setLoading(false);
             } catch (e) {
                 console.error('[useOmenXBalance] fetch error', e);
+                setLoading(false);
             }
+            return;
         }
 
         setLoading(false);
-    }, [retryCount]);
+    }, []);
 
     useEffect(() => {
         fetchBalance();
-        // Poll every 30s
-        intervalRef.current = setInterval(fetchBalance, 30_000);
+        // Poll every 20s for live updates
+        intervalRef.current = setInterval(fetchBalance, 20_000);
 
-        // Re-fetch when auth state changes (login/logout in another tab)
+        // Re-fetch when auth changes
         const onStorage = (e) => {
-            if (e.key === 'omenx_auth_data') {
-                setRetryCount(0);
-                fetchBalance();
-            }
+            if (e.key === 'omenx_auth_data') fetchBalance();
         };
         window.addEventListener('storage', onStorage);
 
-        // Re-fetch on window focus
+        // Re-fetch on focus
         const onFocus = () => fetchBalance();
         window.addEventListener('focus', onFocus);
 
         return () => {
             clearInterval(intervalRef.current);
-            if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
             window.removeEventListener('storage', onStorage);
             window.removeEventListener('focus', onFocus);
         };
