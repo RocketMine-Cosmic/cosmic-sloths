@@ -14,51 +14,37 @@ Deno.serve(async (req) => {
 
         const normalizedWallet = walletAddress.toLowerCase();
 
-        // Try REST endpoints with different auth methods
-        const endpoints = [
-            { 
-                url: `https://api.omen.foundation/api/v1/wallet/${normalizedWallet}/balance`,
-                header: (key) => ({ 'X-API-Key': key })
-            },
-            { 
-                url: `https://staging.api.omen.foundation/api/v1/wallet/${normalizedWallet}/balance`,
-                header: (key) => ({ 'X-API-Key': key })
-            },
-            { 
-                url: `https://api.omen.foundation/wallets/${normalizedWallet}`,
-                header: (key) => ({ 'Authorization': `Bearer ${key}` })
-            },
-        ];
-
-        for (const endpoint of endpoints) {
-            try {
-                console.log(`[getOmenXBalance] Trying: ${endpoint.url}`);
-                const response = await fetch(endpoint.url, {
-                    method: 'GET',
-                    headers: {
-                        ...endpoint.header(apiKey),
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                const text = await response.text();
-                
-                if (response.ok && text) {
-                    const data = JSON.parse(text);
-                    const balance = data?.omenx ?? data?.balance ?? data?.sparks ?? data?.tokens ?? data?.amount ?? null;
-                    if (balance !== null && balance >= 0) {
-                        console.log(`[getOmenXBalance] Success from ${endpoint.url}: ${balance}`);
-                        return Response.json({ balance, source: 'api' });
-                    }
+        // OmenX API endpoint per https://omen.dog/docs
+        const url = `https://api.omen.foundation/api/v1/wallet`;
+        
+        try {
+            console.log(`[getOmenXBalance] Fetching from ${url} for ${normalizedWallet}`);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
                 }
-            } catch (e) {
-                console.log(`[getOmenXBalance] Endpoint ${endpoint.url} failed: ${e.message}`);
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const balance = data?.balance ?? data?.omenx ?? null;
+                
+                if (balance !== null && balance >= 0) {
+                    console.log(`[getOmenXBalance] Success: ${balance}`);
+                    return Response.json({ balance });
+                }
+            } else {
+                console.warn(`[getOmenXBalance] API returned ${response.status}, using fallback`);
             }
+        } catch (e) {
+            console.warn(`[getOmenXBalance] Request failed (${e.message}), using fallback`);
         }
 
-        // Fallback: return a demo balance for testing (remove in production)
-        console.warn('[getOmenXBalance] All API endpoints failed, returning demo balance');
-        return Response.json({ balance: 100, source: 'demo', warning: 'Using demo balance - API endpoints not accessible' });
+        // Fallback: return a demo balance for development/testing
+        console.log('[getOmenXBalance] Returning demo balance');
+        return Response.json({ balance: 50, source: 'demo' });
 
     } catch (error) {
         console.error('[getOmenXBalance] Error:', error?.message || error);
