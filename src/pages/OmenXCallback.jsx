@@ -38,18 +38,20 @@ export default function OmenXCallback() {
                 const tokenData = res.data;
                 if (tokenData.error) throw new Error(tokenData.error);
                 
-                // Fetch wallet balance using the access token
+                // Fetch user info to get wallet address
                 let walletData = {};
                 try {
-                    const balanceRes = await fetch('https://api.omen.foundation/v1/players/me', {
+                    const userRes = await fetch('https://api.omen.foundation/v1/oauth/userinfo', {
                         headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
                     });
-                    if (balanceRes.ok) {
-                        walletData = await balanceRes.json();
-                        console.log('[Callback] Wallet data:', walletData);
+                    const text = await userRes.text();
+                    console.log('[Callback] /oauth/userinfo status:', userRes.status, 'body:', text);
+                    if (userRes.ok && text) {
+                        walletData = JSON.parse(text);
+                        console.log('[Callback] User info:', walletData);
                     }
                 } catch (err) {
-                    console.error('[Callback] Failed to fetch wallet data:', err);
+                    console.error('[Callback] Failed to fetch user info:', err);
                 }
 
                 const fullData = { ...tokenData, ...walletData };
