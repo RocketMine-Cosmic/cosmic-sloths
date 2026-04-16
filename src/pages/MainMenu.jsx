@@ -38,7 +38,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
 
     const handleOmenLogin = async () => {
         SoundManager.playUIClick();
-        await sdk.authenticate();
+        if (sdk) await sdk.authenticate();
     };
 
     const handleOmenLogout = () => {
