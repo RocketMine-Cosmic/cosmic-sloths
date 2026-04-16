@@ -14,7 +14,7 @@ export default function OmenXCallback() {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
-        const savedState = sessionStorage.getItem('omenx_state');
+        const savedState = localStorage.getItem('omenx_state');
 
         if (!code) {
             setStatus('No authorization code received.');
@@ -28,7 +28,7 @@ export default function OmenXCallback() {
             return;
         }
 
-        sessionStorage.removeItem('omenx_state');
+        localStorage.removeItem('omenx_state');
 
         // Exchange code for token via backend (keeps API key secret)
         base44.functions.invoke('omenxTokenExchange', { code })

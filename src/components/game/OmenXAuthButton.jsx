@@ -41,7 +41,7 @@ export default function OmenXAuthButton({ fullWidth = false }) {
 
     const handleLogin = () => {
         const state = Math.random().toString(36).slice(2);
-        sessionStorage.setItem('omenx_state', state);
+        localStorage.setItem('omenx_state', state);
         const url = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&state=${state}`;
         const popup = window.open(url, 'omenx_auth', 'width=500,height=700,noopener');
         if (!popup) { console.error('[OmenX] popup blocked'); return; }
