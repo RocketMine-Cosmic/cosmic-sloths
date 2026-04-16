@@ -25,12 +25,15 @@ function extractBalance(data) {
 export function useOmenXBalance() {
     const [balance, setBalance] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [retryCount, setRetryCount] = useState(0);
     const intervalRef = useRef(null);
+    const retryTimeoutRef = useRef(null);
 
     const fetchBalance = useCallback(async () => {
         const auth = getAuthData();
         if (!auth) {
             setLoading(false);
+            setRetryCount(0);
             return;
         }
 
@@ -47,7 +50,18 @@ export function useOmenXBalance() {
                 if (bal !== null) {
                     setBalance(bal);
                     setLoading(false);
+                    setRetryCount(0);
                     return;
+                } else if (res.data?.error) {
+                    // API returned an error, retry with exponential backoff
+                    const newRetryCount = retryCount + 1;
+                    if (newRetryCount <= 3) {
+                        setRetryCount(newRetryCount);
+                        const delayMs = Math.min(1000 * Math.pow(2, newRetryCount), 10000);
+                        if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+                        retryTimeoutRef.current = setTimeout(fetchBalance, delayMs);
+                        return;
+                    }
                 }
             } catch (e) {
                 console.error('[useOmenXBalance] fetch error', e);
@@ -55,7 +69,7 @@ export function useOmenXBalance() {
         }
 
         setLoading(false);
-    }, []);
+    }, [retryCount]);
 
     useEffect(() => {
         fetchBalance();
@@ -64,7 +78,10 @@ export function useOmenXBalance() {
 
         // Re-fetch when auth state changes (login/logout in another tab)
         const onStorage = (e) => {
-            if (e.key === 'omenx_auth_data') fetchBalance();
+            if (e.key === 'omenx_auth_data') {
+                setRetryCount(0);
+                fetchBalance();
+            }
         };
         window.addEventListener('storage', onStorage);
 
@@ -74,6 +91,7 @@ export function useOmenXBalance() {
 
         return () => {
             clearInterval(intervalRef.current);
+            if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
             window.removeEventListener('storage', onStorage);
             window.removeEventListener('focus', onFocus);
         };

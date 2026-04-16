@@ -12,17 +12,23 @@ Deno.serve(async (req) => {
         }
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
+        if (!apiKey) {
+            console.error('[getOmenXBalance] OMENX_API_KEY not set');
+            return Response.json({ balance: null, error: 'API key not configured' }, { status: 500 });
+        }
+
         const sdk = new OmenXServerSDK({
             apiKey,
             apiBaseUrl: 'https://staging.api.omen.foundation',
         });
 
         const balances = await sdk.getPlayerBalances(walletAddress, chainId);
-        // getPlayerBalances returns something like { omenx: number, ... }
         const balance = balances?.omenx ?? balances?.balance ?? balances?.sparks ?? balances?.tokens ?? null;
 
         return Response.json({ balance, raw: balances });
     } catch (error) {
-        return Response.json({ error: error.message, balance: null }, { status: 500 });
+        console.error('[getOmenXBalance] Error:', error?.message || error);
+        // Return 200 with null balance instead of 500 to allow graceful degradation
+        return Response.json({ balance: null, error: error?.message || 'Failed to fetch balance' });
     }
 });
