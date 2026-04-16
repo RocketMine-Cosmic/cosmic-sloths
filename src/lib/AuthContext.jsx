@@ -56,6 +56,8 @@ export const AuthProvider = ({ children }) => {
         } else {
           setIsLoadingAuth(false);
           setIsAuthenticated(false);
+          // Redirect to Base44 login
+          base44.auth.redirectToLogin(window.location.href);
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
