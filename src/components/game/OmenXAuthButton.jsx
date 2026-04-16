@@ -46,9 +46,19 @@ export default function OmenXAuthButton({ fullWidth = false }) {
         const popup = window.open(url, 'omenx_auth', 'width=500,height=700');
         if (!popup) { console.error('[OmenX] popup blocked'); return; }
         setLoading(true);
-        // Fallback: close loading if popup is closed without completing
+        // Poll for popup close, then check localStorage for auth data
         const timer = setInterval(() => {
-            if (popup.closed) { clearInterval(timer); setLoading(false); }
+            if (popup.closed) {
+                clearInterval(timer);
+                setLoading(false);
+                // Check if auth data was written to localStorage by the callback
+                const stored = getAuthData();
+                if (stored) {
+                    setAuthState(stored);
+                    setSuccessMsg(`Connected as ${stored.username || stored.walletAddress || 'OmenX User'}`);
+                    setTimeout(() => setSuccessMsg(''), 5000);
+                }
+            }
         }, 500);
     };
 
