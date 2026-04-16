@@ -80,28 +80,7 @@ export default function Hub({ isCarousel }) {
         });
     }, [selectedChar, selectedArena, selectedDifficulty, selectedWeapon]);
 
-    React.useEffect(() => {
-        const claimRewards = async () => {
-            try {
-                // Automatically claim any missed Global Raid rewards from past weeks
-                const raidRes = await base44.functions.invoke('claimPastRaidRewards', {});
-                if (raidRes.data?.status === 'success' && raidRes.data.totalGold > 0) {
-                    const currentSave = SaveManager.load();
-                    const newSave = { ...currentSave, gold: (currentSave.gold || 0) + raidRes.data.totalGold };
-                    SaveManager.save(newSave);
-                    setSave(newSave);
-                    if (SaveManager.syncToBackendNow) await SaveManager.syncToBackendNow(newSave);
-                    toast({
-                        title: "Past Raid Rewards Claimed!",
-                        description: `You received ${raidRes.data.totalGold.toLocaleString()} Gold from past Global Raids!`,
-                    });
-                }
-            } catch (e) {
-                // Silently fail if user is not Base44-authenticated (OmenX-only session)
-            }
-        };
-        claimRewards();
-    }, []);
+    // OmenX-only mode: skip Base44 reward claims
 
     const checkAndLaunch = async (mode) => {
         SoundManager.playUIClick();

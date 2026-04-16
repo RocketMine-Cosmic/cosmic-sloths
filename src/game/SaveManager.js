@@ -9,89 +9,13 @@ export const SaveManager = {
   _syncTimeout: null,
 
   initialize: async () => {
-    try {
-      const user = getOmenXUser();
-      if (!user) return;
-      // Use wallet address as canonical ID for cross-device save sync
-      SaveManager._userId = user.walletAddress || user.id;
-      
-      try {
-        const saves = await base44.entities.PlayerSave.filter({ user_id: user.id });
-        if (saves.length > 0) {
-          SaveManager._saveId = saves[0].id;
-          const backendSave = saves[0].save_data;
-          const localDataRaw = localStorage.getItem('cosmic_sloth_save');
-          let localData = null;
-          if (localDataRaw) {
-            try { localData = JSON.parse(localDataRaw); } catch(e) {}
-          }
-          
-          const backendTime = saves[0].updated_at || 0;
-          const localTime = localData ? (localData.updated_at || 0) : 0;
-          
-          if (backendSave && backendTime >= localTime) {
-            // Backend is newer or same — always trust backend on cross-device load
-            localStorage.setItem('cosmic_sloth_save', JSON.stringify(backendSave));
-            console.log('[SaveManager] Loaded from backend (newer or equal)');
-          } else if (localData && localTime > backendTime) {
-            // Local is newer — push local up to backend immediately
-            console.log('[SaveManager] Local save newer, pushing to backend');
-            await SaveManager.syncToBackendNow(localData);
-          }
-        } else {
-          // No backend save exists — create one from local if available
-          const localDataRaw = localStorage.getItem('cosmic_sloth_save');
-          if (localDataRaw) {
-            try {
-              const localData = JSON.parse(localDataRaw);
-              console.log('[SaveManager] No backend save found, creating from local');
-              await SaveManager.syncToBackendNow(localData);
-            } catch(e) {}
-          }
-        }
-      } catch(syncError) {
-        // Backend sync unavailable (user not Base44-authenticated) — continue with local save
-        console.log('[SaveManager] Backend sync unavailable, using local save only');
-      }
-    } catch(e) {
-      console.error('Failed to initialize save sync', e);
-    }
+    // OmenX-only: no Base44 backend sync
+    console.log('[SaveManager] Using local save only (OmenX mode)');
   },
 
-  // Immediately syncs to backend (no debounce) — silently fails if not authenticated
-  syncToBackendNow: async (data) => {
-    if (!SaveManager._userId) return;
-    try {
-      if (SaveManager._saveId) {
-        await base44.entities.PlayerSave.update(SaveManager._saveId, { save_data: data, updated_at: data.updated_at || Date.now() });
-      } else {
-        const res = await base44.entities.PlayerSave.create({ user_id: SaveManager._userId, save_data: data, updated_at: data.updated_at || Date.now() });
-        SaveManager._saveId = res.id;
-      }
-    } catch(e) {
-      // Backend unavailable — local save remains intact
-    }
-  },
-
-  _syncToBackend: (data) => {
-    if (!SaveManager._userId) return;
-    if (SaveManager._syncTimeout) clearTimeout(SaveManager._syncTimeout);
-    
-    SaveManager._syncTimeout = setTimeout(async () => {
-      try {
-        const timestamp = data.updated_at || Date.now();
-        if (SaveManager._saveId) {
-          await base44.entities.PlayerSave.update(SaveManager._saveId, { save_data: data, updated_at: timestamp });
-        } else {
-          const res = await base44.entities.PlayerSave.create({ user_id: SaveManager._userId, save_data: data, updated_at: timestamp });
-          SaveManager._saveId = res.id;
-        }
-        console.log('[SaveManager] Synced to backend at', new Date(timestamp).toISOString());
-      } catch (e) {
-        // Backend unavailable — local save remains intact, don't retry
-      }
-    }, 1000);
-  },
+  // OmenX-only: no backend sync
+  syncToBackendNow: async () => {},
+  _syncToBackend: () => {},
 
   load: () => {
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
@@ -242,7 +166,6 @@ export const SaveManager = {
       data.updated_at = Date.now();
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
-      SaveManager._syncToBackend(data);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
     } catch (e) {
       console.error('[SaveManager] Failed to save locally', e);
