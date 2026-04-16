@@ -6,11 +6,17 @@ Deno.serve(async (req) => {
         if (!code) return Response.json({ error: 'Missing code' }, { status: 400 });
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
+        if (!apiKey) return Response.json({ error: 'API key not configured' }, { status: 500 });
 
+        console.log('[OmenX] Exchanging code with client_secret');
+        
         // Exchange code for access token
         const tokenRes = await fetch('https://api.omen.foundation/v1/oauth/token', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Bearer ${apiKey}`
+            },
             body: new URLSearchParams({
                 grant_type: 'authorization_code',
                 code,
