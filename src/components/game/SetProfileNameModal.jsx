@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { SaveManager } from '../../game/SaveManager';
 
 export default function SetProfileNameModal({ onComplete }) {
     const [name, setName] = useState('');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
-    const handleSave = async () => {
+    const handleSave = () => {
         const trimmed = name.trim();
         if (!trimmed) { setError('Please enter a name.'); return; }
         if (trimmed.length < 2) { setError('Name must be at least 2 characters.'); return; }
         if (trimmed.length > 20) { setError('Name must be 20 characters or less.'); return; }
         setSaving(true);
-        try {
-            await base44.auth.updateMe({ player_name: trimmed });
-            onComplete(trimmed);
-        } catch (e) {
-            setError('Failed to save name. Please try again.');
-            setSaving(false);
-        }
+        const save = SaveManager.load();
+        save.pilotName = trimmed;
+        save.hasSetProfileName = true;
+        SaveManager.save(save);
+        onComplete(trimmed);
     };
 
     return (
@@ -51,7 +49,7 @@ export default function SetProfileNameModal({ onComplete }) {
                     disabled={saving || !name.trim()}
                     className="w-full mt-4 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-3 rounded-lg font-mono text-lg transition-colors"
                 >
-                    {saving ? 'SAVING...' : 'CONFIRM CALLSIGN'}
+                    CONFIRM CALLSIGN
                 </button>
             </motion.div>
         </div>
