@@ -182,8 +182,10 @@ export default function Hub({ isCarousel }) {
         // Check pilot name
         try {
             const user = await base44.auth.me();
+            const save = SaveManager.load();
             const displayName = user?.player_name || user?.data?.player_name;
-            if (!displayName || displayName.includes('@')) {
+            const hasValidName = displayName && !displayName.includes('@') && displayName !== 'Anonymous' && displayName.trim().length >= 2;
+            if (!hasValidName || !save.hasSetProfileName) {
                 setPendingLaunch(mode);
                 setShowNameModal(true);
                 return;
