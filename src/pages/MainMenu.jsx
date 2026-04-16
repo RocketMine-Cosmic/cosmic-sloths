@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
@@ -7,11 +7,15 @@ import { SoundManager } from '../game/SoundManager';
 import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
+    const [omenAuthData, setOmenAuthData] = useState(null);
+    const [omenError, setOmenError] = useState(null);
+    const sdkRef = useRef(null);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -24,6 +28,38 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
         };
         fetchUser();
     }, []);
+
+    useEffect(() => {
+        const initSdk = async () => {
+            const sdk = new OmenXGameSDK({
+                gameId: 'cosmic-sloths',
+                onAuth: (authData) => {
+                    console.log('Authenticated!', authData);
+                    setOmenAuthData(authData);
+                },
+                onAuthError: (error) => {
+                    console.error('Auth error:', error);
+                    setOmenError(error?.message || 'Authentication failed');
+                },
+            });
+            await sdk.init();
+            sdkRef.current = sdk;
+        };
+        initSdk();
+    }, []);
+
+    const handleOmenLogin = async () => {
+        SoundManager.playUIClick();
+        setOmenError(null);
+        try {
+            await sdkRef.current?.authenticate({
+                redirectUri: window.location.origin,
+                enablePKCE: true,
+            });
+        } catch (e) {
+            setOmenError(e?.message || 'Login failed');
+        }
+    };
 
 
 
@@ -89,6 +125,21 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                     >
                         ADMIN DASHBOARD
                     </button>
+                )}
+                {omenAuthData ? (
+                    <div className="col-span-2 w-full bg-emerald-900/40 backdrop-blur-md border border-emerald-500/60 rounded-xl px-4 py-3 text-emerald-300 text-xs font-bold text-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                        ✓ OmenX Logged In as {omenAuthData.userId || omenAuthData.walletAddress || 'User'}
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleOmenLogin}
+                        className="col-span-2 w-full bg-purple-900/40 hover:bg-purple-800/60 backdrop-blur-md text-purple-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-purple-500/60 hover:border-purple-400 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] flex items-center justify-center gap-2"
+                    >
+                        🔮 LOGIN WITH OMENX
+                    </button>
+                )}
+                {omenError && (
+                    <div className="col-span-2 text-center text-red-400 text-xs font-bold">{omenError}</div>
                 )}
                 <button 
                     onClick={() => { SoundManager.init(); SoundManager.playUIClick(); localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
