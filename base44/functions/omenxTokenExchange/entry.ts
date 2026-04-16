@@ -42,9 +42,12 @@ Deno.serve(async (req) => {
                 const meRes = await fetch(`${BASE_URL}/users/me`, {
                     headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
                 });
-                if (meRes.ok) {
-                    userProfile = await meRes.json();
-                    console.log('[OmenX] User profile:', userProfile);
+                const meText = await meRes.text();
+                console.log('[OmenX] /users/me status:', meRes.status);
+                console.log('[OmenX] /users/me response text:', meText);
+                if (meRes.ok && meText) {
+                    userProfile = JSON.parse(meText);
+                    console.log('[OmenX] Parsed user profile:', userProfile);
                 }
             } catch (err) {
                 console.error('[OmenX] Failed to fetch user profile:', err.message);
