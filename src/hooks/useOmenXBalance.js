@@ -30,12 +30,14 @@ export function useOmenXBalance() {
     const fetchBalance = useCallback(async () => {
         const auth = getAuthData();
         if (!auth) {
+            console.warn('[useOmenXBalance] No auth data found');
             setLoading(false);
             return;
         }
 
         const token = auth.access_token || auth.accessToken;
         const walletAddress = auth.walletAddress || auth.wallet_address;
+        console.log('[useOmenXBalance] Auth found, wallet:', walletAddress?.slice(0, 6) + '...');
 
         // 1. Try direct OmenX API calls with user's OAuth token
         if (token) {
@@ -49,6 +51,7 @@ export function useOmenXBalance() {
                     if (res.ok) {
                         const data = await res.json();
                         const bal = extractBalance(data);
+                        console.log(`[useOmenXBalance] Direct API ${ep}: balance=${bal}`);
                         if (bal !== null) {
                             setBalance(bal);
                             setLoading(false);
@@ -67,6 +70,7 @@ export function useOmenXBalance() {
                     chainId: '56'
                 });
                 const bal = extractBalance(res.data);
+                console.log('[useOmenXBalance] Backend balance:', bal, 'raw:', res.data);
                 if (bal !== null) {
                     setBalance(bal);
                     setLoading(false);
@@ -77,6 +81,7 @@ export function useOmenXBalance() {
             }
         }
 
+        console.warn('[useOmenXBalance] Could not fetch balance from any source');
         setLoading(false);
     }, []);
 
