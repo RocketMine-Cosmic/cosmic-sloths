@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { base44 } from '@/api/base44Client';
 
 // This page is opened as a popup by OmenXAuthButton.
 // It reads the ?code and ?state from the URL, exchanges the code for tokens
@@ -29,19 +30,10 @@ export default function OmenXCallback() {
 
         sessionStorage.removeItem('omenx_state');
 
-        // Exchange code for token
-        fetch('https://api.omen.foundation/v1/oauth/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                client_id: 'cosmic-sloths',
-                code,
-                redirect_uri: REDIRECT_URI,
-                grant_type: 'authorization_code',
-            }),
-        })
-            .then(res => res.json())
-            .then(data => {
+        // Exchange code for token via backend (keeps API key secret)
+        base44.functions.invoke('omenxTokenExchange', { code })
+            .then(res => {
+                const data = res.data;
                 if (data.error) throw new Error(data.error);
                 setStatus('Connected! You can close this window.');
                 if (window.opener) {
