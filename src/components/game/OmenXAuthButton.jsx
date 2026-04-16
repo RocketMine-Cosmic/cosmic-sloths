@@ -1,48 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { omenx } from '@/lib/omenx';
+
+const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
+const CLIENT_ID = 'cosmic-sloths';
+const AUTH_URL = `https://api.omen.foundation/v1/oauth/authorize`;
+
+const STORAGE_KEY = 'omenx_auth_data';
+
+function getAuthData() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+}
+function setAuthData(data) {
+    if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    else localStorage.removeItem(STORAGE_KEY);
+}
 
 export default function OmenXAuthButton({ fullWidth = false }) {
-    const [authData, setAuthData] = useState(null);
-    const [successMsg, setSuccessMsg] = useState('');
+    const [authData, setAuthState] = useState(getAuthData);
     const [loading, setLoading] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
-        // Reflect current session on mount (init() already called in App.jsx)
-        setAuthData(omenx.getAuthData());
-    }, []);
-
-
-
-    const handleClick = async () => {
-        if (authData) {
-            await omenx.logout();
-            setAuthData(null);
-            setSuccessMsg('');
-        } else {
-            setLoading(true);
-            try {
-                await omenx.authenticate({
-                    redirectUri: 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback',
-                    enablePKCE: true,
-                });
-                const data = omenx.getAuthData();
+        const handler = (e) => {
+            if (e.origin !== window.location.origin) return;
+            if (e.data?.type === 'OMENX_AUTH_SUCCESS') {
+                const data = e.data.payload;
                 setAuthData(data);
-                if (data) {
-                    setSuccessMsg(`Connected as ${data.username || data.walletAddress || 'OmenX User'}`);
-                    setTimeout(() => setSuccessMsg(''), 5000);
-                }
-            } catch (err) {
-                console.error('[OmenX] authenticate error', err);
-            } finally {
+                setAuthState(data);
+                setLoading(false);
+                setSuccessMsg(`Connected as ${data.username || data.walletAddress || 'OmenX User'}`);
+                setTimeout(() => setSuccessMsg(''), 5000);
+            }
+            if (e.data?.type === 'OMENX_AUTH_ERROR') {
+                console.error('[OmenX] auth error', e.data.error);
                 setLoading(false);
             }
-        }
+        };
+        window.addEventListener('message', handler);
+        return () => window.removeEventListener('message', handler);
+    }, []);
+
+    const handleLogin = () => {
+        const state = Math.random().toString(36).slice(2);
+        sessionStorage.setItem('omenx_state', state);
+        const url = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&state=${state}`;
+        const popup = window.open(url, 'omenx_auth', 'width=500,height=700,noopener');
+        if (!popup) { console.error('[OmenX] popup blocked'); return; }
+        setLoading(true);
+        // Fallback: close loading if popup is closed without completing
+        const timer = setInterval(() => {
+            if (popup.closed) { clearInterval(timer); setLoading(false); }
+        }, 500);
+    };
+
+    const handleLogout = () => {
+        setAuthData(null);
+        setAuthState(null);
+        setSuccessMsg('');
     };
 
     return (
         <div className={`flex flex-col ${fullWidth ? 'items-center w-full' : 'items-end'} gap-1`}>
             <button
-                onClick={handleClick}
+                onClick={authData ? handleLogout : handleLogin}
                 disabled={loading}
                 className={`font-black tracking-widest uppercase transition-all border flex items-center justify-center gap-2 backdrop-blur-md ${
                     fullWidth
