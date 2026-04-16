@@ -115,30 +115,36 @@ export default function GlobalRaid({ isCarousel }) {
     const extraRuns = (save.extraRaidRuns || {})[todayDate] || 0;
     const MAX_RUNS_PER_DAY = 5 + extraRuns;
 
-    const handleBuyMoreRuns = () => {
+    const handleBuyMoreRuns = async () => {
         SoundManager.playUIClick();
         const currentSave = SaveManager.load();
         if ((omenxBalance ?? 0) < 5) {
             toast({ title: 'Not enough OMENX', description: 'You need 5 OMENX to buy more runs.', variant: 'destructive' });
             return;
         }
-        if (!currentSave.extraRaidRuns) currentSave.extraRaidRuns = {};
-        currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
-        SaveManager.save(currentSave);
-        setSave(currentSave);
 
         const week_id = moment().format('YYYY-[W]ww');
         const seasonNum = Math.floor(moment().week() / 4) + 1;
         const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-        
-        base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id, currency: 'omenx' }).catch(console.error);
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        if (authData?.walletAddress) {
-            base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id }).catch(console.error);
-        }
-        refreshOmenX();
 
-        toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
+        try {
+            if (!authData?.walletAddress) throw new Error('No wallet address');
+            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id });
+            if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
+
+            // Only grant runs after confirmed charge
+            if (!currentSave.extraRaidRuns) currentSave.extraRaidRuns = {};
+            currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
+            SaveManager.save(currentSave);
+            setSave(currentSave);
+            base44.functions.invoke('recordTokenSpend', { amount: 5, week_id, season_id, currency: 'omenx' }).catch(console.error);
+            refreshOmenX();
+            toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
+        } catch (err) {
+            console.error('[handleBuyMoreRuns] purchase failed:', err);
+            toast({ title: 'Purchase Failed', description: 'Could not process payment. Please try again.', variant: 'destructive' });
+        }
     };
 
     const handleLaunchRaid = () => {
