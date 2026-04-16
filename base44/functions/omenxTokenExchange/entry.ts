@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
                 });
                 if (profileRes.ok) {
                     profileData = await profileRes.json();
+                    console.log('[OmenX] userinfo response:', profileData);
                 }
 
                 // Also try /me endpoint
@@ -52,6 +53,7 @@ Deno.serve(async (req) => {
                     });
                     if (meRes.ok) {
                         const meData = await meRes.json();
+                        console.log('[OmenX] /me response:', meData);
                         profileData = { ...profileData, ...meData };
                     }
                 }
@@ -70,6 +72,7 @@ Deno.serve(async (req) => {
             userId: profileData.id || profileData.userId || profileData.sub || tokenData.userId || null,
         };
 
+        console.log('[OmenX] Final merged data:', merged);
         return Response.json(merged);
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
