@@ -97,7 +97,7 @@ export default function Hub({ isCarousel }) {
                     });
                 }
             } catch (e) {
-                console.error(e);
+                // Silently fail if user is not Base44-authenticated (OmenX-only session)
             }
         };
         claimRewards();
