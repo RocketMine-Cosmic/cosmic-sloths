@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
-import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Hexagon, Puzzle } from 'lucide-react';
+import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzzle } from 'lucide-react';
+
+function OmenXIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+}
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
@@ -373,7 +377,7 @@ export default function Upgrades({ isCarousel }) {
                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                         }`}
                                     >
-                                        <Hexagon className="w-4 h-4 fill-current" /> {tokenCost.toLocaleString()} Tokens
+                                        <OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX
                                     </button>
                                 )}
                             </div>
@@ -504,7 +508,7 @@ export default function Upgrades({ isCarousel }) {
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                <Hexagon className="w-3 h-3 fill-current" /> {tokenCost.toLocaleString()} Tokens
+                                                <OmenXIcon className="w-3 h-3" /> {tokenCost.toLocaleString()} OMENX
                                             </button>
                                         )}
                                     </div>
@@ -671,7 +675,7 @@ export default function Upgrades({ isCarousel }) {
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
                                         >
-                                            <Hexagon className="w-4 h-4 fill-current" /> {tokenCost.toLocaleString()} Tokens
+                                            <OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX
                                         </button>
                                     )}
                                 </div>
@@ -932,7 +936,7 @@ export default function Upgrades({ isCarousel }) {
                                                             {skin.tokenCost > 0 && (
                                                                 <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
                                                                     className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                    <Hexagon className="w-3 h-3 fill-current" /> {skin.tokenCost.toLocaleString()} Tokens
+                                                                    <OmenXIcon className="w-3 h-3" /> {skin.tokenCost.toLocaleString()} OMENX
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1002,7 +1006,7 @@ export default function Upgrades({ isCarousel }) {
                                                         canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
-                                                    <Hexagon className="w-3 h-3 fill-current" /> {cosmetic.tokenCost.toLocaleString()} Tokens
+                                                    <OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX
                                                 </button>
                                             )}
                                         </div>

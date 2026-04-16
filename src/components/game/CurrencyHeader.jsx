@@ -3,13 +3,8 @@ import { SaveManager } from '../../game/SaveManager';
 import { Star, Puzzle, Coins } from 'lucide-react';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 
-// OmenX logo as inline SVG for crisp rendering
 function OmenXIcon({ className }) {
-    return (
-        <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L3 7v10l9 5 9-5V7L12 2zm0 2.18L19 8v8l-7 3.89L5 16V8l7-3.82z"/>
-        </svg>
-    );
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
 export default function CurrencyHeader() {

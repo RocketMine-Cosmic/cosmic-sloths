@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle, Hexagon } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
+
+function OmenXIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+}
 
 export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish }) {
     const [revealedIndex, setRevealedIndex] = useState(null);
@@ -46,7 +50,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                 className="bg-slate-900 border-2 border-cyan-500 p-3 md:p-8 rounded-xl max-w-3xl w-full max-h-[95vh] overflow-y-auto flex flex-col items-center relative"
             >
                 <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-emerald-950/50 border border-emerald-500/50 px-2 py-1 md:px-3 md:py-1 rounded-lg text-emerald-400 font-bold font-mono text-xs md:text-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1.5">
-                    <Hexagon className="w-3 h-3 md:w-4 md:h-4 fill-emerald-400 text-emerald-400" /> {cosmicTokens || 0}
+                    <OmenXIcon className="w-3 h-3 md:w-4 md:h-4" /> {cosmicTokens || 0}
                 </div>
                 <h2 className="text-xl md:text-3xl font-bold text-center text-cyan-400 mb-1 md:mb-2 font-mono">
                     {revealedIndex === null ? 'CHOOSE A MYSTERY UPGRADE' : 'UPGRADE REVEALED!'}
@@ -141,7 +145,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             }}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 2 ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
                         >
-                            Reroll (2 OMENX)
+                            <OmenXIcon className="w-4 h-4 mr-1" /> Reroll (2 OMENX)
                         </motion.button>
                     )}
                     
