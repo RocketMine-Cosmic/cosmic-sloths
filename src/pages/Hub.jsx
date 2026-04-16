@@ -175,22 +175,12 @@ export default function Hub({ isCarousel }) {
 
     const checkAndLaunch = async (mode) => {
         SoundManager.playUIClick();
-        if (!getOmenXAuth()) {
-            toast({ title: "Login Required", description: "Please login with OmenX to play!" });
+        const currentSave = SaveManager.load();
+        if (!currentSave.hasSetProfileName) {
+            setPendingLaunch(mode);
+            setShowNameModal(true);
             return;
         }
-        // Check pilot name
-        try {
-            const user = await base44.auth.me();
-            const save = SaveManager.load();
-            const displayName = user?.player_name || user?.data?.player_name;
-            const hasValidName = displayName && !displayName.includes('@') && displayName !== 'Anonymous' && displayName.trim().length >= 2;
-            if (!hasValidName || !save.hasSetProfileName) {
-                setPendingLaunch(mode);
-                setShowNameModal(true);
-                return;
-            }
-        } catch(e) { /* continue */ }
         launchGame(mode);
     };
 
@@ -201,6 +191,21 @@ export default function Hub({ isCarousel }) {
     const startGame = () => checkAndLaunch('normal');
 
 
+
+    // If not logged in with OmenX, show a gate
+    if (!omenxAuth) {
+        return (
+            <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 flex flex-col items-center justify-center gap-6 p-6 font-sans`}>
+                {!isCarousel && <SpaceBackground />}
+                <div className="relative z-10 text-center flex flex-col items-center gap-4">
+                    <div className="text-6xl mb-2">🔒</div>
+                    <h2 className="text-2xl md:text-3xl font-black tracking-widest uppercase text-white">Login Required</h2>
+                    <p className="text-slate-400 text-sm max-w-xs">You need to login with OmenX to access the Sloth Lounge and launch missions.</p>
+                    <OmenXAuthButton fullWidth onAuthChange={(data) => setOmenxAuth(data)} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
