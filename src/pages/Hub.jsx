@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMETICS, getCharacterMastery } from '../game/Constants';
-import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Coins, Hexagon } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Coins } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
+import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { IN_GAME_SKUS } from '@/lib/skuMap';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
@@ -40,6 +42,7 @@ export default function Hub({ isCarousel }) {
     const [isNGPlus, setIsNGPlus] = useState(save.isNGPlus || false);
     const [charTab, setCharTab] = useState('loadout');
     const { toast } = useToast();
+    const { balance: omenxBalance, refresh: refreshOmenX } = useOmenXBalance();
     const touchStartX = React.useRef(null);
     const [currentTime, setCurrentTime] = useState(Date.now());
 
@@ -99,34 +102,6 @@ export default function Hub({ isCarousel }) {
         };
         claimRewards();
     }, []);
-
-    const handleBuyCharacter = (char, currency = 'gold') => {
-        if (save.unlockedCharacters.includes(char.id)) return;
-        
-        const tokenCost = Math.max(1, Math.floor(char.cost / 4));
-
-        if (currency === 'gold' && save.gold >= char.cost) {
-            const newSave = { 
-                ...save, 
-                gold: save.gold - char.cost,
-                unlockedCharacters: [...save.unlockedCharacters, char.id],
-                foundCharacters: [...(save.foundCharacters || []), char.id]
-            };
-            SaveManager.save(newSave);
-            setSave(newSave);
-            setSelectedChar(char.id);
-        } else if (currency === 'token' && (save.cosmicTokens || 0) >= tokenCost) {
-            const newSave = { 
-                ...save, 
-                cosmicTokens: (save.cosmicTokens || 0) - tokenCost,
-                unlockedCharacters: [...save.unlockedCharacters, char.id],
-                foundCharacters: [...(save.foundCharacters || []), char.id]
-            };
-            SaveManager.save(newSave);
-            setSave(newSave);
-            setSelectedChar(char.id);
-        }
-    };
 
     const checkAndLaunch = async (mode) => {
         SoundManager.playUIClick();
@@ -553,16 +528,22 @@ export default function Hub({ isCarousel }) {
                                     
                                     const timeLeft = hasXpBuff ? formatTimeLeft(sessionBuffs.xpExpiry - currentTime) : '';
                                     
-                                    const buyBuff = () => {
-                                        if ((save.cosmicTokens || 0) >= 10) {
-                                            SoundManager.playUIClick();
-                                            const newSave = { ...save, cosmicTokens: save.cosmicTokens - 10 };
-                                            newSave.sessionBuffs = newSave.sessionBuffs || {};
-                                            newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
-                                            SaveManager.save(newSave);
-                                            setSave(newSave);
-                                            toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
-                                        }
+                                    const buyBuff = async () => {
+                                        if ((omenxBalance ?? 0) < 10) return;
+                                        SoundManager.playUIClick();
+                                        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                                        const week_id = moment().format('YYYY-[W]ww');
+                                        const seasonNum = Math.floor(moment().week() / 4) + 1;
+                                        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+                                        const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData?.walletAddress, week_id, season_id, amount: 10 });
+                                        if (!res.data?.success) { toast({ title: 'Purchase Failed', description: res.data?.error || 'Try again.' }); return; }
+                                        refreshOmenX();
+                                        const newSave = { ...SaveManager.load() };
+                                        newSave.sessionBuffs = newSave.sessionBuffs || {};
+                                        newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
+                                        SaveManager.save(newSave);
+                                        setSave(newSave);
+                                        toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
                                     };
                                     
                                     return (
@@ -570,9 +551,9 @@ export default function Hub({ isCarousel }) {
                                             
                                             <div className="flex flex-col sm:flex-row gap-2 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
                                                 <div className="text-xs text-slate-400 font-bold mb-1 sm:mb-0 sm:w-24 shrink-0 flex items-center">SESSION BUFFS</div>
-                                                <button onClick={buyBuff} disabled={hasXpBuff || (save.cosmicTokens || 0) < 10} className={`flex-1 flex justify-between items-center px-3 py-2 rounded text-xs font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
+                                                <button onClick={buyBuff} disabled={hasXpBuff || (omenxBalance ?? 0) < 10} className={`flex-1 flex justify-between items-center px-3 py-2 rounded text-xs font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
                                                     <span className="flex items-center gap-2">✨ +50% XP {hasXpBuff ? `(ACTIVE: ${timeLeft})` : '(60 Mins)'}</span>
-                                                    {!hasXpBuff && <span className="flex items-center gap-1"><Hexagon className="w-3 h-3 fill-current text-emerald-400" /> 10</span>}
+                                                    {!hasXpBuff && <span className="text-purple-400 font-bold">10 OMENX</span>}
                                                 </button>
                                             </div>
 
