@@ -61,6 +61,36 @@ const AuthenticatedApp = () => {
     }
   }, [isLoadingAuth, authError, user]);
 
+  // In preview mode, bypass all auth gates
+  const isPreview = window.self !== window.top;
+  if (isPreview) {
+    return (
+      <>
+        <Routes>
+          <Route path="/" element={<PlayCarousel />} />
+          <Route path="/hub" element={<Hub />} />
+          <Route path="/upgrades" element={<Upgrades />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/game" element={<Game />} />
+          <Route path="/info" element={<Info />} />
+          <Route path="/credits" element={<Credits />} />
+          <Route path="/achievements" element={<Achievements />} />
+          <Route path="/squads" element={<Squads />} />
+          <Route path="/bestiary" element={<Bestiary />} />
+          <Route path="/synergy-codex" element={<SynergyCodex />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/trials" element={<LeviathanTrials />} />
+          <Route path="/dailys" element={<Dailys />} />
+          <Route path="/global-raid" element={<GlobalRaid />} />
+          <Route path="/mastery" element={<Mastery />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/download-skus" element={<DownloadSkus />} />
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </>
+    );
+  }
+
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth || (!saveInitialized && !authError)) {
     return (

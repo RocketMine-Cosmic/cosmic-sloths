@@ -9,6 +9,9 @@ function getOmenXAuth() {
 export default function OmenXGate({ children, isCarousel }) {
     const [auth, setAuth] = useState(getOmenXAuth);
 
+    // Bypass in preview iframe
+    if (window.self !== window.top) return children;
+
     if (!auth) {
         return (
             <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 flex flex-col items-center justify-center gap-6 p-6 font-sans`}>
