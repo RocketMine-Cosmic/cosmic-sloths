@@ -102,7 +102,6 @@ const AuthenticatedApp = () => {
       <Route path="/mastery" element={<Mastery />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/download-skus" element={<DownloadSkus />} />
-      <Route path="/auth/callback" element={<OmenXCallback />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     {needsProfileName && (
@@ -128,7 +127,11 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <GamepadManager />
         <Router>
-          <AuthenticatedApp />
+          <Routes>
+            {/* OmenX OAuth callback — must be outside auth gate so popup works without a session */}
+            <Route path="/auth/callback" element={<OmenXCallback />} />
+            <Route path="*" element={<AuthenticatedApp />} />
+          </Routes>
         </Router>
         <Toaster />
       </QueryClientProvider>

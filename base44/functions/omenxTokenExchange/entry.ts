@@ -1,13 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
 const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
         const { code } = await req.json();
         if (!code) return Response.json({ error: 'Missing code' }, { status: 400 });
 
