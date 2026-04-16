@@ -41,20 +41,35 @@ export default function Profile({ isCarousel }) {
                 setNewTitle(me?.data?.player_title || '');
 
                 if (me && displayName) {
-                    // Fetch total kills from local save only (no Base44 calls in OmenX mode)
+                    const topScore = await base44.entities.RunScore.filter({ player_name: displayName }, '-score', 1);
+                    const maxScore = topScore.length > 0 ? topScore[0].score : 0;
                     const save = SaveManager.load();
-                    
                     const enemyKills = save.enemyKills || {};
                     const totalLeviathans = Object.keys(enemyKills)
                         .filter(id => id.startsWith('boss_') || id === 'world_boss')
                         .reduce((sum, id) => sum + (enemyKills[id] || 0), 0);
-                    
+                    let totalRaidDamage = 0;
+                    try {
+                        const contributions = await base44.entities.GlobalBossContribution.filter({ user_id: me.id });
+                        totalRaidDamage = contributions.reduce((sum, c) => sum + (c.damage || 0), 0);
+                    } catch(err) {}
                     setStats({
-                        highestScore: 0,
+                        highestScore: maxScore,
                         totalKills: save.totalKills || 0,
                         leviathanKills: totalLeviathans,
-                        globalRaidDamage: 0
+                        globalRaidDamage: totalRaidDamage
                     });
+                    const memberships = await base44.entities.SquadMember.filter({ user_id: me.id });
+                    if (memberships.length > 0) {
+                        try {
+                            const mySquad = await base44.entities.Squad.get(memberships[0].squad_id);
+                            setSquad(mySquad);
+                        } catch (err) {
+                            console.error('Failed to fetch squad', err);
+                        }
+                    }
+                    const rewards = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: true }, '-period_id', 50);
+                    setRewardsHistory(rewards);
                 }
             } catch (e) {
                 console.error('Failed to fetch profile data', e);

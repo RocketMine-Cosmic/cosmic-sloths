@@ -11,10 +11,23 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const [appPublicSettings, setAppPublicSettings] = useState(null);
+  const [omenxAuth, setOmenxAuth] = useState(null);
 
   useEffect(() => {
     checkAppState();
+    const checkOmenx = () => {
+      try {
+        const data = JSON.parse(localStorage.getItem('omenx_auth_data'));
+        setOmenxAuth(data);
+      } catch { }
+    };
+    checkOmenx();
+    const handler = (e) => {
+      if (e.key === 'omenx_auth_data') checkOmenx();
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
   }, []);
 
   const checkAppState = async () => {
@@ -136,6 +149,7 @@ export const AuthProvider = ({ children }) => {
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
+      omenxAuth,
       logout,
       navigateToLogin,
       checkAppState
