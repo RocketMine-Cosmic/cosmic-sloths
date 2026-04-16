@@ -14,6 +14,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import SetProfileNameModal from '../components/game/SetProfileNameModal';
+import { getOmenXUser } from '@/lib/omenxUser';
 
 function getOmenXAuth() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -79,9 +80,9 @@ export default function Hub({ isCarousel }) {
     React.useEffect(() => {
         const claimRewards = async () => {
             try {
-                const user = await base44.auth.me();
+                const user = getOmenXUser();
                 if (!user) return;
-                const displayName = user.player_name || user.data?.player_name || user.data?.full_name || user.full_name;
+                const displayName = user.player_name || user.data?.player_name || user.full_name;
                 const pendingByUserId = await base44.entities.PendingReward.filter({ user_id: user.id, claimed: false });
                 const pendingByName = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: false });
                 const pending = [...new Map([...pendingByUserId, ...pendingByName].map(item => [item.id, item])).values()];

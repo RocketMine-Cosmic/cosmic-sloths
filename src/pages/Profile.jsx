@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { getOmenXUser, updateOmenXUser } from '@/lib/omenxUser';
 import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon } from 'lucide-react';
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
@@ -33,13 +34,13 @@ export default function Profile({ isCarousel }) {
     useEffect(() => {
         const fetchProfileData = async () => {
             try {
-                const me = await base44.auth.me();
+                const me = getOmenXUser();
                 setUser(me);
-                const displayName = me?.player_name || me?.data?.player_name || me?.data?.full_name || me?.full_name;
+                const displayName = me?.player_name || me?.data?.player_name || me?.full_name;
                 setNewName(displayName || '');
                 setNewTitle(me?.data?.player_title || '');
 
-                if (me) {
+                if (me && displayName) {
                     // Fetch Highest Score
                     const topScore = await base44.entities.RunScore.filter({ player_name: displayName }, '-score', 1);
                     const maxScore = topScore.length > 0 ? topScore[0].score : 0;
@@ -57,7 +58,7 @@ export default function Profile({ isCarousel }) {
                         const contributions = await base44.entities.GlobalBossContribution.filter({ user_id: me.id });
                         totalRaidDamage = contributions.reduce((sum, c) => sum + (c.damage || 0), 0);
                     } catch(err) {
-                        console.error('Failed to fetch global boss contributions', err);
+                        // non-critical
                     }
                     
                     setStats({
@@ -90,47 +91,24 @@ export default function Profile({ isCarousel }) {
         fetchProfileData();
     }, []);
 
-    const handleSaveIcon = async (icon) => {
-        try {
-            await base44.auth.updateMe({ ...user?.data, pilot_icon: icon });
-            setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
-            
-            base44.functions.invoke('syncProfileIcon', { newIcon: icon }).catch(console.error);
-        } catch (e) {
-            console.error(e);
-        }
+    const handleSaveIcon = (icon) => {
+        updateOmenXUser({ pilot_icon: icon });
+        setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
     };
 
-    const handleSaveName = async () => {
+    const handleSaveName = () => {
         if (!newName.trim()) return;
-        const oldName = user?.player_name || user?.data?.player_name || user?.data?.full_name || user?.full_name;
         const updatedName = newName.trim();
-        try {
-            await base44.auth.updateMe({ ...user?.data, player_name: updatedName });
-            setUser(prev => ({ ...prev, data: { ...prev?.data, player_name: updatedName } }));
-            setIsEditingName(false);
-            
-            // Sync the new name across past scores, rewards, and squads
-            // Always invoke sync in case some old records were missed
-            base44.functions.invoke('syncProfileName', { oldName, newName: updatedName }).catch(console.error);
-        } catch (e) {
-            console.error(e);
-        }
+        updateOmenXUser({ player_name: updatedName });
+        setUser(prev => ({ ...prev, player_name: updatedName, data: { ...prev?.data, player_name: updatedName } }));
+        setIsEditingName(false);
     };
 
-    const handleSaveTitle = async (title) => {
-        const oldName = user?.player_name || user?.data?.player_name || user?.data?.full_name || user?.full_name;
-        const updatedTitle = title;
-        try {
-            await base44.auth.updateMe({ ...user?.data, player_title: updatedTitle });
-            setUser(prev => ({ ...prev, data: { ...prev?.data, player_title: updatedTitle } }));
-            setNewTitle(updatedTitle);
-            setIsEditingTitle(false);
-            
-            base44.functions.invoke('syncProfileName', { oldName, newName: oldName, newTitle: updatedTitle }).catch(console.error);
-        } catch (e) {
-            console.error(e);
-        }
+    const handleSaveTitle = (title) => {
+        updateOmenXUser({ player_title: title });
+        setUser(prev => ({ ...prev, data: { ...prev?.data, player_title: title } }));
+        setNewTitle(title);
+        setIsEditingTitle(false);
     };
 
     const getAvailableTitles = () => {

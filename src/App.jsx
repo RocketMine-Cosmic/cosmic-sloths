@@ -41,12 +41,13 @@ const AuthenticatedApp = () => {
     if (!isLoadingAuth && !authError) {
       SaveManager.initialize().then(() => {
           setSaveInitialized(true);
-          if (user) {
+          // Check if OmenX is logged in and profile name is set
+          const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+          if (omenxAuth) {
               const save = SaveManager.load();
-              const displayName = user.player_name || user.data?.player_name || user.data?.full_name || user.full_name;
-              if (!displayName || displayName.includes('@') || !save.hasSetProfileName) {
-                  // If they have played before (e.g. have gold or kills) and have a valid name, grandfather them in
-                  if ((save.totalKills > 0 || save.gold > 0) && displayName && !displayName.includes('@') && !save.hasSetProfileName) {
+              if (!save.hasSetProfileName) {
+                  // Grandfather in players who have already played
+                  if (save.totalKills > 0 || save.gold > 0) {
                       save.hasSetProfileName = true;
                       SaveManager.save(save);
                   } else {

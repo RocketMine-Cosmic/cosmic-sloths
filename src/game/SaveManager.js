@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { BOUNTIES_POOL, DAILY_MISSIONS_POOL } from './Constants';
 import { base44 } from '@/api/base44Client';
+import { getOmenXUser } from '@/lib/omenxUser';
 
 export const SaveManager = {
   _saveId: null,
@@ -9,7 +10,7 @@ export const SaveManager = {
 
   initialize: async () => {
     try {
-      const user = await base44.auth.me();
+      const user = getOmenXUser();
       if (!user) return;
       SaveManager._userId = user.id;
       const saves = await base44.entities.PlayerSave.filter({ user_id: user.id });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { useAuth } from '@/lib/AuthContext';
+import { getOmenXUser } from '@/lib/omenxUser';
 import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle } from 'lucide-react';
 import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
@@ -86,7 +86,7 @@ export default function Squads({ isCarousel }) {
     useEffect(() => {
         const loadUserAndSquad = async () => {
             try {
-                const me = await base44.auth.me();
+                const me = getOmenXUser();
                 setUser(me);
                 if (me) {
                     const memberships = await base44.entities.SquadMember.filter({ user_id: me.id });
