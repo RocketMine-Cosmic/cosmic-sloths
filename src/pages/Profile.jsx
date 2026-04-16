@@ -9,6 +9,7 @@ import { SaveManager } from '../game/SaveManager';
 import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import OmenXAuthButton from '../components/game/OmenXAuthButton';
 
 export default function Profile({ isCarousel }) {
     const navigate = useNavigate();
@@ -232,7 +233,10 @@ export default function Profile({ isCarousel }) {
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">View your career and statistics.</p>
                     </div>
-                    <CurrencyHeader />
+                    <div className="flex flex-col items-end gap-2">
+                        <CurrencyHeader />
+                        <OmenXAuthButton />
+                    </div>
                 </header>
 
                 <motion.div 
