@@ -33,11 +33,34 @@ Deno.serve(async (req) => {
             return Response.json(tokenData, { status: tokenRes.status });
         }
 
-        console.log('[OmenX] Token response keys:', Object.keys(tokenData));
-        console.log('[OmenX] Full token data:', JSON.stringify(tokenData, null, 2));
-        
-        // Return raw token data as-is for inspection
-        return Response.json(tokenData);
+        console.log('[OmenX] Token response:', Object.keys(tokenData));
+
+        // Fetch user profile with access token to get wallet address
+        let userProfile = {};
+        if (tokenData.access_token) {
+            try {
+                const meRes = await fetch(`${BASE_URL}/users/me`, {
+                    headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+                });
+                if (meRes.ok) {
+                    userProfile = await meRes.json();
+                    console.log('[OmenX] User profile:', userProfile);
+                }
+            } catch (err) {
+                console.error('[OmenX] Failed to fetch user profile:', err.message);
+            }
+        }
+
+        // Merge token data with user profile
+        const result = {
+            ...tokenData,
+            ...userProfile,
+            walletAddress: userProfile.walletAddress || userProfile.wallet_address || userProfile.address || null,
+            username: userProfile.username || userProfile.name || null,
+        };
+
+        console.log('[OmenX] Final result:', result);
+        return Response.json(result);
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
