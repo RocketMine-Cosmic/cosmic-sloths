@@ -309,7 +309,7 @@ export default function ForgePanel({ save, setSave }) {
                                             disabled={!canAfford}
                                             className={`py-1.5 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1 ${canAfford ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
                                         >
-                                            <Star className="w-3 h-3 fill-current" /> {aug.cost} Fragments
+                                            <Star className="w-4 h-4 fill-current" /> {aug.cost} Fragments
                                         </button>
                                     )}
                                 </div>
@@ -367,7 +367,7 @@ export default function ForgePanel({ save, setSave }) {
                                             disabled={!canAfford}
                                             className={`py-1.5 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1 ${canAfford ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
                                         >
-                                            <Star className="w-3 h-3 fill-current" /> {aug.cost} Fragments
+                                            <Star className="w-4 h-4 fill-current" /> {aug.cost} Fragments
                                         </button>
                                     )}
                                 </div>

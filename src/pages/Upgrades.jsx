@@ -377,7 +377,7 @@ export default function Upgrades({ isCarousel }) {
                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                         }`}
                                     >
-                                        <OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX
+                                        <OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX
                                     </button>
                                 )}
                             </div>
@@ -508,7 +508,7 @@ export default function Upgrades({ isCarousel }) {
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                <OmenXIcon className="w-3 h-3" /> {tokenCost.toLocaleString()} OMENX
+                                                <OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX
                                             </button>
                                         )}
                                     </div>
@@ -675,7 +675,7 @@ export default function Upgrades({ isCarousel }) {
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
                                         >
-                                            <OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX
+                                            <OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX
                                         </button>
                                     )}
                                 </div>
@@ -935,8 +935,8 @@ export default function Upgrades({ isCarousel }) {
                                                             </button>
                                                             {skin.tokenCost > 0 && (
                                                                 <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
-                                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                    <OmenXIcon className="w-3 h-3" /> {skin.tokenCost.toLocaleString()} OMENX
+                                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                        <OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX
                                                                 </button>
                                                             )}
                                                         </div>

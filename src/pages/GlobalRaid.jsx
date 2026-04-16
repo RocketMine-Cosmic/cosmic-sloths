@@ -303,7 +303,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     <Zap className="w-4 h-4 md:w-5 md:h-5" /> BUY 5 MORE RUNS
                                 </div>
                                 <span className="text-[10px] md:text-xs text-purple-200 flex items-center gap-1 font-normal tracking-normal normal-case">
-                                    Cost: 5 <span className="text-purple-300 font-bold">OMENX</span>
+                                    Cost: 5 <OmenXIcon className="w-4 h-4" />
                                 </span>
                             </button>
                         ) : (
