@@ -91,23 +91,23 @@ export default function Leaderboard() {
                 setCurrentPool(0);
             }
             
-            // Deduplicate by player_name, keeping the highest score
-            // Exclude endless runs from weekly/seasonal/all_time views
+            // Deduplicate strictly by wallet_address (primary), then user_id fallback
+            // This mirrors the backend distributeRewards logic exactly
             const uniqueScores = [];
+            const seenWallets = new Set();
             const seenUserIds = new Set();
-            const seenPilotNames = new Set();
 
             for (const score of data) {
                 if (view !== 'endless' && score.arena_id === 'endless') continue;
 
-                // Deduplicate by user_id (primary) AND pilot name (secondary, catches old records)
+                const wallet = score.wallet_address;
                 const userId = score.user_id;
-                const pilotName = (score.player_name || '').toLowerCase().trim();
 
-                if ((userId && seenUserIds.has(userId)) || (pilotName && seenPilotNames.has(pilotName))) continue;
+                if (wallet && seenWallets.has(wallet)) continue;
+                if (!wallet && userId && seenUserIds.has(userId)) continue;
 
+                if (wallet) seenWallets.add(wallet);
                 if (userId) seenUserIds.add(userId);
-                if (pilotName) seenPilotNames.add(pilotName);
                 uniqueScores.push(score);
 
                 if (uniqueScores.length >= 50) break;
@@ -202,8 +202,8 @@ export default function Leaderboard() {
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
                                 const isEligibleForReward = (view === 'weekly' && index < 30) || (view === 'seasonal' && index < 40);
                                 const rewardAmount = view === 'weekly' 
-                                    ? Math.floor((currentPool * 0.30) * getWeeklyRewardPercentage(index + 1) * weeklyMultiplier) 
-                                    : Math.floor((currentPool * 0.40) * getSeasonalRewardPercentage(index + 1) * seasonalMultiplier);
+                                    ? Math.floor((currentPool * 0.25) * getWeeklyRewardPercentage(index + 1) * weeklyMultiplier) 
+                                    : Math.floor((currentPool * 0.35) * getSeasonalRewardPercentage(index + 1) * seasonalMultiplier);
 
                                 if (view === 'squads') {
                                     const squadLvl = getSquadLevel(score.xp || 0);
@@ -258,8 +258,8 @@ export default function Leaderboard() {
                                                 {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                                             </div>
                                             {isEligibleForReward ? (
-                                                <div className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-3 py-1.5 rounded-md font-bold text-sm flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.15)]">
-                                                    <Hexagon className="w-4 h-4 fill-emerald-400 text-emerald-400" /> {rewardAmount.toLocaleString()}
+                                                <div className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-3 py-1.5 rounded-md font-bold text-sm flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.15)]" title="OMENX paid directly to your wallet">
+                                                    <Hexagon className="w-4 h-4 fill-emerald-400 text-emerald-400" /> {rewardAmount.toLocaleString()} <span className="text-[10px] text-emerald-600 font-bold tracking-wider">OMENX</span>
                                                 </div>
                                             ) : (
                                                 <div className="hidden sm:block w-[80px]"></div>
