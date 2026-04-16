@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingPublicSettings(false);
         setIsLoadingAuth(false);
         setIsAuthenticated(false);
-        base44.auth.redirectToLogin(window.location.href);
+        setTimeout(() => base44.auth.redirectToLogin(window.location.href), 100);
         return;
       }
       
