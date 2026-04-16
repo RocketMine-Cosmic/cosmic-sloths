@@ -35,7 +35,7 @@ export default function OmenXCallback() {
                 
                 // Use SDK client-side to verify token and get wallet
                 const sdk = new OmenXGameSDK({ gameId: 'cosmic-sloths' });
-                const verifyResult = await sdk.apiCall('/v1/oauth/userinfo', {
+                const verifyResult = await sdk.apiCall('/v1/oauth/user', {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
                 });
