@@ -4,6 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import Base44Gate from '@/components/Base44Gate';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
 import OmenXCallback from './pages/OmenXCallback';
@@ -146,13 +147,15 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <GamepadManager />
-        <Router>
-          <Routes>
-            {/* OmenX OAuth callback — must be outside auth gate so popup works without a session */}
-            <Route path="/auth/callback" element={<OmenXCallback />} />
-            <Route path="*" element={<AuthenticatedApp />} />
-          </Routes>
-        </Router>
+        <Base44Gate>
+          <Router>
+            <Routes>
+              {/* OmenX OAuth callback — must be outside auth gate so popup works without a session */}
+              <Route path="/auth/callback" element={<OmenXCallback />} />
+              <Route path="*" element={<AuthenticatedApp />} />
+            </Routes>
+          </Router>
+        </Base44Gate>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
