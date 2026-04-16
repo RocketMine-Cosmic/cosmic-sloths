@@ -33,13 +33,16 @@ export default function OmenXCallback() {
                 const tokenData = res.data;
                 if (tokenData.error) throw new Error(tokenData.error);
                 
-                // Use SDK client-side to verify token and get wallet
-                const sdk = new OmenXGameSDK({ gameId: 'cosmic-sloths' });
-                const verifyResult = await sdk.apiCall('/v1/oauth/user', {
-                    method: 'GET',
+                // Fetch user info with access token
+                const userRes = await fetch('https://api.omen.foundation/v1/oauth/user', {
                     headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
                 });
-                const userInfo = await verifyResult.json();
+                if (!userRes.ok) {
+                    const errText = await userRes.text();
+                    console.error('[Callback] /oauth/user failed:', userRes.status, errText);
+                    throw new Error(`Failed to fetch user: ${userRes.status}`);
+                }
+                const userInfo = await userRes.json();
                 console.log('[Callback] User info:', userInfo);
 
                 const fullData = { ...tokenData, ...userInfo };
