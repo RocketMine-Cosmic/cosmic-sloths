@@ -190,7 +190,7 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             recordTokenSpend(tokenCost);
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name), tokenCost);
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier), tokenCost);
             SoundManager.playUIClick();
         }
     };
@@ -272,7 +272,7 @@ export default function Upgrades({ isCarousel }) {
                 SaveManager.save(newSave);
                 setSave(newSave);
                 recordTokenSpend(cosmetic.tokenCost);
-                purchaseSku(getCosmeticSku('skin', cosmetic.name), cosmetic.tokenCost);
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost);
                 SoundManager.playUIClick();
             }
             return;
@@ -313,7 +313,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.save(newSave);
             setSave(newSave);
             recordTokenSpend(cosmetic.tokenCost);
-            purchaseSku(getCosmeticSku(slot, cosmetic.name), cosmetic.tokenCost);
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost);
             SoundManager.playUIClick();
         }
     };
