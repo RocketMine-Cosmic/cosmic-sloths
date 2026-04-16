@@ -62,22 +62,19 @@ export default function GlobalRaid({ isCarousel }) {
     useEffect(() => {
         const fetchBoss = async () => {
             try {
-                const user = await base44.auth.me();
-                if (!user) return;
                 const week_id = moment().format('YYYY-[W]ww');
                 const res = await base44.functions.invoke('getOrSpawnWeeklyBoss', { week_id });
                 if (res.data.boss) {
                     setWorldBossData(res.data.boss);
-                    const contribs = await base44.entities.GlobalBossContribution.filter({ week_id, user_id: user.id });
-                    if (contribs.length > 0) setWorldBossContribution(contribs[0]);
-                    
                     const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 10);
                     setTopContributors(allContribs);
-
                     const events = await base44.entities.GlobalBossEvent.filter({ week_id }, '-created_date', 15);
                     setRecentEvents(events);
                 }
-            } catch (e) { console.error('Failed to fetch world boss', e); }
+            } catch (e) { 
+                console.error('Failed to fetch world boss', e);
+                // Silently fail in OmenX-only mode
+            }
         };
         fetchBoss();
     }, []);
