@@ -7,7 +7,7 @@ import { SoundManager } from '../game/SoundManager';
 import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
-import sdk, { getOmenAuthData, onOmenAuth } from '../lib/omenSdk';
+import sdk, { getOmenAuthData, onOmenAuth } from '@/lib/omenSdk';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
