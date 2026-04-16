@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Pencil, Check, X, LogOut } from 'lucide-react';
+import { Pencil, Check, X, LogOut, LogIn } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import sdk, { getOmenAuthData, onOmenAuth } from '../lib/omenSdk';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
+    const [omenAuth, setOmenAuth] = useState(() => getOmenAuthData());
+    const [omenSuccess, setOmenSuccess] = useState(null);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -24,6 +27,24 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
         };
         fetchUser();
     }, []);
+
+    useEffect(() => {
+        return onOmenAuth((authData) => {
+            setOmenAuth(authData);
+            setOmenSuccess(authData);
+            setTimeout(() => setOmenSuccess(null), 5000);
+        });
+    }, []);
+
+    const handleOmenLogin = async () => {
+        SoundManager.playUIClick();
+        await sdk.authenticate();
+    };
+
+    const handleOmenLogout = () => {
+        SoundManager.playUIClick();
+        setOmenAuth(null);
+    };
 
 
 
@@ -90,12 +111,27 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                         ADMIN DASHBOARD
                     </button>
                 )}
-                <button 
-                    onClick={() => { SoundManager.init(); SoundManager.playUIClick(); localStorage.removeItem('cosmic_sloth_save'); base44.auth.logout(); }}
-                    className="col-span-2 w-full bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 backdrop-blur-md text-amber-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#F59E0B]/60 hover:border-[#F59E0B] rounded-b-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center justify-center gap-2"
-                >
-                    <LogOut size={20} /> LOGOUT
-                </button>
+                {omenAuth ? (
+                    <button
+                        onClick={handleOmenLogout}
+                        className="col-span-2 w-full bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 backdrop-blur-md text-amber-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#F59E0B]/60 hover:border-[#F59E0B] rounded-b-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center justify-center gap-2"
+                    >
+                        <LogOut size={20} /> OMENX LOGOUT
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleOmenLogin}
+                        className="col-span-2 w-full bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 backdrop-blur-md text-amber-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-[#F59E0B]/60 hover:border-[#F59E0B] rounded-b-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center justify-center gap-2"
+                    >
+                        <LogIn size={20} /> LOGIN WITH OMENX
+                    </button>
+                )}
+                {omenSuccess && (
+                    <div className="col-span-2 bg-green-900/60 border border-green-500/60 rounded-xl p-3 text-green-300 text-xs font-mono break-all">
+                        ✅ OmenX Login Success!<br/>
+                        <span className="text-green-400/70">{JSON.stringify(omenSuccess, null, 2)}</span>
+                    </div>
+                )}
             </motion.div>
             
             <div className="absolute bottom-4 text-slate-500/70 text-[10px] md:text-xs z-10 tracking-widest uppercase">
