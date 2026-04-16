@@ -37,13 +37,12 @@ export default function OmenXCallback() {
                 console.log('[Callback] Response received:', res);
                 const data = res.data;
                 if (data.error) throw new Error(data.error);
-                setStatus('Connected! You can close this window.');
+                setStatus('Connected! You can close this window now.');
                 // Save to localStorage so the parent can pick it up even without postMessage
                 localStorage.setItem('omenx_auth_data', JSON.stringify(data));
                 if (window.opener) {
                     window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
                 }
-                setTimeout(() => window.close(), 1000);
             })
             .catch(err => {
                 console.error('[Callback] token exchange error', err);
