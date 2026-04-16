@@ -17,7 +17,10 @@ Deno.serve(async (req) => {
 
         const res = await fetch('https://api.omen.foundation/v1/oauth/token', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Bearer ${apiKey}`
+            },
             body: body.toString(),
         });
 
