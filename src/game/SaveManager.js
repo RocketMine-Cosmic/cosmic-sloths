@@ -12,7 +12,8 @@ export const SaveManager = {
     try {
       const user = getOmenXUser();
       if (!user) return;
-      SaveManager._userId = user.id;
+      // Use wallet address as canonical ID for cross-device save sync
+      SaveManager._userId = user.walletAddress || user.id;
       const saves = await base44.entities.PlayerSave.filter({ user_id: user.id });
       if (saves.length > 0) {
         SaveManager._saveId = saves[0].id;

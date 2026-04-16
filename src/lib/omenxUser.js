@@ -1,6 +1,9 @@
 /**
  * OmenX user helpers — replaces base44.auth.me() / updateMe() throughout the app.
  * All identity data is stored in localStorage under 'omenx_auth_data' and 'cosmic_sloth_save'.
+ *
+ * Identity is keyed by wallet address (canonical).
+ * walletAddress is populated by omenxTokenExchange backend function at login time.
  */
 
 const STORAGE_KEY = 'omenx_auth_data';
@@ -24,9 +27,13 @@ export function getOmenXUser() {
         if (raw) saveData = JSON.parse(raw);
     } catch {}
 
+    // Wallet address is the canonical identity — used as user ID and for on-chain token lookups
+    const walletAddress = auth.walletAddress || auth.wallet_address || null;
+
     return {
-        id: auth.userId || auth.walletAddress || auth.username || 'omenx-user',
-        full_name: saveData.pilotName || auth.username || auth.walletAddress || 'Pilot',
+        id: walletAddress || auth.userId || auth.username || 'omenx-user',
+        walletAddress,
+        full_name: saveData.pilotName || auth.username || walletAddress || 'Pilot',
         player_name: saveData.pilotName || auth.username || null,
         email: auth.email || null,
         created_date: auth.created_date || new Date().toISOString(),
