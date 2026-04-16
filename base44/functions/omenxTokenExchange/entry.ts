@@ -1,5 +1,6 @@
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
 const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
-const BASE_URL = 'https://staging.api.omen.foundation/v1';
 
 Deno.serve(async (req) => {
     try {
@@ -7,64 +8,50 @@ Deno.serve(async (req) => {
         if (!code) return Response.json({ error: 'Missing code' }, { status: 400 });
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
+        const sdk = new OmenXServerSDK({ apiKey });
 
-        const body = new URLSearchParams({
-            grant_type: 'authorization_code',
-            code,
-            client_id: 'cosmic-sloths',
-            client_secret: apiKey,
-            redirect_uri: REDIRECT_URI,
-        });
-
-        const tokenRes = await fetch(`${BASE_URL}/oauth/token`, {
+        // Exchange code for access token using OmenX OAuth endpoint
+        const tokenRes = await fetch('https://api.omen.foundation/v1/oauth/token', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: body.toString(),
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                grant_type: 'authorization_code',
+                code,
+                client_id: 'cosmic-sloths',
+                client_secret: apiKey,
+                redirect_uri: REDIRECT_URI,
+            }).toString(),
         });
 
-        const tokenText = await tokenRes.text();
-        let tokenData;
-        try { tokenData = JSON.parse(tokenText); } catch { tokenData = { error: tokenText }; }
-
-        if (!tokenRes.ok || tokenData.error) {
-            return Response.json(tokenData, { status: tokenRes.status });
+        if (!tokenRes.ok) {
+            const err = await tokenRes.text();
+            console.error('[OmenX] Token exchange failed:', tokenRes.status, err);
+            return Response.json({ error: 'Token exchange failed' }, { status: tokenRes.status });
         }
 
-        console.log('[OmenX] Token response:', Object.keys(tokenData));
+        const tokenData = await tokenRes.json();
+        console.log('[OmenX] Got access token');
 
-        // Fetch user profile with access token to get wallet address
-        let userProfile = {};
-        if (tokenData.access_token) {
-            try {
-                const meRes = await fetch(`${BASE_URL}/users/me`, {
-                    headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-                });
-                const meText = await meRes.text();
-                console.log('[OmenX] /users/me status:', meRes.status);
-                console.log('[OmenX] /users/me response text:', meText);
-                if (meRes.ok && meText) {
-                    userProfile = JSON.parse(meText);
-                    console.log('[OmenX] Parsed user profile:', userProfile);
-                }
-            } catch (err) {
-                console.error('[OmenX] Failed to fetch user profile:', err.message);
-            }
+        // Verify token and get user wallet info
+        const verifyResult = await sdk.verifyOAuthUser(tokenData.access_token);
+        console.log('[OmenX] Verify result:', verifyResult);
+
+        if (!verifyResult.success) {
+            return Response.json({ error: 'Token verification failed', details: verifyResult.error }, { status: 400 });
         }
 
-        // Merge token data with user profile
         const result = {
-            ...tokenData,
-            ...userProfile,
-            walletAddress: userProfile.walletAddress || userProfile.wallet_address || userProfile.address || null,
-            username: userProfile.username || userProfile.name || null,
+            access_token: tokenData.access_token,
+            token_type: tokenData.token_type,
+            walletAddress: verifyResult.user.walletAddress,
+            userId: verifyResult.user.userId,
+            username: verifyResult.user.userId,
         };
 
         console.log('[OmenX] Final result:', result);
         return Response.json(result);
     } catch (error) {
+        console.error('[OmenX] Error:', error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
