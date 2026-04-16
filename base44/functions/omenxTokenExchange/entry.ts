@@ -1,4 +1,4 @@
-const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/?omenx_callback=1';
+const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
 
 Deno.serve(async (req) => {
     try {

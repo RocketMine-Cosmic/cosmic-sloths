@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/?omenx_callback=1';
+const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
 const CLIENT_ID = 'cosmic-sloths';
 const AUTH_URL = `https://staging.api.omen.foundation/v1/oauth/authorize`;
 
