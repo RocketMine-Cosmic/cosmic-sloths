@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { ArrowLeft, BarChart3, Clock } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock, Send } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
@@ -13,6 +13,10 @@ export default function AdminDashboard() {
     const [user, setUser] = useState(null);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [distributePeriod, setDistributePeriod] = useState('');
+    const [distributeType, setDistributeType] = useState('weekly');
+    const [distributing, setDistributing] = useState(false);
+    const [distributeMsg, setDistributeMsg] = useState('');
 
     useEffect(() => {
         base44.auth.me().then(me => {
@@ -68,6 +72,28 @@ export default function AdminDashboard() {
 
     const weeklyData = aggregateData(filteredPools.filter(p => p.period_type === 'weekly')).sort((a, b) => a.period_id.localeCompare(b.period_id));
     const seasonalData = aggregateData(filteredPools.filter(p => p.period_type === 'seasonal')).sort((a, b) => a.period_id.localeCompare(b.period_id));
+
+    const handleDistribute = async () => {
+        if (!distributePeriod.trim()) {
+            setDistributeMsg('Enter period ID (e.g., 2026-W16 or 2026-S1)');
+            return;
+        }
+        setDistributing(true);
+        setDistributeMsg('');
+        try {
+            const res = await base44.functions.invoke('manuallyDistributeRewards', {
+                period_id: distributePeriod.trim(),
+                period_type: distributeType
+            });
+            setDistributeMsg(`✓ Distributed ${res.paid} players, ${res.totalOmenx} OMENX total`);
+            setDistributePeriod('');
+            setTimeout(() => setDistributeMsg(''), 5000);
+        } catch (err) {
+            setDistributeMsg(`✗ ${err.message}`);
+        } finally {
+            setDistributing(false);
+        }
+    };
 
     return (
         <div className="min-h-screen relative text-slate-200 p-2 pb-20 md:p-6 font-sans">
@@ -162,6 +188,48 @@ export default function AdminDashboard() {
                                 </ResponsiveContainer>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="mt-6 bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-emerald-900/50 p-4 md:p-6 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                        <h2 className="text-lg font-bold text-emerald-400 mb-4 tracking-widest uppercase flex items-center gap-2">
+                            <Send className="w-5 h-5" /> Distribute Rewards (TEST)
+                        </h2>
+                        <div className="flex flex-wrap gap-3 items-end">
+                            <div className="flex flex-col">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Period ID</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="e.g., 2026-W16 or 2026-S1"
+                                    value={distributePeriod}
+                                    onChange={e => setDistributePeriod(e.target.value)}
+                                    className="bg-[#0b0416]/80 backdrop-blur-md border border-emerald-700 text-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Type</label>
+                                <select 
+                                    value={distributeType}
+                                    onChange={e => setDistributeType(e.target.value)}
+                                    className="bg-[#0b0416]/80 backdrop-blur-md border border-emerald-700 text-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                                    style={{ colorScheme: 'dark' }}
+                                >
+                                    <option value="weekly">Weekly</option>
+                                    <option value="seasonal">Seasonal</option>
+                                </select>
+                            </div>
+                            <button 
+                                onClick={handleDistribute}
+                                disabled={distributing}
+                                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold px-4 py-1.5 rounded-md transition-colors flex items-center gap-2 text-sm"
+                            >
+                                <Send className="w-4 h-4" /> {distributing ? 'Distributing...' : 'Send'}
+                            </button>
+                        </div>
+                        {distributeMsg && (
+                            <div className={`mt-2 text-sm font-mono ${distributeMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {distributeMsg}
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-6 bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 md:p-6 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
