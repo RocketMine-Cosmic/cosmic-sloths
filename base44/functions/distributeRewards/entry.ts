@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
         const apiKey = Deno.env.get('OMENX_API_KEY');
         const sdk = new OmenXServerSDK({
             apiKey,
-            apiBaseUrl: 'https://staging.api.omen.foundation',
+            apiBaseUrl: 'https://api.omen.foundation',
         });
 
         const currentWeekId = moment().format('YYYY-[W]ww');

@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
 
         const sdk = new OmenXServerSDK({
             apiKey,
-            apiBaseUrl: 'https://staging.api.omen.foundation',
+            apiBaseUrl: 'https://api.omen.foundation',
         });
 
         // Fetch the pool
