@@ -43,15 +43,16 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
 
     const handleLogin = async () => {
         setLoading(true);
+        console.log('[OmenXAuthButton] Starting login, redirect URI:', getRedirectUri());
         try {
-            // SDK opens popup internally
+            console.log('[OmenXAuthButton] Calling omenx.authenticate()...');
             await omenx.authenticate({
                 redirectUri: getRedirectUri(),
                 enablePKCE: true,
             });
-            // onAuth callback will fire when token exchange completes
+            console.log('[OmenXAuthButton] authenticate() returned, waiting for onAuth callback...');
         } catch (err) {
-            console.error('[OmenX] authenticate failed:', err);
+            console.error('[OmenXAuthButton] authenticate() threw error:', err);
             setLoading(false);
         }
     };

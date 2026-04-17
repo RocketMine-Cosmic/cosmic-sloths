@@ -9,7 +9,7 @@ export const omenx = new OmenXGameSDK({
   oauthTokenUrl: 'https://api.omen.foundation/v1/oauth/token',
   enableIframeAuth: false,
   onAuth: (authData) => {
-    console.log('[OmenX] Authenticated', authData);
+    console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {
       sessionStorage.setItem('omenx_auth_data', JSON.stringify(authData));
       window.dispatchEvent(new StorageEvent('storage', {
@@ -22,7 +22,7 @@ export const omenx = new OmenXGameSDK({
     }
   },
   onAuthError: (err) => {
-    console.error('[OmenX] Auth error (details):', {
+    console.error('[OmenX] ❌ onAuthError triggered:', {
       message: err.message,
       code: err.code,
       status: err.status,
