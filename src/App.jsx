@@ -26,6 +26,7 @@ import GlobalRaid from './pages/GlobalRaid';
 import Mastery from './pages/Mastery';
 import AdminDashboard from './pages/AdminDashboard';
 import DownloadSkus from './pages/DownloadSkus';
+import SkuEditor from './pages/SkuEditor';
 import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
@@ -93,6 +94,7 @@ const AuthenticatedApp = () => {
           <Route path="/mastery" element={<Mastery />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/download-skus" element={<DownloadSkus />} />
+          <Route path="/sku-editor" element={<SkuEditor />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </>
