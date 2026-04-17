@@ -35,11 +35,23 @@ Deno.serve(async (req) => {
         const tokenData = await tokenRes.json();
         console.log('[OmenX] Token exchange success, access_token:', tokenData.access_token?.slice(0, 20) + '...');
 
-        // Return token to frontend; frontend will fetch wallet via SDK client mode
+        // Fetch user info server-side to avoid CORS
+        const userRes = await fetch('https://api.omen.foundation/v1/oauth/user', {
+            headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+        });
+        if (!userRes.ok) {
+            const errText = await userRes.text();
+            console.error('[OmenX] /oauth/user failed:', userRes.status, errText);
+            return Response.json({ error: `Failed to fetch user: ${userRes.status}` }, { status: userRes.status });
+        }
+        const userInfo = await userRes.json();
+        console.log('[OmenX] User info:', JSON.stringify(userInfo));
+
         return Response.json({
             access_token: tokenData.access_token,
             token_type: tokenData.token_type || 'Bearer',
             expires_in: tokenData.expires_in,
+            ...userInfo,
         });
     } catch (error) {
         console.error('[OmenX] Error:', error.message);

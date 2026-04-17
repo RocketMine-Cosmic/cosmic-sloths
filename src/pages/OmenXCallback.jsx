@@ -28,28 +28,15 @@ export default function OmenXCallback() {
         // Exchange code for token
         console.log('[Callback] Invoking omenxTokenExchange with code:', code);
         base44.functions.invoke('omenxTokenExchange', { code })
-            .then(async res => {
+            .then(res => {
                 console.log('[Callback] Token response:', res.data);
-                const tokenData = res.data;
-                if (tokenData.error) throw new Error(tokenData.error);
+                const data = res.data;
+                if (data.error) throw new Error(data.error);
                 
-                // Fetch user info with access token
-                const userRes = await fetch('https://api.omen.foundation/v1/oauth/user', {
-                    headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-                });
-                if (!userRes.ok) {
-                    const errText = await userRes.text();
-                    console.error('[Callback] /oauth/user failed:', userRes.status, errText);
-                    throw new Error(`Failed to fetch user: ${userRes.status}`);
-                }
-                const userInfo = await userRes.json();
-                console.log('[Callback] User info:', userInfo);
-
-                const fullData = { ...tokenData, ...userInfo };
                 setStatus('Connected! You can close this window now.');
-                localStorage.setItem('omenx_auth_data', JSON.stringify(fullData));
+                localStorage.setItem('omenx_auth_data', JSON.stringify(data));
                 if (window.opener) {
-                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: fullData }, window.location.origin);
+                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
                 }
             })
             .catch(err => {
