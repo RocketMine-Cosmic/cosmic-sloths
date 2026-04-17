@@ -14,6 +14,7 @@ import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { getOmenXUser } from '@/lib/omenxUser';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -97,13 +98,9 @@ export default function Game() {
 
         const saveScore = async (stats, isVictory) => {
             try {
-                const user = await base44.auth.me();
+                const user = getOmenXUser();
                 if (!user) return;
-                const displayName = user.player_name || user.data?.player_name || user.data?.full_name || user.full_name;
-                if (!displayName) {
-                    console.error('saveScore: user has no full_name, skipping.');
-                    return;
-                }
+                const displayName = user.player_name || user.full_name;
 
                 // Update squad kills
                 try {
