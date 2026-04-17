@@ -14,13 +14,19 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
-        // Initialize SDK on mount
-        sdk.init().catch(err => console.error('[OmenX] init failed:', err));
+        // Initialize SDK on mount (ignore errors—not critical for OAuth flow)
+        sdk.init().catch(() => {
+            console.warn('[OmenX] init skipped, proceeding with OAuth');
+        });
         
         // Poll SDK auth state in case it changed (e.g., from callback page)
         const interval = setInterval(() => {
-            if (sdk.isAuthenticated() && !authData) {
-                setAuthState(sdk.getAuthData());
+            try {
+                if (sdk.isAuthenticated() && !authData) {
+                    setAuthState(sdk.getAuthData());
+                }
+            } catch (e) {
+                // Ignore errors
             }
         }, 500);
         return () => clearInterval(interval);
