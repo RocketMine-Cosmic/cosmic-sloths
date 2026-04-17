@@ -8,11 +8,13 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('OMENX_API_KEY');
+    const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+    
     if (!apiKey) {
         return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const sdk = new OmenXServerSDK({ apiKey });
+    const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
     const data = await sdk.getPlayerBalances(walletAddress, '56');
     console.log('[getOmenXBalance] raw:', JSON.stringify(data));
