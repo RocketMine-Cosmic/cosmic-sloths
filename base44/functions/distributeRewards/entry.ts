@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
         if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
-        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://staging.api.omen.foundation';
+        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         const sdk = new OmenXServerSDK({
             apiKey,
             apiBaseUrl,
