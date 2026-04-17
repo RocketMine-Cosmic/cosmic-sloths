@@ -121,16 +121,27 @@ async function distributeWeekly(base44, sdk, pool) {
 
     console.log(`[distributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const batchResult = await sdk.grantGameRewardBatch({
-        payments: payments.map(p => ({ 
-            walletAddress: p.walletAddress, 
-            amount: p.amount
-        })),
-        gameId: GAME_ID,
-        gameName: GAME_NAME,
-        chainId: CHAIN_ID,
-        note: `weekly payout ${pool.period_id}`,
+    const response = await fetch(`${sdk.apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sdk.apiKey}`,
+        },
+        body: JSON.stringify({
+            payments: payments.map(p => ({ 
+                walletAddress: p.walletAddress, 
+                amount: p.amount
+            })),
+            gameId: GAME_ID,
+            gameName: GAME_NAME,
+            chainId: CHAIN_ID,
+            note: `weekly payout ${pool.period_id}`,
+        }),
     });
+    const batchResult = await response.json();
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+    }
 
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
 
@@ -151,16 +162,27 @@ async function distributeSeasonal(base44, sdk, pool) {
 
     console.log(`[distributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const batchResult = await sdk.grantGameRewardBatch({
-        payments: payments.map(p => ({ 
-            walletAddress: p.walletAddress, 
-            amount: p.amount
-        })),
-        gameId: GAME_ID,
-        gameName: GAME_NAME,
-        chainId: CHAIN_ID,
-        note: `seasonal payout ${pool.period_id}`,
+    const response = await fetch(`${sdk.apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sdk.apiKey}`,
+        },
+        body: JSON.stringify({
+            payments: payments.map(p => ({ 
+                walletAddress: p.walletAddress, 
+                amount: p.amount
+            })),
+            gameId: GAME_ID,
+            gameName: GAME_NAME,
+            chainId: CHAIN_ID,
+            note: `seasonal payout ${pool.period_id}`,
+        }),
     });
+    const batchResult = await response.json();
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+    }
 
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
 
