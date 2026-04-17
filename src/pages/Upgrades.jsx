@@ -88,7 +88,8 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const purchaseSku = async (skuId, amount) => {
-        if (!skuId) return { success: false, error: 'No SKU' };
+        console.log(`[purchaseSku] Attempting purchase: skuId="${skuId}" amount=${amount}`);
+        if (!skuId) { console.error('[purchaseSku] skuId is null/undefined!'); return { success: false, error: 'No SKU' }; }
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress) { console.warn('[purchaseSku] No wallet address found'); return { success: false, error: 'No wallet' }; }
