@@ -13,20 +13,22 @@ function notify() {
     listeners.forEach(fn => fn(cachedBalance));
 }
 
-function startSubscription() {
+async function startSubscription() {
     if (unsubscribe || !sdk.isAuthenticated()) return;
     
     try {
+        await sdk.init();
+        const authData = sdk.getAuthData();
         unsubscribe = subscribeWalletRealtimeWithOmenXAuth({
             apiBaseUrl: 'https://api.omen.foundation',
-            getAccessToken: () => Promise.resolve(sdk.getAuthData()?.accessToken ?? null),
-            walletAddress: sdk.getAuthData()?.walletAddress,
+            getAccessToken: () => Promise.resolve(authData?.accessToken ?? null),
+            walletAddress: authData?.walletAddress,
             onBalance: (balances) => {
                 const omenxToken = balances?.tokens?.find(t => t.symbol === 'OMENX');
                 cachedBalance = parseFloat(omenxToken?.balance ?? '0');
                 notify();
             },
-            onInventory: () => {}, // no-op for now
+            onInventory: () => {},
         });
     } catch (e) {
         console.error('[useOmenXBalance] subscription failed:', e);
@@ -53,7 +55,6 @@ export function useOmenXBalance() {
             startSubscription();
         }
 
-        // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
 
         return () => {
