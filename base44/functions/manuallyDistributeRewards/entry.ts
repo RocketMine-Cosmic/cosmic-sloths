@@ -146,6 +146,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
                 })),
                 gameId: GAME_ID,
                 gameName: GAME_NAME,
+                note: `weekly payout ${pool.period_id}`,
             }),
         });
         const batchResult = await response.json();
@@ -190,6 +191,7 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
                 })),
                 gameId: GAME_ID,
                 gameName: GAME_NAME,
+                note: `seasonal payout ${pool.period_id}`,
             }),
         });
         const batchResult = await response.json();
