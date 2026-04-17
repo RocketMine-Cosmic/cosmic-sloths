@@ -43,9 +43,9 @@ Deno.serve(async (req) => {
 
         let result;
         if (period_type === 'weekly') {
-            result = await distributeWeekly(base44, sdk, pool);
+            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl);
         } else if (period_type === 'seasonal') {
-            result = await distributeSeasonal(base44, sdk, pool);
+            result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
@@ -119,7 +119,7 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
-async function distributeWeekly(base44, sdk, pool) {
+async function distributeWeekly(base44, sdk, pool, apiBaseUrl) {
     const rewardPool = Math.floor(pool.total_spent * 0.25);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
 
@@ -133,7 +133,7 @@ async function distributeWeekly(base44, sdk, pool) {
     console.log(`[manuallyDistributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
     try {
-        const response = await fetch(`${sdk.apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+        const response = await fetch(`${apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ async function distributeWeekly(base44, sdk, pool) {
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
 
-async function distributeSeasonal(base44, sdk, pool) {
+async function distributeSeasonal(base44, sdk, pool, apiBaseUrl) {
     const rewardPool = Math.floor(pool.total_spent * 0.35);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
 
@@ -179,7 +179,7 @@ async function distributeSeasonal(base44, sdk, pool) {
     console.log(`[manuallyDistributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
     try {
-        const response = await fetch(`${sdk.apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+        const response = await fetch(`${apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

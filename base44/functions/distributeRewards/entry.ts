@@ -29,10 +29,10 @@ Deno.serve(async (req) => {
 
         for (const pool of undistributedPools) {
             if (pool.period_type === 'weekly' && pool.period_id !== currentWeekId) {
-                const result = await distributeWeekly(base44, sdk, pool);
+                const result = await distributeWeekly(base44, sdk, pool, apiBaseUrl);
                 results.push({ pool: pool.period_id, type: 'weekly', ...result });
             } else if (pool.period_type === 'seasonal' && pool.period_id !== currentSeasonId) {
-                const result = await distributeSeasonal(base44, sdk, pool);
+                const result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl);
                 results.push({ pool: pool.period_id, type: 'seasonal', ...result });
             }
         }
@@ -108,7 +108,7 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
-async function distributeWeekly(base44, sdk, pool) {
+async function distributeWeekly(base44, sdk, pool, apiBaseUrl) {
     const rewardPool = Math.floor(pool.total_spent * 0.25);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
 
@@ -121,7 +121,7 @@ async function distributeWeekly(base44, sdk, pool) {
 
     console.log(`[distributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const response = await fetch(`${sdk.apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+    const response = await fetch(`${apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -149,7 +149,7 @@ async function distributeWeekly(base44, sdk, pool) {
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
 
-async function distributeSeasonal(base44, sdk, pool) {
+async function distributeSeasonal(base44, sdk, pool, apiBaseUrl) {
     const rewardPool = Math.floor(pool.total_spent * 0.35);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
 
@@ -162,7 +162,7 @@ async function distributeSeasonal(base44, sdk, pool) {
 
     console.log(`[distributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const response = await fetch(`${sdk.apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+    const response = await fetch(`${apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
