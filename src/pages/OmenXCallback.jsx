@@ -19,15 +19,13 @@ export default function OmenXCallback() {
                 const res = await base44.functions.invoke('omenxTokenExchange', { code });
                 
                 if (res.data.access_token) {
-                    // Store auth data in localStorage for SDK and app to use
-                    localStorage.setItem('omenx_auth_data', JSON.stringify({
-                        access_token: res.data.access_token,
-                        token_type: res.data.token_type || 'Bearer',
-                        expires_in: res.data.expires_in,
-                        walletAddress: res.data.walletAddress,
-                        userId: res.data.userId,
-                        username: res.data.username,
-                    }));
+                    // Store in SDK-expected localStorage keys with omenx_oauth_callback_ prefix
+                    localStorage.setItem('omenx_oauth_callback_access_token', res.data.access_token);
+                    localStorage.setItem('omenx_oauth_callback_token_type', res.data.token_type || 'Bearer');
+                    if (res.data.expires_in) localStorage.setItem('omenx_oauth_callback_expires_in', res.data.expires_in.toString());
+                    if (res.data.walletAddress) localStorage.setItem('omenx_oauth_callback_walletAddress', res.data.walletAddress);
+                    if (res.data.userId) localStorage.setItem('omenx_oauth_callback_userId', res.data.userId);
+                    if (res.data.username) localStorage.setItem('omenx_oauth_callback_username', res.data.username);
                     
                     // Notify opener and close
                     if (window.opener) {
