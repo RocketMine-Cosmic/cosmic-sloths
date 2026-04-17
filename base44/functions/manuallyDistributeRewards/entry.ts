@@ -17,6 +17,7 @@ Deno.serve(async (req) => {
         }
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
+        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiKey) {
             console.error('[manuallyDistributeRewards] OMENX_API_KEY not set');
             return Response.json({ error: 'OMENX_API_KEY not configured' }, { status: 500 });
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
 
         const sdk = new OmenXServerSDK({
             apiKey,
-            apiBaseUrl: 'https://api.omen.foundation',
+            apiBaseUrl,
         });
 
         // Fetch the pool
