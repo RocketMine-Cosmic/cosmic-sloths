@@ -16,7 +16,15 @@ Deno.serve(async (req) => {
         const redirectUri = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
         const state = Math.random().toString(36).substring(7);
         
-        const authorizeUrl = `https://api.omen.foundation/v1/oauth/authorize?client_id=cosmic-sloths&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid+profile+email&state=${state}&api_key=${apiKey}`;
+        const params = new URLSearchParams({
+            client_id: 'cosmic-sloths',
+            redirect_uri: redirectUri,
+            response_type: 'code',
+            scope: 'openid profile email',
+            state,
+        });
+
+        const authorizeUrl = `https://api.omen.foundation/v1/oauth/authorize?${params.toString()}`;
 
         return Response.json({ authorizeUrl });
     } catch (error) {
