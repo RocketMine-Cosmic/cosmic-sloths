@@ -3,6 +3,8 @@ import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
 const sdk = new OmenXGameSDK({
     gameId: 'cosmic-sloths',
+    onAuth: (authData) => console.log('[OmenX] Authenticated!', authData),
+    onAuthError: (error) => console.error('[OmenX] Auth error:', error),
 });
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
@@ -11,6 +13,9 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
+        // Initialize SDK on mount
+        sdk.init().catch(err => console.error('[OmenX] init failed:', err));
+        
         // Poll SDK auth state in case it changed (e.g., from callback page)
         const interval = setInterval(() => {
             if (sdk.isAuthenticated() && !authData) {
