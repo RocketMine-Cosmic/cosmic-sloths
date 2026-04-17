@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const BASE_URL = 'https://api.omen.foundation/v1';
 
 Deno.serve(async (req) => {
     try {
@@ -21,17 +22,34 @@ Deno.serve(async (req) => {
 
         console.log(`[purchaseSku] User ${user.email} purchasing SKU: ${skuId} x${quantity} amount: ${amount} wallet: ${walletAddress}`);
 
-        // 1. Charge the player via OmenX using the SDK
-        const sdk = new OmenXServerSDK({
-            apiKey,
-            apiBaseUrl: 'https://api.omen.foundation',
+        // 1. Charge the player via OmenX — this is the source of truth
+        const idempotencyKey = `${user.id}-${skuId}-${Date.now()}`;
+
+        const purchaseRes = await fetch(`${BASE_URL}/purchases`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+                'Idempotency-Key': idempotencyKey,
+            },
+            body: JSON.stringify({
+                playerWallet: walletAddress,
+                skuId: skuId,
+                quantity: quantity,
+                idempotencyKey,
+                paymentMethod: 'onchain',
+                metadata: {},
+            }),
         });
 
-        const purchaseData = await sdk.purchaseSku({
-            playerWallet: walletAddress,
-            skuId: skuId,
-            quantity: quantity,
-        });
+        const purchaseText = await purchaseRes.text();
+        let purchaseData;
+        try { purchaseData = JSON.parse(purchaseText); } catch { purchaseData = { error: purchaseText }; }
+
+        if (!purchaseRes.ok) {
+            console.error(`[purchaseSku] OmenX purchase failed: ${purchaseRes.status}`, purchaseData);
+            return Response.json({ error: purchaseData.error || purchaseData.message || 'Purchase failed', details: purchaseData }, { status: purchaseRes.status });
+        }
 
         console.log(`[purchaseSku] OmenX charge confirmed for ${user.email}, SKU: ${skuId}, amount: ${amount}`);
 
