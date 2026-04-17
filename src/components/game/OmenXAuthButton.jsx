@@ -11,6 +11,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [authData, setAuthState] = useState(getAuthData);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+    const [debugMsg, setDebugMsg] = useState('');
 
     const applyAuthData = (data) => {
         if (data) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -43,16 +44,15 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
 
     const handleLogin = async () => {
         setLoading(true);
-        console.log('[OmenXAuthButton] Starting login, redirect URI:', getRedirectUri());
+        setDebugMsg('Opening popup...');
         try {
-            console.log('[OmenXAuthButton] Calling omenx.authenticate()...');
             await omenx.authenticate({
                 redirectUri: getRedirectUri(),
                 enablePKCE: true,
             });
-            console.log('[OmenXAuthButton] authenticate() returned, waiting for onAuth callback...');
+            setDebugMsg('Waiting for callback...');
         } catch (err) {
-            console.error('[OmenXAuthButton] authenticate() threw error:', err);
+            setDebugMsg(`Error: ${err.message}`);
             setLoading(false);
         }
     };
@@ -92,6 +92,11 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             {successMsg && (
                 <div className="text-[10px] text-green-400 font-bold bg-green-950/50 border border-green-700/50 px-2 py-1 rounded max-w-[200px] text-right truncate">
                     ✓ {successMsg}
+                </div>
+            )}
+            {debugMsg && (
+                <div className="text-[9px] text-yellow-400 font-bold bg-yellow-950/50 border border-yellow-700/50 px-2 py-1 rounded max-w-[200px] text-right truncate">
+                    {debugMsg}
                 </div>
             )}
         </div>
