@@ -39,6 +39,10 @@ export const omenx = new OmenXGameSDK({
 export const initOmenX = async () => {
   try {
     await omenx.init();
+    // Handle OAuth callback if we're on the callback page
+    if (window.location.pathname === '/auth/callback') {
+      await omenx.handleCallback();
+    }
   } catch (err) {
     console.error('[OmenX] init failed', err);
   }
