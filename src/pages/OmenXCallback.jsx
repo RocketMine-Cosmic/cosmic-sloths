@@ -1,50 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
-import { base44 } from '@/api/base44Client';
+
+const sdk = new OmenXGameSDK({
+    gameId: 'cosmic-sloths',
+    onAuth: (authData) => {
+        localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+    },
+});
 
 export default function OmenXCallback() {
-    const [status, setStatus] = useState('Connecting to OmenX…');
+    const [status, setStatus] = useState('Processing OAuth callback…');
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        const state = params.get('state');
-        const savedState = localStorage.getItem('omenx_state');
-
-        if (!code) {
-            setStatus('No authorization code received.');
-            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'no_code' }, window.location.origin);
-            return;
-        }
-
-        if (state !== savedState) {
-            setStatus('State mismatch — possible CSRF.');
-            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'state_mismatch' }, window.location.origin);
-            return;
-        }
-
-        localStorage.removeItem('omenx_state');
-
-        // Exchange code for token
-        console.log('[Callback] Invoking omenxTokenExchange with code:', code);
-        base44.functions.invoke('omenxTokenExchange', { code })
-            .then(res => {
-                console.log('[Callback] Token response:', res.data);
-                const data = res.data;
-                if (data.error) throw new Error(data.error);
-                
-                setStatus('Connected! Closing…');
-                localStorage.setItem('omenx_auth_data', JSON.stringify(data));
-                if (window.opener) {
-                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
-                }
-                setTimeout(() => window.close(), 500);
-            })
-            .catch(err => {
-                console.error('[Callback] error', err);
-                setStatus('Connection failed: ' + err.message);
-                if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: err.message }, window.location.origin);
-            });
+        // SDK handles the callback automatically via onAuth hook
+        // Just notify the parent window when complete
+        setTimeout(() => {
+            const authData = localStorage.getItem('omenx_auth_data');
+            if (window.opener) {
+                window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: authData ? JSON.parse(authData) : null }, window.location.origin);
+            }
+            setStatus('Connected! Closing…');
+            setTimeout(() => window.close(), 500);
+        }, 1000);
     }, []);
 
     return (
