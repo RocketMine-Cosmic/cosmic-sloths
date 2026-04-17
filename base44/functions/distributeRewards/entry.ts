@@ -121,21 +121,19 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
 
     console.log(`[distributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant`, {
+    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-            payments: payments.map(p => ({ 
+            rewards: payments.map(p => ({ 
                 walletAddress: p.walletAddress, 
-                amount: p.amount
+                amount: p.amount.toString()
             })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
-            chainId: CHAIN_ID,
-            note: `weekly payout ${pool.period_id}`,
         }),
     });
     const batchResult = await response.json();
@@ -162,21 +160,19 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
 
     console.log(`[distributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant`, {
+    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-            payments: payments.map(p => ({ 
+            rewards: payments.map(p => ({ 
                 walletAddress: p.walletAddress, 
-                amount: p.amount
+                amount: p.amount.toString()
             })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
-            chainId: CHAIN_ID,
-            note: `seasonal payout ${pool.period_id}`,
         }),
     });
     const batchResult = await response.json();
