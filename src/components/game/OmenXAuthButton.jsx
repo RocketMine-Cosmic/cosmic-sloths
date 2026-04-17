@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
-const STORAGE_KEY = 'omenx_auth_data';
-
-function getAuthData() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
-}
-function setAuthData(data) {
-    if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    else localStorage.removeItem(STORAGE_KEY);
-}
-
 const sdk = new OmenXGameSDK({
     gameId: 'cosmic-sloths',
 });
@@ -19,6 +9,16 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [authData, setAuthState] = useState(() => sdk.isAuthenticated() ? sdk.getAuthData() : null);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+
+    useEffect(() => {
+        // Poll SDK auth state in case it changed (e.g., from callback page)
+        const interval = setInterval(() => {
+            if (sdk.isAuthenticated() && !authData) {
+                setAuthState(sdk.getAuthData());
+            }
+        }, 500);
+        return () => clearInterval(interval);
+    }, [authData]);
 
     const applyAuthData = (data) => {
         setAuthState(data);
