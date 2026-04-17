@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const BASE_URL = 'https://staging.api.omen.foundation/v1';
+const BASE_URL = 'https://api.omen.foundation/v1';
 
 Deno.serve(async (req) => {
     try {
