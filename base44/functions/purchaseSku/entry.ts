@@ -1,6 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
-const BASE_URL = 'https://api.omen.foundation/v1';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
@@ -22,39 +21,21 @@ Deno.serve(async (req) => {
 
         console.log(`[purchaseSku] User ${user.email} purchasing SKU: ${skuId} x${quantity} amount: ${amount} wallet: ${walletAddress}`);
 
-        // 1. Charge the player via OmenX — this is the source of truth
-        const idempotencyKey = `${user.id}-${skuId}-${Date.now()}`;
-
-        const purchaseRes = await fetch(`${BASE_URL}/purchases`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-                'Idempotency-Key': idempotencyKey,
-            },
-            body: JSON.stringify({
-                playerWallet: walletAddress,
-                skuId: skuId,
-                quantity: quantity,
-                idempotencyKey,
-                paymentMethod: 'onchain',
-                metadata: {},
-            }),
+        // 1. Charge the player via OmenX using the SDK
+        const sdk = new OmenXServerSDK({
+            apiKey,
+            apiBaseUrl: 'https://api.omen.foundation',
         });
 
-        const purchaseText = await purchaseRes.text();
-        let purchaseData;
-        try { purchaseData = JSON.parse(purchaseText); } catch { purchaseData = { error: purchaseText }; }
-
-        if (!purchaseRes.ok) {
-            console.error(`[purchaseSku] OmenX purchase failed: ${purchaseRes.status}`, purchaseData);
-            return Response.json({ error: purchaseData.error || purchaseData.message || 'Purchase failed', details: purchaseData }, { status: purchaseRes.status });
-        }
+        const purchaseData = await sdk.purchaseSku({
+            playerWallet: walletAddress,
+            skuId: skuId,
+            quantity: quantity,
+        });
 
         console.log(`[purchaseSku] OmenX charge confirmed for ${user.email}, SKU: ${skuId}, amount: ${amount}`);
 
         // 2. Only after confirmed charge: log the spend and update pools
-        // All pool accounting lives here — never in the frontend
         const playerName = user.full_name || user.email || 'Unknown';
 
         await base44.asServiceRole.entities.TokenSpendLog.create({
@@ -66,7 +47,7 @@ Deno.serve(async (req) => {
             season_id,
         });
 
-        // Update weekly pool (re-fetch before write to reduce race window)
+        // Update weekly pool
         const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
         if (weeklyPools.length > 0) {
             const fresh = await base44.asServiceRole.entities.TokenPool.get(weeklyPools[0].id);
