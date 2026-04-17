@@ -1,4 +1,5 @@
 import React, { useLayoutEffect, useState } from 'react';
+import { base44 } from '@/api/base44Client';
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Processing login...');
@@ -10,7 +11,6 @@ export default function OmenXCallback() {
             try {
                 const params = new URLSearchParams(window.location.search);
                 const code = params.get('code');
-                const state = params.get('state');
 
                 if (!code) {
                     setStatus('❌ No authorization code received');
@@ -18,41 +18,28 @@ export default function OmenXCallback() {
                     return;
                 }
 
-                const apiBaseUrl = 'https://api.omen.foundation';
-                const redirectUri = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
+                // Use backend function to exchange code (avoids CORS)
+                const res = await base44.functions.invoke('exchangeOmenXCode', { code });
+                const tokenData = res.data;
 
-                // Exchange code for tokens
-                const tokenResponse = await fetch(`${apiBaseUrl}/v1/oauth/token`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        grant_type: 'authorization_code',
-                        code,
-                        redirect_uri: redirectUri,
-                        client_id: 'cosmic-sloths',
-                    }),
-                });
-
-                if (!tokenResponse.ok) {
-                    const error = await tokenResponse.json();
-                    console.error('[OmenX callback] Token exchange failed:', error);
-                    setStatus('❌ Token exchange failed');
+                if (!tokenData || tokenData.error) {
+                    console.error('[OmenX callback] Exchange failed:', tokenData?.error);
+                    setStatus('❌ Login failed');
                     setTimeout(() => window.close(), 2000);
                     return;
                 }
 
-                const tokenData = await tokenResponse.json();
                 const authData = {
-                    accessToken: tokenData.access_token,
-                    refreshToken: tokenData.refresh_token,
-                    expiresIn: tokenData.expires_in,
-                    walletAddress: tokenData.wallet_address,
+                    accessToken: tokenData.accessToken,
+                    refreshToken: tokenData.refreshToken,
+                    expiresIn: tokenData.expiresIn,
+                    walletAddress: tokenData.walletAddress,
                     username: tokenData.username,
                 };
 
                 // Write to localStorage
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
-                console.log('[OmenX callback] ✓ Auth data saved:', authData);
+                console.log('[OmenX callback] ✓ Auth data saved');
 
                 // Notify parent window
                 window.dispatchEvent(new StorageEvent('storage', {
