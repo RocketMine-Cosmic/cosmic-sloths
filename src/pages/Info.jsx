@@ -120,7 +120,7 @@ const TABS_CONTENT = {
     progression: (
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏠 Sloth Lounge (Meta Progression)" color="cyan">
-                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and Cosmic Tokens on persistent upgrades, or purchase a 60-minute <strong className="text-emerald-400">+50% XP Session Buff</strong> for 10 Cosmic Tokens.</p>
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and OMENX on persistent upgrades, or purchase a 60-minute <strong className="text-emerald-400">+50% XP Session Buff</strong> for 10 OMENX.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
@@ -507,7 +507,7 @@ const TABS_CONTENT = {
                         <div className="text-slate-400 text-xs">×3 value</div>
                     </div>
                 </div>
-                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400 inline-flex items-center gap-1">OMENX <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400" /></strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400">⬡ OMENX</strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
             </SectionCard>
 
             <SectionCard title="👑 Boss Encounters" color="rose">
