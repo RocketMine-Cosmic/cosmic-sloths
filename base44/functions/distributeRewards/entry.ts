@@ -13,10 +13,7 @@ Deno.serve(async (req) => {
         if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
-        const sdk = new OmenXServerSDK({
-            apiKey,
-            apiBaseUrl: 'https://staging.api.omen.foundation',
-        });
+        const sdk = new OmenXServerSDK({ apiKey });
 
         const currentWeekId = moment().format('YYYY-[W]ww');
         const currentSeasonNum = Math.floor(moment().week() / 4) + 1;

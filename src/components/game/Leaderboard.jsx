@@ -104,7 +104,7 @@ export default function Leaderboard() {
                 const userId = score.user_id;
 
                 if (wallet && seenWallets.has(wallet)) continue;
-                if (!wallet && userId && seenUserIds.has(userId)) continue;
+                if (userId && seenUserIds.has(userId)) continue;
 
                 if (wallet) seenWallets.add(wallet);
                 if (userId) seenUserIds.add(userId);
