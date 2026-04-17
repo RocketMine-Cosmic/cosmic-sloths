@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { OmenXGameSDK } from '@omen.foundation/game-sdk';
+import { OmenXGameSDK, subscribeWalletRealtimeWithOmenXAuth } from '@omen.foundation/game-sdk';
 
 // Singleton cache — shared across all hook instances
 let cachedBalance = null;
-let lastFetchTime = 0;
-let isFetching = false;
 let listeners = new Set();
-const POLL_INTERVAL = 600_000; // 10 minutes
-const MIN_REFETCH = 5_000;    // don't re-fetch within 5s
+let unsubscribe = null;
+let consumerCount = 0;
 
 const sdk = new OmenXGameSDK({ gameId: 'cosmic-sloths' });
 
@@ -16,50 +13,31 @@ function notify() {
     listeners.forEach(fn => fn(cachedBalance));
 }
 
-async function fetchBalanceOnce() {
-    if (isFetching) return;
-    if (!sdk.isAuthenticated()) {
-        cachedBalance = null;
-        notify();
-        return;
-    }
-    const auth = sdk.getAuthData();
-    if (!auth?.walletAddress) {
-        cachedBalance = null;
-        notify();
-        return;
-    }
-    const now = Date.now();
-    if (now - lastFetchTime < MIN_REFETCH) return;
-    isFetching = true;
+function startSubscription() {
+    if (unsubscribe || !sdk.isAuthenticated()) return;
+    
     try {
-        const res = await base44.functions.invoke('getOmenXBalance', {
-            walletAddress: auth.walletAddress,
+        unsubscribe = subscribeWalletRealtimeWithOmenXAuth({
+            apiBaseUrl: 'https://api.omen.foundation',
+            getAccessToken: () => Promise.resolve(sdk.getAuthData()?.accessToken ?? null),
+            walletAddress: sdk.getAuthData()?.walletAddress,
+            onBalance: (balances) => {
+                const omenxToken = balances?.tokens?.find(t => t.symbol === 'OMENX');
+                cachedBalance = parseFloat(omenxToken?.balance ?? '0');
+                notify();
+            },
+            onInventory: () => {}, // no-op for now
         });
-        cachedBalance = res.data?.balance ?? null;
-        lastFetchTime = Date.now();
-        notify();
     } catch (e) {
-        console.error('[useOmenXBalance] failed:', e);
-        cachedBalance = null;
-        notify();
-    } finally {
-        isFetching = false;
+        console.error('[useOmenXBalance] subscription failed:', e);
     }
 }
 
-// Single global poll — starts when first consumer mounts, stops when last unmounts
-let pollTimer = null;
-let consumerCount = 0;
-
-function startPolling() {
-    if (pollTimer) return;
-    fetchBalanceOnce();
-    pollTimer = setInterval(fetchBalanceOnce, POLL_INTERVAL);
-}
-
-function stopPolling() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+function stopSubscription() {
+    if (unsubscribe) { 
+        unsubscribe(); 
+        unsubscribe = null; 
+    }
 }
 
 export function useOmenXBalance() {
@@ -71,21 +49,19 @@ export function useOmenXBalance() {
         listeners.add(listener);
         consumerCount++;
 
-        startPolling();
+        if (sdk.isAuthenticated()) {
+            startSubscription();
+        }
 
         // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
 
-        const onFocus = () => { lastFetchTime = 0; fetchBalanceOnce(); };
-        window.addEventListener('focus', onFocus);
-
         return () => {
             listeners.delete(listener);
             consumerCount--;
-            window.removeEventListener('focus', onFocus);
-            if (consumerCount <= 0) { consumerCount = 0; stopPolling(); }
+            if (consumerCount <= 0) { consumerCount = 0; stopSubscription(); }
         };
     }, []);
 
-    return { balance, loading, refresh: () => { lastFetchTime = 0; fetchBalanceOnce(); } };
+    return { balance, loading };
 }
