@@ -1,44 +1,39 @@
 import { useState, useEffect } from 'react';
-import { OmenXGameSDK, subscribeWalletRealtimeWithOmenXAuth } from '@omen.foundation/game-sdk';
+import { base44 } from '@/api/base44Client';
 
 // Singleton cache — shared across all hook instances
 let cachedBalance = null;
 let listeners = new Set();
-let unsubscribe = null;
-let consumerCount = 0;
-
-const sdk = new OmenXGameSDK({ gameId: 'cosmic-sloths' });
+let pollTimer = null;
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
 }
 
-async function startSubscription() {
-    if (unsubscribe || !sdk.isAuthenticated()) return;
+async function startPolling() {
+    if (pollTimer) return;
     
-    try {
-        await sdk.init();
-        const authData = sdk.getAuthData();
-        unsubscribe = subscribeWalletRealtimeWithOmenXAuth({
-            apiBaseUrl: 'https://api.omen.foundation',
-            getAccessToken: () => Promise.resolve(authData?.accessToken ?? null),
-            walletAddress: authData?.walletAddress,
-            onBalance: (balances) => {
-                const omenxToken = balances?.tokens?.find(t => t.symbol === 'OMENX');
-                cachedBalance = parseFloat(omenxToken?.balance ?? '0');
-                notify();
-            },
-            onInventory: () => {},
-        });
-    } catch (e) {
-        console.error('[useOmenXBalance] subscription failed:', e);
-    }
+    const poll = async () => {
+        try {
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            if (!authData?.walletAddress) return;
+            
+            const res = await base44.functions.invoke('getOmenXBalance', { walletAddress: authData.walletAddress });
+            cachedBalance = res.data?.balance ?? 0;
+            notify();
+        } catch (e) {
+            console.error('[useOmenXBalance] poll failed:', e);
+        }
+    };
+    
+    await poll();
+    pollTimer = setInterval(poll, 5000);
 }
 
-function stopSubscription() {
-    if (unsubscribe) { 
-        unsubscribe(); 
-        unsubscribe = null; 
+function stopPolling() {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
     }
 }
 
@@ -49,18 +44,14 @@ export function useOmenXBalance() {
     useEffect(() => {
         const listener = (val) => { setBalance(val); setLoading(false); };
         listeners.add(listener);
-        consumerCount++;
 
-        if (sdk.isAuthenticated()) {
-            startSubscription();
-        }
+        startPolling();
 
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
 
         return () => {
             listeners.delete(listener);
-            consumerCount--;
-            if (consumerCount <= 0) { consumerCount = 0; stopSubscription(); }
+            if (listeners.size === 0) stopPolling();
         };
     }, []);
 
