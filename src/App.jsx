@@ -32,6 +32,7 @@ import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
 import { initOmenX } from '@/lib/omenx';
 import GamepadManager from './components/GamepadManager';
+import { CurrencyProvider } from '@/lib/CurrencyContext';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated, authError, navigateToLogin, user } = useAuth();
@@ -155,15 +156,17 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <GamepadManager />
-        <Router>
-          <Routes>
-            {/* OmenX OAuth callback — must be outside auth gate so popup works without a session */}
-            <Route path="/auth/callback" element={<OmenXCallback />} />
-            <Route path="*" element={<AuthenticatedApp />} />
-          </Routes>
-        </Router>
-        <Toaster />
+        <CurrencyProvider>
+          <GamepadManager />
+          <Router>
+            <Routes>
+              {/* OmenX OAuth callback — must be outside auth gate so popup works without a session */}
+              <Route path="/auth/callback" element={<OmenXCallback />} />
+              <Route path="*" element={<AuthenticatedApp />} />
+            </Routes>
+          </Router>
+          <Toaster />
+        </CurrencyProvider>
       </QueryClientProvider>
     </AuthProvider>
   )

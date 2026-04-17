@@ -1,21 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { SaveManager } from '../../game/SaveManager';
+import React from 'react';
 import { Star, Puzzle, Coins } from 'lucide-react';
-import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
 export default function CurrencyHeader() {
-    const [save, setSave] = useState(SaveManager.load());
-    const { balance: omenxBalance, loading: omenxLoading } = useOmenXBalance();
-
-    useEffect(() => {
-        const handleSaveUpdated = (e) => setSave(e.detail);
-        window.addEventListener('saveUpdated', handleSaveUpdated);
-        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
-    }, []);
+    const { save, omenxBalance, loading: omenxLoading } = useCurrency();
 
     const formatBalance = (bal) => {
         if (bal === null || bal === undefined) return '…';
