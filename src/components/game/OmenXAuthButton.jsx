@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-
-const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
-const CLIENT_ID = 'cosmic-sloths';
-const AUTH_URL = `https://staging.api.omen.foundation/v1/oauth/authorize`;
+import { omenx, getRedirectUri } from '@/lib/omenx';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
 function getAuthData() {
     try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY)); } catch { return null; }
-}
-function setAuthData(data) {
-    if (data) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    else sessionStorage.removeItem(STORAGE_KEY);
 }
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
@@ -20,7 +13,8 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [successMsg, setSuccessMsg] = useState('');
 
     const applyAuthData = (data) => {
-        setAuthData(data);
+        if (data) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        else sessionStorage.removeItem(STORAGE_KEY);
         setAuthState(data);
         setLoading(false);
         if (data) {
@@ -31,57 +25,42 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     };
 
     useEffect(() => {
-        // postMessage from popup
-        const handler = (e) => {
-            if (e.origin !== window.location.origin) return;
-            if (e.data?.type === 'OMENX_AUTH_SUCCESS') applyAuthData(e.data.payload);
-            if (e.data?.type === 'OMENX_AUTH_ERROR') { console.error('[OmenX] auth error', e.data.error); setLoading(false); }
+        // Listen for SDK onAuth events
+        const checkAuth = () => {
+            const stored = getAuthData();
+            if (stored) setAuthState(stored);
         };
-        window.addEventListener('message', handler);
-
-        // storage event from OTHER tabs/windows writing to localStorage
-        const storageHandler = (e) => {
-            if (e.key === STORAGE_KEY) {
-                const data = e.newValue ? JSON.parse(e.newValue) : null;
-                setAuthState(data);
-                onAuthChange?.(data);
-            }
-        };
-        window.addEventListener('storage', storageHandler);
-
-        // Clear auth on window unload (page/browser close)
-        const unloadHandler = () => {
-            setAuthData(null);
-        };
-        window.addEventListener('beforeunload', unloadHandler);
-
-        return () => {
-            window.removeEventListener('message', handler);
-            window.removeEventListener('storage', storageHandler);
-            window.removeEventListener('beforeunload', unloadHandler);
-        };
+        
+        window.addEventListener('storage', checkAuth);
+        return () => window.removeEventListener('storage', checkAuth);
     }, []);
 
-    const handleLogin = () => {
-        const state = Math.random().toString(36).slice(2);
-        localStorage.setItem('omenx_state', state);
-        const url = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&state=${state}`;
-        const popup = window.open(url, 'omenx_auth', 'width=500,height=700');
-        if (!popup) { console.error('[OmenX] popup blocked'); return; }
+    const handleLogin = async () => {
         setLoading(true);
-        // Poll for popup close, then sync state from localStorage
-        const timer = setInterval(() => {
-            if (popup.closed) {
-                clearInterval(timer);
+        try {
+            await omenx.authenticate({
+                redirectUri: getRedirectUri(),
+                enablePKCE: true,
+            });
+            // SDK's onAuth callback handles storage update; read it here
+            setTimeout(() => {
                 const stored = getAuthData();
                 applyAuthData(stored);
-            }
-        }, 500);
+            }, 500);
+        } catch (err) {
+            console.error('[OmenX] authenticate failed:', err);
+            setLoading(false);
+        }
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         applyAuthData(null);
         setSuccessMsg('');
+        try {
+            await omenx.logout();
+        } catch (e) {
+            console.error('[OmenX] logout error', e);
+        }
         window.location.reload();
     };
 

@@ -1,50 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { OmenXGameSDK } from '@omen.foundation/game-sdk';
-import { base44 } from '@/api/base44Client';
+import React, { useLayoutEffect, useState } from 'react';
 
 export default function OmenXCallback() {
-    const [status, setStatus] = useState('Connecting to OmenX…');
+    const [status, setStatus] = useState('Completing sign-in…');
 
-    useEffect(() => {
+    useLayoutEffect(() => {
+        if (typeof window === 'undefined') return;
+
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
-        const savedState = localStorage.getItem('omenx_state');
 
-        if (!code) {
-            setStatus('No authorization code received.');
-            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'no_code' }, window.location.origin);
+        if (!code || !state) {
+            setStatus('Invalid callback parameters.');
             return;
         }
 
-        if (state !== savedState) {
-            setStatus('State mismatch — possible CSRF.');
-            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'state_mismatch' }, window.location.origin);
+        try {
+            const storageKey = `omenx_oauth_callback_${state}`;
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify({ code, state, timestamp: Date.now() })
+            );
+            console.log(`[OmenX callback] Stored ${storageKey}`);
+        } catch (e) {
+            console.error('[OmenX callback] localStorage failed', e);
+            setStatus('Storage error. Please retry login.');
             return;
         }
 
-        localStorage.removeItem('omenx_state');
-
-        // Exchange code for token
-        console.log('[Callback] Invoking omenxTokenExchange with code:', code);
-        base44.functions.invoke('omenxTokenExchange', { code })
-            .then(res => {
-                console.log('[Callback] Token response:', res.data);
-                const data = res.data;
-                if (data.error) throw new Error(data.error);
-                
-                setStatus('Connected! Closing…');
-                sessionStorage.setItem('omenx_auth_data', JSON.stringify(data));
-                if (window.opener) {
-                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
-                }
-                setTimeout(() => window.close(), 500);
-            })
-            .catch(err => {
-                console.error('[Callback] error', err);
-                setStatus('Connection failed: ' + err.message);
-                if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: err.message }, window.location.origin);
-            });
+        // Close popup after brief delay for storage flush
+        setTimeout(() => {
+            try {
+                window.close();
+            } catch (e) {
+                console.error('[OmenX callback] Failed to close popup', e);
+                setStatus('You can close this window.');
+            }
+        }, 150);
     }, []);
 
     return (
