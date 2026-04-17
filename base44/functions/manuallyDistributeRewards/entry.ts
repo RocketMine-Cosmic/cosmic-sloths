@@ -17,6 +17,11 @@ Deno.serve(async (req) => {
         }
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
+        if (!apiKey) {
+            console.error('[manuallyDistributeRewards] OMENX_API_KEY not set');
+            return Response.json({ error: 'OMENX_API_KEY not configured' }, { status: 500 });
+        }
+
         const sdk = new OmenXServerSDK({
             apiKey,
             apiBaseUrl: 'https://staging.api.omen.foundation',
@@ -46,8 +51,9 @@ Deno.serve(async (req) => {
 
         return Response.json({ success: true, ...result });
     } catch (error) {
-        console.error('[manuallyDistributeRewards]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        console.error('[manuallyDistributeRewards] ERROR:', error);
+        console.error('[manuallyDistributeRewards] Stack:', error?.stack);
+        return Response.json({ error: error?.message || String(error) }, { status: 500 });
     }
 });
 
@@ -125,14 +131,19 @@ async function distributeWeekly(base44, sdk, pool) {
 
     console.log(`[manuallyDistributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const batchResult = await sdk.grantGameRewardBatch({
-        payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
-        gameId: GAME_ID,
-        gameName: GAME_NAME,
-        chainId: CHAIN_ID,
-    });
-
-    console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
+    try {
+        const batchResult = await sdk.grantGameRewardBatch({
+            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
+            gameId: GAME_ID,
+            gameName: GAME_NAME,
+            chainId: CHAIN_ID,
+        });
+        console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
+    } catch (sdkErr) {
+        console.error('[manuallyDistributeRewards] SDK grant error:', sdkErr?.message);
+        console.error('[manuallyDistributeRewards] SDK error response:', sdkErr?.response?.data || sdkErr?.response);
+        throw sdkErr;
+    }
 
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
@@ -151,14 +162,19 @@ async function distributeSeasonal(base44, sdk, pool) {
 
     console.log(`[manuallyDistributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
-    const batchResult = await sdk.grantGameRewardBatch({
-        payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
-        gameId: GAME_ID,
-        gameName: GAME_NAME,
-        chainId: CHAIN_ID,
-    });
-
-    console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
+    try {
+        const batchResult = await sdk.grantGameRewardBatch({
+            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
+            gameId: GAME_ID,
+            gameName: GAME_NAME,
+            chainId: CHAIN_ID,
+        });
+        console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
+    } catch (sdkErr) {
+        console.error('[manuallyDistributeRewards] SDK grant error:', sdkErr?.message);
+        console.error('[manuallyDistributeRewards] SDK error response:', sdkErr?.response?.data || sdkErr?.response);
+        throw sdkErr;
+    }
 
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
