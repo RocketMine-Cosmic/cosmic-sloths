@@ -1,27 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { OmenXGameSDK } from '@omen.foundation/game-sdk';
-
-const sdk = new OmenXGameSDK({
-    gameId: 'cosmic-sloths',
-    onAuth: (authData) => {
-        localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
-    },
-});
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Processing OAuth callback…');
 
     useEffect(() => {
-        // SDK handles the callback automatically via onAuth hook
-        // Just notify the parent window when complete
-        setTimeout(() => {
-            const authData = localStorage.getItem('omenx_auth_data');
+        // SDK automatically handles code exchange and stores auth data
+        // Wait a moment for SDK to complete, then close popup
+        const timer = setTimeout(() => {
             if (window.opener) {
-                window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: authData ? JSON.parse(authData) : null }, window.location.origin);
+                window.opener.postMessage({ type: 'OMENX_AUTH_COMPLETE' }, window.location.origin);
             }
-            setStatus('Connected! Closing…');
-            setTimeout(() => window.close(), 500);
-        }, 1000);
+            window.close();
+        }, 1500);
+        return () => clearTimeout(timer);
     }, []);
 
     return (
