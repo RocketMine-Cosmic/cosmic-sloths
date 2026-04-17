@@ -36,8 +36,24 @@ export default function Game() {
     const [showRevivePrompt, setShowRevivePrompt] = useState(false);
 
     useEffect(() => {
-        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
-        const save = SaveManager.load();
+        const initGame = async () => {
+            const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+            
+            // Load from backend first if available
+            try {
+              const user = await base44.auth.me();
+              if (user) {
+                const saves = await base44.entities.PlayerSave.filter({ user_id: user.id });
+                if (saves.length > 0) {
+                  const backendSave = saves[0].save_data;
+                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(backendSave));
+                }
+              }
+            } catch (e) {
+              console.error('Failed to load from backend:', e);
+            }
+            
+            const save = SaveManager.load();
         
         const canvas = canvasRef.current;
         const resizeCanvas = () => {
@@ -114,7 +130,7 @@ export default function Game() {
                 const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
                 const arenaMultiplier = isEndless ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
                 const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + (isVictory ? 5000 : 0);
-                const currentSaveForScore = SaveManager.load();
+                const currentSaveForScore = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const bulletHellMult = (currentSaveForScore.bossModifiers && currentSaveForScore.bossModifiers.bullet_hell) ? 1.3 : 1.0;
                 const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
 
@@ -192,32 +208,32 @@ export default function Game() {
                 setLevelUpChoices(choices);
             },
             onFragmentFound: (amount) => {
-                const currentSave = SaveManager.load();
-                currentSave.relicFragments = (currentSave.relicFragments || 0) + amount;
-                SaveManager.save(currentSave);
-                setGameState(s => ({ ...s, relicFragments: currentSave.relicFragments }));
+                const save = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
+                save.relicFragments = (save.relicFragments || 0) + amount;
+                SaveManager.save(save);
+                setGameState(s => ({ ...s, relicFragments: save.relicFragments }));
             },
             onTokenFound: () => {
-                const currentSave = SaveManager.load();
-                currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + 1;
-                SaveManager.save(currentSave);
-                setGameState(s => ({ ...s, cosmicTokens: currentSave.cosmicTokens }));
+                const save = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
+                save.cosmicTokens = (save.cosmicTokens || 0) + 1;
+                SaveManager.save(save);
+                setGameState(s => ({ ...s, cosmicTokens: save.cosmicTokens }));
             },
             onDeathPrompt: () => {
                 setShowRevivePrompt(true);
             },
             onCharacterFound: (charId) => {
-                const currentSave = SaveManager.load();
-                if (!currentSave.foundCharacters.includes(charId)) {
-                    currentSave.foundCharacters.push(charId);
-                    if (!currentSave.unlockedCharacters.includes(charId)) {
-                        currentSave.unlockedCharacters.push(charId);
+                const save = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
+                if (!save.foundCharacters.includes(charId)) {
+                    save.foundCharacters.push(charId);
+                    if (!save.unlockedCharacters.includes(charId)) {
+                        save.unlockedCharacters.push(charId);
                     }
-                    SaveManager.save(currentSave);
+                    SaveManager.save(save);
                 }
             },
             onGameOver: (stats) => {
-                const currentSave = SaveManager.load();
+                const currentSave = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
                 currentSave.gold += stats.gold;
                 currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
                 if (!currentSave.characterKills) currentSave.characterKills = {};
@@ -237,7 +253,7 @@ export default function Game() {
                     }
                 }
                 SaveManager.save(currentSave);
-                const currentSaveForGameOver = SaveManager.load();
+                const currentSaveForGameOver = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const goArenaIndex = ARENAS.findIndex(a => a.id === arenaId);
                 const goArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, goArenaIndex) * 0.2);
                 const goBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5;
@@ -253,7 +269,7 @@ export default function Game() {
                 }
             },
             onVictory: (stats) => {
-                const currentSave = SaveManager.load();
+                const currentSave = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
                 currentSave.gold += stats.gold;
                 currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
                 if (!currentSave.characterKills) currentSave.characterKills = {};
@@ -287,7 +303,7 @@ export default function Game() {
                     }
                 }
                 SaveManager.save(currentSave);
-                const currentSaveForVictory = SaveManager.load();
+                const currentSaveForVictory = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const vicArenaIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 const vicArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, vicArenaIndex) * 0.2);
                 const vicBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + 5000;
@@ -317,11 +333,14 @@ export default function Game() {
         SoundManager.init();
         SoundManager.playBGM();
 
-        return () => {
-            window.removeEventListener('resize', resizeCanvas);
-            engine.cleanup();
-            SoundManager.stopBGM();
+            return () => {
+                window.removeEventListener('resize', resizeCanvas);
+                engine.cleanup();
+                SoundManager.stopBGM();
+            };
         };
+        
+        initGame();
     }, [location.state]);
 
     useEffect(() => {
