@@ -7,13 +7,11 @@ export const omenx = new OmenXGameSDK({
   apiBaseUrl: 'https://api.omen.foundation',
   oauthAuthorizeUrl: 'https://api.omen.foundation/v1/oauth/authorize',
   oauthTokenUrl: 'https://api.omen.foundation/v1/oauth/token',
-  enableIframeAuth: false, // Base44 is standalone, not embedded
+  enableIframeAuth: false,
   onAuth: (authData) => {
     console.log('[OmenX] Authenticated', authData);
-    // Store in sessionStorage for app access
     try {
       sessionStorage.setItem('omenx_auth_data', JSON.stringify(authData));
-      // Trigger storage event for listeners (e.g., OmenXAuthButton)
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'omenx_auth_data',
         newValue: JSON.stringify(authData),
@@ -24,7 +22,12 @@ export const omenx = new OmenXGameSDK({
     }
   },
   onAuthError: (err) => {
-    console.error('[OmenX] Auth error', err);
+    console.error('[OmenX] Auth error (details):', {
+      message: err.message,
+      code: err.code,
+      status: err.status,
+      fullError: err,
+    });
   },
   onLogout: () => {
     console.log('[OmenX] Logged out');
