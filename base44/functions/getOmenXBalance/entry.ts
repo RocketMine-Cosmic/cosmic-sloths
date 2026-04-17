@@ -13,7 +13,13 @@ Deno.serve(async (req) => {
     }
 
     const sdk = new OmenXServerSDK({ apiKey });
-    const balances = await sdk.getPlayerBalances(walletAddress, chainId);
-    
-    return Response.json({ balance: balances.balance ?? 0 });
+    const data = await sdk.getPlayerBalances(walletAddress, chainId);
+
+    // Find OMENX token in the tokens array
+    const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+    // Balance is a string with 18 decimals — convert to a human-readable number
+    const rawBalance = omenxToken?.balance ?? '0';
+    const balance = parseFloat(rawBalance) / 1e18;
+
+    return Response.json({ balance });
 });
