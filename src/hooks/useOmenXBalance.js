@@ -19,7 +19,7 @@ export function useOmenXBalance() {
         }
 
         try {
-            const res = await base44.functions.invoke('getOmenXBalance', { walletAddress: auth.walletAddress });
+            const res = await base44.functions.invoke('getOmenXBalance', { walletAddress: auth.walletAddress, accessToken: auth.access_token });
             setBalance(res.data?.balance ?? null);
         } catch (e) {
             console.error('[useOmenXBalance] failed:', e);

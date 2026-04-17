@@ -1,7 +1,5 @@
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
 Deno.serve(async (req) => {
-    const { walletAddress, chainId = '56' } = await req.json();
+    const { walletAddress, accessToken, chainId = '56' } = await req.json();
 
     if (!walletAddress) {
         return Response.json({ error: 'Wallet address required' }, { status: 400 });
@@ -12,12 +10,27 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const sdk = new OmenXServerSDK({ apiKey });
-    const data = await sdk.getPlayerBalances(walletAddress, chainId);
+    // Use the user's access token if available, otherwise fall back to API key
+    const authToken = accessToken || apiKey;
+
+    const res = await fetch(`https://api.omen.foundation/v1/wallet/${walletAddress}/balances?chainId=${chainId}`, {
+        headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (!res.ok) {
+        const err = await res.text();
+        console.error('[getOmenXBalance] API error:', res.status, err);
+        return Response.json({ error: 'Failed to fetch balance', detail: err }, { status: res.status });
+    }
+
+    const data = await res.json();
+    console.log('[getOmenXBalance] raw:', JSON.stringify(data));
 
     // Find OMENX token in the tokens array
     const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
-    // Balance is a string with 18 decimals — convert to a human-readable number
     const rawBalance = omenxToken?.balance ?? '0';
     const balance = parseFloat(rawBalance) / 1e18;
 
