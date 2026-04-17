@@ -13,7 +13,7 @@ function notify() {
 }
 
 function getAuthData() {
-    try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem('omenx_auth_data')); } catch { return null; }
 }
 
 async function fetchBalance() {
@@ -74,7 +74,7 @@ export function useOmenXBalance() {
         // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
 
-        const onStorage = (e) => { if (e.key === 'omenx_auth_data') { stopSubscription(); startSubscription(); } };
+        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === sessionStorage) { stopSubscription(); startSubscription(); } };
         window.addEventListener('storage', onStorage);
 
         return () => {

@@ -7,11 +7,11 @@ const AUTH_URL = `https://staging.api.omen.foundation/v1/oauth/authorize`;
 const STORAGE_KEY = 'omenx_auth_data';
 
 function getAuthData() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY)); } catch { return null; }
 }
 function setAuthData(data) {
-    if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    else localStorage.removeItem(STORAGE_KEY);
+    if (data) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    else sessionStorage.removeItem(STORAGE_KEY);
 }
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {

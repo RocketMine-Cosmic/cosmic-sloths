@@ -34,7 +34,7 @@ export default function OmenXCallback() {
                 if (data.error) throw new Error(data.error);
                 
                 setStatus('Connected! Closing…');
-                localStorage.setItem('omenx_auth_data', JSON.stringify(data));
+                sessionStorage.setItem('omenx_auth_data', JSON.stringify(data));
                 if (window.opener) {
                     window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
                 }
