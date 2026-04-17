@@ -43,9 +43,9 @@ Deno.serve(async (req) => {
 
         let result;
         if (period_type === 'weekly') {
-            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl);
+            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
         } else if (period_type === 'seasonal') {
-            result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl);
+            result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
@@ -119,7 +119,7 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
-async function distributeWeekly(base44, sdk, pool, apiBaseUrl) {
+async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.25);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
 
@@ -165,7 +165,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl) {
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
 
-async function distributeSeasonal(base44, sdk, pool, apiBaseUrl) {
+async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.35);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
 
