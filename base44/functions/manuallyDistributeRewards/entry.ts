@@ -140,7 +140,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
                 'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                rewards: payments.map(p => ({ 
+                payments: payments.map(p => ({ 
                     walletAddress: p.walletAddress, 
                     amount: p.amount.toString()
                 })),
@@ -185,7 +185,7 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
                 'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                rewards: payments.map(p => ({ 
+                payments: payments.map(p => ({ 
                     walletAddress: p.walletAddress, 
                     amount: p.amount.toString()
                 })),
