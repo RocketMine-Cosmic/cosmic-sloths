@@ -53,6 +53,7 @@ export default function Upgrades({ isCarousel }) {
     const [selectedChar, setSelectedChar] = useState((save.unlockedCharacters && save.unlockedCharacters.length > 0) ? save.unlockedCharacters[0] : 'neobyte');
     const [selectedWeapon, setSelectedWeapon] = useState('napBeam');
     const [timeLeft, setTimeLeft] = useState('');
+    const [purchasing, setPurchasing] = useState(false);
     const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail', 'kill', or 'skin'
     const [skinCharIndex, setSkinCharIndex] = useState(0);
     const [previewSkinColor, setPreviewSkinColor] = useState(null); // color being previewed (not yet purchased)
@@ -118,12 +119,16 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Optimistic update — grant immediately, charge in background
-            currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
-            SaveManager.save(currentSave);
-            setSave(currentSave);
-            SoundManager.playUIClick();
-            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1), tokenCost).catch(err => console.error('[handleBuyStat] purchase failed:', err));
+            setPurchasing(true);
+            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1), tokenCost).then(() => {
+                const s = SaveManager.load();
+                const upg = s[saveKey] || {};
+                s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
+                SaveManager.save(s);
+                setSave(s);
+                SoundManager.playUIClick();
+            }).catch(err => console.error('[handleBuyStat] purchase failed:', err))
+              .finally(() => setPurchasing(false));
         }
     };
 
@@ -149,15 +154,18 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Optimistic update
-            if (!currentSave[saveKey]) currentSave[saveKey] = {};
-            if (!currentSave[saveKey][weaponId]) currentSave[saveKey][weaponId] = {};
-            currentSave[saveKey][weaponId][stat] = currentLevel + 1;
-            SaveManager.save(currentSave);
-            setSave(currentSave);
-            SoundManager.playUIClick();
             const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
-            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1), tokenCost).catch(err => console.error('[handleBuyWeapon] purchase failed:', err));
+            setPurchasing(true);
+            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1), tokenCost).then(() => {
+                const s = SaveManager.load();
+                if (!s[saveKey]) s[saveKey] = {};
+                if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
+                s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
+                SaveManager.save(s);
+                setSave(s);
+                SoundManager.playUIClick();
+            }).catch(err => console.error('[handleBuyWeapon] purchase failed:', err))
+              .finally(() => setPurchasing(false));
         }
     };
 
@@ -182,15 +190,18 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Optimistic update
-            if (!currentSave[saveKey]) currentSave[saveKey] = {};
-            if (!currentSave[saveKey][selectedChar]) currentSave[saveKey][selectedChar] = [];
-            currentSave[saveKey][selectedChar].push(talent.id);
-            SaveManager.save(currentSave);
-            setSave(currentSave);
-            SoundManager.playUIClick();
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier), tokenCost).catch(err => console.error('[handleBuyTalent] purchase failed:', err));
+            setPurchasing(true);
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier), tokenCost).then(() => {
+                const s = SaveManager.load();
+                if (!s[saveKey]) s[saveKey] = {};
+                if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
+                s[saveKey][selectedChar].push(talent.id);
+                SaveManager.save(s);
+                setSave(s);
+                SoundManager.playUIClick();
+            }).catch(err => console.error('[handleBuyTalent] purchase failed:', err))
+              .finally(() => setPurchasing(false));
         }
     };
 
@@ -266,13 +277,18 @@ export default function Upgrades({ isCarousel }) {
                 setSave(newSave);
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-            // Optimistic update
-                const newSave = { ...save, unlockedSkins: [...unlocked, cosmetic.id] };
-                newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
-                SaveManager.save(newSave);
-                setSave(newSave);
-                SoundManager.playUIClick();
-                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).catch(err => console.error('[handleBuyCosmetic skin] purchase failed:', err));
+                setPurchasing(true);
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).then(() => {
+                    const s = SaveManager.load();
+                    const unl = s.unlockedSkins || [];
+                    const cos = s.cosmetics || {};
+                    s.unlockedSkins = [...unl, cosmetic.id];
+                    s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
+                    SaveManager.save(s);
+                    setSave(s);
+                    SoundManager.playUIClick();
+                }).catch(err => console.error('[handleBuyCosmetic skin] purchase failed:', err))
+                  .finally(() => setPurchasing(false));
             }
             return;
         }
@@ -306,14 +322,18 @@ export default function Upgrades({ isCarousel }) {
             setSave(newSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-            // Optimistic update
-            const newSave = { ...save };
-            newSave[unlockKey] = [...unlocked, cosmetic.id];
-            newSave.cosmetics = { ...cosmetics, [cosmeticKey]: cosmetic.id };
-            SaveManager.save(newSave);
-            setSave(newSave);
-            SoundManager.playUIClick();
-            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed:', err));
+            setPurchasing(true);
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).then(() => {
+                const s = SaveManager.load();
+                const unl = s[unlockKey] || [freeId];
+                const cos = s.cosmetics || {};
+                s[unlockKey] = [...unl, cosmetic.id];
+                s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
+                SaveManager.save(s);
+                setSave(s);
+                SoundManager.playUIClick();
+            }).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed:', err))
+              .finally(() => setPurchasing(false));
         }
     };
 
@@ -370,14 +390,14 @@ export default function Upgrades({ isCarousel }) {
                                 )}
                                 {!isMax && (
                                     <button
-                                        onClick={() => handleBuyStat(stat.id, 'token')}
-                                        disabled={!canAffordToken}
-                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
-                                            canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                            'bg-slate-700 text-slate-400 border border-slate-600'
-                                        }`}
+                                       onClick={() => handleBuyStat(stat.id, 'token')}
+                                       disabled={!canAffordToken || purchasing}
+                                       className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
+                                           canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                           'bg-slate-700 text-slate-400 border border-slate-600'
+                                       }`}
                                     >
-                                        <OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX
+                                       {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
                                     </button>
                                 )}
                             </div>
@@ -502,13 +522,13 @@ export default function Upgrades({ isCarousel }) {
                                         {!isMax && (
                                             <button
                                                 onClick={() => handleBuyWeapon(weapon.id, stat.id, 'token')}
-                                                disabled={!canAffordToken}
+                                                disabled={!canAffordToken || purchasing}
                                                 className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                                    canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                    canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                <OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX
+                                                {purchasing ? '…' : <><OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX</>}
                                             </button>
                                         )}
                                     </div>
@@ -669,13 +689,13 @@ export default function Upgrades({ isCarousel }) {
                                     {!isUnlocked && (
                                         <button
                                             onClick={() => handleBuyTalent(talent, 'token')}
-                                            disabled={!canUnlock || !canAffordToken}
+                                            disabled={!canUnlock || !canAffordToken || purchasing}
                                             className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
-                                                canUnlock && canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
                                         >
-                                            <OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX
+                                            {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
                                         </button>
                                     )}
                                 </div>
