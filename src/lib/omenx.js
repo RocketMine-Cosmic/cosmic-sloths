@@ -1,6 +1,6 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
-const REDIRECT_URI = `${window.location.origin}/auth/callback`;
+const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
 
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
