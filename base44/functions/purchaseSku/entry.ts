@@ -23,17 +23,22 @@ Deno.serve(async (req) => {
         console.log(`[purchaseSku] User ${user.email} purchasing SKU: ${skuId} x${quantity} amount: ${amount} wallet: ${walletAddress}`);
 
         // 1. Charge the player via OmenX — this is the source of truth
+        const idempotencyKey = `${user.id}-${skuId}-${Date.now()}`;
+
         const purchaseRes = await fetch(`${BASE_URL}/purchases`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`,
-                'X-Game-Id': 'cosmic-sloths',
+                'Idempotency-Key': idempotencyKey,
             },
             body: JSON.stringify({
                 playerWallet: walletAddress,
                 skuId: skuId,
                 quantity: quantity,
+                idempotencyKey,
+                paymentMethod: 'onchain',
+                metadata: {},
             }),
         });
 
