@@ -104,6 +104,11 @@ export default function SpaceBackground() {
                 });
             }
 
+            if (!preRenderedNebulae || preRenderedNebulae.width === 0 || preRenderedNebulae.height === 0) {
+                animId = requestAnimationFrame(draw);
+                return;
+            }
+
             ctx.globalCompositeOperation = 'source-over';
             ctx.drawImage(preRenderedNebulae, 0, 0);
 
