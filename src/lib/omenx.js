@@ -13,6 +13,12 @@ export const omenx = new OmenXGameSDK({
     // Store in sessionStorage for app access
     try {
       sessionStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+      // Trigger storage event for listeners (e.g., OmenXAuthButton)
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'omenx_auth_data',
+        newValue: JSON.stringify(authData),
+        storageArea: sessionStorage,
+      }));
     } catch (e) {
       console.error('[OmenX] Failed to store auth data', e);
     }

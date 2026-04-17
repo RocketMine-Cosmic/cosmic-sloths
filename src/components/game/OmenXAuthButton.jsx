@@ -25,15 +25,21 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     };
 
     useEffect(() => {
-        // Listen for SDK onAuth events
-        const checkAuth = () => {
+        // Listen for SDK onAuth callback writing to sessionStorage
+        const onStorageChange = () => {
             const stored = getAuthData();
-            if (stored) setAuthState(stored);
+            setAuthState(stored);
+            setLoading(false);
+            if (stored) {
+                setSuccessMsg(`Connected as ${stored.username || stored.walletAddress || 'OmenX User'}`);
+                setTimeout(() => setSuccessMsg(''), 5000);
+            }
+            onAuthChange?.(stored);
         };
         
-        window.addEventListener('storage', checkAuth);
-        return () => window.removeEventListener('storage', checkAuth);
-    }, []);
+        window.addEventListener('storage', onStorageChange);
+        return () => window.removeEventListener('storage', onStorageChange);
+    }, [onAuthChange]);
 
     const handleLogin = async () => {
         setLoading(true);
@@ -42,11 +48,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                 redirectUri: getRedirectUri(),
                 enablePKCE: true,
             });
-            // SDK's onAuth callback handles storage update; read it here
-            setTimeout(() => {
-                const stored = getAuthData();
-                applyAuthData(stored);
-            }, 500);
+            // SDK's onAuth callback will fire and trigger storage listener below
         } catch (err) {
             console.error('[OmenX] authenticate failed:', err);
             setLoading(false);
