@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
-import { base44 } from '@/api/base44Client';
 
 const sdk = new OmenXGameSDK({
     gameId: 'cosmic-sloths',
-    apiBaseUrl: 'https://api.omen.foundation',
     onAuth: (authData) => console.log('[OmenX] Authenticated!', authData),
     onAuthError: (error) => console.error('[OmenX] Auth error:', error),
 });
@@ -46,8 +44,12 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            const res = await base44.functions.invoke('omenxInitiateOAuth', {});
-            window.location.href = res.data.authorizeUrl;
+            await sdk.authenticate({
+                redirectUri: 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback',
+                enablePKCE: true,
+            });
+            const authData = sdk.getAuthData();
+            applyAuthData(authData);
         } catch (err) {
             console.error('[OmenX] auth error', err);
             setLoading(false);
