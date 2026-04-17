@@ -1,47 +1,50 @@
 import React, { useEffect, useState } from 'react';
+import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 import { base44 } from '@/api/base44Client';
 
 export default function OmenXCallback() {
-    const [status, setStatus] = useState('Processing OAuth callback…');
+    const [status, setStatus] = useState('Connecting to OmenX…');
 
     useEffect(() => {
-        const exchangeCode = async () => {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                const code = params.get('code');
-                
-                if (!code) {
-                    setStatus('No authorization code received');
-                    return;
-                }
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const state = params.get('state');
+        const savedState = localStorage.getItem('omenx_state');
 
-                // Call backend to exchange code for token using ServerSDK
-                const res = await base44.functions.invoke('omenxTokenExchange', { code });
-                
-                if (res.data.access_token) {
-                    // Store in SDK-expected localStorage keys with omenx_oauth_callback_ prefix
-                    localStorage.setItem('omenx_oauth_callback_access_token', res.data.access_token);
-                    localStorage.setItem('omenx_oauth_callback_token_type', res.data.token_type || 'Bearer');
-                    if (res.data.expires_in) localStorage.setItem('omenx_oauth_callback_expires_in', res.data.expires_in.toString());
-                    if (res.data.walletAddress) localStorage.setItem('omenx_oauth_callback_walletAddress', res.data.walletAddress);
-                    if (res.data.userId) localStorage.setItem('omenx_oauth_callback_userId', res.data.userId);
-                    if (res.data.username) localStorage.setItem('omenx_oauth_callback_username', res.data.username);
-                    
-                    // Notify opener and close
-                    if (window.opener) {
-                        window.opener.postMessage({ type: 'OMENX_AUTH_COMPLETE' }, window.location.origin);
-                    }
-                    window.close();
-                } else {
-                    setStatus('Token exchange failed');
-                }
-            } catch (err) {
-                console.error('[OmenXCallback] Error:', err);
-                setStatus(`Error: ${err.message}`);
-            }
-        };
+        if (!code) {
+            setStatus('No authorization code received.');
+            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'no_code' }, window.location.origin);
+            return;
+        }
 
-        exchangeCode();
+        if (state !== savedState) {
+            setStatus('State mismatch — possible CSRF.');
+            if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: 'state_mismatch' }, window.location.origin);
+            return;
+        }
+
+        localStorage.removeItem('omenx_state');
+
+        // Exchange code for token
+        console.log('[Callback] Invoking omenxTokenExchange with code:', code);
+        base44.functions.invoke('omenxTokenExchange', { code })
+            .then(res => {
+                console.log('[Callback] Token response:', res.data);
+                const data = res.data;
+                if (data.error) throw new Error(data.error);
+                
+                setStatus('Connected! Closing…');
+                localStorage.setItem('omenx_auth_data', JSON.stringify(data));
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
+                }
+                setTimeout(() => window.close(), 500);
+            })
+            .catch(err => {
+                console.error('[Callback] error', err);
+                setStatus('Connection failed: ' + err.message);
+                if (window.opener) window.opener.postMessage({ type: 'OMENX_AUTH_ERROR', error: err.message }, window.location.origin);
+            });
     }, []);
 
     return (

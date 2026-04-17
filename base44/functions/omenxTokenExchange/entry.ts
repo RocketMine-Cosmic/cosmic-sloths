@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
                 grant_type: 'authorization_code',
                 code,
                 client_id: 'cosmic-sloths',
+                client_secret: apiKey,
                 redirect_uri: REDIRECT_URI,
             }).toString(),
         });

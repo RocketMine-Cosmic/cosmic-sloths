@@ -3,41 +3,59 @@ import { base44 } from '@/api/base44Client';
 
 // Singleton cache — shared across all hook instances
 let cachedBalance = null;
+let lastFetchTime = 0;
+let isFetching = false;
 let listeners = new Set();
-let pollTimer = null;
+const POLL_INTERVAL = 600_000; // 10 minutes
+const MIN_REFETCH = 5_000;    // don't re-fetch within 5s
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
 }
 
-async function startPolling() {
+function getAuthData() {
+    try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
+}
+
+async function fetchBalanceOnce() {
+    if (isFetching) return;
+    const auth = getAuthData();
+    if (!auth?.walletAddress) {
+        cachedBalance = null;
+        notify();
+        return;
+    }
+    const now = Date.now();
+    if (now - lastFetchTime < MIN_REFETCH) return;
+    isFetching = true;
+    try {
+        const res = await base44.functions.invoke('getOmenXBalance', {
+            walletAddress: auth.walletAddress,
+        });
+        cachedBalance = res.data?.balance ?? null;
+        lastFetchTime = Date.now();
+        notify();
+    } catch (e) {
+        console.error('[useOmenXBalance] failed:', e);
+        cachedBalance = null;
+        notify();
+    } finally {
+        isFetching = false;
+    }
+}
+
+// Single global poll — starts when first consumer mounts, stops when last unmounts
+let pollTimer = null;
+let consumerCount = 0;
+
+function startPolling() {
     if (pollTimer) return;
-    
-    const poll = async () => {
-        try {
-            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-            if (!authData?.walletAddress || !authData?.access_token) return;
-            
-            const res = await base44.functions.invoke('getOmenXBalance', { 
-                walletAddress: authData.walletAddress,
-                accessToken: authData.access_token
-            });
-            cachedBalance = res.data?.balance ?? 0;
-            notify();
-        } catch (e) {
-            console.error('[useOmenXBalance] poll failed:', e);
-        }
-    };
-    
-    await poll();
-    pollTimer = setInterval(poll, 5000);
+    fetchBalanceOnce();
+    pollTimer = setInterval(fetchBalanceOnce, POLL_INTERVAL);
 }
 
 function stopPolling() {
-    if (pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-    }
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
 export function useOmenXBalance() {
@@ -47,16 +65,26 @@ export function useOmenXBalance() {
     useEffect(() => {
         const listener = (val) => { setBalance(val); setLoading(false); };
         listeners.add(listener);
+        consumerCount++;
 
         startPolling();
 
+        // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
+
+        const onStorage = (e) => { if (e.key === 'omenx_auth_data') { lastFetchTime = 0; fetchBalanceOnce(); } };
+        const onFocus = () => { lastFetchTime = 0; fetchBalanceOnce(); };
+        window.addEventListener('storage', onStorage);
+        window.addEventListener('focus', onFocus);
 
         return () => {
             listeners.delete(listener);
-            if (listeners.size === 0) stopPolling();
+            consumerCount--;
+            window.removeEventListener('storage', onStorage);
+            window.removeEventListener('focus', onFocus);
+            if (consumerCount <= 0) { consumerCount = 0; stopPolling(); }
         };
     }, []);
 
-    return { balance, loading };
+    return { balance, loading, refresh: () => { lastFetchTime = 0; fetchBalanceOnce(); } };
 }

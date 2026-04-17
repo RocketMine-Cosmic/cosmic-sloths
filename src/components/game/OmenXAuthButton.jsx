@@ -1,38 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { OmenXGameSDK } from '@omen.foundation/game-sdk';
-import { base44 } from '@/api/base44Client';
 
-const sdk = new OmenXGameSDK({
-    gameId: 'cosmic-sloths',
-    onAuth: (authData) => console.log('[OmenX] Authenticated!', authData),
-    onAuthError: (error) => console.error('[OmenX] Auth error:', error),
-});
+const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
+const CLIENT_ID = 'cosmic-sloths';
+const AUTH_URL = `https://staging.api.omen.foundation/v1/oauth/authorize`;
+
+const STORAGE_KEY = 'omenx_auth_data';
+
+function getAuthData() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+}
+function setAuthData(data) {
+    if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    else localStorage.removeItem(STORAGE_KEY);
+}
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
-    const [authData, setAuthState] = useState(() => sdk.isAuthenticated() ? sdk.getAuthData() : null);
+    const [authData, setAuthState] = useState(getAuthData);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
-    useEffect(() => {
-        // Initialize SDK on mount (ignore errors—not critical for OAuth flow)
-        sdk.init().catch(() => {
-            console.warn('[OmenX] init skipped, proceeding with OAuth');
-        });
-        
-        // Poll SDK auth state in case it changed (e.g., from callback page)
-        const interval = setInterval(() => {
-            try {
-                if (sdk.isAuthenticated() && !authData) {
-                    setAuthState(sdk.getAuthData());
-                }
-            } catch (e) {
-                // Ignore errors
-            }
-        }, 500);
-        return () => clearInterval(interval);
-    }, [authData]);
-
     const applyAuthData = (data) => {
+        setAuthData(data);
         setAuthState(data);
         setLoading(false);
         if (data) {
@@ -42,19 +30,49 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         onAuthChange?.(data);
     };
 
-    const handleLogin = async () => {
+    useEffect(() => {
+        // postMessage from popup
+        const handler = (e) => {
+            if (e.origin !== window.location.origin) return;
+            if (e.data?.type === 'OMENX_AUTH_SUCCESS') applyAuthData(e.data.payload);
+            if (e.data?.type === 'OMENX_AUTH_ERROR') { console.error('[OmenX] auth error', e.data.error); setLoading(false); }
+        };
+        window.addEventListener('message', handler);
+
+        // storage event from OTHER tabs/windows writing to localStorage
+        const storageHandler = (e) => {
+            if (e.key === STORAGE_KEY) {
+                const data = e.newValue ? JSON.parse(e.newValue) : null;
+                setAuthState(data);
+                onAuthChange?.(data);
+            }
+        };
+        window.addEventListener('storage', storageHandler);
+
+        return () => {
+            window.removeEventListener('message', handler);
+            window.removeEventListener('storage', storageHandler);
+        };
+    }, []);
+
+    const handleLogin = () => {
+        const state = Math.random().toString(36).slice(2);
+        localStorage.setItem('omenx_state', state);
+        const url = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&state=${state}`;
+        const popup = window.open(url, 'omenx_auth', 'width=500,height=700');
+        if (!popup) { console.error('[OmenX] popup blocked'); return; }
         setLoading(true);
-        try {
-            const res = await base44.functions.invoke('omenxInitiateOAuth', {});
-            window.location.href = res.data.authorizeUrl;
-        } catch (err) {
-            console.error('[OmenX] auth error', err);
-            setLoading(false);
-        }
+        // Poll for popup close, then sync state from localStorage
+        const timer = setInterval(() => {
+            if (popup.closed) {
+                clearInterval(timer);
+                const stored = getAuthData();
+                applyAuthData(stored);
+            }
+        }, 500);
     };
 
     const handleLogout = () => {
-        sdk.logout?.();
         applyAuthData(null);
         setSuccessMsg('');
     };
