@@ -133,7 +133,11 @@ async function distributeWeekly(base44, sdk, pool) {
 
     try {
         const batchResult = await sdk.grantGameRewardBatch({
-            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
+            payments: payments.map(p => ({ 
+                walletAddress: p.walletAddress, 
+                amount: p.amount,
+                token: 'OMENX'
+            })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
             chainId: CHAIN_ID,
@@ -164,7 +168,11 @@ async function distributeSeasonal(base44, sdk, pool) {
 
     try {
         const batchResult = await sdk.grantGameRewardBatch({
-            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
+            payments: payments.map(p => ({ 
+                walletAddress: p.walletAddress, 
+                amount: p.amount,
+                token: 'OMENX'
+            })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
             chainId: CHAIN_ID,
