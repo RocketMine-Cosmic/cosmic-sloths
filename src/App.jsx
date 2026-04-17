@@ -40,7 +40,7 @@ const MainApp = () => {
     SaveManager.initialize().then(() => {
         setSaveInitialized(true);
         // Check if OmenX is logged in and profile name is set
-        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        const omenxAuth = (() => { try { return JSON.parse(sessionStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         if (omenxAuth) {
             const save = SaveManager.load();
             if (!save.hasSetProfileName) {

@@ -149,7 +149,7 @@ export default function Game() {
                     : rawExisting.filter(e => e.arena_id !== 'endless');
 
                 const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
-                const walletAddress = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.walletAddress || null; } catch { return null; } })();
+                const walletAddress = (() => { try { return JSON.parse(sessionStorage.getItem('omenx_auth_data'))?.walletAddress || null; } catch { return null; } })();
                 const scoreData = {
                     user_id: user.id,
                     wallet_address: walletAddress,
@@ -365,7 +365,7 @@ export default function Game() {
     }, []);
 
     const purchaseSku = (skuId, amount, week_id, season_id) => {
-        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        const authData = (() => { try { return JSON.parse(sessionStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress || !skuId) return;
         // amount passed so backend owns all pool accounting server-side after confirmed charge
