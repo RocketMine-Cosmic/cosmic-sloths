@@ -44,11 +44,27 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            await omenx.authenticate({
+            const url = await omenx.authenticate({
                 redirectUri: getRedirectUri(),
                 enablePKCE: true,
             });
-            // SDK's onAuth callback will fire and trigger storage listener below
+            // Open popup and poll for completion
+            if (url) {
+                const popup = window.open(url, '_blank', 'width=500,height=600');
+                const checkAuth = setInterval(() => {
+                    if (popup?.closed) {
+                        clearInterval(checkAuth);
+                        // Check if auth succeeded
+                        const stored = getAuthData();
+                        if (stored?.walletAddress) {
+                            applyAuthData(stored);
+                        } else {
+                            setLoading(false);
+                            console.warn('[OmenX] Popup closed but no auth data found');
+                        }
+                    }
+                }, 500);
+            }
         } catch (err) {
             console.error('[OmenX] authenticate failed:', err);
             setLoading(false);
