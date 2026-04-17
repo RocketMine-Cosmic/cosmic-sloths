@@ -27,18 +27,7 @@ export const AuthProvider = ({ children }) => {
       if (e.key === 'omenx_auth_data') checkOmenx();
     };
     window.addEventListener('storage', handler);
-    
-    // Clear OmenX auth on browser close/unload
-    const handleBeforeUnload = () => {
-      localStorage.removeItem('omenx_auth_data');
-      localStorage.removeItem('omenx_state');
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('storage', handler);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
+    return () => window.removeEventListener('storage', handler);
   }, []);
 
   const checkAppState = async () => {
