@@ -33,11 +33,12 @@ export default function OmenXCallback() {
                 const data = res.data;
                 if (data.error) throw new Error(data.error);
                 
-                setStatus('Connected! You can close this window now.');
+                setStatus('Connected! Closing…');
                 localStorage.setItem('omenx_auth_data', JSON.stringify(data));
                 if (window.opener) {
                     window.opener.postMessage({ type: 'OMENX_AUTH_SUCCESS', payload: data }, window.location.origin);
                 }
+                setTimeout(() => window.close(), 500);
             })
             .catch(err => {
                 console.error('[Callback] error', err);
