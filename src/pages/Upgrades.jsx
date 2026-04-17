@@ -118,12 +118,12 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1), tokenCost).then(() => {
-                currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
-                SaveManager.save(currentSave);
-                setSave(currentSave);
-                SoundManager.playUIClick();
-            }).catch(err => console.error('[handleBuyStat] purchase failed, not granting item:', err));
+            // Optimistic update — grant immediately, charge in background
+            currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
+            SaveManager.save(currentSave);
+            setSave(currentSave);
+            SoundManager.playUIClick();
+            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1), tokenCost).catch(err => console.error('[handleBuyStat] purchase failed:', err));
         }
     };
 
@@ -149,15 +149,15 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
+            // Optimistic update
+            if (!currentSave[saveKey]) currentSave[saveKey] = {};
+            if (!currentSave[saveKey][weaponId]) currentSave[saveKey][weaponId] = {};
+            currentSave[saveKey][weaponId][stat] = currentLevel + 1;
+            SaveManager.save(currentSave);
+            setSave(currentSave);
+            SoundManager.playUIClick();
             const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
-            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1), tokenCost).then(() => {
-                if (!currentSave[saveKey]) currentSave[saveKey] = {};
-                if (!currentSave[saveKey][weaponId]) currentSave[saveKey][weaponId] = {};
-                currentSave[saveKey][weaponId][stat] = currentLevel + 1;
-                SaveManager.save(currentSave);
-                setSave(currentSave);
-                SoundManager.playUIClick();
-            }).catch(err => console.error('[handleBuyWeapon] purchase failed, not granting item:', err));
+            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1), tokenCost).catch(err => console.error('[handleBuyWeapon] purchase failed:', err));
         }
     };
 
@@ -182,15 +182,15 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
+            // Optimistic update
+            if (!currentSave[saveKey]) currentSave[saveKey] = {};
+            if (!currentSave[saveKey][selectedChar]) currentSave[saveKey][selectedChar] = [];
+            currentSave[saveKey][selectedChar].push(talent.id);
+            SaveManager.save(currentSave);
+            setSave(currentSave);
+            SoundManager.playUIClick();
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier), tokenCost).then(() => {
-                if (!currentSave[saveKey]) currentSave[saveKey] = {};
-                if (!currentSave[saveKey][selectedChar]) currentSave[saveKey][selectedChar] = [];
-                currentSave[saveKey][selectedChar].push(talent.id);
-                SaveManager.save(currentSave);
-                setSave(currentSave);
-                SoundManager.playUIClick();
-            }).catch(err => console.error('[handleBuyTalent] purchase failed, not granting item:', err));
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier), tokenCost).catch(err => console.error('[handleBuyTalent] purchase failed:', err));
         }
     };
 
@@ -266,13 +266,13 @@ export default function Upgrades({ isCarousel }) {
                 setSave(newSave);
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).then(() => {
-                    const newSave = { ...save, unlockedSkins: [...unlocked, cosmetic.id] };
-                    newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
-                    SaveManager.save(newSave);
-                    setSave(newSave);
-                    SoundManager.playUIClick();
-                }).catch(err => console.error('[handleBuyCosmetic skin] purchase failed, not granting item:', err));
+            // Optimistic update
+                const newSave = { ...save, unlockedSkins: [...unlocked, cosmetic.id] };
+                newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
+                SaveManager.save(newSave);
+                setSave(newSave);
+                SoundManager.playUIClick();
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).catch(err => console.error('[handleBuyCosmetic skin] purchase failed:', err));
             }
             return;
         }
@@ -306,14 +306,14 @@ export default function Upgrades({ isCarousel }) {
             setSave(newSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).then(() => {
-                const newSave = { ...save };
-                newSave[unlockKey] = [...unlocked, cosmetic.id];
-                newSave.cosmetics = { ...cosmetics, [cosmeticKey]: cosmetic.id };
-                SaveManager.save(newSave);
-                setSave(newSave);
-                SoundManager.playUIClick();
-            }).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed, not granting item:', err));
+            // Optimistic update
+            const newSave = { ...save };
+            newSave[unlockKey] = [...unlocked, cosmetic.id];
+            newSave.cosmetics = { ...cosmetics, [cosmeticKey]: cosmetic.id };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SoundManager.playUIClick();
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed:', err));
         }
     };
 
