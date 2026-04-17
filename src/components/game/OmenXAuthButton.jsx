@@ -4,7 +4,7 @@ import { omenx, getRedirectUri } from '@/lib/omenx';
 const STORAGE_KEY = 'omenx_auth_data';
 
 function getAuthData() {
-    try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY)); } catch { return null; }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
 }
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
@@ -14,8 +14,8 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [debugMsg, setDebugMsg] = useState('');
 
     const applyAuthData = (data) => {
-        if (data) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        else sessionStorage.removeItem(STORAGE_KEY);
+        if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        else localStorage.removeItem(STORAGE_KEY);
         setAuthState(data);
         setLoading(false);
         if (data) {
@@ -26,7 +26,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     };
 
     useEffect(() => {
-        // Listen for SDK onAuth callback writing to sessionStorage
+        // Listen for SDK onAuth callback writing to localStorage
         const onStorageChange = () => {
             const stored = getAuthData();
             setAuthState(stored);

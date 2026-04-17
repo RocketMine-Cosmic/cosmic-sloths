@@ -4,7 +4,7 @@
  */
 export function getOmenXUser() {
     try {
-        const authData = JSON.parse(sessionStorage.getItem('omenx_auth_data'));
+        const authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
         if (!authData?.walletAddress) return null;
         
         return {
@@ -19,15 +19,15 @@ export function getOmenXUser() {
 }
 
 /**
- * Updates OmenX user data in sessionStorage.
+ * Updates OmenX user data in localStorage.
  * Used for profile customization (name, title, icon).
  */
 export function updateOmenXUser(updates) {
     try {
-        const authData = JSON.parse(sessionStorage.getItem('omenx_auth_data'));
+        const authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
         if (!authData) return;
         const updated = { ...authData, ...updates };
-        sessionStorage.setItem('omenx_auth_data', JSON.stringify(updated));
+        localStorage.setItem('omenx_auth_data', JSON.stringify(updated));
         window.dispatchEvent(new CustomEvent('omenxUserUpdated', { detail: updated }));
     } catch (e) {
         console.error('[updateOmenXUser] Failed:', e);
