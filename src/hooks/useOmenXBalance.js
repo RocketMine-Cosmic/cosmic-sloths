@@ -12,7 +12,7 @@ export function useOmenXBalance() {
 
     const fetchBalance = useCallback(async () => {
         const auth = getAuthData();
-        if (!auth?.walletAddress) {
+        if (!auth?.walletAddress || !auth?.access_token) {
             setBalance(null);
             setLoading(false);
             return;

@@ -10,12 +10,13 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    // Use the user's access token if available, otherwise fall back to API key
-    const authToken = accessToken || apiKey;
+    if (!accessToken) {
+        return Response.json({ error: 'Access token required' }, { status: 400 });
+    }
 
     const res = await fetch(`https://api.omen.foundation/v1/wallet/${walletAddress}/balances?chainId=${chainId}`, {
         headers: {
-            'Authorization': `Bearer ${authToken}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
         },
     });
