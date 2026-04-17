@@ -8,6 +8,11 @@ Deno.serve(async (req) => {
 
     const redirectUri = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
     const apiBaseUrl = 'https://api.omen.foundation';
+    const clientSecret = Deno.env.get('OMENX_API_KEY');
+
+    if (!clientSecret) {
+      return Response.json({ error: 'Missing OMENX_API_KEY secret' }, { status: 500 });
+    }
 
     // Exchange code for tokens
     const tokenResponse = await fetch(`${apiBaseUrl}/v1/oauth/token`, {
@@ -18,6 +23,7 @@ Deno.serve(async (req) => {
         code,
         redirect_uri: redirectUri,
         client_id: 'cosmic-sloths',
+        client_secret: clientSecret,
       }),
     });
 
