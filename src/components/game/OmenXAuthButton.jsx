@@ -13,18 +13,14 @@ function setAuthData(data) {
 
 const sdk = new OmenXGameSDK({
     gameId: 'cosmic-sloths',
-    onAuth: (authData) => {
-        setAuthData(authData);
-    },
 });
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
-    const [authData, setAuthState] = useState(getAuthData);
+    const [authData, setAuthState] = useState(() => sdk.isAuthenticated() ? sdk.getAuthData() : null);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
     const applyAuthData = (data) => {
-        setAuthData(data);
         setAuthState(data);
         setLoading(false);
         if (data) {
@@ -34,18 +30,6 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         onAuthChange?.(data);
     };
 
-    useEffect(() => {
-        const storageHandler = (e) => {
-            if (e.key === STORAGE_KEY) {
-                const data = e.newValue ? JSON.parse(e.newValue) : null;
-                setAuthState(data);
-                onAuthChange?.(data);
-            }
-        };
-        window.addEventListener('storage', storageHandler);
-        return () => window.removeEventListener('storage', storageHandler);
-    }, []);
-
     const handleLogin = async () => {
         setLoading(true);
         try {
@@ -53,8 +37,8 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                 redirectUri: 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback',
                 enablePKCE: true,
             });
-            const stored = getAuthData();
-            applyAuthData(stored);
+            const authData = sdk.getAuthData();
+            applyAuthData(authData);
         } catch (err) {
             console.error('[OmenX] auth error', err);
             setLoading(false);
@@ -62,6 +46,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     };
 
     const handleLogout = () => {
+        sdk.logout?.();
         applyAuthData(null);
         setSuccessMsg('');
     };
