@@ -49,9 +49,16 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         };
         window.addEventListener('storage', storageHandler);
 
+        // Clear auth on window unload (page/browser close)
+        const unloadHandler = () => {
+            setAuthData(null);
+        };
+        window.addEventListener('beforeunload', unloadHandler);
+
         return () => {
             window.removeEventListener('message', handler);
             window.removeEventListener('storage', storageHandler);
+            window.removeEventListener('beforeunload', unloadHandler);
         };
     }, []);
 
@@ -75,6 +82,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogout = () => {
         applyAuthData(null);
         setSuccessMsg('');
+        window.location.reload();
     };
 
     return (
