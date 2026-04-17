@@ -137,7 +137,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sdk.apiKey}`,
+                'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
                 payments: payments.map(p => ({ 
@@ -183,7 +183,7 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sdk.apiKey}`,
+                'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
                 payments: payments.map(p => ({ 
