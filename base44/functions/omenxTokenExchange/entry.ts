@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Bearer ${apiKey}`,
             },
             body: new URLSearchParams({
                 grant_type: 'authorization_code',
