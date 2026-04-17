@@ -1,47 +1,91 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+
+// Singleton cache — shared across all hook instances
+let cachedBalance = null;
+let lastFetchTime = 0;
+let isFetching = false;
+let listeners = new Set();
+const POLL_INTERVAL = 60_000; // 1 minute
+const MIN_REFETCH = 10_000;   // don't re-fetch within 10s
+
+function notify() {
+    listeners.forEach(fn => fn(cachedBalance));
+}
 
 function getAuthData() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
 }
 
+async function fetchBalanceOnce() {
+    if (isFetching) return;
+    const auth = getAuthData();
+    if (!auth?.walletAddress || !auth?.access_token) {
+        cachedBalance = null;
+        notify();
+        return;
+    }
+    const now = Date.now();
+    if (now - lastFetchTime < MIN_REFETCH) return;
+    isFetching = true;
+    try {
+        const res = await base44.functions.invoke('getOmenXBalance', {
+            walletAddress: auth.walletAddress,
+            accessToken: auth.access_token,
+        });
+        cachedBalance = res.data?.balance ?? null;
+        lastFetchTime = Date.now();
+        notify();
+    } catch (e) {
+        console.error('[useOmenXBalance] failed:', e);
+        cachedBalance = null;
+        notify();
+    } finally {
+        isFetching = false;
+    }
+}
+
+// Single global poll — starts when first consumer mounts, stops when last unmounts
+let pollTimer = null;
+let consumerCount = 0;
+
+function startPolling() {
+    if (pollTimer) return;
+    fetchBalanceOnce();
+    pollTimer = setInterval(fetchBalanceOnce, POLL_INTERVAL);
+}
+
+function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
 export function useOmenXBalance() {
-    const [balance, setBalance] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const intervalRef = useRef(null);
-
-    const fetchBalance = useCallback(async () => {
-        const auth = getAuthData();
-        if (!auth?.walletAddress || !auth?.access_token) {
-            setBalance(null);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const res = await base44.functions.invoke('getOmenXBalance', { walletAddress: auth.walletAddress, accessToken: auth.access_token });
-            setBalance(res.data?.balance ?? null);
-        } catch (e) {
-            console.error('[useOmenXBalance] failed:', e);
-            setBalance(null);
-        }
-        setLoading(false);
-    }, []);
+    const [balance, setBalance] = useState(cachedBalance);
+    const [loading, setLoading] = useState(cachedBalance === null);
 
     useEffect(() => {
-        fetchBalance();
-        intervalRef.current = setInterval(fetchBalance, 20_000);
+        const listener = (val) => { setBalance(val); setLoading(false); };
+        listeners.add(listener);
+        consumerCount++;
 
-        const onStorage = (e) => { if (e.key === 'omenx_auth_data') fetchBalance(); };
+        startPolling();
+
+        // Sync with latest cache immediately
+        if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
+
+        const onStorage = (e) => { if (e.key === 'omenx_auth_data') { lastFetchTime = 0; fetchBalanceOnce(); } };
+        const onFocus = () => { lastFetchTime = 0; fetchBalanceOnce(); };
         window.addEventListener('storage', onStorage);
-        window.addEventListener('focus', fetchBalance);
+        window.addEventListener('focus', onFocus);
 
         return () => {
-            clearInterval(intervalRef.current);
+            listeners.delete(listener);
+            consumerCount--;
             window.removeEventListener('storage', onStorage);
-            window.removeEventListener('focus', fetchBalance);
+            window.removeEventListener('focus', onFocus);
+            if (consumerCount <= 0) { consumerCount = 0; stopPolling(); }
         };
-    }, [fetchBalance]);
+    }, []);
 
-    return { balance, loading, refresh: fetchBalance };
+    return { balance, loading, refresh: () => { lastFetchTime = 0; fetchBalanceOnce(); } };
 }
