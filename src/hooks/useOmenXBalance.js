@@ -16,9 +16,12 @@ async function startPolling() {
     const poll = async () => {
         try {
             const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-            if (!authData?.walletAddress) return;
+            if (!authData?.walletAddress || !authData?.access_token) return;
             
-            const res = await base44.functions.invoke('getOmenXBalance', { walletAddress: authData.walletAddress });
+            const res = await base44.functions.invoke('getOmenXBalance', { 
+                walletAddress: authData.walletAddress,
+                accessToken: authData.access_token
+            });
             cachedBalance = res.data?.balance ?? 0;
             notify();
         } catch (e) {
