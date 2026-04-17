@@ -3,6 +3,7 @@ import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
 const sdk = new OmenXGameSDK({
     gameId: 'cosmic-sloths',
+    apiBaseUrl: 'https://api.omen.foundation',
     onAuth: (authData) => console.log('[OmenX] Authenticated!', authData),
     onAuthError: (error) => console.error('[OmenX] Auth error:', error),
 });
