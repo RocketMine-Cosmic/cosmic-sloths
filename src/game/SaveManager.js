@@ -4,19 +4,19 @@ import { base44 } from '@/api/base44Client';
 import { getOmenXUser } from '@/lib/omenxUser';
 
 export const SaveManager = {
-  _saveId: null,
-  _userId: null,
+  _walletAddress: null,
   _syncTimeout: null,
 
   initialize: async () => {
     try {
-      const user = await base44.auth.me();
-      if (!user) {
-        console.log('[SaveManager] No user authenticated, using local storage only');
+      // Get wallet from OmenX auth data
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+      if (!omenxAuth?.walletAddress) {
+        console.log('[SaveManager] No wallet authenticated, using local storage only');
         return;
       }
-      SaveManager._userId = user.id;
-      console.log('[SaveManager] Initialized for user', user.id);
+      SaveManager._walletAddress = omenxAuth.walletAddress;
+      console.log('[SaveManager] Initialized for wallet', SaveManager._walletAddress);
     } catch (e) {
       console.error('[SaveManager] Failed to initialize:', e);
     }
@@ -28,23 +28,23 @@ export const SaveManager = {
   },
 
   _syncToBackend: async () => {
-    if (!SaveManager._userId) return;
+    if (!SaveManager._walletAddress) return;
     
     try {
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
 
       const saveData = JSON.parse(localSave);
-      const existing = await base44.entities.PlayerSave.filter({ user_id: SaveManager._userId });
+      const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
 
       if (existing.length > 0) {
-        await base44.entities.PlayerSave.update(existing[0].id, {
+        await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
           save_data: saveData,
           updated_at: Date.now()
         });
       } else {
-        await base44.entities.PlayerSave.create({
-          user_id: SaveManager._userId,
+        await base44.asServiceRole.entities.PlayerSave.create({
+          wallet_address: SaveManager._walletAddress,
           save_data: saveData,
           updated_at: Date.now()
         });
