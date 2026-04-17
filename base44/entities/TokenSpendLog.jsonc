@@ -8,6 +8,10 @@
     "player_name": {
       "type": "string"
     },
+    "wallet_address": {
+      "type": "string",
+      "description": "OmenX wallet address for fraud detection"
+    },
     "amount": {
       "type": "number"
     },
@@ -21,7 +25,8 @@
   "required": [
     "user_id",
     "player_name",
-    "amount"
+    "amount",
+    "wallet_address"
   ],
   "rls": {
     "create": {

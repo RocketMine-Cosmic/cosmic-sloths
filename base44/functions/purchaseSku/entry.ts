@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.TokenSpendLog.create({
             user_id: user.id,
             player_name: playerName,
+            wallet_address: walletAddress,
             amount,
             week_id,
             season_id,
