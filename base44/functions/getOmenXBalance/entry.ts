@@ -17,10 +17,9 @@ Deno.serve(async (req) => {
     const data = await sdk.getPlayerBalances(walletAddress, '56');
     console.log('[getOmenXBalance] raw:', JSON.stringify(data));
 
-    // Find OMENX token in the tokens array
+    // Find OMENX token — balance is already human-readable (not raw wei)
     const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
-    const rawBalance = omenxToken?.balance ?? '0';
-    const balance = parseFloat(rawBalance) / 1e18;
+    const balance = parseFloat(omenxToken?.balance ?? '0');
 
     return Response.json({ balance });
 });
