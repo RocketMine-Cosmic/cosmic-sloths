@@ -129,6 +129,7 @@ async function distributeWeekly(base44, sdk, pool) {
         gameId: GAME_ID,
         gameName: GAME_NAME,
         chainId: CHAIN_ID,
+        note: `weekly payout ${pool.period_id}`,
     });
 
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
@@ -158,6 +159,7 @@ async function distributeSeasonal(base44, sdk, pool) {
         gameId: GAME_ID,
         gameName: GAME_NAME,
         chainId: CHAIN_ID,
+        note: `seasonal payout ${pool.period_id}`,
     });
 
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
