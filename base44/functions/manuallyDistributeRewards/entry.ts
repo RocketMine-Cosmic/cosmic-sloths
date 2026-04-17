@@ -136,7 +136,8 @@ async function distributeWeekly(base44, sdk, pool) {
             payments: payments.map(p => ({ 
                 walletAddress: p.walletAddress, 
                 amount: p.amount,
-                token: 'OMENX'
+                token: 'OMENX',
+                metadata: { rank: p.rank }
             })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
@@ -171,7 +172,8 @@ async function distributeSeasonal(base44, sdk, pool) {
             payments: payments.map(p => ({ 
                 walletAddress: p.walletAddress, 
                 amount: p.amount,
-                token: 'OMENX'
+                token: 'OMENX',
+                metadata: { rank: p.rank }
             })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
