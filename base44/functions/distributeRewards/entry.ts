@@ -121,15 +121,13 @@ async function distributeWeekly(base44, sdk, pool) {
     console.log(`[distributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
     const batchResult = await sdk.grantGameRewardBatch({
-        payments: payments.map(p => ({ 
+        rewards: payments.map(p => ({ 
             walletAddress: p.walletAddress, 
             amount: p.amount,
-            token: 'OMENX',
             metadata: { rank: p.rank }
         })),
         gameId: GAME_ID,
         gameName: GAME_NAME,
-        chainId: CHAIN_ID,
     });
 
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
@@ -152,15 +150,13 @@ async function distributeSeasonal(base44, sdk, pool) {
     console.log(`[distributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
     const batchResult = await sdk.grantGameRewardBatch({
-        payments: payments.map(p => ({ 
+        rewards: payments.map(p => ({ 
             walletAddress: p.walletAddress, 
             amount: p.amount,
-            token: 'OMENX',
             metadata: { rank: p.rank }
         })),
         gameId: GAME_ID,
         gameName: GAME_NAME,
-        chainId: CHAIN_ID,
     });
 
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
