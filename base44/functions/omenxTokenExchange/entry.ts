@@ -15,12 +15,12 @@ Deno.serve(async (req) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Bearer ${apiKey}`,
             },
             body: new URLSearchParams({
                 grant_type: 'authorization_code',
                 code,
                 client_id: 'cosmic-sloths',
-                client_secret: apiKey,
                 redirect_uri: REDIRECT_URI,
             }).toString(),
         });
