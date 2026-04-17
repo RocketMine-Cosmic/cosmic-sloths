@@ -133,7 +133,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     console.log(`[manuallyDistributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
     try {
-        const response = await fetch(`${apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     console.log(`[manuallyDistributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
 
     try {
-        const response = await fetch(`${apiBaseUrl}/v1/games/${GAME_ID}/rewards/batch`, {
+        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
