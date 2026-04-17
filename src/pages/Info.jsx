@@ -81,7 +81,7 @@ const TABS_CONTENT = {
                     <strong className="text-white">Full Gamepad Support:</strong> Connect an Xbox, PlayStation, or generic controller to play from the couch! Use the <strong className="text-fuchsia-400">Virtual Cursor</strong> to navigate the Hub and menus seamlessly, and the <strong className="text-cyan-400">Snap-to-Grid</strong> system for quick selections during gameplay.
                 </div>
                 <div className="bg-slate-900/40 rounded-lg p-3 border border-fuchsia-700/50 text-xs text-slate-400">
-                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, spend 10 Cosmic Tokens to activate your <strong className="text-fuchsia-400">Squad Ultimate</strong> (via the button above the XP bar) to summon a clone from your unlocked roster!
+                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, spend 4 OMENX to activate your <strong className="text-fuchsia-400">Squad Ultimate</strong> (via the button above the XP bar) to summon a clone from your unlocked roster!
                 </div>
             </SectionCard>
 
@@ -262,16 +262,16 @@ const TABS_CONTENT = {
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏆 Leaderboards & Seasons" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Compete for <strong className="text-emerald-400">Cosmic Tokens</strong> — the premium currency earned exclusively through competitive play.
+                    Compete for <strong className="text-emerald-400">OMENX</strong> — the premium currency earned exclusively through competitive play.
                 </p>
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every Monday. Top 30 players earn Cosmic Tokens. Weekly stat upgrades also reset.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every Monday. Top 30 players earn OMENX. Weekly stat upgrades also reset.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for 4 weeks. Top 40 players earn Cosmic Tokens. Seasonal stat upgrades reset at end.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for 4 weeks. Top 40 players earn OMENX. Seasonal stat upgrades reset at end.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
@@ -280,12 +280,12 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
-            <SectionCard title="💠 Cosmic Tokens" color="green">
+            <SectionCard title="💠 OMENX Currency" color="green">
                 <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    Cosmic Tokens are the premium currency earned <strong className="text-emerald-400">exclusively</strong> through competitive leaderboard rankings — they never drop in runs.
+                    OMENX is earned <strong className="text-emerald-400">exclusively</strong> through competitive leaderboard rankings — it never drops in runs. Use it in-game to reroll upgrades, banish unwanted choices, activate Squad Ultimates, and more!
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
-                    <strong className="text-emerald-400">How to earn:</strong> Place in the top rankings on Weekly or Seasonal leaderboards. Rewards are automatically distributed to your account when you visit the Sloth Lounge after a cycle ends.
+                    <strong className="text-emerald-400">How to earn:</strong> Place in the top rankings on Weekly or Seasonal leaderboards. Rewards are automatically distributed to your wallet when you visit the Sloth Lounge after a cycle ends.
                 </div>
             </SectionCard>
 
@@ -507,7 +507,7 @@ const TABS_CONTENT = {
                         <div className="text-slate-400 text-xs">×3 value</div>
                     </div>
                 </div>
-                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400 inline-flex items-center gap-1">Cosmic Tokens <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400" /></strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400 inline-flex items-center gap-1">OMENX <Hexagon className="w-3 h-3 fill-emerald-400 text-emerald-400" /></strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
             </SectionCard>
 
             <SectionCard title="👑 Boss Encounters" color="rose">
