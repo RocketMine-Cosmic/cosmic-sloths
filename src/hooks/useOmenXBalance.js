@@ -6,8 +6,8 @@ let cachedBalance = null;
 let lastFetchTime = 0;
 let isFetching = false;
 let listeners = new Set();
-const POLL_INTERVAL = 60_000; // 1 minute
-const MIN_REFETCH = 10_000;   // don't re-fetch within 10s
+const POLL_INTERVAL = 600_000; // 10 minutes
+const MIN_REFETCH = 5_000;    // don't re-fetch within 5s
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
