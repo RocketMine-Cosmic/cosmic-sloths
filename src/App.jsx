@@ -3,8 +3,6 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
 import OmenXCallback from './pages/OmenXCallback';
 import MainMenu from './pages/MainMenu';
@@ -34,42 +32,29 @@ import { initOmenX } from '@/lib/omenx';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 
-const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated, authError, navigateToLogin, user } = useAuth();
+const MainApp = () => {
   const [saveInitialized, setSaveInitialized] = useState(false);
   const [needsProfileName, setNeedsProfileName] = useState(false);
 
   useEffect(() => {
-    if (!isLoadingAuth && !isAuthenticated) {
-      return; // Block rendering until authenticated
-    }
-    if (!isLoadingAuth && !authError) {
-      SaveManager.initialize().then(() => {
-          setSaveInitialized(true);
-          // Check if OmenX is logged in and profile name is set
-          const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-          if (omenxAuth) {
-              const save = SaveManager.load();
-              if (!save.hasSetProfileName) {
-                  // Grandfather in players who have already played
-                  if (save.totalKills > 0 || save.gold > 0) {
-                      save.hasSetProfileName = true;
-                      SaveManager.save(save);
-                  } else {
-                      setNeedsProfileName(true);
-                  }
-              }
-          }
-      });
-    } else if (authError) {
-      setSaveInitialized(true);
-    }
-  }, [isLoadingAuth, isAuthenticated, authError, user]);
-
-  // Block rendering if not authenticated (wait for redirect)
-  if (!isLoadingAuth && !isAuthenticated) {
-    return null;
-  }
+    SaveManager.initialize().then(() => {
+        setSaveInitialized(true);
+        // Check if OmenX is logged in and profile name is set
+        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        if (omenxAuth) {
+            const save = SaveManager.load();
+            if (!save.hasSetProfileName) {
+                // Grandfather in players who have already played
+                if (save.totalKills > 0 || save.gold > 0) {
+                    save.hasSetProfileName = true;
+                    SaveManager.save(save);
+                } else {
+                    setNeedsProfileName(true);
+                }
+            }
+        }
+    });
+  }, []);
 
   // In preview mode, bypass all auth gates
   const isPreview = window.self !== window.top;
@@ -154,21 +139,19 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <CurrencyProvider>
-          <GamepadManager />
-          <Router>
-            <Routes>
-              {/* OmenX OAuth callback — must be outside auth gate so popup works without a session */}
-              <Route path="/auth/callback" element={<OmenXCallback />} />
-              <Route path="*" element={<AuthenticatedApp />} />
-            </Routes>
-          </Router>
-          <Toaster />
-        </CurrencyProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClientInstance}>
+      <CurrencyProvider>
+        <GamepadManager />
+        <Router>
+          <Routes>
+            {/* OmenX OAuth callback */}
+            <Route path="/auth/callback" element={<OmenXCallback />} />
+            <Route path="*" element={<MainApp />} />
+          </Routes>
+        </Router>
+        <Toaster />
+      </CurrencyProvider>
+    </QueryClientProvider>
   )
 }
 
