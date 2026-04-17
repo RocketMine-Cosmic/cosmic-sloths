@@ -1,5 +1,5 @@
 Deno.serve(async (req) => {
-    const { walletAddress, accessToken, chainId = '56' } = await req.json();
+    const { walletAddress } = await req.json();
 
     if (!walletAddress) {
         return Response.json({ error: 'Wallet address required' }, { status: 400 });
@@ -10,13 +10,9 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    if (!accessToken) {
-        return Response.json({ error: 'Access token required' }, { status: 400 });
-    }
-
-    const res = await fetch(`https://api.omen.foundation/v1/wallet/${walletAddress}/balances?chainId=${chainId}`, {
+    const res = await fetch(`https://api.omen.foundation/v1/players/${walletAddress}/balances?chainId=56`, {
         headers: {
-            'Authorization': `Bearer ${accessToken}`,
+            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
         },
     });

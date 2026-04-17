@@ -20,7 +20,7 @@ function getAuthData() {
 async function fetchBalanceOnce() {
     if (isFetching) return;
     const auth = getAuthData();
-    if (!auth?.walletAddress || !auth?.access_token) {
+    if (!auth?.walletAddress) {
         cachedBalance = null;
         notify();
         return;
@@ -31,7 +31,6 @@ async function fetchBalanceOnce() {
     try {
         const res = await base44.functions.invoke('getOmenXBalance', {
             walletAddress: auth.walletAddress,
-            accessToken: auth.access_token,
         });
         cachedBalance = res.data?.balance ?? null;
         lastFetchTime = Date.now();
