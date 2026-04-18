@@ -132,7 +132,7 @@ export default function GlobalRaid({ isCarousel }) {
 
         try {
             if (!authData?.walletAddress) throw new Error('No wallet address');
-            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id, amount: 5 });
+            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id });
             if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
 
             // Only grant runs after confirmed charge

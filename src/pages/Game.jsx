@@ -371,7 +371,7 @@ export default function Game() {
         const walletAddress = authData?.walletAddress;
         if (!walletAddress || !skuId) return;
         base44.functions.invoke('purchaseSku', {
-            skuId, quantity: 1, walletAddress, week_id, season_id, amount,
+            skuId, quantity: 1, walletAddress, week_id, season_id,
             userId: walletAddress,
             playerName: authData?.username || walletAddress,
         }).catch(console.error);

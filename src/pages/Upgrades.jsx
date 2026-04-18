@@ -88,14 +88,14 @@ export default function Upgrades({ isCarousel }) {
         return { week_id, season_id };
     };
 
-    const purchaseSku = async (skuId, amount) => {
+    const purchaseSku = async (skuId) => {
         if (!skuId) return { success: false, error: 'No SKU' };
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress) { console.warn('[purchaseSku] No wallet address found'); return { success: false, error: 'No wallet' }; }
         const { week_id, season_id } = getWeekSeason();
         // amount is passed to the backend so pool accounting is done server-side, atomically, after confirmed OmenX charge
-        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id, amount });
+        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id });
         if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
         return res.data;
     };
@@ -120,7 +120,7 @@ export default function Upgrades({ isCarousel }) {
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             setPurchasing(true);
-            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1), tokenCost).then(() => {
+            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1)).then(() => {
                 const s = SaveManager.load();
                 const upg = s[saveKey] || {};
                 s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
@@ -156,7 +156,7 @@ export default function Upgrades({ isCarousel }) {
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
             setPurchasing(true);
-            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1), tokenCost).then(() => {
+            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1)).then(() => {
                 const s = SaveManager.load();
                 if (!s[saveKey]) s[saveKey] = {};
                 if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
@@ -192,7 +192,7 @@ export default function Upgrades({ isCarousel }) {
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
             setPurchasing(true);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier), tokenCost).then(() => {
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).then(() => {
                 const s = SaveManager.load();
                 if (!s[saveKey]) s[saveKey] = {};
                 if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
@@ -278,7 +278,7 @@ export default function Upgrades({ isCarousel }) {
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
                 setPurchasing(true);
-                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).then(() => {
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).then(() => {
                     const s = SaveManager.load();
                     const unl = s.unlockedSkins || [];
                     const cos = s.cosmetics || {};
@@ -323,7 +323,7 @@ export default function Upgrades({ isCarousel }) {
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
             setPurchasing(true);
-            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost), cosmetic.tokenCost).then(() => {
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).then(() => {
                 const s = SaveManager.load();
                 const unl = s[unlockKey] || [freeId];
                 const cos = s.cosmetics || {};
