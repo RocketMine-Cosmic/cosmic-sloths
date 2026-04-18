@@ -920,7 +920,7 @@ export class GameEngine {
                 const stats = getWeaponStatsAndMastery(this.save, w.id);
                 const cdMultiplier = stats.cdMult;
                 
-                w.timer = (w.baseCooldown / 60) * Math.max(0.2, this.player.cooldownMult) * cdMultiplier;
+                w.timer = (w.baseCooldown / 60) * Math.max(0.35, this.player.cooldownMult) * Math.max(0.5, cdMultiplier); // Tightened CD floor
             }
         });
     }
@@ -1744,11 +1744,11 @@ export class GameEngine {
         this.level++;
         this.xpRequired = Math.floor(this.xpRequired * 1.15 + 25);
         
-        // Scale stats slightly and heal a bit (no longer full heal + god mode)
-        this.player.maxHp = Math.floor(this.player.maxHp * 1.02);
-        this.player.damageMult += 0.02;
-        this.player.armor += 0.25;
-        this.player.hp = Math.min(this.player.maxHp, this.player.hp + (this.player.maxHp * 0.2));
+        // Scale stats slightly and heal a bit — capped to prevent runaway scaling
+        this.player.maxHp = Math.min(2000, Math.floor(this.player.maxHp * 1.01)); // Reduced: +1% HP per level, max 2000
+        this.player.damageMult = Math.min(5.0, this.player.damageMult + 0.01); // Reduced: +1% dmg per level, max 5x total
+        this.player.armor = Math.min(30, this.player.armor + 0.1); // +0.1 armor per level, max 30
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + (this.player.maxHp * 0.15));
         this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
         
         if (this.player.charAugments?.includes('sky_ace')) {
@@ -1793,11 +1793,23 @@ export class GameEngine {
             return rarities[0];
         };
 
+        const MAX_PASSIVE_LEVEL = 5;
         const choices = [];
-        const pool = [...UPGRADES].filter(u => 
-            !this.banishedUpgrades.has(u.id) && 
-            (!u.characterSpecific || u.characterSpecific === this.characterId)
-        );
+        const pool = [...UPGRADES].filter(u => {
+            if (this.banishedUpgrades.has(u.id)) return false;
+            if (u.characterSpecific && u.characterSpecific !== this.characterId) return false;
+            // Filter out maxed passives so they don't appear in the pool
+            if (u.type === 'passive') {
+                const currentCount = this.player.passives.filter(p => p.id === u.id).length;
+                if (currentCount >= MAX_PASSIVE_LEVEL) return false;
+            }
+            // Filter out maxed weapons
+            if (u.type === 'weapon') {
+                const existing = this.player.weapons.find(w => w.id === u.weaponId);
+                if (existing && existing.level >= 20) return false;
+            }
+            return true;
+        });
         for(let i=0; i<3; i++) {
             if (pool.length === 0) break;
             const idx = Math.floor(Math.random() * pool.length);
@@ -1865,9 +1877,9 @@ export class GameEngine {
             if (!appliedToSynergy) {
                 const existing = this.player.weapons.find(w => w.id === upgrade.weaponId);
                 if (existing) {
-                    existing.level += levelIncrement;
+                    existing.level = Math.min(20, existing.level + levelIncrement); // Cap weapon level at 20
                 } else {
-                    this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: levelIncrement, timer: 0 });
+                    this.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: Math.min(20, levelIncrement), timer: 0 });
                 }
                 this.checkSynergies();
             }
@@ -1885,7 +1897,7 @@ export class GameEngine {
                 this.player.weapons = this.player.weapons.filter(w => w.id !== synergy.weapon1 && w.id !== synergy.weapon2);
                 
                 // Add synergy weapon, combining their levels
-                const newLevel = Math.max(w1.level, w2.level) + 1;
+                const newLevel = Math.min(20, Math.max(w1.level, w2.level) + 1); // Cap synergy level at 20
                 this.player.weapons.push({ ...WEAPONS[synergy.result], level: newLevel, timer: 0 });
                 
                 // Show a notification or effect here if desired

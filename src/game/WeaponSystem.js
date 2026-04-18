@@ -10,8 +10,9 @@ export function fireWeaponLogic(engine, w) {
     const wDmgMult = stats.dmgMult;
     const wAreaMult = stats.areaMult;
 
-    let dmg = w.baseDamage * engine.player.damageMult * (1 + (w.level-1)*0.2) * wDmgMult;
-    let area = w.baseArea * engine.player.areaMult * (1 + (w.level-1)*0.1) * wAreaMult;
+    const weaponLevelMult = 1 + Math.min(19, w.level - 1) * 0.15; // Reduced from 20% to 15% per level, capped at level 20
+    let dmg = w.baseDamage * Math.min(5.0, engine.player.damageMult) * weaponLevelMult * Math.min(2.0, wDmgMult);
+    let area = w.baseArea * Math.min(4.0, engine.player.areaMult) * (1 + Math.min(19, w.level - 1) * 0.08) * Math.min(2.0, wAreaMult); // Reduced area scaling from 10% to 8%
     
     if (engine.player.synAmpTimer > 0) area *= 2.0;
     
