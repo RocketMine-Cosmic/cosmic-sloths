@@ -45,10 +45,38 @@ export default function OmenXCallback() {
 
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 
-                // Check if first-time login - require pilot name setup
+                // Create initial save file on first login
                 const existingProfile = localStorage.getItem('omenx_user_profile');
                 if (!existingProfile) {
-                    localStorage.setItem('omenx_require_pilot_name', 'true');
+                    const initialSave = {
+                        unlockedCharacters: ['neobyte'],
+                        unlockedArenasByCharacter: { neobyte: ['station'] },
+                        unlockedCosmetics: ['default'],
+                        cosmetics: { skins: {}, trail: 'default', killEffect: 'none' },
+                        gold: 0,
+                        sessionBuffs: {},
+                        characterKills: {},
+                        foundCharacters: [],
+                        encounteredEnemies: [],
+                        enemyKills: {},
+                        relicFragments: 0,
+                        cosmicTokens: 0,
+                        lastSelectedChar: 'neobyte',
+                        lastSelectedArena: 'station',
+                        lastSelectedDifficulty: 'normal',
+                        lastSelectedWeapon: 'neoBlaster',
+                        isNGPlus: false,
+                        newGamePlusUnlocked: false,
+                        hasSetProfileName: false,
+                        bounties: { active: [], dailyMission: null },
+                        maxTimeSurvived: 0,
+                        totalGoldEarned: 0,
+                        maxLevelReached: 0,
+                        totalKills: 0,
+                        pilotName: tokenData.username || ''
+                    };
+                    localStorage.setItem('cosmic_sloth_save', JSON.stringify(initialSave));
+                    localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: tokenData.username || '', playerTitle: '', pilotIcon: '🦥' }));
                 }
 
                 if (window.opener) {

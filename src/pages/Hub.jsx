@@ -15,7 +15,6 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
-import SetProfileNameModal from '../components/game/SetProfileNameModal';
 import { getOmenXUser } from '@/lib/omenxUser';
 
 function getOmenXAuth() {
@@ -53,7 +52,6 @@ export default function Hub({ isCarousel }) {
     };
     const [save, setSave] = useState(safeInitialSave);
     const [omenxAuth, setOmenxAuth] = useState(null);
-    const [showNameModal, setShowNameModal] = useState(false);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
 
     React.useEffect(() => {
@@ -115,12 +113,6 @@ export default function Hub({ isCarousel }) {
 
     const checkAndLaunch = async (mode) => {
         SoundManager.playUIClick();
-        const currentSave = SaveManager.load();
-        if (!currentSave.hasSetProfileName) {
-            setPendingLaunch(mode);
-            setShowNameModal(true);
-            return;
-        }
         launchGame(mode);
     };
 
@@ -613,15 +605,6 @@ export default function Hub({ isCarousel }) {
 
                 </div>
             </div>
-        {showNameModal && (
-            <SetProfileNameModal onComplete={(name) => {
-                const s = SaveManager.load();
-                s.hasSetProfileName = true;
-                SaveManager.save(s);
-                setShowNameModal(false);
-                if (pendingLaunch) { launchGame(pendingLaunch); setPendingLaunch(null); }
-            }} />
-        )}
         </div>
     );
 }
