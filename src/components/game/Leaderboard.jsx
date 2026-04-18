@@ -101,9 +101,6 @@ export default function Leaderboard() {
             for (const score of data) {
                 if (view !== 'endless' && score.arena_id === 'endless') continue;
 
-                // Filter out users without a proper pilot name (new users)
-                if (!score.player_name || score.player_name.includes('@') || score.player_name.trim() === '') continue;
-
                 const wallet = score.wallet_address;
                 const userId = score.user_id;
 

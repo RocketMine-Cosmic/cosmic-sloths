@@ -102,6 +102,12 @@ export default function Game() {
                 const user = getOmenXUser();
                 if (!user) return;
                 const displayName = user.player_name || user.full_name;
+                
+                // Enforce pilot name validation - no wallets, emails, or empty names on leaderboard
+                if (!displayName || displayName.includes('@') || displayName.includes('0x') || displayName.trim() === '') {
+                    console.warn('[saveScore] Player has no proper pilot name set - score not recorded');
+                    return;
+                }
 
                 // Update squad kills
                 try {
