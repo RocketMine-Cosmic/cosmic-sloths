@@ -13,6 +13,8 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import { CHARACTERS } from '../game/Constants';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
+import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
 
 function OmenXIcon({ className }) {
@@ -23,6 +25,7 @@ export default function GlobalRaid({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
     const { balance: omenxBalance, refresh: refreshOmenX } = useOmenXBalance();
+    const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('global-raid');
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -126,22 +129,24 @@ export default function GlobalRaid({ isCarousel }) {
 
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
-        try {
-            if (!authData?.walletAddress) throw new Error('No wallet address');
-            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
-            if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
+        confirmPurchase(10, 'Buy 5 Raid Runs', async () => {
+            try {
+                if (!authData?.walletAddress) throw new Error('No wallet address');
+                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
+                if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
 
-            // Only grant runs after confirmed charge
-            if (!currentSave.extraRaidRuns) currentSave.extraRaidRuns = {};
-            currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
-            SaveManager.save(currentSave);
-            setSave(currentSave);
-            refreshOmenX();
-            toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
-        } catch (err) {
-            console.error('[handleBuyMoreRuns] purchase failed:', err);
-            toast({ title: 'Purchase Failed', description: 'Could not process payment. Please try again.', variant: 'destructive' });
-        }
+                // Only grant runs after confirmed charge
+                if (!currentSave.extraRaidRuns) currentSave.extraRaidRuns = {};
+                currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
+                SaveManager.save(currentSave);
+                setSave(currentSave);
+                refreshOmenX();
+                toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
+            } catch (err) {
+                console.error('[handleBuyMoreRuns] purchase failed:', err);
+                toast({ title: 'Purchase Failed', description: 'Could not process payment. Please try again.', variant: 'destructive' });
+            }
+        });
     };
 
     const handleLaunchRaid = () => {
@@ -369,6 +374,16 @@ export default function GlobalRaid({ isCarousel }) {
                 </div>
             </div>
         </div>
+        
+        {pending && (
+            <OmenXConfirmation
+                amount={pending.amount}
+                itemName={pending.itemName}
+                onConfirm={pending.onConfirm}
+                onCancel={pending.onCancel}
+                pageId="global-raid"
+            />
+        )}
         </OmenXGate>
     );
 }

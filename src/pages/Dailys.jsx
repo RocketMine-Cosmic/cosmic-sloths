@@ -8,10 +8,13 @@ import DailyLoginPanel from '../components/game/DailyLoginPanel';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
+import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
+import OmenXConfirmation from '../components/game/OmenXConfirmation';
 
 export default function Dailys({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
+    const { pending, setPending } = useOmenXConfirmation('dailys-page');
 
     useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -48,6 +51,16 @@ export default function Dailys({ isCarousel }) {
                 </div>
             </div>
         </div>
+        
+        {pending && (
+            <OmenXConfirmation
+                amount={pending.amount}
+                itemName={pending.itemName}
+                onConfirm={pending.onConfirm}
+                onCancel={pending.onCancel}
+                pageId="dailys-page"
+            />
+        )}
         </OmenXGate>
     );
 }

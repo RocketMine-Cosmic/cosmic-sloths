@@ -9,6 +9,7 @@ import GameOverModal from '../components/game/GameOverModal';
 import VictoryModal from '../components/game/VictoryModal';
 import VirtualJoystick from '../components/game/VirtualJoystick';
 import PauseModal from '../components/game/PauseModal';
+import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
@@ -16,6 +17,7 @@ import { SoundManager } from '../game/SoundManager';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 import { getOmenXUser } from '@/lib/omenxUser';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
+import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -36,6 +38,7 @@ export default function Game() {
     const [victoryStats, setVictoryStats] = useState(null);
     const [isPaused, setIsPaused] = useState(false);
     const [showRevivePrompt, setShowRevivePrompt] = useState(false);
+    const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
 
     useEffect(() => {
         const initGame = async () => {
@@ -389,23 +392,27 @@ export default function Game() {
     const handleReroll = () => {
         const REROLL_COST = 2;
         if ((omenxBalance ?? 0) >= REROLL_COST) {
-            purchaseSku(IN_GAME_SKUS.reroll);
-            refreshOmenX();
-            if (engineRef.current) {
-                engineRef.current.rerollChoices();
-            }
+            confirmPurchase(REROLL_COST, 'Reroll Upgrades', () => {
+                purchaseSku(IN_GAME_SKUS.reroll);
+                refreshOmenX();
+                if (engineRef.current) {
+                    engineRef.current.rerollChoices();
+                }
+            });
         }
     };
 
     const handleBanish = (choice) => {
         const BANISH_COST = 1;
         if ((omenxBalance ?? 0) >= BANISH_COST) {
-            purchaseSku(IN_GAME_SKUS.banish);
-            refreshOmenX();
-            if (engineRef.current) {
-                engineRef.current.banishUpgrade(choice.id);
-                engineRef.current.rerollChoices();
-            }
+            confirmPurchase(BANISH_COST, 'Banish Upgrade', () => {
+                purchaseSku(IN_GAME_SKUS.banish);
+                refreshOmenX();
+                if (engineRef.current) {
+                    engineRef.current.banishUpgrade(choice.id);
+                    engineRef.current.rerollChoices();
+                }
+            });
         }
     };
 
@@ -417,9 +424,11 @@ export default function Game() {
 
     const handleSquadUltimate = () => {
         if ((omenxBalance ?? 0) >= 4 && engineRef.current && !engineRef.current.isPaused) {
-            purchaseSku(IN_GAME_SKUS.squadUltimate);
-            refreshOmenX();
-            engineRef.current.triggerSquadUltimate();
+            confirmPurchase(4, 'Squad Ultimate', () => {
+                purchaseSku(IN_GAME_SKUS.squadUltimate);
+                refreshOmenX();
+                engineRef.current.triggerSquadUltimate();
+            });
         }
     };
 
@@ -439,16 +448,18 @@ export default function Game() {
 
     const handleRevive = () => {
         if ((omenxBalance ?? 0) >= 4) {
-            purchaseSku(IN_GAME_SKUS.revive);
-            refreshOmenX();
-            if (engineRef.current) {
-                engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
-                engineRef.current.player.iFrames = 3.0;
-                engineRef.current.player.invincibleTimer = 3.0;
-                engineRef.current.player.hasRevivedWithTokens = true;
-                engineRef.current.isPaused = false;
-                setShowRevivePrompt(false);
-            }
+            confirmPurchase(4, 'Emergency Revive', () => {
+                purchaseSku(IN_GAME_SKUS.revive);
+                refreshOmenX();
+                if (engineRef.current) {
+                    engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
+                    engineRef.current.player.iFrames = 3.0;
+                    engineRef.current.player.invincibleTimer = 3.0;
+                    engineRef.current.player.hasRevivedWithTokens = true;
+                    engineRef.current.isPaused = false;
+                    setShowRevivePrompt(false);
+                }
+            });
         }
     };
 
@@ -511,6 +522,16 @@ export default function Game() {
             
             {victoryStats && (
                 <VictoryModal stats={victoryStats} />
+            )}
+            
+            {pending && (
+                <OmenXConfirmation
+                    amount={pending.amount}
+                    itemName={pending.itemName}
+                    onConfirm={pending.onConfirm}
+                    onCancel={pending.onCancel}
+                    pageId="game-run"
+                />
             )}
         </div>
     );

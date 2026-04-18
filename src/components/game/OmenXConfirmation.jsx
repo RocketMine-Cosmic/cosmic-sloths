@@ -31,7 +31,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                 </div>
                 
                 <h2 className="text-2xl font-bold text-white mb-2 font-mono">CONFIRM PURCHASE</h2>
-                <p className="text-slate-400 mb-6">You're about to spend real OMENX tokens.</p>
+                <p className="text-slate-400 mb-6">You're about to spend real OMENX tokens on this page.</p>
                 
                 <div className="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
                     <div className="text-sm text-slate-400 mb-2">ITEM</div>
@@ -61,7 +61,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                     onClick={handleDisableFor24h}
                     className="w-full py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-slate-300 border border-slate-700 hover:border-slate-600 transition-colors"
                 >
-                    CONFIRM & DISABLE BOX FOR 24H
+                    CONFIRM & DISABLE PROMPTS FOR THIS PAGE FOR 24H
                 </button>
             </motion.div>
         </div>
