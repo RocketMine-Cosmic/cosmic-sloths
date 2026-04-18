@@ -37,12 +37,12 @@ export default function Leaderboard() {
     };
 
     // Calculate actual payout amount (mirrors backend distributeRewards exactly)
-    const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier) => {
+    const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier, totalPlayers) => {
         const rewardPool = Math.floor(pool * poolMultiplier);
         
-        // Calculate total percentage and multiplier for normalization
+        // Normalize percentages based on actual player count
         let totalPct = 0;
-        for (let i = 1; i <= (percentageFn === getWeeklyRewardPercentage ? 30 : 40); i++) {
+        for (let i = 1; i <= totalPlayers; i++) {
             totalPct += percentageFn(i);
         }
         if (totalPct === 0) return 0;
@@ -232,8 +232,8 @@ export default function Leaderboard() {
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
                                 const isEligibleForReward = (view === 'weekly' && index < 30) || (view === 'seasonal' && index < 40);
                                 const rewardAmount = view === 'weekly' 
-                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.25)
-                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.35);
+                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.25, scores.length)
+                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.35, scores.length);
 
                                 if (view === 'squads') {
                                     const squadLvl = getSquadLevel(score.xp || 0);
