@@ -169,6 +169,11 @@ export class GameEngine {
             sectorPenalty = Math.max(0.5, 1.0 - (diff * 0.10));
         }
 
+        // VIP bonus: 1% damage + 1% HP per VIP level (stored in save.vipLevel)
+        const vipLevel = save.vipLevel || 0;
+        const vipDmgBonus = vipLevel * 0.01;
+        const vipHpBonus = Math.floor((baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0)) * vipLevel * 0.01);
+
         this.player = {
             name: baseChar.name,
             image: playerImage,
@@ -177,11 +182,11 @@ export class GameEngine {
             frameTimer: 0,
             currentFrame: 0,
             x: 0, y: 0, radius: 16,
-            maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
-            hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0),
+            maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0) + vipHpBonus,
+            hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0) + vipHpBonus,
             speed: baseChar.speed,
             speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0) + augBonus.speedMult) * this.envModifiers.playerSpeed,
-            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0),
+            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0) + vipDmgBonus,
             magnetRange: (baseChar.magnetRange || 60) + 30 + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0),
             regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0) + augBonus.regen,
             armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0) + augBonus.armor,

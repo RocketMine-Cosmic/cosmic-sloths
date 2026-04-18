@@ -30,12 +30,25 @@ export default function Profile({ isCarousel }) {
     const [rewardsHistory, setRewardsHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showIconPicker, setShowIconPicker] = useState(false);
+    const [vipLevel, setVipLevel] = useState(0);
 
     useEffect(() => {
         const fetchProfileData = async () => {
             try {
                 const me = getOmenXUser();
                 setUser(me);
+
+                // Fetch VIP level
+                const walletAddress = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.walletAddress; } catch { return null; } })();
+                if (walletAddress) {
+                    base44.functions.invoke('getVipLevel', { walletAddress }).then(res => {
+                        const lvl = res.data?.vipLevel || 0;
+                        setVipLevel(lvl);
+                        // Persist in save so GameEngine can use it on next game start
+                        const s = SaveManager.load();
+                        if (s.vipLevel !== lvl) { s.vipLevel = lvl; SaveManager.save(s); }
+                    }).catch(() => {});
+                }
                 const displayName = me?.player_name || me?.data?.player_name || me?.full_name;
                 setNewName(displayName || '');
                 setNewTitle(me?.data?.player_title || '');
@@ -348,6 +361,42 @@ export default function Profile({ isCarousel }) {
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* VIP Status */}
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-yellow-500/40 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_30px_rgba(234,179,8,0.15)]">
+                        <h2 className="text-lg md:text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">
+                            ⭐ VIP Status
+                        </h2>
+                        {vipLevel > 0 ? (
+                            <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8">
+                                <div className="flex flex-col items-center justify-center bg-yellow-950/40 border border-yellow-500/50 rounded-xl px-8 py-4 shadow-[0_0_20px_rgba(234,179,8,0.2)] shrink-0">
+                                    <div className="text-5xl md:text-6xl font-black text-yellow-400 font-mono">{vipLevel}</div>
+                                    <div className="text-xs text-yellow-600 font-bold uppercase tracking-widest mt-1">VIP Level</div>
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <p className="text-slate-400 text-sm mb-3">Your VIP level grants permanent in-game bonuses applied to every run:</p>
+                                    <div className="bg-slate-800/60 rounded-lg p-3 border border-yellow-900/50 flex items-center gap-3">
+                                        <span className="text-2xl">⚡</span>
+                                        <div>
+                                            <div className="font-bold text-white text-sm">Damage Boost</div>
+                                            <div className="text-yellow-400 font-mono font-bold">+{vipLevel}% flat damage multiplier</div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-800/60 rounded-lg p-3 border border-yellow-900/50 flex items-center gap-3">
+                                        <span className="text-2xl">❤️</span>
+                                        <div>
+                                            <div className="font-bold text-white text-sm">HP Boost</div>
+                                            <div className="text-yellow-400 font-mono font-bold">+{vipLevel}% flat max HP bonus</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-4 text-slate-500 text-sm">
+                                No VIP level detected. Earn VIP status on OmenX to unlock in-game bonuses.
+                            </div>
+                        )}
                     </div>
 
                     {/* Rewards History */}
