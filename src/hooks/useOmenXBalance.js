@@ -82,17 +82,20 @@ export function useOmenXBalance() {
         const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopSubscription(); fetchBalance().then(() => startSubscription()); } };
         window.addEventListener('storage', onStorage);
 
-        // If redirected back after mobile OAuth, clean the URL
-        const url = new URL(window.location.href);
-        if (url.searchParams.get('omenx_login')) {
-            url.searchParams.delete('omenx_login');
-            window.history.replaceState({}, '', url.toString());
-        }
+        const onVisibilityChange = () => {
+            if (document.hidden) {
+                stopSubscription();
+            } else {
+                fetchBalance().then(() => startSubscription());
+            }
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
 
         return () => {
             listeners.delete(listener);
             consumerCount--;
             window.removeEventListener('storage', onStorage);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
             if (consumerCount <= 0) { consumerCount = 0; stopSubscription(); }
         };
     }, []);
