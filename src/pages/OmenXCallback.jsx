@@ -60,15 +60,24 @@ export default function OmenXCallback() {
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 console.log('[OmenX callback] ✓ Auth data saved');
 
-                // Notify parent window
-                window.dispatchEvent(new StorageEvent('storage', {
-                    key: 'omenx_auth_data',
-                    newValue: JSON.stringify(authData),
-                    storageArea: localStorage,
-                }));
-
-                setStatus('✓ Login successful! (closes in 15s)');
-                setTimeout(() => window.close(), 15000);
+                // Try to notify parent window (works in desktop popup)
+                if (window.opener) {
+                    try {
+                        window.opener.dispatchEvent(new StorageEvent('storage', {
+                            key: 'omenx_auth_data',
+                            newValue: JSON.stringify(authData),
+                            storageArea: localStorage,
+                        }));
+                    } catch(e) { /* cross-origin, ignore */ }
+                    setStatus('✓ Login successful! (closes in 15s)');
+                    setTimeout(() => window.close(), 15000);
+                } else {
+                    // Mobile: opened as new tab — redirect back to main app
+                    setStatus('✓ Login successful! Returning...');
+                    setTimeout(() => {
+                        window.location.replace('/');
+                    }, 1000);
+                }
             } catch (err) {
                 setStatus(`❌ ${err.message}`);
                 setTimeout(() => window.close(), 8000);
