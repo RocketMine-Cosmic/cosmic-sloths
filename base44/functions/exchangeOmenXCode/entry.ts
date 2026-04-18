@@ -43,8 +43,10 @@ Deno.serve(async (req) => {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresIn: tokenData.expires_in,
-      walletAddress: user.wallet_address || user.walletAddress || tokenData.wallet_address || null,
-      username: user.username || user.name || tokenData.username || null,
+      walletAddress: user.walletAddress || user.wallet_address || null,
+      username: user.profileName || user.username || user.name || null,
+      userId: user.userId || null,
+      email: user.email || null,
       _raw: tokenData,
     });
   } catch (error) {
