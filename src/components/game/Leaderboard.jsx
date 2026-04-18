@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { CHARACTERS, ARENAS } from '../../game/Constants';
 import { getSquadLevel } from '../../game/SquadLevels';
+import { getCurrentPeriodIds } from '../../lib/periodIds';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -66,10 +67,7 @@ export default function Leaderboard() {
     const fetchScores = async () => {
         setLoading(true);
         try {
-            const week_id = moment().format('YYYY-[W]ww');
-            const weekNum = moment().week();
-            const seasonNum = Math.floor(weekNum / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+            const { week_id, season_id } = getCurrentPeriodIds();
 
             const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless' } : {};
             
