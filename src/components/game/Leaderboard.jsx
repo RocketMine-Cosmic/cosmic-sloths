@@ -269,14 +269,14 @@ export default function Leaderboard() {
 
                                         {/* Player Info */}
                                         <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
-                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 text-xl overflow-hidden">
-                                                {score.pilot_icon?.startsWith('http') ? <img src={score.pilot_icon} className="w-full h-full object-cover" alt="pilot" /> : (score.pilot_icon || '🦥')}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 truncate">
-                                                    <div className="font-bold text-white text-lg md:text-xl truncate">
-                                                        {score.player_name?.includes('@') ? score.player_name.split('@')[0] : score.player_name}
-                                                    </div>
+                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 text-xl overflow-hidden">
+                                            {score.pilot_icon?.startsWith('http') ? <img src={score.pilot_icon} className="w-full h-full object-cover" alt="pilot" /> : (score.pilot_icon || '🦥')}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 truncate">
+                                                <div className="font-bold text-white text-lg md:text-xl truncate">
+                                                    {score.player_name}
+                                                </div>
                                                     {score.player_title && (
                                                         <span className="text-[10px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider font-bold truncate">
                                                             {score.player_title}
