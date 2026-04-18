@@ -63,15 +63,15 @@ export const SaveManager = {
     }
 
     // Canonical UTC ISO week calculation — must match lib/periodIds.js exactly
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    const currentWeek = `${year}-W${String(isoWeek).padStart(2, '0')}`;
-    const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
-    const currentSeason = `${year}-S${seasonNum}`;
+    const { week_id: currentWeek, season_id: currentSeason } = (() => {
+        const now = new Date();
+        const year = now.getUTCFullYear();
+        const startOfYear = new Date(Date.UTC(year, 0, 1));
+        const startOfWeek = new Date(startOfYear);
+        startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+        const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+        return { week_id: `${year}-W${String(isoWeek).padStart(2, '0')}`, season_id: `${year}-S${Math.floor((isoWeek - 1) / 13) + 1}` };
+    })();
 
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
 

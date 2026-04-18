@@ -20,17 +20,20 @@ Deno.serve(async (req) => {
             apiBaseUrl,
         });
 
-        // Canonical period IDs — must match purchaseSku exactly
-        const now = new Date();
-        const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-        const startOfWeek = new Date(startOfYear);
-        startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-        const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-        const weekNum = String(isoWeek).padStart(2, '0');
-        const year = now.getUTCFullYear();
-        const currentWeekId = `${year}-W${weekNum}`;
-        const currentSeasonNum = Math.floor((isoWeek - 1) / 13) + 1;
-        const currentSeasonId = `${year}-S${currentSeasonNum}`;
+        // Use canonical period calculation to ensure uniformity across all systems
+        const getCurrentPeriodIds = () => {
+            const now = new Date();
+            const year = now.getUTCFullYear();
+            const startOfYear = new Date(Date.UTC(year, 0, 1));
+            const startOfWeek = new Date(startOfYear);
+            startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+            const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+            const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+            const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+            const season_id = `${year}-S${seasonNum}`;
+            return { week_id, season_id };
+        };
+        const { week_id: currentWeekId, season_id: currentSeasonId } = getCurrentPeriodIds();
 
         const undistributedPools = await base44.asServiceRole.entities.TokenPool.filter({ distributed: false });
 

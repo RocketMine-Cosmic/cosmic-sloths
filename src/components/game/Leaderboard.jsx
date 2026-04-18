@@ -53,9 +53,9 @@ export default function Leaderboard() {
 
     useEffect(() => {
         const updateTimer = () => {
+            const now = new Date();
             if (view === 'weekly' || view === 'squads') {
                 // Calculate next Sunday (UTC)
-                const now = new Date();
                 const currentDay = now.getUTCDay();
                 const daysUntilSunday = (7 - currentDay) % 7 || 7;
                 const endOfWeek = new Date(now);
@@ -84,7 +84,6 @@ export default function Leaderboard() {
                 const endOfSeason = new Date(startOfWeek.getTime() + (lastWeekOfSeason) * msPerWeek);
                 endOfSeason.setUTCHours(0, 0, 0, 0);
                 
-                const now = new Date();
                 const msLeft = endOfSeason - now;
                 const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
                 const hoursLeft = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
