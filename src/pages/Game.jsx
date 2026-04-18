@@ -143,22 +143,11 @@ export default function Game() {
                 const { week_id, season_id } = getCurrentPeriodIds();
                 const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
 
-                // Determine which leaderboard bucket this score belongs to
-                const isEndlessRun = arena_id === 'endless';
-                const filter = isEndlessRun
-                    ? { user_id: user.id, arena_id: 'endless' }
-                    : { user_id: user.id, week_id: week_id };
-
-                const rawExisting = await base44.entities.RunScore.filter(filter);
-                const existing = isEndlessRun 
-                    ? rawExisting 
-                    : rawExisting.filter(e => e.arena_id !== 'endless');
-
                 const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
                 const walletAddress = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.walletAddress || null; } catch { return null; } })();
+                
                 const scoreData = {
                     user_id: user.id,
-                    wallet_address: walletAddress,
                     player_name: displayName,
                     player_title: user.data?.player_title || '',
                     pilot_icon: pilotIcon,
@@ -172,22 +161,11 @@ export default function Game() {
                     season_id
                 };
 
-                if (existing.length > 0) {
-                    // Always update player_name (in case they changed it), only update stats if score is higher
-                    const best = existing.reduce((a, b) => (a.score > b.score ? a : b));
-                    // Delete duplicates
-                    for (const e of existing) {
-                        if (e.id !== best.id) await base44.entities.RunScore.delete(e.id);
-                    }
-                    if (score > best.score) {
-                        await base44.entities.RunScore.update(best.id, scoreData);
-                    } else {
-                        // Still update player_name in case it changed
-                        await base44.entities.RunScore.update(best.id, { player_name: displayName });
-                    }
-                } else {
-                    await base44.entities.RunScore.create(scoreData);
-                }
+                // Route through backend function — RLS checks user.id which only works server-side
+                await base44.functions.invoke('saveScore', {
+                    scoreData,
+                    walletAddress
+                });
             } catch (e) {
                 console.error('saveScore: FAILED:', e?.message || e);
             }
