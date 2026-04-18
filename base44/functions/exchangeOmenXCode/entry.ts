@@ -35,15 +35,17 @@ Deno.serve(async (req) => {
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('[exchangeOmenXCode] raw token response keys:', Object.keys(tokenData));
     console.log('[exchangeOmenXCode] raw token response:', JSON.stringify(tokenData));
+
+    // wallet/username are nested inside tokenData.user
+    const user = tokenData.user || {};
     return Response.json({
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresIn: tokenData.expires_in,
-      walletAddress: tokenData.wallet_address,
-      username: tokenData.username,
-      _raw: tokenData, // expose raw so callback can inspect
+      walletAddress: user.wallet_address || user.walletAddress || tokenData.wallet_address || null,
+      username: user.username || user.name || tokenData.username || null,
+      _raw: tokenData,
     });
   } catch (error) {
     console.error('[exchangeOmenXCode] Error:', error);
