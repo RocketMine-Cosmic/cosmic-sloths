@@ -24,7 +24,16 @@ function getOmenXAuth() {
 
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
-    const [save, setSave] = useState(SaveManager.load());
+    const initialSave = SaveManager.load() || {};
+    const [save, setSave] = useState({
+        unlockedCharacters: [],
+        unlockedArenasByCharacter: {},
+        unlockedCosmetics: [],
+        cosmetics: {},
+        gold: 0,
+        sessionBuffs: {},
+        ...initialSave
+    });
     const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
     const [showNameModal, setShowNameModal] = useState(false);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
