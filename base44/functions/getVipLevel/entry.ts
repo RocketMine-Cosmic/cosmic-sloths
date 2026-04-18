@@ -1,12 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
         const { walletAddress } = await req.json();
         if (!walletAddress) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
 
