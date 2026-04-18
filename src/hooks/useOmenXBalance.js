@@ -17,8 +17,8 @@ function getAuthData() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
 }
 
-async function fetchBalance() {
-    if (fetchInProgress) return;
+async function fetchBalance(force = false) {
+    if (fetchInProgress && !force) return;
     const auth = getAuthData();
     if (!auth?.walletAddress) {
         cachedBalance = null;
@@ -100,5 +100,5 @@ export function useOmenXBalance() {
         };
     }, []);
 
-    return { balance, loading, refresh: fetchBalance };
+    return { balance, loading, refresh: () => fetchBalance(true) };
 }
