@@ -111,28 +111,6 @@ export default function Game() {
                     return;
                 }
 
-                // Update squad kills
-                try {
-                    const memberships = await base44.entities.SquadMember.filter({ user_id: user.id });
-                    if (memberships.length > 0) {
-                        const squad = await base44.entities.Squad.get(memberships[0].squad_id);
-                        if (squad) {
-                            const today = moment().format('YYYY-MM-DD');
-                            let newDailyKills = (squad.daily_kills || 0) + stats.kills;
-                            if (squad.current_day !== today) {
-                                newDailyKills = stats.kills;
-                            }
-                            await base44.entities.Squad.update(squad.id, {
-                                weekly_kills: (squad.weekly_kills || 0) + stats.kills,
-                                daily_kills: newDailyKills,
-                                current_day: today
-                            });
-                        }
-                    }
-                } catch(err) {
-                    console.error('Failed to update squad kills', err);
-                }
-
                 const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
                 const arenaMultiplier = isEndless ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
                 const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + (isVictory ? 5000 : 0);
@@ -144,10 +122,9 @@ export default function Game() {
                 const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
 
                 const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
-                const walletAddress = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.walletAddress || null; } catch { return null; } })();
+                const walletAddress = user.walletAddress;
                 
                 const scoreData = {
-                    user_id: user.id,
                     player_name: displayName,
                     player_title: user.data?.player_title || '',
                     pilot_icon: pilotIcon,
@@ -161,10 +138,25 @@ export default function Game() {
                     season_id
                 };
 
-                // Route through backend function — RLS checks user.id which only works server-side
+                // Get squad info if player is in one
+                let squadStats = null;
+                try {
+                    const memberships = await base44.entities.SquadMember.filter({ player_name: displayName });
+                    if (memberships.length > 0) {
+                        squadStats = {
+                            squadId: memberships[0].squad_id,
+                            kills: stats.kills
+                        };
+                    }
+                } catch (err) {
+                    console.error('Failed to get squad info', err);
+                }
+
+                // Route through backend function — all Base44 entity operations happen server-side
                 await base44.functions.invoke('saveScore', {
                     scoreData,
-                    walletAddress
+                    walletAddress,
+                    squadStats
                 });
             } catch (e) {
                 console.error('saveScore: FAILED:', e?.message || e);

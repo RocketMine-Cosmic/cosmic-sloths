@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { scoreData, walletAddress } = await req.json();
+        const { scoreData, walletAddress, squadStats } = await req.json();
 
         if (!scoreData || !walletAddress) {
             return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
         // Check if player already has a score in this period
         const existingScores = await base44.asServiceRole.entities.RunScore.filter({
-            user_id: scoreData.user_id,
+            wallet_address: walletAddress,
             week_id: scoreData.week_id
         });
 
@@ -36,6 +36,27 @@ Deno.serve(async (req) => {
             }
         } else {
             result = await base44.asServiceRole.entities.RunScore.create(scoreData);
+        }
+
+        // Update squad kills if provided
+        if (squadStats && squadStats.squadId) {
+            try {
+                const squad = await base44.asServiceRole.entities.Squad.get(squadStats.squadId);
+                if (squad) {
+                    const today = new Date().toISOString().split('T')[0];
+                    let newDailyKills = (squad.daily_kills || 0) + squadStats.kills;
+                    if (squad.current_day !== today) {
+                        newDailyKills = squadStats.kills;
+                    }
+                    await base44.asServiceRole.entities.Squad.update(squad.id, {
+                        weekly_kills: (squad.weekly_kills || 0) + squadStats.kills,
+                        daily_kills: newDailyKills,
+                        current_day: today
+                    });
+                }
+            } catch (err) {
+                console.error('[saveScore] Failed to update squad kills:', err);
+            }
         }
 
         return Response.json({ success: true, scoreId: result.id });
