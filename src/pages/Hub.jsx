@@ -61,7 +61,27 @@ export default function Hub({ isCarousel }) {
     }, []);
 
     React.useEffect(() => {
-        setOmenxAuth(getOmenXAuth());
+        const initOmenX = async () => {
+            const auth = getOmenXAuth();
+            setOmenxAuth(auth);
+            
+            // On first login, pull cloud data and force profile name setup
+            if (auth?.walletAddress) {
+                try {
+                    const res = await base44.functions.invoke('loadSave', { walletAddress: auth.walletAddress });
+                    if (res.data?.saveData) {
+                        localStorage.setItem('cosmic_sloth_save', JSON.stringify(res.data.saveData));
+                        const cloudSave = res.data.saveData;
+                        if (!cloudSave.hasSetProfileName) {
+                            setNeedsProfileName(true);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to load cloud save:', e);
+                }
+            }
+        };
+        initOmenX();
     }, []);
 
     const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');

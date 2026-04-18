@@ -45,7 +45,7 @@ export default function OmenXCallback() {
 
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 
-                // Create initial save file on first login
+                // Create initial save file and PlayerSave on first login
                 const existingProfile = localStorage.getItem('omenx_user_profile');
                 if (!existingProfile) {
                     const initialSave = {
@@ -73,10 +73,22 @@ export default function OmenXCallback() {
                         totalGoldEarned: 0,
                         maxLevelReached: 0,
                         totalKills: 0,
-                        pilotName: tokenData.username || ''
+                        pilotName: ''
                     };
                     localStorage.setItem('cosmic_sloth_save', JSON.stringify(initialSave));
-                    localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: tokenData.username || '', playerTitle: '', pilotIcon: '🦥' }));
+                    localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: '', playerTitle: '', pilotIcon: '🦥' }));
+                    
+                    // Create PlayerSave record in backend
+                    try {
+                        const base44 = await import('@/api/base44Client').then(m => m.base44);
+                        await base44.asServiceRole.entities.PlayerSave.create({
+                            wallet_address: walletAddress,
+                            save_data: initialSave,
+                            updated_at: Date.now()
+                        });
+                    } catch (e) {
+                        console.error('Failed to create PlayerSave:', e);
+                    }
                 }
 
                 if (window.opener) {
