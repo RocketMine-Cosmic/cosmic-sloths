@@ -10,7 +10,9 @@ import SpaceBackground from '../components/game/SpaceBackground';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem('admin_key') || '');
+    const [keyInput, setKeyInput] = useState('');
+    const [keyError, setKeyError] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [distributePeriod, setDistributePeriod] = useState('');
@@ -18,30 +20,64 @@ export default function AdminDashboard() {
     const [distributing, setDistributing] = useState(false);
     const [distributeMsg, setDistributeMsg] = useState('');
 
-    useEffect(() => {
-        base44.auth.me().then(me => {
-            setUser(me);
-            if (me?.role !== 'admin') {
-                navigate('/');
+    const handleKeySubmit = async (e) => {
+        e.preventDefault();
+        // Verify the key by calling a protected function
+        try {
+            await base44.functions.invoke('distributeRewards', {}, { headers: { 'x-admin-key': keyInput } });
+            setAdminKey(keyInput);
+            sessionStorage.setItem('admin_key', keyInput);
+            setKeyError('');
+        } catch (err) {
+            // A 403 means wrong key, other errors (like no pools) mean key is valid
+            if (err.message?.includes('403') || err.message?.includes('Forbidden')) {
+                setKeyError('Invalid admin key');
+            } else {
+                setAdminKey(keyInput);
+                sessionStorage.setItem('admin_key', keyInput);
+                setKeyError('');
             }
-        });
-    }, [navigate]);
+        }
+    };
+
+    const user = adminKey ? { role: 'admin' } : null;
 
     const { data: pools, isLoading: poolsLoading } = useQuery({
-        queryKey: ['tokenPools'],
-        queryFn: () => base44.entities.TokenPool.list('-created_date', 100),
-        enabled: !!user && user.role === 'admin'
+        queryKey: ['tokenPools', adminKey],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }, { headers: { 'x-admin-key': adminKey } }).then(r => r.data?.pools || []),
+        enabled: !!adminKey
     });
 
     const { data: spendLogs, isLoading: logsLoading } = useQuery({
-        queryKey: ['tokenSpendLogs'],
-        queryFn: () => base44.entities.TokenSpendLog.list('-created_date', 50),
-        enabled: !!user && user.role === 'admin'
+        queryKey: ['tokenSpendLogs', adminKey],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'logs' }, { headers: { 'x-admin-key': adminKey } }).then(r => r.data?.logs || []),
+        enabled: !!adminKey
     });
 
     const isLoading = poolsLoading || logsLoading;
 
-    if (!user || user.role !== 'admin') return null;
+    if (!adminKey) {
+        return (
+            <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans">
+                <SpaceBackground />
+                <form onSubmit={handleKeySubmit} className="relative z-10 bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-4 w-full max-w-sm">
+                    <h1 className="text-xl font-black uppercase tracking-widest text-red-400">Admin Access</h1>
+                    <input
+                        type="password"
+                        placeholder="Enter admin key"
+                        value={keyInput}
+                        onChange={e => setKeyInput(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500"
+                        autoFocus
+                    />
+                    {keyError && <div className="text-red-400 text-sm">{keyError}</div>}
+                    <button type="submit" className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-md transition-colors">
+                        Enter
+                    </button>
+                </form>
+            </div>
+        );
+    }
 
     const aggregateData = (data) => {
         const grouped = {};
@@ -84,8 +120,8 @@ export default function AdminDashboard() {
             const res = await base44.functions.invoke('manuallyDistributeRewards', {
                 period_id: distributePeriod.trim(),
                 period_type: distributeType
-            });
-            setDistributeMsg(`✓ Distributed ${res.paid} players, ${res.totalOmenx} OMENX total`);
+            }, { headers: { 'x-admin-key': adminKey } });
+            setDistributeMsg(`✓ Distributed ${res.data?.paid} players, ${res.data?.totalOmenx} OMENX total`);
             setDistributePeriod('');
             setTimeout(() => setDistributeMsg(''), 5000);
         } catch (err) {

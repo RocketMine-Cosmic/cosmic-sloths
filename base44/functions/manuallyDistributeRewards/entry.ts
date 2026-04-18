@@ -8,8 +8,9 @@ const CHAIN_ID = '56';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+        const adminKey = req.headers.get('x-admin-key');
+        const expectedKey = Deno.env.get('OMENX_API_KEY');
+        if (!adminKey || adminKey !== expectedKey) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const { period_id, period_type } = await req.json();
         if (!period_id || !period_type) {
