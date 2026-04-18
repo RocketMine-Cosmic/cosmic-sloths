@@ -53,6 +53,7 @@ export default function Hub({ isCarousel }) {
     const [save, setSave] = useState(safeInitialSave);
     const [omenxAuth, setOmenxAuth] = useState(null);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
+    const [needsProfileName, setNeedsProfileName] = useState(false);
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
