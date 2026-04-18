@@ -44,6 +44,12 @@ export default function OmenXCallback() {
                 };
 
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+                
+                // Check if first-time login - require pilot name setup
+                const existingProfile = localStorage.getItem('omenx_user_profile');
+                if (!existingProfile) {
+                    localStorage.setItem('omenx_require_pilot_name', 'true');
+                }
 
                 if (window.opener) {
                     try {

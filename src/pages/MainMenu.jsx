@@ -7,17 +7,24 @@ import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
+import SetProfileNameModal from '../components/game/SetProfileNameModal';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
+    const [showPilotNameModal, setShowPilotNameModal] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
                 const me = await base44.auth.me();
                 setUser(me);
+                
+                // Check if first-time OmenX login requires pilot name
+                if (localStorage.getItem('omenx_require_pilot_name') === 'true') {
+                    setShowPilotNameModal(true);
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -100,6 +107,12 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
             </div>
 
             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+            {showPilotNameModal && (
+                <SetProfileNameModal onComplete={() => {
+                    localStorage.removeItem('omenx_require_pilot_name');
+                    setShowPilotNameModal(false);
+                }} />
+            )}
         </div>
     );
 }
