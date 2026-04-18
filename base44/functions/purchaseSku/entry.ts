@@ -1,19 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-// Canonical period ID computation — must match distributeRewards exactly
+// Period ID calculation — uses UTC ISO week, canonical across all functions
 function getCurrentPeriodIds() {
     const now = new Date();
-    const startOfYear = new Date(now.getUTCFullYear(), 0, 1);
-    const dayOfYear = Math.floor((now - startOfYear) / 86400000);
-    // ISO week number
+    const year = now.getUTCFullYear();
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
     const startOfWeek = new Date(startOfYear);
     startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
     const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    const weekNum = String(isoWeek).padStart(2, '0');
-    const year = now.getUTCFullYear();
-    const week_id = `${year}-W${weekNum}`;
-    // Season: 4 quarters of 13 weeks
+    const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
     const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
     const season_id = `${year}-S${seasonNum}`;
     return { week_id, season_id };
