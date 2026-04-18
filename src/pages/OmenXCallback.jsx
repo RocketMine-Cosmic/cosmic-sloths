@@ -82,7 +82,7 @@ export default function OmenXCallback() {
                     try {
                         const base44 = await import('@/api/base44Client').then(m => m.base44);
                         await base44.asServiceRole.entities.PlayerSave.create({
-                            wallet_address: walletAddress,
+                            wallet_address: authData.walletAddress,
                             save_data: initialSave,
                             updated_at: Date.now()
                         });

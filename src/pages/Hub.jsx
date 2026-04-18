@@ -73,7 +73,8 @@ export default function Hub({ isCarousel }) {
                         localStorage.setItem('cosmic_sloth_save', JSON.stringify(res.data.saveData));
                         const cloudSave = res.data.saveData;
                         if (!cloudSave.hasSetProfileName) {
-                            setNeedsProfileName(true);
+                            setPendingLaunch(null);
+                            setTimeout(() => setPendingLaunch('profile-name'), 100);
                         }
                     }
                 } catch (e) {
