@@ -51,6 +51,21 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                 enablePKCE: true,
             });
             setDebugMsg('Waiting for callback...');
+
+            // Poll localStorage for auth data (StorageEvent doesn't fire in same tab on mobile)
+            let polls = 0;
+            const poll = setInterval(() => {
+                polls++;
+                const stored = getAuthData();
+                if (stored?.walletAddress) {
+                    clearInterval(poll);
+                    applyAuthData(stored);
+                } else if (polls > 60) { // 30s timeout
+                    clearInterval(poll);
+                    setLoading(false);
+                    setDebugMsg('Timed out waiting for login');
+                }
+            }, 500);
         } catch (err) {
             setDebugMsg(`Error: ${err.message}`);
             setLoading(false);
