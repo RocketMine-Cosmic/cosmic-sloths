@@ -61,8 +61,7 @@ Deno.serve(async (req) => {
         // Update weekly pool
         const weeklyPools = await db.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
         if (weeklyPools.length > 0) {
-            const fresh = await db.entities.TokenPool.get(weeklyPools[0].id);
-            await db.entities.TokenPool.update(fresh.id, { total_spent: fresh.total_spent + totalAmount });
+            await db.entities.TokenPool.update(weeklyPools[0].id, { total_spent: weeklyPools[0].total_spent + totalAmount });
         } else {
             await db.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false });
         }
@@ -70,8 +69,7 @@ Deno.serve(async (req) => {
         // Update seasonal pool
         const seasonalPools = await db.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
         if (seasonalPools.length > 0) {
-            const fresh = await db.entities.TokenPool.get(seasonalPools[0].id);
-            await db.entities.TokenPool.update(fresh.id, { total_spent: fresh.total_spent + totalAmount });
+            await db.entities.TokenPool.update(seasonalPools[0].id, { total_spent: seasonalPools[0].total_spent + totalAmount });
         } else {
             await db.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false });
         }

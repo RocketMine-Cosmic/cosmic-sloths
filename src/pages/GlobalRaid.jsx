@@ -120,8 +120,8 @@ export default function GlobalRaid({ isCarousel }) {
     const handleBuyMoreRuns = async () => {
         SoundManager.playUIClick();
         const currentSave = SaveManager.load();
-        if ((omenxBalance ?? 0) < 5) {
-            toast({ title: 'Not enough OMENX', description: 'You need 5 OMENX to buy more runs.', variant: 'destructive' });
+        if ((omenxBalance ?? 0) < 10) {
+            toast({ title: 'Not enough OMENX', description: 'You need 10 OMENX to buy more runs.', variant: 'destructive' });
             return;
         }
 
@@ -305,7 +305,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     <Zap className="w-4 h-4 md:w-5 md:h-5" /> BUY 5 MORE RUNS
                                 </div>
                                 <span className="text-[10px] md:text-xs text-purple-200 flex items-center gap-1 font-normal tracking-normal normal-case">
-                                    Cost: 5 <OmenXIcon className="w-4 h-4" />
+                                    Cost: 10 <OmenXIcon className="w-4 h-4" />
                                 </span>
                             </button>
                         ) : (

@@ -14,9 +14,9 @@ export const IN_GAME_SKUS = {
 
 // Stat upgrade SKUs — keyed by tier and level
 const STAT_SKUS = {
-    permanent: ['stat-upgrade-permanent-lvl1', 'stat-upgrade-permanent-1v12', 'stat-upgrade-permanent-1v13', 'stat-upgrade-permanent-1v14', 'stat-upgrade-permanent-1v15'],
-    weekly:    ['stat-upgrade-weekly-1v11',    'stat-upgrade-weekly-1v12',    'stat-upgrade-weekly-1v13',    'stat-upgrade-weekly-1v14',    'stat-upgrade-weekly-1v15'],
-    seasonal:  ['stat-upgrade-seasonal-1v11',  'stat-upgrade-seasonal-1v12',  'stat-upgrade-seasonal-1v13',  'stat-upgrade-seasonal-1v14',  'stat-upgrade-seasonal-1v15'],
+    permanent: ['stat-upgrade-permanent-lvl1', 'stat-upgrade-permanent-lvl2', 'stat-upgrade-permanent-lvl3', 'stat-upgrade-permanent-lvl4', 'stat-upgrade-permanent-lvl5'],
+    weekly:    ['stat-upgrade-weekly-lvl1',    'stat-upgrade-weekly-lvl2',    'stat-upgrade-weekly-lvl3',    'stat-upgrade-weekly-lvl4',    'stat-upgrade-weekly-lvl5'],
+    seasonal:  ['stat-upgrade-seasonal-lvl1',  'stat-upgrade-seasonal-lvl2',  'stat-upgrade-seasonal-lvl3',  'stat-upgrade-seasonal-lvl4',  'stat-upgrade-seasonal-lvl5'],
 };
 
 // Weapon upgrade SKUs — keyed by tier and level

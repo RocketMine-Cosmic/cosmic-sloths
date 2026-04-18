@@ -89,13 +89,12 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const purchaseSku = async (skuId) => {
-        if (!skuId) return { success: false, error: 'No SKU' };
+        if (!skuId) { console.warn('[purchaseSku] No SKU mapping found — purchase skipped'); return { success: true, skipped: true }; }
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress) { console.warn('[purchaseSku] No wallet address found'); return { success: false, error: 'No wallet' }; }
         const { week_id, season_id } = getWeekSeason();
-        // amount is passed to the backend so pool accounting is done server-side, atomically, after confirmed OmenX charge
-        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id });
+        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id, userId: walletAddress, playerName: authData?.username || walletAddress });
         if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
         return res.data;
     };
