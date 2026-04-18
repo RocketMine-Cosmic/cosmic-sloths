@@ -519,8 +519,8 @@ export default function Hub({ isCarousel }) {
                                 </div>
 
                                 {(() => {
-                                    const isCharUnlocked = save.unlockedCharacters.includes(selectedChar);
-                                    const isArenaUnlocked = (save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena);
+                                    const isCharUnlocked = (save?.unlockedCharacters ?? []).includes(selectedChar);
+                                    const isArenaUnlocked = (save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).includes(selectedArena);
                                     const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
                                     const sessionBuffs = save.sessionBuffs || {};
