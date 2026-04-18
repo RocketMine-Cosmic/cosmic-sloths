@@ -66,8 +66,8 @@ export default function OmenXCallback() {
                     storageArea: localStorage,
                 }));
 
-                setStatus('✓ Login successful! Closing...');
-                setTimeout(() => window.close(), 500);
+                setStatus('✓ Login successful! (closes in 15s)');
+                setTimeout(() => window.close(), 15000);
             } catch (err) {
                 setStatus(`❌ ${err.message}`);
                 setTimeout(() => window.close(), 8000);
