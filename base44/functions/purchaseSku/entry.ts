@@ -62,6 +62,28 @@ Deno.serve(async (req) => {
         const totalAmount = amount * quantity;
         console.log(`[purchaseSku] OmenX charge confirmed, txHash: ${purchaseData.transactionId || purchaseData.paymentTxHash}, amount: ${totalAmount}`);
 
+        // Ensure PlayerSave exists (in case initializeFirstLogin hasn't been called yet)
+        try {
+            const existing = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
+            if (existing.length === 0) {
+                console.log(`[purchaseSku] PlayerSave missing for ${walletAddress}, creating default...`);
+                await db.entities.PlayerSave.create({
+                    wallet_address: walletAddress,
+                    save_data: {
+                        unlockedCharacters: ['neobyte'],
+                        unlockedArenasByCharacter: { neobyte: ['station'] },
+                        unlockedCosmetics: ['default'],
+                        gold: 0,
+                        relicFragments: 0
+                    },
+                    updated_at: Date.now()
+                });
+            }
+        } catch (e) {
+            console.error(`[purchaseSku] Failed to ensure PlayerSave exists:`, e);
+            // Don't fail the purchase if this happens, just log it
+        }
+
         // Log the spend and update pools
         const playerName = playerNameParam || walletAddress;
 
