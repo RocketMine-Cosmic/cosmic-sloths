@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import moment from 'moment';
 import { CHARACTERS, ARENAS } from '../../game/Constants';
 import { getSquadLevel } from '../../game/SquadLevels';
 import { getCurrentPeriodIds } from '../../lib/periodIds';
@@ -41,16 +40,43 @@ export default function Leaderboard() {
     useEffect(() => {
         const updateTimer = () => {
             if (view === 'weekly' || view === 'squads') {
-                const endOfWeek = moment().endOf('week');
-                const duration = moment.duration(endOfWeek.diff(moment()));
-                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+                // Calculate next Sunday (UTC)
+                const now = new Date();
+                const currentDay = now.getUTCDay();
+                const daysUntilSunday = (7 - currentDay) % 7 || 7;
+                const endOfWeek = new Date(now);
+                endOfWeek.setUTCDate(now.getUTCDate() + daysUntilSunday);
+                endOfWeek.setUTCHours(0, 0, 0, 0);
+                
+                const msLeft = endOfWeek - now;
+                const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
+                const hoursLeft = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const minutesLeft = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000));
+                
+                setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
             } else if (view === 'seasonal') {
-                const weekNum = moment().week();
-                const seasonNum = Math.floor(weekNum / 4) + 1;
-                const lastWeekOfSeason = seasonNum * 4 - 1;
-                const endOfSeason = moment().week(lastWeekOfSeason).endOf('week');
-                const duration = moment.duration(endOfSeason.diff(moment()));
-                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+                // Calculate last Sunday of current season (seasons are 13 weeks)
+                const { isoWeek, year } = getCurrentPeriodIds();
+                const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+                const lastWeekOfSeason = seasonNum * 13;
+                
+                // ISO week to date conversion
+                const startOfYear = new Date(Date.UTC(year, 0, 1));
+                const startOfWeek = new Date(startOfYear);
+                startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+                
+                // Calculate Sunday of last week of season
+                const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+                const endOfSeason = new Date(startOfWeek.getTime() + (lastWeekOfSeason) * msPerWeek);
+                endOfSeason.setUTCHours(0, 0, 0, 0);
+                
+                const now = new Date();
+                const msLeft = endOfSeason - now;
+                const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
+                const hoursLeft = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const minutesLeft = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000));
+                
+                setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
             } else {
                 setTimeLeft('');
             }

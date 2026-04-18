@@ -4,7 +4,6 @@ import { SaveManager } from '../game/SaveManager';
 import { ArrowLeft, Skull, Crosshair, Trophy, Activity, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
-import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import BossPreview from '../components/game/BossPreview';
 import SpaceBackground from '../components/game/SpaceBackground';
@@ -54,9 +53,20 @@ export default function GlobalRaid({ isCarousel }) {
 
     useEffect(() => {
         const updateTimer = () => {
-            const endOfWeek = moment().endOf('week');
-            const duration = moment.duration(endOfWeek.diff(moment()));
-            setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+            // Calculate next Sunday (end of week, UTC)
+            const now = new Date();
+            const currentDay = now.getUTCDay();
+            const daysUntilSunday = (7 - currentDay) % 7 || 7;
+            const endOfWeek = new Date(now);
+            endOfWeek.setUTCDate(now.getUTCDate() + daysUntilSunday);
+            endOfWeek.setUTCHours(0, 0, 0, 0);
+            
+            const msLeft = endOfWeek - now;
+            const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
+            const hoursLeft = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+            const minutesLeft = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000));
+            
+            setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
         };
         updateTimer();
         const interval = setInterval(updateTimer, 60000);
@@ -66,7 +76,7 @@ export default function GlobalRaid({ isCarousel }) {
     useEffect(() => {
         const fetchBoss = async () => {
             try {
-                const week_id = moment().format('YYYY-[W]ww');
+                const { week_id } = getCurrentPeriodIds();
                 const res = await base44.functions.invoke('getOrSpawnWeeklyBoss', { week_id });
                 if (res.data.boss) {
                     setWorldBossData(res.data.boss);
@@ -118,7 +128,7 @@ export default function GlobalRaid({ isCarousel }) {
         setClaimingLevel(null);
     };
 
-    const todayDate = moment().format('YYYY-MM-DD');
+    const todayDate = new Date().toISOString().split('T')[0];
     const runsToday = (save.raidRuns || {})[todayDate] || 0;
     const extraRuns = (save.extraRaidRuns || {})[todayDate] || 0;
     const MAX_RUNS_PER_DAY = 5 + extraRuns;
