@@ -9,6 +9,12 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
         }
 
+        // Verify authenticated user matches the wallet submitting the score
+        const user = await base44.auth.me();
+        if (!user || user.id !== walletAddress) {
+            return Response.json({ error: 'Unauthorized: wallet mismatch' }, { status: 403 });
+        }
+
         // Add wallet address to the score data
         scoreData.wallet_address = walletAddress;
 
