@@ -125,6 +125,7 @@ export default function Game() {
                 const walletAddress = user.walletAddress;
                 
                 const scoreData = {
+                    user_id: user.id,
                     player_name: displayName,
                     player_title: user.data?.player_title || '',
                     pilot_icon: pilotIcon,
