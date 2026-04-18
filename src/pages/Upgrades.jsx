@@ -9,6 +9,7 @@ function OmenXIcon({ className }) {
 }
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 import { base44 } from '@/api/base44Client';
+import moment from 'moment';
 import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
