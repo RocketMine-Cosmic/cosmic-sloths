@@ -24,12 +24,13 @@ export default function OmenXCallback() {
                 const allLocalKeys = Object.keys(localStorage).filter(k => !k.includes('cosmic_sloth'));
                 setDebugInfo(`SS keys: [${allSessionKeys.join(', ')}] | LS keys: [${allLocalKeys.join(', ')}]`);
 
-                const codeVerifier = sessionStorage.getItem('omenx_code_verifier') ||
-                                     sessionStorage.getItem('pkce_code_verifier') ||
-                                     sessionStorage.getItem('code_verifier') ||
-                                     localStorage.getItem('omenx_code_verifier') ||
-                                     localStorage.getItem('pkce_code_verifier') ||
-                                     localStorage.getItem('code_verifier');
+                // The SDK stores the PKCE verifier under "omenx_pkce_<state>"
+                const state = params.get('state');
+                const codeVerifier = (state && sessionStorage.getItem(`omenx_pkce_${state}`)) ||
+                                     Object.keys(sessionStorage)
+                                         .filter(k => k.startsWith('omenx_pkce_'))
+                                         .map(k => sessionStorage.getItem(k))[0] ||
+                                     null;
 
                 // Use backend function to exchange code (avoids CORS)
                 const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier });
