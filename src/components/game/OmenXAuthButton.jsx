@@ -11,7 +11,6 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [authData, setAuthState] = useState(getAuthData);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
-    const [debugMsg, setDebugMsg] = useState('');
 
     const applyAuthData = (data) => {
         if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -26,7 +25,6 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     };
 
     useEffect(() => {
-        // Listen for SDK onAuth callback writing to localStorage
         const onStorageChange = () => {
             const stored = getAuthData();
             setAuthState(stored);
@@ -44,13 +42,11 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
 
     const handleLogin = async () => {
         setLoading(true);
-        setDebugMsg('Opening popup...');
         try {
             await omenx.authenticate({
                 redirectUri: getRedirectUri(),
                 enablePKCE: true,
             });
-            setDebugMsg('Waiting for callback...');
 
             // Poll localStorage for auth data (StorageEvent doesn't fire in same tab on mobile)
             let polls = 0;
@@ -60,14 +56,12 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                 if (stored?.walletAddress) {
                     clearInterval(poll);
                     applyAuthData(stored);
-                } else if (polls > 60) { // 30s timeout
+                } else if (polls > 60) {
                     clearInterval(poll);
                     setLoading(false);
-                    setDebugMsg('Timed out waiting for login');
                 }
             }, 500);
         } catch (err) {
-            setDebugMsg(`Error: ${err.message}`);
             setLoading(false);
         }
     };
@@ -75,11 +69,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogout = async () => {
         applyAuthData(null);
         setSuccessMsg('');
-        try {
-            await omenx.logout();
-        } catch (e) {
-            console.error('[OmenX] logout error', e);
-        }
+        try { await omenx.logout(); } catch (e) {}
         window.location.reload();
     };
 
@@ -107,11 +97,6 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             {successMsg && (
                 <div className="text-[10px] text-green-400 font-bold bg-green-950/50 border border-green-700/50 px-2 py-1 rounded max-w-[200px] text-right truncate">
                     ✓ {successMsg}
-                </div>
-            )}
-            {debugMsg && (
-                <div className="text-[9px] text-yellow-400 font-bold bg-yellow-950/50 border border-yellow-700/50 px-2 py-1 rounded max-w-[200px] text-right truncate">
-                    {debugMsg}
                 </div>
             )}
         </div>
