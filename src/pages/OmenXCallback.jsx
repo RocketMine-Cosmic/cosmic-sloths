@@ -75,7 +75,7 @@ export default function OmenXCallback() {
                     // Mobile: opened as new tab — redirect back to main app
                     setStatus('✓ Login successful! Returning...');
                     setTimeout(() => {
-                        window.location.replace('/');
+                        window.location.replace('/?omenx_login=1');
                     }, 1000);
                 }
             } catch (err) {

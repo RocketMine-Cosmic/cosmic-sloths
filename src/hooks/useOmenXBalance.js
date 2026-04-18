@@ -69,13 +69,21 @@ export function useOmenXBalance() {
         listeners.add(listener);
         consumerCount++;
 
-        startSubscription();
+        // Always fetch on mount if we have a wallet (catches mobile redirect case)
+        fetchBalance().then(() => startSubscription());
 
         // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
 
-        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopSubscription(); startSubscription(); } };
+        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopSubscription(); fetchBalance().then(() => startSubscription()); } };
         window.addEventListener('storage', onStorage);
+
+        // If redirected back after mobile OAuth, clean the URL
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('omenx_login')) {
+            url.searchParams.delete('omenx_login');
+            window.history.replaceState({}, '', url.toString());
+        }
 
         return () => {
             listeners.delete(listener);
