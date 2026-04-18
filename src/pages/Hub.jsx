@@ -52,7 +52,7 @@ export default function Hub({ isCarousel }) {
         totalKills: initialSave?.totalKills ?? 0
     };
     const [save, setSave] = useState(safeInitialSave);
-    const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
+    const [omenxAuth, setOmenxAuth] = useState(null);
     const [showNameModal, setShowNameModal] = useState(false);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
 
@@ -60,6 +60,10 @@ export default function Hub({ isCarousel }) {
         const handleSaveUpdated = (e) => setSave(e.detail);
         window.addEventListener('saveUpdated', handleSaveUpdated);
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+    }, []);
+
+    React.useEffect(() => {
+        setOmenxAuth(getOmenXAuth());
     }, []);
 
     const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');
