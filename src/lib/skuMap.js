@@ -99,3 +99,62 @@ export function getCosmeticSku(type, name, goldCost) {
     if (type === 'skin')   return SKIN_SKUS[goldCost] || null;
     return null;
 }
+
+/**
+ * Returns the OMENX cost for an in-game consumable.
+ * @param {string} skuId - SKU ID (e.g., 'ingame-banish')
+ */
+export function getConsumableCost(skuId) {
+    const costs = {
+        'ingame-banish': 1,
+        'ingame-reroll': 2,
+        'ingame-squad-buff': 4,
+        'ingame-revive': 4,
+        'ingame-xp-buff': 10,
+    };
+    return costs[skuId] || 0;
+}
+
+/**
+ * Returns the OMENX cost for a stat upgrade.
+ * @param {number} level - 1-indexed level being purchased
+ */
+export function getStatUpgradeCost(level) {
+    const costs = [5, 10, 20, 40, 80]; // OMENX costs per level
+    return costs[Math.min(level - 1, costs.length - 1)] || 0;
+}
+
+/**
+ * Returns the OMENX cost for a weapon upgrade.
+ * @param {number} level - 1-indexed level being purchased
+ */
+export function getWeaponUpgradeCost(level) {
+    const costs = [5, 10, 20, 40, 80];
+    return costs[Math.min(level - 1, costs.length - 1)] || 0;
+}
+
+/**
+ * Returns the OMENX cost for a talent.
+ * @param {number} tier - 1, 2, or 3
+ */
+export function getTalentCost(tier) {
+    const costs = [10, 20, 40];
+    return costs[Math.min(tier - 1, costs.length - 1)] || 0;
+}
+
+/**
+ * Returns the OMENX cost for a cosmetic based on gold tier.
+ * @param {number} goldCost - Gold cost (determines tier)
+ */
+export function getCosmeticCost(goldCost) {
+    const costs = {
+        3000: 3,
+        5000: 5,
+        10000: 10,
+        12000: 12,
+        20000: 20,
+        25000: 25,
+        30000: 30,
+    };
+    return costs[goldCost] || 0;
+}
