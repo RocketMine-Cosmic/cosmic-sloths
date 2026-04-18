@@ -11,7 +11,7 @@ function OmenXIcon({ className }) {
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [view, setView] = useState('weekly'); // 'weekly', 'seasonal', 'all_time', 'endless', or 'squads'
+    const [view, setView] = useState('weekly');
     const [timeLeft, setTimeLeft] = useState('');
     const [currentPool, setCurrentPool] = useState(0);
 
@@ -34,6 +34,21 @@ export default function Leaderboard() {
         if (rank >= 21 && rank <= 30) return 0.02;
         if (rank >= 31 && rank <= 40) return 0.015;
         return 0;
+    };
+
+    // Calculate actual payout amount (mirrors backend distributeRewards exactly)
+    const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier) => {
+        const rewardPool = Math.floor(pool * poolMultiplier);
+        
+        // Calculate total percentage and multiplier for normalization
+        let totalPct = 0;
+        for (let i = 1; i <= (percentageFn === getWeeklyRewardPercentage ? 30 : 40); i++) {
+            totalPct += percentageFn(i);
+        }
+        if (totalPct === 0) return 0;
+        const multiplier = 1 / totalPct;
+        
+        return Math.floor(rewardPool * percentageFn(rank) * multiplier);
     };
 
     useEffect(() => {
@@ -155,21 +170,7 @@ export default function Leaderboard() {
         return `${m}:${sec.toString().padStart(2, '0')}`;
     };
 
-    let totalWeeklyPercentage = 0;
-    let totalSeasonalPercentage = 0;
-    
-    if (view === 'weekly') {
-        for (let i = 0; i < Math.min(scores.length, 30); i++) {
-            totalWeeklyPercentage += getWeeklyRewardPercentage(i + 1);
-        }
-    } else if (view === 'seasonal') {
-        for (let i = 0; i < Math.min(scores.length, 40); i++) {
-            totalSeasonalPercentage += getSeasonalRewardPercentage(i + 1);
-        }
-    }
-    
-    const weeklyMultiplier = totalWeeklyPercentage > 0 ? 1 / totalWeeklyPercentage : 1;
-    const seasonalMultiplier = totalSeasonalPercentage > 0 ? 1 / totalSeasonalPercentage : 1;
+
 
     return (
         <div className="flex flex-col h-full">
@@ -231,8 +232,8 @@ export default function Leaderboard() {
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
                                 const isEligibleForReward = (view === 'weekly' && index < 30) || (view === 'seasonal' && index < 40);
                                 const rewardAmount = view === 'weekly' 
-                                    ? Math.floor((currentPool * 0.25) * getWeeklyRewardPercentage(index + 1) * weeklyMultiplier) 
-                                    : Math.floor((currentPool * 0.35) * getSeasonalRewardPercentage(index + 1) * seasonalMultiplier);
+                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.25)
+                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.35);
 
                                 if (view === 'squads') {
                                     const squadLvl = getSquadLevel(score.xp || 0);
