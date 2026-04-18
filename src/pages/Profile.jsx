@@ -39,7 +39,8 @@ export default function Profile({ isCarousel }) {
                 setUser(me);
 
                 // Fetch VIP level
-                const walletAddress = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.walletAddress; } catch { return null; } })();
+                const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                const walletAddress = authData?.walletAddress;
                 if (walletAddress) {
                     base44.functions.invoke('getVipLevel', { walletAddress }).then(res => {
                         const lvl = res.data?.vipLevel || 0;
@@ -47,9 +48,9 @@ export default function Profile({ isCarousel }) {
                         // Persist in save so GameEngine can use it on next game start
                         const s = SaveManager.load();
                         if (s.vipLevel !== lvl) { s.vipLevel = lvl; SaveManager.save(s); }
-                    }).catch(() => {});
+                    }).catch(err => console.error('VIP fetch failed:', err));
                 }
-                const displayName = me?.player_name || me?.data?.player_name || me?.full_name;
+                const displayName = me?.player_name || me?.data?.player_name || authData?.username || me?.full_name;
                 setNewName(displayName || '');
                 setNewTitle(me?.data?.player_title || '');
 
