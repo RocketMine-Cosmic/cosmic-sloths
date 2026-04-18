@@ -196,7 +196,7 @@ export default function Hub({ isCarousel }) {
                                         >
                                             {(() => {
                                                 const char = CHARACTERS.find(c => c.id === selectedChar);
-                                                const isUnlocked = save.unlockedCharacters.includes(char.id);
+                                                const isUnlocked = (save?.unlockedCharacters ?? []).includes(char?.id);
                                                 const canAfford = save.gold >= char.cost;
                                                 const isFindable = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'].includes(char.id);
                                                 
