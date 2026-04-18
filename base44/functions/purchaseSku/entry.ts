@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
         }
 
         const base44 = createClientFromRequest(req);
-        const db = base44.asServiceRole;
+        const userClient = base44;  // User-scoped for auth check
+        const db = base44.asServiceRole;  // Admin-scoped for TokenPool/TokenSpendLog
 
         const idempotencyKey = `${walletAddress}-${skuId}-${Date.now()}`;
 
