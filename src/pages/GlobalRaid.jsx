@@ -374,7 +374,7 @@ export default function GlobalRaid({ isCarousel }) {
                                                     {evt.message}
                                                 </div>
                                                 <div className="text-[10px] text-slate-500 mt-0.5">
-                                                    {moment(evt.created_date).fromNow()}
+                                                    {new Date(evt.created_date).toLocaleString()}
                                                 </div>
                                             </div>
                                         </div>
