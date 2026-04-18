@@ -72,13 +72,29 @@ export default function Hub({ isCarousel }) {
                     const res = await base44.functions.invoke('loadSave', { walletAddress: auth.walletAddress });
                     if (res.data?.saveData) {
                         localStorage.setItem('cosmic_sloth_save', JSON.stringify(res.data.saveData));
-                        // After loading cloud save, check if needs profile name
-                        if (!res.data.saveData.hasSetProfileName) {
+                        // Reload save state and check profile name
+                        const cloudSave = res.data.saveData;
+                        setSave(prev => ({ ...prev, ...cloudSave }));
+                        if (!cloudSave.hasSetProfileName) {
                             setNeedsProfileName(true);
                         }
                     }
                 } catch (e) {
                     console.error('Failed to load cloud save:', e);
+                }
+            }
+            
+            // Fetch VIP level after auth established
+            if (auth?.walletAddress) {
+                try {
+                    const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress });
+                    if (vipRes.data?.vipLevel !== undefined) {
+                        const s = SaveManager.load();
+                        s.vipLevel = vipRes.data.vipLevel;
+                        SaveManager.save(s);
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch VIP level:', e);
                 }
             }
         };

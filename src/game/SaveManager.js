@@ -56,17 +56,10 @@ export const SaveManager = {
     }
   },
 
-  load: async () => {
-    // If cloud save is available and local is missing, try loading from cloud
+  load: () => {
+    // Sync cloud to local if needed (synchronously check, but don't block render)
     if (!localStorage.getItem('cosmic_sloth_save') && SaveManager._walletAddress) {
-      try {
-        const cloudRes = await base44.functions.invoke('loadSave', { walletAddress: SaveManager._walletAddress });
-        if (cloudRes.data?.saveData) {
-          localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudRes.data.saveData));
-        }
-      } catch (e) {
-        console.warn('[SaveManager] Could not load cloud save:', e);
-      }
+      // Cloud load already happened in initialize(), so just continue with local
     }
 
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
