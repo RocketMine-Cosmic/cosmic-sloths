@@ -253,8 +253,8 @@ export default function Hub({ isCarousel }) {
                                                                         >
                                                                             <option disabled>-- Select Skin --</option>
                                                                             {SKIN_COSMETICS.filter(s => s.charId === char.id).map(s => {
-                                                                                const unlockedSkins = save.unlockedSkins || [];
-                                                                                const isOwned = s.goldCost === 0 || unlockedSkins.includes(s.id);
+                                                                                                                 const unlockedSkins = save.unlockedCosmetics || ['default'];
+                                                                                                                 const isOwned = s.goldCost === 0 || unlockedSkins.includes(s.id);
                                                                                 if (!isOwned) return null;
                                                                                 return <option key={s.id} value={s.id}>{s.icon} {s.name}</option>;
                                                                             })}
