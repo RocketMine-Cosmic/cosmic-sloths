@@ -349,10 +349,13 @@ export default function Game() {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress || !skuId) return;
+        const { week_id, season_id } = getCurrentPeriodIds();
         base44.functions.invoke('purchaseSku', {
             skuId, quantity: 1, walletAddress,
             userId: walletAddress,
             playerName: authData?.username || walletAddress,
+            week_id,
+            season_id,
         }).catch(console.error);
     };
 
