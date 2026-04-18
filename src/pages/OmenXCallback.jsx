@@ -72,11 +72,10 @@ export default function OmenXCallback() {
                     setStatus('✓ Login successful! (closes in 15s)');
                     setTimeout(() => window.close(), 15000);
                 } else {
-                    // Mobile: opened as new tab — redirect back to main app
-                    setStatus('✓ Login successful! Returning...');
-                    setTimeout(() => {
-                        window.location.replace('/?omenx_login=1');
-                    }, 1000);
+                    // Mobile: opened as new tab — try to close it
+                    setStatus('✓ Login successful! You can close this tab.');
+                    // Try closing via window.close (works if opened via JS)
+                    setTimeout(() => window.close(), 1500);
                 }
             } catch (err) {
                 setStatus(`❌ ${err.message}`);

@@ -69,8 +69,9 @@ export function useOmenXBalance() {
         listeners.add(listener);
         consumerCount++;
 
-        // Always fetch on mount if we have a wallet (catches mobile redirect case)
-        fetchBalance().then(() => startSubscription());
+        // Fetch on mount only if no cached balance yet (catches fresh page load after mobile OAuth)
+        if (cachedBalance === null) fetchBalance().then(() => startSubscription());
+        else startSubscription();
 
         // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
