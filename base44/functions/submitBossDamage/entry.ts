@@ -1,29 +1,28 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.24';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const db = base44.asServiceRole;
 
         const body = await req.json();
-        const { damage, week_id } = body;
-        
-        const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
+        const { damage, week_id, walletAddress, playerName, userId } = body;
+
+        if (!damage || !week_id) return Response.json({ error: 'Missing damage or week_id' }, { status: 400 });
+
+        const bossRecords = await db.entities.GlobalBoss.filter({ week_id });
         if (bossRecords.length === 0) {
             return Response.json({ error: 'No boss active' }, { status: 404 });
         }
-        
+
         const boss = bossRecords[0];
-        
+
         let newHp = Math.max(0, boss.current_hp - damage);
-        let isDefeated = false;
-        
+
         let updates = { current_hp: newHp };
-        
+
         if (newHp === 0) {
             const nextLevel = (boss.level || 1) + 1;
-            // 50% more HP each level
             const nextMaxHp = Math.floor(boss.max_hp * 1.5);
             updates = {
                 level: nextLevel,
@@ -32,44 +31,47 @@ Deno.serve(async (req) => {
                 is_defeated: false
             };
             newHp = nextMaxHp;
-            isDefeated = false; // it is alive again!
         }
-        
-        await base44.asServiceRole.entities.GlobalBoss.update(boss.id, updates);
-        
-        const playerName = user.player_name || user.data?.player_name || user.full_name;
-        const eventType = (boss.current_hp - damage <= 0) ? 'kill' : 'damage';
-        const eventMessage = (boss.current_hp - damage <= 0) 
-            ? `${playerName} defeated the Level ${boss.level || 1} Boss!`
-            : `${playerName} dealt ${damage.toLocaleString()} damage!`;
 
-        await base44.asServiceRole.entities.GlobalBossEvent.create({
+        await db.entities.GlobalBoss.update(boss.id, updates);
+
+        const displayName = playerName || walletAddress || 'Unknown';
+        const eventType = (boss.current_hp - damage <= 0) ? 'kill' : 'damage';
+        const eventMessage = (boss.current_hp - damage <= 0)
+            ? `${displayName} defeated the Level ${boss.level || 1} Boss!`
+            : `${displayName} dealt ${damage.toLocaleString()} damage!`;
+
+        await db.entities.GlobalBossEvent.create({
             week_id,
-            player_name: playerName,
+            player_name: displayName,
             event_type: eventType,
-            damage: damage,
+            damage,
             level: boss.level || 1,
             message: eventMessage
         });
-        
-        const existingContributions = await base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id, user_id: user.id });
-        if (existingContributions.length > 0) {
-            const cont = existingContributions[0];
-            await base44.asServiceRole.entities.GlobalBossContribution.update(cont.id, {
-                damage: cont.damage + damage,
-                player_name: user.player_name || user.data?.player_name || user.full_name
-            });
-        } else {
-            await base44.asServiceRole.entities.GlobalBossContribution.create({
-                week_id,
-                user_id: user.id,
-                player_name: user.player_name || user.data?.player_name || user.full_name,
-                damage,
-                claimed: false
-            });
+
+        // Use walletAddress or userId as the unique contributor key
+        const contribUserId = userId || walletAddress;
+        if (contribUserId) {
+            const existingContributions = await db.entities.GlobalBossContribution.filter({ week_id, user_id: contribUserId });
+            if (existingContributions.length > 0) {
+                const cont = existingContributions[0];
+                await db.entities.GlobalBossContribution.update(cont.id, {
+                    damage: cont.damage + damage,
+                    player_name: displayName
+                });
+            } else {
+                await db.entities.GlobalBossContribution.create({
+                    week_id,
+                    user_id: contribUserId,
+                    player_name: displayName,
+                    damage,
+                    claimed: false
+                });
+            }
         }
-        
-        return Response.json({ status: 'success', boss: { ...boss, current_hp: newHp, is_defeated: isDefeated } });
+
+        return Response.json({ status: 'success', boss: { ...boss, current_hp: newHp } });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
