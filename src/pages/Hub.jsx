@@ -54,6 +54,7 @@ export default function Hub({ isCarousel }) {
     const [omenxAuth, setOmenxAuth] = useState(null);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
     const [needsProfileName, setNeedsProfileName] = useState(false);
+    const [syncReady, setSyncReady] = useState(false);
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -66,26 +67,20 @@ export default function Hub({ isCarousel }) {
             const auth = getOmenXAuth();
             setOmenxAuth(auth);
             
-            // On first login, pull cloud data and force profile name setup
             if (auth?.walletAddress) {
-                try {
-                    const res = await base44.functions.invoke('loadSave', { walletAddress: auth.walletAddress });
-                    if (res.data?.saveData) {
-                        localStorage.setItem('cosmic_sloth_save', JSON.stringify(res.data.saveData));
-                        // Reload save state and check profile name
-                        const cloudSave = res.data.saveData;
-                        setSave(prev => ({ ...prev, ...cloudSave }));
-                        if (!cloudSave.hasSetProfileName) {
-                            setNeedsProfileName(true);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Failed to load cloud save:', e);
+                // Initialize SaveManager first (pulls cloud sync)
+                await SaveManager.initialize();
+                
+                // Then load merged save
+                const mergedSave = SaveManager.load();
+                setSave(mergedSave);
+                
+                // Check profile name requirement
+                if (!mergedSave.hasSetProfileName) {
+                    setNeedsProfileName(true);
                 }
-            }
-            
-            // Fetch VIP level after auth established
-            if (auth?.walletAddress) {
+                
+                // Fetch and store VIP level
                 try {
                     const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress });
                     if (vipRes.data?.vipLevel !== undefined) {
@@ -96,6 +91,10 @@ export default function Hub({ isCarousel }) {
                 } catch (e) {
                     console.error('Failed to fetch VIP level:', e);
                 }
+                
+                setSyncReady(true);
+            } else {
+                setSyncReady(true);
             }
         };
         initOmenX();
@@ -162,6 +161,7 @@ export default function Hub({ isCarousel }) {
 
 
     // If not logged in with OmenX, show a gate (bypass in preview)
+    if (!syncReady) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
     if (!save) return <div>Loading...</div>;
     if (!omenxAuth && window.self === window.top) {
         return (
