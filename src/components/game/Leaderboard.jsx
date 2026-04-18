@@ -262,7 +262,7 @@ export default function Leaderboard() {
                                             </div>
                                             {isEligibleForReward ? (
                                                 <div className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-3 py-1.5 rounded-md font-bold text-sm flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.15)]" title="OMENX paid directly to your wallet">
-                                                    <OmenXIcon className="w-4 h-4" /> {rewardAmount.toLocaleString()} <span className="text-[10px] text-emerald-600 font-bold tracking-wider">OMENX</span>
+                                                    <OmenXIcon className="w-4 h-4" /> {rewardAmount.toFixed(2)} <span className="text-[10px] text-emerald-600 font-bold tracking-wider">OMENX</span>
                                                 </div>
                                             ) : (
                                                 <div className="hidden sm:block w-[80px]"></div>
