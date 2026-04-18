@@ -14,7 +14,6 @@ export default function Leaderboard() {
     const [view, setView] = useState('weekly'); // 'weekly', 'seasonal', 'all_time', 'endless', or 'squads'
     const [timeLeft, setTimeLeft] = useState('');
     const [currentPool, setCurrentPool] = useState(0);
-    const [debugInfo, setDebugInfo] = useState('');
 
     const getWeeklyRewardPercentage = (rank) => {
         if (rank === 1) return 0.10;
@@ -89,8 +88,6 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchScores();
-        const interval = setInterval(fetchScores, 5000); // Refresh every 5s for testing
-        return () => clearInterval(interval);
     }, [view]);
 
     const fetchScores = async () => {
@@ -115,15 +112,12 @@ export default function Leaderboard() {
                 const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
                 const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
                 setCurrentPool(poolAmount);
-                setDebugInfo(`Week: ${week_id} | Pool: ${poolAmount} OMENX | Records: ${pools.length}`);
             } else if (view === 'seasonal') {
                 const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
                 const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
                 setCurrentPool(poolAmount);
-                setDebugInfo(`Season: ${season_id} | Pool: ${poolAmount} OMENX | Records: ${pools.length}`);
             } else {
                 setCurrentPool(0);
-                setDebugInfo('');
             }
             
             // Deduplicate strictly by wallet_address (primary), then user_id fallback
@@ -186,13 +180,6 @@ export default function Leaderboard() {
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <button 
-                        onClick={() => fetchScores()}
-                        className="px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base bg-yellow-700 text-white hover:bg-yellow-600 transition-colors"
-                        title="Force refresh leaderboard data"
-                    >
-                        🔄 Refresh
-                    </button>
-                    <button 
                         onClick={() => setView('weekly')}
                         className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'weekly' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                     >
@@ -227,11 +214,6 @@ export default function Leaderboard() {
             </div>
 
             <div className="flex-1 bg-[#0b0416]/40 rounded-xl overflow-hidden border-0 flex flex-col">
-                {debugInfo && (
-                    <div className="bg-slate-900/80 border-b border-slate-700 p-2 text-xs text-slate-400 font-mono">
-                        {debugInfo}
-                    </div>
-                )}
                 <div className="flex-1 overflow-y-auto p-2 md:p-4">
                     <div className="space-y-3">
                     {loading ? (
