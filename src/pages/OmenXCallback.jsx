@@ -45,7 +45,8 @@ export default function OmenXCallback() {
 
                 // Show raw fields so we can see what the API actually returns
                 const rawKeys = tokenData._raw ? Object.keys(tokenData._raw).join(', ') : 'n/a';
-                setDebugInfo(`Raw API keys: [${rawKeys}] | wallet: ${tokenData.walletAddress || 'MISSING'} | user: ${tokenData.username || 'MISSING'}`);
+                const userKeys = tokenData._raw?.user ? Object.keys(tokenData._raw.user).join(', ') : 'n/a';
+                setDebugInfo(`Raw keys: [${rawKeys}] | user obj keys: [${userKeys}] | wallet: ${tokenData.walletAddress || 'MISSING'} | user: ${tokenData.username || 'MISSING'}`);
 
                 const authData = {
                     accessToken: tokenData.accessToken,
