@@ -65,6 +65,8 @@ Deno.serve(async (req) => {
         // Log the spend and update pools
         const playerName = playerNameParam || walletAddress;
 
+        console.log(`[purchaseSku] Creating TokenSpendLog: week=${week_id}, season=${season_id}, amount=${totalAmount}`);
+        
         await db.entities.TokenSpendLog.create({
             user_id: userId || walletAddress,
             player_name: playerName,
@@ -75,22 +77,32 @@ Deno.serve(async (req) => {
         });
 
         // Update weekly pool
+        console.log(`[purchaseSku] Querying TokenPool for week=${week_id}, type=weekly`);
         const weeklyPools = await db.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+        console.log(`[purchaseSku] Found ${weeklyPools.length} weekly pools`);
+        
         if (weeklyPools.length > 0) {
+            console.log(`[purchaseSku] Updating existing weekly pool ${weeklyPools[0].id}`);
             await db.entities.TokenPool.update(weeklyPools[0].id, { total_spent: weeklyPools[0].total_spent + totalAmount });
         } else {
+            console.log(`[purchaseSku] Creating new weekly pool for ${week_id}`);
             await db.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false });
         }
 
         // Update seasonal pool
+        console.log(`[purchaseSku] Querying TokenPool for season=${season_id}, type=seasonal`);
         const seasonalPools = await db.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+        console.log(`[purchaseSku] Found ${seasonalPools.length} seasonal pools`);
+        
         if (seasonalPools.length > 0) {
+            console.log(`[purchaseSku] Updating existing seasonal pool ${seasonalPools[0].id}`);
             await db.entities.TokenPool.update(seasonalPools[0].id, { total_spent: seasonalPools[0].total_spent + totalAmount });
         } else {
+            console.log(`[purchaseSku] Creating new seasonal pool for ${season_id}`);
             await db.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false });
         }
 
-        console.log(`[purchaseSku] Pool updated: +${totalAmount} to week=${week_id} season=${season_id}`);
+        console.log(`[purchaseSku] Pool sync complete: week=${week_id} season=${season_id} amount=${totalAmount}`);
 
         return Response.json({ success: true, purchase: purchaseData, amount: totalAmount });
     } catch (error) {
