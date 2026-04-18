@@ -7,6 +7,7 @@ let cachedBalance = null;
 let listeners = new Set();
 let subscription = null;
 let consumerCount = 0;
+let fetchInProgress = false;
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
@@ -17,12 +18,14 @@ function getAuthData() {
 }
 
 async function fetchBalance() {
+    if (fetchInProgress) return;
     const auth = getAuthData();
     if (!auth?.walletAddress) {
         cachedBalance = null;
         notify();
         return;
     }
+    fetchInProgress = true;
     try {
         const res = await base44.functions.invoke('getOmenXBalance', {
             walletAddress: auth.walletAddress,
@@ -30,9 +33,10 @@ async function fetchBalance() {
         cachedBalance = res.data?.balance ?? null;
         notify();
     } catch (e) {
-        console.error('[useOmenXBalance] fetch failed:', e);
         cachedBalance = null;
         notify();
+    } finally {
+        fetchInProgress = false;
     }
 }
 
@@ -51,7 +55,6 @@ function startSubscription() {
             onBalance: fetchBalance,
         });
     } catch (e) {
-        console.error('[useOmenXBalance] subscription failed:', e);
         fetchBalance();
     }
 }

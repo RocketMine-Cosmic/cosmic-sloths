@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Processing login...');
-    const [debugInfo, setDebugInfo] = useState('');
 
     useLayoutEffect(() => {
         if (typeof window === 'undefined') return;
@@ -19,12 +18,6 @@ export default function OmenXCallback() {
                     return;
                 }
 
-                // Grab PKCE code_verifier - try all known keys
-                const allSessionKeys = Object.keys(sessionStorage);
-                const allLocalKeys = Object.keys(localStorage).filter(k => !k.includes('cosmic_sloth'));
-                setDebugInfo(`SS keys: [${allSessionKeys.join(', ')}] | LS keys: [${allLocalKeys.join(', ')}]`);
-
-                // The SDK stores the PKCE verifier under "omenx_pkce_<state>"
                 const state = params.get('state');
                 const codeVerifier = (state && sessionStorage.getItem(`omenx_pkce_${state}`)) ||
                                      Object.keys(sessionStorage)
@@ -32,7 +25,6 @@ export default function OmenXCallback() {
                                          .map(k => sessionStorage.getItem(k))[0] ||
                                      null;
 
-                // Use backend function to exchange code (avoids CORS)
                 const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier });
                 const tokenData = res.data;
 
@@ -43,11 +35,6 @@ export default function OmenXCallback() {
                     return;
                 }
 
-                // Show raw fields so we can see what the API actually returns
-                const rawKeys = tokenData._raw ? Object.keys(tokenData._raw).join(', ') : 'n/a';
-                const userKeys = tokenData._raw?.user ? Object.keys(tokenData._raw.user).join(', ') : 'n/a';
-                setDebugInfo(`Raw keys: [${rawKeys}] | user obj keys: [${userKeys}] | wallet: ${tokenData.walletAddress || 'MISSING'} | user: ${tokenData.username || 'MISSING'}`);
-
                 const authData = {
                     accessToken: tokenData.accessToken,
                     refreshToken: tokenData.refreshToken,
@@ -56,11 +43,8 @@ export default function OmenXCallback() {
                     username: tokenData.username,
                 };
 
-                // Write to localStorage
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
-                console.log('[OmenX callback] ✓ Auth data saved');
 
-                // Try to notify parent window (works in desktop popup)
                 if (window.opener) {
                     try {
                         window.opener.dispatchEvent(new StorageEvent('storage', {
@@ -69,12 +53,10 @@ export default function OmenXCallback() {
                             storageArea: localStorage,
                         }));
                     } catch(e) { /* cross-origin, ignore */ }
-                    setStatus('✓ Login successful! (closes in 15s)');
+                    setStatus('✓ Login successful!');
                     setTimeout(() => window.close(), 15000);
                 } else {
-                    // Mobile: opened as new tab — try to close it
                     setStatus('✓ Login successful! You can close this tab.');
-                    // Try closing via window.close (works if opened via JS)
                     setTimeout(() => window.close(), 1500);
                 }
             } catch (err) {
@@ -91,9 +73,6 @@ export default function OmenXCallback() {
             <div className="text-center text-purple-300 font-mono px-6">
                 <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 <div className="text-sm tracking-widest uppercase">{status}</div>
-                {debugInfo && (
-                    <div className="mt-4 text-[10px] text-purple-400/70 max-w-xs break-all text-left">{debugInfo}</div>
-                )}
             </div>
         </div>
     );
