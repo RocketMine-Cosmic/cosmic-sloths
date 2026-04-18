@@ -10,8 +10,15 @@ export function getOmenXUser() {
         return {
             walletAddress: authData.walletAddress,
             username: authData.username,
-            full_name: authData.username || 'Player',
-            player_name: authData.username || 'Player',
+            full_name: authData.username || authData.player_name || 'Player',
+            player_name: authData.player_name || authData.username || 'Player',
+            pilot_icon: authData.pilot_icon || '🦥',
+            // Expose nested data fields at top level for compatibility
+            data: {
+                player_name: authData.player_name || authData.username || 'Player',
+                player_title: authData.player_title || '',
+                pilot_icon: authData.pilot_icon || '🦥',
+            }
         };
     } catch {
         return null;

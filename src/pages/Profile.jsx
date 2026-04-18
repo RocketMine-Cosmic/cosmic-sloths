@@ -53,8 +53,9 @@ export default function Profile({ isCarousel }) {
                 setNewName(displayName || '');
                 setNewTitle(me?.data?.player_title || '');
 
-                if (me && displayName) {
-                     const topScore = await base44.entities.RunScore.filter({ player_name: displayName }, '-score', 1);
+                if (me && me.walletAddress) {
+                     // Fetch best score by wallet address (cross-device safe)
+                     const topScore = await base44.entities.RunScore.filter({ wallet_address: me.walletAddress }, '-score', 1);
                      const maxScore = topScore.length > 0 ? topScore[0].score : 0;
                      const save = SaveManager.load();
                      const enemyKills = save.enemyKills || {};

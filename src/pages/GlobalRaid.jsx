@@ -71,8 +71,11 @@ export default function GlobalRaid({ isCarousel }) {
                 if (res.data.boss) {
                     setWorldBossData(res.data.boss);
                     const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                const contribs = await base44.entities.GlobalBossContribution.filter({ week_id, user_id: authData?.walletAddress });
-                    if (contribs.length > 0) setWorldBossContribution(contribs[0]);
+                    // Fetch own contribution via backend to avoid RLS issues
+                    if (authData?.walletAddress) {
+                        const contribRes = await base44.functions.invoke('getMyBossContribution', { walletAddress: authData.walletAddress });
+                        if (contribRes.data?.contribution) setWorldBossContribution(contribRes.data.contribution);
+                    }
                     const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 10);
                     setTopContributors(allContribs);
                     const events = await base44.entities.GlobalBossEvent.filter({ week_id }, '-created_date', 15);
@@ -87,7 +90,8 @@ export default function GlobalRaid({ isCarousel }) {
         if (!worldBossData || claimingLevel !== null) return;
         setClaimingLevel(level);
         try {
-            const res = await base44.functions.invoke('claimBossReward', { claim_level: level });
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            const res = await base44.functions.invoke('claimBossReward', { claim_level: level, walletAddress: authData?.walletAddress });
             if (res.data.status === 'success') {
                 const { type, id } = res.data.reward;
                 const currentSave = SaveManager.load();

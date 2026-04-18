@@ -237,7 +237,7 @@ export default function Game() {
                 
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: omenxAuth?.username || omenxAuth?.walletAddress })
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: omenxAuth?.player_name || omenxAuth?.username || omenxAuth?.walletAddress, walletAddress: omenxAuth?.walletAddress })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             },
@@ -287,7 +287,7 @@ export default function Game() {
                 
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: omenxAuth?.username || omenxAuth?.walletAddress })
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: omenxAuth?.player_name || omenxAuth?.username || omenxAuth?.walletAddress, walletAddress: omenxAuth?.walletAddress })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }
