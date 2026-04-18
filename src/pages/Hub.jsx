@@ -281,8 +281,8 @@ export default function Hub({ isCarousel }) {
                                                                         >
                                                                             <option disabled>-- Select Skin --</option>
                                                                             {SKIN_COSMETICS.filter(s => s.charId === char.id).map(s => {
-                                                                                                                 const unlockedSkins = save.unlockedCosmetics || ['default'];
-                                                                                                                 const isOwned = s.goldCost === 0 || unlockedSkins.includes(s.id);
+                                                                                                                 const unlockedSkins = save?.unlockedCosmetics ?? ['default'];
+                                                                                                                 const isOwned = s.goldCost === 0 || (Array.isArray(unlockedSkins) && unlockedSkins.includes(s.id));
                                                                                 if (!isOwned) return null;
                                                                                 return <option key={s.id} value={s.id}>{s.icon} {s.name}</option>;
                                                                             })}
@@ -301,8 +301,8 @@ export default function Hub({ isCarousel }) {
                                                                         >
                                                                             <option disabled>-- Select Trail --</option>
                                                                             {TRAIL_COSMETICS.map(t => {
-                                                                                const unlockedTrails = save.unlockedCosmetics || ['default'];
-                                                                                const isOwned = unlockedTrails.includes(t.id);
+                                                                                 const unlockedTrails = save?.unlockedCosmetics ?? ['default'];
+                                                                                 const isOwned = Array.isArray(unlockedTrails) && unlockedTrails.includes(t.id);
                                                                                 if (!isOwned) return null;
                                                                                 return <option key={t.id} value={t.id}>{t.icon} {t.name}</option>;
                                                                             })}
