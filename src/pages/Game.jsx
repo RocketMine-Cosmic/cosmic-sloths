@@ -153,11 +153,12 @@ export default function Game() {
                 }
 
                 // Route through backend function — all Base44 entity operations happen server-side
-                await base44.functions.invoke('saveScore', {
+                const res = await base44.functions.invoke('saveScore', {
                     scoreData,
                     walletAddress,
                     squadStats
                 });
+                console.log('[saveScore] Response:', res?.data);
             } catch (e) {
                 console.error('saveScore: FAILED:', e?.message || e);
             }
