@@ -11,9 +11,7 @@ export default function CurrencyHeader() {
 
     const formatBalance = (bal) => {
         if (bal === null || bal === undefined) return '…';
-        if (bal >= 1_000_000) return `${(bal / 1_000_000).toFixed(1)}M`;
-        if (bal >= 1_000) return `${(bal / 1_000).toFixed(1)}K`;
-        return bal.toLocaleString();
+        return bal.toFixed(2);
     };
 
     return (
