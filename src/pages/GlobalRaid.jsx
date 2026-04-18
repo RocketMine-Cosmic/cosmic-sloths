@@ -13,6 +13,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import { CHARACTERS } from '../game/Constants';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { getCurrentPeriodIds } from '@/lib/periodIds';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -125,14 +126,11 @@ export default function GlobalRaid({ isCarousel }) {
             return;
         }
 
-        const week_id = moment().format('YYYY-[W]ww');
-        const seasonNum = Math.floor(moment().week() / 4) + 1;
-        const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
         try {
             if (!authData?.walletAddress) throw new Error('No wallet address');
-            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, week_id, season_id });
+            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
             if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
 
             // Only grant runs after confirmed charge

@@ -20,9 +20,17 @@ Deno.serve(async (req) => {
             apiBaseUrl,
         });
 
-        const currentWeekId = moment().format('YYYY-[W]ww');
-        const currentSeasonNum = Math.floor(moment().week() / 4) + 1;
-        const currentSeasonId = `${moment().format('YYYY')}-S${currentSeasonNum}`;
+        // Canonical period IDs — must match purchaseSku exactly
+        const now = new Date();
+        const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+        const startOfWeek = new Date(startOfYear);
+        startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+        const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+        const weekNum = String(isoWeek).padStart(2, '0');
+        const year = now.getUTCFullYear();
+        const currentWeekId = `${year}-W${weekNum}`;
+        const currentSeasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+        const currentSeasonId = `${year}-S${currentSeasonNum}`;
 
         const undistributedPools = await base44.asServiceRole.entities.TokenPool.filter({ distributed: false });
 

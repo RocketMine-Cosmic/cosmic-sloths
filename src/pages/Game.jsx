@@ -15,6 +15,7 @@ import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 import { getOmenXUser } from '@/lib/omenxUser';
+import { getCurrentPeriodIds } from '@/lib/periodIds';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -131,10 +132,7 @@ export default function Game() {
                 const bulletHellMult = (currentSaveForScore.bossModifiers && currentSaveForScore.bossModifiers.bullet_hell) ? 1.3 : 1.0;
                 const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
 
-                const week_id = moment().format('YYYY-[W]ww');
-                const weekNum = moment().week();
-                const seasonNum = Math.floor(weekNum / 4) + 1;
-                const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+                const { week_id, season_id } = getCurrentPeriodIds();
                 const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
 
                 // Determine which leaderboard bucket this score belongs to
@@ -260,9 +258,9 @@ export default function Game() {
                 saveScore(stats, false);
                 
                 if (stats.worldBossDamage > 0) {
-                    const week_id = moment().format('YYYY-[W]ww');
+                    const { week_id: bossWeekId } = getCurrentPeriodIds();
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, week_id, walletAddress: omenxAuth?.walletAddress, userId: omenxAuth?.walletAddress, playerName: omenxAuth?.username || omenxAuth?.walletAddress })
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, week_id: bossWeekId, walletAddress: omenxAuth?.walletAddress, userId: omenxAuth?.walletAddress, playerName: omenxAuth?.username || omenxAuth?.walletAddress })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             },
@@ -311,9 +309,9 @@ export default function Game() {
                 saveScore(stats, true);
                 
                 if (stats.worldBossDamage > 0) {
-                    const week_id = moment().format('YYYY-[W]ww');
+                    const { week_id: bossWeekId2 } = getCurrentPeriodIds();
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, week_id, walletAddress: omenxAuth?.walletAddress, userId: omenxAuth?.walletAddress, playerName: omenxAuth?.username || omenxAuth?.walletAddress })
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, week_id: bossWeekId2, walletAddress: omenxAuth?.walletAddress, userId: omenxAuth?.walletAddress, playerName: omenxAuth?.username || omenxAuth?.walletAddress })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }
@@ -366,12 +364,12 @@ export default function Game() {
         return () => clearInterval(interval);
     }, []);
 
-    const purchaseSku = (skuId, amount, week_id, season_id) => {
+    const purchaseSku = (skuId) => {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress || !skuId) return;
         base44.functions.invoke('purchaseSku', {
-            skuId, quantity: 1, walletAddress, week_id, season_id,
+            skuId, quantity: 1, walletAddress,
             userId: walletAddress,
             playerName: authData?.username || walletAddress,
         }).catch(console.error);
@@ -387,10 +385,7 @@ export default function Game() {
     const handleReroll = () => {
         const REROLL_COST = 2;
         if ((omenxBalance ?? 0) >= REROLL_COST) {
-            const week_id = moment().format('YYYY-[W]ww');
-            const seasonNum = Math.floor(moment().week() / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            purchaseSku(IN_GAME_SKUS.reroll, REROLL_COST, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.reroll);
             refreshOmenX();
             if (engineRef.current) {
                 engineRef.current.rerollChoices();
@@ -401,10 +396,7 @@ export default function Game() {
     const handleBanish = (choice) => {
         const BANISH_COST = 1;
         if ((omenxBalance ?? 0) >= BANISH_COST) {
-            const week_id = moment().format('YYYY-[W]ww');
-            const seasonNum = Math.floor(moment().week() / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            purchaseSku(IN_GAME_SKUS.banish, BANISH_COST, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.banish);
             refreshOmenX();
             if (engineRef.current) {
                 engineRef.current.banishUpgrade(choice.id);
@@ -421,10 +413,7 @@ export default function Game() {
 
     const handleSquadUltimate = () => {
         if ((omenxBalance ?? 0) >= 4 && engineRef.current && !engineRef.current.isPaused) {
-            const week_id = moment().format('YYYY-[W]ww');
-            const seasonNum = Math.floor(moment().week() / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            purchaseSku(IN_GAME_SKUS.squadUltimate, 4, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.squadUltimate);
             refreshOmenX();
             engineRef.current.triggerSquadUltimate();
         }
@@ -446,10 +435,7 @@ export default function Game() {
 
     const handleRevive = () => {
         if ((omenxBalance ?? 0) >= 4) {
-            const week_id = moment().format('YYYY-[W]ww');
-            const seasonNum = Math.floor(moment().week() / 4) + 1;
-            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-            purchaseSku(IN_GAME_SKUS.revive, 4, week_id, season_id);
+            purchaseSku(IN_GAME_SKUS.revive);
             refreshOmenX();
             if (engineRef.current) {
                 engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;

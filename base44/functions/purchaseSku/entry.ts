@@ -1,13 +1,33 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
+// Canonical period ID computation — must match distributeRewards exactly
+function getCurrentPeriodIds() {
+    const now = new Date();
+    const startOfYear = new Date(now.getUTCFullYear(), 0, 1);
+    const dayOfYear = Math.floor((now - startOfYear) / 86400000);
+    // ISO week number
+    const startOfWeek = new Date(startOfYear);
+    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+    const weekNum = String(isoWeek).padStart(2, '0');
+    const year = now.getUTCFullYear();
+    const week_id = `${year}-W${weekNum}`;
+    // Season: 4 quarters of 13 weeks
+    const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+    const season_id = `${year}-S${seasonNum}`;
+    return { week_id, season_id };
+}
+
 Deno.serve(async (req) => {
     try {
-        const { skuId, quantity = 1, walletAddress, week_id, season_id, userId, playerName: playerNameParam } = await req.json();
+        const { skuId, quantity = 1, walletAddress, userId, playerName: playerNameParam } = await req.json();
 
         if (!skuId) return Response.json({ error: 'Missing skuId' }, { status: 400 });
         if (!walletAddress) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
-        if (!week_id || !season_id) return Response.json({ error: 'Missing week_id or season_id' }, { status: 400 });
+
+        // Compute period IDs server-side — never trust client values
+        const { week_id, season_id } = getCurrentPeriodIds();
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
