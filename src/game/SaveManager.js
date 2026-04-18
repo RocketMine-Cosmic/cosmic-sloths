@@ -17,6 +17,17 @@ export const SaveManager = {
       }
       SaveManager._walletAddress = omenxAuth.walletAddress;
       console.log('[SaveManager] Initialized for wallet', SaveManager._walletAddress);
+      
+      // Load cloud save if exists (cross-device sync)
+      try {
+        const cloudRes = await base44.functions.invoke('loadSave', { walletAddress: SaveManager._walletAddress });
+        if (cloudRes.data?.saveData) {
+          console.log('[SaveManager] Cloud save found, syncing to local');
+          localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudRes.data.saveData));
+        }
+      } catch (e) {
+        console.warn('[SaveManager] Could not load cloud save:', e);
+      }
     } catch (e) {
       console.error('[SaveManager] Failed to initialize:', e);
     }
@@ -45,7 +56,18 @@ export const SaveManager = {
     }
   },
 
-  load: () => {
+  load: async () => {
+    // If cloud save is available and local is missing, try loading from cloud
+    if (!localStorage.getItem('cosmic_sloth_save') && SaveManager._walletAddress) {
+      try {
+        const cloudRes = await base44.functions.invoke('loadSave', { walletAddress: SaveManager._walletAddress });
+        if (cloudRes.data?.saveData) {
+          localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudRes.data.saveData));
+        }
+      } catch (e) {
+        console.warn('[SaveManager] Could not load cloud save:', e);
+      }
+    }
 
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
     const currentWeek = moment().format('YYYY-[W]ww');
