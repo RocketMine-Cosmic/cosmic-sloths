@@ -26,15 +26,14 @@ export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const initialSave = SaveManager.load() || {};
     const [save, setSave] = useState({
-        unlockedCharacters: [],
-        unlockedArenasByCharacter: {},
-        unlockedCosmetics: ['default'],
-        cosmetics: {},
-        gold: 0,
-        sessionBuffs: {},
-        characterKills: {},
-        ...initialSave,
-        unlockedCosmetics: initialSave.unlockedCosmetics || ['default']
+        unlockedCharacters: initialSave.unlockedCharacters || [],
+        unlockedArenasByCharacter: initialSave.unlockedArenasByCharacter || {},
+        unlockedCosmetics: initialSave.unlockedCosmetics || ['default'],
+        cosmetics: initialSave.cosmetics || {},
+        gold: initialSave.gold || 0,
+        sessionBuffs: initialSave.sessionBuffs || {},
+        characterKills: initialSave.characterKills || {},
+        ...initialSave
     });
     const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
     const [showNameModal, setShowNameModal] = useState(false);
