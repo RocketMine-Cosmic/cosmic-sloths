@@ -26,7 +26,7 @@ export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const initialSave = SaveManager.load() || {};
     const safeInitialSave = {
-        unlockedCharacters: initialSave?.unlockedCharacters ?? [],
+        unlockedCharacters: initialSave?.unlockedCharacters ?? ['neobyte'],
         unlockedArenasByCharacter: initialSave?.unlockedArenasByCharacter ?? {},
         unlockedCosmetics: (initialSave?.unlockedCosmetics?.length ?? 0) > 0 ? initialSave.unlockedCosmetics : ['default'],
         cosmetics: initialSave?.cosmetics ?? {},
