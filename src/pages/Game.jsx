@@ -442,8 +442,19 @@ export default function Game() {
         }
     };
 
+    React.useEffect(() => {
+        // Disable pull-to-refresh on mobile
+        const preventPullToRefresh = (e) => {
+            if (e.touches && e.touches.length > 0 && window.scrollY === 0) {
+                e.preventDefault();
+            }
+        };
+        document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
+        return () => document.removeEventListener('touchmove', preventPullToRefresh);
+    }, []);
+
     return (
-        <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none">
+        <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none" style={{ overscrollBehavior: 'none' }}>
             <canvas 
                 ref={canvasRef} 
                 className="absolute inset-0"
