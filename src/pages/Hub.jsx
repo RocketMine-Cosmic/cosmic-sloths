@@ -386,7 +386,7 @@ export default function Hub({ isCarousel }) {
                                                     <h4 className="text-lg md:text-xl font-bold text-white mb-0.5 md:mb-1 drop-shadow-md">
                                                         {ARENAS.find(a => a.id === selectedArena)?.name}
                                                     </h4>
-                                                    {!(save.unlockedArenasByCharacter[selectedChar] || ['station']).includes(selectedArena) ? (
+                                                    {!((save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).includes(selectedArena)) ? (
                                                         <span className="inline-flex items-center gap-1 text-rose-300 font-black tracking-widest text-[9px] md:text-[10px] bg-rose-950/60 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-rose-500/50 backdrop-blur-sm shadow-[0_0_10px_rgba(244,63,94,0.2)]">
                                                             🔒 LOCKED
                                                         </span>
@@ -397,7 +397,7 @@ export default function Hub({ isCarousel }) {
                                                             </span>
                                                             {(() => {
                                                                 const currentIndex = ARENAS.findIndex(a => a.id === selectedArena);
-                                                                const unlockedCount = (save.unlockedArenasByCharacter[selectedChar] || ['station']).length;
+                                                                const unlockedCount = (save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).length;
                                                                 const diff = Math.max(0, unlockedCount - 1 - currentIndex);
                                                                 const penalty = diff * 10;
                                                                 if (penalty > 0) {
