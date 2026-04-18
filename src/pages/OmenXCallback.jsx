@@ -18,14 +18,29 @@ export default function OmenXCallback() {
                     return;
                 }
 
+                // Grab PKCE code_verifier stored by the SDK during authorize step
+                // Log all storage keys to find the right one
+                const allSessionKeys = Object.keys(sessionStorage);
+                const allLocalKeys = Object.keys(localStorage);
+                console.log('[OmenX callback] sessionStorage keys:', allSessionKeys);
+                console.log('[OmenX callback] localStorage keys:', allLocalKeys);
+
+                const codeVerifier = sessionStorage.getItem('omenx_code_verifier') ||
+                                     sessionStorage.getItem('pkce_code_verifier') ||
+                                     sessionStorage.getItem('code_verifier') ||
+                                     localStorage.getItem('omenx_code_verifier') ||
+                                     localStorage.getItem('pkce_code_verifier') ||
+                                     localStorage.getItem('code_verifier');
+                console.log('[OmenX callback] codeVerifier found:', codeVerifier ? 'YES' : 'NO', codeVerifier?.substring(0, 20));
+
                 // Use backend function to exchange code (avoids CORS)
-                const res = await base44.functions.invoke('exchangeOmenXCode', { code });
+                const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier });
                 const tokenData = res.data;
 
                 if (!tokenData || tokenData.error) {
-                    console.error('[OmenX callback] Exchange failed:', tokenData?.error);
-                    setStatus('❌ Login failed');
-                    setTimeout(() => window.close(), 2000);
+                    console.error('[OmenX callback] Exchange failed:', tokenData?.error, tokenData?.details);
+                    setStatus(`❌ Login failed: ${tokenData?.details?.error?.message || tokenData?.error || 'unknown'}`);
+                    setTimeout(() => window.close(), 4000);
                     return;
                 }
 

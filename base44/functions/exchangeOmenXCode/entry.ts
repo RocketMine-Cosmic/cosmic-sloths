@@ -1,6 +1,6 @@
 Deno.serve(async (req) => {
   try {
-    const { code } = await req.json();
+    const { code, codeVerifier } = await req.json();
 
     if (!code) {
       return Response.json({ error: 'No code provided' }, { status: 400 });
@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
         redirect_uri: redirectUri,
         client_id: 'cosmic-sloths',
         client_secret: clientSecret,
+        ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
       }),
     });
 
