@@ -1233,7 +1233,7 @@ export class GameEngine {
                 }
                 
                 const progress = this.arena?.duration === Infinity ? this.time / 300 : Math.min(1, this.time / (this.arena?.duration || 300));
-                xpValue *= (1.0 + (progress * 2.0)); // Scale XP heavily in late game
+                xpValue *= (1.0 + Math.min(1.0, progress * 1.5)); // Cap XP multiplier at 2.5x max
                 
                 this.pickups.push({ x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc' });
                 
@@ -1268,7 +1268,8 @@ export class GameEngine {
                 } else {
                     const baseGoldChance = this.arena.duration === Infinity ? 0.30 : 0.50;
                     if (Math.random() < baseGoldChance + (this.player.luck * 0.02)) {
-                        const goldValue = 5 + Math.floor(this.time / 30) * 2;
+                        const maxGoldValue = 50; // Cap gold per drop
+                        const goldValue = Math.min(maxGoldValue, 5 + Math.floor(this.time / 60) * 2); // Slower scaling
                         const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 2) : 1;
                         const goldCount = e.isElite ? 2 : 1;
                         for (let gi = 0; gi < goldCount; gi++) {
@@ -1833,6 +1834,11 @@ export class GameEngine {
 
     applyUpgrade(upgrade) {
         if (upgrade.type === 'passive') {
+            // Prevent stacking same passive beyond max level (default: 5)
+            const maxLevel = 5;
+            const existingCount = this.player.passives.filter(p => p.id === upgrade.id).length;
+            if (existingCount >= maxLevel) return; // Don't apply if at max level
+            
             this.player[upgrade.stat] += upgrade.value;
             if (upgrade.stat === 'maxHp') {
                 this.player.hp += upgrade.value;
