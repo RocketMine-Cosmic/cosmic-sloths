@@ -72,8 +72,7 @@ export default function OmenXCallback() {
                         maxTimeSurvived: 0,
                         totalGoldEarned: 0,
                         maxLevelReached: 0,
-                        totalKills: 0,
-                        pilotName: ''
+                        totalKills: 0
                     };
                     localStorage.setItem('cosmic_sloth_save', JSON.stringify(initialSave));
                     localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: '', playerTitle: '', pilotIcon: '🦥' }));

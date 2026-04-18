@@ -71,17 +71,14 @@ export default function Hub({ isCarousel }) {
                     const res = await base44.functions.invoke('loadSave', { walletAddress: auth.walletAddress });
                     if (res.data?.saveData) {
                         localStorage.setItem('cosmic_sloth_save', JSON.stringify(res.data.saveData));
+                        // After loading cloud save, check if needs profile name
+                        if (!res.data.saveData.hasSetProfileName) {
+                            setNeedsProfileName(true);
+                        }
                     }
                 } catch (e) {
                     console.error('Failed to load cloud save:', e);
                 }
-            }
-            
-            // Check local save for profile name requirement
-            const localSave = SaveManager.load();
-            if (!localSave.hasSetProfileName) {
-                setPendingLaunch(null);
-                setTimeout(() => setPendingLaunch('profile-name'), 100);
             }
         };
         initOmenX();
