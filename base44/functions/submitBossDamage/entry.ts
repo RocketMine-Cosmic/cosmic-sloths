@@ -1,12 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-function getCurrentWeekId() {
+// Canonical period ID calculation — must match purchaseSku, saveScore, and lib/periodIds.js exactly
+function getCurrentPeriodIds() {
     const now = new Date();
-    const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+    const year = now.getUTCFullYear();
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
     const startOfWeek = new Date(startOfYear);
     startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
     const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    return `${now.getUTCFullYear()}-W${String(isoWeek).padStart(2, '0')}`;
+    const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+    const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+    const season_id = `${year}-S${seasonNum}`;
+    return { week_id, season_id };
 }
 
 const MAX_DAMAGE_PER_SUBMISSION = 1_000_000;
@@ -23,7 +28,7 @@ Deno.serve(async (req) => {
         if (typeof damage !== 'number' || damage <= 0) return Response.json({ error: 'Invalid damage' }, { status: 400 });
 
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);
-        const week_id = getCurrentWeekId();
+        const { week_id } = getCurrentPeriodIds();
 
         const bossRecords = await db.entities.GlobalBoss.filter({ week_id });
         if (bossRecords.length === 0) return Response.json({ error: 'No boss active' }, { status: 404 });

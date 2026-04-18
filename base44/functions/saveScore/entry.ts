@@ -1,9 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Canonical period ID calculation — must match purchaseSku and lib/periodIds.js exactly
+function getCurrentPeriodIds() {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const startOfWeek = new Date(startOfYear);
+    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+    const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+    const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+    const season_id = `${year}-S${seasonNum}`;
+    return { week_id, season_id };
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const { scoreData, walletAddress, squadStats } = await req.json();
+        
+        // Override week_id and season_id with canonical server-side calculation
+        const { week_id, season_id } = getCurrentPeriodIds();
+        scoreData.week_id = week_id;
+        scoreData.season_id = season_id;
 
         if (!scoreData || !walletAddress) {
             return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
