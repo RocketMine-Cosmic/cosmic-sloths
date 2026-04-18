@@ -102,6 +102,7 @@ export default function Hub({ isCarousel }) {
 
 
     // If not logged in with OmenX, show a gate (bypass in preview)
+    if (!save) return <div>Loading...</div>;
     if (!omenxAuth && window.self === window.top) {
         return (
             <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 flex flex-col items-center justify-center gap-6 p-6 font-sans`}>
