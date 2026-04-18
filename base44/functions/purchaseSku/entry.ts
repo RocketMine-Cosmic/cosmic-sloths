@@ -3,8 +3,6 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-
         const { skuId, quantity = 1, walletAddress, week_id, season_id, amount, userId, playerName: playerNameParam } = await req.json();
 
         if (!skuId) return Response.json({ error: 'Missing skuId' }, { status: 400 });
@@ -17,6 +15,10 @@ Deno.serve(async (req) => {
         const apiKey = Deno.env.get('OMENX_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiKey) return Response.json({ error: 'API key not configured' }, { status: 500 });
+
+        // Use service-role client (no user auth needed — callers are OmenX-only users)
+        const base44 = createClientFromRequest(req);
+        const db = base44.asServiceRole;
 
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
@@ -37,7 +39,7 @@ Deno.serve(async (req) => {
         // 2. Only after confirmed charge: log the spend and update pools
         const playerName = playerNameParam || walletAddress;
 
-        await base44.asServiceRole.entities.TokenSpendLog.create({
+        await db.entities.TokenSpendLog.create({
             user_id: userId || walletAddress,
             player_name: playerName,
             wallet_address: walletAddress,
@@ -47,21 +49,21 @@ Deno.serve(async (req) => {
         });
 
         // Update weekly pool
-        const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+        const weeklyPools = await db.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
         if (weeklyPools.length > 0) {
-            const fresh = await base44.asServiceRole.entities.TokenPool.get(weeklyPools[0].id);
-            await base44.asServiceRole.entities.TokenPool.update(fresh.id, { total_spent: fresh.total_spent + amount });
+            const fresh = await db.entities.TokenPool.get(weeklyPools[0].id);
+            await db.entities.TokenPool.update(fresh.id, { total_spent: fresh.total_spent + amount });
         } else {
-            await base44.asServiceRole.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: amount, distributed: false });
+            await db.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: amount, distributed: false });
         }
 
         // Update seasonal pool
-        const seasonalPools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+        const seasonalPools = await db.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
         if (seasonalPools.length > 0) {
-            const fresh = await base44.asServiceRole.entities.TokenPool.get(seasonalPools[0].id);
-            await base44.asServiceRole.entities.TokenPool.update(fresh.id, { total_spent: fresh.total_spent + amount });
+            const fresh = await db.entities.TokenPool.get(seasonalPools[0].id);
+            await db.entities.TokenPool.update(fresh.id, { total_spent: fresh.total_spent + amount });
         } else {
-            await base44.asServiceRole.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: amount, distributed: false });
+            await db.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: amount, distributed: false });
         }
 
         console.log(`[purchaseSku] Pool updated: +${amount} to week=${week_id} season=${season_id}`);
