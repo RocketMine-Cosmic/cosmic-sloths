@@ -35,12 +35,15 @@ Deno.serve(async (req) => {
     }
 
     const tokenData = await tokenResponse.json();
+    console.log('[exchangeOmenXCode] raw token response keys:', Object.keys(tokenData));
+    console.log('[exchangeOmenXCode] raw token response:', JSON.stringify(tokenData));
     return Response.json({
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresIn: tokenData.expires_in,
       walletAddress: tokenData.wallet_address,
       username: tokenData.username,
+      _raw: tokenData, // expose raw so callback can inspect
     });
   } catch (error) {
     console.error('[exchangeOmenXCode] Error:', error);
