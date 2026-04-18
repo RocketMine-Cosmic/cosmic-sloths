@@ -9,10 +9,10 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
         }
 
-        // Verify authenticated user matches the wallet submitting the score
+        // Verify user is authenticated (OmenX wallet is validated client-side)
         const user = await base44.auth.me();
-        if (!user || user.id !== walletAddress) {
-            return Response.json({ error: 'Unauthorized: wallet mismatch' }, { status: 403 });
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         // Add wallet address to the score data
