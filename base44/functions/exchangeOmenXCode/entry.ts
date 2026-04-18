@@ -46,8 +46,6 @@ Deno.serve(async (req) => {
       walletAddress: user.walletAddress || user.wallet_address || null,
       username: user.profileName || user.username || user.name || null,
       userId: user.userId || null,
-      email: user.email || null,
-      _raw: tokenData,
     });
   } catch (error) {
     console.error('[exchangeOmenXCode] Error:', error);
