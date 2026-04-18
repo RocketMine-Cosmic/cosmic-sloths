@@ -78,28 +78,15 @@ export default function OmenXCallback() {
                     localStorage.setItem('cosmic_sloth_save', JSON.stringify(initialSave));
                     localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: '', playerTitle: '', pilotIcon: '🦥' }));
                     
-                    // Create PlayerSave record in backend with VIP level
+                    // Create PlayerSave record via backend function
                     try {
                         const base44 = await import('@/api/base44Client').then(m => m.base44);
-                        
-                        // Fetch VIP level
-                        let vipLevel = 0;
-                        try {
-                            const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: authData.walletAddress });
-                            vipLevel = vipRes.data?.vipLevel || 0;
-                        } catch (e) {
-                            console.error('Failed to fetch VIP level:', e);
-                        }
-                        
-                        const saveDataWithVip = { ...initialSave, vipLevel };
-                        
-                        await base44.asServiceRole.entities.PlayerSave.create({
-                            wallet_address: authData.walletAddress,
-                            save_data: saveDataWithVip,
-                            updated_at: Date.now()
+                        await base44.functions.invoke('initializeFirstLogin', {
+                            walletAddress: authData.walletAddress,
+                            initialSave
                         });
                     } catch (e) {
-                        console.error('Failed to create PlayerSave:', e);
+                        console.error('Failed to initialize first login:', e);
                     }
                 }
 
