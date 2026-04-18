@@ -8,6 +8,8 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
+import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku } from '@/lib/skuMap';
@@ -41,6 +43,7 @@ export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
     const { balance: omenxBalance } = useOmenXBalance();
+    const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('upgrades-page');
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -89,6 +92,10 @@ export default function Upgrades({ isCarousel }) {
         const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress });
         if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
         return res.data;
+    };
+
+    const purchaseWithConfirmation = (amount, itemName, onConfirm) => {
+        confirmPurchase(amount, itemName, onConfirm);
     };
 
     const handleBuyStat = (stat, currency) => {
@@ -343,57 +350,57 @@ export default function Upgrades({ isCarousel }) {
                     const isMax = level >= typeConfig.goldCosts.length;
                     
                     const goldCost = isMax ? 0 : typeConfig.goldCosts[level];
-                    const tokenCost = isMax ? 0 : typeConfig.tokenCosts[level];
-                    
-                    const canAffordGold = save.gold >= goldCost;
-                    const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
+                                    const tokenCost = isMax ? 0 : typeConfig.tokenCosts[level];
 
-                    return (
-                        <div key={stat.id} className="bg-slate-800 p-1.5 md:p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 border border-slate-700">
-                            <div className="flex items-center gap-2 md:gap-4">
-                                <div className="p-1.5 md:p-3 bg-slate-700 rounded-md md:rounded-lg text-cyan-400 shrink-0 text-base md:text-xl">
-                                    {stat.emoji}
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-sm md:text-lg text-white">{stat.name} <span className="text-slate-400 font-normal text-xs md:text-sm">({stat.label})</span></h3>
-                                    <div className="text-[10px] md:text-xs text-slate-400 mb-0.5 md:mb-1">
-                                        {activeCategory === 'permanent' && `${stat.perm} per level`}
-                                        {activeCategory === 'weekly' && `${stat.week} per level`}
-                                        {activeCategory === 'seasonal' && `${stat.season} per level`}
-                                    </div>
-                                    <StatPips level={level} statId={stat.id} />
-                                </div>
-                            </div>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                                <button
-                                    onClick={() => handleBuyStat(stat.id, 'gold')}
-                                    disabled={isMax || !canAffordGold}
-                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
-                                        isMax ? 'bg-slate-700 text-slate-500' :
-                                        canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
-                                        'bg-slate-700 text-slate-400 border border-slate-600'
-                                    }`}
-                                >
-                                    {isMax ? 'MAX' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
-                                </button>
-                                {!isMax && (
-                                    <div className="flex items-center justify-center text-slate-500 text-xs font-bold sm:hidden md:flex">OR</div>
-                                )}
-                                {!isMax && (
-                                    <button
-                                       onClick={() => handleBuyStat(stat.id, 'token')}
-                                       disabled={!canAffordToken || purchasing}
-                                       className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
-                                           canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                           'bg-slate-700 text-slate-400 border border-slate-600'
-                                       }`}
-                                    >
-                                       {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    );
+                                    const canAffordGold = save.gold >= goldCost;
+                                    const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
+
+                                    return (
+                                        <div key={stat.id} className="bg-slate-800 p-1.5 md:p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 border border-slate-700">
+                                            <div className="flex items-center gap-2 md:gap-4">
+                                                <div className="p-1.5 md:p-3 bg-slate-700 rounded-md md:rounded-lg text-cyan-400 shrink-0 text-base md:text-xl">
+                                                    {stat.emoji}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-sm md:text-lg text-white">{stat.name} <span className="text-slate-400 font-normal text-xs md:text-sm">({stat.label})</span></h3>
+                                                    <div className="text-[10px] md:text-xs text-slate-400 mb-0.5 md:mb-1">
+                                                        {activeCategory === 'permanent' && `${stat.perm} per level`}
+                                                        {activeCategory === 'weekly' && `${stat.week} per level`}
+                                                        {activeCategory === 'seasonal' && `${stat.season} per level`}
+                                                    </div>
+                                                    <StatPips level={level} statId={stat.id} />
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 w-full sm:w-auto">
+                                                <button
+                                                    onClick={() => handleBuyStat(stat.id, 'gold')}
+                                                    disabled={isMax || !canAffordGold}
+                                                    className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
+                                                        isMax ? 'bg-slate-700 text-slate-500' :
+                                                        canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                        'bg-slate-700 text-slate-400 border border-slate-600'
+                                                    }`}
+                                                >
+                                                    {isMax ? 'MAX' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
+                                                </button>
+                                                {!isMax && (
+                                                    <div className="flex items-center justify-center text-slate-500 text-xs font-bold sm:hidden md:flex">OR</div>
+                                                )}
+                                                {!isMax && (
+                                                    <button
+                                                       onClick={() => purchaseWithConfirmation(tokenCost, `${stat.name} Upgrade`, () => handleBuyStat(stat.id, 'token'))}
+                                                       disabled={!canAffordToken || purchasing}
+                                                       className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
+                                                           canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                           'bg-slate-700 text-slate-400 border border-slate-600'
+                                                       }`}
+                                                    >
+                                                       {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
                 })}
             </div>
         );
@@ -1135,6 +1142,16 @@ export default function Upgrades({ isCarousel }) {
                     
                 </div>
             </div>
+            
+            {pending && (
+                <OmenXConfirmation
+                    amount={pending.amount}
+                    itemName={pending.itemName}
+                    onConfirm={pending.onConfirm}
+                    onCancel={pending.onCancel}
+                    pageId="upgrades-page"
+                />
+            )}
         </div>
         </OmenXGate>
     );

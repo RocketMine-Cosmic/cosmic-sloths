@@ -1,0 +1,69 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { AlertCircle } from 'lucide-react';
+
+function OmenXIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+}
+
+export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId }) {
+    const [showDisableOption, setShowDisableOption] = useState(true);
+
+    const handleConfirm = () => {
+        onConfirm();
+    };
+
+    const handleDisableFor24h = () => {
+        const disabledUntil = Date.now() + (24 * 60 * 60 * 1000);
+        localStorage.setItem(`omenx_confirm_disabled_${pageId}`, disabledUntil.toString());
+        onConfirm();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-slate-900 border-2 border-orange-500 p-6 md:p-8 rounded-xl max-w-md w-full text-center shadow-[0_0_30px_rgba(234,179,8,0.2)]"
+            >
+                <div className="flex justify-center mb-4">
+                    <AlertCircle className="w-12 h-12 text-orange-500" />
+                </div>
+                
+                <h2 className="text-2xl font-bold text-white mb-2 font-mono">CONFIRM PURCHASE</h2>
+                <p className="text-slate-400 mb-6">You're about to spend real OMENX tokens.</p>
+                
+                <div className="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
+                    <div className="text-sm text-slate-400 mb-2">ITEM</div>
+                    <div className="font-bold text-white text-lg mb-4">{itemName}</div>
+                    <div className="flex items-center justify-center gap-2 bg-orange-950/40 p-3 rounded-lg border border-orange-500/30">
+                        <OmenXIcon className="w-5 h-5" />
+                        <span className="text-orange-400 font-bold text-lg">{amount.toFixed(2)} OMENX</span>
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-3 mb-4">
+                    <button
+                        onClick={handleConfirm}
+                        className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-lg font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+                    >
+                        CONFIRM PURCHASE
+                    </button>
+                    <button
+                        onClick={onCancel}
+                        className="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-lg font-bold border border-slate-700 transition-colors"
+                    >
+                        CANCEL
+                    </button>
+                </div>
+
+                <button
+                    onClick={handleDisableFor24h}
+                    className="w-full py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-slate-300 border border-slate-700 hover:border-slate-600 transition-colors"
+                >
+                    CONFIRM & DISABLE BOX FOR 24H
+                </button>
+            </motion.div>
+        </div>
+    );
+}
