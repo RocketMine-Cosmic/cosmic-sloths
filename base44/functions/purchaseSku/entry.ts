@@ -27,11 +27,14 @@ Deno.serve(async (req) => {
         console.log(`[purchaseSku] Purchasing SKU: ${skuId} x${quantity} amount: ${amount} wallet: ${walletAddress}`);
 
         // 1. Charge the player via OmenX SDK — this is the source of truth
+        // paymentCurrency + paymentAmount triggers on-chain token deduction (produces a tx hash)
         const purchaseData = await sdk.createPurchase({
             playerWallet: walletAddress,
             skuId,
             quantity,
             idempotencyKey,
+            paymentCurrency: 'OMENX',
+            paymentAmount: amount,
         });
 
         console.log(`[purchaseSku] OmenX charge confirmed, SKU: ${skuId}, amount: ${amount}`);
