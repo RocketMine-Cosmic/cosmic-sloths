@@ -25,16 +25,17 @@ function getOmenXAuth() {
 export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const initialSave = SaveManager.load() || {};
-    const [save, setSave] = useState({
-        unlockedCharacters: initialSave.unlockedCharacters || [],
-        unlockedArenasByCharacter: initialSave.unlockedArenasByCharacter || {},
-        unlockedCosmetics: initialSave.unlockedCosmetics || ['default'],
-        cosmetics: initialSave.cosmetics || {},
-        gold: initialSave.gold || 0,
-        sessionBuffs: initialSave.sessionBuffs || {},
-        characterKills: initialSave.characterKills || {},
-        ...initialSave
-    });
+    const [save, setSave] = useState(() => ({
+        unlockedCharacters: [],
+        unlockedArenasByCharacter: {},
+        unlockedCosmetics: ['default'],
+        cosmetics: {},
+        gold: 0,
+        sessionBuffs: {},
+        characterKills: {},
+        ...(initialSave || {}),
+        unlockedCosmetics: (initialSave?.unlockedCosmetics?.length > 0) ? initialSave.unlockedCosmetics : ['default']
+    }));
     const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
     const [showNameModal, setShowNameModal] = useState(false);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
