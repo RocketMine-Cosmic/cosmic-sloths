@@ -46,12 +46,11 @@ export default function Game() {
             
             // Load from backend first if available
             try {
-              const user = await base44.auth.me();
-              if (user) {
-                const saves = await base44.entities.PlayerSave.filter({ user_id: user.id });
-                if (saves.length > 0) {
-                  const backendSave = saves[0].save_data;
-                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(backendSave));
+              const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+              if (omenxAuth?.walletAddress) {
+                const res = await base44.functions.invoke('loadSave', { walletAddress: omenxAuth.walletAddress });
+                if (res.data?.saveData) {
+                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(res.data.saveData));
                 }
               }
             } catch (e) {

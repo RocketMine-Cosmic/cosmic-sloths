@@ -35,20 +35,11 @@ export const SaveManager = {
       if (!localSave) return;
 
       const saveData = JSON.parse(localSave);
-      const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
-
-      if (existing.length > 0) {
-        await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
-          save_data: saveData,
-          updated_at: Date.now()
-        });
-      } else {
-        await base44.asServiceRole.entities.PlayerSave.create({
-          wallet_address: SaveManager._walletAddress,
-          save_data: saveData,
-          updated_at: Date.now()
-        });
-      }
+      // Route through backend function — asServiceRole doesn't work from the frontend with OmenX auth
+      await base44.functions.invoke('syncSave', {
+        walletAddress: SaveManager._walletAddress,
+        saveData
+      });
     } catch (e) {
       console.error('[SaveManager] Sync failed:', e);
     }
