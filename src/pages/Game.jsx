@@ -368,8 +368,11 @@ export default function Game() {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
         if (!walletAddress || !skuId) return;
-        // amount passed so backend owns all pool accounting server-side after confirmed charge
-        base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, week_id, season_id, amount }).catch(console.error);
+        base44.functions.invoke('purchaseSku', {
+            skuId, quantity: 1, walletAddress, week_id, season_id, amount,
+            userId: walletAddress,
+            playerName: authData?.username || walletAddress,
+        }).catch(console.error);
     };
 
     const handleUpgradeSelect = (upgrade) => {

@@ -5,10 +5,8 @@ const BASE_URL = 'https://api.omen.foundation/v1';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-        const { skuId, quantity = 1, walletAddress, week_id, season_id, amount } = await req.json();
+        const { skuId, quantity = 1, walletAddress, week_id, season_id, amount, userId, playerName: playerNameParam } = await req.json();
 
         if (!skuId) return Response.json({ error: 'Missing skuId' }, { status: 400 });
         if (!walletAddress) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
@@ -54,10 +52,10 @@ Deno.serve(async (req) => {
         console.log(`[purchaseSku] OmenX charge confirmed for ${user.email}, SKU: ${skuId}, amount: ${amount}`);
 
         // 2. Only after confirmed charge: log the spend and update pools
-        const playerName = user.full_name || user.email || 'Unknown';
+        const playerName = playerNameParam || walletAddress;
 
         await base44.asServiceRole.entities.TokenSpendLog.create({
-            user_id: user.id,
+            user_id: userId || walletAddress,
             player_name: playerName,
             wallet_address: walletAddress,
             amount,
