@@ -87,6 +87,10 @@ export default function Squads({ isCarousel }) {
         const loadUserAndSquad = async () => {
             try {
                 const me = getOmenXUser();
+                if (!me) {
+                    setUser({}); // Set empty user to avoid infinite loading
+                    return;
+                }
                 setUser(me);
                 if (me) {
                     const memberships = await base44.entities.SquadMember.filter({ user_id: me.id });
