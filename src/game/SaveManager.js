@@ -62,9 +62,18 @@ export const SaveManager = {
       // Cloud load already happened in initialize(), so just continue with local
     }
 
+    // Canonical UTC ISO week calculation — must match lib/periodIds.js exactly
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const startOfWeek = new Date(startOfYear);
+    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+    const currentWeek = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+    const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+    const currentSeason = `${year}-S${seasonNum}`;
+
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
-    const currentWeek = moment().format('YYYY-[W]ww');
-    const currentSeason = `${moment().format('YYYY')}-S${Math.floor(moment().week() / 4) + 1}`;
 
     const defaultSave = {
       gold: 0,
