@@ -28,11 +28,13 @@ export default function Hub({ isCarousel }) {
     const [save, setSave] = useState({
         unlockedCharacters: [],
         unlockedArenasByCharacter: {},
-        unlockedCosmetics: [],
+        unlockedCosmetics: ['default'],
         cosmetics: {},
         gold: 0,
         sessionBuffs: {},
-        ...initialSave
+        characterKills: {},
+        ...initialSave,
+        unlockedCosmetics: initialSave.unlockedCosmetics || ['default']
     });
     const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
     const [showNameModal, setShowNameModal] = useState(false);
