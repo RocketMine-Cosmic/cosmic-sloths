@@ -26,14 +26,30 @@ export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const initialSave = SaveManager.load() || {};
     const safeInitialSave = {
-        unlockedCharacters: initialSave.unlockedCharacters || [],
-        unlockedArenasByCharacter: initialSave.unlockedArenasByCharacter || {},
-        unlockedCosmetics: (initialSave.unlockedCosmetics?.length > 0) ? initialSave.unlockedCosmetics : ['default'],
-        cosmetics: initialSave.cosmetics || {},
-        gold: initialSave.gold || 0,
-        sessionBuffs: initialSave.sessionBuffs || {},
-        characterKills: initialSave.characterKills || {},
-        ...initialSave
+        unlockedCharacters: initialSave?.unlockedCharacters ?? [],
+        unlockedArenasByCharacter: initialSave?.unlockedArenasByCharacter ?? {},
+        unlockedCosmetics: (initialSave?.unlockedCosmetics?.length ?? 0) > 0 ? initialSave.unlockedCosmetics : ['default'],
+        cosmetics: initialSave?.cosmetics ?? {},
+        gold: initialSave?.gold ?? 0,
+        sessionBuffs: initialSave?.sessionBuffs ?? {},
+        characterKills: initialSave?.characterKills ?? {},
+        foundCharacters: initialSave?.foundCharacters ?? [],
+        encounteredEnemies: initialSave?.encounteredEnemies ?? [],
+        enemyKills: initialSave?.enemyKills ?? {},
+        relicFragments: initialSave?.relicFragments ?? 0,
+        cosmicTokens: initialSave?.cosmicTokens ?? 0,
+        lastSelectedChar: initialSave?.lastSelectedChar,
+        lastSelectedArena: initialSave?.lastSelectedArena,
+        lastSelectedDifficulty: initialSave?.lastSelectedDifficulty,
+        lastSelectedWeapon: initialSave?.lastSelectedWeapon,
+        isNGPlus: initialSave?.isNGPlus ?? false,
+        newGamePlusUnlocked: initialSave?.newGamePlusUnlocked,
+        hasSetProfileName: initialSave?.hasSetProfileName,
+        bounties: initialSave?.bounties,
+        maxTimeSurvived: initialSave?.maxTimeSurvived ?? 0,
+        totalGoldEarned: initialSave?.totalGoldEarned ?? 0,
+        maxLevelReached: initialSave?.maxLevelReached ?? 0,
+        totalKills: initialSave?.totalKills ?? 0
     };
     const [save, setSave] = useState(safeInitialSave);
     const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
