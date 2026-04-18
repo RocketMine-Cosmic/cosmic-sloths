@@ -62,6 +62,8 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchScores();
+        const interval = setInterval(fetchScores, 30000); // Refresh every 30s
+        return () => clearInterval(interval);
     }, [view]);
 
     const fetchScores = async () => {
