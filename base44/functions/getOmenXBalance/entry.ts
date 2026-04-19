@@ -21,16 +21,8 @@ Deno.serve(async (req) => {
         }
         const authenticatedWallet = verifyResult.user.walletAddress;
 
-        // Check if user is admin
-        const user = await base44.auth.me();
-        let isAdmin = user?.role === 'admin';
-        if (!isAdmin && user?.wallet_address) {
-            const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: user.wallet_address });
-            isAdmin = adminWallets.length > 0;
-        }
-
         // Non-admins can only query their own wallet
-        if (!isAdmin && walletAddress !== authenticatedWallet) {
+        if (walletAddress !== authenticatedWallet) {
             return Response.json({ error: 'Forbidden: You can only view your own wallet balance' }, { status: 403 });
         }
 
