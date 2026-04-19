@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull, Coins, Puzzle, Hexagon } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull, Coins, Puzzle, Gem } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 
@@ -13,6 +13,7 @@ const TABS = [
     { id: 'squads',     label: 'Squads',       icon: Users },
     { id: 'combat',     label: 'Combat',       icon: Zap },
     { id: 'raid',       label: 'Global Raid',  icon: Skull },
+    { id: 'vip',        label: 'VIP',          icon: Crown },
 ];
 
 function SectionCard({ title, children, color = 'cyan' }) {
@@ -106,7 +107,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="💎 In-Run Pickups" color="purple">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                    <PickupCard icon={<Hexagon className="w-8 h-8 fill-emerald-400 text-emerald-400" />} label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
+                    <PickupCard icon={<Gem className="w-8 h-8 fill-emerald-400 text-emerald-400" />} label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
                     <PickupCard icon={<Coins className="w-8 h-8 fill-yellow-500 text-yellow-500" />} label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
                     <PickupCard icon={<Puzzle className="w-8 h-8 fill-fuchsia-400 text-fuchsia-400" />} label="Relic Fragments" color="text-fuchsia-400" desc="Dropped by Bosses. Craft and upgrade Ancient Relics in the Sloth Lounge." />
                     <PickupCard icon="☢️" label="Nuke" color="text-red-400" desc="Instantly destroys all non-boss enemies on screen." />
@@ -281,11 +282,16 @@ const TABS_CONTENT = {
             </SectionCard>
 
             <SectionCard title="💠 OMENX Currency" color="green">
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    OMENX is earned <strong className="text-emerald-400">exclusively</strong> through competitive leaderboard rankings — it never drops in runs. Use it in-game to reroll upgrades, banish unwanted choices, activate Squad Ultimates, and more!
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                    OMENX is the premium Web3 currency of the OmenX ecosystem. Use it in-game to reroll upgrades, banish unwanted choices, activate Squad Ultimates, purchase cosmetics, stat boosts, and more!
                 </p>
-                <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
-                    <strong className="text-emerald-400">How to earn:</strong> Place in the top rankings on Weekly or Seasonal leaderboards. Rewards are automatically distributed to your wallet when you visit the Sloth Lounge after a cycle ends.
+                <div className="space-y-2">
+                    <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
+                        <strong className="text-emerald-400">Earn via Leaderboards:</strong> Place in the top rankings on Weekly or Seasonal leaderboards. Rewards are automatically sent to your wallet at the end of each cycle.
+                    </div>
+                    <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-purple-900/40">
+                        <strong className="text-purple-400">Purchase directly:</strong> Buy OMENX through the OmenX platform and use it immediately in-game. Your live wallet balance is always shown in the top bar.
+                    </div>
                 </div>
             </SectionCard>
 
@@ -455,6 +461,55 @@ const TABS_CONTENT = {
                     <div className="font-bold text-yellow-400 text-sm md:text-base mb-1.5">Claiming Gold</div>
                     <p className="text-xs md:text-sm text-slate-400 mb-2 leading-relaxed">For every boss level the community defeats, you can claim <strong className="text-white">1,000 Gold × Boss Level</strong>. (e.g., Level 5 boss gives 5,000 Gold).</p>
                     <p className="text-xs md:text-sm text-slate-500 italic">Note: You must have contributed damage to the raid to claim rewards!</p>
+                </div>
+            </SectionCard>
+        </div>
+    ),
+
+    vip: (
+        <div className="space-y-4 md:space-y-6">
+            <SectionCard title="👑 VIP Status" color="amber">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
+                    VIP status is earned through your activity and investment in the <strong className="text-amber-400">OmenX ecosystem</strong>. The higher your VIP level, the better your in-game bonuses every single run.
+                </p>
+                <div className="bg-slate-900/50 rounded-xl p-4 border border-amber-800/40 text-xs text-slate-400">
+                    Your VIP level is automatically detected from your OmenX wallet when you log in — no manual setup required.
+                </div>
+            </SectionCard>
+
+            <SectionCard title="⚡ VIP Bonuses Per Level" color="purple">
+                <div className="space-y-2">
+                    {[
+                        { level: 0, label: 'No VIP',   color: 'text-slate-400', border: 'border-slate-700',    bonus: 'No bonus — standard experience' },
+                        { level: 1, label: 'VIP 1',    color: 'text-blue-400',   border: 'border-blue-900/50',  bonus: '+5% Gold earned per run' },
+                        { level: 2, label: 'VIP 2',    color: 'text-cyan-400',   border: 'border-cyan-900/50',  bonus: '+10% Gold + +5% XP per run' },
+                        { level: 3, label: 'VIP 3',    color: 'text-green-400',  border: 'border-green-900/50', bonus: '+15% Gold + +10% XP per run' },
+                        { level: 4, label: 'VIP 4',    color: 'text-purple-400', border: 'border-purple-900/50',bonus: '+20% Gold + +15% XP + +1 starting Relic Fragment' },
+                        { level: 5, label: 'VIP 5',    color: 'text-amber-400',  border: 'border-amber-700/50', bonus: '+25% Gold + +20% XP + +2 starting Relic Fragments + exclusive VIP badge' },
+                    ].map(v => (
+                        <div key={v.level} className={`flex items-center gap-4 bg-slate-900/60 rounded-xl px-4 py-3 border ${v.border}`}>
+                            <Crown className={`w-4 h-4 shrink-0 ${v.color}`} />
+                            <span className={`font-bold text-sm min-w-[60px] ${v.color}`}>{v.label}</span>
+                            <span className="text-xs text-slate-400 leading-relaxed">{v.bonus}</span>
+                        </div>
+                    ))}
+                </div>
+            </SectionCard>
+
+            <SectionCard title="🔮 How to Get VIP" color="cyan">
+                <div className="space-y-3">
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-900/40">
+                        <div className="font-bold text-cyan-300 text-sm mb-1">Hold OMENX Tokens</div>
+                        <p className="text-xs text-slate-400 leading-relaxed">Your VIP level is based on your activity and holdings in the OmenX ecosystem. The more engaged you are with the platform, the higher your level.</p>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-900/40">
+                        <div className="font-bold text-purple-300 text-sm mb-1">Automatic Detection</div>
+                        <p className="text-xs text-slate-400 leading-relaxed">Log in with OmenX and your VIP level is fetched automatically from the blockchain. No codes or manual redemption needed — your bonuses apply instantly every run.</p>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-900/40">
+                        <div className="font-bold text-amber-300 text-sm mb-1">Stacks with Everything</div>
+                        <p className="text-xs text-slate-400 leading-relaxed">VIP bonuses stack on top of all your permanent upgrades, weekly upgrades, and seasonal upgrades. It's the best long-term multiplier in the game.</p>
+                    </div>
                 </div>
             </SectionCard>
         </div>
