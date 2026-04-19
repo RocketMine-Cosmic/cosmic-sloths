@@ -19,6 +19,11 @@ Deno.serve(async (req) => {
             return Response.json({ logs });
         }
 
+        if (type === 'payouts') {
+            const payouts = await base44.asServiceRole.entities.PayoutLog.list('-created_date', 200);
+            return Response.json({ payouts });
+        }
+
         return Response.json({ error: 'Invalid type' }, { status: 400 });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

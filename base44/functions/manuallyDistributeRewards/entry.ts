@@ -155,6 +155,19 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
             throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
         }
         console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
+
+        // Write payout log records
+        for (const p of payments) {
+            await base44.asServiceRole.entities.PayoutLog.create({
+                period_id: pool.period_id,
+                period_type: 'weekly',
+                wallet_address: p.walletAddress,
+                player_name: p.player_name || p.walletAddress,
+                amount: p.amount,
+                rank: p.rank,
+                tx_id: batchResult?.transactionId || batchResult?.txHash || ''
+            });
+        }
     } catch (sdkErr) {
         console.error('[manuallyDistributeRewards] SDK grant error:', sdkErr?.message);
         console.error('[manuallyDistributeRewards] SDK error response:', sdkErr?.response?.data || sdkErr?.response);
@@ -200,6 +213,19 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
             throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
         }
         console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
+
+        // Write payout log records
+        for (const p of payments) {
+            await base44.asServiceRole.entities.PayoutLog.create({
+                period_id: pool.period_id,
+                period_type: 'seasonal',
+                wallet_address: p.walletAddress,
+                player_name: p.player_name || p.walletAddress,
+                amount: p.amount,
+                rank: p.rank,
+                tx_id: batchResult?.transactionId || batchResult?.txHash || ''
+            });
+        }
     } catch (sdkErr) {
         console.error('[manuallyDistributeRewards] SDK grant error:', sdkErr?.message);
         console.error('[manuallyDistributeRewards] SDK error response:', sdkErr?.response?.data || sdkErr?.response);

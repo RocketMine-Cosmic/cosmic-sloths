@@ -157,6 +157,20 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
 
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+
+    // Write payout log records
+    for (const p of payments) {
+        await base44.asServiceRole.entities.PayoutLog.create({
+            period_id: pool.period_id,
+            period_type: 'weekly',
+            wallet_address: p.walletAddress,
+            player_name: p.player_name || p.walletAddress,
+            amount: p.amount,
+            rank: p.rank,
+            tx_id: batchResult?.transactionId || batchResult?.txHash || ''
+        });
+    }
+
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
 
@@ -197,5 +211,19 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
 
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+
+    // Write payout log records
+    for (const p of payments) {
+        await base44.asServiceRole.entities.PayoutLog.create({
+            period_id: pool.period_id,
+            period_type: 'seasonal',
+            wallet_address: p.walletAddress,
+            player_name: p.player_name || p.walletAddress,
+            amount: p.amount,
+            rank: p.rank,
+            tx_id: batchResult?.transactionId || batchResult?.txHash || ''
+        });
+    }
+
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }

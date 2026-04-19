@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { ArrowLeft, BarChart3, Clock, Send } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock, Send, Trophy } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
@@ -54,7 +54,13 @@ export default function AdminDashboard() {
         enabled: !!adminKey
     });
 
-    const isLoading = poolsLoading || logsLoading;
+    const { data: payoutLogs, isLoading: payoutsLoading } = useQuery({
+        queryKey: ['payoutLogs', adminKey],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts' }, { headers: { 'x-admin-key': adminKey } }).then(r => r.data?.payouts || []),
+        enabled: !!adminKey
+    });
+
+    const isLoading = poolsLoading || logsLoading || payoutsLoading;
 
     if (!adminKey) {
         return (
@@ -266,6 +272,59 @@ export default function AdminDashboard() {
                                 {distributeMsg}
                             </div>
                         )}
+                    </div>
+
+                    <div className="mt-6 bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-yellow-900/50 p-4 md:p-6 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+                        <h2 className="text-lg font-bold text-yellow-400 mb-4 tracking-widest uppercase flex items-center gap-2">
+                            <Trophy className="w-5 h-5" /> Payout Log
+                        </h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-900/50 text-slate-400 font-mono tracking-wider border-b border-slate-700/50">
+                                    <tr>
+                                        <th className="p-3 font-semibold">Date</th>
+                                        <th className="p-3 font-semibold">Player</th>
+                                        <th className="p-3 font-semibold">Wallet</th>
+                                        <th className="p-3 font-semibold text-center">Rank</th>
+                                        <th className="p-3 font-semibold text-right">OMENX Paid</th>
+                                        <th className="p-3 font-semibold">Period</th>
+                                        <th className="p-3 font-semibold">Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800/50">
+                                    {(payoutLogs || []).map((log) => (
+                                        <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
+                                            <td className="p-3 text-slate-400 font-mono text-xs whitespace-nowrap">
+                                                {moment(log.created_date).format('MMM D, YYYY HH:mm')}
+                                            </td>
+                                            <td className="p-3 font-bold text-white whitespace-nowrap">{log.player_name}</td>
+                                            <td className="p-3 text-slate-500 font-mono text-xs truncate max-w-[140px]" title={log.wallet_address}>
+                                                {log.wallet_address ? `${log.wallet_address.slice(0, 6)}...${log.wallet_address.slice(-4)}` : '-'}
+                                            </td>
+                                            <td className="p-3 text-center font-mono text-slate-300">
+                                                {log.rank === 1 ? '🥇' : log.rank === 2 ? '🥈' : log.rank === 3 ? '🥉' : `#${log.rank}`}
+                                            </td>
+                                            <td className="p-3 text-right font-mono font-bold text-yellow-400">
+                                                {Number(log.amount).toFixed(2)}
+                                            </td>
+                                            <td className="p-3 text-slate-500 font-mono text-xs">{log.period_id}</td>
+                                            <td className="p-3">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${log.period_type === 'weekly' ? 'bg-cyan-900/50 text-cyan-400' : 'bg-purple-900/50 text-purple-400'}`}>
+                                                    {log.period_type}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {!(payoutLogs || []).length && (
+                                        <tr>
+                                            <td colSpan="7" className="p-6 text-center text-slate-500 font-mono">
+                                                No payouts recorded yet. Payout logs appear here after rewards are distributed.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div className="mt-6 bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 md:p-6 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
