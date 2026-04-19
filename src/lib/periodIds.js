@@ -1,6 +1,6 @@
 /**
  * Canonical period ID computation — must match purchaseSku backend exactly.
- * Uses UTC ISO week numbers, divided into 4 seasons of 13 weeks each.
+ * Uses UTC ISO week numbers, divided into seasons of 4 weeks each.
  */
 export function getCurrentPeriodIds() {
     const now = new Date();
