@@ -253,8 +253,10 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
-      // Immediate sync to backend (no debounce - backend is source of truth)
-      SaveManager.syncToBackend();
+      // Only sync if user is authenticated with OmenX
+      if (SaveManager._walletAddress) {
+        SaveManager.syncToBackend();
+      }
     } catch (e) {
       console.error('[SaveManager] Save error');
     }
