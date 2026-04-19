@@ -102,8 +102,26 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchScores();
-        // Poll every minute to update rewards
-        const interval = setInterval(fetchScores, 60000);
+    }, [view]);
+
+    // Poll pool updates every 30 seconds without re-fetching scores
+    useEffect(() => {
+        const updatePool = async () => {
+            try {
+                const { week_id, season_id } = getCurrentPeriodIds();
+                if (view === 'weekly') {
+                    const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+                    setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
+                } else if (view === 'seasonal') {
+                    const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+                    setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
+                }
+            } catch (error) {
+                console.error('Failed to update pool', error);
+            }
+        };
+        
+        const interval = setInterval(updatePool, 30000);
         return () => clearInterval(interval);
     }, [view]);
 
