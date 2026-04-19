@@ -467,7 +467,38 @@ const TABS_CONTENT = {
         </div>
     ),
 
-    vip: (
+    vip: <VipTab />,
+    combat: null, // defined below after VipTab
+};
+
+// Phase 2 started Monday 2026-03-09 (Week 1)
+const PHASE2_START = new Date('2026-03-09T00:00:00Z');
+
+function getVipPhaseInfo() {
+    const now = new Date();
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    const weeksSincePhase2 = Math.floor((now - PHASE2_START) / msPerWeek);
+
+    if (weeksSincePhase2 < 0) {
+        return { phase: 2, week: 1, totalWeeks: 10, status: 'upcoming' };
+    } else if (weeksSincePhase2 < 10) {
+        return { phase: 2, week: weeksSincePhase2 + 1, totalWeeks: 10, status: 'active' };
+    } else if (weeksSincePhase2 < 20) {
+        return { phase: 3, week: weeksSincePhase2 - 9, totalWeeks: 10, status: 'active' };
+    } else {
+        return { phase: 3, week: 10, totalWeeks: 10, status: 'complete' };
+    }
+}
+
+function VipTab() {
+    const phaseInfo = getVipPhaseInfo();
+    const { phase, week, totalWeeks, status } = phaseInfo;
+
+    const phaseLabel = status === 'complete'
+        ? 'Phase 3 complete — future allocation TBD'
+        : `Phase ${phase} — Week ${week} of ${totalWeeks} (Mon–Sun cycles)`;
+
+    return (
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="👑 VIP Status" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
@@ -520,8 +551,13 @@ const TABS_CONTENT = {
                         <div className="font-bold text-cyan-300 text-sm mb-1">Purchase a VIP Tier</div>
                         <p className="text-xs text-slate-400 leading-relaxed">VIP tiers are purchased with <strong className="text-white">real money</strong> directly through the OmenX platform. Each tier comes with a <strong className="text-purple-300">weekly OMENX token allocation</strong> sent to your wallet — so your subscription pays you back in crypto!</p>
                         <div className="mt-2 bg-slate-800/60 rounded-lg p-2 border border-slate-700/50 text-[11px] text-slate-400 space-y-0.5">
-                            <div className="flex items-center gap-2"><span className="text-cyan-400 font-bold">Phase 2</span><span>10 weeks total — currently Week 6/7 of 10 (Mon–Sun cycles)</span></div>
-                            <div className="flex items-center gap-2"><span className="text-purple-400 font-bold">Phase 3</span><span>10 weeks — coming after Phase 2</span></div>
+                            <div className="flex items-center gap-2">
+                                <span className={`font-bold ${phase === 2 ? 'text-cyan-400' : 'text-purple-400'}`}>Phase {phase}</span>
+                                <span>{phaseLabel}</span>
+                            </div>
+                            {status !== 'complete' && phase === 2 && (
+                                <div className="flex items-center gap-2"><span className="text-purple-400 font-bold">Phase 3</span><span>10 weeks — follows Phase 2</span></div>
+                            )}
                             <div className="flex items-center gap-2"><span className="text-slate-500 font-bold">Beyond</span><span className="text-slate-500 italic">Allocation TBD after Phase 3</span></div>
                         </div>
                     </div>
@@ -536,9 +572,10 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
         </div>
-    ),
+    );
+}
 
-    combat: (
+TABS_CONTENT.combat = (
         <div className="space-y-4">
             <SectionCard title="⚔️ Sectors & Penalties" color="cyan">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
@@ -614,8 +651,7 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
         </div>
-    ),
-};
+);
 
 export default function Info() {
     const navigate = useNavigate();
