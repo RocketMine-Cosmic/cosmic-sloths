@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const adminKey = req.headers.get('x-admin-key');
-        const expectedKey = Deno.env.get('OMENX_API_KEY');
+        const expectedKey = Deno.env.get('AdminDash');
         if (!adminKey || adminKey !== expectedKey) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const { type } = await req.json();

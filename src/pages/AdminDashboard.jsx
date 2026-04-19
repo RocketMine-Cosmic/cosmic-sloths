@@ -29,12 +29,12 @@ export default function AdminDashboard() {
         e.preventDefault();
         // Verify the key by calling a protected function
         try {
-            await base44.functions.invoke('distributeRewards', {}, { headers: { 'x-admin-key': keyInput } });
+            const res = await base44.functions.invoke('getAdminData', { type: 'pools' }, { headers: { 'x-admin-key': keyInput } });
+            if (res.data?.error === 'Forbidden') throw new Error('Forbidden');
             setAdminKey(keyInput);
             sessionStorage.setItem('admin_key', keyInput);
             setKeyError('');
         } catch (err) {
-            // A 403 means wrong key, other errors (like no pools) mean key is valid
             if (err.message?.includes('403') || err.message?.includes('Forbidden')) {
                 setKeyError('Invalid admin key');
             } else {
