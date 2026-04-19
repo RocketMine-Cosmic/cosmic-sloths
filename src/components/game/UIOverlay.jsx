@@ -2,7 +2,7 @@ import React from 'react';
 import { Pause, Heart, CircleDollarSign } from 'lucide-react';
 
 function OmenXIcon({ className }) {
-    return <span className={`${className} font-black text-purple-400 tracking-wider`}>✕</span>;
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, onPause, onSquadUltimate }) {
