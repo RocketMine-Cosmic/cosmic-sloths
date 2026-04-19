@@ -6,17 +6,19 @@ import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 
 export const SaveManager = {
   _walletAddress: null,
-  _syncTimeout: null,
+  _playerSaveId: null,
 
   initialize: async () => {
     try {
       let walletAddress = null;
+      let accessToken = null;
       
       // Try OmenX IndexedDB first (survives browser history clear)
       try {
         const omenxAuth = await getAuthFromIndexedDB();
         if (omenxAuth?.walletAddress) {
           walletAddress = omenxAuth.walletAddress;
+          accessToken = omenxAuth.accessToken;
           console.log('[SaveManager] Using OmenX IndexedDB auth');
         }
       } catch (e) {
@@ -27,6 +29,7 @@ export const SaveManager = {
       if (!walletAddress) {
         const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         walletAddress = omenxAuth?.walletAddress;
+        accessToken = omenxAuth?.accessToken;
       }
       
       if (!walletAddress) {
@@ -37,28 +40,40 @@ export const SaveManager = {
       SaveManager._walletAddress = walletAddress;
       console.log('[SaveManager] Initialized');
       
-      // Load cloud save if exists (cross-device sync)
+      // Load from backend FIRST (backend is source of truth)
+      if (accessToken) {
+        try {
+          const { data: response } = await base44.functions.invoke('loadSave', {
+            walletAddress: SaveManager._walletAddress,
+            accessToken: accessToken
+          });
+          if (response?.saveData) {
+            console.log('[SaveManager] Loaded from backend');
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
+            return;
+          }
+        } catch (e) {
+          console.log('[SaveManager] Backend load failed:', e.message);
+        }
+      }
+      
+      // Fallback: load cloud save if backend failed
       try {
         const saves = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
         if (saves.length > 0 && saves[0].save_data) {
-          console.log('[SaveManager] Cloud save found, syncing to local');
+          console.log('[SaveManager] Loaded from cloud backup');
           localStorage.setItem('cosmic_sloth_save', JSON.stringify(saves[0].save_data));
           SaveManager._playerSaveId = saves[0].id;
         }
       } catch (e) {
-        console.warn('[SaveManager] Could not load cloud save:', e);
+        console.log('[SaveManager] Cloud load failed:', e.message);
       }
     } catch (e) {
-      console.error('[SaveManager] Failed to initialize:', e);
+      console.error('[SaveManager] Init error');
     }
   },
 
-  syncToBackendNow: async () => {
-    if (SaveManager._syncTimeout) clearTimeout(SaveManager._syncTimeout);
-    SaveManager._syncTimeout = setTimeout(SaveManager._syncToBackend, 500);
-  },
-
-  _syncToBackend: async () => {
+  syncToBackend: async () => {
     if (!SaveManager._walletAddress) return;
     
     try {
@@ -78,7 +93,7 @@ export const SaveManager = {
         SaveManager._playerSaveId = created.id;
       }
     } catch (e) {
-      console.error('[SaveManager] Sync failed:', e);
+      console.error('[SaveManager] Sync error');
     }
   },
 
@@ -238,9 +253,10 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
-      SaveManager.syncToBackendNow();
+      // Immediate sync to backend (no debounce - backend is source of truth)
+      SaveManager.syncToBackend();
     } catch (e) {
-      console.error('[SaveManager] Failed to save locally', e);
+      console.error('[SaveManager] Save error');
     }
   }
 };

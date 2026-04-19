@@ -40,33 +40,15 @@ const MainApp = () => {
   useEffect(() => {
     SaveManager.initialize().then(async () => {
         setSaveInitialized(true);
-        // Check if OmenX is logged in and profile name is set
-        const omenxAuth = await getAuthFromIndexedDB();
-        if (omenxAuth) {
-            // Load server-side PlayerSave if it exists
-            try {
-                const { data: response } = await base44.functions.invoke('loadSave', {
-                    walletAddress: omenxAuth.walletAddress,
-                    accessToken: omenxAuth.accessToken
-                });
-                if (response?.saveData) {
-                    // Server save exists, use it (overwrite local if stale)
-                    localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
-                    console.log('[App] Loaded server PlayerSave');
-                }
-            } catch (e) {
-                console.log('[App] Could not load server save:', e.message);
-            }
-
-            const save = SaveManager.load();
-            if (!save.hasSetProfileName) {
-                // Grandfather in players who have already played
-                if (save.totalKills > 0 || save.gold > 0) {
-                    save.hasSetProfileName = true;
-                    SaveManager.save(save);
-                } else {
-                    setNeedsProfileName(true);
-                }
+        
+        const save = SaveManager.load();
+        if (!save.hasSetProfileName) {
+            // Grandfather in players who have already played
+            if (save.totalKills > 0 || save.gold > 0) {
+                save.hasSetProfileName = true;
+                SaveManager.save(save);
+            } else {
+                setNeedsProfileName(true);
             }
         }
     });
