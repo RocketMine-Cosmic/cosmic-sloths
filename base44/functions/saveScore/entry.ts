@@ -83,12 +83,14 @@ Deno.serve(async (req) => {
                 const squad = await base44.asServiceRole.entities.Squad.get(squadStats.squadId);
                 if (squad) {
                     const today = new Date().toISOString().split('T')[0];
-                    let newDailyKills = (squad.daily_kills || 0) + squadStats.kills;
-                    if (squad.current_day !== today) {
-                        newDailyKills = squadStats.kills;
+                    const currentDay = squad.current_day || today;
+                    let newDailyKills = (squad.daily_kills || 0) + (squadStats.kills || 0);
+                    // Reset daily kills if day changed
+                    if (currentDay !== today) {
+                        newDailyKills = squadStats.kills || 0;
                     }
                     await base44.asServiceRole.entities.Squad.update(squad.id, {
-                        weekly_kills: (squad.weekly_kills || 0) + squadStats.kills,
+                        weekly_kills: (squad.weekly_kills || 0) + (squadStats.kills || 0),
                         daily_kills: newDailyKills,
                         current_day: today
                     });

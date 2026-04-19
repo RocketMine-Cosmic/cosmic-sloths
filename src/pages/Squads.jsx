@@ -203,7 +203,7 @@ export default function Squads({ isCarousel }) {
         try {
             SoundManager.playUIClick();
             
-            const walletAddr = user.walletAddress || user.wallet_address || user.data?.wallet_address;
+            const walletAddr = (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim();
             if (!walletAddr) {
                 toast({ title: "Error", description: "Wallet address not found. Please log in again." });
                 return;
@@ -230,12 +230,12 @@ export default function Squads({ isCarousel }) {
                 level: 1
             });
             
-            const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A new pilot';
+            const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
             const member = await base44.entities.SquadMember.create({
                 squad_id: squad.id,
-                wallet_address: user.wallet_address || user.data?.wallet_address,
+                wallet_address: walletAddr,
                 player_name: displayName,
-                player_title: user.data?.player_title || '',
+                player_title: (user?.data?.player_title || '').trim(),
                 role: 'leader',
                 last_payout_week: '',
                 last_daily_payout_date: ''
@@ -261,7 +261,7 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const existingMembers = await base44.entities.SquadMember.filter({ wallet_address: user.wallet_address || user.data?.wallet_address });
+            const existingMembers = await base44.entities.SquadMember.filter({ wallet_address: walletAddr });
             if (existingMembers.length > 0) {
                 toast({ title: "Already in a Squad", description: "You are already in a squad." });
                 return;
@@ -273,13 +273,13 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A new pilot';
+            const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
 
             const member = await base44.entities.SquadMember.create({
                 squad_id: squadId,
-                wallet_address: user.wallet_address || user.data?.wallet_address,
+                wallet_address: walletAddr,
                 player_name: displayName,
-                player_title: user.data?.player_title || '',
+                player_title: (user?.data?.player_title || '').trim(),
                 role: 'member',
                 last_payout_week: '',
                 last_daily_payout_date: ''
@@ -344,13 +344,13 @@ export default function Squads({ isCarousel }) {
         SoundManager.playUIClick();
 
         // Optimistically add to local state immediately
-        const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'Pilot';
+        const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'Pilot').trim();
         const optimisticMsg = {
             id: `optimistic-${Date.now()}`,
             squad_id: mySquad.id,
             user_id: user.id,
             player_name: displayName,
-            player_title: user.data?.player_title || '',
+            player_title: (user?.data?.player_title || '').trim(),
             content: content,
             created_date: new Date().toISOString()
         };
@@ -359,9 +359,9 @@ export default function Squads({ isCarousel }) {
         try {
             const saved = await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
-                wallet_address: user.wallet_address || user.data?.wallet_address,
+                wallet_address: walletAddr,
                 player_name: displayName,
-                player_title: user.data?.player_title || '',
+                player_title: (user?.data?.player_title || '').trim(),
                 content: content
             });
             // Replace optimistic message with real one
@@ -376,7 +376,7 @@ export default function Squads({ isCarousel }) {
     const isLeader = myMemberRecord?.role === 'leader';
 
     const handleKickMember = async (member) => {
-        if (!isLeader || member.wallet_address === user.wallet_address) return;
+    if (!isLeader || member.wallet_address === (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address)) return;
         try {
             SoundManager.playUIClick();
             await base44.entities.SquadMember.delete(member.id);
@@ -397,7 +397,7 @@ export default function Squads({ isCarousel }) {
     };
 
     const handleTransferLeadership = async (member) => {
-        if (!isLeader || member.wallet_address === user.wallet_address) return;
+        if (!isLeader || member.wallet_address === (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address)) return;
         try {
             SoundManager.playUIClick();
             // Demote current leader, promote new leader

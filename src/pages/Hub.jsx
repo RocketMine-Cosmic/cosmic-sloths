@@ -57,10 +57,15 @@ export default function Hub({ isCarousel }) {
     const [syncReady, setSyncReady] = useState(false);
 
     React.useEffect(() => {
-        const handleSaveUpdated = (e) => setSave(e.detail);
+        // Sync saves to state but don't overwrite initialization data
+        const handleSaveUpdated = (e) => {
+            if (syncReady) {
+                setSave(e.detail);
+            }
+        };
         window.addEventListener('saveUpdated', handleSaveUpdated);
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
-    }, []);
+    }, [syncReady]);
 
     React.useEffect(() => {
         const initOmenX = async () => {
@@ -68,30 +73,34 @@ export default function Hub({ isCarousel }) {
             setOmenxAuth(auth);
             
             if (auth?.walletAddress) {
-                // Initialize SaveManager first (pulls cloud sync)
-                await SaveManager.initialize();
-                
-                // Then load merged save
-                const mergedSave = SaveManager.load();
-                setSave(mergedSave);
-                
-                // Check profile name requirement
-                if (!mergedSave.hasSetProfileName) {
-                    setNeedsProfileName(true);
-                }
-                
-                // Fetch and store VIP level
                 try {
-                    const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress, accessToken: auth.accessToken });
-                    if (vipRes.data?.vipLevel !== undefined) {
-                        const s = SaveManager.load();
-                        s.vipLevel = vipRes.data.vipLevel;
-                        SaveManager.save(s);
+                    // Initialize SaveManager first (pulls cloud sync)
+                    await SaveManager.initialize();
+                    
+                    // Then load merged save
+                    const mergedSave = SaveManager.load();
+                    setSave(mergedSave);
+                    
+                    // Check profile name requirement
+                    if (!mergedSave.hasSetProfileName) {
+                        setNeedsProfileName(true);
+                    }
+                    
+                    // Fetch and store VIP level
+                    try {
+                        const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress, accessToken: auth.accessToken });
+                        if (vipRes.data?.vipLevel !== undefined) {
+                            const s = SaveManager.load();
+                            s.vipLevel = vipRes.data.vipLevel;
+                            SaveManager.save(s);
+                            setSave(s);
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch VIP level:', e);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch VIP level:', e);
+                    console.error('Failed to initialize SaveManager:', e);
                 }
-                
                 setSyncReady(true);
             } else {
                 setSyncReady(true);

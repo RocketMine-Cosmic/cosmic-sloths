@@ -22,8 +22,9 @@ Deno.serve(async (req) => {
         if (!skuId) return Response.json({ error: 'Missing skuId' }, { status: 400 });
         if (!clientWallet) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
 
-        // Compute period IDs server-side — never trust client values
+        // Compute period IDs server-side — never trust client values, always recalculate
         const { week_id, season_id } = getCurrentPeriodIds();
+        // Ignore any client-provided period IDs for security
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';

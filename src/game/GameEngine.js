@@ -208,9 +208,10 @@ export class GameEngine {
         const sessionBuffs = save.sessionBuffs || {};
         const now = Date.now();
         const hasXpBuff = sessionBuffs.xpExpiry > now;
+        const xpBuffMultiplier = hasXpBuff ? 1.5 : 1.0; // 50% boost means 1.5x multiplier
 
         this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult * sectorPenalty;
-        this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (hasXpBuff ? 0.5 : 0)) * this.difficulty.xpMult;
+        this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult) * this.difficulty.xpMult * xpBuffMultiplier;
 
         if (hasAug('dat_ghost')) {
             this.player.iFrames = 5.0;
@@ -1195,6 +1196,11 @@ export class GameEngine {
                 SFXManager.playEnemyDeath();
                 this.kills++;
                 this.enemyKills[e.id] = (this.enemyKills[e.id] || 0) + 1;
+                // Persist enemy kills to save immediately
+                if (this.save) {
+                    this.save.enemyKills = this.enemyKills;
+                    SaveManager.save(this.save);
+                }
                 
                 if (this.player.charAugments?.includes('dat_drain')) {
                     this.player.drainCount = (this.player.drainCount || 0) + 1;
@@ -1940,6 +1946,11 @@ export class GameEngine {
 
     gameOver() {
         this.isGameOver = true;
+        // Persist final enemy kills before ending
+        if (this.save) {
+            this.save.enemyKills = this.enemyKills;
+            SaveManager.save(this.save);
+        }
         SFXManager.playGameOver();
         this.callbacks.onGameOver({
             time: Math.floor(this.time),
