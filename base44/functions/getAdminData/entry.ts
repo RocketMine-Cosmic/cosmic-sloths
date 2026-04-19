@@ -3,6 +3,7 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { type, walletAddress, accessToken } = await req.json();
         
         // Verify OAuth token
