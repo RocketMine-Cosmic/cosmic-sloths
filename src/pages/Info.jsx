@@ -290,7 +290,8 @@ const TABS_CONTENT = {
                         <strong className="text-emerald-400">Earn via Leaderboards:</strong> Place in the top rankings on Weekly or Seasonal leaderboards. Rewards are automatically sent to your wallet at the end of each cycle.
                     </div>
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-purple-900/40">
-                        <strong className="text-purple-400">Purchase directly:</strong> Buy OMENX through the OmenX platform and use it immediately in-game. Your live wallet balance is always shown in the top bar.
+                        <strong className="text-purple-400">Purchase directly:</strong> Buy OMENX on the BNB Chain via{' '}
+                        <a href="https://thirdweb.com/binance/0x992a09877b619b4755Cabe9edaf5092A956F0317" target="_blank" rel="noopener noreferrer" className="text-purple-300 underline hover:text-purple-200 transition-colors">Thirdweb (BNB Chain)</a>. Your live wallet balance is always shown in the top bar.
                     </div>
                 </div>
             </SectionCard>
