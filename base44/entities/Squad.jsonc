@@ -3,10 +3,12 @@
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "unique": true
     },
     "tag": {
-      "type": "string"
+      "type": "string",
+      "unique": true
     },
     "description": {
       "type": "string"
