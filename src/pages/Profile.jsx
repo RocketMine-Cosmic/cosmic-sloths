@@ -41,8 +41,8 @@ export default function Profile({ isCarousel }) {
                 // Fetch VIP level and sync to backend
                 const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                 const walletAddress = authData?.walletAddress;
-                if (walletAddress) {
-                    base44.functions.invoke('getVipLevel', { walletAddress }).then(res => {
+                if (walletAddress && authData?.accessToken) {
+                    base44.functions.invoke('getVipLevel', { walletAddress, accessToken: authData.accessToken }).then(res => {
                         const lvl = res.data?.vipLevel || 0;
                         setVipLevel(lvl);
                         // Persist in save so GameEngine can use it on next game start
