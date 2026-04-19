@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -15,9 +16,17 @@ Deno.serve(async (req) => {
         const db = base44.asServiceRole;
 
         const body = await req.json();
-        const { claim_level, walletAddress } = body;
+        const { claim_level, walletAddress: clientWallet, accessToken } = body;
 
-        if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
+        if (!clientWallet || !accessToken) return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
+
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
+        const verifyResult = await sdk.verifyOAuthUser(accessToken);
+        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        const walletAddress = verifyResult.user.walletAddress;
 
         const levelNum = parseInt(claim_level, 10);
         if (isNaN(levelNum) || levelNum < 1) return Response.json({ error: 'Invalid level' }, { status: 400 });

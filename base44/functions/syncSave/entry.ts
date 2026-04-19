@@ -5,22 +5,17 @@ Deno.serve(async (req) => {
     try {
         const { walletAddress: clientWallet, saveData, accessToken } = await req.json();
 
-        if (!clientWallet || !saveData) {
-            return Response.json({ error: 'walletAddress and saveData required' }, { status: 400 });
+        if (!clientWallet || !saveData || !accessToken) {
+            return Response.json({ error: 'walletAddress, saveData, and accessToken required' }, { status: 400 });
         }
 
-        // Verify identity via OmenX if accessToken provided
-        let walletAddress = clientWallet;
-        if (accessToken) {
-            const sdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-            });
-            const result = await sdk.verifyOAuthUser(accessToken);
-            if (result.success) {
-                walletAddress = result.user.walletAddress;
-            }
-        }
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
+        const verifyResult = await sdk.verifyOAuthUser(accessToken);
+        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        const walletAddress = verifyResult.user.walletAddress;
 
         const base44 = createClientFromRequest(req);
 
