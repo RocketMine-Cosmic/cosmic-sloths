@@ -478,23 +478,27 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
-            <SectionCard title="⚡ VIP Bonuses Per Level" color="purple">
-                <div className="space-y-2">
-                    {[
-                        { level: 0, label: 'No VIP',   color: 'text-slate-400', border: 'border-slate-700',    bonus: 'No bonus — standard experience' },
-                        { level: 1, label: 'VIP 1',    color: 'text-blue-400',   border: 'border-blue-900/50',  bonus: '+5% Gold earned per run' },
-                        { level: 2, label: 'VIP 2',    color: 'text-cyan-400',   border: 'border-cyan-900/50',  bonus: '+10% Gold + +5% XP per run' },
-                        { level: 3, label: 'VIP 3',    color: 'text-green-400',  border: 'border-green-900/50', bonus: '+15% Gold + +10% XP per run' },
-                        { level: 4, label: 'VIP 4',    color: 'text-purple-400', border: 'border-purple-900/50',bonus: '+20% Gold + +15% XP + +1 starting Relic Fragment' },
-                        { level: 5, label: 'VIP 5',    color: 'text-amber-400',  border: 'border-amber-700/50', bonus: '+25% Gold + +20% XP + +2 starting Relic Fragments + exclusive VIP badge' },
-                    ].map(v => (
-                        <div key={v.level} className={`flex items-center gap-4 bg-slate-900/60 rounded-xl px-4 py-3 border ${v.border}`}>
-                            <Crown className={`w-4 h-4 shrink-0 ${v.color}`} />
-                            <span className={`font-bold text-sm min-w-[60px] ${v.color}`}>{v.label}</span>
-                            <span className="text-xs text-slate-400 leading-relaxed">{v.bonus}</span>
+            <SectionCard title="⚡ VIP Bonuses" color="purple">
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                    Each VIP level grants <strong className="text-purple-400">+1% Damage</strong> and <strong className="text-purple-400">+1% Max HP</strong> per run. These bonuses stack — a higher VIP level means a stronger character every time you play.
+                </p>
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-900/40">
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="bg-slate-800/60 rounded-lg p-2 border border-slate-700">
+                            <div className="text-slate-400 mb-1">VIP Level 1</div>
+                            <div className="text-purple-400 font-bold">+1% DMG / HP</div>
                         </div>
-                    ))}
+                        <div className="bg-slate-800/60 rounded-lg p-2 border border-slate-700">
+                            <div className="text-slate-400 mb-1">VIP Level 5</div>
+                            <div className="text-purple-400 font-bold">+5% DMG / HP</div>
+                        </div>
+                        <div className="bg-slate-800/60 rounded-lg p-2 border border-amber-800/50">
+                            <div className="text-slate-400 mb-1">VIP Level 21</div>
+                            <div className="text-amber-400 font-bold">+21% DMG / HP</div>
+                        </div>
+                    </div>
                 </div>
+                <p className="text-xs text-slate-500 mt-2">VIP levels go up to 21, determined by your OmenX Game Bonus Points level.</p>
             </SectionCard>
 
             <SectionCard title="🔮 How to Get VIP" color="cyan">
