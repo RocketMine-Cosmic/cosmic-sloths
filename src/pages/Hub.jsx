@@ -82,7 +82,7 @@ export default function Hub({ isCarousel }) {
                 
                 // Fetch and store VIP level
                 try {
-                    const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress });
+                    const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress, accessToken: auth.accessToken });
                     if (vipRes.data?.vipLevel !== undefined) {
                         const s = SaveManager.load();
                         s.vipLevel = vipRes.data.vipLevel;
