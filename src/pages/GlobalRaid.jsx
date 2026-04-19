@@ -77,14 +77,22 @@ export default function GlobalRaid({ isCarousel }) {
         const fetchBoss = async () => {
             try {
                 const { week_id } = getCurrentPeriodIds();
-                const res = await base44.functions.invoke('getOrSpawnWeeklyBoss', { week_id });
-                if (res.data.boss) {
-                    setWorldBossData(res.data.boss);
+                // Read boss directly (open RLS)
+                let bosses = await base44.entities.GlobalBoss.filter({ week_id });
+                // If no boss yet, try to spawn via backend
+                if (bosses.length === 0) {
+                    try {
+                        const res = await base44.functions.invoke('getOrSpawnWeeklyBoss', { week_id });
+                        if (res.data?.boss) bosses = [res.data.boss];
+                    } catch (e) { console.warn('Boss spawn failed, will retry:', e); }
+                }
+                if (bosses.length > 0) {
+                    setWorldBossData(bosses[0]);
                     const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    // Fetch own contribution via backend to avoid RLS issues
+                    // Read own contribution directly (open RLS)
                     if (authData?.walletAddress) {
-                        const contribRes = await base44.functions.invoke('getMyBossContribution', { walletAddress: authData.walletAddress });
-                        if (contribRes.data?.contribution) setWorldBossContribution(contribRes.data.contribution);
+                        const contribs = await base44.entities.GlobalBossContribution.filter({ week_id, user_id: authData.walletAddress });
+                        if (contribs.length > 0) setWorldBossContribution(contribs[0]);
                     }
                     const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 10);
                     setTopContributors(allContribs);

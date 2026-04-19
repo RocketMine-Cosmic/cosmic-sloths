@@ -48,9 +48,9 @@ export default function Game() {
             try {
               const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
               if (omenxAuth?.walletAddress) {
-                const res = await base44.functions.invoke('loadSave', { walletAddress: omenxAuth.walletAddress });
-                if (res.data?.saveData) {
-                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(res.data.saveData));
+                const saves = await base44.entities.PlayerSave.filter({ wallet_address: omenxAuth.walletAddress });
+                if (saves.length > 0 && saves[0].save_data) {
+                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(saves[0].save_data));
                 }
               }
             } catch (e) {

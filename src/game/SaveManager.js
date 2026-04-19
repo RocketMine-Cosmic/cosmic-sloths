@@ -20,10 +20,11 @@ export const SaveManager = {
       
       // Load cloud save if exists (cross-device sync)
       try {
-        const cloudRes = await base44.functions.invoke('loadSave', { walletAddress: SaveManager._walletAddress });
-        if (cloudRes.data?.saveData) {
+        const saves = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
+        if (saves.length > 0 && saves[0].save_data) {
           console.log('[SaveManager] Cloud save found, syncing to local');
-          localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudRes.data.saveData));
+          localStorage.setItem('cosmic_sloth_save', JSON.stringify(saves[0].save_data));
+          SaveManager._playerSaveId = saves[0].id;
         }
       } catch (e) {
         console.warn('[SaveManager] Could not load cloud save:', e);
@@ -46,12 +47,18 @@ export const SaveManager = {
       if (!localSave) return;
 
       const saveData = JSON.parse(localSave);
-      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-      await base44.functions.invoke('syncSave', {
-        walletAddress: SaveManager._walletAddress,
-        saveData,
-        accessToken: omenxAuth?.accessToken || null,
-      });
+      if (SaveManager._playerSaveId) {
+        await base44.entities.PlayerSave.update(SaveManager._playerSaveId, { save_data: saveData, updated_at: Date.now() });
+      } else {
+        const existing = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
+        if (existing.length > 0) {
+          SaveManager._playerSaveId = existing[0].id;
+          await base44.entities.PlayerSave.update(existing[0].id, { save_data: saveData, updated_at: Date.now() });
+        } else {
+          const created = await base44.entities.PlayerSave.create({ wallet_address: SaveManager._walletAddress, save_data: saveData, updated_at: Date.now() });
+          SaveManager._playerSaveId = created.id;
+        }
+      }
     } catch (e) {
       console.error('[SaveManager] Sync failed:', e);
     }
