@@ -268,7 +268,7 @@ export class GameEngine {
         this.shakeY = 0;
         this.shakeTimer = 0;
         this.hitStopTimer = 0;
-        this.zoom = window.innerWidth < 768 ? 0.55 : 1;
+        this.zoom = window.innerWidth < 768 ? 0.5 : 0.8;
         this.bossModifiers = save.bossModifiers || {};
         this.worldBossDamage = 0;
         
@@ -554,7 +554,7 @@ export class GameEngine {
             this.player.synAmpTimer -= dt;
         }
         
-        this.zoom = window.innerWidth < 768 ? 0.55 : 1;
+        this.zoom = window.innerWidth < 768 ? 0.5 : 0.8;
         this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
         this.camera.y = this.player.y - (this.canvas.height / this.zoom) / 2;
 
