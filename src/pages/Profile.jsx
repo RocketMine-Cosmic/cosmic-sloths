@@ -175,14 +175,15 @@ export default function Profile({ isCarousel }) {
     };
 
     const getVipTierName = (level) => {
-        const tiers = ['Bronze 1', 'Bronze 2', 'Silver 1', 'Silver 2', 'Silver 3', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Diamond 4'];
+        const tiers = ['Bronze 1', 'Bronze 2', 'Silver 1', 'Silver 2', 'Silver 3', 'Gold 1', 'Gold 2', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Diamond 4'];
         return tiers[level - 1] || `Level ${level}`;
     };
 
     const getVipTierColor = (level) => {
         if (level <= 2) return { text: 'text-amber-700', border: 'border-amber-600/50', bg: 'bg-amber-950/40', shadow: 'shadow-[0_0_20px_rgba(180,83,9,0.2)]' };
         if (level <= 5) return { text: 'text-slate-300', border: 'border-slate-400/50', bg: 'bg-slate-800/40', shadow: 'shadow-[0_0_20px_rgba(148,163,184,0.2)]' };
-        if (level <= 8) return { text: 'text-cyan-300', border: 'border-cyan-500/50', bg: 'bg-cyan-950/40', shadow: 'shadow-[0_0_20px_rgba(6,182,212,0.2)]' };
+        if (level <= 7) return { text: 'text-yellow-400', border: 'border-yellow-600/50', bg: 'bg-yellow-950/40', shadow: 'shadow-[0_0_20px_rgba(234,179,8,0.2)]' };
+        if (level <= 10) return { text: 'text-cyan-300', border: 'border-cyan-500/50', bg: 'bg-cyan-950/40', shadow: 'shadow-[0_0_20px_rgba(6,182,212,0.2)]' };
         return { text: 'text-blue-300', border: 'border-blue-400/50', bg: 'bg-blue-950/40', shadow: 'shadow-[0_0_20px_rgba(96,165,250,0.25)]' };
     };
 

@@ -489,13 +489,15 @@ const TABS_CONTENT = {
                         { tier: 'Silver 1',   level: 3,  color: 'text-slate-300',   border: 'border-slate-500/50',   bg: 'bg-slate-800/40' },
                         { tier: 'Silver 2',   level: 4,  color: 'text-slate-300',   border: 'border-slate-500/50',   bg: 'bg-slate-800/40' },
                         { tier: 'Silver 3',   level: 5,  color: 'text-slate-300',   border: 'border-slate-500/50',   bg: 'bg-slate-800/40' },
-                        { tier: 'Platinum 1', level: 6,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
-                        { tier: 'Platinum 2', level: 7,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
-                        { tier: 'Platinum 3', level: 8,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
-                        { tier: 'Diamond 1',  level: 9,  color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
-                        { tier: 'Diamond 2',  level: 10, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
-                        { tier: 'Diamond 3',  level: 11, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
-                        { tier: 'Diamond 4',  level: 12, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                        { tier: 'Gold 1',     level: 6,  color: 'text-yellow-400',  border: 'border-yellow-700/50',  bg: 'bg-yellow-950/30' },
+                        { tier: 'Gold 2',     level: 7,  color: 'text-yellow-400',  border: 'border-yellow-700/50',  bg: 'bg-yellow-950/30' },
+                        { tier: 'Platinum 1', level: 8,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
+                        { tier: 'Platinum 2', level: 9,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
+                        { tier: 'Platinum 3', level: 10, color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
+                        { tier: 'Diamond 1',  level: 11, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                        { tier: 'Diamond 2',  level: 12, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                        { tier: 'Diamond 3',  level: 13, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                        { tier: 'Diamond 4',  level: 14, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
                     ].map(v => (
                         <div key={v.tier} className={`flex items-center justify-between gap-3 ${v.bg} rounded-lg px-3 py-2 border ${v.border}`}>
                             <div className="flex items-center gap-2">
