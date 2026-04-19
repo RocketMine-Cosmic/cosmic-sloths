@@ -45,10 +45,13 @@ const MainApp = () => {
         if (omenxAuth) {
             // Load server-side PlayerSave if it exists
             try {
-                const { data: response } = await base44.functions.invoke('loadSave', {});
-                if (response?.save_data) {
+                const { data: response } = await base44.functions.invoke('loadSave', {
+                    walletAddress: omenxAuth.walletAddress,
+                    accessToken: omenxAuth.accessToken
+                });
+                if (response?.saveData) {
                     // Server save exists, use it (overwrite local if stale)
-                    localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.save_data));
+                    localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
                     console.log('[App] Loaded server PlayerSave for wallet:', omenxAuth.walletAddress);
                 }
             } catch (e) {
