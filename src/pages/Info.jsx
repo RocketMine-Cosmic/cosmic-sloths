@@ -480,25 +480,36 @@ const TABS_CONTENT = {
 
             <SectionCard title="⚡ VIP Bonuses" color="purple">
                 <p className="text-sm text-slate-300 leading-relaxed mb-3">
-                    Each VIP level grants <strong className="text-purple-400">+1% Damage</strong> and <strong className="text-purple-400">+1% Max HP</strong> per run. These bonuses stack — a higher VIP level means a stronger character every time you play.
+                    Each VIP tier grants <strong className="text-purple-400">+1% Damage</strong> and <strong className="text-purple-400">+1% Max HP</strong> per run, stacking with every tier you reach.
                 </p>
-                <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-900/40">
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                        <div className="bg-slate-800/60 rounded-lg p-2 border border-slate-700">
-                            <div className="text-slate-400 mb-1">VIP Level 1</div>
-                            <div className="text-purple-400 font-bold">+1% DMG / HP</div>
+                <div className="space-y-1.5">
+                    {[
+                        { tier: 'Bronze 1',   level: 1,  color: 'text-amber-700',   border: 'border-amber-900/50',   bg: 'bg-amber-950/30' },
+                        { tier: 'Bronze 2',   level: 2,  color: 'text-amber-700',   border: 'border-amber-900/50',   bg: 'bg-amber-950/30' },
+                        { tier: 'Silver 1',   level: 3,  color: 'text-slate-300',   border: 'border-slate-500/50',   bg: 'bg-slate-800/40' },
+                        { tier: 'Silver 2',   level: 4,  color: 'text-slate-300',   border: 'border-slate-500/50',   bg: 'bg-slate-800/40' },
+                        { tier: 'Silver 3',   level: 5,  color: 'text-slate-300',   border: 'border-slate-500/50',   bg: 'bg-slate-800/40' },
+                        { tier: 'Platinum 1', level: 6,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
+                        { tier: 'Platinum 2', level: 7,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
+                        { tier: 'Platinum 3', level: 8,  color: 'text-cyan-300',    border: 'border-cyan-800/50',    bg: 'bg-cyan-950/30' },
+                        { tier: 'Diamond 1',  level: 9,  color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                        { tier: 'Diamond 2',  level: 10, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                        { tier: 'Diamond 3',  level: 11, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                        { tier: 'Diamond 4',  level: 12, color: 'text-blue-300',    border: 'border-blue-700/50',    bg: 'bg-blue-950/30' },
+                    ].map(v => (
+                        <div key={v.tier} className={`flex items-center justify-between gap-3 ${v.bg} rounded-lg px-3 py-2 border ${v.border}`}>
+                            <div className="flex items-center gap-2">
+                                <Crown className={`w-3.5 h-3.5 shrink-0 ${v.color}`} />
+                                <span className={`font-bold text-sm ${v.color}`}>{v.tier}</span>
+                            </div>
+                            <span className="text-xs font-mono text-purple-400 font-bold">+{v.level}% DMG / HP</span>
                         </div>
-                        <div className="bg-slate-800/60 rounded-lg p-2 border border-slate-700">
-                            <div className="text-slate-400 mb-1">VIP Level 5</div>
-                            <div className="text-purple-400 font-bold">+5% DMG / HP</div>
-                        </div>
-                        <div className="bg-slate-800/60 rounded-lg p-2 border border-amber-800/50">
-                            <div className="text-slate-400 mb-1">VIP Level 21</div>
-                            <div className="text-amber-400 font-bold">+21% DMG / HP</div>
-                        </div>
+                    ))}
+                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-900/40 rounded-lg border border-slate-800/50 opacity-50">
+                        <Crown className="w-3.5 h-3.5 text-slate-600" />
+                        <span className="text-xs text-slate-600 italic">Higher tiers — coming soon</span>
                     </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">VIP levels go up to 21, determined by your OmenX Game Bonus Points level.</p>
             </SectionCard>
 
             <SectionCard title="🔮 How to Get VIP" color="cyan">
