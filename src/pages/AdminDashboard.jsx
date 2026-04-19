@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { ArrowLeft, BarChart3, Clock, Send, Trophy } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock, Send, Trophy, Eye } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
@@ -19,6 +19,11 @@ export default function AdminDashboard() {
     const [distributeType, setDistributeType] = useState('weekly');
     const [distributing, setDistributing] = useState(false);
     const [distributeMsg, setDistributeMsg] = useState('');
+    const [previewPeriod, setPreviewPeriod] = useState('');
+    const [previewType, setPreviewType] = useState('weekly');
+    const [previewing, setPreviewing] = useState(false);
+    const [previewData, setPreviewData] = useState(null);
+    const [previewError, setPreviewError] = useState('');
 
     const handleKeySubmit = async (e) => {
         e.preventDefault();
@@ -114,6 +119,27 @@ export default function AdminDashboard() {
 
     const weeklyData = aggregateData(filteredPools.filter(p => p.period_type === 'weekly')).sort((a, b) => a.period_id.localeCompare(b.period_id));
     const seasonalData = aggregateData(filteredPools.filter(p => p.period_type === 'seasonal')).sort((a, b) => a.period_id.localeCompare(b.period_id));
+
+    const handlePreview = async () => {
+        if (!previewPeriod.trim()) {
+            setPreviewError('Enter period ID (e.g., 2026-W16 or 2026-S1)');
+            return;
+        }
+        setPreviewing(true);
+        setPreviewData(null);
+        setPreviewError('');
+        try {
+            const res = await base44.functions.invoke('previewPayouts', {
+                period_id: previewPeriod.trim(),
+                period_type: previewType
+            }, { headers: { 'x-admin-key': adminKey } });
+            setPreviewData(res.data);
+        } catch (err) {
+            setPreviewError(err.message);
+        } finally {
+            setPreviewing(false);
+        }
+    };
 
     const handleDistribute = async () => {
         if (!distributePeriod.trim()) {
@@ -271,6 +297,100 @@ export default function AdminDashboard() {
                             <div className={`mt-2 text-sm font-mono ${distributeMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>
                                 {distributeMsg}
                             </div>
+                        )}
+                    </div>
+
+                    <div className="mt-6 bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-sky-900/50 p-4 md:p-6 shadow-[0_0_30px_rgba(14,165,233,0.1)]">
+                        <h2 className="text-lg font-bold text-sky-400 mb-4 tracking-widest uppercase flex items-center gap-2">
+                            <Eye className="w-5 h-5" /> Preview Payouts (Dry Run)
+                        </h2>
+                        <div className="flex flex-wrap gap-3 items-end mb-4">
+                            <div className="flex flex-col">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Period ID</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g., 2026-W16 or 2026-S1"
+                                    value={previewPeriod}
+                                    onChange={e => setPreviewPeriod(e.target.value)}
+                                    className="bg-[#0b0416]/80 backdrop-blur-md border border-sky-700 text-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 transition-colors"
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Type</label>
+                                <select
+                                    value={previewType}
+                                    onChange={e => setPreviewType(e.target.value)}
+                                    className="bg-[#0b0416]/80 backdrop-blur-md border border-sky-700 text-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 transition-colors cursor-pointer"
+                                    style={{ colorScheme: 'dark' }}
+                                >
+                                    <option value="weekly">Weekly</option>
+                                    <option value="seasonal">Seasonal</option>
+                                </select>
+                            </div>
+                            <button
+                                onClick={handlePreview}
+                                disabled={previewing}
+                                className="bg-sky-700 hover:bg-sky-600 disabled:opacity-50 text-white font-bold px-4 py-1.5 rounded-md transition-colors flex items-center gap-2 text-sm"
+                            >
+                                <Eye className="w-4 h-4" /> {previewing ? 'Loading...' : 'Preview'}
+                            </button>
+                        </div>
+                        {previewError && <div className="text-red-400 text-sm font-mono mb-3">{previewError}</div>}
+                        {previewData && (
+                            <>
+                                <div className="flex flex-wrap gap-4 mb-4">
+                                    <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-2 text-center">
+                                        <div className="text-[10px] text-slate-400 uppercase tracking-wider">Total Spent</div>
+                                        <div className="font-mono font-bold text-white">{previewData.total_spent?.toFixed(2)} OMENX</div>
+                                    </div>
+                                    <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-2 text-center">
+                                        <div className="text-[10px] text-slate-400 uppercase tracking-wider">Reward Pool</div>
+                                        <div className="font-mono font-bold text-sky-400">{previewData.reward_pool?.toFixed(2)} OMENX</div>
+                                    </div>
+                                    <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-2 text-center">
+                                        <div className="text-[10px] text-slate-400 uppercase tracking-wider">Total Paying Out</div>
+                                        <div className="font-mono font-bold text-emerald-400">{previewData.total_payout?.toFixed(2)} OMENX</div>
+                                    </div>
+                                    <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-2 text-center">
+                                        <div className="text-[10px] text-slate-400 uppercase tracking-wider">Recipients</div>
+                                        <div className="font-mono font-bold text-white">{previewData.player_count}</div>
+                                    </div>
+                                    <div className={`border rounded-lg px-4 py-2 text-center ${previewData.distributed ? 'bg-red-950/40 border-red-700' : 'bg-emerald-950/40 border-emerald-700'}`}>
+                                        <div className="text-[10px] text-slate-400 uppercase tracking-wider">Status</div>
+                                        <div className={`font-mono font-bold text-sm ${previewData.distributed ? 'text-red-400' : 'text-emerald-400'}`}>
+                                            {previewData.distributed ? 'ALREADY DISTRIBUTED' : 'PENDING'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-slate-900/50 text-slate-400 font-mono tracking-wider border-b border-slate-700/50">
+                                            <tr>
+                                                <th className="p-3 font-semibold text-center">Rank</th>
+                                                <th className="p-3 font-semibold">Player</th>
+                                                <th className="p-3 font-semibold">Wallet</th>
+                                                <th className="p-3 font-semibold text-right">Score</th>
+                                                <th className="p-3 font-semibold text-right">Would Receive</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800/50">
+                                            {(previewData.payments || []).map((p) => (
+                                                <tr key={p.rank} className="hover:bg-slate-800/30 transition-colors">
+                                                    <td className="p-3 text-center font-mono text-slate-300">
+                                                        {p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`}
+                                                    </td>
+                                                    <td className="p-3 font-bold text-white whitespace-nowrap">{p.player_name}</td>
+                                                    <td className="p-3 text-slate-500 font-mono text-xs" title={p.wallet_address}>
+                                                        {p.wallet_address ? `${p.wallet_address.slice(0, 6)}...${p.wallet_address.slice(-4)}` : '-'}
+                                                    </td>
+                                                    <td className="p-3 text-right font-mono text-slate-300">{(p.score || 0).toLocaleString()}</td>
+                                                    <td className="p-3 text-right font-mono font-bold text-sky-400">{p.amount.toFixed(2)} OMENX</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </>
                         )}
                     </div>
 
