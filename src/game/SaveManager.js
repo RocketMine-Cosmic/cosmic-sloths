@@ -4,6 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { getOmenXUser } from '@/lib/omenxUser';
 import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 
+let syncTimeout = null;
+let pendingSync = false;
+
 export const SaveManager = {
   _walletAddress: null,
   _playerSaveId: null,
@@ -274,7 +277,14 @@ export const SaveManager = {
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
       // Only sync if user is authenticated with OmenX
       if (SaveManager._walletAddress) {
-        SaveManager.syncToBackend();
+        pendingSync = true;
+        if (syncTimeout) clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
+          if (pendingSync) {
+            SaveManager.syncToBackend();
+            pendingSync = false;
+          }
+        }, 10000); // Debounce to 10 seconds
       }
     } catch (e) {
       console.error('[SaveManager] Save error');

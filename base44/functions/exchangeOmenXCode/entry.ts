@@ -37,6 +37,11 @@ Deno.serve(async (req) => {
     const tokenData = await tokenResponse.json();
     console.log('[exchangeOmenXCode] raw token response:', JSON.stringify(tokenData));
 
+    // Check token expiry before responding
+    if (tokenData.expires_in && tokenData.expires_in <= 0) {
+      return Response.json({ error: 'Token expired immediately', details: tokenData }, { status: 400 });
+    }
+
     // wallet/username are nested inside tokenData.user
     const user = tokenData.user || {};
     return Response.json({

@@ -65,6 +65,7 @@ export default function Game() {
             canvas.height = window.innerHeight;
         };
         window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', resizeCanvas);
         resizeCanvas();
 
         const updateBounties = (currentSave, stats) => {
@@ -315,6 +316,7 @@ export default function Game() {
 
             return () => {
                 window.removeEventListener('resize', resizeCanvas);
+                window.removeEventListener('orientationchange', resizeCanvas);
                 engine.cleanup();
                 SoundManager.stopBGM();
             };

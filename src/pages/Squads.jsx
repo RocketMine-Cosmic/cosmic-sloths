@@ -139,6 +139,11 @@ export default function Squads({ isCarousel }) {
                 }
             } catch (e) {
                 console.error(e);
+                // Handle RLS or access errors gracefully
+                if (e?.message?.includes('Forbidden') || e?.status === 403) {
+                    setUser({}); // Reset to avoid retry loop
+                    toast({ title: "Access Denied", description: "You may have been removed from your squad." });
+                }
             }
         };
         loadUserAndSquad();
