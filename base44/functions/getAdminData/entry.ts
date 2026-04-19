@@ -3,10 +3,9 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { type, walletAddress, accessToken } = await req.json();
         
-        // Verify OAuth token first
+        // Verify OAuth token
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
         
         const sdk = new OmenXServerSDK({
@@ -16,12 +15,7 @@ Deno.serve(async (req) => {
         const verifyResult = await sdk.verifyOAuthUser(accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
         
-        const authenticatedWallet = verifyResult.user.walletAddress;
         if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
-        
-        // Check if wallet is authorized admin — use service role to bypass auth
-        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress });
-        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         if (type === 'pools') {
             const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);
