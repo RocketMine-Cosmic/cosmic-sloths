@@ -2,6 +2,7 @@ import moment from 'moment';
 import { BOUNTIES_POOL, DAILY_MISSIONS_POOL } from './Constants';
 import { base44 } from '@/api/base44Client';
 import { getOmenXUser } from '@/lib/omenxUser';
+import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 
 export const SaveManager = {
   _walletAddress: null,
@@ -11,15 +12,15 @@ export const SaveManager = {
     try {
       let walletAddress = null;
       
-      // Try Base44 auth first (persists on backend, survives localStorage clear)
+      // Try OmenX IndexedDB first (survives browser history clear)
       try {
-        const user = await base44.auth.me();
-        if (user?.wallet_address) {
-          walletAddress = user.wallet_address;
-          console.log('[SaveManager] Using Base44 auth wallet:', walletAddress);
+        const omenxAuth = await getAuthFromIndexedDB();
+        if (omenxAuth?.walletAddress) {
+          walletAddress = omenxAuth.walletAddress;
+          console.log('[SaveManager] Using OmenX IndexedDB wallet:', walletAddress);
         }
       } catch (e) {
-        console.log('[SaveManager] Base44 auth not available:', e.message);
+        console.log('[SaveManager] IndexedDB auth not available:', e.message);
       }
       
       // Fallback to OmenX localStorage

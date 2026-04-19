@@ -1,10 +1,19 @@
+import { getAuthFromIndexedDB, saveAuthToIndexedDB } from './indexedDbAuth.js';
+
 /**
- * Gets the current OmenX user data from sessionStorage.
+ * Gets the current OmenX user data from IndexedDB or localStorage.
  * Replaces base44.auth.me() for wallet-only auth.
  */
-export function getOmenXUser() {
+export async function getOmenXUser() {
     try {
-        const authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
+        // Try IndexedDB first (survives history clear)
+        let authData = await getAuthFromIndexedDB();
+        
+        // Fallback to localStorage
+        if (!authData) {
+            authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
+        }
+        
         if (!authData?.walletAddress) return null;
         
         return {
@@ -26,14 +35,19 @@ export function getOmenXUser() {
 }
 
 /**
- * Updates OmenX user data in localStorage.
+ * Updates OmenX user data in IndexedDB and localStorage.
  * Used for profile customization (name, title, icon).
  */
-export function updateOmenXUser(updates) {
+export async function updateOmenXUser(updates) {
     try {
-        const authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
+        let authData = await getAuthFromIndexedDB();
+        if (!authData) {
+            authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
+        }
         if (!authData) return;
+        
         const updated = { ...authData, ...updates };
+        await saveAuthToIndexedDB(updated);
         localStorage.setItem('omenx_auth_data', JSON.stringify(updated));
         window.dispatchEvent(new CustomEvent('omenxUserUpdated', { detail: updated }));
     } catch (e) {

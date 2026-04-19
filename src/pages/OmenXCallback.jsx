@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { saveAuthToIndexedDB } from '@/lib/indexedDbAuth';
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Processing login...');
@@ -43,6 +44,8 @@ export default function OmenXCallback() {
                     username: tokenData.username,
                 };
 
+                // Save to both IndexedDB (survives history clear) and localStorage (fallback)
+                await saveAuthToIndexedDB(authData);
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 
                 // Create initial save file and PlayerSave on first login
