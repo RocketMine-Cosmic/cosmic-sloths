@@ -34,7 +34,12 @@ export default function AdminDashboard() {
     const handleWalletSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await base44.functions.invoke('getAdminData', { type: 'pools', walletAddress: walletInput });
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            if (!authData?.accessToken) {
+                setWalletError('Please login with OmenX first');
+                return;
+            }
+            const res = await base44.functions.invoke('getAdminData', { type: 'pools', walletAddress: walletInput, accessToken: authData.accessToken });
             if (res.data?.error === 'Forbidden') throw new Error('Forbidden');
             setAdminWallet(walletInput);
             sessionStorage.setItem('admin_wallet', walletInput);
