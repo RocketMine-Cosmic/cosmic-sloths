@@ -203,6 +203,12 @@ export default function Squads({ isCarousel }) {
         try {
             SoundManager.playUIClick();
             
+            const walletAddr = user.wallet_address || user.data?.wallet_address;
+            if (!walletAddr) {
+                toast({ title: "Error", description: "Wallet address not found. Please log in again." });
+                return;
+            }
+            
             const currentSave = SaveManager.load();
             if (currentSave.lastSquadLeaveTime && Date.now() - currentSave.lastSquadLeaveTime < 24 * 60 * 60 * 1000) {
                 const hoursLeft = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - currentSave.lastSquadLeaveTime)) / (60 * 60 * 1000));
@@ -214,7 +220,7 @@ export default function Squads({ isCarousel }) {
                 name: newSquadName,
                 tag: newSquadTag.toUpperCase().substring(0, 4),
                 description: newSquadDesc,
-                owner_wallet: user.wallet_address || user.data?.wallet_address,
+                owner_wallet: walletAddr,
                 weekly_kills: 0,
                 current_week: getCurrentWeek(),
                 daily_kills: 0,

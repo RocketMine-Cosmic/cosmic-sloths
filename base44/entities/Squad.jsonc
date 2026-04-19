@@ -52,8 +52,10 @@
     "owner_wallet"
   ],
   "rls": {
+    "create": {
+      "authenticated": true
+    },
     "read": {},
-    "create": {},
     "update": {
       "$or": [
         {
