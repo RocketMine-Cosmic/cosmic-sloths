@@ -44,17 +44,42 @@ Deno.serve(async (req) => {
         };
         const { week_id: currentWeekId, season_id: currentSeasonId } = getCurrentPeriodIds();
 
+        // CRITICAL: Validate TokenPool matches TokenSpendLog before distribution
+        const validatePoolsBeforeDistribution = async (pool) => {
+            const logs = await base44.asServiceRole.entities.TokenSpendLog.filter({
+                week_id: pool.period_id,
+                season_id: pool.period_id
+            });
+            const logTotal = logs.reduce((sum, log) => sum + (log.amount || 0), 0);
+            if (Math.abs(logTotal - pool.total_spent) > 0.01) {
+                throw new Error(`CRITICAL: TokenPool mismatch for ${pool.period_id} (${pool.period_type}): pool=${pool.total_spent} OMENX, logs=${logTotal} OMENX. Aborting distribution to protect payouts.`);
+            }
+            console.log(`[distributeRewards] VALIDATED ${pool.period_type} ${pool.period_id}: ${pool.total_spent} OMENX`);
+        };
+
         const undistributedPools = await base44.asServiceRole.entities.TokenPool.filter({ distributed: false });
 
         const results = [];
 
         for (const pool of undistributedPools) {
             if (pool.period_type === 'weekly' && pool.period_id !== currentWeekId) {
-                const result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
-                results.push({ pool: pool.period_id, type: 'weekly', ...result });
+                try {
+                    await validatePoolsBeforeDistribution(pool);
+                    const result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
+                    results.push({ pool: pool.period_id, type: 'weekly', ...result });
+                } catch (validationErr) {
+                    console.error('[distributeRewards] VALIDATION FAILED:', validationErr.message);
+                    results.push({ pool: pool.period_id, type: 'weekly', error: validationErr.message, aborted: true });
+                }
             } else if (pool.period_type === 'seasonal' && pool.period_id !== currentSeasonId) {
-                const result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
-                results.push({ pool: pool.period_id, type: 'seasonal', ...result });
+                try {
+                    await validatePoolsBeforeDistribution(pool);
+                    const result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
+                    results.push({ pool: pool.period_id, type: 'seasonal', ...result });
+                } catch (validationErr) {
+                    console.error('[distributeRewards] VALIDATION FAILED:', validationErr.message);
+                    results.push({ pool: pool.period_id, type: 'seasonal', error: validationErr.message, aborted: true });
+                }
             }
         }
 
@@ -132,6 +157,11 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 }
 
 async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
+    // CRITICAL: Validate pool amount > 0 to prevent distributing zero payouts
+    if (!pool.total_spent || pool.total_spent <= 0) {
+        throw new Error(`CRITICAL: Weekly pool ${pool.period_id} has zero or negative spend (${pool.total_spent} OMENX). Aborting to prevent erroneous payouts.`);
+    }
+
     const rewardPool = Math.floor(pool.total_spent * 0.25);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
 
@@ -186,6 +216,11 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
 }
 
 async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
+    // CRITICAL: Validate pool amount > 0 to prevent distributing zero payouts
+    if (!pool.total_spent || pool.total_spent <= 0) {
+        throw new Error(`CRITICAL: Seasonal pool ${pool.period_id} has zero or negative spend (${pool.total_spent} OMENX). Aborting to prevent erroneous payouts.`);
+    }
+
     const rewardPool = Math.floor(pool.total_spent * 0.35);
     const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
 
