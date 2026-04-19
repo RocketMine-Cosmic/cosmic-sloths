@@ -93,7 +93,7 @@ export default function Squads({ isCarousel }) {
                 }
                 setUser(me);
                 if (me) {
-                    const memberships = await base44.entities.SquadMember.filter({ user_id: me.id });
+                    const memberships = await base44.entities.SquadMember.filter({ wallet_address: me.wallet_address });
                     if (memberships.length > 0) {
                         const member = memberships[0];
                         setMyMemberRecord(member);
@@ -227,7 +227,7 @@ export default function Squads({ isCarousel }) {
             const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A new pilot';
             const member = await base44.entities.SquadMember.create({
                 squad_id: squad.id,
-                user_id: user.id,
+                wallet_address: user.wallet_address || user.data?.wallet_address,
                 player_name: displayName,
                 player_title: user.data?.player_title || '',
                 role: 'leader',
@@ -255,7 +255,7 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const existingMembers = await base44.entities.SquadMember.filter({ user_id: user.id });
+            const existingMembers = await base44.entities.SquadMember.filter({ wallet_address: user.wallet_address || user.data?.wallet_address });
             if (existingMembers.length > 0) {
                 toast({ title: "Already in a Squad", description: "You are already in a squad." });
                 return;
@@ -271,7 +271,7 @@ export default function Squads({ isCarousel }) {
 
             const member = await base44.entities.SquadMember.create({
                 squad_id: squadId,
-                user_id: user.id,
+                wallet_address: user.wallet_address || user.data?.wallet_address,
                 player_name: displayName,
                 player_title: user.data?.player_title || '',
                 role: 'member',
@@ -281,7 +281,7 @@ export default function Squads({ isCarousel }) {
             
             await base44.entities.SquadMessage.create({
                 squad_id: squadId,
-                user_id: 'system',
+                wallet_address: 'system',
                 player_name: 'SYSTEM',
                 content: `${displayName} has joined the squad!`
             });
@@ -307,7 +307,7 @@ export default function Squads({ isCarousel }) {
 
             await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
-                user_id: 'system',
+                wallet_address: 'system',
                 player_name: 'SYSTEM',
                 content: `${displayName} has left the squad.`
             });
@@ -353,7 +353,7 @@ export default function Squads({ isCarousel }) {
         try {
             const saved = await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
-                user_id: user.id,
+                wallet_address: user.wallet_address || user.data?.wallet_address,
                 player_name: displayName,
                 player_title: user.data?.player_title || '',
                 content: content
@@ -370,7 +370,7 @@ export default function Squads({ isCarousel }) {
     const isLeader = myMemberRecord?.role === 'leader';
 
     const handleKickMember = async (member) => {
-        if (!isLeader || member.user_id === user.id) return;
+        if (!isLeader || member.wallet_address === user.wallet_address) return;
         try {
             SoundManager.playUIClick();
             await base44.entities.SquadMember.delete(member.id);
@@ -379,7 +379,7 @@ export default function Squads({ isCarousel }) {
             });
             await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
-                user_id: 'system',
+                wallet_address: 'system',
                 player_name: 'SYSTEM',
                 content: `${member.player_name} was removed from the squad.`
             });
@@ -391,7 +391,7 @@ export default function Squads({ isCarousel }) {
     };
 
     const handleTransferLeadership = async (member) => {
-        if (!isLeader || member.user_id === user.id) return;
+        if (!isLeader || member.wallet_address === user.wallet_address) return;
         try {
             SoundManager.playUIClick();
             // Demote current leader, promote new leader
@@ -400,7 +400,7 @@ export default function Squads({ isCarousel }) {
             await base44.entities.Squad.update(mySquad.id, { owner_wallet: member.wallet_address });
             await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
-                user_id: 'system',
+                wallet_address: 'system',
                 player_name: 'SYSTEM',
                 content: `${member.player_name} is now the squad leader!`
             });
@@ -877,14 +877,14 @@ export default function Squads({ isCarousel }) {
                                             <div className="text-center text-slate-500 mt-10">No messages yet. Say hi!</div>
                                         ) : (
                                             messages.map(msg => (
-                                                <div key={msg.id} className={`flex flex-col ${msg.user_id === user.id ? 'items-end' : 'items-start'}`}>
-                                                    {msg.user_id === 'system' ? (
+                                                <div key={msg.id} className={`flex flex-col ${msg.wallet_address === user.wallet_address ? 'items-end' : 'items-start'}`}>
+                                                    {msg.wallet_address === 'system' ? (
                                                         <div className="w-full text-center text-xs text-slate-500 my-2 italic">
                                                             {msg.content}
                                                         </div>
                                                     ) : (
                                                         <div className={`max-w-[70%] rounded-lg p-2 ${
-                                                            msg.user_id === user.id 
+                                                            msg.wallet_address === user.wallet_address 
                                                                 ? 'bg-cyan-900/50 text-white border border-cyan-800' 
                                                                 : 'bg-slate-800 text-slate-200 border border-slate-700'
                                                         }`}>
@@ -933,12 +933,12 @@ export default function Squads({ isCarousel }) {
                                                         {member.role === 'leader' && <Crown className="w-3 h-3 text-yellow-400" />}
                                                         {member.player_name}
                                                         {member.player_title && <span className="text-[9px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider">{member.player_title}</span>}
-                                                        {member.user_id === user.id && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 rounded">YOU</span>}
+                                                        {member.wallet_address === user.wallet_address && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 rounded">YOU</span>}
                                                     </div>
                                                     <div className="text-xs text-slate-400 capitalize">{member.role}</div>
                                                 </div>
                                             </div>
-                                            {isLeader && member.user_id !== user.id && (
+                                            {isLeader && member.wallet_address !== user.wallet_address && (
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleTransferLeadership(member)}
