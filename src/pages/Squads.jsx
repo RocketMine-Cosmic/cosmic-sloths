@@ -203,7 +203,6 @@ export default function Squads({ isCarousel }) {
         try {
             SoundManager.playUIClick();
             
-            const walletAddr = (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim();
             if (!walletAddr) {
                 toast({ title: "Error", description: "Wallet address not found. Please log in again." });
                 return;
@@ -523,6 +522,8 @@ export default function Squads({ isCarousel }) {
     };
 
     if (!user) return <div className="p-8 text-white">Loading...</div>;
+
+    const walletAddr = (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim();
 
     return (
         <OmenXGate isCarousel={isCarousel}>
