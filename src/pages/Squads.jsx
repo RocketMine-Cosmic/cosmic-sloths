@@ -310,11 +310,12 @@ export default function Squads({ isCarousel }) {
             
             const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A pilot';
 
+            const leaveName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A pilot').trim();
             await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
                 wallet_address: 'system',
                 player_name: 'SYSTEM',
-                content: `${displayName} has left the squad.`
+                content: `${leaveName} has left the squad.`
             });
             
             await base44.entities.Squad.update(mySquad.id, {

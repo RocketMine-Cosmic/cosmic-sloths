@@ -82,18 +82,28 @@ export const SaveManager = {
 
       const saveData = JSON.parse(localSave);
       
-      // Always check for existing saves by wallet to avoid duplicates
+      // Always check for existing saves by wallet to avoid duplicates (with race condition safety)
       const existing = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
       if (existing.length > 0) {
-        SaveManager._playerSaveId = existing[0].id;
-        await base44.entities.PlayerSave.update(existing[0].id, { save_data: saveData, updated_at: Date.now() });
+        // Keep only the most recently updated record
+        const latest = existing.reduce((a, b) => ((a.updated_at || 0) > (b.updated_at || 0) ? a : b));
+        SaveManager._playerSaveId = latest.id;
+        // Delete any duplicates that may have been created during race condition
+        for (const e of existing) {
+          if (e.id !== latest.id) {
+            try {
+              await base44.entities.PlayerSave.delete(e.id);
+            } catch { /* ignore */ }
+          }
+        }
+        await base44.entities.PlayerSave.update(latest.id, { save_data: saveData, updated_at: Date.now() });
       } else {
         // Only create if truly doesn't exist
         const created = await base44.entities.PlayerSave.create({ wallet_address: SaveManager._walletAddress, save_data: saveData, updated_at: Date.now() });
         SaveManager._playerSaveId = created.id;
       }
     } catch (e) {
-      console.error('[SaveManager] Sync error');
+      console.error('[SaveManager] Sync error:', e.message);
     }
   },
 
@@ -220,18 +230,27 @@ export const SaveManager = {
         
         const today = moment().format('YYYY-MM-DD');
         if (parsed.bounties.date !== today) {
-            const shuffled = [...BOUNTIES_POOL].sort(() => 0.5 - Math.random());
-            const shuffledMissions = [...DAILY_MISSIONS_POOL].sort(() => 0.5 - Math.random());
-            parsed.bounties = {
-                date: today,
-                active: shuffled.slice(0, 3).map(b => ({ ...b, progress: 0, claimed: false })),
-                dailyMission: { ...shuffledMissions[0], progress: 0, claimed: false }
-            };
-            localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+            try {
+                const shuffled = [...BOUNTIES_POOL].sort(() => 0.5 - Math.random());
+                const shuffledMissions = [...DAILY_MISSIONS_POOL].sort(() => 0.5 - Math.random());
+                parsed.bounties = {
+                    date: today,
+                    active: shuffled.slice(0, 3).map(b => ({ ...b, progress: 0, claimed: false })),
+                    dailyMission: { ...shuffledMissions[0], progress: 0, claimed: false }
+                };
+                localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+            } catch (e) {
+                console.error('[SaveManager] Failed to reset daily bounties:', e.message);
+                // Keep old bounties if reset fails
+            }
         } else if (!parsed.bounties.dailyMission) {
-            const shuffledMissions = [...DAILY_MISSIONS_POOL].sort(() => 0.5 - Math.random());
-            parsed.bounties.dailyMission = { ...shuffledMissions[0], progress: 0, claimed: false };
-            localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+            try {
+                const shuffledMissions = [...DAILY_MISSIONS_POOL].sort(() => 0.5 - Math.random());
+                parsed.bounties.dailyMission = { ...shuffledMissions[0], progress: 0, claimed: false };
+                localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+            } catch (e) {
+                console.error('[SaveManager] Failed to initialize daily mission:', e.message);
+            }
         }
         
         if (parsed.rerollTokens !== undefined) {

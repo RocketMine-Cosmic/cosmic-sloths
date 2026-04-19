@@ -101,11 +101,18 @@ Deno.serve(async (req) => {
 
         // Log the spend and update pools
         const playerName = playerNameParam || walletAddress;
+        
+        // Validate user_id before logging (use wallet as fallback)
+        const validUserId = userId || walletAddress;
+        if (!validUserId) {
+            console.error('[purchaseSku] No valid user ID or wallet for spend log');
+            return Response.json({ error: 'Invalid user identification' }, { status: 400 });
+        }
 
         console.log(`[purchaseSku] Creating TokenSpendLog: week=${week_id}, season=${season_id}, amount=${totalAmount}`);
         
         await db.entities.TokenSpendLog.create({
-            user_id: userId || walletAddress,
+            user_id: validUserId,
             player_name: playerName,
             wallet_address: walletAddress,
             amount: totalAmount,

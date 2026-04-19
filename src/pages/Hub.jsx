@@ -68,27 +68,32 @@ export default function Hub({ isCarousel }) {
     }, [syncReady]);
 
     React.useEffect(() => {
+        let isMounted = true;
         const initOmenX = async () => {
             const auth = getOmenXAuth();
+            if (!isMounted) return;
             setOmenxAuth(auth);
             
             if (auth?.walletAddress) {
                 try {
                     // Initialize SaveManager first (pulls cloud sync)
                     await SaveManager.initialize();
+                    if (!isMounted) return;
                     
                     // Then load merged save
                     const mergedSave = SaveManager.load();
+                    if (!isMounted) return;
                     setSave(mergedSave);
                     
                     // Check profile name requirement
-                    if (!mergedSave.hasSetProfileName) {
+                    if (!mergedSave.hasSetProfileName && isMounted) {
                         setNeedsProfileName(true);
                     }
                     
                     // Fetch and store VIP level
                     try {
                         const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress, accessToken: auth.accessToken });
+                        if (!isMounted) return;
                         if (vipRes.data?.vipLevel !== undefined) {
                             const s = SaveManager.load();
                             s.vipLevel = vipRes.data.vipLevel;
@@ -101,12 +106,13 @@ export default function Hub({ isCarousel }) {
                 } catch (e) {
                     console.error('Failed to initialize SaveManager:', e);
                 }
-                setSyncReady(true);
+                if (isMounted) setSyncReady(true);
             } else {
                 setSyncReady(true);
             }
         };
         initOmenX();
+        return () => { isMounted = false; };
     }, []);
 
     const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');

@@ -52,6 +52,17 @@ export default function OmenXCallback() {
                 }
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 
+                // Dispatch event for immediate UI update
+                if (window.opener) {
+                    try {
+                        window.opener.dispatchEvent(new StorageEvent('storage', {
+                            key: 'omenx_auth_data',
+                            newValue: JSON.stringify(authData),
+                            storageArea: localStorage,
+                        }));
+                    } catch(e) { /* cross-origin, ignore */ }
+                }
+                
                 // Create initial save file and PlayerSave on first login
                 const existingProfile = localStorage.getItem('omenx_user_profile');
                 if (!existingProfile) {
@@ -97,18 +108,11 @@ export default function OmenXCallback() {
                 }
 
                 if (window.opener) {
-                    try {
-                        window.opener.dispatchEvent(new StorageEvent('storage', {
-                            key: 'omenx_auth_data',
-                            newValue: JSON.stringify(authData),
-                            storageArea: localStorage,
-                        }));
-                    } catch(e) { /* cross-origin, ignore */ }
-                    setStatus('✓ Login successful!');
-                    setTimeout(() => window.close(), 15000);
+                    setStatus('✓ Login successful! Returning to app...');
+                    setTimeout(() => window.close(), 2000);
                 } else {
                     setStatus('✓ Login successful! You can close this tab.');
-                    setTimeout(() => window.close(), 1500);
+                    setTimeout(() => window.close(), 2000);
                 }
             } catch (err) {
                 setStatus(`❌ ${err.message}`);
