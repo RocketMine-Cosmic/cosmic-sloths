@@ -8,6 +8,8 @@ let listeners = new Set();
 let subscription = null;
 let consumerCount = 0;
 let fetchInProgress = false;
+let lastFetchTime = 0;
+const BALANCE_CACHE_DURATION = 30000; // 30 seconds
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
@@ -18,7 +20,11 @@ function getAuthData() {
 }
 
 async function fetchBalance(force = false) {
+    const now = Date.now();
+    // Skip if cache is fresh and not forced
+    if (!force && now - lastFetchTime < BALANCE_CACHE_DURATION) return;
     if (fetchInProgress && !force) return;
+    
     const auth = getAuthData();
     if (!auth?.walletAddress || !auth?.accessToken) {
         cachedBalance = null;
@@ -32,6 +38,7 @@ async function fetchBalance(force = false) {
             accessToken: auth.accessToken,
         });
         cachedBalance = res.data?.balance ?? null;
+        lastFetchTime = now;
         notify();
     } catch (e) {
         cachedBalance = null;
@@ -87,7 +94,7 @@ export function useOmenXBalance() {
             if (document.hidden) {
                 stopSubscription();
             } else {
-                fetchBalance().then(() => startSubscription());
+                startSubscription();
             }
         };
         document.addEventListener('visibilitychange', onVisibilityChange);
