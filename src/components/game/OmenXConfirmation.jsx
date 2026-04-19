@@ -7,16 +7,13 @@ function OmenXIcon({ className }) {
 }
 
 export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId }) {
-    const [showDisableOption, setShowDisableOption] = useState(true);
+    const [skipNext24h, setSkipNext24h] = useState(false);
 
     const handleConfirm = () => {
-        onConfirm();
-        onCancel();
-    };
-
-    const handleDisableFor24h = () => {
-        const disabledUntil = Date.now() + (24 * 60 * 60 * 1000);
-        localStorage.setItem(`omenx_confirm_disabled_${pageId}`, disabledUntil.toString());
+        if (skipNext24h) {
+            const disabledUntil = Date.now() + (24 * 60 * 60 * 1000);
+            localStorage.setItem(`omenx_confirm_disabled_${pageId}`, disabledUntil.toString());
+        }
         onConfirm();
         onCancel();
     };
@@ -44,7 +41,20 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 mb-4">
+                <div className="flex items-center gap-2 mb-6 bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                    <input
+                        type="checkbox"
+                        id="skip-confirm"
+                        checked={skipNext24h}
+                        onChange={(e) => setSkipNext24h(e.target.checked)}
+                        className="w-4 h-4 accent-orange-500 cursor-pointer"
+                    />
+                    <label htmlFor="skip-confirm" className="text-sm text-slate-300 cursor-pointer flex-1 text-left">
+                        Don't show this again for 24 hours
+                    </label>
+                </div>
+
+                <div className="flex flex-col gap-3">
                     <button
                         onClick={handleConfirm}
                         className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-lg font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.3)]"
@@ -58,13 +68,6 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                         CANCEL
                     </button>
                 </div>
-
-                <button
-                    onClick={handleDisableFor24h}
-                    className="w-full py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-slate-300 border border-slate-700 hover:border-slate-600 transition-colors"
-                >
-                    CONFIRM & DISABLE PROMPTS FOR THIS PAGE FOR 24H
-                </button>
             </motion.div>
         </div>
     );
