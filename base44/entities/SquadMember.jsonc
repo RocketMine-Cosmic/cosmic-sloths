@@ -5,8 +5,9 @@
     "squad_id": {
       "type": "string"
     },
-    "user_id": {
-      "type": "string"
+    "wallet_address": {
+      "type": "string",
+      "description": "Wallet address of the member"
     },
     "player_name": {
       "type": "string"
@@ -31,17 +32,28 @@
   },
   "required": [
     "squad_id",
-    "user_id",
+    "wallet_address",
     "player_name"
   ],
   "rls": {
     "read": {},
     "create": {},
-    "update": {},
+    "update": {
+      "$or": [
+        {
+          "data.wallet_address": "{{user.wallet_address}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "delete": {
       "$or": [
         {
-          "data.user_id": "{{user.id}}"
+          "data.wallet_address": "{{user.wallet_address}}"
         },
         {
           "user_condition": {

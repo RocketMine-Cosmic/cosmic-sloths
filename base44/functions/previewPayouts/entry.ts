@@ -62,9 +62,12 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { period_id, period_type, adminKey } = await req.json();
-        const expectedKey = Deno.env.get('AdminDash');
-        if (!adminKey || adminKey !== expectedKey) return Response.json({ error: 'Forbidden' }, { status: 403 });
+        const { period_id, period_type, walletAddress } = await req.json();
+        if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
+        
+        // Check if wallet is authorized admin
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress });
+        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
         if (!period_id || !period_type) return Response.json({ error: 'period_id and period_type required' }, { status: 400 });
 
         const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type });

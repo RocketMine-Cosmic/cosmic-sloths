@@ -3,9 +3,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { type, adminKey } = await req.json();
-        const expectedKey = Deno.env.get('AdminDash');
-        if (!adminKey || adminKey !== expectedKey) return Response.json({ error: 'Forbidden' }, { status: 403 });
+        const { type, walletAddress } = await req.json();
+        if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
+        
+        // Check if wallet is authorized admin
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress });
+        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         if (type === 'pools') {
             const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);

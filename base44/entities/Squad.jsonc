@@ -11,8 +11,9 @@
     "description": {
       "type": "string"
     },
-    "owner_id": {
-      "type": "string"
+    "owner_wallet": {
+      "type": "string",
+      "description": "Wallet address of the squad owner"
     },
     "icon": {
       "type": "string",
@@ -47,16 +48,28 @@
   },
   "required": [
     "name",
-    "tag"
+    "tag",
+    "owner_wallet"
   ],
   "rls": {
     "read": {},
     "create": {},
-    "update": {},
+    "update": {
+      "$or": [
+        {
+          "data.owner_wallet": "{{user.wallet_address}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "delete": {
       "$or": [
         {
-          "data.owner_id": "{{user.id}}"
+          "data.owner_wallet": "{{user.wallet_address}}"
         },
         {
           "user_condition": {

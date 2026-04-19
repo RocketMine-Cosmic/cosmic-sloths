@@ -24,53 +24,53 @@ const TABS = [
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem('admin_key') || '');
-    const [keyInput, setKeyInput] = useState('');
-    const [keyError, setKeyError] = useState('');
+    const [adminWallet, setAdminWallet] = useState(() => sessionStorage.getItem('admin_wallet') || '');
+    const [walletInput, setWalletInput] = useState('');
+    const [walletError, setWalletError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
 
-    const handleKeySubmit = async (e) => {
+    const handleWalletSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await base44.functions.invoke('getAdminData', { type: 'pools', adminKey: keyInput });
+            const res = await base44.functions.invoke('getAdminData', { type: 'pools', walletAddress: walletInput });
             if (res.data?.error === 'Forbidden') throw new Error('Forbidden');
-            setAdminKey(keyInput);
-            sessionStorage.setItem('admin_key', keyInput);
-            setKeyError('');
+            setAdminWallet(walletInput);
+            sessionStorage.setItem('admin_wallet', walletInput);
+            setWalletError('');
         } catch {
-            setKeyError('Invalid admin key');
+            setWalletError('Wallet not authorized as admin');
         }
     };
 
-    if (!adminKey) {
+    if (!adminWallet) {
         return (
             <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans">
                 <SpaceBackground />
-                <form onSubmit={handleKeySubmit} className="relative z-10 bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-4 w-full max-w-sm">
+                <form onSubmit={handleWalletSubmit} className="relative z-10 bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-4 w-full max-w-sm">
                     <h1 className="text-xl font-black uppercase tracking-widest text-red-400">Admin Access</h1>
                     <input
-                        type="password"
-                        placeholder="Enter admin key"
-                        value={keyInput}
-                        onChange={e => setKeyInput(e.target.value)}
-                        className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500"
+                        type="text"
+                        placeholder="Enter your wallet address"
+                        value={walletInput}
+                        onChange={e => setWalletInput(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500 font-mono text-xs"
                         autoFocus
                     />
-                    {keyError && <div className="text-red-400 text-sm">{keyError}</div>}
-                    <button type="submit" className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-md transition-colors">Enter</button>
+                    {walletError && <div className="text-red-400 text-sm">{walletError}</div>}
+                    <button type="submit" className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-md transition-colors">Authenticate</button>
                 </form>
             </div>
         );
     }
 
     const TabContent = {
-        overview: <AdminOverview adminKey={adminKey} />,
-        leaderboard: <AdminLeaderboard adminKey={adminKey} />,
-        players: <AdminPlayers adminKey={adminKey} />,
-        squads: <AdminSquads adminKey={adminKey} />,
-        raid: <AdminRaid adminKey={adminKey} />,
-        economy: <AdminEconomy adminKey={adminKey} />,
-        rewards: <AdminRewards adminKey={adminKey} />,
+        overview: <AdminOverview walletAddress={adminWallet} />,
+        leaderboard: <AdminLeaderboard walletAddress={adminWallet} />,
+        players: <AdminPlayers walletAddress={adminWallet} />,
+        squads: <AdminSquads walletAddress={adminWallet} />,
+        raid: <AdminRaid walletAddress={adminWallet} />,
+        economy: <AdminEconomy walletAddress={adminWallet} />,
+        rewards: <AdminRewards walletAddress={adminWallet} />,
     };
 
     return (
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
                         </h1>
                     </div>
                     <button
-                        onClick={() => { sessionStorage.removeItem('admin_key'); setAdminKey(''); }}
+                        onClick={() => { sessionStorage.removeItem('admin_wallet'); setAdminWallet(''); }}
                         className="text-xs text-red-400 hover:text-red-300 border border-red-900/50 px-2 py-1 rounded transition-colors"
                     >
                         Logout
