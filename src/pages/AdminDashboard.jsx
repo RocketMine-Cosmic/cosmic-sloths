@@ -29,19 +29,13 @@ export default function AdminDashboard() {
         e.preventDefault();
         // Verify the key by calling a protected function
         try {
-            const res = await base44.functions.invoke('getAdminData', { type: 'pools' }, { headers: { 'x-admin-key': keyInput } });
+            const res = await base44.functions.invoke('getAdminData', { type: 'pools', adminKey: keyInput });
             if (res.data?.error === 'Forbidden') throw new Error('Forbidden');
             setAdminKey(keyInput);
             sessionStorage.setItem('admin_key', keyInput);
             setKeyError('');
         } catch (err) {
-            if (err.message?.includes('403') || err.message?.includes('Forbidden')) {
-                setKeyError('Invalid admin key');
-            } else {
-                setAdminKey(keyInput);
-                sessionStorage.setItem('admin_key', keyInput);
-                setKeyError('');
-            }
+            setKeyError('Invalid admin key');
         }
     };
 
@@ -49,19 +43,19 @@ export default function AdminDashboard() {
 
     const { data: pools, isLoading: poolsLoading } = useQuery({
         queryKey: ['tokenPools', adminKey],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }, { headers: { 'x-admin-key': adminKey } }).then(r => r.data?.pools || []),
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools', adminKey }).then(r => r.data?.pools || []),
         enabled: !!adminKey
     });
 
     const { data: spendLogs, isLoading: logsLoading } = useQuery({
         queryKey: ['tokenSpendLogs', adminKey],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'logs' }, { headers: { 'x-admin-key': adminKey } }).then(r => r.data?.logs || []),
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'logs', adminKey }).then(r => r.data?.logs || []),
         enabled: !!adminKey
     });
 
     const { data: payoutLogs, isLoading: payoutsLoading } = useQuery({
         queryKey: ['payoutLogs', adminKey],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts' }, { headers: { 'x-admin-key': adminKey } }).then(r => r.data?.payouts || []),
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts', adminKey }).then(r => r.data?.payouts || []),
         enabled: !!adminKey
     });
 
@@ -131,8 +125,9 @@ export default function AdminDashboard() {
         try {
             const res = await base44.functions.invoke('previewPayouts', {
                 period_id: previewPeriod.trim(),
-                period_type: previewType
-            }, { headers: { 'x-admin-key': adminKey } });
+                period_type: previewType,
+                adminKey
+            });
             setPreviewData(res.data);
         } catch (err) {
             setPreviewError(err.message);
@@ -151,8 +146,9 @@ export default function AdminDashboard() {
         try {
             const res = await base44.functions.invoke('manuallyDistributeRewards', {
                 period_id: distributePeriod.trim(),
-                period_type: distributeType
-            }, { headers: { 'x-admin-key': adminKey } });
+                period_type: distributeType,
+                adminKey
+            });
             setDistributeMsg(`✓ Distributed ${res.data?.paid} players, ${res.data?.totalOmenx} OMENX total`);
             setDistributePeriod('');
             setTimeout(() => setDistributeMsg(''), 5000);

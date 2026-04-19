@@ -3,11 +3,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const adminKey = req.headers.get('x-admin-key');
+        const { type, adminKey } = await req.json();
         const expectedKey = Deno.env.get('AdminDash');
         if (!adminKey || adminKey !== expectedKey) return Response.json({ error: 'Forbidden' }, { status: 403 });
-
-        const { type } = await req.json();
 
         if (type === 'pools') {
             const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);
