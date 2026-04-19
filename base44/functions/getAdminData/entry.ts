@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
         const authenticatedWallet = verifyResult.user.walletAddress;
         if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
         
-        // Check if wallet is authorized admin (must be verified OAuth user)
+        // Check if wallet is authorized admin — use service role to bypass auth
         const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress });
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 

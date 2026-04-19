@@ -1,17 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
         const body = await req.json();
-        const { type, adminKey, query, period, squadId } = body;
+        const { type, walletAddress, accessToken, query, period, squadId } = body;
 
-        const expectedKey = Deno.env.get('AdminDash');
-        if (!adminKey || adminKey !== expectedKey) {
-            return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
+        // Verify OAuth token
+        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
+        
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
+        const verifyResult = await sdk.verifyOAuthUser(accessToken);
+        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
         const base44 = createClientFromRequest(req);
         const db = base44.asServiceRole;
+
+        // Verify admin access
+        if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
+        const adminWallets = await db.entities.AdminWallet.filter({ wallet_address: walletAddress });
+        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         if (type === 'overview') {
             const [scores, saves] = await Promise.all([
