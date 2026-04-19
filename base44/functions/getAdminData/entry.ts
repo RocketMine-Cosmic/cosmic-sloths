@@ -4,9 +4,8 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { type, walletAddress, accessToken } = await req.json();
+        const { type, accessToken } = await req.json();
         
-        // Verify OAuth token
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
         
         const sdk = new OmenXServerSDK({
@@ -14,9 +13,7 @@ Deno.serve(async (req) => {
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
         const verifyResult = await sdk.verifyOAuthUser(accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-        
-        if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
+        if (!verifyResult.success) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         if (type === 'pools') {
             const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);
@@ -35,6 +32,7 @@ Deno.serve(async (req) => {
 
         return Response.json({ error: 'Invalid type' }, { status: 400 });
     } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        console.error('[getAdminData] Error:', error);
+        return Response.json({ error: error.message || 'Internal error' }, { status: 500 });
     }
 });
