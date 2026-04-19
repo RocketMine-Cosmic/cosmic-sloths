@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import RecentChanges from './RecentChanges';
+import DistributionTimer from './DistributionTimer';
 
 function StatCard({ label, value, color = 'text-white', sub }) {
     return (
@@ -46,6 +47,8 @@ export default function AdminOverview({ walletAddress }) {
                 <StatCard label="This Week Spent" value={`${weeklySpent.toFixed(1)} OMENX`} color="text-red-400" />
                 <StatCard label="All-Time Spent" value={`${totalSpent.toFixed(1)} OMENX`} color="text-amber-400" />
             </div>
+
+            <DistributionTimer />
 
             <RecentChanges />
 
