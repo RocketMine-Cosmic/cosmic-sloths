@@ -11,12 +11,14 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
 
     const handleConfirm = () => {
         onConfirm();
+        onCancel();
     };
 
     const handleDisableFor24h = () => {
         const disabledUntil = Date.now() + (24 * 60 * 60 * 1000);
         localStorage.setItem(`omenx_confirm_disabled_${pageId}`, disabledUntil.toString());
         onConfirm();
+        onCancel();
     };
 
     return (
