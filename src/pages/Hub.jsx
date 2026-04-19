@@ -16,6 +16,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import { getOmenXUser } from '@/lib/omenxUser';
+import SetProfileNameModal from '../components/game/SetProfileNameModal';
 
 function getOmenXAuth() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -85,9 +86,15 @@ export default function Hub({ isCarousel }) {
                     if (!isMounted) return;
                     setSave(mergedSave);
                     
-                    // Check profile name requirement
-                    if (!mergedSave.hasSetProfileName && isMounted) {
-                        setNeedsProfileName(true);
+                    // Check profile name requirement AFTER login confirmed
+                    if (!mergedSave.hasSetProfileName) {
+                        // Grandfather in players who have already played
+                        if (mergedSave.totalKills > 0 || mergedSave.gold > 0) {
+                            mergedSave.hasSetProfileName = true;
+                            SaveManager.save(mergedSave);
+                        } else if (isMounted) {
+                            setNeedsProfileName(true);
+                        }
                     }
                     
                     // Fetch and store VIP level
@@ -192,11 +199,22 @@ export default function Hub({ isCarousel }) {
         );
     }
 
+    if (!syncReady) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
+
     return (
-        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
+        <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-1.5 pb-16 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
+            {needsProfileName && (
+                <SetProfileNameModal onComplete={() => {
+                    const s = SaveManager.load();
+                    s.hasSetProfileName = true;
+                    SaveManager.save(s);
+                    setSave(s);
+                    setNeedsProfileName(false);
+                }} />
+            )}
             <div className="max-w-6xl mx-auto relative z-10">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-1.5 md:gap-4 mb-2 md:mb-6 border-b border-fuchsia-900/40 pb-1.5 md:pb-4">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-1 md:gap-4 mb-1 md:mb-4 border-b border-fuchsia-900/40 pb-1 md:pb-4">
                     <div>
                         {!isCarousel && (
                             <button 
@@ -212,13 +230,13 @@ export default function Hub({ isCarousel }) {
                     <CurrencyHeader />
                 </header>
 
-                <div className="flex flex-col gap-4 md:gap-8">
-                    <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-2 md:p-6 border border-[#D946EF]/30 shadow-[0_0_50px_rgba(217,70,239,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]">
+                <div className="flex flex-col gap-2 md:gap-6">
+                    <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-1.5 md:p-4 border border-[#D946EF]/30 shadow-[0_0_50px_rgba(217,70,239,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]">
                         <div className="h-full flex flex-col justify-between">
                                 <div>
-                                    <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4 tracking-widest uppercase flex items-center gap-2"><span className="text-cyan-400">▶</span> Mission Briefing</h2>
+                                    <h2 className="text-base md:text-lg font-bold text-white mb-2 md:mb-3 tracking-widest uppercase flex items-center gap-2"><span className="text-cyan-400">▶</span> Mission Briefing</h2>
                                     
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6 mb-2 md:mb-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-1.5 md:gap-4 mb-1.5 md:mb-4">
                                         <div>
                                         <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Operative</h3>
                                         <div 
@@ -604,48 +622,48 @@ export default function Hub({ isCarousel }) {
                                     return (
                                         <div className="flex flex-col gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
                                             
-                                            <div className="flex flex-col sm:flex-row gap-2 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
-                                                <div className="text-xs text-slate-400 font-bold mb-1 sm:mb-0 sm:w-24 shrink-0 flex items-center">SESSION BUFFS</div>
-                                                <button onClick={buyBuff} disabled={hasXpBuff || (omenxBalance ?? 0) < 10} className={`flex-1 flex justify-between items-center px-3 py-2 rounded text-xs font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
-                                                    <span className="flex items-center gap-2">✨ +50% XP {hasXpBuff ? `(ACTIVE: ${timeLeft})` : '(60 Mins)'}</span>
+                                            <div className="flex flex-col sm:flex-row gap-1 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">
+                                                <div className="text-[11px] text-slate-400 font-bold mb-1 sm:mb-0 sm:w-20 shrink-0 flex items-center">BUFFS</div>
+                                                <button onClick={buyBuff} disabled={hasXpBuff || (omenxBalance ?? 0) < 10} className={`flex-1 flex justify-between items-center px-2 py-1 rounded text-[11px] font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
+                                                    <span className="flex items-center gap-1">✨ +50% XP {hasXpBuff ? `(${timeLeft})` : ''}</span>
                                                     {!hasXpBuff && <span className="text-purple-400 font-bold">10 OMENX</span>}
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+                                            <div className="flex flex-col md:flex-row gap-1 md:gap-3">
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('normal')}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-xs md:text-lg font-black py-1.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-1 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#0CA7B8] to-cyan-400 hover:from-cyan-400 hover:to-[#0CA7B8] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(12,167,184,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
                                                 {!isCharUnlocked ? (
-                                                    <>OPERATIVE LOCKED</>
+                                                    <>LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                    <>SECTOR LOCKED</>
+                                                    <>LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH MISSION <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
+                                                    <>LAUNCH <ArrowRight className="w-3 h-3 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                             
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('endless')}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-sm md:text-xl font-black py-2 md:py-4 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-xs md:text-lg font-black py-1.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-1 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
                                                 {!isCharUnlocked ? (
-                                                    <>OPERATIVE LOCKED</>
+                                                    <>LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                    <>SECTOR LOCKED</>
+                                                    <>LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH ENDLESS MODE <ArrowRight className="w-5 h-5 md:w-6 md:h-6" /></>
+                                                    <>ENDLESS <ArrowRight className="w-3 h-3 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                         </div>

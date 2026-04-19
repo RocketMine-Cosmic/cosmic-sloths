@@ -66,47 +66,52 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     </div>
                 </div>
 
-                {/* Top Right: Gold & Controls */}
-                <div className="flex gap-1 md:gap-2 pointer-events-auto shrink-0">
-                    <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-emerald-500/30 flex flex-col justify-center text-right">
-                        <div className="text-[8px] md:text-xs font-black tracking-widest text-purple-500/80 uppercase mb-0.5">OMENX</div>
-                        <div className="text-purple-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
-                            ⬡ {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
+                {/* Top Right: Gold & Controls & ULT */}
+                <div className="flex gap-1 md:gap-2 pointer-events-auto shrink-0 flex-col md:flex-row">
+                    <div className="flex gap-1 md:gap-2">
+                        <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-emerald-500/30 flex flex-col justify-center text-right">
+                            <div className="text-[8px] md:text-xs font-black tracking-widest text-purple-500/80 uppercase mb-0.5">OMENX</div>
+                            <div className="text-purple-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
+                                ⬡ {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
+                            </div>
                         </div>
-                    </div>
-                    <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-amber-500/30 flex flex-col justify-center text-right">
-                        <div className="text-[8px] md:text-xs font-black tracking-widest text-amber-500/80 uppercase mb-0.5">WEALTH</div>
-                        <div className="text-amber-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
-                            <CircleDollarSign className="w-3 h-3 md:w-4 md:h-4" /> {gold}
+                        <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-amber-500/30 flex flex-col justify-center text-right">
+                            <div className="text-[8px] md:text-xs font-black tracking-widest text-amber-500/80 uppercase mb-0.5">WEALTH</div>
+                            <div className="text-amber-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
+                                <CircleDollarSign className="w-3 h-3 md:w-4 md:h-4" /> {gold}
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-col justify-center">
+                            <button 
+                                id="pause-game-btn"
+                                onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
+                                className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none h-full"
+                                style={{ touchAction: 'none' }}
+                            >
+                                <Pause className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                            </button>
                         </div>
                     </div>
                     
-                    <div className="flex flex-col justify-center">
+                    {/* Squad ULT on desktop, hidden on mobile */}
+                    <div className="hidden md:flex flex-col justify-center">
                         <button 
-                            id="pause-game-btn"
-                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onPause(); }}
-                            className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-slate-700/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-center touch-none h-full"
+                            id="squad-ult-btn"
+                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate(); }}
+                            disabled={omenxBalance < 4}
+                            className="bg-[#0b0416]/90 p-2 md:p-3 rounded-xl border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_15px_rgba(217,70,239,0.3)]"
                             style={{ touchAction: 'none' }}
                         >
-                            <Pause className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                            <span className="text-xs font-black text-fuchsia-300 tracking-widest uppercase">ULT</span>
+                            <span className="text-[10px] font-bold text-slate-300">4X</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Bottom: XP Bar & ULT */}
-            <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full flex flex-col gap-2">
-                <button 
-                    id="squad-ult-btn"
-                    onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate(); }}
-                    disabled={omenxBalance < 4}
-                    className="mx-auto w-40 md:w-56 bg-[#0b0416]/90 p-2 md:p-3 rounded-xl border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_15px_rgba(217,70,239,0.3)]"
-                    style={{ touchAction: 'none' }}
-                >
-                    <span className="text-sm md:text-base font-black text-fuchsia-300 tracking-widest uppercase">SQUAD ULT</span>
-                    <span className="text-[10px] md:text-xs font-bold text-slate-300 flex items-center gap-1">COST: 4 <span className="text-purple-400">OMENX</span></span>
-                </button>
-
+            {/* Bottom: XP Bar only */}
+            <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full">
                 <div className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-cyan-500/30">
                     <div className="flex justify-between items-end mb-1">
                         <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider">LVL {level}</span>
@@ -117,7 +122,6 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                             className="h-full transition-all duration-200 bg-gradient-to-r from-cyan-600 to-cyan-300" 
                             style={{ width: `${Math.min(100, (xp / xpRequired) * 100)}%` }}
                         />
-                    </div>
                 </div>
             </div>
         </div>

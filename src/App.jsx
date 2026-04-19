@@ -40,17 +40,6 @@ const MainApp = () => {
   useEffect(() => {
     SaveManager.initialize().then(async () => {
         setSaveInitialized(true);
-        
-        const save = SaveManager.load();
-        if (!save.hasSetProfileName) {
-            // Grandfather in players who have already played
-            if (save.totalKills > 0 || save.gold > 0) {
-                save.hasSetProfileName = true;
-                SaveManager.save(save);
-            } else {
-                setNeedsProfileName(true);
-            }
-        }
     });
   }, []);
 
