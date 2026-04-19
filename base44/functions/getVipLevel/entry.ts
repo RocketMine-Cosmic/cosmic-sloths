@@ -2,14 +2,26 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
-        const { walletAddress } = await req.json();
-        if (!walletAddress) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
+        const { walletAddress, accessToken } = await req.json();
+        if (!walletAddress || !accessToken) {
+            return Response.json({ error: 'Missing walletAddress and accessToken' }, { status: 400 });
+        }
 
-        const apiKey = Deno.env.get('OMENX_API_KEY');
-        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!apiKey) return Response.json({ error: 'API key not configured' }, { status: 500 });
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
 
-        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
+        // Verify OAuth token and ensure wallet ownership
+        const verifyResult = await sdk.verifyOAuthUser(accessToken);
+        if (!verifyResult.success) {
+            return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        }
+        
+        const authenticatedWallet = verifyResult.user.walletAddress;
+        if (walletAddress !== authenticatedWallet) {
+            return Response.json({ error: 'Forbidden: Can only view your own VIP level' }, { status: 403 });
+        }
 
         const [vipStatus, bonusLevel] = await Promise.all([
             sdk.getPlayerVipStatus(walletAddress).catch(() => null),
