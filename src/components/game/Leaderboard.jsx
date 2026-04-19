@@ -102,6 +102,9 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchScores();
+        // Poll every 10 seconds to update rewards in real-time
+        const interval = setInterval(fetchScores, 10000);
+        return () => clearInterval(interval);
     }, [view]);
 
     const fetchScores = async () => {
