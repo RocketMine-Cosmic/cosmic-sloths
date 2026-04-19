@@ -1,6 +1,10 @@
 import React from 'react';
 import { Pause, Heart, CircleDollarSign } from 'lucide-react';
 
+function OmenXIcon({ className }) {
+    return <span className={`${className} font-black text-purple-400 tracking-wider`}>✕</span>;
+}
+
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, onPause, onSquadUltimate }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
@@ -72,7 +76,8 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-emerald-500/30 flex flex-col justify-center text-right">
                             <div className="text-[8px] md:text-xs font-black tracking-widest text-purple-500/80 uppercase mb-0.5">OMENX</div>
                             <div className="text-purple-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
-                                ✕ {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
+                                <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" />
+                                {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
                             </div>
                         </div>
                         <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-amber-500/30 flex flex-col justify-center text-right">
