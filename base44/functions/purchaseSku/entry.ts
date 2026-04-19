@@ -31,14 +31,17 @@ Deno.serve(async (req) => {
 
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
-        // Verify identity via OmenX if accessToken provided
-        let walletAddress = clientWallet;
-        if (accessToken) {
-            const result = await sdk.verifyOAuthUser(accessToken);
-            if (result.success) {
-                walletAddress = result.user.walletAddress;
-            }
+        // Verify identity via OmenX — require accessToken
+        if (!accessToken) {
+            return Response.json({ error: 'accessToken required for verification' }, { status: 401 });
         }
+        
+        const result = await sdk.verifyOAuthUser(accessToken);
+        if (!result.success) {
+            return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        }
+        
+        const walletAddress = result.user.walletAddress;
 
         // Look up the canonical OMENX price from the OmenX product catalog (server-side, tamper-proof)
         const productsRes = await sdk.getProducts();
