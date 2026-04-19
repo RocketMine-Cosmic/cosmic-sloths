@@ -10,7 +10,7 @@ function getCurrentPeriodIds() {
     startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
     const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
     const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
-    const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
     const season_id = `${year}-S${seasonNum}`;
     return { week_id, season_id };
 }
@@ -23,9 +23,9 @@ Deno.serve(async (req) => {
         const db = base44.asServiceRole;
 
         const body = await req.json();
-        const { damage, playerName, walletAddress: clientWallet, accessToken } = body;
+        const { damage, playerName, accessToken } = body;
 
-        if (!clientWallet || !accessToken) return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
+        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 400 });
 
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_API_KEY'),

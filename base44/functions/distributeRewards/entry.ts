@@ -5,6 +5,7 @@ import moment from 'npm:moment@2.30.1';
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 const CHAIN_ID = '56';
+const MAX_PAYOUT_PER_PLAYER = 10000; // Cap individual payouts to prevent data corruption exploits
 
 Deno.serve(async (req) => {
     try {
@@ -115,7 +116,9 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 
     const payments = [];
     for (let i = 0; i < uniqueScores.length; i++) {
-        const amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
+        let amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
+        // Cap payout per player to prevent corruption exploits
+        amount = Math.min(amount, MAX_PAYOUT_PER_PLAYER);
         if (amount >= 1) {
             payments.push({
                 walletAddress: uniqueScores[i].wallet_address,

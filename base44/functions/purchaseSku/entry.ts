@@ -58,7 +58,8 @@ Deno.serve(async (req) => {
         const userClient = base44;  // User-scoped for auth check
         const db = base44.asServiceRole;  // Admin-scoped for TokenPool/TokenSpendLog
 
-        const idempotencyKey = `${walletAddress}-${skuId}-${Date.now()}`;
+        // Generate crypto-random UUID-style idempotency key for true idempotence
+        const idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
         console.log(`[purchaseSku] Purchasing SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${walletAddress}`);
 
