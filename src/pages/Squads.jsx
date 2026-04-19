@@ -214,7 +214,7 @@ export default function Squads({ isCarousel }) {
                 name: newSquadName,
                 tag: newSquadTag.toUpperCase().substring(0, 4),
                 description: newSquadDesc,
-                owner_id: user.id,
+                owner_wallet: user.wallet_address || user.data?.wallet_address,
                 weekly_kills: 0,
                 current_week: getCurrentWeek(),
                 daily_kills: 0,
@@ -397,7 +397,7 @@ export default function Squads({ isCarousel }) {
             // Demote current leader, promote new leader
             await base44.entities.SquadMember.update(myMemberRecord.id, { role: 'member' });
             await base44.entities.SquadMember.update(member.id, { role: 'leader' });
-            await base44.entities.Squad.update(mySquad.id, { owner_id: member.user_id });
+            await base44.entities.Squad.update(mySquad.id, { owner_wallet: member.wallet_address });
             await base44.entities.SquadMessage.create({
                 squad_id: mySquad.id,
                 user_id: 'system',
