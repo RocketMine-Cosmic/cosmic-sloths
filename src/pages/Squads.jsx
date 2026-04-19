@@ -58,6 +58,7 @@ export default function Squads({ isCarousel }) {
     const [user, setUser] = useState(null);
     const [myMemberRecord, setMyMemberRecord] = useState(null);
     const [mySquad, setMySquad] = useState(null);
+    const walletAddr = (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim();
     
     // States for No Squad
     const [allSquads, setAllSquads] = useState([]);
@@ -523,8 +524,6 @@ export default function Squads({ isCarousel }) {
     };
 
     if (!user) return <div className="p-8 text-white">Loading...</div>;
-
-    const walletAddr = (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim();
 
     return (
         <OmenXGate isCarousel={isCarousel}>
