@@ -69,10 +69,10 @@ export default function Leaderboard() {
                 
                 setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
             } else if (view === 'seasonal') {
-                // Calculate last Sunday of current season (seasons are 13 weeks)
+                // Calculate last Sunday of current season (seasons are 4 weeks)
                 const { isoWeek, year } = getCurrentPeriodIds();
-                const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
-                const lastWeekOfSeason = seasonNum * 13;
+                const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+                const lastWeekOfSeason = seasonNum * 4;
                 
                 // ISO week to date conversion
                 const startOfYear = new Date(Date.UTC(year, 0, 1));

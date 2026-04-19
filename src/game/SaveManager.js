@@ -70,7 +70,7 @@ export const SaveManager = {
         const startOfWeek = new Date(startOfYear);
         startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
         const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-        return { week_id: `${year}-W${String(isoWeek).padStart(2, '0')}`, season_id: `${year}-S${Math.floor((isoWeek - 1) / 13) + 1}` };
+        return { week_id: `${year}-W${String(isoWeek).padStart(2, '0')}`, season_id: `${year}-S${Math.floor((isoWeek - 1) / 4) + 1}` };
     })();
 
     const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];

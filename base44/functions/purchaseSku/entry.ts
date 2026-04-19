@@ -10,7 +10,7 @@ function getCurrentPeriodIds() {
     startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
     const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
     const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
-    const seasonNum = Math.floor((isoWeek - 1) / 13) + 1;
+    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
     const season_id = `${year}-S${seasonNum}`;
     return { week_id, season_id };
 }
