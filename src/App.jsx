@@ -28,6 +28,8 @@ import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
 import { initOmenX } from '@/lib/omenx';
+import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
+import { base44 } from '@/api/base44Client';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 
@@ -36,10 +38,25 @@ const MainApp = () => {
   const [needsProfileName, setNeedsProfileName] = useState(false);
 
   useEffect(() => {
-    SaveManager.initialize().then(() => {
+    SaveManager.initialize().then(async () => {
+        // Load server-side PlayerSave if user is authenticated
+        try {
+            const auth = await getAuthFromIndexedDB();
+            if (auth?.walletAddress) {
+                const { data: response } = await base44.functions.invoke('loadSave', {});
+                if (response?.save_data) {
+                    // Server save exists, use it (overwrite local if stale)
+                    localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.save_data));
+                    console.log('[App] Loaded server PlayerSave for wallet:', auth.walletAddress);
+                }
+            }
+        } catch (e) {
+            console.log('[App] Could not load server save:', e.message);
+        }
+
         setSaveInitialized(true);
         // Check if OmenX is logged in and profile name is set
-        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        const omenxAuth = await getAuthFromIndexedDB();
         if (omenxAuth) {
             const save = SaveManager.load();
             if (!save.hasSetProfileName) {
