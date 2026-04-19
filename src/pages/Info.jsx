@@ -518,7 +518,12 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-900/40">
                         <div className="font-bold text-cyan-300 text-sm mb-1">Purchase a VIP Tier</div>
-                        <p className="text-xs text-slate-400 leading-relaxed">VIP tiers are purchased with <strong className="text-white">real money</strong> directly through the OmenX platform. Each tier comes with a monthly <strong className="text-purple-300">OMENX token allocation</strong> sent to your wallet — so your subscription pays you back in crypto!</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">VIP tiers are purchased with <strong className="text-white">real money</strong> directly through the OmenX platform. Each tier comes with a <strong className="text-purple-300">weekly OMENX token allocation</strong> sent to your wallet — so your subscription pays you back in crypto!</p>
+                        <div className="mt-2 bg-slate-800/60 rounded-lg p-2 border border-slate-700/50 text-[11px] text-slate-400 space-y-0.5">
+                            <div className="flex items-center gap-2"><span className="text-cyan-400 font-bold">Phase 2</span><span>10 weeks total — currently Week 6 of 10</span></div>
+                            <div className="flex items-center gap-2"><span className="text-purple-400 font-bold">Phase 3</span><span>10 weeks — coming after Phase 2</span></div>
+                            <div className="flex items-center gap-2"><span className="text-slate-500 font-bold">Beyond</span><span className="text-slate-500 italic">Allocation TBD after Phase 3</span></div>
+                        </div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-900/40">
                         <div className="font-bold text-purple-300 text-sm mb-1">Automatic Detection</div>
