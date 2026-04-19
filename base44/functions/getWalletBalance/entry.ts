@@ -1,13 +1,39 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const BASE_URL = 'https://staging.api.omen.foundation/v1';
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { walletAddress, accessToken } = await req.json();
 
-        if (!accessToken && !walletAddress) {
-            return Response.json({ error: 'Missing accessToken or walletAddress' }, { status: 400 });
+        if (!walletAddress || !accessToken) {
+            return Response.json({ error: 'Missing walletAddress and accessToken' }, { status: 400 });
+        }
+
+        // Verify OAuth token and get authenticated wallet
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
+        const verifyResult = await sdk.verifyOAuthUser(accessToken);
+        if (!verifyResult.success) {
+            return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        }
+        const authenticatedWallet = verifyResult.user.walletAddress;
+
+        // Check if user is admin
+        const user = await base44.auth.me();
+        let isAdmin = user?.role === 'admin';
+        if (!isAdmin && user?.wallet_address) {
+            const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: user.wallet_address });
+            isAdmin = adminWallets.length > 0;
+        }
+
+        // Non-admins can only query their own wallet
+        if (!isAdmin && walletAddress !== authenticatedWallet) {
+            return Response.json({ error: 'Forbidden: You can only view your own wallet balance' }, { status: 403 });
         }
 
         const apiKey = Deno.env.get('OMENX_API_KEY');

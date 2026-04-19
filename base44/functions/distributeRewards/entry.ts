@@ -9,6 +9,17 @@ const CHAIN_ID = '56';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
+        
+        // Check admin authorization: role='admin' OR wallet in AdminWallet entity
+        let isAdmin = user?.role === 'admin';
+        if (!isAdmin && user?.wallet_address) {
+            const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: user.wallet_address });
+            isAdmin = adminWallets.length > 0;
+        }
+        if (!isAdmin) {
+            return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+        }
 
         const apiKey = Deno.env.get('OMENX_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
