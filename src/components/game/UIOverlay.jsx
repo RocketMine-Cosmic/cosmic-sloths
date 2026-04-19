@@ -112,7 +112,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
             </button>
 
             {/* Bottom: XP Bar only */}
-            <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full">
+            <div className="mb-32 md:mb-20 pointer-events-auto max-w-lg mx-auto w-full">
                 <div className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-cyan-500/30">
                     <div className="flex justify-between items-end mb-1">
                         <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider">LVL {level}</span>
