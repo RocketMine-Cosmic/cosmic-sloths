@@ -124,10 +124,12 @@ export default function Leaderboard() {
             
             if (view === 'weekly') {
                 const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+                console.log('[Leaderboard] Weekly pool query:', { week_id, found: pools.length, pool: pools[0] });
                 const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
                 setCurrentPool(poolAmount);
             } else if (view === 'seasonal') {
                 const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+                console.log('[Leaderboard] Seasonal pool query:', { season_id, found: pools.length, pool: pools[0] });
                 const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
                 setCurrentPool(poolAmount);
             } else {
