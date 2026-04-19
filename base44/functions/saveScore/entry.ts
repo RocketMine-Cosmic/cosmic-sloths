@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 // Canonical period ID calculation — must match purchaseSku and lib/periodIds.js exactly
 function getCurrentPeriodIds() {
@@ -17,15 +18,28 @@ function getCurrentPeriodIds() {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { scoreData, walletAddress, squadStats } = await req.json();
+        const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
         
         // Override week_id and season_id with canonical server-side calculation
         const { week_id, season_id } = getCurrentPeriodIds();
         scoreData.week_id = week_id;
         scoreData.season_id = season_id;
 
-        if (!scoreData || !walletAddress) {
+        if (!scoreData || !clientWallet) {
             return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
+        }
+
+        // Verify identity via OmenX if accessToken provided
+        let walletAddress = clientWallet;
+        if (accessToken) {
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const result = await sdk.verifyOAuthUser(accessToken);
+            if (result.success) {
+                walletAddress = result.user.walletAddress;
+            }
         }
 
         // Add wallet address to the score data

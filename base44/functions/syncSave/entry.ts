@@ -1,11 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
-        const { walletAddress, saveData } = await req.json();
+        const { walletAddress: clientWallet, saveData, accessToken } = await req.json();
 
-        if (!walletAddress || !saveData) {
+        if (!clientWallet || !saveData) {
             return Response.json({ error: 'walletAddress and saveData required' }, { status: 400 });
+        }
+
+        // Verify identity via OmenX if accessToken provided
+        let walletAddress = clientWallet;
+        if (accessToken) {
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const result = await sdk.verifyOAuthUser(accessToken);
+            if (result.success) {
+                walletAddress = result.user.walletAddress;
+            }
         }
 
         const base44 = createClientFromRequest(req);

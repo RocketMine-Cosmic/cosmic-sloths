@@ -17,10 +17,10 @@ function getCurrentPeriodIds() {
 
 Deno.serve(async (req) => {
     try {
-        const { skuId, quantity = 1, walletAddress, userId, playerName: playerNameParam } = await req.json();
+        const { skuId, quantity = 1, walletAddress: clientWallet, userId, playerName: playerNameParam, accessToken } = await req.json();
 
         if (!skuId) return Response.json({ error: 'Missing skuId' }, { status: 400 });
-        if (!walletAddress) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
+        if (!clientWallet) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
 
         // Compute period IDs server-side — never trust client values
         const { week_id, season_id } = getCurrentPeriodIds();
@@ -30,6 +30,15 @@ Deno.serve(async (req) => {
         if (!apiKey) return Response.json({ error: 'API key not configured' }, { status: 500 });
 
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
+
+        // Verify identity via OmenX if accessToken provided
+        let walletAddress = clientWallet;
+        if (accessToken) {
+            const result = await sdk.verifyOAuthUser(accessToken);
+            if (result.success) {
+                walletAddress = result.user.walletAddress;
+            }
+        }
 
         // Look up the canonical OMENX price from the OmenX product catalog (server-side, tamper-proof)
         const productsRes = await sdk.getProducts();

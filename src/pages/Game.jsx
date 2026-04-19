@@ -155,10 +155,12 @@ export default function Game() {
                 }
 
                 // Route through backend function — all Base44 entity operations happen server-side
+                const omenxAuthForScore = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                 const res = await base44.functions.invoke('saveScore', {
                     scoreData,
                     walletAddress,
-                    squadStats
+                    squadStats,
+                    accessToken: omenxAuthForScore?.accessToken || null,
                 });
                 console.log('[saveScore] Response:', res?.data);
             } catch (e) {
@@ -356,6 +358,7 @@ export default function Game() {
             playerName: authData?.username || walletAddress,
             week_id,
             season_id,
+            accessToken: authData?.accessToken || null,
         }).catch(console.error);
     };
 

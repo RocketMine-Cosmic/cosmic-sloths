@@ -46,10 +46,11 @@ export const SaveManager = {
       if (!localSave) return;
 
       const saveData = JSON.parse(localSave);
-      // Route through backend function — asServiceRole doesn't work from the frontend with OmenX auth
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
       await base44.functions.invoke('syncSave', {
         walletAddress: SaveManager._walletAddress,
-        saveData
+        saveData,
+        accessToken: omenxAuth?.accessToken || null,
       });
     } catch (e) {
       console.error('[SaveManager] Sync failed:', e);
