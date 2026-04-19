@@ -122,6 +122,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                             className="h-full transition-all duration-200 bg-gradient-to-r from-cyan-600 to-cyan-300" 
                             style={{ width: `${Math.min(100, (xp / xpRequired) * 100)}%` }}
                         />
+                    </div>
                 </div>
             </div>
         </div>
