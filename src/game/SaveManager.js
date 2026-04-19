@@ -9,13 +9,31 @@ export const SaveManager = {
 
   initialize: async () => {
     try {
-      // Get wallet from OmenX auth data
-      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-      if (!omenxAuth?.walletAddress) {
+      let walletAddress = null;
+      
+      // Try Base44 auth first (persists on backend, survives localStorage clear)
+      try {
+        const user = await base44.auth.me();
+        if (user?.wallet_address) {
+          walletAddress = user.wallet_address;
+          console.log('[SaveManager] Using Base44 auth wallet:', walletAddress);
+        }
+      } catch (e) {
+        console.log('[SaveManager] Base44 auth not available:', e.message);
+      }
+      
+      // Fallback to OmenX localStorage
+      if (!walletAddress) {
+        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        walletAddress = omenxAuth?.walletAddress;
+      }
+      
+      if (!walletAddress) {
         console.log('[SaveManager] No wallet authenticated, using local storage only');
         return;
       }
-      SaveManager._walletAddress = omenxAuth.walletAddress;
+      
+      SaveManager._walletAddress = walletAddress;
       console.log('[SaveManager] Initialized for wallet', SaveManager._walletAddress);
       
       // Load cloud save if exists (cross-device sync)
