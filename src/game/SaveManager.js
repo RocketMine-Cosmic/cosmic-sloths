@@ -47,17 +47,16 @@ export const SaveManager = {
       if (!localSave) return;
 
       const saveData = JSON.parse(localSave);
-      if (SaveManager._playerSaveId) {
-        await base44.entities.PlayerSave.update(SaveManager._playerSaveId, { save_data: saveData, updated_at: Date.now() });
+      
+      // Always check for existing saves by wallet to avoid duplicates
+      const existing = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
+      if (existing.length > 0) {
+        SaveManager._playerSaveId = existing[0].id;
+        await base44.entities.PlayerSave.update(existing[0].id, { save_data: saveData, updated_at: Date.now() });
       } else {
-        const existing = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
-        if (existing.length > 0) {
-          SaveManager._playerSaveId = existing[0].id;
-          await base44.entities.PlayerSave.update(existing[0].id, { save_data: saveData, updated_at: Date.now() });
-        } else {
-          const created = await base44.entities.PlayerSave.create({ wallet_address: SaveManager._walletAddress, save_data: saveData, updated_at: Date.now() });
-          SaveManager._playerSaveId = created.id;
-        }
+        // Only create if truly doesn't exist
+        const created = await base44.entities.PlayerSave.create({ wallet_address: SaveManager._walletAddress, save_data: saveData, updated_at: Date.now() });
+        SaveManager._playerSaveId = created.id;
       }
     } catch (e) {
       console.error('[SaveManager] Sync failed:', e);
