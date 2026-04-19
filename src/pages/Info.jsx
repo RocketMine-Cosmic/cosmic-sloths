@@ -515,16 +515,16 @@ const TABS_CONTENT = {
             <SectionCard title="🔮 How to Get VIP" color="cyan">
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-900/40">
-                        <div className="font-bold text-cyan-300 text-sm mb-1">Hold OMENX Tokens</div>
-                        <p className="text-xs text-slate-400 leading-relaxed">Your VIP level is based on your activity and holdings in the OmenX ecosystem. The more engaged you are with the platform, the higher your level.</p>
+                        <div className="font-bold text-cyan-300 text-sm mb-1">Purchase a VIP Tier</div>
+                        <p className="text-xs text-slate-400 leading-relaxed">VIP tiers are purchased with <strong className="text-white">real money</strong> directly through the OmenX platform. Each tier comes with a monthly <strong className="text-purple-300">OMENX token allocation</strong> sent to your wallet — so your subscription pays you back in crypto!</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-900/40">
                         <div className="font-bold text-purple-300 text-sm mb-1">Automatic Detection</div>
-                        <p className="text-xs text-slate-400 leading-relaxed">Log in with OmenX and your VIP level is fetched automatically from the blockchain. No codes or manual redemption needed — your bonuses apply instantly every run.</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">Log in with OmenX and your VIP tier is fetched automatically. No codes or manual setup — your in-game bonuses apply instantly every run.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-900/40">
                         <div className="font-bold text-amber-300 text-sm mb-1">Stacks with Everything</div>
-                        <p className="text-xs text-slate-400 leading-relaxed">VIP bonuses stack on top of all your permanent upgrades, weekly upgrades, and seasonal upgrades. It's the best long-term multiplier in the game.</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">VIP bonuses stack on top of all your permanent, weekly, and seasonal upgrades. It's the best long-term multiplier in the game — and it pays for itself.</p>
                     </div>
                 </div>
             </SectionCard>
