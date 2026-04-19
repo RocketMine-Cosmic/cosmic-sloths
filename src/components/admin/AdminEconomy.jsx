@@ -4,20 +4,21 @@ import { base44 } from '@/api/base44Client';
 import { Coins, Clock } from 'lucide-react';
 import moment from 'moment';
 
-export default function AdminEconomy({ adminKey }) {
+export default function AdminEconomy({ walletAddress }) {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
     const { data: spendLogs, isLoading: logsLoading } = useQuery({
-        queryKey: ['tokenSpendLogs', adminKey],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'logs', adminKey }).then(r => r.data?.logs || []),
-        enabled: !!adminKey
+        queryKey: ['tokenSpendLogs', walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'logs', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.logs || []),
+        enabled: !!walletAddress && !!authData?.accessToken
     });
 
     const { data: pools, isLoading: poolsLoading } = useQuery({
-        queryKey: ['adminPools', adminKey],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools', adminKey }).then(r => r.data?.pools || []),
-        enabled: !!adminKey
+        queryKey: ['adminPools', walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.pools || []),
+        enabled: !!walletAddress && !!authData?.accessToken
     });
 
     const filteredLogs = (spendLogs || []).filter(log => {

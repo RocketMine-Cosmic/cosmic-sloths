@@ -4,11 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { Skull } from 'lucide-react';
 import moment from 'moment';
 
-export default function AdminRaid({ adminKey }) {
+export default function AdminRaid({ walletAddress }) {
+    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const { data, isLoading } = useQuery({
-        queryKey: ['adminRaid', adminKey],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'raid', adminKey }).then(r => r.data || {}),
-        enabled: !!adminKey
+        queryKey: ['adminRaid', walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'raid', walletAddress, accessToken: authData?.accessToken }).then(r => r.data || {}),
+        enabled: !!walletAddress && !!authData?.accessToken
     });
 
     const boss = data?.boss;

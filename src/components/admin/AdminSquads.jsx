@@ -4,14 +4,15 @@ import { base44 } from '@/api/base44Client';
 import { Shield } from 'lucide-react';
 import moment from 'moment';
 
-export default function AdminSquads({ adminKey }) {
+export default function AdminSquads({ walletAddress }) {
     const [selected, setSelected] = useState(null);
     const [search, setSearch] = useState('');
+    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
     const { data, isLoading } = useQuery({
-        queryKey: ['adminSquads', adminKey],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squads', adminKey }).then(r => r.data?.squads || []),
-        enabled: !!adminKey
+        queryKey: ['adminSquads', walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squads', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.squads || []),
+        enabled: !!walletAddress && !!authData?.accessToken
     });
 
     const filtered = (data || []).filter(s =>
@@ -73,7 +74,7 @@ export default function AdminSquads({ adminKey }) {
                 {selected && (
                     <div className="mt-4 bg-slate-900/60 border border-orange-700/50 rounded-xl p-4">
                         <h3 className="font-bold text-orange-300 mb-2">{selected.icon} {selected.name} [{selected.tag}] — Members</h3>
-                        <SquadMembers squadId={selected.id} adminKey={adminKey} />
+                        <SquadMembers squadId={selected.id} walletAddress={walletAddress} />
                     </div>
                 )}
             </div>
@@ -81,11 +82,12 @@ export default function AdminSquads({ adminKey }) {
     );
 }
 
-function SquadMembers({ squadId, adminKey }) {
+function SquadMembers({ squadId, walletAddress }) {
+    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const { data, isLoading } = useQuery({
-        queryKey: ['adminSquadMembers', squadId, adminKey],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squadMembers', squadId, adminKey }).then(r => r.data?.members || []),
-        enabled: !!squadId
+        queryKey: ['adminSquadMembers', squadId, walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squadMembers', squadId, walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.members || []),
+        enabled: !!squadId && !!walletAddress && !!authData?.accessToken
     });
 
     if (isLoading) return <div className="text-slate-500 text-xs">Loading members...</div>;

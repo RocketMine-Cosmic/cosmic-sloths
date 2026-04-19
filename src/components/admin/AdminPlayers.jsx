@@ -3,18 +3,19 @@ import { base44 } from '@/api/base44Client';
 import { Search, User } from 'lucide-react';
 import moment from 'moment';
 
-export default function AdminPlayers({ adminKey }) {
+export default function AdminPlayers({ walletAddress }) {
     const [search, setSearch] = useState('');
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [selected, setSelected] = useState(null);
+    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
     const handleSearch = async () => {
         if (!search.trim()) return;
         setLoading(true);
         setSelected(null);
         try {
-            const res = await base44.functions.invoke('getAdminDataExtended', { type: 'playerSearch', query: search.trim(), adminKey });
+            const res = await base44.functions.invoke('getAdminDataExtended', { type: 'playerSearch', query: search.trim(), walletAddress, accessToken: authData?.accessToken });
             setResults(res.data?.players || []);
         } catch (e) {
             setResults([]);
