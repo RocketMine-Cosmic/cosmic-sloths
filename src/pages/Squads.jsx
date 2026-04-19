@@ -203,7 +203,7 @@ export default function Squads({ isCarousel }) {
         try {
             SoundManager.playUIClick();
             
-            const walletAddr = user.wallet_address || user.data?.wallet_address;
+            const walletAddr = user.walletAddress || user.wallet_address || user.data?.wallet_address;
             if (!walletAddr) {
                 toast({ title: "Error", description: "Wallet address not found. Please log in again." });
                 return;

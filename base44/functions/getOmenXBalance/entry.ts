@@ -3,43 +3,38 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { walletAddress, accessToken } = await req.json();
 
         if (!walletAddress || !accessToken) {
-            return Response.json({ error: 'Missing walletAddress and accessToken' }, { status: 400 });
+            return Response.json({ balance: 0 });
         }
 
-        // Verify OAuth token and get authenticated wallet
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await sdk.verifyOAuthUser(accessToken);
-        if (!verifyResult.success) {
-            return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        try {
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const verifyResult = await sdk.verifyOAuthUser(accessToken);
+            if (!verifyResult.success) {
+                return Response.json({ balance: 0 });
+            }
+            const authenticatedWallet = verifyResult.user.walletAddress;
+
+            if (walletAddress !== authenticatedWallet) {
+                return Response.json({ balance: 0 });
+            }
+
+            const data = await sdk.getPlayerBalances(walletAddress, '56');
+            const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+            const balance = parseFloat(omenxToken?.balance ?? '0');
+
+            return Response.json({ balance });
+        } catch {
+            // Token verification or balance fetch failed, return 0
         }
-        const authenticatedWallet = verifyResult.user.walletAddress;
 
-        // Non-admins can only query their own wallet
-        if (walletAddress !== authenticatedWallet) {
-            return Response.json({ error: 'Forbidden: You can only view your own wallet balance' }, { status: 403 });
-        }
-
-        const apiKey = Deno.env.get('OMENX_API_KEY');
-        if (!apiKey) {
-            return Response.json({ error: 'API key not configured' }, { status: 500 });
-        }
-
-        const data = await sdk.getPlayerBalances(walletAddress, '56');
-        console.log('[getOmenXBalance] raw:', JSON.stringify(data));
-
-        // Find OMENX token — balance is already human-readable (not raw wei)
-        const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
-        const balance = parseFloat(omenxToken?.balance ?? '0');
-
-        return Response.json({ balance });
+        return Response.json({ balance: 0 });
     } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ balance: 0 });
     }
 });
