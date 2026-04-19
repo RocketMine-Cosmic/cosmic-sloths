@@ -23,7 +23,6 @@ import Dailys from './pages/Dailys';
 import GlobalRaid from './pages/GlobalRaid';
 import Mastery from './pages/Mastery';
 import AdminDashboard from './pages/AdminDashboard';
-import DownloadSkus from './pages/DownloadSkus';
 import SkuEditor from './pages/SkuEditor';
 import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
@@ -79,7 +78,6 @@ const MainApp = () => {
           <Route path="/global-raid" element={<GlobalRaid />} />
           <Route path="/mastery" element={<Mastery />} />
           <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/download-skus" element={<DownloadSkus />} />
           <Route path="/sku-editor" element={<SkuEditor />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
@@ -117,7 +115,6 @@ const MainApp = () => {
       <Route path="/global-raid" element={<GlobalRaid />} />
       <Route path="/mastery" element={<Mastery />} />
       <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/download-skus" element={<DownloadSkus />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     {needsProfileName && (

@@ -11,6 +11,7 @@ import AdminRewards from '../components/admin/AdminRewards';
 import AdminSquads from '../components/admin/AdminSquads';
 import AdminRaid from '../components/admin/AdminRaid';
 import AdminLeaderboard from '../components/admin/AdminLeaderboard';
+import AdminSkus from '../components/admin/AdminSkus';
 
 const TABS = [
     { id: 'overview',    label: 'Overview',    icon: BarChart3 },
@@ -20,6 +21,7 @@ const TABS = [
     { id: 'raid',        label: 'Global Raid', icon: Skull },
     { id: 'economy',     label: 'Economy',     icon: Coins },
     { id: 'rewards',     label: 'Rewards',     icon: Gift },
+    { id: 'skus',        label: 'SKUs',        icon: Gift },
 ];
 
 export default function AdminDashboard() {
@@ -71,6 +73,7 @@ export default function AdminDashboard() {
         raid: <AdminRaid walletAddress={adminWallet} />,
         economy: <AdminEconomy walletAddress={adminWallet} />,
         rewards: <AdminRewards walletAddress={adminWallet} />,
+        skus: <AdminSkus walletAddress={adminWallet} />,
     };
 
     return (
