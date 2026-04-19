@@ -17,7 +17,7 @@ export const SaveManager = {
         const omenxAuth = await getAuthFromIndexedDB();
         if (omenxAuth?.walletAddress) {
           walletAddress = omenxAuth.walletAddress;
-          console.log('[SaveManager] Using OmenX IndexedDB wallet:', walletAddress);
+          console.log('[SaveManager] Using OmenX IndexedDB auth');
         }
       } catch (e) {
         console.log('[SaveManager] IndexedDB auth not available:', e.message);

@@ -52,7 +52,7 @@ const MainApp = () => {
                 if (response?.saveData) {
                     // Server save exists, use it (overwrite local if stale)
                     localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
-                    console.log('[App] Loaded server PlayerSave for wallet:', omenxAuth.walletAddress);
+                    console.log('[App] Loaded server PlayerSave');
                 }
             } catch (e) {
                 console.log('[App] Could not load server save:', e.message);
