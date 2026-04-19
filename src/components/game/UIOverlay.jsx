@@ -72,7 +72,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-emerald-500/30 flex flex-col justify-center text-right">
                             <div className="text-[8px] md:text-xs font-black tracking-widest text-purple-500/80 uppercase mb-0.5">OMENX</div>
                             <div className="text-purple-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
-                                ⬡ {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
+                                ◊ {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
                             </div>
                         </div>
                         <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-amber-500/30 flex flex-col justify-center text-right">
