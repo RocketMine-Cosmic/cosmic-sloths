@@ -3,7 +3,7 @@ import { Star, Puzzle, Coins } from 'lucide-react';
 import { useCurrency } from '@/lib/CurrencyContext';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <span className={`${className} font-black text-purple-400 tracking-wider`}>◊</span>;
 }
 
 export default function CurrencyHeader() {

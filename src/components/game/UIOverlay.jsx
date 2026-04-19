@@ -94,21 +94,22 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         </div>
                     </div>
                     
-                    {/* Squad ULT on desktop, hidden on mobile */}
-                    <div className="hidden md:flex flex-col justify-center">
-                        <button 
-                            id="squad-ult-btn"
-                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate(); }}
-                            disabled={omenxBalance < 4}
-                            className="bg-[#0b0416]/90 p-2 md:p-3 rounded-xl border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_15px_rgba(217,70,239,0.3)]"
-                            style={{ touchAction: 'none' }}
-                        >
-                            <span className="text-xs font-black text-fuchsia-300 tracking-widest uppercase">ULT</span>
-                            <span className="text-[10px] font-bold text-slate-300">4X</span>
-                        </button>
-                    </div>
+
                 </div>
             </div>
+
+            {/* Floating Squad ULT (bottom-right) */}
+            <button 
+                id="squad-ult-btn"
+                onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate(); }}
+                disabled={omenxBalance < 4}
+                className="fixed bottom-20 md:bottom-6 right-4 md:right-6 bg-[#0b0416]/90 p-2 md:p-3 rounded-xl border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_15px_rgba(217,70,239,0.3)] pointer-events-auto z-40"
+                style={{ touchAction: 'none' }}
+                title="Squad Ultimate (4 OMENX)"
+            >
+                <span className="text-xs font-black text-fuchsia-300 tracking-widest uppercase">ULT</span>
+                <span className="text-[10px] font-bold text-slate-300">4X</span>
+            </button>
 
             {/* Bottom: XP Bar only */}
             <div className="mb-14 md:mb-2 pointer-events-auto max-w-lg mx-auto w-full">
