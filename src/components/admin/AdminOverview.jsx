@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import RecentChanges from './RecentChanges';
 
 function StatCard({ label, value, color = 'text-white', sub }) {
     return (
@@ -43,6 +44,8 @@ export default function AdminOverview({ adminKey }) {
                 <StatCard label="This Week Spent" value={`${weeklySpent.toFixed(1)} OMENX`} color="text-red-400" />
                 <StatCard label="All-Time Spent" value={`${totalSpent.toFixed(1)} OMENX`} color="text-amber-400" />
             </div>
+
+            <RecentChanges />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-[#0b0416]/80 border border-red-900/50 rounded-xl p-4">
