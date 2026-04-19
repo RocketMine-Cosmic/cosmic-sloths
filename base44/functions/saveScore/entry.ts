@@ -15,10 +15,26 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
+// Check if leaderboard is locked (Sunday 23:00 UTC to Monday 23:00 UTC for distribution)
+function isLeaderboardLocked() {
+    const now = new Date();
+    const utcHour = now.getUTCHours();
+    const utcDay = now.getUTCDay();
+    // Lock on Sunday 23:00 UTC (day 0, hour 23) through Monday 23:00 UTC (day 1, hour 23)
+    if (utcDay === 0 && utcHour >= 23) return true; // Sunday 23:00+ UTC
+    if (utcDay === 1 && utcHour < 23) return true;   // Monday 00:00-22:59 UTC
+    return false;
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
+        
+        // Check if leaderboard is locked during distribution window
+        if (isLeaderboardLocked()) {
+            return Response.json({ error: 'Leaderboard is locked for distribution' }, { status: 423 });
+        }
         
         // Override week_id and season_id with canonical server-side calculation
         const { week_id, season_id } = getCurrentPeriodIds();
