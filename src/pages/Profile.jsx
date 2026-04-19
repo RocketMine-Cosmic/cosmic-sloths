@@ -38,7 +38,7 @@ export default function Profile({ isCarousel }) {
                 const me = getOmenXUser();
                 setUser(me);
 
-                // Fetch VIP level
+                // Fetch VIP level and sync to backend
                 const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                 const walletAddress = authData?.walletAddress;
                 if (walletAddress) {
@@ -78,6 +78,11 @@ export default function Profile({ isCarousel }) {
             setLoading(false);
         };
         fetchProfileData();
+        
+        // Re-fetch when auth state changes
+        const handleStorageChange = () => fetchProfileData();
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
     const handleSaveIcon = (icon) => {
