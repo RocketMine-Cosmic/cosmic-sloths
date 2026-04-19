@@ -69,7 +69,7 @@ export default function Profile({ isCarousel }) {
                          leviathanKills: totalLeviathans,
                          globalRaidDamage: 0
                      });
-                     const rewards = await base44.entities.PendingReward.filter({ player_name: displayName, claimed: true }, '-period_id', 50);
+                     const rewards = await base44.entities.PayoutLog.filter({ player_name: displayName }, '-period_id', 50);
                      setRewardsHistory(rewards);
                  }
             } catch (e) {
