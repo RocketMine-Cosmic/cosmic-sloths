@@ -14,7 +14,9 @@ export async function getOmenXUser() {
             authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
         }
         
-        if (!authData?.walletAddress) return null;
+        if (!authData?.walletAddress) {
+            return null;
+        }
         
         return {
             walletAddress: authData.walletAddress,
@@ -51,6 +53,6 @@ export async function updateOmenXUser(updates) {
         localStorage.setItem('omenx_auth_data', JSON.stringify(updated));
         window.dispatchEvent(new CustomEvent('omenxUserUpdated', { detail: updated }));
     } catch (e) {
-        console.error('[updateOmenXUser] Failed:', e);
+        console.error('[updateOmenXUser] Update error');
     }
 }

@@ -35,7 +35,7 @@ export const SaveManager = {
       }
       
       SaveManager._walletAddress = walletAddress;
-      console.log('[SaveManager] Initialized for wallet', SaveManager._walletAddress);
+      console.log('[SaveManager] Initialized');
       
       // Load cloud save if exists (cross-device sync)
       try {

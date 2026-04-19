@@ -41,7 +41,7 @@ export async function saveAuthToIndexedDB(authData) {
             request.onsuccess = () => resolve(authData);
         });
     } catch (error) {
-        console.error('[IndexedDB] Failed to save auth:', error);
+        console.error('[IndexedDB] Save error');
         return null;
     }
 }
@@ -58,7 +58,7 @@ export async function getAuthFromIndexedDB() {
             request.onsuccess = () => resolve(request.result || null);
         });
     } catch (error) {
-        console.error('[IndexedDB] Failed to get auth:', error);
+        console.error('[IndexedDB] Retrieval error');
         return null;
     }
 }
@@ -75,6 +75,6 @@ export async function clearAuthFromIndexedDB() {
             request.onsuccess = () => resolve();
         });
     } catch (error) {
-        console.error('[IndexedDB] Failed to clear auth:', error);
+        console.error('[IndexedDB] Clear error');
     }
 }

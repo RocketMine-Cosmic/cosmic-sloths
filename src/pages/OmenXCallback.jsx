@@ -47,9 +47,8 @@ export default function OmenXCallback() {
                 // Save to IndexedDB (survives history clear) and localStorage (fallback)
                 try {
                     await saveAuthToIndexedDB(authData);
-                    console.log('[OmenXCallback] Saved auth to IndexedDB');
                 } catch (e) {
-                    console.error('[OmenXCallback] IndexedDB save failed:', e);
+                    console.error('[OmenXCallback] Storage error');
                 }
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 
