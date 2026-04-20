@@ -1,7 +1,7 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
 const getBaseUrl = () => {
-  if (typeof window === 'undefined') return 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app';
+  if (typeof window === 'undefined') return '';
   return window.location.origin;
 };
 
