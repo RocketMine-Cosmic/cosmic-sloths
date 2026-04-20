@@ -4,165 +4,185 @@ import { useToast } from '@/components/ui/use-toast';
 
 const GAME_DESCRIPTION = `# 🦥 COSMIC SLOTHS
 
-*The laziest roguelike with the realest payouts. Pick your sloth. Survive the cosmos. Earn real crypto.*
+> *The laziest roguelike with the realest payouts. Squad up. Slay. Stack OMENX.*
 
 ---
 
-## 🎮 WHAT IS IT?
+## 🎮 DROP IN, SURVIVE, EARN
 
-Cosmic Sloths is a **survivor roguelike** built on the OmenX blockchain ecosystem. Move with WASD or a virtual joystick — your weapons fire automatically. Blast through 10 hand-crafted sectors filled with increasingly unhinged alien enemies. Survive the timer. Beat the boss. Stack gold and OMENX.
+Blast through **10 hand-crafted sectors** filled with cosmic chaos. Move with WASD or your joystick. Your weapons? They auto-fire at whatever's closest. Survive the timer. Climb the leaderboards. **Earn real Web3 currency** based on your performance.
 
-The twist? **Top-ranked players earn real OMENX tokens** paid directly to their wallet at the end of every week and season.
-
----
-
-## 🧑‍🚀 10 PLAYABLE CHARACTERS
-
-Three sloths are unlocked from the start. The rest are bought with Gold.
-
-- **NeoByte** — Balanced commander. Deploys a damage-boosting support banner every 15s.
-- **Pandypaws** — Tanky but slow. 5% chance on kill to permanently gain armor from scrap.
-- **NovaByte** — High damage, big AoE, low HP. 10% chance on kill to chain explode nearby enemies.
-- **Glitch** — Glass cannon assassin. 15% chance when hit to phase into invulnerability.
-- **HoloDrift** — Massive magnet range, 30% XP bonus. Deploys a decoy every 20s to taunt enemies.
-- **CodeBreaker** — Fast cooldowns, high luck. Hacks a nearby enemy every 10s to fight for you.
-- **DataPhantom** — High projectile speed and armor. Leeches data from enemies to slow them.
-- **NeonVortex** — Extreme damage but very slow fire rate. Executes enemies below 20% HP instantly.
-- **SynthBeats** — 50% bonus gold, high luck. Automatically bribes death with 5 Gold to negate hits.
-- **SkyByte** — Very fast ace pilot. Charges a Sonic Boom while moving that detonates on stop.
-
-Each character has a unique **Talent Tree**, **Mastery system** (Novice → Grandmaster), and multiple purchasable **colour skins** — including exclusive seasonal reward skins.
+### ⚡ The Core Loop
+1. **Move & Fight** — WASD/Arrows or Virtual Joystick. Auto-firing weapons handle the rest.
+2. **Level Up** — Defeat enemies for XP. Pick 1 of 3 random upgrades (Common → Legendary).
+3. **Unlock Sectors** — Beat runs to unlock new arenas with unique enemies and environments.
+4. **Face Bosses** — Epic encounters drop Relic Fragments and massive gold bonuses.
+5. **Earn Real Rewards** — Top leaderboard performers get OMENX sent to their wallet every week.
 
 ---
 
-## 🗺️ 10 SECTORS TO CONQUER
+## 🛠️ FORGE YOUR POWER IN THE SLOTH LOUNGE
 
-Unlock sectors by beating the previous one. Each has a fixed survival timer, a unique visual environment, and a weather effect:
-- **Neon Rain** — Speed boost for everyone
-- **Fog** — Reduced speed and fewer enemy spawns
-- **Solar Flare** — Increased enemy spawns
+Between runs, visit your cosmic base and spend **Gold** and **OMENX** to get stronger:
 
-Sectors range from 3 minutes (Azure Expanse) up to 7:30 (Rainbow Rift). Playing older sectors applies a **-10% Gold penalty per tier below your furthest unlock** (max -50%).
+| Feature | What You Get |
+|---------|-------------|
+| **👤 Characters** | Unlock unique sloths with exclusive Talent Trees |
+| **⬆️ Stat Upgrades** | 3 tiers: Permanent / Weekly / Seasonal—stronger each cycle |
+| **🔫 Armory** | Master weapons (Damage + Area + Cooldown) to unlock ultimate forms |
+| **💎 Ancient Relics** | Equip for global buffs. Upgrade with Relic Fragments. |
+| **✨ Cosmetics** | Trails, kill effects, character skins—flex your style |
+| **🔨 The Forge** | Convert Gold → Star Fragments to permanently enhance weapons |
 
-An **Endless Void** mode is also available — infinitely scaling difficulty with boss fights every 3 minutes.
-
----
-
-## ⚔️ DIFFICULTY MODES
-
-- **Easy** — 0.7x enemy HP/damage, -50% XP & Gold
-- **Normal** — Standard
-- **Hard** — 1.5x enemy HP/damage, +100% XP & Gold, occasional hazards
-- **Cosmic** — 2.5x enemy HP/damage, +200% XP & Gold, frequent hazards
+### 🔥 Advanced Synergies
+Discover **Weapon Synergies**: combine two specific weapons mid-run to unlock game-changing power combos. Track them all in your **Synergy Codex**.
 
 ---
 
-## 🔫 WEAPONS, SYNERGIES & EVOLUTIONS
+## 🏆 COMPETE FOR OMENX
 
-9 base weapons drop during runs (Blaster, Cosmic Nap Beam, Plasma Whip, Orbital Drones, Zero-G Napalm, Nova Pulse, Shield Bubble, Ricochet Blade, Toxic Emitter).
+Three leaderboards. Real crypto rewards.
 
-**Synergies:** Hold two specific weapons simultaneously and they automatically fuse into a powerful combo weapon. There are 7 synergy combos to discover — track them in your Synergy Codex.
+### 📅 **Weekly Leaderboard**
+- Resets every Monday
+- Top 30 earn OMENX
+- Stat upgrades reset each week
 
-**Evolutions:** Max out a weapon's upgrades (Damage + Area + Cooldown to level 5 each) to reach **Mastery**, then combine it with the right passive to unlock its ultimate evolved form. 7 evolutions total.
+### 🗓️ **Seasonal Leaderboard**
+- 4-week cycles
+- Top 40 earn OMENX
+- Seasonal upgrades reset end-of-season
 
-**Upgrade cost:** Use **OMENX to Reroll** your level-up picks (2 OMENX) or **Banish** a specific choice (1 OMENX).
-
----
-
-## 🛠️ THE UPGRADE LOUNGE
-
-Your permanent base between runs. Spend **Gold** or **OMENX** on:
-
-- **Stats** — 7 stats (Damage, HP, Speed, Pickup Range, Regen, Cooldown, Luck) across 3 upgrade tiers:
-  - *Permanent* — Never resets
-  - *Weekly* — Resets every Monday
-  - *Seasonal* — Resets every 4 weeks
-- **Armory** — Upgrade each weapon's Damage, Area, and Cooldown. Max all 3 = Mastery.
-- **Skill Trees** — Character-specific talent trees with branching paths. Respec anytime for a Gold refund.
-- **Ancient Relics** — Equip up to 2 relics for global buffs. Upgrade using Relic Fragments (dropped by bosses). 5 tiers: Common to Legendary.
-- **The Forge** — Convert 1,000 Gold = 1 Star Fragment (max 20/day). Use Star Fragments to permanently augment weapons beyond their normal cap. Forge upgrades never reset.
-- **Cosmetics** — Trails, kill effects, and character skins. Preview before buying.
+### ♾️ **Endless Void**
+- Infinitely scaling difficulty
+- Boss fights every 3 minutes
+- All-time high scores tracked globally
 
 ---
 
-## 🏆 LEADERBOARDS & OMENX REWARDS
+## 👥 SLOTH SQUADS — RAID TOGETHER
 
-OMENX rewards come from the prize pool (funded by in-game OMENX spending). 25% of weekly spend = weekly prizes. 35% of seasonal spend = seasonal prizes.
+Create or join a crew of up to **5 players**. Every kill you make—in any run—counts toward your squad's weekly total.
 
-**Weekly Leaderboard** — Resets every Monday. Top 30 players paid:
-- #1: 10% | #2: 8% | #3: 6% | #4-10: 4% each | #11-20: 3% each | #21-30: 1.8% each
+### 📈 **Squad Levels** (7 tiers)
+🦥 **Recruits** → ⭐ **Drifters** → 🔥 **Hunters** → ⚡ **Vanguards** → 💀 **Reapers** → 👑 **Legends** → 🌌 **Cosmic Elite**
 
-**Seasonal Leaderboard** — 4-week cycles. Top 40 players paid:
-- #1: 8% | #2: 6% | #3: 5% | #4-10: 3% each | #11-20: 2.5% each | #21-30: 2% each | #31-40: 1.5% each
+**Level up?** Unlock harder bounties with bigger rewards.
 
-Rewards are sent automatically to your OmenX wallet at the end of each period.
+### 🛡️ **Shared Bounties**
+Hit weekly kill targets. **Every member** can individually claim:
+- 💰 Gold (scales by squad level: 500–15,000)
+- 🧩 Relic Fragments (scales by squad level: 1–10)
+
+### 💬 **Squad Chat**
+Real-time messaging to coordinate with your team.
 
 ---
 
-## 👥 SLOTH SQUADS
+## 🌍 DIFFICULTY & MODIFIERS
 
-Form a crew of up to **5 pilots**. Every kill you make in any run automatically counts toward your squad's weekly total — no setup required.
+### 🎯 **Sector Penalties**
+Playing older sectors? **-10% Gold per sector below your max unlocked arena** (capped at -50%). Keep pushing forward to maximize earnings!
 
-**7 Squad Tiers:** Recruits -> Drifters -> Hunters -> Vanguards -> Reapers -> Legends -> Cosmic Elite
+### 🌟 **Difficulty Modes**
+- **Normal** — Learn the ropes
+- **Hard** — Enemies hit harder. Better score multiplier.
+- **Cosmic** — Maximum chaos. Best multiplier for leaderboard grinders.
 
-Each tier unlocks bigger **Daily & Weekly bounties** — shared kill targets that every member can individually claim for Gold and Relic Fragments. For example:
-- Lv.1: 2,000 kills = 500 Gold + 1 Fragment
-- Lv.7: 75,000 kills = 15,000 Gold + 10 Fragments
+### ⚔️ **Leviathan Trials**
+Activate modifiers before a run to make bosses **tougher & more rewarding**:
+- 🔴 **FURY** — Boss deals +50% damage
+- 🟠 **FRENZY** — Boss moves +50% faster
+- 🟣 **HIDE** — Boss has +100% HP
 
-Squads also have a real-time **Squad Chat** and appear on the weekly squad leaderboard.
+---
+
+## 🎁 DAILY GRIND & MISSION REWARDS
+
+### 📅 **Daily Login Streak**
+7-day escalating rewards. Miss a day? Streak resets to Day 1.
+
+### 🎯 **Daily Bounties**
+3 random challenges every day → **Gold** or **Relic Fragments**
+
+### ⚔️ **Daily Mission**
+One harder challenge → **Seasonal Points** (collect 100 for exclusive seasonal skins)
+
+### 👥 **Squad Weekly Bounty**
+Hit your squad's weekly kill target → **Gold + Relic Fragments** per member (scales with squad level)
 
 ---
 
 ## 💀 GLOBAL RAID BOSS
 
-A permanent community-wide World Boss with **shared HP across all players**. Launch up to **5 Raid Runs per day** — your damage permanently chips away at the global HP pool.
+**Community-wide cooperative event.** A massive World Boss with **shared HP across all players**. Deal damage in up to **5 Raid Runs per day**—your damage is permanent.
 
-When the boss hits 0, it respawns at the next level with **+50% more max HP**. Rewards scale: claim **1,000 Gold x boss level** for each level defeated (must have dealt damage to claim).
-
----
-
-## 🎁 DAILY REWARDS
-
-**Login streak** — 7-day escalating rewards (Day 7: 4,000 Gold). Miss a day and your streak resets.
-
-**Daily Bounties** — 3 random challenges refreshed each day for Gold or Relic Fragments.
-
-**Daily Mission** — One harder challenge worth **10 Seasonal Points**. Collect 100 points = unlock that season's exclusive character skin.
+### 🔥 **Infinite Scaling**
+- Boss reaches 0 HP? → Respawns at **next level**
+- Each level? → Boss gains **+50% max HP**
+- Your rewards? → **Scale with boss level** (1,000 Gold × Level)
 
 ---
 
-## ⚡ LEVIATHAN TRIALS
+## ✨ IN-RUN PICKUPS
 
-Activate boss modifiers before a run for a harder fight:
-- FURY — Boss deals +50% damage
-- FRENZY — Boss moves +50% faster
-- HIDE — Boss has +100% HP
+| Icon | Item | Effect |
+|------|------|--------|
+| 💎 | **XP Gems** | Dropped by every enemy. Level up to pick upgrades. |
+| 🪙 | **Gold Coins** | Random drops. Spend in the Lounge. |
+| 🧩 | **Relic Fragments** | Boss drops. Craft & upgrade Relics. |
+| ☢️ | **Nuke** | Destroys all non-boss enemies instantly. |
+| 🧲 | **Magnet Surge** | Pulls all nearby XP & Gold to you. |
+| 🛡️ | **Shield Overcharge** | 10 seconds of full invincibility. |
 
 ---
 
 ## 👑 VIP STATUS
 
-Purchase a VIP tier through the OmenX platform. Each tier = **+1% Damage and +1% Max HP** per run (cumulative).
+Purchase **VIP Tiers** with real money. Your subscription pays you back in OMENX each week.
 
-**14 tiers:** Bronze 1-2, Silver 1-3, Gold 1-2, Platinum 1-3, Diamond 1-4
+### ⚡ **VIP Bonuses**
+Each tier = **+1% Damage** & **+1% Max HP** per run. Bonuses **stack** with all your upgrades.
 
-VIP is automatically detected from your OmenX wallet. Every tier comes with a **weekly OMENX token allocation** sent to your wallet — your subscription pays you back in crypto.
-
----
-
-## 💰 OMENX
-
-The premium Web3 currency of the OmenX ecosystem (BNB Chain).
-
-**Earn:** Rank in the top 30/40 on weekly/seasonal leaderboards.
-**Buy:** Via Thirdweb on BNB Chain.
-**Spend in-game:** Rerolls (2), banishes (1), revives (4), squad ultimates (4), cosmetics, stat upgrades, and more.
-
-Your live OMENX balance is displayed in the top bar at all times.
+**14 Tiers Available:** Bronze 1–2 → Silver 1–3 → Gold 1–2 → Platinum 1–3 → Diamond 1–4
 
 ---
 
-*Squad up. Slay the cosmos. Earn real crypto. Repeat.*`;
+## 🌟 MASTERY SYSTEMS
+
+### 👾 **Enemy Mastery**
+Defeat enough of one enemy type? Unlock permanent **+2% to +10% damage** against that enemy forever.
+
+### 🎮 **Character Mastery**
+Play a character repeatedly → Rank up through **5 tiers (Novice → Grandmaster)** for unique badges & permanent stat bonuses.
+
+---
+
+## 💰 OMENX — THE PREMIUM CURRENCY
+
+Earn via **leaderboard rankings**. Spend in-game to:
+- 🔄 Reroll upgrade picks
+- 🚫 Banish unwanted upgrades
+- ⚡ Activate Squad Ultimates
+- ✨ Buy cosmetics & power-ups
+
+**Live balance always shown in the top bar of your screen.**
+
+---
+
+## 🎯 THE HOOK
+
+✅ **Free-to-play** — Pure skill determines earnings
+✅ **No pay-to-win** — Cosmetics only
+✅ **Real rewards** — OMENX tokens to your wallet
+✅ **Squad multiplier** — Farm together, earn together
+✅ **Infinite scaling** — Boss raids never stop
+
+---
+
+**Ready to slay cosmic enemies and stack real crypto?**
+
+**🦥 Create your squad. Raid the Global Boss. Earn OMENX. Repeat.**`;
 
 export default function AdminContent() {
     const { toast } = useToast();
