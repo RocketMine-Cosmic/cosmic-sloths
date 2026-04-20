@@ -121,6 +121,24 @@ const MainApp = () => {
 function App() {
   useEffect(() => {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
+
+    // Listen for auth data pushed from parent page (when embedded on Omen website)
+    const onParentMessage = (event) => {
+      const { type, authData } = event.data || {};
+      if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.accessToken) {
+        console.log('[OmenX] Received auth from parent iframe');
+        try {
+          localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'omenx_auth_data',
+            newValue: JSON.stringify(authData),
+            storageArea: localStorage,
+          }));
+        } catch (e) {}
+      }
+    };
+    window.addEventListener('message', onParentMessage);
+    return () => window.removeEventListener('message', onParentMessage);
   }, []);
 
   return (

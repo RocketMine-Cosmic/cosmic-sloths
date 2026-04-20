@@ -47,6 +47,16 @@ export const initOmenX = async () => {
   } catch (err) {
     console.error('[OmenX] init failed', err);
   }
+
+  // If embedded in an iframe (e.g. Omen website), request auth token from parent
+  if (window.self !== window.top) {
+    try {
+      window.parent.postMessage({ type: 'omenx_request_auth', gameId: 'cosmic-sloths' }, '*');
+      console.log('[OmenX] Requested auth from parent iframe');
+    } catch (e) {
+      console.error('[OmenX] Failed to request auth from parent', e);
+    }
+  }
 };
 
 export const getRedirectUri = () => `${getBaseUrl()}/auth/callback`;
