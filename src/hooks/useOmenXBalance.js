@@ -8,7 +8,8 @@ let listeners = new Set();
 let consumerCount = 0;
 let fetchInProgress = false;
 let lastFetchTime = 0;
-const BALANCE_CACHE_DURATION = 600000; // 10 minutes — poll interval
+let pollingInitialized = false;
+const BALANCE_CACHE_DURATION = 120000; // 2 minutes — poll interval
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
@@ -52,13 +53,15 @@ async function fetchBalance(force = false) {
 let pollInterval = null;
 
 function startPolling() {
-    if (pollInterval) return;
+    if (pollingInitialized) return;
+    pollingInitialized = true;
     fetchBalance();
     pollInterval = setInterval(() => fetchBalance(), BALANCE_CACHE_DURATION);
 }
 
 function stopPolling() {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    pollingInitialized = false;
 }
 
 export function useOmenXBalance() {
@@ -70,9 +73,8 @@ export function useOmenXBalance() {
         listeners.add(listener);
         consumerCount++;
 
-        // Fetch on mount only if no cached balance yet (catches fresh page load after mobile OAuth)
-        if (cachedBalance === null) fetchBalance().then(() => startPolling());
-        else startPolling();
+        // Start polling once globally
+        startPolling();
 
         // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
