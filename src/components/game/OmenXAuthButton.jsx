@@ -55,21 +55,24 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            // Build the auth URL manually so we control the popup window
             const redirectUri = getRedirectUri();
-            const authUrl = await omenx.getAuthUrl({ redirectUri, enablePKCE: true })
-                .catch(() => null);
+            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const authUrl = await omenx.getAuthUrl({ redirectUri, enablePKCE: true }).catch(() => null);
 
-            let popup;
-            if (authUrl) {
-                // Open as a proper popup so window.close() works in callback
-                popup = window.open(authUrl, 'omenx_auth', 'width=520,height=680,menubar=no,toolbar=no,location=yes');
-            } else {
-                // Fallback: let SDK handle it
-                await omenx.authenticate({ redirectUri, enablePKCE: true });
+            if (isMobile || !authUrl) {
+                // Mobile: full-page redirect flow, callback will redirect back to /
+                if (authUrl) {
+                    window.location.href = authUrl;
+                } else {
+                    await omenx.authenticate({ redirectUri, enablePKCE: true });
+                }
+                return;
             }
 
-            // Poll localStorage — callback writes auth data then closes the popup
+            // Desktop: open as popup, callback will window.close()
+            const popup = window.open(authUrl, 'omenx_auth', 'width=520,height=680,menubar=no,toolbar=no,location=yes');
+
+            // Poll localStorage — callback writes auth data then closes popup
             let polls = 0;
             const poll = setInterval(() => {
                 polls++;
