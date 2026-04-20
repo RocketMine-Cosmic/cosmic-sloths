@@ -9,7 +9,7 @@ let consumerCount = 0;
 let fetchInProgress = false;
 let lastFetchTime = 0;
 let pollingInitialized = false;
-const BALANCE_CACHE_DURATION = 120000; // 2 minutes — poll interval
+const BALANCE_CACHE_DURATION = 600000; // 10 minutes — poll interval
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
