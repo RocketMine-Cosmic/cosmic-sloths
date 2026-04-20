@@ -97,8 +97,8 @@ export default function Upgrades({ isCarousel }) {
     const syncSaveToBackend = async (updatedSave) => {
         try {
             const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-            if (!authData?.walletAddress) return;
-            await base44.functions.invoke('syncSave', { walletAddress: authData.walletAddress, saveData: updatedSave });
+            if (!authData?.walletAddress || !authData?.accessToken) return;
+            await base44.functions.invoke('syncSave', { walletAddress: authData.walletAddress, saveData: updatedSave, accessToken: authData.accessToken });
         } catch (e) {
             console.error('[syncSaveToBackend] Sync failed:', e);
         }
