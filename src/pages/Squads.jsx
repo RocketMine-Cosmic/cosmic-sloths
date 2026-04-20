@@ -93,8 +93,8 @@ export default function Squads({ isCarousel }) {
                     return;
                 }
                 setUser(omenxUser);
-                if (me) {
-                    const memberships = await base44.entities.SquadMember.filter({ wallet_address: me.wallet_address });
+                if (omenxUser) {
+                    const memberships = await base44.entities.SquadMember.filter({ wallet_address: omenxUser.wallet_address || omenxUser.walletAddress });
                     if (memberships.length > 0) {
                         const member = memberships[0];
                         setMyMemberRecord(member);

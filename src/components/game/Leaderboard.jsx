@@ -55,11 +55,11 @@ export default function Leaderboard() {
         const updateTimer = () => {
             const now = new Date();
             if (view === 'weekly' || view === 'squads') {
-                // Calculate next Sunday (UTC)
+                // Calculate next Monday (UTC) — weekly period resets Monday
                 const currentDay = now.getUTCDay();
-                const daysUntilSunday = (7 - currentDay) % 7 || 7;
+                const daysUntilMonday = (1 - currentDay + 7) % 7 || 7;
                 const endOfWeek = new Date(now);
-                endOfWeek.setUTCDate(now.getUTCDate() + daysUntilSunday);
+                endOfWeek.setUTCDate(now.getUTCDate() + daysUntilMonday);
                 endOfWeek.setUTCHours(0, 0, 0, 0);
                 
                 const msLeft = endOfWeek - now;
