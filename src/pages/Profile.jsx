@@ -34,7 +34,10 @@ export default function Profile({ isCarousel }) {
     const [vipLevel, setVipLevel] = useState(0);
 
     useEffect(() => {
+        let hasFetched = false;
         const fetchProfileData = async () => {
+            if (hasFetched) return;
+            hasFetched = true;
             try {
                 const me = getOmenXUser();
                 setUser(me);
@@ -92,13 +95,14 @@ export default function Profile({ isCarousel }) {
                  }
             } catch (e) {
                 console.error('Failed to fetch profile data', e);
+                setLoading(false);
             }
             setLoading(false);
         };
         fetchProfileData();
         
-        // Re-fetch when auth state changes
-        const handleStorageChange = () => fetchProfileData();
+        // Re-fetch when auth state changes (only on omenx_auth_data key change)
+        const handleStorageChange = (e) => { if (e.key === 'omenx_auth_data') { hasFetched = false; fetchProfileData(); } };
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
