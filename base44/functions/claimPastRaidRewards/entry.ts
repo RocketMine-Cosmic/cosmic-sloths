@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.24';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import moment from 'npm:moment@2.30.1';
 
 Deno.serve(async (req) => {
@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
 
         const currentWeekId = moment().format('YYYY-[W]ww');
         
-        const contribs = await base44.asServiceRole.entities.GlobalBossContribution.filter({ user_id: user.id });
+        const contribs = await base44.asServiceRole.entities.GlobalBossContribution.filter({ user_id: user.wallet_address || user.id });
         
         let totalGold = 0;
         let pastUnclaimedCount = 0;

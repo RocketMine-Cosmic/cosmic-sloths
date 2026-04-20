@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Missing period_id or period_type' }, { status: 400 });
         }
 
-        const apiKey = Deno.env.get('OMENX_API_KEY');
+        const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiKey) {
             console.error('[manuallyDistributeRewards] OMENX_API_KEY not set');

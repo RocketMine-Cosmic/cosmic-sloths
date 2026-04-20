@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
         const { week_id, season_id } = getCurrentPeriodIds();
         // Ignore any client-provided period IDs for security
 
-        const apiKey = Deno.env.get('OMENX_API_KEY');
+        const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiKey) return Response.json({ error: 'API key not configured' }, { status: 500 });
 

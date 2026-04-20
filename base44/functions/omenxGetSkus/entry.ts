@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
 
         const base44 = createClientFromRequest(req);
         const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_API_KEY'),
+            apiKey: Deno.env.get('OMENX_PAYMENT_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
 
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden: Admin wallet required' }, { status: 403 });
         }
 
-        const apiKey = Deno.env.get('OMENX_API_KEY');
+        const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
 
         const res = await fetch(`${BASE_URL}/products`, {
             headers: { 'Authorization': `Bearer ${apiKey}` }

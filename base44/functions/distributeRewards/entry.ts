@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
         }
 
-        const apiKey = Deno.env.get('OMENX_API_KEY');
+        const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         const sdk = new OmenXServerSDK({
             apiKey,

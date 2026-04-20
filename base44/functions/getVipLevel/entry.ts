@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
         }
 
         const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_API_KEY'),
+            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
 
