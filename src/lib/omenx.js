@@ -45,7 +45,7 @@ export const initOmenX = async () => {
   try {
     await omenx.init();
   } catch (err) {
-    console.error('[OmenX] init failed', err);
+    // Silently fail - expected in some environments
   }
 
   // If embedded in an iframe (e.g. Omen website), request auth token from parent
