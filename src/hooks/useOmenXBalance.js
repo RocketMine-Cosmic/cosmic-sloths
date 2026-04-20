@@ -9,7 +9,9 @@ let subscription = null;
 let consumerCount = 0;
 let fetchInProgress = false;
 let lastFetchTime = 0;
+let fetchScheduled = false;
 const BALANCE_CACHE_DURATION = 30000; // 30 seconds
+const MIN_FETCH_INTERVAL = 5000; // 5 seconds minimum between fetches
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
@@ -23,7 +25,8 @@ async function fetchBalance(force = false) {
     const now = Date.now();
     // Skip if cache is fresh and not forced
     if (!force && now - lastFetchTime < BALANCE_CACHE_DURATION) return;
-    if (fetchInProgress && !force) return;
+    // Skip if already fetching or scheduled to fetch soon
+    if (fetchInProgress || (!force && fetchScheduled)) return;
     
     const auth = getAuthData();
     if (!auth?.walletAddress || !auth?.accessToken) {
@@ -31,6 +34,7 @@ async function fetchBalance(force = false) {
         notify();
         return;
     }
+    
     fetchInProgress = true;
     try {
         const res = await base44.functions.invoke('getOmenXBalance', {
@@ -49,6 +53,18 @@ async function fetchBalance(force = false) {
     }
 }
 
+// Debounced fetch — prevents rapid duplicate calls
+function debouncedFetchBalance() {
+    if (fetchScheduled || fetchInProgress) return;
+    const now = Date.now();
+    if (now - lastFetchTime < MIN_FETCH_INTERVAL) return;
+    fetchScheduled = true;
+    setTimeout(() => {
+        fetchScheduled = false;
+        fetchBalance();
+    }, MIN_FETCH_INTERVAL);
+}
+
 function startSubscription() {
     if (subscription) return;
     const auth = getAuthData();
@@ -61,7 +77,7 @@ function startSubscription() {
             apiBaseUrl: 'https://api.omen.foundation',
             getAccessToken: () => Promise.resolve(getAuthData()?.accessToken ?? null),
             walletAddress: auth.walletAddress,
-            onBalance: fetchBalance,
+            onBalance: debouncedFetchBalance,
         });
     } catch (e) {
         // Silent error handling - subscription failed, fallback to polling
