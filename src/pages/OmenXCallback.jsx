@@ -71,8 +71,12 @@ export default function OmenXCallback() {
                 }
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 
-                // Dispatch event for immediate UI update
+                // Notify opener (popup mode) via postMessage — works cross-origin
                 if (window.opener) {
+                    try {
+                        window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
+                    } catch(e) { /* ignore */ }
+                    // Also try same-origin storage event as fallback
                     try {
                         window.opener.dispatchEvent(new StorageEvent('storage', {
                             key: 'omenx_auth_data',
@@ -126,19 +130,13 @@ export default function OmenXCallback() {
                     }
                 }
 
+                setStatus('✓ Login successful!');
                 if (window.opener) {
-                    setStatus('✓ Login successful! Returning to app...');
-                    setTimeout(() => window.close(), 2000);
-                } else if (window.self !== window.top) {
-                    setStatus('✓ Login successful! Returning to game...');
-                    setTimeout(() => {
-                        window.location.replace('/');
-                    }, 1200);
+                    // Popup: close and let opener handle it
+                    setTimeout(() => window.close(), 1000);
                 } else {
-                    setStatus('✓ Login successful! Returning to app...');
-                    setTimeout(() => {
-                        window.location.replace('/');
-                    }, 1200);
+                    // Direct navigation (no popup): redirect back to game
+                    setTimeout(() => window.location.replace('/'), 1200);
                 }
             } catch (err) {
                 const debugPayload = {

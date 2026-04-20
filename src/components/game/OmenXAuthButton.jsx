@@ -35,9 +35,21 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             }
             onAuthChange?.(stored);
         };
+
+        const onMessage = (event) => {
+            if (event.data?.type === 'omenx_auth' && event.data?.authData) {
+                const authData = event.data.authData;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
+                applyAuthData(authData);
+            }
+        };
         
         window.addEventListener('storage', onStorageChange);
-        return () => window.removeEventListener('storage', onStorageChange);
+        window.addEventListener('message', onMessage);
+        return () => {
+            window.removeEventListener('storage', onStorageChange);
+            window.removeEventListener('message', onMessage);
+        };
     }, [onAuthChange]);
 
     const handleLogin = async () => {

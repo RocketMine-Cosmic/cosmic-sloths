@@ -9,7 +9,7 @@ export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
   apiBaseUrl: 'https://api.omen.foundation',
   oauthAuthorizeUrl: 'https://api.omen.foundation/v1/oauth/authorize',
-  enableIframeAuth: false,
+  enableIframeAuth: true,
   onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {
