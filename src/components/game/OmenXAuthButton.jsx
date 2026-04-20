@@ -60,16 +60,12 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             const authUrl = await omenx.getAuthUrl({ redirectUri, enablePKCE: true }).catch(() => null);
 
             if (isMobile || !authUrl) {
-                // Mobile: full-page redirect flow, callback will redirect back to /
-                if (authUrl) {
-                    window.location.href = authUrl;
-                } else {
-                    await omenx.authenticate({ redirectUri, enablePKCE: true });
-                }
+                // Mobile or embedded in iframe: use SDK's authenticate method
+                await omenx.authenticate({ redirectUri, enablePKCE: true });
                 return;
             }
 
-            // Desktop: open as popup, callback will window.close()
+            // Desktop standalone: open as popup
             const popup = window.open(authUrl, 'omenx_auth', 'width=520,height=680,menubar=no,toolbar=no,location=yes');
 
             // Poll localStorage — callback writes auth data then closes popup
