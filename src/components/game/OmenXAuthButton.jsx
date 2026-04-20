@@ -53,6 +53,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     }, [onAuthChange]);
 
     const handleLogin = async () => {
+        console.log('[OmenXAuthButton] handleLogin clicked');
         setLoading(true);
         try {
             const redirectUri = getRedirectUri();
