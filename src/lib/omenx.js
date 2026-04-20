@@ -5,8 +5,6 @@ const getBaseUrl = () => {
   return window.location.origin;
 };
 
-const REDIRECT_URI = `${getBaseUrl()}/auth/callback`;
-
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
   apiBaseUrl: 'https://api.omen.foundation',
@@ -52,4 +50,4 @@ export const initOmenX = async () => {
   }
 };
 
-export const getRedirectUri = () => REDIRECT_URI;
+export const getRedirectUri = () => `${getBaseUrl()}/auth/callback`;
