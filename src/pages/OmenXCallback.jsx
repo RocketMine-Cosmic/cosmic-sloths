@@ -4,6 +4,7 @@ import { saveAuthToIndexedDB } from '@/lib/indexedDbAuth';
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Processing login...');
+    const [debugInfo, setDebugInfo] = useState(null);
 
     useLayoutEffect(() => {
         if (typeof window === 'undefined') return;
@@ -26,13 +27,30 @@ export default function OmenXCallback() {
                                          .map(k => sessionStorage.getItem(k))[0] ||
                                      null;
 
+                console.log('[OmenXCallback] Starting token exchange', {
+                    currentUrl: window.location.href,
+                    origin: window.location.origin,
+                    codePresent: !!code,
+                    state,
+                    hasCodeVerifier: !!codeVerifier,
+                });
+
                 const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier });
                 const tokenData = res.data;
+                console.log('[OmenXCallback] Exchange response', tokenData);
 
                 if (!tokenData || tokenData.error) {
                     const errMsg = tokenData?.details?.error?.message || tokenData?.details?.error?.code || tokenData?.error || 'unknown';
+                    const debugPayload = {
+                        currentUrl: window.location.href,
+                        origin: window.location.origin,
+                        state,
+                        hasCodeVerifier: !!codeVerifier,
+                        response: tokenData,
+                    };
+                    console.error('[OmenXCallback] Exchange failed', debugPayload);
+                    setDebugInfo(debugPayload);
                     setStatus(`❌ ${errMsg}`);
-                    setTimeout(() => window.close(), 8000);
                     return;
                 }
 
@@ -122,8 +140,15 @@ export default function OmenXCallback() {
                     }, 1200);
                 }
             } catch (err) {
+                const debugPayload = {
+                    currentUrl: typeof window !== 'undefined' ? window.location.href : '',
+                    origin: typeof window !== 'undefined' ? window.location.origin : '',
+                    error: err?.message || 'Unknown error',
+                    response: err?.response?.data || null,
+                };
+                console.error('[OmenXCallback] Unexpected error', debugPayload);
+                setDebugInfo(debugPayload);
                 setStatus(`❌ ${err.message}`);
-                setTimeout(() => window.close(), 8000);
             }
         };
 
@@ -131,10 +156,17 @@ export default function OmenXCallback() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#0b0416] flex items-center justify-center">
-            <div className="text-center text-purple-300 font-mono px-6">
-                <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <div className="text-sm tracking-widest uppercase">{status}</div>
+        <div className="min-h-screen bg-[#0b0416] flex items-center justify-center p-6">
+            <div className="text-center text-purple-300 font-mono px-6 max-w-2xl w-full">
+                {!status.startsWith('❌') && (
+                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                )}
+                <div className="text-sm tracking-widest uppercase mb-4">{status}</div>
+                {debugInfo && (
+                    <pre className="text-left text-xs normal-case tracking-normal bg-black/30 border border-purple-500/30 rounded-lg p-4 overflow-auto whitespace-pre-wrap break-all">
+                        {JSON.stringify(debugInfo, null, 2)}
+                    </pre>
+                )}
             </div>
         </div>
     );
