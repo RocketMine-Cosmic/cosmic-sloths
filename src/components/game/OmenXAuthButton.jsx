@@ -58,9 +58,18 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         try {
             const redirectUri = getRedirectUri();
             const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            const authUrl = await omenx.getAuthUrl({ redirectUri, enablePKCE: true }).catch(() => null);
+            console.log('[OmenXAuthButton] isMobile:', isMobile, 'redirectUri:', redirectUri);
+            
+            let authUrl = null;
+            try {
+                authUrl = await omenx.getAuthUrl({ redirectUri, enablePKCE: true });
+                console.log('[OmenXAuthButton] authUrl:', authUrl);
+            } catch (err) {
+                console.error('[OmenXAuthButton] getAuthUrl failed:', err);
+            }
 
             if (isMobile || !authUrl) {
+                console.log('[OmenXAuthButton] Using authenticate() method');
                 // Mobile or embedded in iframe: use SDK's authenticate method
                 await omenx.authenticate({ redirectUri, enablePKCE: true });
                 return;
