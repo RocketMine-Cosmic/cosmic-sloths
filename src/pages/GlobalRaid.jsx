@@ -11,7 +11,7 @@ import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import { CHARACTERS } from '../game/Constants';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
-import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { useCurrency } from '@/lib/CurrencyContext';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
@@ -23,7 +23,7 @@ function OmenXIcon({ className }) {
 export default function GlobalRaid({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const { balance: omenxBalance, refresh: refreshOmenX } = useOmenXBalance();
+    const { omenxBalance } = useCurrency();
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('global-raid');
 
     React.useEffect(() => {
@@ -162,7 +162,6 @@ export default function GlobalRaid({ isCarousel }) {
                 currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
                 SaveManager.save(currentSave);
                 setSave(currentSave);
-                refreshOmenX();
                 toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
             } catch (err) {
                 console.error('[handleBuyMoreRuns] purchase failed:', err);

@@ -7,7 +7,7 @@ import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzz
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
-import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { useCurrency } from '@/lib/CurrencyContext';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
@@ -42,7 +42,7 @@ const STATS = [
 export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const { balance: omenxBalance } = useOmenXBalance();
+    const { omenxBalance } = useCurrency();
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('upgrades-page');
 
     React.useEffect(() => {

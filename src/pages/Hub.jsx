@@ -5,7 +5,7 @@ import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMET
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Coins } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
-import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { useCurrency } from '@/lib/CurrencyContext';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
@@ -133,7 +133,7 @@ export default function Hub({ isCarousel }) {
     const [isNGPlus, setIsNGPlus] = useState(save.isNGPlus || false);
     const [charTab, setCharTab] = useState('loadout');
     const { toast } = useToast();
-    const { balance: omenxBalance, refresh: refreshOmenX } = useOmenXBalance();
+    const { omenxBalance } = useCurrency();
     const touchStartX = React.useRef(null);
     const [currentTime, setCurrentTime] = useState(Date.now());
 
@@ -614,7 +614,6 @@ export default function Hub({ isCarousel }) {
                                         const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
                                         const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData?.walletAddress, week_id, season_id, amount: 10 });
                                         if (!res.data?.success) { toast({ title: 'Purchase Failed', description: res.data?.error || 'Try again.' }); return; }
-                                        refreshOmenX();
                                         const newSave = { ...SaveManager.load() };
                                         newSave.sessionBuffs = newSave.sessionBuffs || {};
                                         newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
