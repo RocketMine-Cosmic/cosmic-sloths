@@ -6,7 +6,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No code provided' }, { status: 400 });
     }
 
-    const redirectUri = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
+    const host = req.headers.get('host');
+    const protocol = host?.includes('localhost') || host?.startsWith('127.0.0.1') ? 'http' : 'https';
+    const redirectUri = `${protocol}://${host}/auth/callback`;
     const apiBaseUrl = 'https://api.omen.foundation';
     const clientSecret = Deno.env.get('OMENX_AUTH_API_KEY');
 
