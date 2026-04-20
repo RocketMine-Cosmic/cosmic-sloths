@@ -28,8 +28,6 @@ import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
 import { initOmenX } from '@/lib/omenx';
-import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
-import { base44 } from '@/api/base44Client';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 
