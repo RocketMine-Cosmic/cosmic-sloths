@@ -221,33 +221,23 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const squad = await base44.entities.Squad.create({
-                name: newSquadName,
-                tag: newSquadTag.toUpperCase().substring(0, 4),
-                description: newSquadDesc,
-                owner_wallet: walletAddr,
-                weekly_kills: 0,
-                current_week: getCurrentWeek(),
-                daily_kills: 0,
-                current_day: moment().format('YYYY-MM-DD'),
-                member_count: 1,
-                xp: 0,
-                level: 1
-            });
-            
             const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
-            const member = await base44.entities.SquadMember.create({
-                squad_id: squad.id,
-                wallet_address: walletAddr,
-                player_name: displayName,
-                player_title: (user?.data?.player_title || '').trim(),
-                role: 'leader',
-                last_payout_week: '',
-                last_daily_payout_date: ''
+            const res = await base44.functions.invoke('createSquad', {
+                squadName: newSquadName,
+                squadTag: newSquadTag,
+                squadDesc: newSquadDesc,
+                walletAddress: walletAddr,
+                playerName: displayName,
+                playerTitle: (user?.data?.player_title || '').trim()
             });
             
-            setMySquad(squad);
-            setMyMemberRecord(member);
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to create squad." });
+                return;
+            }
+            
+            setMySquad(res.data.squad);
+            setMyMemberRecord(res.data.member);
         } catch (e) {
             console.error(e);
             toast({ title: "Error", description: "Failed to create squad. Name might be taken." });
