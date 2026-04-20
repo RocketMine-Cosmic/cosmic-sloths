@@ -10,7 +10,7 @@ const GAME_DESCRIPTION = `# 🦥 COSMIC SLOTHS
 
 ## 🎮 DROP IN, SURVIVE, EARN
 
-Blast through **10 unique hand-crafted sectors** filled with cosmic chaos. Move with WASD or your joystick. Your weapons? They auto-fire at whatever's closest. Survive the timer. Climb the leaderboards. **Earn real Web3 currency** based on your performance.
+Blast through **10 hand-crafted sectors** filled with cosmic chaos. Move with WASD or your joystick. Your weapons? They auto-fire at whatever's closest. Survive the timer. Climb the leaderboards. **Earn real Web3 currency** based on your performance.
 
 ### ⚡ The Core Loop
 1. **Move & Fight** — WASD/Arrows or Virtual Joystick. Auto-firing weapons handle the rest.
@@ -109,7 +109,7 @@ Activate modifiers before a run to make bosses **tougher & more rewarding**:
 One harder challenge → **Seasonal Points** (collect 100 for exclusive seasonal skins)
 
 ### 👥 **Squad Weekly Bounty**
-Hit your squad's weekly kill target → **Gold + Relic Fragments** per member (rewards scale with squad level, up to 15,000 Gold + 10 Fragments)
+Hit your squad's shared weekly kill target → every member individually claims **Gold + Relic Fragments** (scales with squad level: up to 15,000 Gold + 10 Fragments at Lv.7)
 
 ---
 
@@ -175,7 +175,7 @@ Earn via **leaderboard rankings**. Spend in-game to:
 ## 🎯 THE HOOK
 
 ✅ **Free-to-play** — Pure skill determines earnings
-✅ **No pay-to-win** — Cosmetics only
+✅ **Skill-first** — Leaderboard earnings are purely based on performance
 ✅ **Real rewards** — OMENX tokens to your wallet
 ✅ **Squad multiplier** — Farm together, earn together
 ✅ **Infinite scaling** — Boss raids never stop
