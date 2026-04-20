@@ -55,12 +55,21 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            await omenx.authenticate({
-                redirectUri: getRedirectUri(),
-                enablePKCE: true,
-            });
+            // Build the auth URL manually so we control the popup window
+            const redirectUri = getRedirectUri();
+            const authUrl = await omenx.getAuthUrl({ redirectUri, enablePKCE: true })
+                .catch(() => null);
 
-            // Poll localStorage for auth data (StorageEvent doesn't fire in same tab on mobile)
+            let popup;
+            if (authUrl) {
+                // Open as a proper popup so window.close() works in callback
+                popup = window.open(authUrl, 'omenx_auth', 'width=520,height=680,menubar=no,toolbar=no,location=yes');
+            } else {
+                // Fallback: let SDK handle it
+                await omenx.authenticate({ redirectUri, enablePKCE: true });
+            }
+
+            // Poll localStorage — callback writes auth data then closes the popup
             let polls = 0;
             const poll = setInterval(() => {
                 polls++;
@@ -68,7 +77,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                 if (stored?.walletAddress) {
                     clearInterval(poll);
                     applyAuthData(stored);
-                } else if (polls > 60) {
+                } else if (polls > 120 || (popup && popup.closed && polls > 4)) {
                     clearInterval(poll);
                     setLoading(false);
                 }

@@ -131,13 +131,14 @@ export default function OmenXCallback() {
                 }
 
                 setStatus('✓ Login successful!');
-                if (window.opener) {
-                    // Popup: close and let opener handle it
-                    setTimeout(() => window.close(), 1000);
-                } else {
-                    // Direct navigation (no popup): redirect back to game
-                    setTimeout(() => window.location.replace('/'), 1200);
-                }
+                // Always try to close — works when opened as popup
+                // If this was a direct navigation, window.close() will fail silently
+                // and we fall back to redirect after a short delay
+                window.close();
+                // Fallback: if still open after 1.5s, we're in direct navigation mode
+                setTimeout(() => {
+                    window.location.replace('/');
+                }, 1500);
             } catch (err) {
                 const debugPayload = {
                     currentUrl: typeof window !== 'undefined' ? window.location.href : '',
