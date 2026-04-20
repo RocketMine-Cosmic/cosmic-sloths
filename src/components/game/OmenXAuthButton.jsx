@@ -53,44 +53,10 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     }, [onAuthChange]);
 
     const handleLogin = async () => {
-        console.log('[OmenXAuthButton] handleLogin clicked');
         setLoading(true);
         try {
             const redirectUri = getRedirectUri();
-            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            console.log('[OmenXAuthButton] isMobile:', isMobile, 'redirectUri:', redirectUri);
-            
-            let authUrl = null;
-            try {
-                authUrl = await omenx.getAuthUrl({ redirectUri, enablePKCE: true });
-                console.log('[OmenXAuthButton] authUrl:', authUrl);
-            } catch (err) {
-                console.error('[OmenXAuthButton] getAuthUrl failed:', err);
-            }
-
-            if (isMobile || !authUrl) {
-                console.log('[OmenXAuthButton] Using authenticate() method');
-                // Mobile or embedded in iframe: use SDK's authenticate method
-                await omenx.authenticate({ redirectUri, enablePKCE: true });
-                return;
-            }
-
-            // Desktop standalone: open as popup
-            const popup = window.open(authUrl, 'omenx_auth', 'width=520,height=680,menubar=no,toolbar=no,location=yes');
-
-            // Poll localStorage — callback writes auth data then closes popup
-            let polls = 0;
-            const poll = setInterval(() => {
-                polls++;
-                const stored = getAuthData();
-                if (stored?.walletAddress) {
-                    clearInterval(poll);
-                    applyAuthData(stored);
-                } else if (polls > 120 || (popup && popup.closed && polls > 4)) {
-                    clearInterval(poll);
-                    setLoading(false);
-                }
-            }, 500);
+            await omenx.authenticate({ redirectUri, enablePKCE: true });
         } catch (err) {
             setLoading(false);
         }
