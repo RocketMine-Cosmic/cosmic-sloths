@@ -5,13 +5,10 @@ import { subscribeWalletRealtimeWithOmenXAuth } from '@omen.foundation/game-sdk'
 // Singleton cache — shared across all hook instances
 let cachedBalance = null;
 let listeners = new Set();
-let subscription = null;
 let consumerCount = 0;
 let fetchInProgress = false;
 let lastFetchTime = 0;
-let fetchScheduled = false;
-const BALANCE_CACHE_DURATION = 30000; // 30 seconds
-const MIN_FETCH_INTERVAL = 5000; // 5 seconds minimum between fetches
+const BALANCE_CACHE_DURATION = 60000; // 60 seconds — poll interval
 
 function notify() {
     listeners.forEach(fn => fn(cachedBalance));
@@ -25,8 +22,7 @@ async function fetchBalance(force = false) {
     const now = Date.now();
     // Skip if cache is fresh and not forced
     if (!force && now - lastFetchTime < BALANCE_CACHE_DURATION) return;
-    // Skip if already fetching or scheduled to fetch soon
-    if (fetchInProgress || (!force && fetchScheduled)) return;
+    if (fetchInProgress) return;
     
     const auth = getAuthData();
     if (!auth?.walletAddress || !auth?.accessToken) {
@@ -53,40 +49,16 @@ async function fetchBalance(force = false) {
     }
 }
 
-// Debounced fetch — prevents rapid duplicate calls
-function debouncedFetchBalance() {
-    if (fetchScheduled || fetchInProgress) return;
-    const now = Date.now();
-    if (now - lastFetchTime < MIN_FETCH_INTERVAL) return;
-    fetchScheduled = true;
-    setTimeout(() => {
-        fetchScheduled = false;
-        fetchBalance();
-    }, MIN_FETCH_INTERVAL);
+let pollInterval = null;
+
+function startPolling() {
+    if (pollInterval) return;
+    fetchBalance();
+    pollInterval = setInterval(() => fetchBalance(), BALANCE_CACHE_DURATION);
 }
 
-function startSubscription() {
-    if (subscription) return;
-    const auth = getAuthData();
-    if (!auth?.accessToken || !auth?.walletAddress) {
-        fetchBalance();
-        return;
-    }
-    try {
-        subscription = subscribeWalletRealtimeWithOmenXAuth({
-            apiBaseUrl: 'https://api.omen.foundation',
-            getAccessToken: () => Promise.resolve(getAuthData()?.accessToken ?? null),
-            walletAddress: auth.walletAddress,
-            onBalance: debouncedFetchBalance,
-        });
-    } catch (e) {
-        // Silent error handling - subscription failed, fallback to polling
-        fetchBalance();
-    }
-}
-
-function stopSubscription() {
-    if (subscription) { subscription(); subscription = null; }
+function stopPolling() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
 }
 
 export function useOmenXBalance() {
@@ -99,20 +71,20 @@ export function useOmenXBalance() {
         consumerCount++;
 
         // Fetch on mount only if no cached balance yet (catches fresh page load after mobile OAuth)
-        if (cachedBalance === null) fetchBalance().then(() => startSubscription());
-        else startSubscription();
+        if (cachedBalance === null) fetchBalance().then(() => startPolling());
+        else startPolling();
 
         // Sync with latest cache immediately
         if (cachedBalance !== null) { setBalance(cachedBalance); setLoading(false); }
 
-        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopSubscription(); fetchBalance().then(() => startSubscription()); } };
+        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopPolling(); fetchBalance().then(() => startPolling()); } };
         window.addEventListener('storage', onStorage);
 
         const onVisibilityChange = () => {
             if (document.hidden) {
-                stopSubscription();
+                stopPolling();
             } else {
-                startSubscription();
+                startPolling();
             }
         };
         document.addEventListener('visibilitychange', onVisibilityChange);
@@ -122,7 +94,7 @@ export function useOmenXBalance() {
             consumerCount--;
             window.removeEventListener('storage', onStorage);
             document.removeEventListener('visibilitychange', onVisibilityChange);
-            if (consumerCount <= 0) { consumerCount = 0; stopSubscription(); }
+            if (consumerCount <= 0) { consumerCount = 0; stopPolling(); }
         };
     }, []);
 
