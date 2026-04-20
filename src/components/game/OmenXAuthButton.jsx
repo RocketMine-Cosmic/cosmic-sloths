@@ -106,7 +106,10 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     return (
         <div className={`flex flex-col ${fullWidth ? 'items-center w-full' : 'items-end'} gap-1`}>
             <button
-                onClick={authData ? handleLogout : handleLogin}
+                onClick={(e) => { 
+                    console.log('[OmenXAuthButton] onclick fired', e);
+                    (authData ? handleLogout : handleLogin)();
+                }}
                 disabled={loading}
                 type="button"
                 className={`font-black tracking-widest uppercase transition-all border flex items-center justify-center gap-2 backdrop-blur-md pointer-events-auto cursor-pointer ${
