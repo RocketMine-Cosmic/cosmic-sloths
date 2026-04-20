@@ -8,7 +8,7 @@ function getAuthData() {
 }
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
-    const [authData, setAuthState] = useState(getAuthData);
+    const [authData, setAuthState] = useState(getAuthData());
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
