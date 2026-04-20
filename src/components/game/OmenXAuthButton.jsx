@@ -99,7 +99,8 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             <button
                 onClick={authData ? handleLogout : handleLogin}
                 disabled={loading}
-                className={`font-black tracking-widest uppercase transition-all border flex items-center justify-center gap-2 backdrop-blur-md ${
+                type="button"
+                className={`font-black tracking-widest uppercase transition-all border flex items-center justify-center gap-2 backdrop-blur-md pointer-events-auto cursor-pointer ${
                     fullWidth
                         ? 'w-full py-4 md:py-5 text-sm md:text-lg px-4'
                         : 'px-3 py-1.5 rounded-lg text-xs'
