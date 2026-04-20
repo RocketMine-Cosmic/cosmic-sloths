@@ -39,14 +39,29 @@ export default function Profile({ isCarousel }) {
                 const me = getOmenXUser();
                 setUser(me);
 
-                // Fetch VIP level and sync to backend
+                // Fetch VIP level with 24-hour cache
                 const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                 const walletAddress = authData?.walletAddress;
                 if (walletAddress && authData?.accessToken) {
+                    const cacheKey = `vip_level_cache_${walletAddress}`;
+                    const cached = localStorage.getItem(cacheKey);
+                    const now = Date.now();
+                    const twentyFourHours = 24 * 60 * 60 * 1000;
+                    
+                    if (cached) {
+                        const { level, timestamp } = JSON.parse(cached);
+                        if (now - timestamp < twentyFourHours) {
+                            setVipLevel(level);
+                            const s = SaveManager.load();
+                            if (s.vipLevel !== level) { s.vipLevel = level; SaveManager.save(s); }
+                            return;
+                        }
+                    }
+                    
                     base44.functions.invoke('getVipLevel', { walletAddress, accessToken: authData.accessToken }).then(res => {
                         const lvl = res.data?.vipLevel || 0;
                         setVipLevel(lvl);
-                        // Persist in save so GameEngine can use it on next game start
+                        localStorage.setItem(cacheKey, JSON.stringify({ level: lvl, timestamp: now }));
                         const s = SaveManager.load();
                         if (s.vipLevel !== lvl) { s.vipLevel = lvl; SaveManager.save(s); }
                     }).catch(() => {
