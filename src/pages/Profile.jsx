@@ -8,6 +8,7 @@ import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon } 
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
+import { useOmenXVip } from '@/hooks/useOmenXVip';
 import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -31,7 +32,7 @@ export default function Profile({ isCarousel }) {
     const [rewardsHistory, setRewardsHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showIconPicker, setShowIconPicker] = useState(false);
-    const [vipLevel, setVipLevel] = useState(0);
+    const { vip: vipLevel } = useOmenXVip();
 
     useEffect(() => {
         let hasFetched = false;
@@ -41,38 +42,9 @@ export default function Profile({ isCarousel }) {
             try {
                 const me = await getOmenXUser();
                 setUser(me);
-
-                // Fetch VIP level with 24-hour cache
-                const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                const walletAddress = authData?.walletAddress;
-                if (walletAddress && authData?.accessToken) {
-                    const cacheKey = `vip_level_cache_${walletAddress}`;
-                    const cached = localStorage.getItem(cacheKey);
-                    const now = Date.now();
-                    const twentyFourHours = 24 * 60 * 60 * 1000;
-                    
-                    if (cached) {
-                        const { level, timestamp } = JSON.parse(cached);
-                        if (now - timestamp < twentyFourHours) {
-                            setVipLevel(level);
-                            const s = SaveManager.load();
-                            if (s.vipLevel !== level) { s.vipLevel = level; SaveManager.save(s); }
-                            return;
-                        }
-                    }
-                    
-                    base44.functions.invoke('getVipLevel', { walletAddress, accessToken: authData.accessToken }).then(res => {
-                        const lvl = res.data?.vipLevel || 0;
-                        setVipLevel(lvl);
-                        localStorage.setItem(cacheKey, JSON.stringify({ level: lvl, timestamp: now }));
-                        const s = SaveManager.load();
-                        if (s.vipLevel !== lvl) { s.vipLevel = lvl; SaveManager.save(s); }
-                    }).catch(() => {
-                        // Silent error handling - VIP level fetch failed
-                    });
-                }
-                const displayName = me?.player_name || me?.data?.player_name || authData?.username || me?.full_name;
-                setNewName(displayName || '');
+                // VIP level is now fetched via useOmenXVip hook globally
+                const displayName = me?.player_name || me?.data?.player_name || me?.full_name || 'Anonymous';
+                setNewName(displayName);
                 setNewTitle(me?.data?.player_title || '');
 
                 if (me && me.walletAddress) {

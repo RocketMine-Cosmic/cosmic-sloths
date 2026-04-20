@@ -16,6 +16,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import { getOmenXUser } from '@/lib/omenxUser';
+import { useOmenXVip } from '@/hooks/useOmenXVip';
 import SetProfileNameModal from '../components/game/SetProfileNameModal';
 
 function getOmenXAuth() {
@@ -56,6 +57,7 @@ export default function Hub({ isCarousel }) {
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
     const [needsProfileName, setNeedsProfileName] = useState(false);
     const [syncReady, setSyncReady] = useState(false);
+    const { vip: vipLevel } = useOmenXVip();
 
     React.useEffect(() => {
         // Sync saves to state but don't overwrite initialization data
@@ -101,18 +103,14 @@ export default function Hub({ isCarousel }) {
                     const omenxUser = await getOmenXUser();
                     if (!isMounted || !omenxUser?.walletAddress) return;
                     
-                    // Fetch and store VIP level
-                    try {
-                        const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress, accessToken: auth.accessToken });
-                        if (!isMounted) return;
-                        if (vipRes.data?.vipLevel !== undefined) {
-                            const s = SaveManager.load();
-                            s.vipLevel = vipRes.data.vipLevel;
+                    // VIP level is now fetched via useOmenXVip hook globally
+                    if (vipLevel > 0 && isMounted) {
+                        const s = SaveManager.load();
+                        if (s.vipLevel !== vipLevel) {
+                            s.vipLevel = vipLevel;
                             SaveManager.save(s);
                             setSave(s);
                         }
-                    } catch (e) {
-                        console.error('Failed to fetch VIP level:', e);
                     }
                 } catch (e) {
                     console.error('Failed to initialize SaveManager:', e);
@@ -124,7 +122,7 @@ export default function Hub({ isCarousel }) {
         };
         initOmenX();
         return () => { isMounted = false; };
-    }, []);
+    }, [vipLevel]);
 
     const [selectedChar, setSelectedChar] = useState(save.lastSelectedChar || 'neobyte');
     const [selectedArena, setSelectedArena] = useState(save.lastSelectedArena || 'station');
