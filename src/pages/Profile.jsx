@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { maskWallet } from '@/lib/maskWallet';
 import { getOmenXUser, updateOmenXUser } from '@/lib/omenxUser';
 import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon } from 'lucide-react';
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
