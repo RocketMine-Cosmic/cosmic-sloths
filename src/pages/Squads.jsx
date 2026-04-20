@@ -58,7 +58,7 @@ export default function Squads({ isCarousel }) {
     const [user, setUser] = useState(null);
     const [myMemberRecord, setMyMemberRecord] = useState(null);
     const [mySquad, setMySquad] = useState(null);
-    const walletAddr = (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim();
+    const walletAddr = user ? (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim() : '';
     
     // States for No Squad
     const [allSquads, setAllSquads] = useState([]);
