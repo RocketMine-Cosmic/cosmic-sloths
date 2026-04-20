@@ -35,7 +35,8 @@ export default function OmenXCallback() {
                     hasCodeVerifier: !!codeVerifier,
                 });
 
-                const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier });
+                const redirectUri = `${window.location.origin}/auth/callback`;
+                const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier, redirectUri });
                 const tokenData = res.data;
                 console.log('[OmenXCallback] Exchange response', tokenData);
 

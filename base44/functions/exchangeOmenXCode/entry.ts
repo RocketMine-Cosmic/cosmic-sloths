@@ -1,14 +1,14 @@
 Deno.serve(async (req) => {
   try {
-    const { code, codeVerifier } = await req.json();
+    const { code, codeVerifier, redirectUri } = await req.json();
 
     if (!code) {
       return Response.json({ error: 'No code provided' }, { status: 400 });
     }
 
-    const host = req.headers.get('host');
-    const protocol = host?.includes('localhost') || host?.startsWith('127.0.0.1') ? 'http' : 'https';
-    const redirectUri = `${protocol}://${host}/auth/callback`;
+    if (!redirectUri) {
+      return Response.json({ error: 'No redirectUri provided' }, { status: 400 });
+    }
     const apiBaseUrl = 'https://api.omen.foundation';
     const clientSecret = Deno.env.get('OMENX_AUTH_API_KEY');
 
