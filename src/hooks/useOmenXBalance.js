@@ -55,7 +55,11 @@ let pollInterval = null;
 function startPolling() {
     if (pollingInitialized) return;
     pollingInitialized = true;
-    fetchBalance();
+    const now = Date.now();
+    // Only fetch if cache is stale
+    if (now - lastFetchTime >= BALANCE_CACHE_DURATION) {
+        fetchBalance();
+    }
     pollInterval = setInterval(() => fetchBalance(), BALANCE_CACHE_DURATION);
 }
 
