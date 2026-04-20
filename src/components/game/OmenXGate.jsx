@@ -9,8 +9,9 @@ function getOmenXAuth() {
 export default function OmenXGate({ children, isCarousel }) {
     const [auth, setAuth] = useState(getOmenXAuth);
 
-    // Bypass in preview iframe
-    if (window.self !== window.top) return children;
+    // Only bypass auth inside the Base44 preview iframe
+    const isPreview = window.self !== window.top && window.location !== window.parent.location;
+    if (isPreview) return children;
 
     if (!auth) {
         return (

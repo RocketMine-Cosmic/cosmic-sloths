@@ -1,13 +1,18 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
-const REDIRECT_URI = 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app/auth/callback';
+const getBaseUrl = () => {
+  if (typeof window === 'undefined') return 'https://cosmic-sloth-survival-copy-b89d66e3.base44.app';
+  return window.location.origin;
+};
+
+const REDIRECT_URI = `${getBaseUrl()}/auth/callback`;
 
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
   apiBaseUrl: 'https://api.omen.foundation',
   oauthAuthorizeUrl: 'https://api.omen.foundation/v1/oauth/authorize',
   oauthTokenUrl: 'https://api.omen.foundation/v1/oauth/token',
-  enableIframeAuth: false,
+  enableIframeAuth: true,
   onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {

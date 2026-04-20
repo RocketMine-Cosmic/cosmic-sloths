@@ -110,9 +110,16 @@ export default function OmenXCallback() {
                 if (window.opener) {
                     setStatus('✓ Login successful! Returning to app...');
                     setTimeout(() => window.close(), 2000);
+                } else if (window.self !== window.top) {
+                    setStatus('✓ Login successful! Returning to game...');
+                    setTimeout(() => {
+                        window.location.replace('/');
+                    }, 1200);
                 } else {
-                    setStatus('✓ Login successful! You can close this tab.');
-                    setTimeout(() => window.close(), 2000);
+                    setStatus('✓ Login successful! Returning to app...');
+                    setTimeout(() => {
+                        window.location.replace('/');
+                    }, 1200);
                 }
             } catch (err) {
                 setStatus(`❌ ${err.message}`);
