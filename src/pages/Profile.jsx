@@ -39,7 +39,7 @@ export default function Profile({ isCarousel }) {
             if (hasFetched) return;
             hasFetched = true;
             try {
-                const me = getOmenXUser();
+                const me = await getOmenXUser();
                 setUser(me);
 
                 // Fetch VIP level with 24-hour cache

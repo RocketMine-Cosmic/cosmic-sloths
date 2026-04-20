@@ -87,7 +87,7 @@ export default function Squads({ isCarousel }) {
     useEffect(() => {
         const loadUserAndSquad = async () => {
             try {
-                const me = getOmenXUser();
+                const me = await getOmenXUser();
                 if (!me) {
                     setUser({}); // Set empty user to avoid infinite loading
                     return;

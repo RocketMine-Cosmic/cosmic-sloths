@@ -97,6 +97,10 @@ export default function Hub({ isCarousel }) {
                         }
                     }
                     
+                    // Ensure OmenX user is loaded
+                    const omenxUser = await getOmenXUser();
+                    if (!isMounted || !omenxUser?.walletAddress) return;
+                    
                     // Fetch and store VIP level
                     try {
                         const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress: auth.walletAddress, accessToken: auth.accessToken });
