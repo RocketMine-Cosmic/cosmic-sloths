@@ -41,6 +41,7 @@ async function fetchBalance(force = false) {
         lastFetchTime = now;
         notify();
     } catch (e) {
+        // Silent error handling - balance fetch failed
         cachedBalance = null;
         notify();
     } finally {
@@ -63,6 +64,7 @@ function startSubscription() {
             onBalance: fetchBalance,
         });
     } catch (e) {
+        // Silent error handling - subscription failed, fallback to polling
         fetchBalance();
     }
 }

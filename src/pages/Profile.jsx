@@ -49,7 +49,9 @@ export default function Profile({ isCarousel }) {
                         // Persist in save so GameEngine can use it on next game start
                         const s = SaveManager.load();
                         if (s.vipLevel !== lvl) { s.vipLevel = lvl; SaveManager.save(s); }
-                    }).catch(err => console.error('VIP fetch failed:', err));
+                    }).catch(() => {
+                        // Silent error handling - VIP level fetch failed
+                    });
                 }
                 const displayName = me?.player_name || me?.data?.player_name || authData?.username || me?.full_name;
                 setNewName(displayName || '');
