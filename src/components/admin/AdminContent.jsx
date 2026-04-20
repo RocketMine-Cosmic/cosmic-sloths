@@ -10,7 +10,7 @@ const GAME_DESCRIPTION = `# 🦥 COSMIC SLOTHS
 
 ## 🎮 DROP IN, SURVIVE, EARN
 
-Blast through **10 hand-crafted sectors** filled with cosmic chaos. Move with WASD or your joystick. Your weapons? They auto-fire at whatever's closest. Survive the timer. Climb the leaderboards. **Earn real Web3 currency** based on your performance.
+Blast through **10 unique hand-crafted sectors** filled with cosmic chaos. Move with WASD or your joystick. Your weapons? They auto-fire at whatever's closest. Survive the timer. Climb the leaderboards. **Earn real Web3 currency** based on your performance.
 
 ### ⚡ The Core Loop
 1. **Move & Fight** — WASD/Arrows or Virtual Joystick. Auto-firing weapons handle the rest.
@@ -109,7 +109,7 @@ Activate modifiers before a run to make bosses **tougher & more rewarding**:
 One harder challenge → **Seasonal Points** (collect 100 for exclusive seasonal skins)
 
 ### 👥 **Squad Weekly Bounty**
-Hit your squad's weekly kill target → **Gold + Relic Fragments** per member (scales with squad level)
+Hit your squad's weekly kill target → **Gold + Relic Fragments** per member (rewards scale with squad level, up to 15,000 Gold + 10 Fragments)
 
 ---
 
@@ -145,6 +145,8 @@ Purchase **VIP Tiers** with real money. Your subscription pays you back in OMENX
 Each tier = **+1% Damage** & **+1% Max HP** per run. Bonuses **stack** with all your upgrades.
 
 **14 Tiers Available:** Bronze 1–2 → Silver 1–3 → Gold 1–2 → Platinum 1–3 → Diamond 1–4
+
+*(VIP is automatically detected from your OmenX wallet — no setup required.)*
 
 ---
 
