@@ -8,6 +8,7 @@ import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon } 
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
+import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import moment from 'moment';
 import SpaceBackground from '../components/game/SpaceBackground';
@@ -33,23 +34,24 @@ export default function Profile({ isCarousel }) {
     const [loading, setLoading] = useState(true);
     const [showIconPicker, setShowIconPicker] = useState(false);
     const { vip: vipLevel } = useOmenXVip();
+    const { user: omenxUser } = useOmenXUser();
 
     useEffect(() => {
-        let hasFetched = false;
-        const fetchProfileData = async () => {
-            if (hasFetched) return;
-            hasFetched = true;
-            try {
-                const me = await getOmenXUser();
-                setUser(me);
-                // VIP level is now fetched via useOmenXVip hook globally
-                const displayName = me?.player_name || me?.data?.player_name || me?.full_name || 'Anonymous';
-                setNewName(displayName);
-                setNewTitle(me?.data?.player_title || '');
+        if (!omenxUser) {
+            setLoading(false);
+            return;
+        }
 
-                if (me && me.walletAddress) {
+        (async () => {
+            try {
+                setUser(omenxUser);
+                const displayName = omenxUser?.player_name || omenxUser?.data?.player_name || omenxUser?.full_name || 'Anonymous';
+                setNewName(displayName);
+                setNewTitle(omenxUser?.data?.player_title || '');
+
+                if (omenxUser && omenxUser.walletAddress) {
                      // Fetch best score by wallet address (cross-device safe)
-                     const topScore = await base44.entities.RunScore.filter({ wallet_address: me.walletAddress }, '-score', 1);
+                     const topScore = await base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress }, '-score', 1);
                      const maxScore = topScore.length > 0 ? topScore[0].score : 0;
                      const save = SaveManager.load();
                      const enemyKills = save.enemyKills || {};
@@ -65,19 +67,13 @@ export default function Profile({ isCarousel }) {
                      const rewards = await base44.entities.PayoutLog.filter({ player_name: displayName }, '-period_id', 50);
                      setRewardsHistory(rewards);
                  }
+                setLoading(false);
             } catch (e) {
                 console.error('Failed to fetch profile data', e);
                 setLoading(false);
             }
-            setLoading(false);
-        };
-        fetchProfileData();
-        
-        // Re-fetch when auth state changes (only on omenx_auth_data key change)
-        const handleStorageChange = (e) => { if (e.key === 'omenx_auth_data') { hasFetched = false; fetchProfileData(); } };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
+        })();
+    }, [omenxUser]);
 
     const handleSaveIcon = (icon) => {
         updateOmenXUser({ pilot_icon: icon });

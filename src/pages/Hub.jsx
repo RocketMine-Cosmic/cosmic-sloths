@@ -15,7 +15,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
-import { getOmenXUser } from '@/lib/omenxUser';
+import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import SetProfileNameModal from '../components/game/SetProfileNameModal';
 
@@ -70,6 +70,8 @@ export default function Hub({ isCarousel }) {
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
     }, [syncReady]);
 
+    const { user: omenxUser } = useOmenXUser();
+
     React.useEffect(() => {
         let isMounted = true;
         const initOmenX = async () => {
@@ -98,10 +100,6 @@ export default function Hub({ isCarousel }) {
                             setNeedsProfileName(true);
                         }
                     }
-                    
-                    // Ensure OmenX user is loaded
-                    const omenxUser = await getOmenXUser();
-                    if (!isMounted || !omenxUser?.walletAddress) return;
                     
                     // VIP level is now fetched via useOmenXVip hook globally
                     if (vipLevel > 0 && isMounted) {

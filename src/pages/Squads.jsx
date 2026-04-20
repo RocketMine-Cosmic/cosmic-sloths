@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { getOmenXUser } from '@/lib/omenxUser';
+import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle } from 'lucide-react';
 import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
@@ -55,6 +55,7 @@ function getDailyBountyTier(level) {
 export default function Squads({ isCarousel }) {
     const navigate = useNavigate();
     const { toast } = useToast();
+    const { user: omenxUser } = useOmenXUser();
     const [user, setUser] = useState(null);
     const [myMemberRecord, setMyMemberRecord] = useState(null);
     const [mySquad, setMySquad] = useState(null);
@@ -87,12 +88,11 @@ export default function Squads({ isCarousel }) {
     useEffect(() => {
         const loadUserAndSquad = async () => {
             try {
-                const me = await getOmenXUser();
-                if (!me) {
-                    setUser({}); // Set empty user to avoid infinite loading
+                if (!omenxUser) {
+                    setUser({});
                     return;
                 }
-                setUser(me);
+                setUser(omenxUser);
                 if (me) {
                     const memberships = await base44.entities.SquadMember.filter({ wallet_address: me.wallet_address });
                     if (memberships.length > 0) {
@@ -147,7 +147,7 @@ export default function Squads({ isCarousel }) {
             }
         };
         loadUserAndSquad();
-    }, []);
+    }, [omenxUser]);
 
     useEffect(() => {
         if (mySquad) {
