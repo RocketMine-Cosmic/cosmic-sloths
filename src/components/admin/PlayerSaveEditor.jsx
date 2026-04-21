@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CHARACTERS, ARENAS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS } from '../../game/Constants';
 import { Plus, Minus, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
@@ -157,8 +157,47 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
     const [draft, setDraft] = useState({ ...save });
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState('');
+    const [rank, setRank] = useState(null);
+    const [resetting, setResetting] = useState(false);
 
     const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+
+    // Load weekly rank
+    useEffect(() => {
+        const loadRank = async () => {
+            try {
+                const now = new Date();
+                const year = now.getUTCFullYear();
+                const startOfYear = new Date(Date.UTC(year, 0, 1));
+                const startOfWeek = new Date(startOfYear);
+                startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+                const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+                const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+                const scores = await base44.entities.RunScore.filter({ week_id }, '-score', 200);
+                const idx = scores.findIndex(s => s.wallet_address === player.wallet_address || s.user_id === player.wallet_address);
+                setRank(idx === -1 ? null : idx + 1);
+            } catch { setRank(null); }
+        };
+        loadRank();
+    }, [player.wallet_address]);
+
+    const handleReset = async () => {
+        if (!window.confirm(`Reset ${draft.pilotName || player.wallet_address}'s save to defaults? This cannot be undone.`)) return;
+        setResetting(true);
+        try {
+            const defaultSave = { gold: 0, relicFragments: 0, unlockedCharacters: ['neobyte', 'pandypaws', 'novabyte'], unlockedArenasByCharacter: {}, totalKills: 0, totalRuns: 0, seasonalPoints: 0, pilotName: draft.pilotName || '', hasSetProfileName: !!draft.pilotName };
+            await base44.functions.invoke('adminPatchSave', { saveId: player.id, patch: defaultSave, accessToken: authData?.accessToken });
+            await base44.entities.AdminChangesLog.create({
+                wallet_address: authData?.walletAddress || 'admin',
+                action_type: 'player_action',
+                description: `Reset save for player: ${draft.pilotName || player.wallet_address}`,
+                details: { wallet: player.wallet_address }
+            });
+            setMsg('✓ Save reset');
+            onSaved({ ...player, save_data: defaultSave });
+        } catch (e) { setMsg(`✗ ${e.message}`); }
+        setResetting(false);
+    };
 
     const set = (key, value) => setDraft(d => ({ ...d, [key]: value }));
 
@@ -214,16 +253,30 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
     return (
         <div className="space-y-3">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                     <div className="font-bold text-cyan-300 text-sm">{draft.pilotName || draft.player_name || 'Unnamed Player'}</div>
                     <div className="text-[10px] text-slate-500 font-mono">{player.wallet_address}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                        {rank !== null && (
+                            <span className="text-[10px] bg-yellow-900/50 text-yellow-400 px-2 py-0.5 rounded font-bold">
+                                🏆 Weekly Rank #{rank}
+                            </span>
+                        )}
+                        <span className="text-[10px] text-slate-500">
+                            {(draft.gold || 0).toLocaleString()} G · {(draft.totalKills || 0).toLocaleString()} kills
+                        </span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     {msg && <span className={`text-xs font-mono ${msg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{msg}</span>}
                     <button onClick={handleSave} disabled={saving}
                         className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-4 py-1.5 rounded font-bold text-xs flex items-center gap-1.5 transition-colors">
                         <Check size={12} /> {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button onClick={handleReset} disabled={resetting}
+                        className="bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white px-3 py-1.5 rounded font-bold text-xs flex items-center gap-1 transition-colors">
+                        🔄 {resetting ? 'Resetting...' : 'Reset Save'}
                     </button>
                     <button onClick={onClose} className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded font-bold text-xs flex items-center gap-1 transition-colors">
                         <X size={12} /> Close

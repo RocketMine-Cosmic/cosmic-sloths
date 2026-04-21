@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart3, Users, Coins, Gift, Shield, Skull, Trophy, Database } from 'lucide-react';
+import { ArrowLeft, BarChart3, Users, Coins, Gift, Shield, Skull, Trophy, Database, AlertTriangle } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import { base44 } from '@/api/base44Client';
@@ -13,9 +13,16 @@ import AdminRaid from '../components/admin/AdminRaid';
 import AdminLeaderboard from '../components/admin/AdminLeaderboard';
 import AdminSkus from '../components/admin/AdminSkus';
 import AdminContent from '../components/admin/AdminContent';
+import AdminHealthCheck from '../components/admin/AdminHealthCheck';
+import AdminDuplicateScores from '../components/admin/AdminDuplicateScores';
+import AdminBulkScoreDelete from '../components/admin/AdminBulkScoreDelete';
+import AdminChangesLogViewer from '../components/admin/AdminChangesLogViewer';
+import AdminManagers from '../components/admin/AdminManagers';
+import AdminOrphanedData from '../components/admin/AdminOrphanedData';
 
 const TABS = [
     { id: 'overview',    label: 'Overview',    icon: BarChart3 },
+    { id: 'health',      label: '🩺 Health',   icon: BarChart3 },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'players',     label: 'Players',     icon: Users },
     { id: 'squads',      label: 'Squads',      icon: Shield },
@@ -24,6 +31,10 @@ const TABS = [
     { id: 'rewards',     label: 'Rewards',     icon: Gift },
     { id: 'skus',        label: 'SKUs',        icon: Gift },
     { id: 'content',     label: 'Content',     icon: Database },
+    { id: 'duplicates',  label: '⚠️ Duplicates', icon: AlertTriangle },
+    { id: 'cleanup',     label: '🧹 Cleanup',  icon: Database },
+    { id: 'changelog',   label: '📋 Audit Log', icon: Database },
+    { id: 'managers',    label: '👥 Managers', icon: Users },
 ];
 
 export default function AdminDashboard() {
@@ -84,6 +95,7 @@ export default function AdminDashboard() {
 
     const TabContent = {
         overview: <AdminOverview walletAddress={adminWallet} />,
+        health: <AdminHealthCheck walletAddress={adminWallet} />,
         leaderboard: <AdminLeaderboard walletAddress={adminWallet} />,
         players: <AdminPlayers walletAddress={adminWallet} />,
         squads: <AdminSquads walletAddress={adminWallet} />,
@@ -92,6 +104,15 @@ export default function AdminDashboard() {
         rewards: <AdminRewards walletAddress={adminWallet} />,
         skus: <AdminSkus walletAddress={adminWallet} />,
         content: <AdminContent />,
+        duplicates: (
+            <div className="space-y-4">
+                <AdminDuplicateScores walletAddress={adminWallet} />
+                <AdminBulkScoreDelete walletAddress={adminWallet} />
+            </div>
+        ),
+        cleanup: <AdminOrphanedData walletAddress={adminWallet} />,
+        changelog: <AdminChangesLogViewer />,
+        managers: <AdminManagers walletAddress={adminWallet} />,
     };
 
     return (
