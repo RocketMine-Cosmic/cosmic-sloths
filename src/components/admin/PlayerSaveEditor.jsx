@@ -250,15 +250,63 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                     </div>
                 </Section>
 
-                {/* Permanent upgrades */}
-                <Section title="⬆️ Permanent Upgrades (perm upgrade purchase counts)" color="text-green-400">
-                    <div className="text-[10px] text-slate-500 mb-3">These represent the number of times each permanent stat was purchased.</div>
-                    {['dmg_up','spd_up','hp_up','area_up','cd_down','magnet_up','regen_up','armor_up','gold_up','proj_spd','xp_up'].map(id => (
-                        <NumericField key={id} label={id} max={10}
-                            value={(draft.permanentUpgrades || {})[id] || 0}
-                            onChange={v => setDraft(d => ({ ...d, permanentUpgrades: { ...(d.permanentUpgrades || {}), [id]: v } }))} />
-                    ))}
-                </Section>
+                {/* Stat Upgrades — all 3 tiers */}
+                {[
+                    { key: 'permanentUpgrades', title: '⬆️ Permanent Stat Upgrades', color: 'text-green-400', note: 'Persists forever.' },
+                    { key: 'weeklyUpgrades',    title: '📅 Weekly Stat Upgrades',    color: 'text-cyan-400',  note: `Week: ${draft.weeklyUpgrades?.weekId || 'unknown'}` },
+                    { key: 'seasonalUpgrades',  title: '🗓️ Seasonal Stat Upgrades',  color: 'text-purple-400', note: `Season: ${draft.seasonalUpgrades?.seasonId || 'unknown'}` },
+                ].map(({ key, title, color, note }) => (
+                    <Section key={key} title={title} color={color}>
+                        <div className="text-[10px] text-slate-500 mb-3">{note}</div>
+                        {['damage','health','speed','magnet','regen','cooldown','luck'].map(stat => (
+                            <NumericField key={stat} label={stat} max={10}
+                                value={(draft[key] || {})[stat] || 0}
+                                onChange={v => setDraft(d => ({ ...d, [key]: { ...(d[key] || {}), [stat]: v } }))} />
+                        ))}
+                    </Section>
+                ))}
+
+                {/* Weapon Upgrades — all 3 tiers */}
+                {[
+                    { key: 'permanentWeaponUpgrades', title: '🔫 Permanent Weapon Upgrades', color: 'text-green-400' },
+                    { key: 'weeklyWeaponUpgrades',    title: '🔫 Weekly Weapon Upgrades',    color: 'text-cyan-400' },
+                    { key: 'seasonalWeaponUpgrades',  title: '🔫 Seasonal Weapon Upgrades',  color: 'text-purple-400' },
+                ].map(({ key, title, color }) => (
+                    <Section key={key} title={title} color={color}>
+                        <div className="text-[10px] text-slate-500 mb-3">damage / area / cooldown per weapon (max 5 each).</div>
+                        {['neoBlaster','napBeam','vineWhip','slothSwarm','napalm','novaPulse','shieldBubble','bouncingBlade','toxicCloud'].map(wid => (
+                            <div key={wid} className="py-1.5 border-b border-slate-800/50 last:border-0">
+                                <div className="text-[10px] text-slate-400 uppercase mb-1 font-bold">{wid}</div>
+                                <div className="flex gap-4">
+                                    {['damage','area','cooldown'].map(stat => (
+                                        <NumericField key={stat} label={stat} max={5}
+                                            value={((draft[key] || {})[wid] || {})[stat] || 0}
+                                            onChange={v => setDraft(d => ({
+                                                ...d,
+                                                [key]: { ...(d[key] || {}), [wid]: { ...((d[key] || {})[wid] || {}), [stat]: v } }
+                                            }))} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </Section>
+                ))}
+
+                {/* Talent Upgrades — all 3 tiers */}
+                {[
+                    { key: 'permanentTalents', title: '🌟 Permanent Talents', color: 'text-green-400' },
+                    { key: 'weeklyTalents',    title: '🌟 Weekly Talents',    color: 'text-cyan-400' },
+                    { key: 'seasonalTalents',  title: '🌟 Seasonal Talents',  color: 'text-purple-400' },
+                ].map(({ key, title, color }) => (
+                    <Section key={key} title={title} color={color}>
+                        <div className="text-[10px] text-slate-500 mb-3">Number of talent purchases per character (max 3).</div>
+                        {CHARACTERS.map(c => (
+                            <NumericField key={c.id} label={c.name} max={3}
+                                value={(draft[key] || {})[c.id] || 0}
+                                onChange={v => setDraft(d => ({ ...d, [key]: { ...(d[key] || {}), [c.id]: v } }))} />
+                        ))}
+                    </Section>
+                ))}
             </div>
         </div>
     );
