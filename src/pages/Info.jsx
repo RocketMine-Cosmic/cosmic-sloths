@@ -268,18 +268,11 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
                         <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday</strong>. Top <strong className="text-white">30 players</strong> earn OMENX. Weekly stat upgrades also reset.</p>
-                        <div className="grid grid-cols-3 gap-2 text-[11px] text-center">
-                            <div className="bg-yellow-950/40 border border-yellow-700/40 rounded-lg p-2"><div className="text-yellow-400 font-bold">🥇 1st</div><div className="text-slate-400">10% of pool</div></div>
-                            <div className="bg-slate-800/60 border border-slate-700/40 rounded-lg p-2"><div className="text-slate-300 font-bold">🥈 2nd</div><div className="text-slate-400">8% of pool</div></div>
-                            <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-2"><div className="text-amber-600 font-bold">🥉 3rd</div><div className="text-slate-400">6% of pool</div></div>
-                        </div>
-                        <div className="text-[10px] text-slate-500 mt-1.5 text-center">Ranks 4–30 also earn a share · Pool = 25% of all OMENX spent that week</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every <strong className="text-white">Monday</strong>. Top <strong className="text-white">30 players</strong> earn OMENX. Weekly stat upgrades also reset.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. Top <strong className="text-white">40 players</strong> earn OMENX. Seasonal stat upgrades reset at end.</p>
-                        <div className="text-[10px] text-slate-500">Pool = 35% of all OMENX spent that season · Ranks 4–40 earn a share</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for <strong className="text-white">4 weeks</strong>. Top <strong className="text-white">40 players</strong> earn OMENX. Seasonal stat upgrades reset at end.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
