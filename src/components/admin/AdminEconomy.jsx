@@ -5,9 +5,25 @@ import { Coins, Clock } from 'lucide-react';
 import moment from 'moment';
 
 export default function AdminEconomy({ walletAddress }) {
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [preset, setPreset] = useState('this_week');
     const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+
+    const PRESETS = [
+        { id: 'today',      label: 'Today' },
+        { id: 'this_week',  label: 'This Week' },
+        { id: 'last_week',  label: 'Last Week' },
+        { id: 'this_month', label: 'This Month' },
+        { id: 'all',        label: 'All Time' },
+    ];
+
+    const getDateRange = (p) => {
+        const now = moment();
+        if (p === 'today')      return [now.clone().startOf('day'), now.clone().endOf('day')];
+        if (p === 'this_week')  return [now.clone().startOf('isoWeek'), now.clone().endOf('isoWeek')];
+        if (p === 'last_week')  return [now.clone().subtract(1, 'week').startOf('isoWeek'), now.clone().subtract(1, 'week').endOf('isoWeek')];
+        if (p === 'this_month') return [now.clone().startOf('month'), now.clone().endOf('month')];
+        return [null, null];
+    };
 
     const { data: spendLogs, isLoading: logsLoading } = useQuery({
         queryKey: ['tokenSpendLogs', walletAddress],
@@ -21,11 +37,11 @@ export default function AdminEconomy({ walletAddress }) {
         enabled: !!walletAddress && !!authData?.accessToken
     });
 
+    const [start, end] = getDateRange(preset);
     const filteredLogs = (spendLogs || []).filter(log => {
+        if (!start) return true;
         const d = moment(log.created_date);
-        if (startDate && d.isBefore(moment(startDate).startOf('day'))) return false;
-        if (endDate && d.isAfter(moment(endDate).endOf('day'))) return false;
-        return true;
+        return d.isSameOrAfter(start) && d.isSameOrBefore(end);
     });
 
     return (
@@ -72,15 +88,13 @@ export default function AdminEconomy({ walletAddress }) {
             <div className="bg-[#0b0416]/80 border border-slate-700/50 rounded-xl p-4">
                 <div className="flex flex-wrap items-center gap-3 mb-3">
                     <h2 className="text-base font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2"><Clock size={16} className="text-slate-400" /> Audit Trail</h2>
-                    <div className="flex gap-2 ml-auto items-center">
-                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ colorScheme: 'dark' }}
-                            className="bg-slate-900 border border-slate-700 text-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-slate-500" />
-                        <span className="text-slate-600 text-xs">to</span>
-                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ colorScheme: 'dark' }}
-                            className="bg-slate-900 border border-slate-700 text-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-slate-500" />
-                        {(startDate || endDate) && (
-                            <button onClick={() => { setStartDate(''); setEndDate(''); }} className="text-xs text-red-400 hover:text-red-300 border border-red-900/50 px-2 py-1 rounded">Clear</button>
-                        )}
+                    <div className="flex gap-1 ml-auto flex-wrap">
+                        {PRESETS.map(p => (
+                            <button key={p.id} onClick={() => setPreset(p.id)}
+                                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${preset === p.id ? 'bg-slate-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                                {p.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
                 <div className="overflow-x-auto">

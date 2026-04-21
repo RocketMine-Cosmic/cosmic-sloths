@@ -71,13 +71,16 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'playerSearch') {
-            if (!query) return Response.json({ players: [] });
             const saves = await db.entities.PlayerSave.list('-updated_at', 500);
+            if (!query) {
+                // No query — return 30 most recently active players
+                return Response.json({ players: saves.slice(0, 30) });
+            }
             const q = query.toLowerCase();
             const matched = saves.filter(s =>
                 s.wallet_address?.toLowerCase().includes(q) ||
                 s.save_data?.player_name?.toLowerCase().includes(q)
-            ).slice(0, 20);
+            ).slice(0, 30);
             return Response.json({ players: matched });
         }
 
