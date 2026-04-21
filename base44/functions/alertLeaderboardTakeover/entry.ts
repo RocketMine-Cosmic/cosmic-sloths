@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
                         title: '👑 Weekly #1 Takeover!',
                         description: `${icon} **${name}**${title} has seized the top of the **Weekly Leaderboard**!\n\n🏆 Score: **${score} pts**\n📅 Week: ${week_id}`,
                         color: 0x0CA7B8,
-                        footer: { text: 'Sloths in Space · Weekly Leaderboard' },
+                        footer: { text: 'Cosmic Sloths · Weekly Leaderboard' },
                         timestamp: new Date().toISOString(),
                     });
                 }
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
                         title: '👑 Seasonal #1 Takeover!',
                         description: `${icon} **${name}**${title} has seized the top of the **Seasonal Leaderboard**!\n\n🏆 Score: **${score} pts**\n🗓️ Season: ${season_id}`,
                         color: 0xD946EF,
-                        footer: { text: 'Sloths in Space · Seasonal Leaderboard' },
+                        footer: { text: 'Cosmic Sloths · Seasonal Leaderboard' },
                         timestamp: new Date().toISOString(),
                     });
                 }
