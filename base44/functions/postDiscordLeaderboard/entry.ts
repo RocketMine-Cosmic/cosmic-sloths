@@ -71,6 +71,11 @@ Deno.serve(async (req) => {
             timestamp: new Date().toISOString(),
         };
 
+        // Dry run — return preview without posting
+        if (body.dry_run) {
+            return Response.json({ preview: embed, week_id, would_post: unique.length });
+        }
+
         const discordRes = await fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
