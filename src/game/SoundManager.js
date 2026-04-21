@@ -4,12 +4,13 @@ class SoundManagerClass {
     constructor() {
         this.bgm = new Audio();
         this.bgmTracks = [
-            'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=8-bit-background-music-for-arcade-game-come-on-mario-164702.mp3',
-            'https://opengameart.org/sites/default/files/8bit-spaceshooter.mp3',
-            'https://opengameart.org/sites/default/files/space_quest_looped_section.mp3',
-            'https://opengameart.org/sites/default/files/Orbital%20Colossus.mp3',
-            'https://opengameart.org/sites/default/files/8Bit%20Title%20Screen.mp3',
-            'https://opengameart.org/sites/default/files/Epic.mp3'
+            'https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3',
+            'https://cdn.pixabay.com/audio/2025/07/28/audio_29231d4e9b.mp3',
+            'https://cdn.pixabay.com/audio/2025/08/04/audio_749c34be55.mp3',
+            'https://cdn.pixabay.com/audio/2025/07/28/audio_5a182bdc96.mp3',
+            'https://cdn.pixabay.com/audio/2025/08/04/audio_94c12a9e7f.mp3',
+            'https://cdn.pixabay.com/audio/2025/08/04/audio_124a05d23a.mp3',
+            'https://cdn.pixabay.com/audio/2025/08/04/audio_6304a0f398.mp3',
         ];
         this.currentTrackIndex = Math.floor(Math.random() * this.bgmTracks.length);
         this.bgm.src = this.bgmTracks[this.currentTrackIndex];
