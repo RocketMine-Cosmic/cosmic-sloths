@@ -117,7 +117,7 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <div className="font-bold text-cyan-300 text-sm">{draft.player_name || 'Unnamed Player'}</div>
+                    <div className="font-bold text-cyan-300 text-sm">{draft.pilotName || draft.player_name || 'Unnamed Player'}</div>
                     <div className="text-[10px] text-slate-500 font-mono">{player.wallet_address}</div>
                 </div>
                 <div className="flex items-center gap-2">

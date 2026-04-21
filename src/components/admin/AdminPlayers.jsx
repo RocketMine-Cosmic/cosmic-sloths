@@ -68,7 +68,7 @@ export default function AdminPlayers({ walletAddress }) {
                                         className="w-full text-left bg-slate-900/60 border border-slate-700 hover:border-cyan-600 rounded-lg px-3 py-2 transition-colors">
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <div className="font-bold text-white text-sm">{p.save_data?.player_name || <span className="text-slate-500 italic">Unnamed</span>}</div>
+                                                <div className="font-bold text-white text-sm">{p.save_data?.pilotName || p.save_data?.player_name || <span className="text-slate-500 italic">Unnamed</span>}</div>
                                                 <div className="text-[10px] text-slate-500 font-mono mt-0.5">{p.wallet_address?.slice(0,10)}...{p.wallet_address?.slice(-6)} · {moment(p.updated_date).fromNow()}</div>
                                             </div>
                                             <div className="text-right shrink-0 ml-3">

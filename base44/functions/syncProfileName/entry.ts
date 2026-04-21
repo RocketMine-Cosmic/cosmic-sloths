@@ -1,4 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.24';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
     try {
@@ -9,69 +10,81 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { oldName, newName, newTitle } = await req.json();
+        const { oldName, newName, newTitle, accessToken } = await req.json();
         
         if (!newName) {
-             return Response.json({ error: 'newName required' }, { status: 400 });
+            return Response.json({ error: 'newName required' }, { status: 400 });
         }
 
-        // Update RunScore (match by user_id AND created_by to catch older records)
-        const runScoresById = await base44.asServiceRole.entities.RunScore.filter({ user_id: user.id });
-        const runScoresByEmail = await base44.asServiceRole.entities.RunScore.filter({ created_by: user.email });
+        const db = base44.asServiceRole;
+
+        // Resolve wallet address via OmenX if accessToken provided
+        let walletAddress = user.wallet_address;
+        if (!walletAddress && accessToken) {
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const verifyResult = await sdk.verifyOAuthUser(accessToken);
+            if (verifyResult.success) {
+                walletAddress = verifyResult.user.walletAddress;
+            }
+        }
+
+        // Update pilotName in PlayerSave (canonical name storage)
+        if (walletAddress) {
+            const saves = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
+            for (const save of saves) {
+                const updatedSaveData = { ...save.save_data, pilotName: newName, player_name: newName };
+                await db.entities.PlayerSave.update(save.id, { save_data: updatedSaveData, updated_at: Date.now() });
+            }
+        }
+
+        // Update RunScore — match by user_id and wallet_address
+        const runScoresByUser = await db.entities.RunScore.filter({ user_id: user.id });
+        const runScoresByWallet = walletAddress ? await db.entities.RunScore.filter({ wallet_address: walletAddress }) : [];
         
         const allRunScores = new Map();
-        [...runScoresById, ...runScoresByEmail].forEach(s => allRunScores.set(s.id, s));
+        [...runScoresByUser, ...runScoresByWallet].forEach(s => allRunScores.set(s.id, s));
         
         for (const score of allRunScores.values()) {
             if (score.player_name !== newName || (newTitle !== undefined && score.player_title !== newTitle)) {
-                await base44.asServiceRole.entities.RunScore.update(score.id, { 
+                await db.entities.RunScore.update(score.id, { 
                     player_name: newName,
                     player_title: newTitle !== undefined ? newTitle : score.player_title,
-                    user_id: score.user_id || user.id, // Ensure required fields are not dropped from old records
-                    score: score.score || 0,
-                    week_id: score.week_id || 'unknown',
-                    season_id: score.season_id || 'unknown'
                 });
             }
         }
         
-        // Update PendingReward (created by system, no user_id, so match by oldName if available)
-        if (oldName) {
-            const rewards = await base44.asServiceRole.entities.PendingReward.filter({ player_name: oldName });
-            for (const reward of rewards) {
-                await base44.asServiceRole.entities.PendingReward.update(reward.id, { 
-                    player_name: newName,
-                    amount: reward.amount || 0,
-                    reason: reward.reason || 'unknown',
-                    period_id: reward.period_id || 'unknown'
-                });
+        // Update SquadMember — match by wallet_address (primary key for squad entities)
+        if (walletAddress) {
+            const members = await db.entities.SquadMember.filter({ wallet_address: walletAddress });
+            for (const member of members) {
+                if (member.player_name !== newName || (newTitle !== undefined && member.player_title !== newTitle)) {
+                    await db.entities.SquadMember.update(member.id, { 
+                        player_name: newName,
+                        player_title: newTitle !== undefined ? newTitle : member.player_title,
+                    });
+                }
             }
-        }
-        
-        // Update SquadMember (match by user_id)
-        const members = await base44.asServiceRole.entities.SquadMember.filter({ user_id: user.id });
-        for (const member of members) {
-            if (member.player_name !== newName || (newTitle !== undefined && member.player_title !== newTitle)) {
-                await base44.asServiceRole.entities.SquadMember.update(member.id, { 
-                    player_name: newName,
-                    player_title: newTitle !== undefined ? newTitle : member.player_title,
-                    squad_id: member.squad_id || 'unknown',
-                    user_id: member.user_id || user.id
-                });
-            }
-        }
 
-        // Update SquadMessage (match by user_id)
-        const messages = await base44.asServiceRole.entities.SquadMessage.filter({ user_id: user.id });
-        for (const msg of messages) {
-            if (msg.player_name !== newName || (newTitle !== undefined && msg.player_title !== newTitle)) {
-                await base44.asServiceRole.entities.SquadMessage.update(msg.id, { 
-                    player_name: newName,
-                    player_title: newTitle !== undefined ? newTitle : msg.player_title,
-                    squad_id: msg.squad_id || 'unknown',
-                    user_id: msg.user_id || user.id,
-                    content: msg.content || ''
-                });
+            // Update SquadMessage — match by wallet_address
+            const messages = await db.entities.SquadMessage.filter({ wallet_address: walletAddress });
+            for (const msg of messages) {
+                if (msg.player_name !== newName || (newTitle !== undefined && msg.player_title !== newTitle)) {
+                    await db.entities.SquadMessage.update(msg.id, { 
+                        player_name: newName,
+                        player_title: newTitle !== undefined ? newTitle : msg.player_title,
+                    });
+                }
+            }
+
+            // Update TokenSpendLog player name
+            const spendLogs = await db.entities.TokenSpendLog.filter({ wallet_address: walletAddress });
+            for (const log of spendLogs) {
+                if (log.player_name !== newName) {
+                    await db.entities.TokenSpendLog.update(log.id, { player_name: newName });
+                }
             }
         }
         
