@@ -4,6 +4,19 @@ import { base44 } from '@/api/base44Client';
 import { Gift, Eye, Send, Trophy } from 'lucide-react';
 import moment from 'moment';
 
+function getCurrentPeriodIds() {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const startOfWeek = new Date(startOfYear);
+    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+    const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+    const season_id = `${year}-S${seasonNum}`;
+    return { week_id, season_id };
+}
+
 export default function AdminRewards({ walletAddress }) {
     const [distributePeriod, setDistributePeriod] = useState('');
     const [distributeType, setDistributeType] = useState('weekly');
@@ -15,6 +28,28 @@ export default function AdminRewards({ walletAddress }) {
     const [previewData, setPreviewData] = useState(null);
     const [previewError, setPreviewError] = useState('');
     const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+    const { week_id: currentWeekId, season_id: currentSeasonId } = getCurrentPeriodIds();
+
+    // Load all pools for the dropdowns
+    const { data: allPools = [] } = useQuery({
+        queryKey: ['allPools', walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.pools || []),
+        enabled: !!walletAddress && !!authData?.accessToken
+    });
+
+    // Build dropdown options: undistributed pools + current period always present
+    const weeklyOptions = [
+        { id: currentWeekId, label: `${currentWeekId} (current)`, distributed: false },
+        ...allPools.filter(p => p.period_type === 'weekly' && p.period_id !== currentWeekId)
+                   .map(p => ({ id: p.period_id, label: `${p.period_id}${p.distributed ? ' ✓ distributed' : ' — pending'}`, distributed: p.distributed }))
+    ];
+    const seasonalOptions = [
+        { id: currentSeasonId, label: `${currentSeasonId} (current)`, distributed: false },
+        ...allPools.filter(p => p.period_type === 'seasonal' && p.period_id !== currentSeasonId)
+                   .map(p => ({ id: p.period_id, label: `${p.period_id}${p.distributed ? ' ✓ distributed' : ' — pending'}`, distributed: p.distributed }))
+    ];
+
+    const getPeriodOptions = (type) => type === 'weekly' ? weeklyOptions : seasonalOptions;
 
     const { data: payoutLogs } = useQuery({
         queryKey: ['payoutLogs', walletAddress],
@@ -23,20 +58,20 @@ export default function AdminRewards({ walletAddress }) {
     });
 
     const handlePreview = async () => {
-        if (!previewPeriod.trim()) { setPreviewError('Enter a period ID'); return; }
+        if (!previewPeriod) { setPreviewError('Select a period'); return; }
         setPreviewing(true); setPreviewData(null); setPreviewError('');
         try {
-            const res = await base44.functions.invoke('previewPayouts', { period_id: previewPeriod.trim(), period_type: previewType, walletAddress, accessToken: authData?.accessToken });
+            const res = await base44.functions.invoke('previewPayouts', { period_id: previewPeriod, period_type: previewType, walletAddress, accessToken: authData?.accessToken });
             setPreviewData(res.data);
         } catch (err) { setPreviewError(err.message); }
         setPreviewing(false);
     };
 
     const handleDistribute = async () => {
-        if (!distributePeriod.trim()) { setDistributeMsg('Enter a period ID'); return; }
+        if (!distributePeriod) { setDistributeMsg('Select a period'); return; }
         setDistributing(true); setDistributeMsg('');
         try {
-            const res = await base44.functions.invoke('manuallyDistributeRewards', { period_id: distributePeriod.trim(), period_type: distributeType, walletAddress, accessToken: authData?.accessToken });
+            const res = await base44.functions.invoke('manuallyDistributeRewards', { period_id: distributePeriod, period_type: distributeType, walletAddress, accessToken: authData?.accessToken });
             setDistributeMsg(`✓ Distributed to ${res.data?.paid} players — ${res.data?.totalOmenx} OMENX total`);
             setDistributePeriod('');
             setTimeout(() => setDistributeMsg(''), 6000);
@@ -51,16 +86,21 @@ export default function AdminRewards({ walletAddress }) {
                 <h2 className="text-base font-bold text-sky-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Eye size={16} /> Preview Payouts (Dry Run)</h2>
                 <div className="flex flex-wrap gap-2 items-end mb-3">
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] text-slate-500 uppercase">Period ID</label>
-                        <input type="text" placeholder="e.g., 2026-W16" value={previewPeriod} onChange={e => setPreviewPeriod(e.target.value)}
-                            className="bg-slate-900 border border-sky-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 w-48" />
-                    </div>
-                    <div className="flex flex-col gap-1">
                         <label className="text-[10px] text-slate-500 uppercase">Type</label>
-                        <select value={previewType} onChange={e => setPreviewType(e.target.value)} style={{ colorScheme: 'dark' }}
+                        <select value={previewType} onChange={e => { setPreviewType(e.target.value); setPreviewPeriod(''); }} style={{ colorScheme: 'dark' }}
                             className="bg-slate-900 border border-sky-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
                             <option value="weekly">Weekly</option>
                             <option value="seasonal">Seasonal</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] text-slate-500 uppercase">Period</label>
+                        <select value={previewPeriod} onChange={e => setPreviewPeriod(e.target.value)} style={{ colorScheme: 'dark' }}
+                            className="bg-slate-900 border border-sky-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 w-56">
+                            <option value="">— select period —</option>
+                            {getPeriodOptions(previewType).map(o => (
+                                <option key={o.id} value={o.id}>{o.label}</option>
+                            ))}
                         </select>
                     </div>
                     <button onClick={handlePreview} disabled={previewing}
@@ -121,16 +161,21 @@ export default function AdminRewards({ walletAddress }) {
                 <h2 className="text-base font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Send size={16} /> Distribute Rewards</h2>
                 <div className="flex flex-wrap gap-2 items-end">
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] text-slate-500 uppercase">Period ID</label>
-                        <input type="text" placeholder="e.g., 2026-W16" value={distributePeriod} onChange={e => setDistributePeriod(e.target.value)}
-                            className="bg-slate-900 border border-emerald-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500 w-48" />
-                    </div>
-                    <div className="flex flex-col gap-1">
                         <label className="text-[10px] text-slate-500 uppercase">Type</label>
-                        <select value={distributeType} onChange={e => setDistributeType(e.target.value)} style={{ colorScheme: 'dark' }}
+                        <select value={distributeType} onChange={e => { setDistributeType(e.target.value); setDistributePeriod(''); }} style={{ colorScheme: 'dark' }}
                             className="bg-slate-900 border border-emerald-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
                             <option value="weekly">Weekly</option>
                             <option value="seasonal">Seasonal</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] text-slate-500 uppercase">Period</label>
+                        <select value={distributePeriod} onChange={e => setDistributePeriod(e.target.value)} style={{ colorScheme: 'dark' }}
+                            className="bg-slate-900 border border-emerald-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500 w-56">
+                            <option value="">— select period —</option>
+                            {getPeriodOptions(distributeType).map(o => (
+                                <option key={o.id} value={o.id}>{o.label}</option>
+                            ))}
                         </select>
                     </div>
                     <button onClick={handleDistribute} disabled={distributing}
