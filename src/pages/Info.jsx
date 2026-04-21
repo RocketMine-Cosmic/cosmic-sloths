@@ -450,7 +450,7 @@ const TABS_CONTENT = {
                 </p>
                 <div className="bg-slate-900/60 rounded-xl p-4 border border-yellow-900/30">
                     <div className="font-bold text-yellow-400 text-sm md:text-base mb-1.5">Claiming Gold</div>
-                    <p className="text-xs md:text-sm text-slate-400 mb-2 leading-relaxed">For every boss level the community defeats, you can claim <strong className="text-white">1,000 Gold × Boss Level</strong>. (e.g., Level 5 boss gives 5,000 Gold).</p>
+                    <p className="text-xs md:text-sm text-slate-400 mb-2 leading-relaxed">For every boss level the community defeats, you can claim <strong className="text-white">250 Gold × Boss Level</strong>. (e.g., Level 5 boss gives 1,250 Gold).</p>
                     <p className="text-xs md:text-sm text-slate-500 italic">Note: You must have contributed damage to the raid to claim rewards!</p>
                 </div>
             </SectionCard>
