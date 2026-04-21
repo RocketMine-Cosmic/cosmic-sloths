@@ -91,12 +91,14 @@ Deno.serve(async (req) => {
         // Update squad kills if provided — verify user is squad member and squadId is valid
         if (squadStats && squadStats.squadId && typeof squadStats.squadId === 'string' && squadStats.squadId.length > 0) {
             try {
-                const members = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadStats.squadId, wallet_address: walletAddress });
+                const [members, squad] = await Promise.all([
+                    base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadStats.squadId, wallet_address: walletAddress }),
+                    base44.asServiceRole.entities.Squad.get(squadStats.squadId)
+                ]);
                 if (members.length === 0) {
                     console.error('[saveScore] Player not in squad, rejecting update');
                     return Response.json({ error: 'Not a member of this squad' }, { status: 403 });
                 }
-                const squad = await base44.asServiceRole.entities.Squad.get(squadStats.squadId);
                 if (squad) {
                     const today = new Date().toISOString().split('T')[0];
                     const currentDay = squad.current_day || today;
