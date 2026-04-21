@@ -13,7 +13,7 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
-async function postTakeover(webhookUrl, embed) {
+async function postToDiscord(webhookUrl, embed) {
     const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -25,6 +25,34 @@ async function postTakeover(webhookUrl, embed) {
     }
 }
 
+// Get top 2 unique players for a period filter
+async function getTopTwo(db, filter) {
+    const scores = await db.entities.RunScore.filter(filter, '-score', 50);
+    const seen = new Set();
+    const unique = [];
+    for (const s of scores) {
+        const key = s.wallet_address || s.user_id;
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        unique.push(s);
+        if (unique.length >= 2) break;
+    }
+    return unique;
+}
+
+function isTakeover(top2, newScore) {
+    const currentTop = top2[0];
+    if (!currentTop) return false;
+    const isThisPlayer =
+        currentTop.wallet_address === newScore.wallet_address ||
+        currentTop.user_id === newScore.user_id;
+    const isThisScore = currentTop.score === newScore.score;
+    if (!isThisPlayer || !isThisScore) return false;
+    // Check if #2 is a different player (i.e. someone was displaced)
+    const prevTop = top2[1];
+    return !prevTop || prevTop.wallet_address !== newScore.wallet_address;
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -33,7 +61,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'DISCORD_ALERT_WEBHOOK not configured' }, { status: 500 });
         }
 
-        // This function is triggered by the entity automation on RunScore create/update
         const body = await req.json();
         const newScore = body.data;
 
@@ -42,8 +69,6 @@ Deno.serve(async (req) => {
         }
 
         const { week_id, season_id } = getCurrentPeriodIds();
-
-        // Only care about scores from the current periods
         const isCurrentWeek = newScore.week_id === week_id;
         const isCurrentSeason = newScore.season_id === season_id;
 
@@ -55,83 +80,40 @@ Deno.serve(async (req) => {
         const icon = newScore.pilot_icon || '🦥';
         const title = newScore.player_title ? ` — *${newScore.player_title}*` : '';
         const score = newScore.score?.toLocaleString() || '0';
+        const db = base44.asServiceRole;
 
         const alerts = [];
 
-        // Check weekly #1
-        if (isCurrentWeek) {
-            const weeklyScores = await base44.asServiceRole.entities.RunScore.filter({ week_id }, '-score', 50);
-            // Deduplicate
-            const seen = new Set();
-            const unique = [];
-            for (const s of weeklyScores) {
-                const key = s.wallet_address || s.user_id;
-                if (!key || seen.has(key)) continue;
-                seen.add(key);
-                unique.push(s);
-                if (unique.length >= 2) break;
-            }
-            const currentTop = unique[0];
-            // This score is #1 if it matches the top score and belongs to this player
-            const isTopScore = currentTop &&
-                (currentTop.wallet_address === newScore.wallet_address || currentTop.user_id === newScore.user_id) &&
-                currentTop.score === newScore.score;
+        const [weeklyTop2, seasonalTop2] = await Promise.all([
+            isCurrentWeek   ? getTopTwo(db, { week_id })   : Promise.resolve([]),
+            isCurrentSeason ? getTopTwo(db, { season_id }) : Promise.resolve([]),
+        ]);
 
-            if (isTopScore) {
-                // Check if previous #1 was someone else
-                const prevTop = unique[1];
-                const takenOver = !prevTop || prevTop.wallet_address !== newScore.wallet_address;
-                if (takenOver) {
-                    alerts.push({
-                        title: '👑 Weekly #1 Takeover!',
-                        description: `${icon} **${name}**${title} has seized the top of the **Weekly Leaderboard**!\n\n🏆 Score: **${score} pts**\n📅 Week: ${week_id}`,
-                        color: 0x0CA7B8,
-                        footer: { text: 'Cosmic Sloths · Weekly Leaderboard' },
-                        timestamp: new Date().toISOString(),
-                    });
-                }
-            }
+        if (isCurrentWeek && isTakeover(weeklyTop2, newScore)) {
+            alerts.push({
+                title: '👑 Weekly #1 Takeover!',
+                description: `${icon} **${name}**${title} has seized the top of the **Weekly Leaderboard**!\n\n🏆 Score: **${score} pts**\n📅 Week: ${week_id}`,
+                color: 0x0CA7B8,
+                footer: { text: 'Cosmic Sloths · Weekly Leaderboard' },
+                timestamp: new Date().toISOString(),
+            });
         }
 
-        // Check seasonal #1
-        if (isCurrentSeason) {
-            const seasonalScores = await base44.asServiceRole.entities.RunScore.filter({ season_id }, '-score', 50);
-            const seen = new Set();
-            const unique = [];
-            for (const s of seasonalScores) {
-                const key = s.wallet_address || s.user_id;
-                if (!key || seen.has(key)) continue;
-                seen.add(key);
-                unique.push(s);
-                if (unique.length >= 2) break;
-            }
-            const currentTop = unique[0];
-            const isTopScore = currentTop &&
-                (currentTop.wallet_address === newScore.wallet_address || currentTop.user_id === newScore.user_id) &&
-                currentTop.score === newScore.score;
-
-            if (isTopScore) {
-                const prevTop = unique[1];
-                const takenOver = !prevTop || prevTop.wallet_address !== newScore.wallet_address;
-                if (takenOver) {
-                    alerts.push({
-                        title: '👑 Seasonal #1 Takeover!',
-                        description: `${icon} **${name}**${title} has seized the top of the **Seasonal Leaderboard**!\n\n🏆 Score: **${score} pts**\n🗓️ Season: ${season_id}`,
-                        color: 0xD946EF,
-                        footer: { text: 'Cosmic Sloths · Seasonal Leaderboard' },
-                        timestamp: new Date().toISOString(),
-                    });
-                }
-            }
+        if (isCurrentSeason && isTakeover(seasonalTop2, newScore)) {
+            alerts.push({
+                title: '👑 Seasonal #1 Takeover!',
+                description: `${icon} **${name}**${title} has seized the top of the **Seasonal Leaderboard**!\n\n🏆 Score: **${score} pts**\n🗓️ Season: ${season_id}`,
+                color: 0xD946EF,
+                footer: { text: 'Cosmic Sloths · Seasonal Leaderboard' },
+                timestamp: new Date().toISOString(),
+            });
         }
 
         if (alerts.length === 0) {
             return Response.json({ skipped: 'not a #1 takeover' });
         }
 
-        for (const embed of alerts) {
-            await postTakeover(webhookUrl, embed);
-        }
+        await Promise.all(alerts.map(embed => postToDiscord(webhookUrl, embed)));
 
         return Response.json({ success: true, alerts: alerts.length });
     } catch (error) {

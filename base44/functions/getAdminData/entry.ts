@@ -15,6 +15,12 @@ Deno.serve(async (req) => {
         const verifyResult = await sdk.verifyOAuthUser(accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
+        // Verify wallet is registered as an admin
+        const walletAddress = verifyResult.user?.walletAddress;
+        if (!walletAddress) return Response.json({ error: 'Forbidden' }, { status: 403 });
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress });
+        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
         if (type === 'pools') {
             const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);
             return Response.json({ pools });
