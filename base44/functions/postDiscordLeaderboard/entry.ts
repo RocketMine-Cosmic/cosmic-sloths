@@ -37,6 +37,49 @@ function dedup(scores, limit = 10) {
     return result;
 }
 
+function getWeeklyCloseDate(week_id) {
+    // Week closes next Monday 00:00 UTC
+    const [year, weekStr] = week_id.split('-W');
+    const isoWeek = parseInt(weekStr);
+    const jan1 = new Date(Date.UTC(parseInt(year), 0, 1));
+    const dayOfWeek = jan1.getUTCDay();
+    const daysToFirstMonday = (8 - dayOfWeek) % 7;
+    const firstMonday = new Date(jan1);
+    firstMonday.setUTCDate(jan1.getUTCDate() + daysToFirstMonday);
+    const weekStart = new Date(firstMonday);
+    weekStart.setUTCDate(firstMonday.getUTCDate() + (isoWeek - 1) * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setUTCDate(weekStart.getUTCDate() + 7);
+    return weekEnd;
+}
+
+function getSeasonalCloseDate(season_id) {
+    // Season closes at end of its 4-week span
+    const [year, seasonStr] = season_id.split('-S');
+    const seasonNum = parseInt(seasonStr);
+    const startWeek = (seasonNum - 1) * 4 + 1;
+    const endWeek = startWeek + 4;
+    const jan1 = new Date(Date.UTC(parseInt(year), 0, 1));
+    const dayOfWeek = jan1.getUTCDay();
+    const daysToFirstMonday = (8 - dayOfWeek) % 7;
+    const firstMonday = new Date(jan1);
+    firstMonday.setUTCDate(jan1.getUTCDate() + daysToFirstMonday);
+    const seasonEnd = new Date(firstMonday);
+    seasonEnd.setUTCDate(firstMonday.getUTCDate() + (endWeek - 1) * 7);
+    return seasonEnd;
+}
+
+function formatCountdown(closeDate) {
+    const now = new Date();
+    const msLeft = closeDate - now;
+    if (msLeft <= 0) return 'Closed';
+    const totalHours = Math.floor(msLeft / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    if (days > 0) return `${days}d ${hours}h remaining`;
+    return `${hours}h remaining`;
+}
+
 function buildRows(scores) {
     return scores.map((s, i) => {
         const rank = i + 1;
@@ -75,18 +118,22 @@ Deno.serve(async (req) => {
         const embeds = [];
 
         if (weeklyUnique.length > 0) {
+            const weeklyClose = getWeeklyCloseDate(week_id);
+            const weeklyCountdown = formatCountdown(weeklyClose);
             embeds.push({
                 title: '🏆 Weekly Leaderboard',
-                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n\n${buildRows(weeklyUnique)}`,
+                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${weeklyCountdown}\n\n${buildRows(weeklyUnique)}`,
                 color: 0x0CA7B8,
                 timestamp: new Date().toISOString(),
             });
         }
 
         if (seasonalUnique.length > 0) {
+            const seasonalClose = getSeasonalCloseDate(season_id);
+            const seasonalCountdown = formatCountdown(seasonalClose);
             embeds.push({
                 title: '🗓️ Seasonal Leaderboard',
-                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n\n${buildRows(seasonalUnique)}`,
+                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${seasonalCountdown}\n\n${buildRows(seasonalUnique)}`,
                 color: 0xD946EF,
                 footer: { text: 'Sloths in Space · Compete for OMENX rewards' },
                 timestamp: new Date().toISOString(),
