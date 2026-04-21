@@ -8,52 +8,99 @@ const ALL_ARENA_IDS = ARENAS.map(a => a.id);
 const ALL_TRAIL_IDS = TRAIL_COSMETICS.map(t => t.id);
 const ALL_KILL_IDS = KILL_COSMETICS.map(k => k.id);
 
-function RawJsonEditor({ draft, setDraft }) {
+function CustomFieldEditor({ draft, setDraft }) {
     const [open, setOpen] = useState(false);
-    const [json, setJson] = useState('');
-    const [err, setErr] = useState('');
-    const [applied, setApplied] = useState(false);
-
-    const handleOpen = () => {
-        setJson(JSON.stringify(draft, null, 2));
-        setErr('');
-        setApplied(false);
-        setOpen(true);
-    };
+    const [field, setField] = useState('');
+    const [value, setValue] = useState('');
+    const [type, setType] = useState('number');
+    const [msg, setMsg] = useState('');
 
     const handleApply = () => {
-        try {
-            const parsed = JSON.parse(json);
-            setDraft(parsed);
-            setErr('');
-            setApplied(true);
-            setTimeout(() => setApplied(false), 2000);
-        } catch (e) {
-            setErr(`Invalid JSON: ${e.message}`);
+        if (!field.trim()) { setMsg('Please enter a field name.'); return; }
+        let parsed;
+        if (type === 'number') {
+            parsed = Number(value);
+            if (isNaN(parsed)) { setMsg('Value must be a number.'); return; }
+        } else if (type === 'true/false') {
+            parsed = value === 'true';
+        } else {
+            parsed = value;
         }
+        setDraft(d => ({ ...d, [field.trim()]: parsed }));
+        setMsg(`✓ Set "${field.trim()}" to ${JSON.stringify(parsed)}`);
+        setField('');
+        setValue('');
+        setTimeout(() => setMsg(''), 3000);
     };
+
+    // Show all top-level fields currently in the draft
+    const fields = Object.entries(draft).filter(([, v]) => typeof v !== 'object' || v === null);
 
     return (
         <div className="border border-slate-600/60 rounded-lg overflow-hidden">
-            <button onClick={() => open ? setOpen(false) : handleOpen()}
+            <button onClick={() => setOpen(o => !o)}
                 className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700/80 transition-colors">
-                <span className="font-bold text-sm uppercase tracking-wider text-slate-300">⚙️ Raw JSON Editor (Full Save Data)</span>
+                <span className="font-bold text-sm uppercase tracking-wider text-slate-300">🛠️ Custom Field Editor</span>
                 {open ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
             </button>
             {open && (
-                <div className="p-4 bg-slate-950/60 space-y-2">
-                    <div className="text-[10px] text-amber-400 mb-2">⚠️ Edit raw save data directly. Click Apply to stage changes, then Save Changes to persist.</div>
-                    <textarea
-                        value={json}
-                        onChange={e => { setJson(e.target.value); setErr(''); setApplied(false); }}
-                        className="w-full h-80 bg-slate-900 border border-slate-600 text-green-300 font-mono text-[11px] rounded px-3 py-2 focus:outline-none focus:border-cyan-500 resize-y"
-                        spellCheck={false}
-                    />
-                    {err && <div className="text-red-400 text-xs font-mono">{err}</div>}
-                    <button onClick={handleApply}
-                        className={`px-4 py-1.5 rounded font-bold text-xs transition-colors ${applied ? 'bg-emerald-600 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white'}`}>
-                        {applied ? '✓ Applied — click Save Changes above' : 'Apply JSON'}
-                    </button>
+                <div className="p-4 bg-slate-950/60 space-y-4">
+                    <div className="text-xs text-slate-400">Set any field on the player's save. Use this to fix or add anything not listed above.</div>
+
+                    {/* Add / set a field */}
+                    <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-3 space-y-3">
+                        <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Set a Field</div>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-slate-500 uppercase">Field Name</label>
+                                <input type="text" value={field} onChange={e => setField(e.target.value)} placeholder="e.g. gold, totalKills, hasSetProfileName"
+                                    className="bg-slate-800 border border-slate-600 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500" />
+                            </div>
+                            <div className="flex gap-2">
+                                <div className="flex flex-col gap-1 flex-1">
+                                    <label className="text-[10px] text-slate-500 uppercase">Value Type</label>
+                                    <select value={type} onChange={e => setType(e.target.value)} style={{ colorScheme: 'dark' }}
+                                        className="bg-slate-800 border border-slate-600 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                                        <option value="number">Number (e.g. 5000)</option>
+                                        <option value="text">Text (e.g. a name)</option>
+                                        <option value="true/false">True / False</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-1 flex-1">
+                                    <label className="text-[10px] text-slate-500 uppercase">Value</label>
+                                    {type === 'true/false' ? (
+                                        <select value={value} onChange={e => setValue(e.target.value)} style={{ colorScheme: 'dark' }}
+                                            className="bg-slate-800 border border-slate-600 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                                            <option value="true">True</option>
+                                            <option value="false">False</option>
+                                        </select>
+                                    ) : (
+                                        <input type={type === 'number' ? 'number' : 'text'} value={value} onChange={e => setValue(e.target.value)}
+                                            placeholder={type === 'number' ? '0' : 'enter value'}
+                                            className="bg-slate-800 border border-slate-600 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500" />
+                                    )}
+                                </div>
+                            </div>
+                            <button onClick={handleApply}
+                                className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-1.5 rounded font-bold text-xs transition-colors w-fit">
+                                Apply Field
+                            </button>
+                            {msg && <div className={`text-xs font-mono ${msg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{msg}</div>}
+                        </div>
+                    </div>
+
+                    {/* Current simple fields */}
+                    <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+                        <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2">Current Simple Fields</div>
+                        <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                            {fields.map(([k, v]) => (
+                                <div key={k} className="flex justify-between items-center text-xs py-0.5 border-b border-slate-800/50 last:border-0">
+                                    <span className="text-slate-400 font-mono">{k}</span>
+                                    <span className="text-white font-mono">{String(v)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
@@ -360,8 +407,8 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                     </Section>
                 ))}
 
-                {/* Raw JSON Editor */}
-                <RawJsonEditor draft={draft} setDraft={setDraft} />
+                {/* Custom Field Editor */}
+                <CustomFieldEditor draft={draft} setDraft={setDraft} />
             </div>
         </div>
     );
