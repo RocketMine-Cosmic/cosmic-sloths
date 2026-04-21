@@ -55,12 +55,12 @@ export default function Leaderboard() {
         const updateTimer = () => {
             const now = new Date();
             if (view === 'weekly' || view === 'squads') {
-                // Calculate next Monday (UTC) — weekly period resets Monday
-                const currentDay = now.getUTCDay();
-                const daysUntilMonday = (1 - currentDay + 7) % 7 || 7;
+                // Count down to Sunday 23:59 UTC — last moment of the current week
+                const currentDay = now.getUTCDay(); // 0=Sun, 6=Sat
+                const daysUntilSunday = (7 - currentDay) % 7 || 7;
                 const endOfWeek = new Date(now);
-                endOfWeek.setUTCDate(now.getUTCDate() + daysUntilMonday);
-                endOfWeek.setUTCHours(0, 0, 0, 0);
+                endOfWeek.setUTCDate(now.getUTCDate() + daysUntilSunday);
+                endOfWeek.setUTCHours(23, 59, 0, 0);
                 
                 const msLeft = endOfWeek - now;
                 const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
@@ -69,20 +69,22 @@ export default function Leaderboard() {
                 
                 setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
             } else if (view === 'seasonal') {
-                // Calculate last Sunday of current season (seasons are 4 weeks)
+                // Count down to Sunday 23:59 UTC of the last week of the current season
                 const { isoWeek, year } = getCurrentPeriodIds();
                 const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
-                const lastWeekOfSeason = seasonNum * 4;
-                
-                // ISO week to date conversion
+                const lastWeekOfSeason = seasonNum * 4; // last ISO week in this season
+
+                // Find the Sunday that ends lastWeekOfSeason
+                // ISO week starts Monday, so Sunday of that week = Monday + 6 days
                 const startOfYear = new Date(Date.UTC(year, 0, 1));
-                const startOfWeek = new Date(startOfYear);
-                startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-                
-                // Calculate Sunday of last week of season
+                const dayOfWeek = startOfYear.getUTCDay(); // 0=Sun
+                // Monday of ISO week 1
+                const mondayW1 = new Date(Date.UTC(year, 0, 1 + ((1 - dayOfWeek + 7) % 7)));
                 const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-                const endOfSeason = new Date(startOfWeek.getTime() + (lastWeekOfSeason) * msPerWeek);
-                endOfSeason.setUTCHours(0, 0, 0, 0);
+                // Monday of lastWeekOfSeason, then +6 days = Sunday
+                const mondayOfLastWeek = new Date(mondayW1.getTime() + (lastWeekOfSeason - 1) * msPerWeek);
+                const endOfSeason = new Date(mondayOfLastWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
+                endOfSeason.setUTCHours(23, 59, 0, 0);
                 
                 const msLeft = endOfSeason - now;
                 const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
