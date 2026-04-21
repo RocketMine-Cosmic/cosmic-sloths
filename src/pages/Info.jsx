@@ -263,31 +263,55 @@ const TABS_CONTENT = {
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏆 Leaderboards & Seasons" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Compete for <strong className="text-emerald-400">OMENX</strong> — the premium currency earned exclusively through competitive play.
+                    Compete for <strong className="text-emerald-400">OMENX</strong> — real crypto earned exclusively through competitive play. Rewards are sent automatically to your wallet at the end of each cycle.
                 </p>
                 <div className="space-y-3">
-                    <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
-                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every Monday. Top 30 players earn OMENX. Weekly stat upgrades also reset.</p>
-                    </div>
-                    <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
-                        <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for 4 weeks. Top 40 players earn OMENX. Seasonal stat upgrades reset at end.</p>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
+                        <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday</strong>. Top <strong className="text-white">30 players</strong> earn OMENX. Weekly stat upgrades also reset.</p>
+                        <div className="grid grid-cols-3 gap-2 text-[11px] text-center">
+                            <div className="bg-yellow-950/40 border border-yellow-700/40 rounded-lg p-2"><div className="text-yellow-400 font-bold">🥇 1st</div><div className="text-slate-400">10% of pool</div></div>
+                            <div className="bg-slate-800/60 border border-slate-700/40 rounded-lg p-2"><div className="text-slate-300 font-bold">🥈 2nd</div><div className="text-slate-400">8% of pool</div></div>
+                            <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-2"><div className="text-amber-600 font-bold">🥉 3rd</div><div className="text-slate-400">6% of pool</div></div>
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-1.5 text-center">Ranks 4–30 also earn a share · Pool = 25% of all OMENX spent that week</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
-                        <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes.</p>
+                        <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. Top <strong className="text-white">40 players</strong> earn OMENX. Seasonal stat upgrades reset at end.</p>
+                        <div className="text-[10px] text-slate-500">Pool = 35% of all OMENX spent that season · Ranks 4–40 earn a share</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
+                        <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score.</p>
                     </div>
                 </div>
             </SectionCard>
 
-            <SectionCard title="💠 OMENX Currency" color="green">
+            <SectionCard title="📊 How Scores Work" color="green">
                 <p className="text-sm text-slate-300 leading-relaxed mb-3">
-                    OMENX is the premium Web3 currency of the OmenX ecosystem. Use it in-game to reroll upgrades, banish unwanted choices, activate Squad Ultimates, purchase cosmetics, stat boosts, and more!
+                    Your score is calculated at the end of each run. The core formula is:
+                </p>
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-sm text-center text-green-300 mb-3">
+                    Score = Kills × Time Survived × Difficulty Multiplier
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs text-center mb-3">
+                    <div className="bg-cyan-950/40 border border-cyan-800/40 rounded-lg p-2"><div className="text-cyan-400 font-bold">Normal</div><div className="text-slate-400">×1.0</div></div>
+                    <div className="bg-pink-950/40 border border-pink-800/40 rounded-lg p-2"><div className="text-pink-400 font-bold">Hard</div><div className="text-slate-400">×1.5</div></div>
+                    <div className="bg-violet-950/40 border border-violet-800/40 rounded-lg p-2"><div className="text-violet-400 font-bold">Cosmic</div><div className="text-slate-400">×2.0</div></div>
+                </div>
+                <div className="text-xs text-slate-500 bg-slate-900/40 rounded-lg p-2 border border-slate-800">
+                    💡 Only your <strong className="text-white">highest score</strong> per week counts on the leaderboard. Keep grinding and replace it with a better run!
+                </div>
+            </SectionCard>
+
+            <SectionCard title="💠 OMENX Currency" color="cyan">
+                <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                    OMENX is the premium Web3 currency of the OmenX ecosystem. Use it in-game to reroll upgrades, banish unwanted choices, activate Squad Ultimates, purchase cosmetics, stat boosts, and more.
                 </p>
                 <div className="space-y-2">
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
-                        <strong className="text-emerald-400">Earn via Leaderboards:</strong> Place in the top rankings on Weekly or Seasonal leaderboards. Rewards are automatically sent to your wallet at the end of each cycle.
+                        <strong className="text-emerald-400">Earn via Leaderboards:</strong> Place in the top rankings. Rewards are automatically sent to your wallet — no claiming needed.
                     </div>
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-purple-900/40">
                         <strong className="text-purple-400">Purchase directly:</strong> Buy OMENX on the BNB Chain via{' '}
@@ -298,51 +322,24 @@ const TABS_CONTENT = {
 
             <SectionCard title="⚡ Leviathan Trials" color="rose">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Activate special <strong className="text-rose-400">modifiers</strong> before a run to make boss encounters harder — but more rewarding.
+                    Activate special <strong className="text-rose-400">modifiers</strong> on the Trials page before a run to make boss encounters harder — but earn bonus rewards for completing them.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                     <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-red-900/40 text-center flex flex-col justify-center">
-                        <div className="text-red-400 font-bold mb-1">FURY</div>
-                        <div className="text-slate-400 text-xs md:text-sm">Boss deals +50% damage</div>
+                        <div className="text-red-400 font-bold mb-1 text-base">⚔️ FURY</div>
+                        <div className="text-slate-400 text-xs">Boss deals +50% damage</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-orange-900/40 text-center flex flex-col justify-center">
-                        <div className="text-orange-400 font-bold mb-1">FRENZY</div>
-                        <div className="text-slate-400 text-xs md:text-sm">Boss moves +50% faster</div>
+                        <div className="text-orange-400 font-bold mb-1 text-base">💨 FRENZY</div>
+                        <div className="text-slate-400 text-xs">Boss moves +50% faster</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-purple-900/40 text-center flex flex-col justify-center">
-                        <div className="text-purple-400 font-bold mb-1">HIDE</div>
-                        <div className="text-slate-400 text-xs md:text-sm">Boss has +100% HP</div>
+                        <div className="text-purple-400 font-bold mb-1 text-base">🛡️ TITAN</div>
+                        <div className="text-slate-400 text-xs">Boss has +100% HP</div>
                     </div>
                 </div>
-            </SectionCard>
-
-            <SectionCard title="👥 Sloth Squads" color="orange">
-                <p className="text-sm text-slate-300 leading-relaxed mb-3">
-                    Create or join a squad of up to <strong className="text-orange-400">5 players</strong>. Every kill you make in any run automatically contributes to your squad's weekly kill total.
-                </p>
-                <div className="space-y-2 mb-3">
-                    <div className="bg-slate-900/60 rounded-lg p-3 border border-orange-900/40">
-                        <div className="font-bold text-orange-300 text-sm mb-1">📈 Squad Levels & XP</div>
-                        <p className="text-xs text-slate-400">Squads earn XP equal to their weekly kills at the end of each week. Level up through 7 tiers — from <strong className="text-white">Recruits</strong> all the way to <strong className="text-pink-400">Cosmic Elite</strong> — unlocking harder bounties and bigger rewards.</p>
-                    </div>
-                    <div className="bg-slate-900/60 rounded-lg p-3 border border-yellow-900/40">
-                        <div className="font-bold text-yellow-300 text-sm mb-1">🛡️ Daily & Weekly Bounties</div>
-                        <p className="text-xs text-slate-400">Your squad shares daily and weekly kill targets. Hit them and every member can <strong className="text-white">individually claim</strong> Gold and Relic Fragments as their reward.</p>
-                        <div className="grid grid-cols-2 gap-1.5 mt-2 text-[10px]">
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.1 Rookie</div><div className="text-yellow-400 font-bold">2,000 kills → 🪙500 + 🧩×1</div></div>
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.3 Hunters</div><div className="text-yellow-400 font-bold">10,000 kills → 🪙2,500 + 🧩×3</div></div>
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.5 Reapers</div><div className="text-yellow-400 font-bold">30,000 kills → 🪙6,500 + 🧩×5</div></div>
-                            <div className="bg-slate-800 rounded p-1.5 text-center border border-slate-700"><div className="text-slate-400">Lv.7 Cosmic Elite</div><div className="text-pink-400 font-bold">75,000 kills → 🪙15k + 🧩×10</div></div>
-                        </div>
-                    </div>
-                    <div className="bg-slate-900/60 rounded-lg p-3 border border-slate-700/50">
-                        <div className="font-bold text-slate-200 text-sm mb-1">⚙️ Squad Management</div>
-                        <p className="text-xs text-slate-400">The squad <strong className="text-white">Leader</strong> can edit the squad name, tag, and description, kick members, or transfer leadership. Use the in-squad <strong className="text-cyan-400">Chat</strong> to coordinate with your team.</p>
-                    </div>
-                    <div className="bg-slate-900/60 rounded-lg p-3 border border-slate-700/50">
-                        <div className="font-bold text-slate-200 text-sm mb-1">🏆 Squad Leaderboard</div>
-                        <p className="text-xs text-slate-400">The top squads by weekly kills are ranked on the <strong className="text-white">Squads Leaderboard</strong> tab in the Hall of Fame. Compete to be the most lethal squad this week!</p>
-                    </div>
+                <div className="text-xs text-slate-500 mt-3 bg-slate-900/40 rounded-lg p-2 border border-slate-800">
+                    💡 Stack multiple modifiers for even greater challenge and rewards. Modifiers can be combined freely.
                 </div>
             </SectionCard>
         </div>
@@ -622,7 +619,10 @@ TABS_CONTENT.combat = (
                         <div className="text-slate-400 text-xs">×3 value</div>
                     </div>
                 </div>
-                <p className="text-xs md:text-sm text-slate-500 mt-4">Use <strong className="text-emerald-400">⬡ OMENX</strong> during the level-up screen to refresh your choices or banish unwanted upgrades.</p>
+                <div className="mt-4 space-y-1.5">
+                    <p className="text-xs md:text-sm text-slate-500">Use <strong className="text-emerald-400">⬡ OMENX</strong> during the level-up screen to <strong className="text-white">Reroll</strong> (new options) or <strong className="text-white">Banish</strong> (remove an upgrade from the pool for the rest of the run).</p>
+                    <p className="text-xs text-slate-600">💡 Banishing a weapon you don't want increases the odds of getting your preferred ones on future level-ups.</p>
+                </div>
             </SectionCard>
 
             <SectionCard title="👑 Boss Encounters" color="rose">
@@ -636,17 +636,26 @@ TABS_CONTENT.combat = (
 
             <SectionCard title="🌍 Difficulty Modes" color="green">
                 <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-3 bg-slate-900/50 rounded-lg p-2 border border-cyan-900/40">
-                        <span className="text-cyan-400 font-bold w-20 shrink-0">Normal</span>
-                        <span className="text-slate-400 text-xs">Standard experience. Good for learning the ropes.</span>
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/50 rounded-lg p-3 border border-cyan-900/40">
+                        <div className="flex items-center gap-3">
+                            <span className="text-cyan-400 font-bold w-20 shrink-0">Normal</span>
+                            <span className="text-slate-400 text-xs">Standard experience. Good for learning the ropes.</span>
+                        </div>
+                        <span className="text-cyan-400 font-bold text-xs font-mono shrink-0">×1.0 score</span>
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-900/50 rounded-lg p-2 border border-pink-900/40">
-                        <span className="text-pink-400 font-bold w-20 shrink-0">Hard</span>
-                        <span className="text-slate-400 text-xs">Enemies hit harder. Cosmic hazard strikes appear. Better score multiplier.</span>
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/50 rounded-lg p-3 border border-pink-900/40">
+                        <div className="flex items-center gap-3">
+                            <span className="text-pink-400 font-bold w-20 shrink-0">Hard</span>
+                            <span className="text-slate-400 text-xs">Enemies hit harder. Cosmic hazard strikes appear.</span>
+                        </div>
+                        <span className="text-pink-400 font-bold text-xs font-mono shrink-0">×1.5 score</span>
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-900/50 rounded-lg p-2 border border-violet-900/40">
-                        <span className="text-violet-400 font-bold w-20 shrink-0">Cosmic</span>
-                        <span className="text-slate-400 text-xs">Maximum chaos. Best score multiplier for leaderboard climbers.</span>
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/50 rounded-lg p-3 border border-violet-900/40">
+                        <div className="flex items-center gap-3">
+                            <span className="text-violet-400 font-bold w-20 shrink-0">Cosmic</span>
+                            <span className="text-slate-400 text-xs">Maximum chaos. Best for leaderboard climbers.</span>
+                        </div>
+                        <span className="text-violet-400 font-bold text-xs font-mono shrink-0">×2.0 score</span>
                     </div>
                 </div>
             </SectionCard>
