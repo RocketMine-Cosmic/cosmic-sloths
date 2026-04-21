@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
                 title: '🗓️ Seasonal Leaderboard',
                 description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${seasonalCountdown}\n\n${buildRows(seasonalUnique)}`,
                 color: 0xD946EF,
-                footer: { text: 'Sloths in Space · Compete for OMENX rewards' },
+                footer: { text: 'Cosmic Sloths · Compete for OMENX rewards' },
                 timestamp: new Date().toISOString(),
             });
         }
