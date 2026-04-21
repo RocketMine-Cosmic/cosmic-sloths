@@ -46,10 +46,8 @@ Deno.serve(async (req) => {
 
         // CRITICAL: Reconcile TokenPool with TokenSpendLog — auto-heal any mismatches
         const reconcilePoolBeforeDistribution = async (pool) => {
-            const logs = await base44.asServiceRole.entities.TokenSpendLog.filter({
-                week_id: pool.period_id,
-                season_id: pool.period_id
-            });
+            const filterKey = pool.period_type === 'weekly' ? { week_id: pool.period_id } : { season_id: pool.period_id };
+            const logs = await base44.asServiceRole.entities.TokenSpendLog.filter(filterKey);
             const logTotal = logs.reduce((sum, log) => sum + (log.amount || 0), 0);
             
             if (Math.abs(logTotal - pool.total_spent) > 0.01) {
