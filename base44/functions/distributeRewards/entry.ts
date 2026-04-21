@@ -61,21 +61,43 @@ Deno.serve(async (req) => {
 
         const undistributedPools = await base44.asServiceRole.entities.TokenPool.filter({ distributed: false });
 
+        console.log(`[distributeRewards] Current period: week=${currentWeekId} season=${currentSeasonId}`);
+        console.log(`[distributeRewards] Found ${undistributedPools.length} undistributed pools: ${undistributedPools.map(p => `${p.period_id}(${p.period_type})`).join(', ')}`);
+
         const results = [];
 
         for (const pool of undistributedPools) {
-            if (pool.period_type === 'weekly' && pool.period_id !== currentWeekId) {
+            const isClosedWeekly = pool.period_type === 'weekly' && pool.period_id !== currentWeekId;
+            const isClosedSeasonal = pool.period_type === 'seasonal' && pool.period_id !== currentSeasonId;
+
+            if (!isClosedWeekly && !isClosedSeasonal) {
+                console.log(`[distributeRewards] SKIPPING ${pool.period_id} (${pool.period_type}) — still current period, not yet closed`);
+                results.push({ pool: pool.period_id, type: pool.period_type, skipped: 'current period not yet closed' });
+                continue;
+            }
+
+            // Double-distribution guard — re-fetch from DB to confirm still undistributed
+            const freshPool = await base44.asServiceRole.entities.TokenPool.get(pool.id);
+            if (freshPool.distributed) {
+                console.warn(`[distributeRewards] DOUBLE-DISTRIBUTION GUARD: ${pool.period_id} already distributed, skipping`);
+                results.push({ pool: pool.period_id, type: pool.period_type, skipped: 'already distributed' });
+                continue;
+            }
+
+            if (isClosedWeekly) {
                 try {
                     await reconcilePoolBeforeDistribution(pool);
+                    console.log(`[distributeRewards] PRE-FLIGHT weekly ${pool.period_id}: total_spent=${pool.total_spent} reward_pool=${Math.floor(pool.total_spent * 0.25)} OMENX`);
                     const result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
                     results.push({ pool: pool.period_id, type: 'weekly', ...result });
                 } catch (err) {
                     console.error('[distributeRewards] WEEKLY FAILED:', err.message);
                     results.push({ pool: pool.period_id, type: 'weekly', error: err.message });
                 }
-            } else if (pool.period_type === 'seasonal' && pool.period_id !== currentSeasonId) {
+            } else if (isClosedSeasonal) {
                 try {
                     await reconcilePoolBeforeDistribution(pool);
+                    console.log(`[distributeRewards] PRE-FLIGHT seasonal ${pool.period_id}: total_spent=${pool.total_spent} reward_pool=${Math.floor(pool.total_spent * 0.35)} OMENX`);
                     const result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
                     results.push({ pool: pool.period_id, type: 'seasonal', ...result });
                 } catch (err) {
