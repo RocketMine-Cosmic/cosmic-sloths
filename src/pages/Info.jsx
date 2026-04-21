@@ -613,7 +613,7 @@ TABS_CONTENT.combat = (
                     </div>
                 </div>
                 <div className="mt-4 space-y-1.5">
-                    <p className="text-xs md:text-sm text-slate-500">Use <strong className="text-emerald-400">⬡ OMENX</strong> during the level-up screen to <strong className="text-white">Reroll</strong> (new options) or <strong className="text-white">Banish</strong> (remove an upgrade from the pool for the rest of the run).</p>
+                    <p className="text-xs md:text-sm text-slate-500">Use <strong className="text-emerald-400 inline-flex items-center gap-1"><img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className="w-3 h-3 inline" alt="OMENX" /> OMENX</strong> during the level-up screen to <strong className="text-white">Reroll</strong> (new options) or <strong className="text-white">Banish</strong> (remove an upgrade from the pool for the rest of the run).</p>
                     <p className="text-xs text-slate-600">💡 Banishing a weapon you don't want increases the odds of getting your preferred ones on future level-ups.</p>
                 </div>
             </SectionCard>
