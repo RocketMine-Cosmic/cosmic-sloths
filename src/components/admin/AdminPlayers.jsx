@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Search, User } from 'lucide-react';
 import moment from 'moment';
+import PlayerSaveEditor from './PlayerSaveEditor';
 
 export default function AdminPlayers({ walletAddress }) {
     const [search, setSearch] = useState('');
@@ -86,31 +87,14 @@ export default function AdminPlayers({ walletAddress }) {
                     <div className="mt-4">
                         <button onClick={() => setSelected(null)} className="text-xs text-slate-400 hover:text-white mb-3 flex items-center gap-1">← Back to results</button>
                         <div className="bg-slate-900/60 border border-cyan-700/50 rounded-xl p-4">
-                            <div className="text-sm font-bold text-cyan-300 mb-3 font-mono">{selected.wallet_address}</div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                <div className="bg-slate-800 rounded-lg p-3">
-                                    <div className="text-[10px] text-slate-500 uppercase">Gold</div>
-                                    <div className="font-mono font-bold text-yellow-400">{selected.save_data?.gold?.toLocaleString() || 0}</div>
-                                </div>
-                                <div className="bg-slate-800 rounded-lg p-3">
-                                    <div className="text-[10px] text-slate-500 uppercase">Relic Frags</div>
-                                    <div className="font-mono font-bold text-fuchsia-400">{selected.save_data?.relicFragments || 0}</div>
-                                </div>
-                                <div className="bg-slate-800 rounded-lg p-3">
-                                    <div className="text-[10px] text-slate-500 uppercase">Total Kills</div>
-                                    <div className="font-mono font-bold text-red-400">{selected.save_data?.totalKills?.toLocaleString() || 0}</div>
-                                </div>
-                                <div className="bg-slate-800 rounded-lg p-3">
-                                    <div className="text-[10px] text-slate-500 uppercase">Characters</div>
-                                    <div className="font-mono font-bold text-green-400">{selected.save_data?.unlockedCharacters?.length || 0}</div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-950 rounded-lg p-3 max-h-64 overflow-y-auto">
-                                <div className="text-[10px] text-slate-500 uppercase mb-2">Raw Save Data</div>
-                                <pre className="text-[10px] text-slate-300 whitespace-pre-wrap break-all">
-                                    {JSON.stringify(selected.save_data, null, 2)}
-                                </pre>
-                            </div>
+                            <PlayerSaveEditor
+                                player={selected}
+                                onClose={() => setSelected(null)}
+                                onSaved={(updated) => {
+                                    setSelected(updated);
+                                    setResults(prev => prev ? prev.map(p => p.id === updated.id ? updated : p) : prev);
+                                }}
+                            />
                         </div>
                     </div>
                 )}
