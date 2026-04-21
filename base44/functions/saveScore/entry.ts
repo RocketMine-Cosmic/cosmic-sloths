@@ -15,6 +15,26 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
+// In-memory verify cache — avoids redundant OmenX round-trips for the same token
+// Cache entries expire after 5 minutes; Deno isolate memory is per-instance so this is safe
+const verifyCache = new Map(); // token -> { walletAddress, expiresAt }
+const VERIFY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function verifyToken(sdk, accessToken) {
+    const now = Date.now();
+    const cached = verifyCache.get(accessToken);
+    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
+    const result = await sdk.verifyOAuthUser(accessToken);
+    if (result.success) {
+        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
+        // Prune stale entries occasionally
+        if (verifyCache.size > 500) {
+            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
+        }
+    }
+    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
+}
+
 // Check if leaderboard is locked (Sunday 23:00 UTC to Monday 23:00 UTC for distribution)
 function isLeaderboardLocked() {
     const now = new Date();
@@ -53,11 +73,11 @@ Deno.serve(async (req) => {
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
-        const verifyResult = await sdk.verifyOAuthUser(accessToken);
+        const verifyResult = await verifyToken(sdk, accessToken);
         if (!verifyResult.success) {
             return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
         }
-        const walletAddress = verifyResult.user.walletAddress;
+        const walletAddress = verifyResult.walletAddress;
 
         // Add wallet address to the score data
         scoreData.wallet_address = walletAddress;
