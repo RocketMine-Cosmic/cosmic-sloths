@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
             title: '🏆 Weekly Leaderboard',
             description: `**Week ${week_id}** — Top ${unique.length} Pilots\n\n${rows}`,
             color: 0x0CA7B8,
-            footer: { text: 'Sloths in Space · Compete for OMENX rewards' },
+            footer: { text: 'Cosmic Sloths · Compete for OMENX rewards' },
             timestamp: new Date().toISOString(),
         };
 
