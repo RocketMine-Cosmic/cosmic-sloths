@@ -59,7 +59,7 @@ export const SaveManager = {
             try {
               const { data: nftRes } = await base44.functions.invoke('getNFTCharacters', { accessToken });
               if (nftRes?.unlockedCharacters?.length > 0) {
-                const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
+                const defaultChars = ['neobyte'];
                 const nftChars = nftRes.unlockedCharacters.filter(c => typeof c === 'string');
                 saveData.unlockedCharacters = [...new Set([...defaultChars, ...nftChars])];
                 console.log('[SaveManager] Unlocked NFT characters:', nftChars);
