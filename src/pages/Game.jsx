@@ -44,13 +44,16 @@ export default function Game() {
         const initGame = async () => {
             const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
             
-            // Load from backend first if available
+            // Load from backend first if available (via backend function — no session required)
             try {
               const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-              if (omenxAuth?.walletAddress) {
-                const saves = await base44.entities.PlayerSave.filter({ wallet_address: omenxAuth.walletAddress });
-                if (saves.length > 0 && saves[0].save_data) {
-                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(saves[0].save_data));
+              if (omenxAuth?.walletAddress && omenxAuth?.accessToken) {
+                const { data: response } = await base44.functions.invoke('loadSave', {
+                  walletAddress: omenxAuth.walletAddress,
+                  accessToken: omenxAuth.accessToken,
+                });
+                if (response?.saveData) {
+                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
                 }
               }
             } catch (e) {
@@ -141,15 +144,17 @@ export default function Game() {
                     season_id
                 };
 
-                // Get squad info if player is in one
+                // Get squad info if player is in one (read from local storage — no session required)
                 let squadStats = null;
                 try {
-                    const memberships = await base44.entities.SquadMember.filter({ player_name: displayName });
-                    if (memberships.length > 0) {
-                        squadStats = {
-                            squadId: memberships[0].squad_id,
-                            kills: stats.kills
-                        };
+                    if (walletAddress) {
+                        const memberships = await base44.entities.SquadMember.filter({ wallet_address: walletAddress });
+                        if (memberships.length > 0) {
+                            squadStats = {
+                                squadId: memberships[0].squad_id,
+                                kills: stats.kills
+                            };
+                        }
                     }
                 } catch (err) {
                     console.error('Failed to get squad info', err);
@@ -244,7 +249,7 @@ export default function Game() {
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                     const user = getOmenXUser();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name || omenxAuth?.username || omenxAuth?.walletAddress, walletAddress: omenxAuth?.walletAddress })
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name || omenxAuth?.username || omenxAuth?.walletAddress, accessToken: omenxAuth?.accessToken })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             },
@@ -295,7 +300,7 @@ export default function Game() {
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                     const user = getOmenXUser();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name || omenxAuth?.username || omenxAuth?.walletAddress, walletAddress: omenxAuth?.walletAddress })
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name || omenxAuth?.username || omenxAuth?.walletAddress, accessToken: omenxAuth?.accessToken })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }

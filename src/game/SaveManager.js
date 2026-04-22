@@ -60,17 +60,8 @@ export const SaveManager = {
         }
       }
       
-      // Fallback: load cloud save if backend failed
-      try {
-        const saves = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
-        if (saves.length > 0 && saves[0].save_data) {
-          console.log('[SaveManager] Loaded from cloud backup');
-          localStorage.setItem('cosmic_sloth_save', JSON.stringify(saves[0].save_data));
-          SaveManager._playerSaveId = saves[0].id;
-        }
-      } catch (e) {
-        console.log('[SaveManager] Cloud load failed:', e.message);
-      }
+      // Fallback: if backend failed and we have accessToken, try loadSave again silently
+      // (no direct entity calls — avoid Base44 session requirement)
     } catch (e) {
       console.error('[SaveManager] Init error');
     }
@@ -84,27 +75,16 @@ export const SaveManager = {
       if (!localSave) return;
 
       const saveData = JSON.parse(localSave);
-      
-      // Always check for existing saves by wallet to avoid duplicates (with race condition safety)
-      const existing = await base44.entities.PlayerSave.filter({ wallet_address: SaveManager._walletAddress });
-      if (existing.length > 0) {
-        // Keep only the most recently updated record
-        const latest = existing.reduce((a, b) => ((a.updated_at || 0) > (b.updated_at || 0) ? a : b));
-        SaveManager._playerSaveId = latest.id;
-        // Delete any duplicates that may have been created during race condition
-        for (const e of existing) {
-          if (e.id !== latest.id) {
-            try {
-              await base44.entities.PlayerSave.delete(e.id);
-            } catch { /* ignore */ }
-          }
-        }
-        await base44.entities.PlayerSave.update(latest.id, { save_data: saveData, updated_at: Date.now() });
-      } else {
-        // Only create if truly doesn't exist
-        const created = await base44.entities.PlayerSave.create({ wallet_address: SaveManager._walletAddress, save_data: saveData, updated_at: Date.now() });
-        SaveManager._playerSaveId = created.id;
-      }
+      const accessToken = (() => {
+        try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.accessToken; } catch { return null; }
+      })();
+      if (!accessToken) return;
+
+      await base44.functions.invoke('syncSave', {
+        walletAddress: SaveManager._walletAddress,
+        saveData,
+        accessToken,
+      });
     } catch (e) {
       console.error('[SaveManager] Sync error:', e.message);
     }
