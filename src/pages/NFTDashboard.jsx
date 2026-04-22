@@ -120,7 +120,7 @@ export default function NFTDashboard({ isCarousel }) {
                                                 </div>
                                                 <div className="flex items-center gap-2 mb-1.5">
                                                     <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-                                                        🎯 Unlocked via gameplay runs
+                                                        ⚡ Instant unlock + perks active
                                                     </div>
                                                     {rarity && (
                                                         <span className="bg-amber-900/50 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-600/50 capitalize">
