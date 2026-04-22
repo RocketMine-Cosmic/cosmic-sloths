@@ -75,6 +75,12 @@ export default function Profile({ isCarousel }) {
                 setLoading(false);
             }
         })();
+
+        const handleSaveUpdated = () => {
+            setUser(prev => ({ ...prev }));
+        };
+        window.addEventListener('saveUpdated', handleSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
     }, [omenxUser]);
 
     const getAccessToken = () => {
