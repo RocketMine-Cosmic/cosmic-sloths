@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
         if (nftNotifyUrl && weeklyUnique.length > 0) {
             const nftEmbed = {
                 title: '💎 NFT Character Unlock System',
-                description: '**Instant Unlock + Per-Run Bonuses:**\n\n🔹 Own an OmenX NFT? Instantly unlock the character + earn rarity-based Gold & Fragment bonuses every run!\n🔹 **Sell your NFT?** Character is removed from your roster, but kill mastery is preserved for when you re-acquire it.\n\n**Rarity Bonuses (Per Run):**\n⬜ Common: +5% Gold, +5% Fragments\n🟢 Uncommon: +7% Gold, +8% Fragments\n🔵 Rare: +10% Gold, +10% Fragments\n🟣 Epic: +12% Gold, +13% Fragments\n🟡 Legendary: +15% Gold, +15% Fragments\n\n**Alternative Path:** Reach cumulative kill milestones (2k/5k/10k/20k) to permanently unlock characters.',
+                description: '**Instant Unlock + Per-Run Bonuses:**\n\n🔹 Own an OmenX NFT? Instantly unlock the character + earn rarity-based Gold & Fragment bonuses every run (for that character)!\n🔹 **Sell your NFT?** Character is removed from your roster, but kill mastery is preserved for when you re-acquire it.\n\n**Rarity Bonuses (Per Run):**\n⬜ Common: +5% Gold, +5% Fragments\n🟢 Uncommon: +7% Gold, +8% Fragments\n🔵 Rare: +10% Gold, +10% Fragments\n🟣 Epic: +12% Gold, +13% Fragments\n🟡 Legendary: +15% Gold, +15% Fragments\n\n**Alternative Path:** Reach cumulative kill milestones (2k/5k/10k/20k) to permanently unlock characters.',
                 color: 0x9333EA,
                 footer: { text: '💎 NFTs enhance progression but are not required' },
                 timestamp: new Date().toISOString(),

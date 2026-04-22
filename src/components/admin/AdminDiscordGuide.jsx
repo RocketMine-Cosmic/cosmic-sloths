@@ -125,7 +125,7 @@ FURY (+50% dmg) · FRENZY (+50% speed) · TITAN (+100% HP)
 
 💀 **Global Raid** — Community World Boss. Up to 5 runs/day. Your damage permanently depletes shared HP. Boss levels up when defeated (+50% HP each time). Rewards scale with boss level. Must contribute to claim.
 
-👑 **VIP** — 14 tiers (Bronze 1 → Diamond 4). Each tier = +1% Damage & +1% Max HP per run, stacking. Includes a weekly OMENX allocation. Auto-detected from your OmenX wallet.`,
+👑 **VIP** — 14 tiers (Bronze 1 → Diamond 4). Each tier = +1% Damage & +1% Max HP per run (stacking with other upgrades). Includes a weekly OMENX allocation. Auto-detected from your OmenX wallet.`,
     },
 ];
 
