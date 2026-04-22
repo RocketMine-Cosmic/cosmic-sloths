@@ -110,7 +110,6 @@ const TABS_CONTENT = {
                     <PickupCard icon={<Gem className="w-8 h-8 fill-emerald-400 text-emerald-400" />} label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
                     <PickupCard icon={<Coins className="w-8 h-8 fill-yellow-500 text-yellow-500" />} label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
                     <PickupCard icon={<Puzzle className="w-8 h-8 fill-fuchsia-400 text-fuchsia-400" />} label="Relic Fragments" color="text-fuchsia-400" desc="Dropped by Bosses. Craft and upgrade Ancient Relics in the Sloth Lounge." />
-                    <PickupCard icon="🎁" label="Character Find" color="text-purple-400" desc="Rare drop from special encounters. Discover new characters to unlock them for future runs." />
                     <PickupCard icon="☢️" label="Nuke" color="text-red-400" desc="Instantly destroys all non-boss enemies on screen." />
                     <PickupCard icon="🧲" label="Magnet Surge" color="text-blue-400" desc="Instantly pulls all nearby XP and Gold to you." />
                     <PickupCard icon="🛡️" label="Shield Overcharge" color="text-cyan-400" desc="10 seconds of full invincibility." />
@@ -126,7 +125,7 @@ const TABS_CONTENT = {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Unlock new sloths by reaching kill milestones or discovering them during runs. Each character has unique stats, abilities, and exclusive Talent Trees.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Unlock new sloths by reaching kill milestones. Each character has unique stats, abilities, and exclusive Talent Trees.</p>
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">⬆️ Stat Upgrades</div>
@@ -190,7 +189,7 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div>
                         <h4 className="text-sm font-bold text-amber-400 mb-2">🔓 Unlocking Characters</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed">Unlock new sloths by reaching cumulative kill milestones or finding them during runs as rare pickups. Once unlocked, you can play them in future runs without cost.</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">Unlock new sloths by reaching cumulative kill milestones. Once unlocked, you can play them in future runs without cost.</p>
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-amber-400 mb-2">📊 Character Mastery</h4>
