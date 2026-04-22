@@ -99,6 +99,7 @@ export default function NFTDashboard({ isCarousel }) {
                             {nfts.filter(nft => getCharacterData(nft.metadata?.name || '')).map((nft, idx) => {
                                 const charData = getCharacterData(nft.metadata?.name || '');
                                 const charName = (nft.metadata?.name || '').toLowerCase();
+                                const rarity = nft.metadata?.attributes?.find(attr => attr.trait_type === 'rarity')?.value;
                                 
                                 return (
                                     <div key={idx} className="bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
@@ -126,9 +127,9 @@ export default function NFTDashboard({ isCarousel }) {
                                                     <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                                                         🎯 Unlocked via gameplay runs
                                                     </div>
-                                                    {nft.metadata?.rarity && (
-                                                        <span className="bg-amber-900/50 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-600/50">
-                                                            {nft.metadata.rarity}
+                                                    {rarity && (
+                                                        <span className="bg-amber-900/50 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-600/50 capitalize">
+                                                            {rarity}
                                                         </span>
                                                     )}
                                                 </div>
