@@ -55,8 +55,8 @@ export default function NFTDashboard({ isCarousel }) {
         const rarityMap = {
             legendary: { border: 'border-yellow-600/60', shadow: 'shadow-[0_0_30px_rgba(234,179,8,0.2)]', glow: 'drop-shadow(0 0 15px rgba(234,179,8,0.4))' },
             epic: { border: 'border-purple-600/60', shadow: 'shadow-[0_0_30px_rgba(147,51,234,0.2)]', glow: 'drop-shadow(0 0 15px rgba(147,51,234,0.4))' },
-            rare: { border: 'border-orange-600/60', shadow: 'shadow-[0_0_30px_rgba(234,88,12,0.2)]', glow: 'drop-shadow(0 0 15px rgba(234,88,12,0.4))' },
-            uncommon: { border: 'border-blue-600/60', shadow: 'shadow-[0_0_30px_rgba(37,99,235,0.2)]', glow: 'drop-shadow(0 0 15px rgba(37,99,235,0.4))' },
+            rare: { border: 'border-blue-600/60', shadow: 'shadow-[0_0_30px_rgba(37,99,235,0.2)]', glow: 'drop-shadow(0 0 15px rgba(37,99,235,0.4))' },
+            uncommon: { border: 'border-green-600/60', shadow: 'shadow-[0_0_30px_rgba(22,163,74,0.2)]', glow: 'drop-shadow(0 0 15px rgba(22,163,74,0.4))' },
             common: { border: 'border-slate-600/60', shadow: 'shadow-[0_0_30px_rgba(71,85,105,0.2)]', glow: 'drop-shadow(0 0 15px rgba(71,85,105,0.3))' }
         };
         return rarityMap[rarity?.toLowerCase()] || rarityMap.common;
