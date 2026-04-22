@@ -61,6 +61,17 @@ export default function OmenXCallback() {
                     expiresIn: tokenData.expiresIn,
                     walletAddress: tokenData.walletAddress,
                     username: tokenData.username,
+                    // Preserve any existing profile customizations from prior session
+                    ...(() => {
+                        try {
+                            const existing = JSON.parse(localStorage.getItem('omenx_auth_data')) || {};
+                            return {
+                                player_name: existing.player_name || tokenData.username || '',
+                                player_title: existing.player_title || '',
+                                pilot_icon: existing.pilot_icon || '🦥',
+                            };
+                        } catch { return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' }; }
+                    })(),
                 };
 
                 // Save to IndexedDB (survives history clear) and localStorage (fallback)
@@ -123,6 +134,7 @@ export default function OmenXCallback() {
                         const base44 = await import('@/api/base44Client').then(m => m.base44);
                         await base44.functions.invoke('initializeFirstLogin', {
                             walletAddress: authData.walletAddress,
+                            accessToken: authData.accessToken,
                             initialSave
                         });
                     } catch (e) {

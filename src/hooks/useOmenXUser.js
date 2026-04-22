@@ -32,6 +32,7 @@ async function fetchUser(force = false) {
 }
 
 let pollInitialized = false;
+let pollInterval = null;
 
 function startPolling() {
     if (pollInitialized) return;
@@ -40,9 +41,11 @@ function startPolling() {
     if (now - lastFetchTime >= USER_CACHE_DURATION) {
         fetchUser();
     }
+    pollInterval = setInterval(() => fetchUser(), USER_CACHE_DURATION);
 }
 
 function stopPolling() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     pollInitialized = false;
 }
 
@@ -58,8 +61,8 @@ export function useOmenXUser() {
 
         if (cachedUser !== null) { setUser(cachedUser); setLoading(false); }
 
-        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopPolling(); pollInitialized = false; fetchUser(true).then(() => startPolling()); } };
-        const onUserUpdated = () => { fetchUser(true); };
+        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { lastFetchTime = 0; stopPolling(); fetchUser(true).then(() => startPolling()); } };
+        const onUserUpdated = () => { lastFetchTime = 0; fetchUser(true); };
         window.addEventListener('storage', onStorage);
         window.addEventListener('omenxUserUpdated', onUserUpdated);
 

@@ -75,24 +75,56 @@ export default function Profile({ isCarousel }) {
         })();
     }, [omenxUser]);
 
-    const handleSaveIcon = (icon) => {
-        updateOmenXUser({ pilot_icon: icon });
-        setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
+    const getAccessToken = () => {
+        try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.accessToken || null; } catch { return null; }
     };
 
-    const handleSaveName = () => {
+    const handleSaveIcon = async (icon) => {
+        await updateOmenXUser({ pilot_icon: icon });
+        setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
+        // Sync to DB — include current name so the single function handles everything
+        const accessToken = getAccessToken();
+        if (accessToken) {
+            const currentName = user?.player_name || user?.data?.player_name || '';
+            base44.functions.invoke('syncProfileName', {
+                newName: currentName,
+                newIcon: icon,
+                accessToken,
+            }).catch(e => console.error('[Profile] icon sync failed', e));
+        }
+    };
+
+    const handleSaveName = async () => {
         if (!newName.trim()) return;
         const updatedName = newName.trim();
-        updateOmenXUser({ player_name: updatedName });
+        await updateOmenXUser({ player_name: updatedName });
         setUser(prev => ({ ...prev, player_name: updatedName, data: { ...prev?.data, player_name: updatedName } }));
         setIsEditingName(false);
+        // Sync to DB
+        const accessToken = getAccessToken();
+        if (accessToken) {
+            base44.functions.invoke('syncProfileName', {
+                newName: updatedName,
+                accessToken,
+            }).catch(e => console.error('[Profile] name sync failed', e));
+        }
     };
 
-    const handleSaveTitle = (title) => {
-        updateOmenXUser({ player_title: title });
+    const handleSaveTitle = async (title) => {
+        await updateOmenXUser({ player_title: title });
         setUser(prev => ({ ...prev, data: { ...prev?.data, player_title: title } }));
         setNewTitle(title);
         setIsEditingTitle(false);
+        // Sync to DB
+        const accessToken = getAccessToken();
+        const currentName = user?.player_name || user?.data?.player_name || '';
+        if (accessToken && currentName) {
+            base44.functions.invoke('syncProfileName', {
+                newName: currentName,
+                newTitle: title,
+                accessToken,
+            }).catch(e => console.error('[Profile] title sync failed', e));
+        }
     };
 
     const getAvailableTitles = () => {

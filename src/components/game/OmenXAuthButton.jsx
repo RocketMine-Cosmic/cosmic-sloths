@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { omenx, getRedirectUri } from '@/lib/omenx';
+import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
@@ -65,6 +66,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogout = async () => {
         applyAuthData(null);
         setSuccessMsg('');
+        try { await clearAuthFromIndexedDB(); } catch (e) {}
         try { await omenx.logout(); } catch (e) {}
         window.location.reload();
     };

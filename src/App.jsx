@@ -117,6 +117,16 @@ const MainApp = () => {
       <SetProfileNameModal onComplete={(chosenName) => {
           updateOmenXUser({ player_name: chosenName });
           setNeedsProfileName(false);
+          // Sync to DB
+          const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+          if (omenxAuth?.accessToken) {
+              import('@/api/base44Client').then(({ base44 }) => {
+                  base44.functions.invoke('syncProfileName', {
+                      newName: chosenName,
+                      accessToken: omenxAuth.accessToken,
+                  }).catch(e => console.error('[App] profile name sync failed', e));
+              });
+          }
       }} />
     )}
     </>
