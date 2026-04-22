@@ -139,10 +139,10 @@ export default function NFTDashboard({ isCarousel }) {
                                                     </div>
                                                     {rarity && (() => {
                                                         const rarityBadgeMap = {
-                                                            legendary: 'bg-yellow-900/50 text-yellow-400 border-yellow-600/50',
-                                                            epic: 'bg-purple-900/50 text-purple-400 border-purple-600/50',
-                                                            rare: 'bg-blue-900/50 text-blue-300 border-blue-800/50',
-                                                            uncommon: 'bg-green-900/50 text-green-400 border-green-600/50',
+                                                            legendary: 'bg-yellow-900/50 text-yellow-300 border-yellow-600/50',
+                                                            epic: 'bg-purple-900/50 text-purple-300 border-purple-600/50',
+                                                            rare: 'bg-blue-900/50 text-blue-300 border-blue-600/50',
+                                                            uncommon: 'bg-green-900/50 text-green-300 border-green-600/50',
                                                             common: 'bg-slate-800/50 text-slate-300 border-slate-600/50'
                                                         };
                                                         const badgeClass = rarityBadgeMap[rarity?.toLowerCase()] || rarityBadgeMap.common;
@@ -172,17 +172,17 @@ export default function NFTDashboard({ isCarousel }) {
                                     <h3 className="text-xs md:text-sm font-bold text-slate-400 uppercase mb-2">Common</h3>
                                     <div className="text-xs md:text-sm text-slate-300">+5% Gold, +5% Relic Fragments</div>
                                 </div>
+                                <div className="p-3 md:p-4 rounded-lg border border-green-600/50 bg-green-950/20">
+                                    <h3 className="text-xs md:text-sm font-bold text-green-300 uppercase mb-2">Uncommon</h3>
+                                    <div className="text-xs md:text-sm text-green-200">+7% Gold, +8% Relic Fragments</div>
+                                </div>
                                 <div className="p-3 md:p-4 rounded-lg border border-blue-600/50 bg-blue-950/20">
-                                    <h3 className="text-xs md:text-sm font-bold text-blue-300 uppercase mb-2">Uncommon</h3>
-                                    <div className="text-xs md:text-sm text-blue-200">+7% Gold, +8% Relic Fragments</div>
+                                    <h3 className="text-xs md:text-sm font-bold text-blue-300 uppercase mb-2">Rare</h3>
+                                    <div className="text-xs md:text-sm text-blue-200">+10% Gold, +10% Relic Fragments</div>
                                 </div>
                                 <div className="p-3 md:p-4 rounded-lg border border-purple-600/50 bg-purple-950/20">
-                                    <h3 className="text-xs md:text-sm font-bold text-purple-300 uppercase mb-2">Rare</h3>
-                                    <div className="text-xs md:text-sm text-purple-200">+10% Gold, +10% Relic Fragments</div>
-                                </div>
-                                <div className="p-3 md:p-4 rounded-lg border border-orange-600/50 bg-orange-950/20">
-                                    <h3 className="text-xs md:text-sm font-bold text-orange-300 uppercase mb-2">Epic</h3>
-                                    <div className="text-xs md:text-sm text-orange-200">+12% Gold, +13% Relic Fragments</div>
+                                    <h3 className="text-xs md:text-sm font-bold text-purple-300 uppercase mb-2">Epic</h3>
+                                    <div className="text-xs md:text-sm text-purple-200">+12% Gold, +13% Relic Fragments</div>
                                 </div>
                                 <div className="p-3 md:p-4 rounded-lg border border-yellow-600/50 bg-yellow-950/20">
                                     <h3 className="text-xs md:text-sm font-bold text-yellow-300 uppercase mb-2">Legendary</h3>
