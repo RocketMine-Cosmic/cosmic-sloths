@@ -58,12 +58,14 @@ export const SaveManager = {
             
             // Fetch NFT-unlocked characters and merge + apply perks
             try {
-              console.log('[SaveManager] Fetching balances (includes NFTs) with accessToken:', !!accessToken);
+              console.log('[SaveManager] Fetching player data (includes NFTs) with accessToken:', !!accessToken);
               const { data: playerRes } = await base44.functions.invoke('getPlayerData', { walletAddress, accessToken });
               console.log('[SaveManager] Player response:', playerRes);
-              if (playerRes?.unlockedCharacters?.length > 0) {
+              if (playerRes?.nfts?.length > 0) {
                 const defaultChars = ['neobyte'];
-                const nftChars = playerRes.unlockedCharacters.filter(c => typeof c === 'string');
+                const nftChars = playerRes.nfts
+                  .map(nft => (nft.metadata?.name || '').toLowerCase().trim())
+                  .filter(Boolean);
                 saveData.unlockedCharacters = [...new Set([...defaultChars, ...nftChars])];
                 console.log('[SaveManager] Unlocked NFT characters:', nftChars);
                 // Apply NFT-based perks (gold multiplier, cost reductions, etc.)
