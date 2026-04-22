@@ -3,10 +3,21 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const MAX_SQUAD_MEMBERS = 5;
 
+const verifyCache = new Map();
+const VERIFY_CACHE_TTL = 60 * 60 * 1000;
+
 async function verifyToken(sdk, accessToken) {
+    const now = Date.now();
+    const cached = verifyCache.get(accessToken);
+    if (cached && cached.expiresAt > now) return cached.walletAddress;
     const result = await sdk.verifyOAuthUser(accessToken);
     if (!result.success) throw new Error('Invalid OAuth token');
-    return result.user.walletAddress;
+    const walletAddress = result.user.walletAddress;
+    verifyCache.set(accessToken, { walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
+    if (verifyCache.size > 500) {
+        for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
+    }
+    return walletAddress;
 }
 
 Deno.serve(async (req) => {

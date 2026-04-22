@@ -1,6 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
+const verifyCache = new Map();
+const VERIFY_CACHE_TTL = 60 * 60 * 1000;
+
+async function verifyToken(sdk, accessToken) {
+    const now = Date.now();
+    const cached = verifyCache.get(accessToken);
+    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
+    const result = await sdk.verifyOAuthUser(accessToken);
+    if (result.success) {
+        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
+        if (verifyCache.size > 500) {
+            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
+        }
+    }
+    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
+}
+
 function getCurrentPeriodIds() {
     const now = new Date();
     const year = now.getUTCFullYear();
@@ -34,12 +51,12 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'accessToken required for verification' }, { status: 401 });
         }
         
-        const result = await sdk.verifyOAuthUser(accessToken);
-        if (!result.success) {
+        const verifyResult = await verifyToken(sdk, accessToken);
+        if (!verifyResult.success) {
             return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
         }
         
-        const walletAddress = result.user.walletAddress;
+        const walletAddress = verifyResult.walletAddress;
 
         const productsRes = await sdk.getProducts();
         const products = productsRes?.products || productsRes || [];
