@@ -13,6 +13,7 @@ export const SaveManager = {
   _playerSaveId: null,
 
   initialize: async () => {
+    console.log('[SaveManager] Initialize called');
     try {
       let walletAddress = null;
       let accessToken = null;
