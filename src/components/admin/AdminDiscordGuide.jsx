@@ -40,7 +40,7 @@ Every OMENX spent in-game (rerolls, banishes, buffs, upgrades) goes back into th
 ⚠️ You must have a linked OmenX wallet to receive rewards. Rewards are distributed automatically after each period closes.`,
     },
     {
-        title: 'Post 3 — The 10 Pilots',
+        title: 'Post 3 — The 10 Pilots & Character Unlocks',
         content: `👥 **THE 10 PILOTS**
 
 🔵 **NeoByte** — Balanced starter. Support banner every 15s boosts damage & cooldowns.
@@ -52,7 +52,31 @@ Every OMENX spent in-game (rerolls, banishes, buffs, upgrades) goes back into th
 🔵 **DataPhantom** — Fastest projectiles, good armor. Leeches data to slow enemies.
 🟡 **NeonVortex** — Sniper. ×2.0 damage but very slow cooldowns. Executes enemies below 20% HP.
 🟡 **SynthBeats** — Gold farmer. ×1.5 gold, high luck. Bribes death with 5 gold per hit.
-🩵 **SkyByte** — Ace Pilot. Fast, good damage & area. Charges a Sonic Boom while moving.`,
+🩵 **SkyByte** — Ace Pilot. Fast, good damage & area. Charges a Sonic Boom while moving.
+
+---
+
+💎 **HOW TO UNLOCK CHARACTERS**
+
+**Path 1 — Own the NFT (Instant)**
+🔹 Own an OmenX NFT matching a pilot? Unlock instantly with rarity-based bonuses.
+🔹 Bonuses apply to that character every run: +5% to +15% Gold & Relic Fragments (based on rarity).
+🔹 Sell the NFT? Character leaves roster, but mastery persists for re-acquisition.
+
+**Path 2 — Kill Milestones (Permanent)**
+🔹 Reach global kill thresholds with ANY character:
+  2k kills → Unlock 1 random pilot
+  5k kills → Unlock 1 random pilot
+  10k kills → Unlock 1 random pilot
+  20k kills → Unlock 1 random pilot
+🔹 These unlocks never go away.
+
+**Rarity-Based Bonuses (NFT Only)**
+⬜ Common: +5% Gold, +5% Fragments | 🟢 Uncommon: +7% Gold, +8% Fragments
+🔵 Rare: +10% Gold, +10% Fragments | 🟣 Epic: +12% Gold, +13% Fragments
+🟡 Legendary: +15% Gold, +15% Fragments
+
+💡 Bonuses are per-character-per-run (only the pilot you select gets its bonus).`,
     },
     {
         title: 'Post 4 — Weapons, Synergies & Evolutions',
@@ -127,39 +151,7 @@ FURY (+50% dmg) · FRENZY (+50% speed) · TITAN (+100% HP)
 
 👑 **VIP** — 14 tiers (Bronze 1 → Diamond 4). Each tier = +1% Damage & +1% Max HP per run (stacking with other upgrades). Includes a weekly OMENX allocation. Auto-detected from your OmenX wallet.`,
     },
-    {
-        title: 'Post 7 — NFT Character Unlocks & Bonuses',
-        content: `💎 **NFT CHARACTER UNLOCKS & BONUSES**
 
-Two paths to unlock every pilot in Cosmic Sloths:
-
-**Path 1 — Own the NFT (Instant)**
-🔹 Own an OmenX NFT? Instantly unlock the character — no grind required.
-🔹 Earn rarity-based Gold & Relic Fragment bonuses every run you play that character.
-🔹 Sell the NFT? Character is removed from roster, but your mastery is preserved. Re-acquire later and jump right back in.
-
-**Path 2 — Kill Milestones (Permanent)**
-🔹 Reach cumulative kill thresholds with any character:
-  2,000 kills → Unlock 1 new character (random)
-  5,000 kills → Unlock 1 new character (random)
-  10,000 kills → Unlock 1 new character (random)
-  20,000 kills → Unlock 1 new character (random)
-🔹 Milestone unlocks are **never removed**, even without the NFT.
-
-**Rarity-Based Per-Run Bonuses** (NFT Only)
-Bonuses apply ONLY to the character you're playing in that run:
-⬜ Common — +5% Gold, +5% Relic Fragments
-🟢 Uncommon — +7% Gold, +8% Relic Fragments
-🔵 Rare — +10% Gold, +10% Relic Fragments
-🟣 Epic — +12% Gold, +13% Relic Fragments
-🟡 Legendary — +15% Gold, +15% Relic Fragments
-
-**Key Points**
-✅ NFTs unlock characters instantly—no mandatory progression gate
-✅ Bonuses are per-character-per-run (select a character, get its bonus for that run only)
-✅ Mastery transfers between NFT unlocks and milestone unlocks
-✅ NeoByte is free for everyone to start`,
-    },
 ];
 
 function PostCard({ post, index }) {
