@@ -1,9 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, initialSave, vipLevel, accessToken } = await req.json();
 
         if (!clientWallet || !accessToken) {
@@ -19,25 +20,16 @@ Deno.serve(async (req) => {
         const walletAddress = verifyResult.user.walletAddress;
 
         // Check if PlayerSave already exists
-        const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
+        const existing = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
         if (existing.length > 0) {
             return Response.json({ success: false, message: 'PlayerSave already exists' });
         }
 
-        // Fetch VIP level if not provided
-        let finalVipLevel = vipLevel || 0;
-        if (!vipLevel) {
-            try {
-                const vipRes = await base44.functions.invoke('getVipLevel', { walletAddress });
-                finalVipLevel = vipRes.data?.vipLevel || 0;
-            } catch (e) {
-                console.error('Failed to fetch VIP level:', e);
-            }
-        }
-
+        // Use provided vipLevel or default to 0
+        const finalVipLevel = vipLevel || 0;
         const saveDataWithVip = { ...initialSave, vipLevel: finalVipLevel };
 
-        const result = await base44.asServiceRole.entities.PlayerSave.create({
+        const result = await db.entities.PlayerSave.create({
             wallet_address: walletAddress,
             save_data: saveDataWithVip,
             updated_at: Date.now()

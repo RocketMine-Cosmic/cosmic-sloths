@@ -1,5 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 // Canonical period ID calculation — must match purchaseSku and lib/periodIds.js exactly
 function getCurrentPeriodIds() {
@@ -48,7 +50,6 @@ function isLeaderboardLocked() {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
         
         // Check if leaderboard is locked during distribution window
@@ -83,7 +84,7 @@ Deno.serve(async (req) => {
         scoreData.wallet_address = walletAddress;
 
         // Check if player already has a score in this period
-        const existingScores = await base44.asServiceRole.entities.RunScore.filter({
+        const existingScores = await db.entities.RunScore.filter({
             wallet_address: walletAddress,
             week_id: scoreData.week_id
         });
@@ -95,25 +96,25 @@ Deno.serve(async (req) => {
             // Delete duplicates
             for (const e of existingScores) {
                 if (e.id !== best.id) {
-                    await base44.asServiceRole.entities.RunScore.delete(e.id);
+                    await db.entities.RunScore.delete(e.id);
                 }
             }
             // Update if new score is better, or always update player_name
             if (scoreData.score > best.score) {
-                result = await base44.asServiceRole.entities.RunScore.update(best.id, scoreData);
+                result = await db.entities.RunScore.update(best.id, scoreData);
             } else {
-                result = await base44.asServiceRole.entities.RunScore.update(best.id, { player_name: scoreData.player_name });
+                result = await db.entities.RunScore.update(best.id, { player_name: scoreData.player_name });
             }
         } else {
-            result = await base44.asServiceRole.entities.RunScore.create(scoreData);
+            result = await db.entities.RunScore.create(scoreData);
         }
 
         // Update squad kills if provided — verify user is squad member and squadId is valid
         if (squadStats && squadStats.squadId && typeof squadStats.squadId === 'string' && squadStats.squadId.length > 0) {
             try {
                 const [members, squad] = await Promise.all([
-                    base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadStats.squadId, wallet_address: walletAddress }),
-                    base44.asServiceRole.entities.Squad.get(squadStats.squadId)
+                    db.entities.SquadMember.filter({ squad_id: squadStats.squadId, wallet_address: walletAddress }),
+                    db.entities.Squad.get(squadStats.squadId)
                 ]);
                 if (members.length === 0) {
                     console.error('[saveScore] Player not in squad, rejecting update');
@@ -127,7 +128,7 @@ Deno.serve(async (req) => {
                     if (currentDay !== today) {
                         newDailyKills = squadStats.kills || 0;
                     }
-                    await base44.asServiceRole.entities.Squad.update(squad.id, {
+                    await db.entities.Squad.update(squad.id, {
                         weekly_kills: (squad.weekly_kills || 0) + (squadStats.kills || 0),
                         daily_kills: newDailyKills,
                         current_day: today

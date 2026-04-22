@@ -1,5 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
@@ -12,7 +14,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'newName required' }, { status: 400 });
         }
 
-        // Verify identity via OmenX
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
@@ -22,8 +23,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Invalid access token' }, { status: 401 });
         }
         const walletAddress = verifyResult.user.walletAddress;
-
-        const db = createClientFromRequest(req).asServiceRole;
 
         // Update pilotName in PlayerSave
         const saves = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
