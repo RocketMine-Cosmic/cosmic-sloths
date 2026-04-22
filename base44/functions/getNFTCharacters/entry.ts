@@ -37,13 +37,11 @@ Deno.serve(async (req) => {
         }
 
         // Fetch user's NFTs from custom API
-        const customNftApiUrl = Deno.env.get('CUSTOM_NFT_API_URL');
-        if (!customNftApiUrl) {
-            console.warn('[getNFTCharacters] CUSTOM_NFT_API_URL not set, falling back to empty');
-            return Response.json({ unlockedCharacters: [] });
-        }
+        const baseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        const customNftApiUrl = Deno.env.get('CUSTOM_NFT_API_URL') || '/v1/nfts';
+        const nftUrl = `${baseUrl}${customNftApiUrl}/${verifyResult.walletAddress}`;
 
-        const nftRes = await fetch(`${customNftApiUrl}/${verifyResult.walletAddress}`, {
+        const nftRes = await fetch(nftUrl, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         
