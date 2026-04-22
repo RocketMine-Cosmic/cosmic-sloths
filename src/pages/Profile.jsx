@@ -15,6 +15,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
+import NFTPerkBadge from '../components/game/NFTPerkBadge';
 
 export default function Profile({ isCarousel }) {
     const navigate = useNavigate();
@@ -296,11 +297,16 @@ export default function Profile({ isCarousel }) {
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-2xl md:text-3xl font-bold text-white">{user?.player_name || user?.data?.player_name || user?.data?.full_name || user?.full_name || 'Anonymous'}</span>
-                                        <button onClick={() => setIsEditingName(true)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-md transition-colors border border-slate-700 hover:border-slate-500">
-                                            <Pencil size={16} />
-                                        </button>
+                                    <div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl md:text-3xl font-bold text-white">{user?.player_name || user?.data?.player_name || user?.data?.full_name || user?.full_name || 'Anonymous'}</span>
+                                            <button onClick={() => setIsEditingName(true)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-md transition-colors border border-slate-700 hover:border-slate-500">
+                                                <Pencil size={16} />
+                                            </button>
+                                        </div>
+                                        <div className="mt-2">
+                                            <NFTPerkBadge />
+                                        </div>
                                     </div>
                                 )}
                                 <div className="mt-2 flex items-center gap-2">
