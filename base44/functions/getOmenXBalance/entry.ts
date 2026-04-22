@@ -24,13 +24,25 @@ Deno.serve(async (req) => {
                 return Response.json({ balance: 0, unlockedCharacters: [] });
             }
 
-            const playerData = await sdk.getPlayer(walletAddress, '56');
+            // Fetch player data (balance + NFTs) using raw API with BALANCE_API_KEY
+            const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+            const playerRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+                headers: {
+                    'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}`,
+                },
+            });
+
+            if (!playerRes.ok) {
+                return Response.json({ balance: 0, unlockedCharacters: [] });
+            }
+
+            const playerData = await playerRes.json();
             
             // Extract OMENX balance
             const omenxToken = playerData?.balances?.tokens?.find(t => t.symbol === 'OMENX');
             const balance = parseFloat(omenxToken?.balance ?? '0');
             
-            // Extract NFT character names from player.nfts array
+            // Extract NFT character names
             const nfts = playerData?.nfts || [];
             const unlockedCharacters = nfts
                 .map(nft => (nft.name || '').toLowerCase().trim())

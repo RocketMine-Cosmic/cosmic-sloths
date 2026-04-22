@@ -28,15 +28,18 @@ Deno.serve(async (req) => {
         }
 
         // Fetch player data (balance + NFTs) + VIP in parallel
-        const [playerData, bonusLevel] = await Promise.all([
-            balanceSdk.getPlayer(walletAddress, '56').catch(() => null),
+        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        const [playerDataRes, bonusLevel] = await Promise.all([
+            fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+                headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
+            }).then(r => r.ok ? r.json() : null).catch(() => null),
             authSdk.getPlayerGameBonusPointsLevel(walletAddress).catch(() => null),
         ]);
 
-        const omenxToken = playerData?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+        const omenxToken = playerDataRes?.balances?.tokens?.find(t => t.symbol === 'OMENX');
         const balance = parseFloat(omenxToken?.balance ?? '0');
         const vipLevel = bonusLevel ?? 0;
-        const nfts = playerData?.nfts || [];
+        const nfts = playerDataRes?.nfts || [];
         const unlockedCharacters = nfts
             .map(nft => (nft.name || '').toLowerCase().trim())
             .filter(Boolean);
