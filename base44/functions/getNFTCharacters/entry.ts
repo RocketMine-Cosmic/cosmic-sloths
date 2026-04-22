@@ -36,10 +36,16 @@ Deno.serve(async (req) => {
             return Response.json({ unlockedCharacters: [] });
         }
 
-        // Fetch NFTs from OmenX
-        const nfts = await sdk.getPlayerNfts(walletAddress, '56', { limit: 100 });
-        console.log('[getNFTCharacters] Raw NFTs response:', nfts);
+        // Fetch NFTs from OmenX via raw HTTP (API requires chainId as query param)
+        const baseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        const apiUrl = `${baseUrl}/v1/players/${walletAddress}/nfts?chainId=56&limit=100`;
+        const nftResponse = await fetch(apiUrl, {
+            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_AUTH_API_KEY')}` }
+        });
+        const nftData = await nftResponse.json();
+        console.log('[getNFTCharacters] Raw NFTs response:', nftData);
         
+        const nfts = nftData?.data || [];
         const nftNames = (nfts || [])
             .map(nft => {
                 console.log('[getNFTCharacters] Processing NFT:', nft);
