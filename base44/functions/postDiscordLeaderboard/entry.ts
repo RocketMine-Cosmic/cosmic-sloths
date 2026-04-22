@@ -75,16 +75,17 @@ function formatCountdown(closeDate) {
 }
 
 function buildRows(scores) {
-    return scores.map((s, i) => {
-        const rank = i + 1;
-        const icon = s.pilot_icon || '🦥';
-        const name = s.player_name || 'Unknown';
-        const title = s.player_title ? ` *${s.player_title}*` : '';
-        const score = s.score?.toLocaleString() || '0';
-        const kills = s.kills ? ` · ${s.kills.toLocaleString()} kills` : '';
-        return `${getRankEmoji(rank)} ${icon} **${name}**${title} — ${score} pts${kills}`;
-    }).join('\n');
-}
+     return scores.map((s, i) => {
+         const rank = i + 1;
+         const icon = s.pilot_icon || '🦥';
+         const name = s.player_name || 'Unknown';
+         const title = s.player_title ? ` *${s.player_title}*` : '';
+         const score = s.score?.toLocaleString() || '0';
+         const kills = s.kills ? ` · ${s.kills.toLocaleString()} kills` : '';
+         const charName = s.character_id ? ` [${s.character_id}]` : '';
+         return `${getRankEmoji(rank)} ${icon} **${name}**${title}${charName} — ${score} pts${kills}`;
+     }).join('\n');
+ }
 
 Deno.serve(async (req) => {
     try {
@@ -111,8 +112,8 @@ Deno.serve(async (req) => {
         if (weeklyUnique.length > 0) {
             const weeklyClose = getWeeklyCloseDate(week_id);
             embeds.push({
-                title: '🏆 Weekly Leaderboard',
-                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${formatCountdown(weeklyClose)}\n\n${buildRows(weeklyUnique)}`,
+                title: '🏆 Weekly Leaderboard — Cosmic Sloths',
+                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${formatCountdown(weeklyClose)}\n\n${buildRows(weeklyUnique)}\n\n*Earn OMENX by ranking in the top 30. Play to unlock characters, equip NFTs for bonus Gold & Relic Fragments per run.*`,
                 color: 0x0CA7B8,
                 timestamp: new Date().toISOString(),
             });
@@ -121,8 +122,8 @@ Deno.serve(async (req) => {
         if (seasonalUnique.length > 0) {
             const seasonalClose = getSeasonalCloseDate(season_id);
             embeds.push({
-                title: '🗓️ Seasonal Leaderboard',
-                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${formatCountdown(seasonalClose)}\n\n${buildRows(seasonalUnique)}`,
+                title: '🗓️ Seasonal Leaderboard — Cosmic Sloths',
+                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${formatCountdown(seasonalClose)}\n\n${buildRows(seasonalUnique)}\n\n*Earn OMENX by ranking in the top 40. Unlock new characters through kill milestones or finding them during runs. NFT holders get +5% to +15% Gold & Relic Fragments!*`,
                 color: 0xD946EF,
                 footer: { text: 'Cosmic Sloths · Compete for OMENX rewards' },
                 timestamp: new Date().toISOString(),

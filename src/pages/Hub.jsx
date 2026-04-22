@@ -378,7 +378,7 @@ export default function Hub({ isCarousel }) {
                                                                 
                                                                 {!isUnlocked && (
                                                                     <div className="px-3 py-1 rounded font-bold text-xs bg-[#0b0416]/50 text-slate-400 border border-slate-700/50 mt-1 inline-flex items-center gap-1.5 w-fit">
-                                                                        🎯 Reach Kill Milestones
+                                                                        🎯 Unlock via Kills or Find in Runs
                                                                     </div>
                                                                 )}
                                                                 {isUnlocked && (

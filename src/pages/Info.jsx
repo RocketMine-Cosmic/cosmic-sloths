@@ -110,6 +110,7 @@ const TABS_CONTENT = {
                     <PickupCard icon={<Gem className="w-8 h-8 fill-emerald-400 text-emerald-400" />} label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
                     <PickupCard icon={<Coins className="w-8 h-8 fill-yellow-500 text-yellow-500" />} label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
                     <PickupCard icon={<Puzzle className="w-8 h-8 fill-fuchsia-400 text-fuchsia-400" />} label="Relic Fragments" color="text-fuchsia-400" desc="Dropped by Bosses. Craft and upgrade Ancient Relics in the Sloth Lounge." />
+                    <PickupCard icon="🎁" label="Character Find" color="text-purple-400" desc="Rare drop from special encounters. Discover new characters to unlock them for future runs." />
                     <PickupCard icon="☢️" label="Nuke" color="text-red-400" desc="Instantly destroys all non-boss enemies on screen." />
                     <PickupCard icon="🧲" label="Magnet Surge" color="text-blue-400" desc="Instantly pulls all nearby XP and Gold to you." />
                     <PickupCard icon="🛡️" label="Shield Overcharge" color="text-cyan-400" desc="10 seconds of full invincibility." />
@@ -125,7 +126,7 @@ const TABS_CONTENT = {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Unlock new sloths with unique stats, abilities, and exclusive Talent Trees.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Unlock new sloths by reaching kill milestones or discovering them during runs. Each character has unique stats, abilities, and exclusive Talent Trees.</p>
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">⬆️ Stat Upgrades</div>
@@ -185,12 +186,17 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
-            <SectionCard title="🏅 Character Mastery" color="amber">
-                <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    Playing a character repeatedly builds their <strong className="text-amber-400">Mastery</strong>. As you defeat more enemies with a specific character, they will rank up through 5 tiers (from Novice to Grandmaster), unlocking unique badges and permanent stat bonuses!
-                </p>
-                <div className="bg-slate-900/60 rounded-lg p-3 text-xs text-slate-400 italic border border-slate-700/50">
-                    💡 Track your character's kills and Mastery level directly on the character selection screen in the Lounge.
+            <SectionCard title="🏅 Character Progression" color="amber">
+                <div className="space-y-3">
+                    <div>
+                        <h4 className="text-sm font-bold text-amber-400 mb-2">🔓 Unlocking Characters</h4>
+                        <p className="text-xs text-slate-400 leading-relaxed">Unlock new sloths by reaching cumulative kill milestones or finding them during runs as rare pickups. Once unlocked, you can play them in future runs without cost.</p>
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-amber-400 mb-2">📊 Character Mastery</h4>
+                        <p className="text-xs text-slate-400 leading-relaxed mb-2">Playing a character repeatedly builds their <strong className="text-amber-400">Mastery</strong>. Defeat more enemies with a specific character to rank them through 5 tiers (Novice to Grandmaster), unlocking unique badges and permanent stat bonuses!</p>
+                        <p className="text-[10px] text-slate-500 italic">Track your character's kills and Mastery level on the character selection screen in the Lounge.</p>
+                    </div>
                 </div>
             </SectionCard>
         </div>
@@ -304,7 +310,10 @@ const TABS_CONTENT = {
                 </p>
                 <div className="space-y-2">
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
-                        <strong className="text-emerald-400">Earn via Leaderboards:</strong> Place in the top rankings. Rewards are automatically sent to your wallet — no claiming needed.
+                        <strong className="text-emerald-400">Earn via Leaderboards:</strong> Place in the top rankings on weekly or seasonal boards. Rewards are automatically sent to your wallet — no claiming needed.
+                    </div>
+                    <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-fuchsia-900/40">
+                        <strong className="text-fuchsia-400">NFT Holder Bonus:</strong> Own an OmenX NFT? Earn bonus Gold and Relic Fragments every run based on your NFT's rarity (no unlock needed — automatic per-run boost).
                     </div>
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-purple-900/40">
                         <strong className="text-purple-400">Purchase directly:</strong> Buy OMENX on the BNB Chain via{' '}

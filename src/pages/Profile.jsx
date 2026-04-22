@@ -460,7 +460,7 @@ export default function Profile({ isCarousel }) {
                         
                         {rewardsHistory.length === 0 ? (
                             <div className="text-center text-sm md:text-base text-slate-500 py-6 md:py-8 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                                No rewards claimed yet. Compete on the leaderboards to earn Cosmic Tokens!
+                                No rewards claimed yet. Compete on the leaderboards to earn OMENX rewards!
                             </div>
                         ) : (
                             <div className="grid gap-2 md:gap-3 max-h-[200px] md:max-h-[300px] overflow-y-auto pr-2">
