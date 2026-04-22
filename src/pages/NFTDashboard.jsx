@@ -54,9 +54,9 @@ export default function NFTDashboard({ isCarousel }) {
     const getRarityColor = (rarity) => {
         const rarityMap = {
             legendary: { border: 'border-yellow-600/60', shadow: 'shadow-[0_0_30px_rgba(234,179,8,0.2)]', glow: 'drop-shadow(0 0 15px rgba(234,179,8,0.4))' },
-            epic: { border: 'border-purple-600/60', shadow: 'shadow-[0_0_30px_rgba(168,85,247,0.2)]', glow: 'drop-shadow(0 0 15px rgba(168,85,247,0.4))' },
-            rare: { border: 'border-cyan-500/60', shadow: 'shadow-[0_0_30px_rgba(6,182,212,0.2)]', glow: 'drop-shadow(0 0 15px rgba(6,182,212,0.4))' },
-            uncommon: { border: 'border-green-600/60', shadow: 'shadow-[0_0_30px_rgba(16,185,129,0.2)]', glow: 'drop-shadow(0 0 15px rgba(16,185,129,0.4))' },
+            epic: { border: 'border-orange-600/60', shadow: 'shadow-[0_0_30px_rgba(234,88,12,0.2)]', glow: 'drop-shadow(0 0 15px rgba(234,88,12,0.4))' },
+            rare: { border: 'border-purple-600/60', shadow: 'shadow-[0_0_30px_rgba(147,51,234,0.2)]', glow: 'drop-shadow(0 0 15px rgba(147,51,234,0.4))' },
+            uncommon: { border: 'border-blue-600/60', shadow: 'shadow-[0_0_30px_rgba(37,99,235,0.2)]', glow: 'drop-shadow(0 0 15px rgba(37,99,235,0.4))' },
             common: { border: 'border-slate-600/60', shadow: 'shadow-[0_0_30px_rgba(71,85,105,0.2)]', glow: 'drop-shadow(0 0 15px rgba(71,85,105,0.3))' }
         };
         return rarityMap[rarity?.toLowerCase()] || rarityMap.common;
@@ -140,9 +140,9 @@ export default function NFTDashboard({ isCarousel }) {
                                                     {rarity && (() => {
                                                         const rarityBadgeMap = {
                                                             legendary: 'bg-yellow-900/50 text-yellow-400 border-yellow-600/50',
-                                                            epic: 'bg-purple-900/50 text-purple-400 border-purple-600/50',
-                                                            rare: 'bg-cyan-900/50 text-cyan-400 border-cyan-600/50',
-                                                            uncommon: 'bg-green-900/50 text-green-400 border-green-600/50',
+                                                            epic: 'bg-orange-900/50 text-orange-400 border-orange-600/50',
+                                                            rare: 'bg-purple-900/50 text-purple-400 border-purple-600/50',
+                                                            uncommon: 'bg-blue-900/50 text-blue-400 border-blue-600/50',
                                                             common: 'bg-slate-800/50 text-slate-300 border-slate-600/50'
                                                         };
                                                         const badgeClass = rarityBadgeMap[rarity?.toLowerCase()] || rarityBadgeMap.common;
