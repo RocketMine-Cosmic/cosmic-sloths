@@ -64,6 +64,14 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     };
 
     const handleLogout = async () => {
+        // Flush any pending save to backend before logout
+        try {
+            const { SaveManager } = await import('@/game/SaveManager');
+            await SaveManager.syncToBackend();
+        } catch (e) {
+            console.error('[handleLogout] Failed to flush save:', e.message);
+        }
+        
         applyAuthData(null);
         setSuccessMsg('');
         try { await clearAuthFromIndexedDB(); } catch (e) {}
