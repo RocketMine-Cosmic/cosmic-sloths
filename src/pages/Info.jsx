@@ -551,7 +551,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="📝 Important Notes" color="green">
                 <div className="space-y-2 text-xs md:text-sm text-slate-400">
-                    <p>✓ Bonuses from different NFTs <strong className="text-white">stack</strong> if you own multiple character NFTs.</p>
+                    <p>✓ Bonuses are per-character-per-run (only the character you're playing gets its NFT bonus).</p>
                     <p>✓ NFT status is checked automatically on login — no manual claiming required.</p>
                     <p>✓ Kill mastery <strong className="text-white">never resets</strong> and is shared between NFT unlocks and milestone unlocks.</p>
                     <p>✓ You start with <strong className="text-white">NeoByte unlocked</strong> by default. All other characters require NFT ownership or milestone progression.</p>
