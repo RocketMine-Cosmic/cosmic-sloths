@@ -18,6 +18,7 @@ import { useOmenXBalance } from '@/hooks/useOmenXBalance';
 import { getOmenXUserSync } from '@/lib/omenxUser';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
+import { CharacterUnlockManager } from '../game/CharacterUnlocks';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -219,7 +220,8 @@ export default function Game() {
             onGameOver: (stats) => {
                 const currentSave = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
                 currentSave.gold += stats.gold;
-                currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
+                const prevTotalKills = currentSave.totalKills || 0;
+                currentSave.totalKills = prevTotalKills + stats.kills;
                 if (!currentSave.characterKills) currentSave.characterKills = {};
                 const activeCharId = stats.characterId || characterId;
                 currentSave.characterKills[activeCharId] = (currentSave.characterKills[activeCharId] || 0) + stats.kills;
@@ -235,6 +237,11 @@ export default function Game() {
                     for (const [id, count] of Object.entries(stats.enemyKills)) {
                         currentSave.enemyKills[id] = (currentSave.enemyKills[id] || 0) + count;
                     }
+                }
+                // Check for character unlocks from kill milestones
+                const grantedChar = CharacterUnlockManager.checkAndGrantRandomUnlock(currentSave, currentSave.totalKills);
+                if (grantedChar) {
+                    stats.unlockedCharacter = grantedChar;
                 }
                 SaveManager.save(currentSave);
                 const currentSaveForGameOver = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
@@ -256,7 +263,8 @@ export default function Game() {
             onVictory: (stats) => {
                 const currentSave = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
                 currentSave.gold += stats.gold;
-                currentSave.totalKills = (currentSave.totalKills || 0) + stats.kills;
+                const prevTotalKills = currentSave.totalKills || 0;
+                currentSave.totalKills = prevTotalKills + stats.kills;
                 if (!currentSave.characterKills) currentSave.characterKills = {};
                 const activeCharId = stats.characterId || characterId;
                 currentSave.characterKills[activeCharId] = (currentSave.characterKills[activeCharId] || 0) + stats.kills;
@@ -286,6 +294,11 @@ export default function Game() {
                     if (!currentSave.newGamePlusUnlocked) {
                         currentSave.newGamePlusUnlocked = true;
                     }
+                }
+                // Check for character unlocks from kill milestones
+                const grantedChar = CharacterUnlockManager.checkAndGrantRandomUnlock(currentSave, currentSave.totalKills);
+                if (grantedChar) {
+                    stats.unlockedCharacter = grantedChar;
                 }
                 SaveManager.save(currentSave);
                 const currentSaveForVictory = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
