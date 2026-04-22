@@ -221,6 +221,11 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            if (!authData?.accessToken) {
+                toast({ title: "Error", description: "Please log in with OmenX first." });
+                return;
+            }
             const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
             const res = await base44.functions.invoke('createSquad', {
                 squadName: newSquadName,
@@ -228,7 +233,8 @@ export default function Squads({ isCarousel }) {
                 squadDesc: newSquadDesc,
                 walletAddress: walletAddr,
                 playerName: displayName,
-                playerTitle: (user?.data?.player_title || '').trim()
+                playerTitle: (user?.data?.player_title || '').trim(),
+                accessToken: authData.accessToken
             });
             
             if (!res.data?.success) {
