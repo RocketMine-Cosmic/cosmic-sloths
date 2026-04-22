@@ -51,7 +51,6 @@ export default function NFTDashboard({ isCarousel }) {
     const getPerksList = () => {
         return [
             { id: 'gold_mult', icon: '🪙', name: 'Gold Multiplier', desc: '+10% Gold Income', active: nfts.length > 0 },
-            { id: 'upgrade_cost', icon: '💰', name: 'Reduced Upgrade Costs', desc: '-10% Upgrade Costs', active: nfts.length > 0 },
             { id: 'relic_bonus', icon: '✨', name: 'Relic Fragment Bonus', desc: '+15% Relic Fragments', active: nfts.length > 0 }
         ];
     };
@@ -123,8 +122,15 @@ export default function NFTDashboard({ isCarousel }) {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="text-[10px] text-emerald-400 font-bold mb-1.5 flex items-center gap-1">
-                                                    🎯 Unlocked via gameplay runs
+                                                <div className="flex items-center gap-2 mb-1.5">
+                                                    <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                                                        🎯 Unlocked via gameplay runs
+                                                    </div>
+                                                    {nft.metadata?.rarity && (
+                                                        <span className="bg-amber-900/50 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-600/50">
+                                                            {nft.metadata.rarity}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <p className="text-slate-400 text-xs md:text-sm leading-snug mb-2">
                                                     {nft.metadata?.description || 'NFT'}
