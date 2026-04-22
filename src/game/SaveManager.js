@@ -9,7 +9,7 @@ let pendingSync = false;
 
 export const SaveManager = {
   _walletAddress: null,
-  _playerSaveId: null,
+  _accessToken: null,
 
   initialize: async () => {
     console.log('[SaveManager] Initialize called');
@@ -36,26 +36,72 @@ export const SaveManager = {
         accessToken = omenxAuth?.accessToken;
       }
       
-      if (!walletAddress) {
+      if (!walletAddress || !accessToken) {
         console.log('[SaveManager] No wallet authenticated, using local storage only');
         return;
       }
       
       SaveManager._walletAddress = walletAddress;
+      SaveManager._accessToken = accessToken;
+      
+      // Load cloud save on init
+      try {
+        const { base44 } = await import('@/api/base44Client');
+        const { data: response } = await base44.functions.invoke('loadSave', {
+          walletAddress,
+          accessToken,
+        });
+        
+        if (response?.saveData) {
+          const cloudSave = response.saveData;
+          const localSave = localStorage.getItem('cosmic_sloth_save');
+          
+          if (localSave) {
+            const localData = JSON.parse(localSave);
+            const cloudData = typeof cloudSave === 'string' ? JSON.parse(cloudSave) : cloudSave;
+            // Merge: cloud data wins for persistent fields, local wins for session state
+            const merged = { ...localData, ...cloudData };
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
+            console.log('[SaveManager] Merged cloud save with local');
+          } else {
+            const dataToStore = typeof cloudSave === 'string' ? cloudSave : JSON.stringify(cloudSave);
+            localStorage.setItem('cosmic_sloth_save', dataToStore);
+            console.log('[SaveManager] Loaded cloud save');
+          }
+        }
+      } catch (e) {
+        console.warn('[SaveManager] Cloud load failed, continuing with local:', e.message);
+      }
+      
       console.log('[SaveManager] Initialized');
     } catch (e) {
-      console.error('[SaveManager] Init error');
+      console.error('[SaveManager] Init error:', e.message);
     }
   },
 
   syncToBackend: async () => {
-    // Sync disabled - no Base44 auth available from frontend
-    return;
+    if (!SaveManager._walletAddress || !SaveManager._accessToken) return;
+    
+    try {
+      const { base44 } = await import('@/api/base44Client');
+      const localSave = localStorage.getItem('cosmic_sloth_save');
+      if (!localSave) return;
+      
+      await base44.functions.invoke('syncSave', {
+        walletAddress: SaveManager._walletAddress,
+        saveData: JSON.parse(localSave),
+        accessToken: SaveManager._accessToken,
+      });
+      console.log('[SaveManager] Cloud sync successful');
+    } catch (e) {
+      console.error('[SaveManager] Cloud sync failed:', e.message);
+    }
   },
 
   syncToBackendImmediate: async () => {
-    // Sync disabled - no Base44 auth available from frontend
-    return;
+    if (syncTimeout) clearTimeout(syncTimeout);
+    pendingSync = false;
+    await SaveManager.syncToBackend();
   },
 
   load: () => {
@@ -216,7 +262,7 @@ export const SaveManager = {
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
       // Only sync if user is authenticated with OmenX
-      if (SaveManager._walletAddress) {
+      if (SaveManager._walletAddress && SaveManager._accessToken) {
         pendingSync = true;
         if (syncTimeout) clearTimeout(syncTimeout);
         syncTimeout = setTimeout(() => {
@@ -227,7 +273,7 @@ export const SaveManager = {
         }, 10000); // Debounce to 10 seconds
       }
     } catch (e) {
-      console.error('[SaveManager] Save error');
+      console.error('[SaveManager] Save error:', e.message);
     }
   }
 };
