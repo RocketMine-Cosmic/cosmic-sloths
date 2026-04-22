@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
             const weeklyClose = getWeeklyCloseDate(week_id);
             embeds.push({
                 title: '🏆 Weekly Leaderboard — Cosmic Sloths',
-                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${formatCountdown(weeklyClose)}\n\n${buildRows(weeklyUnique)}\n\n*Earn OMENX by ranking in the top 30. Unlock characters via kill milestones or own their NFT for instant unlock + per-run bonuses (+5% to +15% Gold & Relic Fragments).*`,
+                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${formatCountdown(weeklyClose)}\n\n${buildRows(weeklyUnique)}\n\n**Unlock Characters:**\n🔫 Reach kill milestones (2k/5k/10k/20k) for permanent unlocks\n💎 Own an NFT? Instant unlock + rarity-based per-run bonuses (+5% to +15% Gold & Relic Fragments)\n\n**Earn OMENX** by ranking in the top 30!`,
                 color: 0x0CA7B8,
                 timestamp: new Date().toISOString(),
             });
@@ -123,9 +123,9 @@ Deno.serve(async (req) => {
             const seasonalClose = getSeasonalCloseDate(season_id);
             embeds.push({
                 title: '🗓️ Seasonal Leaderboard — Cosmic Sloths',
-                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${formatCountdown(seasonalClose)}\n\n${buildRows(seasonalUnique)}\n\n*Earn OMENX by ranking in the top 40. Unlock characters via kill milestones or own their NFT for instant unlock + per-run bonuses (+5% to +15% Gold & Relic Fragments).*`,
+                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${formatCountdown(seasonalClose)}\n\n${buildRows(seasonalUnique)}\n\n**Unlock Characters:**\n🔫 Reach kill milestones (2k/5k/10k/20k) for permanent unlocks\n💎 Own an NFT? Instant unlock + rarity-based per-run bonuses (+5% to +15% Gold & Relic Fragments)\n\n**Earn OMENX** by ranking in the top 40!`,
                 color: 0xD946EF,
-                footer: { text: 'Cosmic Sloths · Compete for OMENX rewards' },
+                footer: { text: 'Cosmic Sloths · NFTs unlock characters instantly + boost runs' },
                 timestamp: new Date().toISOString(),
             });
         }
@@ -145,6 +145,28 @@ Deno.serve(async (req) => {
         if (!discordRes.ok) {
             const err = await discordRes.text();
             throw new Error(`Discord error ${discordRes.status}: ${err}`);
+        }
+
+        // Also post NFT unlock info to a separate notification (optional)
+        const nftNotifyUrl = Deno.env.get('DISCORD_NFT_NOTIFY_WEBHOOK');
+        if (nftNotifyUrl && weeklyUnique.length > 0) {
+            const nftEmbed = {
+                title: '💎 NFT Character Unlock System',
+                description: '**Instant Unlock + Per-Run Bonuses:**\n\n🔹 Own an OmenX NFT? Instantly unlock the character + earn rarity-based Gold & Fragment bonuses every run!\n🔹 **Sell your NFT?** Character is removed from your roster, but kill mastery is preserved for when you re-acquire it.\n\n**Rarity Bonuses (Per Run):**\n⬜ Common: +5% Gold, +5% Fragments\n🟢 Uncommon: +7% Gold, +8% Fragments\n🔵 Rare: +10% Gold, +10% Fragments\n🟣 Epic: +12% Gold, +13% Fragments\n🟡 Legendary: +15% Gold, +15% Fragments\n\n**Alternative Path:** Reach cumulative kill milestones (2k/5k/10k/20k) to permanently unlock characters.',
+                color: 0x9333EA,
+                footer: { text: '💎 NFTs enhance progression but are not required' },
+                timestamp: new Date().toISOString(),
+            };
+            
+            try {
+                await fetch(nftNotifyUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ embeds: [nftEmbed] }),
+                });
+            } catch (e) {
+                console.warn('[postDiscordLeaderboard] NFT notify failed:', e.message);
+            }
         }
 
         return Response.json({ success: true, week_id, season_id, posted: { weekly: weeklyUnique.length, seasonal: seasonalUnique.length } });

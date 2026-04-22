@@ -11,6 +11,7 @@ const TABS = [
     { id: 'missions',   label: 'Missions',     icon: Target },
     { id: 'compete',    label: 'Compete',      icon: Trophy },
     { id: 'squads',     label: 'Squads',       icon: Users },
+    { id: 'nft',        label: 'NFT Unlocks',  icon: Gem },
     { id: 'combat',     label: 'Combat',       icon: Zap },
     { id: 'raid',       label: 'Global Raid',  icon: Skull },
     { id: 'vip',        label: 'VIP',          icon: Crown },
@@ -460,6 +461,100 @@ const TABS_CONTENT = {
                     <div className="font-bold text-yellow-400 text-sm md:text-base mb-1.5">Claiming Gold</div>
                     <p className="text-xs md:text-sm text-slate-400 mb-2 leading-relaxed">For every boss level the community defeats, you can claim <strong className="text-white">250 Gold × Boss Level</strong>. (e.g., Level 5 boss gives 1,250 Gold).</p>
                     <p className="text-xs md:text-sm text-slate-500 italic">Note: You must have contributed damage to the raid to claim rewards!</p>
+                </div>
+            </SectionCard>
+        </div>
+    ),
+
+    nft: (
+        <div className="space-y-4 md:space-y-6">
+            <SectionCard title="💎 NFT Character Unlocks" color="purple">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
+                    Own an OmenX NFT? Instantly unlock the corresponding character and earn powerful per-run bonuses based on your NFT's rarity.
+                </p>
+                <div className="space-y-3">
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
+                        <div className="font-bold text-purple-400 text-sm md:text-base mb-1.5 flex items-center gap-2">⚡ How It Works</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Your NFTs are automatically detected when you log in. If you own a character's NFT, that character unlocks instantly in your roster — <strong className="text-white">no progression grinds required</strong>.</p>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-emerald-800/40">
+                        <div className="font-bold text-emerald-400 text-sm md:text-base mb-1.5">📊 Dynamic Unlocks</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed"><strong className="text-white">Sell your NFT?</strong> The character is removed from your roster, but your <strong className="text-emerald-400">kill mastery is preserved</strong>. If you re-acquire the NFT later, the character unlocks again instantly, with all your mastery progress intact.</p>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="🎁 Rarity-Based Per-Run Bonuses" color="amber">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
+                    Every run grants <strong className="text-amber-400">automatic bonuses</strong> based on your NFT's rarity. Higher rarity = bigger rewards!
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
+                        <div className="text-sm font-bold text-slate-300 mb-2">⬜ Common</div>
+                        <div className="text-xs text-slate-400 space-y-1">
+                            <div>+5% Gold</div>
+                            <div>+5% Relic Fragments</div>
+                        </div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-green-700/50">
+                        <div className="text-sm font-bold text-green-300 mb-2">🟢 Uncommon</div>
+                        <div className="text-xs text-slate-400 space-y-1">
+                            <div>+7% Gold</div>
+                            <div>+8% Relic Fragments</div>
+                        </div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-blue-700/50">
+                        <div className="text-sm font-bold text-blue-300 mb-2">🔵 Rare</div>
+                        <div className="text-xs text-slate-400 space-y-1">
+                            <div>+10% Gold</div>
+                            <div>+10% Relic Fragments</div>
+                        </div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-700/50">
+                        <div className="text-sm font-bold text-purple-300 mb-2">🟣 Epic</div>
+                        <div className="text-xs text-slate-400 space-y-1">
+                            <div>+12% Gold</div>
+                            <div>+13% Relic Fragments</div>
+                        </div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 border border-yellow-700/50 md:col-span-2">
+                        <div className="text-sm font-bold text-yellow-300 mb-2">🟡 Legendary</div>
+                        <div className="text-xs text-slate-400 space-y-1">
+                            <div>+15% Gold</div>
+                            <div>+15% Relic Fragments</div>
+                        </div>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="🔄 Character Unlock Paths" color="cyan">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
+                    There are two ways to unlock every character:
+                </p>
+                <div className="space-y-3">
+                    <div className="flex gap-4 bg-slate-900/60 rounded-xl p-4 border border-purple-800/40 items-start">
+                        <div className="text-2xl shrink-0">💎</div>
+                        <div>
+                            <div className="font-bold text-purple-300 text-sm mb-1">NFT Ownership (Instant)</div>
+                            <div className="text-xs text-slate-400 leading-relaxed">Own the character's NFT? Unlock instantly, plus earn rarity-based per-run bonuses every single run. Sell the NFT and the unlock is removed, but mastery persists.</div>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40 items-start">
+                        <div className="text-2xl shrink-0">⚔️</div>
+                        <div>
+                            <div className="font-bold text-cyan-300 text-sm mb-1">Kill Milestones (Permanent)</div>
+                            <div className="text-xs text-slate-400 leading-relaxed">Reach cumulative kill thresholds (2k, 5k, 10k, 20k kills) to permanently unlock characters. These unlocks are <strong className="text-white">never removed</strong>, even if you don't own the NFT.</div>
+                        </div>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="📝 Important Notes" color="green">
+                <div className="space-y-2 text-xs md:text-sm text-slate-400">
+                    <p>✓ Bonuses from different NFTs <strong className="text-white">stack</strong> if you own multiple character NFTs.</p>
+                    <p>✓ NFT status is checked automatically on login — no manual claiming required.</p>
+                    <p>✓ Kill mastery <strong className="text-white">never resets</strong> and is shared between NFT unlocks and milestone unlocks.</p>
+                    <p>✓ You start with <strong className="text-white">NeoByte unlocked</strong> by default. All other characters require NFT ownership or milestone progression.</p>
                 </div>
             </SectionCard>
         </div>
