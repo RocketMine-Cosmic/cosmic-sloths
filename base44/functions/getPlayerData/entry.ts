@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
         const { walletAddress, accessToken } = await req.json();
 
         if (!walletAddress || !accessToken) {
-            return Response.json({ balance: 0, vipLevel: 0, unlockedCharacters: [] });
+            return Response.json({ balance: 0, vipLevel: 0, nfts: [] });
         }
 
         const authSdk = new OmenXServerSDK({
@@ -36,13 +36,10 @@ Deno.serve(async (req) => {
         const balance = parseFloat(omenxToken?.balance ?? '0');
         const vipLevel = bonusLevel ?? 0;
         const nfts = playerDataRes?.nfts || [];
-        const unlockedCharacters = nfts
-            .map(nft => (nft.name || '').toLowerCase().trim())
-            .filter(Boolean);
 
-        return Response.json({ balance, vipLevel, unlockedCharacters });
+        return Response.json({ balance, vipLevel, nfts });
     } catch (error) {
         console.error('[getPlayerData]', error.message);
-        return Response.json({ balance: 0, vipLevel: 0, unlockedCharacters: [] });
+        return Response.json({ balance: 0, vipLevel: 0, nfts: [] });
     }
 });
