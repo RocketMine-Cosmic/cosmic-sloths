@@ -123,6 +123,9 @@ export default function NFTDashboard({ isCarousel }) {
                                                         </span>
                                                     )}
                                                 </div>
+                                                <div className="text-[10px] text-emerald-400 font-bold mb-1.5 flex items-center gap-1">
+                                                    🎯 Unlocked via gameplay runs
+                                                </div>
                                                 <p className="text-slate-400 text-xs md:text-sm leading-snug mb-2">
                                                     {nft.metadata?.description || 'NFT'}
                                                 </p>
