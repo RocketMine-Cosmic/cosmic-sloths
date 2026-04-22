@@ -44,7 +44,7 @@ export default function NFTDashboard({ isCarousel }) {
         };
 
         fetchNFTs();
-    }, [omenxUser]);
+    }, []);
 
     const getCharacterData = (charName) => {
         const char = CHARACTERS.find(c => c.id === charName.toLowerCase());
