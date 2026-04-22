@@ -38,9 +38,13 @@ Deno.serve(async (req) => {
 
         // Fetch NFTs from OmenX
         const nfts = await sdk.getPlayerNfts(walletAddress, '56', { limit: 100 });
+        console.log('[getNFTCharacters] Raw NFTs response:', nfts);
         
         const nftNames = (nfts || [])
-            .map(nft => (nft.name || '').toLowerCase().trim())
+            .map(nft => {
+                console.log('[getNFTCharacters] Processing NFT:', nft);
+                return (nft.name || '').toLowerCase().trim();
+            })
             .filter(Boolean);
         
         console.log(`[getNFTCharacters] User has ${nftNames.length} NFTs: ${nftNames.join(', ')}`);
