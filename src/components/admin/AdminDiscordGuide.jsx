@@ -3,155 +3,108 @@ import { Copy, Check } from 'lucide-react';
 
 const POSTS = [
     {
-        title: 'Post 1 — Quick Start Guide',
-        content: `🚀 **COSMIC SLOTHS — QUICK START GUIDE**
+        title: 'Post 1 — Quick Start',
+        content: `🚀 **COSMIC SLOTHS — QUICK START**
 
-Top-down auto-shooter. Weapons fire automatically — you move, dodge and build. Survive the sector timer to win.
+Top-down auto-shooter. Weapons auto-fire — you move & dodge. Survive the timer to win.
 
-**Controls**
-• WASD / Arrow Keys — Move
-• ESC or P — Pause
-• Full gamepad & mobile support
+**Controls:** WASD/Arrows or Virtual Joystick | ESC/P Pause | Full gamepad & mobile support
 
-**Score Formula**
-Kills × Time Survived × Difficulty Multiplier
+**Scoring:** Kills × Time × Difficulty Multiplier
 • Normal ×1.0 | Hard ×1.5 | Cosmic ×2.0
-• Easy is not eligible for leaderboards
-• Only your HIGHEST score per week counts
+• Only highest score per week counts on leaderboard
 
-**Difficulty**
-• Hard — +100% XP & Gold, tougher enemies
-• Cosmic — +200% XP & Gold, maximum chaos
-→ Push Cosmic if you want to compete seriously`,
+**Difficulties:** Normal (standard) | Hard (harder, better rewards) | Cosmic (maximum chaos, best multiplier)`,
     },
     {
-        title: 'Post 2 — Leaderboards & Rewards',
-        content: `🏆 **LEADERBOARDS & OMENX REWARDS**
+        title: 'Post 2 — Leaderboards & OMENX',
+        content: `🏆 **LEADERBOARDS — EARN REAL CRYPTO**
 
-Two live competitive leaderboards. Rewards are real OMENX sent automatically to your wallet — no claiming needed.
+Three live leaderboards. Real OMENX rewards sent automatically to your wallet (no claiming needed).
 
-📅 **Weekly** — Resets every Monday. Top 30 earn OMENX.
-🗓️ **Seasonal** — 4-week cycle. Top 40 earn OMENX.
-♾️ **Endless Void** — All-time high score. Never resets.
+📅 **Weekly** — Top 30 earn OMENX
+🗓️ **Seasonal** — Top 40 earn OMENX (4-week cycles)
+♾️ **Endless Void** — All-time high score
 
-💠 **How the reward pool works**
-Every OMENX spent in-game (rerolls, banishes, buffs, upgrades) goes back into the weekly and seasonal prize pools. The more the community plays, the bigger the prizes get.
+💠 **Reward Pool:** Every OMENX spent in-game (rerolls, banishes, power-ups) feeds back into the prize pools. More players spending = bigger rewards.
 
-⚠️ You must have a linked OmenX wallet to receive rewards. Rewards are distributed automatically after each period closes.`,
+⚠️ Link your OmenX wallet to receive payouts. Rewards auto-distribute after each period.`,
     },
     {
-        title: 'Post 3 — The 10 Pilots & Character Unlocks',
-        content: `👥 **THE 10 PILOTS**
+        title: 'Post 3 — The 10 Pilots & NFT Unlocks',
+        content: `👥 **10 UNIQUE PILOTS**
 
-🔵 **NeoByte** — Balanced starter. Support banner every 15s boosts damage & cooldowns.
-🩷 **Pandypaws** — Tank. High HP & armor, slow. Kills have 5% chance to drop permanent armor scrap.
-🟠 **NovaByte** — Glass cannon. Huge damage & area. Kills have 10% chance to chain explode.
-🟣 **Glitch** — Assassin. Fastest movement. 15% chance when hit to phase-shift and become invulnerable.
-🩵 **HoloDrift** — Engineer. Massive magnet range, +30% XP. Decoy taunts enemies every 20s.
-🟢 **CodeBreaker** — Hacker. Fastest cooldowns. Hacks an enemy to fight for you every 10s.
-🔵 **DataPhantom** — Fastest projectiles, good armor. Leeches data to slow enemies.
-🟡 **NeonVortex** — Sniper. ×2.0 damage but very slow cooldowns. Executes enemies below 20% HP.
-🟡 **SynthBeats** — Gold farmer. ×1.5 gold, high luck. Bribes death with 5 gold per hit.
-🩵 **SkyByte** — Ace Pilot. Fast, good damage & area. Charges a Sonic Boom while moving.
+🔵 **NeoByte** — Balanced starter. Support banner boosts damage & cooldowns.
+🩷 **Pandypaws** — Tank. High HP & armor.
+🟠 **NovaByte** — Glass cannon with massive damage.
+🟣 **Glitch** — Assassin. Fastest movement, phase-shifts on hit.
+🩵 **HoloDrift** — Engineer. Huge magnet range.
+🟢 **CodeBreaker** — Fastest cooldowns, hacks enemies.
+🔵 **DataPhantom** — Fastest projectiles, leeches damage.
+🟡 **NeonVortex** — Sniper with instant kills.
+🟡 **SynthBeats** — Gold farmer (×1.5 income).
+🩵 **SkyByte** — Balanced speed & damage.
 
 ---
 
-💎 **HOW TO UNLOCK CHARACTERS**
+💎 **UNLOCK PATHS**
 
-**Path 1 — Own the NFT (Instant)**
-🔹 Own an OmenX NFT matching a pilot? Unlock instantly with rarity-based bonuses.
-🔹 Bonuses apply to that character every run: +5% to +15% Gold & Relic Fragments (based on rarity).
-🔹 Sell the NFT? Character leaves roster, but mastery persists for re-acquisition.
+**NFT Ownership (Instant)** — Own the NFT = instant unlock + per-run bonuses (+5% to +15% Gold & Fragments based on rarity)
 
-**Path 2 — Kill Milestones (Permanent)**
-🔹 Reach global kill thresholds with ANY character:
-  2k kills → Unlock 1 random pilot
-  5k kills → Unlock 1 random pilot
-  10k kills → Unlock 1 random pilot
-  20k kills → Unlock 1 random pilot
-🔹 These unlocks never go away.
+**Kill Milestones (Permanent)** — 2k/5k/10k/20k kills unlock random pilots (never expire)
 
-**Rarity-Based Bonuses (NFT Only)**
-⬜ Common: +5% Gold, +5% Fragments | 🟢 Uncommon: +7% Gold, +8% Fragments
-🔵 Rare: +10% Gold, +10% Fragments | 🟣 Epic: +12% Gold, +13% Fragments
-🟡 Legendary: +15% Gold, +15% Fragments
-
-💡 Bonuses are per-character-per-run (only the pilot you select gets its bonus).`,
+**Rarity Bonuses (NFT Only):** ⬜ Common +5% | 🟢 Uncommon +7%/+8% | 🔵 Rare +10% | 🟣 Epic +12%/+13% | 🟡 Legendary +15%`,
     },
     {
-        title: 'Post 4 — Weapons, Synergies & Evolutions',
+        title: 'Post 4 — Weapons & Synergies',
         content: `🔫 **WEAPONS, SYNERGIES & EVOLUTIONS**
 
-Pick 1 of 3 upgrades every level-up (Common / Rare / Epic / Legendary).
-Use OMENX to **Reroll** (new choices) or **Banish** (remove from pool).
+Pick 1 of 3 upgrades every level (Common to Legendary). Use OMENX to Reroll or Banish.
 
-**Base Weapons**
-Blaster · Cosmic Nap Beam · Plasma Whip · Orbital Drones
-Zero-G Napalm · Nova Pulse · Shield Bubble · Ricochet Blade · Toxic Emitter
+**Base Weapons:** Blaster · Nap Beam · Plasma Whip · Orbital Drones · Napalm · Nova Pulse · Shield Bubble · Ricochet Blade · Toxic Emitter
 
-**Synergies** — get both weapons in one run to merge them:
-Napalm + Shield Bubble → 🔥 Burning Barrier
-Nap Beam + Nova Pulse → ⚡ Laser Nova
-Plasma Whip + Orbital Drones → 🌿 Plasma Swarm
-Nap Beam + Orbital Drones → 🔦 Orbital Lasers
-Plasma Whip + Nova Pulse → 🌍 Seismic Whip
-Napalm + Plasma Whip → 🔥 Flaming Lash
-Toxic Emitter + Plasma Whip → ☣️ Venom Lash
+**Synergies** (combine 2 weapons):
+Napalm+Shield → Burning Barrier | Nap+Nova → Laser Nova | Whip+Drones → Plasma Swarm
+Nap+Drones → Orbital Lasers | Whip+Nova → Seismic Whip | Napalm+Whip → Flaming Lash
+Toxic+Whip → Venom Lash
 
-**Evolutions** — max a weapon + pick the matching passive:
-Nap Beam + Area → Supernova Beam
-Plasma Whip + Regen → Vampiric Lash
-Orbital Drones + Speed → Orbital Defense Network
-Napalm + Damage → Hellfire
-Nova Pulse + Cooldown → Quantum Collapse
-Shield Bubble + HP → Aegis Matrix
-Ricochet Blade + Proj Speed → Buzzsaw Swarm`,
+**Evolutions** (max weapon = special forms):
+Nap+Area → Supernova | Whip+Regen → Vampiric | Drones+Speed → Network
+Napalm+Damage → Hellfire | Nova+Cooldown → Quantum Collapse | Bubble+HP → Aegis`,
     },
     {
-        title: 'Post 5 — Progression & Lounge',
-        content: `🏠 **SLOTH LOUNGE — META PROGRESSION**
+        title: 'Post 5 — Meta Progression',
+        content: `📈 **SLOTH LOUNGE — PERMANENT UPGRADES**
 
-Everything here persists between runs.
+🔧 **Stat Upgrades** (3 tiers: Permanent/Weekly/Seasonal)
+Damage · HP · Speed · Magnet · Regen · Cooldown · Luck
 
-📈 **Stat Upgrades** (3 tiers, all stack)
-• Permanent — never resets
-• Weekly — resets Monday
-• Seasonal — resets every 4 weeks
-Stats: Damage · HP · Speed · Magnet · Regen · Cooldown · Luck
+🔫 **Armory** — Upgrade weapons (Damage/Area/Cooldown). Max all 3 = Mastery + Evolution.
 
-🔫 **Armory** — Upgrade weapons (Damage / Area / Cooldown). Max all 3 = Mastery + evolution unlocked.
+🌳 **Talent Trees** — Unique per pilot. Respec anytime for gold.
 
-🌳 **Talent Trees** — Unique 3-tier branching tree per pilot. Respec anytime for gold.
+💎 **Relics** — Global stat boosts, upgrade to Lv.5: Cosmic Dice · Midas Core · Knowledge Drive · Blood Chalice · Annihilation Core
 
-🔮 **Relics** — Global stat bonuses, upgraded with Relic Fragments (boss drops) up to Lv.5 Legendary:
-🎲 Cosmic Dice | 💰 Midas Core | 🧠 Knowledge Drive | 🍷 Blood Chalice | 💥 Annihilation Core
+🔨 **The Forge** — 10k Gold = 1 Star Fragment (max 30/day). Permanently enhance weapons & unlock character traits. NEVER resets.
 
-🔨 **The Forge** — 10,000 Gold = 1 🌟 Star Fragment (max 30/day). Permanently augment weapons & unlock character traits. Forge upgrades NEVER reset.
-
-🏅 **Character Mastery** — Play a pilot to earn permanent bonuses:
-🔵 2,000 kills → +5% Speed
-🟣 5,000 kills → +10% Damage
-🟡 10,000 kills → +15% Area
-👑 25,000 kills → -10% Cooldown`,
+👑 **Character Mastery** — 2k kills +5% Speed | 5k kills +10% Damage | 10k kills +15% Area | 25k kills -10% Cooldown`,
     },
     {
-        title: 'Post 6 — Dailies, Squads & Raid',
-        content: `🎯 **DAILIES, SQUADS & GLOBAL RAID**
+        title: 'Post 6 — Dailies, Squads, Raids & VIP',
+        content: `🎯 **DAILIES, SQUADS & EVENTS**
 
-**Daily Bounties** (3/day) — earn Gold or Relic Fragments
-**Daily Mission** (1/day) — earn Seasonal Points → 100 pts = exclusive character skin
-**Daily Login** — streak up to Day 7 for up to 4,000 Gold. Miss a day = resets.
+📅 **Login Streak** — 7 days up to 4k Gold (miss 1 = reset)
+🎯 **3 Bounties/day** — Gold or Relic Fragments
+⚔️ **1 Daily Mission** — Seasonal Points (100 = exclusive skin)
 
-👥 **Squads** — up to 5 pilots. Kills auto-contribute to squad weekly total. 7 level tiers (Recruits → Cosmic Elite). Hit the weekly kill target and every member claims Gold + Relic Fragments.
+👥 **Squads** (up to 5 pilots) — Kills auto-count. 7 levels (Recruits → Elite). Hit weekly target = all members claim Gold + Fragments.
 
-⚔️ **Leviathan Trials** — stack boss modifiers for bonus rewards:
-FURY (+50% dmg) · FRENZY (+50% speed) · TITAN (+100% HP)
+💀 **Global Raid** (5 runs/day) — Your damage permanently cuts boss HP. Levels up every defeat. Rewards scale with level.
 
-💀 **Global Raid** — Community World Boss. Up to 5 runs/day. Your damage permanently depletes shared HP. Boss levels up when defeated (+50% HP each time). Rewards scale with boss level. Must contribute to claim.
+⚔️ **Leviathan Trials** — Stack modifiers: FURY (+50% dmg) · FRENZY (+50% speed) · TITAN (+100% HP)
 
-👑 **VIP** — 14 tiers (Bronze 1 → Diamond 4). Each tier = +1% Damage & +1% Max HP per run (stacking with other upgrades). Includes a weekly OMENX allocation. Auto-detected from your OmenX wallet.`,
+👑 **VIP** (14 tiers) — Each tier +1% Damage & +1% Max HP per run. Weekly OMENX allocation. Auto-detected.`,
     },
-
 ];
 
 function PostCard({ post, index }) {
