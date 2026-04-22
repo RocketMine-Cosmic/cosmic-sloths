@@ -250,6 +250,11 @@ export default function Squads({ isCarousel }) {
         }
     };
 
+    const getAuthToken = () => {
+        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        return authData?.accessToken || null;
+    };
+
     const handleJoinSquad = async (squadId) => {
         if (!user) return;
         try {
@@ -262,45 +267,24 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const existingMembers = await base44.entities.SquadMember.filter({ wallet_address: walletAddr });
-            if (existingMembers.length > 0) {
-                toast({ title: "Already in a Squad", description: "You are already in a squad." });
-                return;
-            }
-
-            const currentSquad = await base44.entities.Squad.get(squadId);
-            if ((currentSquad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
-                toast({ title: "Squad Full", description: "This squad has reached the maximum number of members." });
-                return;
-            }
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
 
             const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
-
-            const member = await base44.entities.SquadMember.create({
-                squad_id: squadId,
-                wallet_address: walletAddr,
-                player_name: displayName,
-                player_title: (user?.data?.player_title || '').trim(),
-                role: 'member',
-                last_payout_week: '',
-                last_daily_payout_date: ''
+            const res = await base44.functions.invoke('squadActions', {
+                action: 'join', accessToken, squadId,
+                playerName: displayName,
+                playerTitle: (user?.data?.player_title || '').trim(),
             });
-            
-            await base44.entities.SquadMessage.create({
-                squad_id: squadId,
-                wallet_address: 'system',
-                player_name: 'SYSTEM',
-                content: `${displayName} has joined the squad!`
-            });
-            
-            const updatedSquad = await base44.entities.Squad.update(squadId, {
-                member_count: (currentSquad.member_count || 0) + 1
-            });
-            setMyMemberRecord(member);
-            setMySquad(updatedSquad);
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to join squad." });
+                return;
+            }
+            setMyMemberRecord(res.data.member);
+            setMySquad(res.data.squad);
         } catch (e) {
             console.error(e);
-            toast({ title: "Error", description: "Failed to join squad." });
+            toast({ title: "Error", description: e?.response?.data?.error || "Failed to join squad." });
         }
     };
 
@@ -308,21 +292,20 @@ export default function Squads({ isCarousel }) {
         if (!myMemberRecord) return;
         try {
             SoundManager.playUIClick();
-            await base44.entities.SquadMember.delete(myMemberRecord.id);
-            
-            const displayName = user.data?.player_name || user.player_name || user.data?.full_name || user.full_name || 'A pilot';
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
 
             const leaveName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A pilot').trim();
-            await base44.entities.SquadMessage.create({
-                squad_id: mySquad.id,
-                wallet_address: 'system',
-                player_name: 'SYSTEM',
-                content: `${leaveName} has left the squad.`
+            const res = await base44.functions.invoke('squadActions', {
+                action: 'leave', accessToken,
+                memberId: myMemberRecord.id,
+                squadId: mySquad.id,
+                playerName: leaveName,
             });
-            
-            await base44.entities.Squad.update(mySquad.id, {
-                member_count: Math.max(0, (mySquad.member_count || 1) - 1)
-            });
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to leave squad." });
+                return;
+            }
 
             const currentSave = SaveManager.load();
             currentSave.lastSquadLeaveTime = Date.now();
@@ -345,12 +328,11 @@ export default function Squads({ isCarousel }) {
         setNewMessage('');
         SoundManager.playUIClick();
 
-        // Optimistically add to local state immediately
         const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'Pilot').trim();
         const optimisticMsg = {
             id: `optimistic-${Date.now()}`,
             squad_id: mySquad.id,
-            user_id: user.id,
+            wallet_address: walletAddr,
             player_name: displayName,
             player_title: (user?.data?.player_title || '').trim(),
             content: content,
@@ -359,18 +341,20 @@ export default function Squads({ isCarousel }) {
         setMessages(prev => [...prev, optimisticMsg]);
         
         try {
-            const saved = await base44.entities.SquadMessage.create({
-                squad_id: mySquad.id,
-                wallet_address: walletAddr,
-                player_name: displayName,
-                player_title: (user?.data?.player_title || '').trim(),
-                content: content
+            const accessToken = getAuthToken();
+            if (!accessToken) throw new Error('Not authenticated');
+            const res = await base44.functions.invoke('squadActions', {
+                action: 'sendMessage', accessToken,
+                squadId: mySquad.id,
+                content,
+                playerName: displayName,
+                playerTitle: (user?.data?.player_title || '').trim(),
             });
-            // Replace optimistic message with real one
-            setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? saved : m));
+            if (res.data?.message) {
+                setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? res.data.message : m));
+            }
         } catch (e) {
             console.error('[Squad] Failed to send message:', e);
-            // Remove optimistic message on failure
             setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
         }
     };
@@ -378,19 +362,21 @@ export default function Squads({ isCarousel }) {
     const isLeader = myMemberRecord?.role === 'leader';
 
     const handleKickMember = async (member) => {
-    if (!isLeader || member.wallet_address === (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address)) return;
+        if (!isLeader) return;
         try {
             SoundManager.playUIClick();
-            await base44.entities.SquadMember.delete(member.id);
-            await base44.entities.Squad.update(mySquad.id, {
-                member_count: Math.max(0, (mySquad.member_count || 1) - 1)
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
+            const res = await base44.functions.invoke('squadActions', {
+                action: 'kick', accessToken,
+                squadId: mySquad.id,
+                targetMemberId: member.id,
             });
-            await base44.entities.SquadMessage.create({
-                squad_id: mySquad.id,
-                wallet_address: 'system',
-                player_name: 'SYSTEM',
-                content: `${member.player_name} was removed from the squad.`
-            });
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to kick member." });
+                return;
+            }
             setSquadMembers(prev => prev.filter(m => m.id !== member.id));
             toast({ title: "Member Kicked", description: `${member.player_name} has been removed.` });
         } catch (e) {
@@ -399,23 +385,26 @@ export default function Squads({ isCarousel }) {
     };
 
     const handleTransferLeadership = async (member) => {
-        if (!isLeader || member.wallet_address === (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address)) return;
+        if (!isLeader) return;
         try {
             SoundManager.playUIClick();
-            // Demote current leader, promote new leader
-            await base44.entities.SquadMember.update(myMemberRecord.id, { role: 'member' });
-            await base44.entities.SquadMember.update(member.id, { role: 'leader' });
-            await base44.entities.Squad.update(mySquad.id, { owner_wallet: member.wallet_address });
-            await base44.entities.SquadMessage.create({
-                squad_id: mySquad.id,
-                wallet_address: 'system',
-                player_name: 'SYSTEM',
-                content: `${member.player_name} is now the squad leader!`
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
+            const res = await base44.functions.invoke('squadActions', {
+                action: 'transferLeadership', accessToken,
+                squadId: mySquad.id,
+                targetMemberId: member.id,
             });
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to transfer leadership." });
+                return;
+            }
+            const { newLeaderMemberId, oldLeaderMemberId } = res.data;
             setMyMemberRecord(prev => ({ ...prev, role: 'member' }));
             setSquadMembers(prev => prev.map(m => {
-                if (m.id === myMemberRecord.id) return { ...m, role: 'member' };
-                if (m.id === member.id) return { ...m, role: 'leader' };
+                if (m.id === oldLeaderMemberId) return { ...m, role: 'member' };
+                if (m.id === newLeaderMemberId) return { ...m, role: 'leader' };
                 return m;
             }));
             toast({ title: "Leadership Transferred", description: `${member.player_name} is now the leader.` });
@@ -429,13 +418,22 @@ export default function Squads({ isCarousel }) {
         if (!editName.trim() || !editTag.trim()) return;
         setIsSavingSettings(true);
         try {
-            const updated = await base44.entities.Squad.update(mySquad.id, {
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
+            const res = await base44.functions.invoke('squadActions', {
+                action: 'saveSettings', accessToken,
+                squadId: mySquad.id,
                 name: editName.trim(),
-                tag: editTag.trim().toUpperCase().substring(0, 4),
+                tag: editTag.trim(),
                 description: editDesc.trim(),
-                icon: editIcon
+                icon: editIcon,
             });
-            setMySquad(updated);
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to save settings." });
+                return;
+            }
+            setMySquad(res.data.squad);
             toast({ title: "Settings Saved", description: "Squad info has been updated." });
         } catch (e) {
             console.error(e);
@@ -461,23 +459,22 @@ export default function Squads({ isCarousel }) {
         if ((mySquad.weekly_kills || 0) >= tier.target && myMemberRecord.last_payout_week !== currentWeek) {
             try {
                 SoundManager.playLevelUp();
-                
-                // Update local save
+                const accessToken = getAuthToken();
+                if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
+                const res = await base44.functions.invoke('squadActions', {
+                    action: 'claimWeekly', accessToken,
+                    memberId: myMemberRecord.id,
+                    currentWeek,
+                });
+                if (!res.data?.success) { toast({ title: "Error", description: res.data?.error }); return; }
+
                 const currentSave = SaveManager.load();
                 currentSave.gold += tier.gold;
                 currentSave.relicFragments = (currentSave.relicFragments || 0) + tier.fragments;
                 SaveManager.save(currentSave);
-                
-                // Update member record
-                const updatedMember = await base44.entities.SquadMember.update(myMemberRecord.id, {
-                    last_payout_week: currentWeek
-                });
-                setMyMemberRecord(updatedMember);
-                
-                toast({
-                    title: "Weekly Bounty Claimed!",
-                    description: `You received ${tier.gold.toLocaleString()} Gold and ${tier.fragments} Relic Fragments!`,
-                });
+                setMyMemberRecord(res.data.member);
+                toast({ title: "Weekly Bounty Claimed!", description: `You received ${tier.gold.toLocaleString()} Gold and ${tier.fragments} Relic Fragments!` });
             } catch (e) {
                 console.error(e);
             }
@@ -501,23 +498,22 @@ export default function Squads({ isCarousel }) {
         if ((mySquad.daily_kills || 0) >= tier.target && myMemberRecord.last_daily_payout_date !== currentDay) {
             try {
                 SoundManager.playGoldPickup();
-                
-                // Update local save
+                const accessToken = getAuthToken();
+                if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
+                const res = await base44.functions.invoke('squadActions', {
+                    action: 'claimDaily', accessToken,
+                    memberId: myMemberRecord.id,
+                    currentDay,
+                });
+                if (!res.data?.success) { toast({ title: "Error", description: res.data?.error }); return; }
+
                 const currentSave = SaveManager.load();
                 currentSave.gold += tier.gold;
                 currentSave.relicFragments = (currentSave.relicFragments || 0) + tier.fragments;
                 SaveManager.save(currentSave);
-                
-                // Update member record
-                const updatedMember = await base44.entities.SquadMember.update(myMemberRecord.id, {
-                    last_daily_payout_date: currentDay
-                });
-                setMyMemberRecord(updatedMember);
-                
-                toast({
-                    title: "Daily Bounty Claimed!",
-                    description: `You received ${tier.gold.toLocaleString()} Gold${tier.fragments > 0 ? ` and ${tier.fragments} Relic Fragments` : ''}!`,
-                });
+                setMyMemberRecord(res.data.member);
+                toast({ title: "Daily Bounty Claimed!", description: `You received ${tier.gold.toLocaleString()} Gold${tier.fragments > 0 ? ` and ${tier.fragments} Relic Fragments` : ''}!` });
             } catch (e) {
                 console.error(e);
             }
