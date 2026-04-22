@@ -36,6 +36,8 @@ Deno.serve(async (req) => {
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
         const walletAddress = verifyResult.walletAddress;
 
+        const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+        
         const existing = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
 
         if (existing.length > 0) {

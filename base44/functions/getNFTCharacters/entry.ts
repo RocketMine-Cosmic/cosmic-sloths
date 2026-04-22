@@ -20,9 +20,9 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
-        const { accessToken } = await req.json();
+        const { accessToken, walletAddress } = await req.json();
         
-        if (!accessToken) {
+        if (!accessToken || !walletAddress) {
             return Response.json({ unlockedCharacters: [] });
         }
 
@@ -36,15 +36,26 @@ Deno.serve(async (req) => {
             return Response.json({ unlockedCharacters: [] });
         }
 
-        // Fetch user's NFTs from OmenX
-        const nftsResult = await sdk.getUserNFTs();
-        if (!nftsResult || !Array.isArray(nftsResult)) {
+        // Fetch NFTs from custom API
+        const customApiUrl = Deno.env.get('CUSTOM_NFT_API_URL');
+        if (!customApiUrl) {
+            console.warn('[getNFTCharacters] CUSTOM_NFT_API_URL not configured');
             return Response.json({ unlockedCharacters: [] });
         }
 
-        // Extract NFT names and match against character IDs
-        // OmenX NFT names should match character IDs (e.g., "neobyte", "pandypaws", etc.)
-        const nftNames = nftsResult.map(nft => nft.name?.toLowerCase().trim()).filter(Boolean);
+        const nftRes = await fetch(`${customApiUrl}?wallet=${walletAddress}`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!nftRes.ok) {
+            console.error(`[getNFTCharacters] API failed: ${nftRes.status}`);
+            return Response.json({ unlockedCharacters: [] });
+        }
+
+        const nftData = await nftRes.json();
+        const nftNames = (nftData.nfts || [])
+            .map(nft => (nft.name || '').toLowerCase().trim())
+            .filter(Boolean);
         
         console.log(`[getNFTCharacters] User has ${nftNames.length} NFTs: ${nftNames.join(', ')}`);
 
