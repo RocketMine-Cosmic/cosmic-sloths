@@ -73,22 +73,43 @@ export default function Hub({ isCarousel }) {
     const { user: omenxUser } = useOmenXUser();
 
     React.useEffect(() => {
-        let isMounted = true;
-        const initOmenX = async () => {
-            const auth = getOmenXAuth();
-            if (!isMounted) return;
-            setOmenxAuth(auth);
-            
-            if (auth?.walletAddress) {
-                try {
-                    // Initialize SaveManager first (pulls cloud sync)
-                    await SaveManager.initialize();
-                    if (!isMounted) return;
-                    
-                    // Then load merged save
-                    const mergedSave = SaveManager.load();
-                    if (!isMounted) return;
-                    setSave(mergedSave);
+         let isMounted = true;
+         const initOmenX = async () => {
+             const auth = getOmenXAuth();
+             if (!isMounted) return;
+             setOmenxAuth(auth);
+
+             if (auth?.walletAddress) {
+                 try {
+                     // Initialize SaveManager first (pulls cloud sync)
+                     await SaveManager.initialize();
+                     if (!isMounted) return;
+
+                     // Then load merged save
+                     const mergedSave = SaveManager.load();
+                     if (!isMounted) return;
+
+                     // Auto-unlock NFT characters
+                     try {
+                         const { data: playerData } = await base44.functions.invoke('getPlayerData', {
+                             walletAddress: auth.walletAddress,
+                             accessToken: auth.accessToken,
+                         });
+                         if (playerData?.nfts?.length > 0) {
+                             const nftCharIds = playerData.nfts
+                                 .map(nft => nft.metadata?.name?.toLowerCase())
+                                 .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
+                             const updatedChars = [...new Set([...mergedSave.unlockedCharacters, ...nftCharIds])];
+                             if (updatedChars.length > mergedSave.unlockedCharacters.length) {
+                                 mergedSave.unlockedCharacters = updatedChars;
+                                 SaveManager.save(mergedSave);
+                             }
+                         }
+                     } catch (nftErr) {
+                         console.error('Failed to sync NFT unlocks:', nftErr);
+                     }
+
+                     setSave(mergedSave);
                     
                     // Check profile name requirement AFTER login confirmed
                     if (!mergedSave.hasSetProfileName) {
