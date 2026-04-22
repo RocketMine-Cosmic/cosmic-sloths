@@ -27,17 +27,23 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        // Fetch balance + VIP in parallel (no extra verify calls)
-        const [balanceData, bonusLevel] = await Promise.all([
-            balanceSdk.getPlayerBalances(walletAddress, '56').catch(() => null),
+        // Fetch player data (balance + NFTs) + VIP in parallel
+        const [playerData, bonusLevel] = await Promise.all([
+            balanceSdk.getPlayer(walletAddress, '56').catch(() => null),
             authSdk.getPlayerGameBonusPointsLevel(walletAddress).catch(() => null),
         ]);
 
-        const omenxToken = balanceData?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+        const omenxToken = playerData?.balances?.tokens?.find(t => t.symbol === 'OMENX');
         const balance = parseFloat(omenxToken?.balance ?? '0');
         const vipLevel = bonusLevel ?? 0;
+        
+        // Extract NFT character names
+        const nfts = playerData?.nfts || [];
+        const unlockedCharacters = nfts
+            .map(nft => (nft.name || '').toLowerCase().trim())
+            .filter(Boolean);
 
-        return Response.json({ balance, vipLevel });
+        return Response.json({ balance, vipLevel, unlockedCharacters });
     } catch (error) {
         console.error('[getPlayerData]', error.message);
         return Response.json({ balance: 0, vipLevel: 0 });
