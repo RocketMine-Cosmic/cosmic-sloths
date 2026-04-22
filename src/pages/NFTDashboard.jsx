@@ -53,11 +53,11 @@ export default function NFTDashboard({ isCarousel }) {
 
     const getRarityColor = (rarity) => {
         const rarityMap = {
-            legendary: { border: 'border-yellow-600/60', shadow: 'shadow-[0_0_30px_rgba(234,179,8,0.2)]', glow: 'drop-shadow(0 0 15px rgba(234,179,8,0.4))' },
-            epic: { border: 'border-purple-600/60', shadow: 'shadow-[0_0_30px_rgba(147,51,234,0.2)]', glow: 'drop-shadow(0 0 15px rgba(147,51,234,0.4))' },
-            rare: { border: 'border-blue-600/60', shadow: 'shadow-[0_0_30px_rgba(37,99,235,0.2)]', glow: 'drop-shadow(0 0 15px rgba(37,99,235,0.4))' },
-            uncommon: { border: 'border-green-600/60', shadow: 'shadow-[0_0_30px_rgba(22,163,74,0.2)]', glow: 'drop-shadow(0 0 15px rgba(22,163,74,0.4))' },
-            common: { border: 'border-slate-600/60', shadow: 'shadow-[0_0_30px_rgba(71,85,105,0.2)]', glow: 'drop-shadow(0 0 15px rgba(71,85,105,0.3))' }
+            legendary: { border: 'border-2 border-yellow-500', shadow: 'shadow-[0_0_30px_rgba(234,179,8,0.2)]', glow: 'drop-shadow(0 0 15px rgba(234,179,8,0.4))' },
+            epic: { border: 'border-2 border-purple-500', shadow: 'shadow-[0_0_30px_rgba(147,51,234,0.2)]', glow: 'drop-shadow(0 0 15px rgba(147,51,234,0.4))' },
+            rare: { border: 'border-2 border-blue-500', shadow: 'shadow-[0_0_30px_rgba(37,99,235,0.2)]', glow: 'drop-shadow(0 0 15px rgba(37,99,235,0.4))' },
+            uncommon: { border: 'border-2 border-green-500', shadow: 'shadow-[0_0_30px_rgba(22,163,74,0.2)]', glow: 'drop-shadow(0 0 15px rgba(22,163,74,0.4))' },
+            common: { border: 'border-2 border-slate-500', shadow: 'shadow-[0_0_30px_rgba(71,85,105,0.2)]', glow: 'drop-shadow(0 0 15px rgba(71,85,105,0.3))' }
         };
         return rarityMap[rarity?.toLowerCase()] || rarityMap.common;
     };
@@ -115,11 +115,11 @@ export default function NFTDashboard({ isCarousel }) {
                                     <div key={idx} className={`bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border ${rarityColor.border} ${rarityColor.shadow}`}>
                                         <div className="flex items-start gap-4">
                                             {charData?.image ? (
-                                                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 md:border-4 ${rarityColor.border} shrink-0`} style={{ filter: rarityColor.glow }}>
-                                                    <img src={charData.image} alt={charData.name} className="w-full h-full object-cover" />
-                                                </div>
-                                            ) : (
-                                                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full bg-slate-800 border-2 md:border-4 ${rarityColor.border} shrink-0`} />
+                                                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 md:border-4 ${rarityColor.border.split(' ')[1]} shrink-0`} style={{ filter: rarityColor.glow }}>
+                                                                 <img src={charData.image} alt={charData.name} className="w-full h-full object-cover" />
+                                                             </div>
+                                                         ) : (
+                                                             <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full bg-slate-800 border-2 md:border-4 ${rarityColor.border.split(' ')[1]} shrink-0`} />
                                             )}
                                             
                                             <div className="flex-1 min-w-0">
