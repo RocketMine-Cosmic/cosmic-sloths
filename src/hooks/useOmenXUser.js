@@ -58,12 +58,15 @@ export function useOmenXUser() {
 
         if (cachedUser !== null) { setUser(cachedUser); setLoading(false); }
 
-        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopPolling(); pollInitialized = false; fetchUser().then(() => startPolling()); } };
+        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { stopPolling(); pollInitialized = false; fetchUser(true).then(() => startPolling()); } };
+        const onUserUpdated = () => { fetchUser(true); };
         window.addEventListener('storage', onStorage);
+        window.addEventListener('omenxUserUpdated', onUserUpdated);
 
         return () => {
             listeners.delete(listener);
             window.removeEventListener('storage', onStorage);
+            window.removeEventListener('omenxUserUpdated', onUserUpdated);
             if (listeners.size === 0) { stopPolling(); }
         };
     }, []);

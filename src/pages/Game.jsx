@@ -15,7 +15,7 @@ import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
 import { useOmenXBalance } from '@/hooks/useOmenXBalance';
-import { getOmenXUser } from '@/lib/omenxUser';
+import { getOmenXUserSync } from '@/lib/omenxUser';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 
@@ -105,7 +105,7 @@ export default function Game() {
 
         const saveScore = async (stats, isVictory) => {
             try {
-                const user = getOmenXUser();
+                const user = getOmenXUserSync();
                 if (!user) return;
                 const displayName = user.player_name || user.full_name;
                 const walletAddress = user.walletAddress;
@@ -248,7 +248,7 @@ export default function Game() {
                 
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    const user = getOmenXUser();
+                    const user = getOmenXUserSync();
                     base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name || omenxAuth?.username || omenxAuth?.walletAddress, accessToken: omenxAuth?.accessToken })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
@@ -299,7 +299,7 @@ export default function Game() {
                 
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    const user = getOmenXUser();
+                    const user = getOmenXUserSync();
                     base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name || omenxAuth?.username || omenxAuth?.walletAddress, accessToken: omenxAuth?.accessToken })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }

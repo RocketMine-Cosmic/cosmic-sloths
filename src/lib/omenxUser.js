@@ -1,6 +1,30 @@
 import { getAuthFromIndexedDB, saveAuthToIndexedDB } from './indexedDbAuth.js';
 
 /**
+ * Synchronous version — reads localStorage only. Use in game callbacks where async is not possible.
+ */
+export function getOmenXUserSync() {
+    try {
+        const authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
+        if (!authData?.walletAddress) return null;
+        return {
+            walletAddress: authData.walletAddress,
+            username: authData.username,
+            full_name: authData.username || authData.player_name || 'Player',
+            player_name: authData.player_name || authData.username || 'Player',
+            pilot_icon: authData.pilot_icon || '🦥',
+            data: {
+                player_name: authData.player_name || authData.username || 'Player',
+                player_title: authData.player_title || '',
+                pilot_icon: authData.pilot_icon || '🦥',
+            }
+        };
+    } catch {
+        return null;
+    }
+}
+
+/**
  * Gets the current OmenX user data from IndexedDB or localStorage.
  * Replaces base44.auth.me() for wallet-only auth.
  */
