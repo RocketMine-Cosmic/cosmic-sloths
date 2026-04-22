@@ -90,6 +90,13 @@ export const SaveManager = {
     }
   },
 
+  syncToBackendImmediate: async () => {
+    // Flush pending sync and call immediately (no debounce)
+    if (syncTimeout) clearTimeout(syncTimeout);
+    pendingSync = false;
+    return SaveManager.syncToBackend();
+  },
+
   load: () => {
     // Sync cloud to local if needed (synchronously check, but don't block render)
     if (!localStorage.getItem('cosmic_sloth_save') && SaveManager._walletAddress) {

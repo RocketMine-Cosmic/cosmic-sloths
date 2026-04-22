@@ -48,7 +48,16 @@ export default function Upgrades({ isCarousel }) {
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
         window.addEventListener('saveUpdated', handleSaveUpdated);
-        return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
+        
+        const handleBeforeUnload = () => {
+            SaveManager.syncToBackendImmediate();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        
+        return () => {
+            window.removeEventListener('saveUpdated', handleSaveUpdated);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
     }, []);
 
     const [activeCategory, setActiveCategory] = useState('permanent');
@@ -134,7 +143,7 @@ export default function Upgrades({ isCarousel }) {
                 s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
                 SaveManager.save(s);
                 setSave(s);
-                syncSaveToBackend(s);
+                SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyStat] purchase failed:', err))
               .finally(() => setPurchasing(false));
@@ -172,7 +181,7 @@ export default function Upgrades({ isCarousel }) {
                 s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
                 SaveManager.save(s);
                 setSave(s);
-                syncSaveToBackend(s);
+                SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyWeapon] purchase failed:', err))
               .finally(() => setPurchasing(false));
@@ -209,7 +218,7 @@ export default function Upgrades({ isCarousel }) {
                 s[saveKey][selectedChar].push(talent.id);
                 SaveManager.save(s);
                 setSave(s);
-                syncSaveToBackend(s);
+                SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyTalent] purchase failed:', err))
               .finally(() => setPurchasing(false));
@@ -297,7 +306,7 @@ export default function Upgrades({ isCarousel }) {
                     s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
                     SaveManager.save(s);
                     setSave(s);
-                    syncSaveToBackend(s);
+                    SaveManager.syncToBackendImmediate();
                     SoundManager.playUIClick();
                 }).catch(err => console.error('[handleBuyCosmetic skin] purchase failed:', err))
                   .finally(() => setPurchasing(false));
@@ -343,7 +352,7 @@ export default function Upgrades({ isCarousel }) {
                 s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
                 SaveManager.save(s);
                 setSave(s);
-                syncSaveToBackend(s);
+                SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             }).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed:', err))
               .finally(() => setPurchasing(false));
