@@ -18,30 +18,16 @@
     "save_data"
   ],
   "rls": {
-    "create": {},
-    "read": {
-      "$or": [
-        {
-          "data.wallet_address": "{{user.wallet_address}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
     },
+    "read": {},
     "update": {
-      "$or": [
-        {
-          "data.wallet_address": "{{user.wallet_address}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {

@@ -32,12 +32,12 @@
     "damage"
   ],
   "rls": {
-    "read": {},
     "create": {
       "user_condition": {
         "role": "admin"
       }
     },
+    "read": {},
     "update": {
       "user_condition": {
         "role": "admin"

@@ -63,19 +63,12 @@
     "season_id"
   ],
   "rls": {
-    "read": {},
     "create": {
-      "$or": [
-        {
-          "data.wallet_address": "{{user.wallet_address}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
+    "read": {},
     "update": {
       "user_condition": {
         "role": "admin"

@@ -55,32 +55,20 @@
   ],
   "rls": {
     "create": {
-      "authenticated": true
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "read": {},
     "update": {
-      "$or": [
-        {
-          "data.owner_wallet": "{{user.wallet_address}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$or": [
-        {
-          "data.owner_wallet": "{{user.wallet_address}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

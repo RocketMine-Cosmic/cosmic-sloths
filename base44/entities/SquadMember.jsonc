@@ -36,31 +36,21 @@
     "player_name"
   ],
   "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "read": {},
-    "create": {},
     "update": {
-      "$or": [
-        {
-          "data.wallet_address": "{{user.wallet_address}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$or": [
-        {
-          "data.wallet_address": "{{user.wallet_address}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }
