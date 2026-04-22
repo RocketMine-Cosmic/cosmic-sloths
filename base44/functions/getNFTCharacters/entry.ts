@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
         }
 
         // Fetch NFTs from OmenX
-        const nfts = await sdk.getPlayerNfts(walletAddress, '8453', { limit: 100 });
+        const nfts = await sdk.getPlayerNfts(walletAddress, '56', { limit: 100 });
         
         const nftNames = (nfts || [])
             .map(nft => (nft.name || '').toLowerCase().trim())
