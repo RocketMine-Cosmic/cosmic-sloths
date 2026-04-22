@@ -8,14 +8,17 @@ import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import { useOmenXUser } from '@/hooks/useOmenXUser';
 
 export default function NFTDashboard({ isCarousel }) {
     const navigate = useNavigate();
+    const { user: omenxUser } = useOmenXUser();
     const [nfts, setNfts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchNFTs = async () => {
+            setLoading(true);
             try {
                 const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                 if (!omenxAuth?.walletAddress || !omenxAuth?.accessToken) {
@@ -41,7 +44,7 @@ export default function NFTDashboard({ isCarousel }) {
         };
 
         fetchNFTs();
-    }, []);
+    }, [omenxUser]);
 
     const getCharacterData = (charName) => {
         const char = CHARACTERS.find(c => c.id === charName.toLowerCase());
