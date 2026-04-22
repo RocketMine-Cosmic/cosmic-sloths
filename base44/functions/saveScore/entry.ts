@@ -20,7 +20,7 @@ function getCurrentPeriodIds() {
 // In-memory verify cache — avoids redundant OmenX round-trips for the same token
 // Cache entries expire after 5 minutes; Deno isolate memory is per-instance so this is safe
 const verifyCache = new Map(); // token -> { walletAddress, expiresAt }
-const VERIFY_CACHE_TTL = 20 * 60 * 1000; // 20 minutes
+const VERIFY_CACHE_TTL = 60 * 60 * 1000; // 60 minutes
 
 async function verifyToken(sdk, accessToken) {
     const now = Date.now();
