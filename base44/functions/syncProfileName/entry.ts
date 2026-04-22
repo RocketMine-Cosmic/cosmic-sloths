@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 Deno.serve(async (req) => {
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
         }
         const walletAddress = verifyResult.user.walletAddress;
 
-        const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') }).asServiceRole;
+        const db = createClientFromRequest(req).asServiceRole;
 
         // Update pilotName in PlayerSave
         const saves = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });

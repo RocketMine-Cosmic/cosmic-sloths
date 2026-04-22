@@ -1,5 +1,5 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
         const walletAddress = verifyResult.user.walletAddress;
 
-        const base44 = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+        const base44 = createClientFromRequest(req);
 
         const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
 
