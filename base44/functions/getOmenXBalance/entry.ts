@@ -25,20 +25,18 @@ Deno.serve(async (req) => {
             }
 
             const playerData = await sdk.getPlayer(walletAddress, '56');
-            console.log('[getOmenXBalance] Full playerData:', JSON.stringify(playerData, null, 2));
             
             // Extract OMENX balance
             const omenxToken = playerData?.balances?.tokens?.find(t => t.symbol === 'OMENX');
             const balance = parseFloat(omenxToken?.balance ?? '0');
             
-            // Try different NFT field names
-            const nfts = playerData?.nfts || playerData?.items || playerData?.assets || [];
-            console.log('[getOmenXBalance] NFTs found:', nfts.length);
+            // Extract NFT character names from player.nfts array
+            const nfts = playerData?.nfts || [];
             const unlockedCharacters = nfts
-                .map(nft => (nft.name || nft.title || '').toLowerCase().trim())
+                .map(nft => (nft.name || '').toLowerCase().trim())
                 .filter(Boolean);
 
-            return Response.json({ balance, unlockedCharacters, debugNfts: nfts });
+            return Response.json({ balance, unlockedCharacters });
         } catch {
             // Token verification or balance fetch failed, return 0
         }

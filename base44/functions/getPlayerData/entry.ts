@@ -36,8 +36,6 @@ Deno.serve(async (req) => {
         const omenxToken = playerData?.balances?.tokens?.find(t => t.symbol === 'OMENX');
         const balance = parseFloat(omenxToken?.balance ?? '0');
         const vipLevel = bonusLevel ?? 0;
-        
-        // Extract NFT character names
         const nfts = playerData?.nfts || [];
         const unlockedCharacters = nfts
             .map(nft => (nft.name || '').toLowerCase().trim())
