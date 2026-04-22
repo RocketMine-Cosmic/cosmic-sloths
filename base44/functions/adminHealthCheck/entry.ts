@@ -1,5 +1,7 @@
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
@@ -15,10 +17,6 @@ Deno.serve(async (req) => {
         const verifyResult = await sdk.verifyOAuthUser(accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
-        const base44 = createClientFromRequest(req);
-        const db = base44.asServiceRole;
-
-        // Current period IDs
         const now = new Date();
         const year = now.getUTCFullYear();
         const startOfYear = new Date(Date.UTC(year, 0, 1));
@@ -39,7 +37,6 @@ Deno.serve(async (req) => {
             db.entities.GlobalBossContribution.filter({ week_id }),
         ]);
 
-        // Duplicate score check
         const walletMap = {};
         weekScores.forEach(s => {
             if (!s.wallet_address) return;
@@ -47,31 +44,25 @@ Deno.serve(async (req) => {
         });
         const duplicateCount = Object.values(walletMap).filter(c => c > 1).length;
 
-        // Orphaned members
         const squadIds = new Set(squads.map(s => s.id));
         const orphanedMembers = members.filter(m => !squadIds.has(m.squad_id)).length;
 
-        // Pool checks
         const weeklyPool = pools.find(p => p.period_type === 'weekly' && p.period_id === week_id);
         const seasonalPool = pools.find(p => p.period_type === 'seasonal' && p.period_id === season_id);
 
-        // Boss
         const boss = bosses.length > 0 ? bosses[0] : null;
         const bossHpPct = boss ? Math.round((boss.current_hp / boss.max_hp) * 100) : null;
 
-        // Total players (approximate from saves count)
         const allSaves = await db.entities.PlayerSave.list('-updated_at', 1000);
 
         return Response.json({
-            week_id,
-            season_id,
+            week_id, season_id,
             undistributedCount: pools.length,
             weeklyPoolExists: !!weeklyPool,
             seasonalPoolExists: !!seasonalPool,
             totalPlayers: allSaves.length,
             scoresThisWeek: weekScores.length,
-            duplicateCount,
-            orphanedMembers,
+            duplicateCount, orphanedMembers,
             bossExists: !!boss,
             bossDefeated: boss?.is_defeated || false,
             bossHpPct,

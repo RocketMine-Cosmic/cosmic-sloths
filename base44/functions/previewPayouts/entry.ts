@@ -1,4 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 function getWeeklyRewardPercentage(rank) {
     if (rank === 1) return 0.10;
@@ -61,38 +63,34 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { period_id, period_type, walletAddress } = await req.json();
         if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
         
-        // Check if wallet is authorized admin
-        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress });
+        const adminWallets = await db.entities.AdminWallet.filter({ wallet_address: walletAddress });
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
         if (!period_id || !period_type) return Response.json({ error: 'period_id and period_type required' }, { status: 400 });
 
-        const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type });
+        const pools = await db.entities.TokenPool.filter({ period_id, period_type });
         if (pools.length === 0) return Response.json({ error: 'No pool found for that period' }, { status: 404 });
 
         const pool = pools[0];
-
         let payments = [];
         let rewardPool = 0;
 
         if (period_type === 'weekly') {
             rewardPool = Math.floor(pool.total_spent * 0.25);
-            const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: period_id }, '-score', 300);
+            const scores = await db.entities.RunScore.filter({ week_id: period_id }, '-score', 300);
             payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
         } else if (period_type === 'seasonal') {
             rewardPool = Math.floor(pool.total_spent * 0.35);
-            const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: period_id }, '-score', 400);
+            const scores = await db.entities.RunScore.filter({ season_id: period_id }, '-score', 400);
             payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
 
         return Response.json({
-            period_id,
-            period_type,
+            period_id, period_type,
             total_spent: pool.total_spent,
             reward_pool: rewardPool,
             distributed: pool.distributed,

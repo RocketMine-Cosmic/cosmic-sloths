@@ -1,4 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -25,8 +27,7 @@ async function postToDiscord(webhookUrl, embed) {
     }
 }
 
-// Get top 2 unique players for a period filter
-async function getTopTwo(db, filter) {
+async function getTopTwo(filter) {
     const scores = await db.entities.RunScore.filter(filter, '-score', 50);
     const seen = new Set();
     const unique = [];
@@ -43,50 +44,39 @@ async function getTopTwo(db, filter) {
 function isTakeover(top2, newScore) {
     const currentTop = top2[0];
     if (!currentTop) return false;
-    const isThisPlayer =
-        currentTop.wallet_address === newScore.wallet_address ||
-        currentTop.user_id === newScore.user_id;
+    const isThisPlayer = currentTop.wallet_address === newScore.wallet_address || currentTop.user_id === newScore.user_id;
     const isThisScore = currentTop.score === newScore.score;
     if (!isThisPlayer || !isThisScore) return false;
-    // Check if #2 is a different player (i.e. someone was displaced)
     const prevTop = top2[1];
     return !prevTop || prevTop.wallet_address !== newScore.wallet_address;
 }
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const webhookUrl = Deno.env.get('DISCORD_ALERT_WEBHOOK');
-        if (!webhookUrl) {
-            return Response.json({ error: 'DISCORD_ALERT_WEBHOOK not configured' }, { status: 500 });
-        }
+        if (!webhookUrl) return Response.json({ error: 'DISCORD_ALERT_WEBHOOK not configured' }, { status: 500 });
 
         const body = await req.json();
         const newScore = body.data;
 
-        if (!newScore || !newScore.score) {
-            return Response.json({ skipped: 'no score data' });
-        }
+        if (!newScore || !newScore.score) return Response.json({ skipped: 'no score data' });
 
         const { week_id, season_id } = getCurrentPeriodIds();
         const isCurrentWeek = newScore.week_id === week_id;
         const isCurrentSeason = newScore.season_id === season_id;
 
-        if (!isCurrentWeek && !isCurrentSeason) {
-            return Response.json({ skipped: 'not current period' });
-        }
+        if (!isCurrentWeek && !isCurrentSeason) return Response.json({ skipped: 'not current period' });
 
         const name = newScore.player_name || 'Unknown Pilot';
         const icon = newScore.pilot_icon || '🦥';
         const title = newScore.player_title ? ` — *${newScore.player_title}*` : '';
         const score = newScore.score?.toLocaleString() || '0';
-        const db = base44.asServiceRole;
 
         const alerts = [];
 
         const [weeklyTop2, seasonalTop2] = await Promise.all([
-            isCurrentWeek   ? getTopTwo(db, { week_id })   : Promise.resolve([]),
-            isCurrentSeason ? getTopTwo(db, { season_id }) : Promise.resolve([]),
+            isCurrentWeek   ? getTopTwo({ week_id })   : Promise.resolve([]),
+            isCurrentSeason ? getTopTwo({ season_id }) : Promise.resolve([]),
         ]);
 
         if (isCurrentWeek && isTakeover(weeklyTop2, newScore)) {
@@ -109,9 +99,7 @@ Deno.serve(async (req) => {
             });
         }
 
-        if (alerts.length === 0) {
-            return Response.json({ skipped: 'not a #1 takeover' });
-        }
+        if (alerts.length === 0) return Response.json({ skipped: 'not a #1 takeover' });
 
         await Promise.all(alerts.map(embed => postToDiscord(webhookUrl, embed)));
 

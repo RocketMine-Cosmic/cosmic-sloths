@@ -1,7 +1,8 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-// Period ID calculation — uses UTC ISO week, canonical across all functions
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+
 function getCurrentPeriodIds() {
     const now = new Date();
     const year = now.getUTCFullYear();
@@ -22,9 +23,7 @@ Deno.serve(async (req) => {
         if (!skuId) return Response.json({ error: 'Missing skuId' }, { status: 400 });
         if (!clientWallet) return Response.json({ error: 'Missing walletAddress' }, { status: 400 });
 
-        // Compute period IDs server-side — never trust client values, always recalculate
         const { week_id, season_id } = getCurrentPeriodIds();
-        // Ignore any client-provided period IDs for security
 
         const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
@@ -32,7 +31,6 @@ Deno.serve(async (req) => {
 
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
-        // Verify identity via OmenX — require accessToken
         if (!accessToken) {
             return Response.json({ error: 'accessToken required for verification' }, { status: 401 });
         }
@@ -44,7 +42,6 @@ Deno.serve(async (req) => {
         
         const walletAddress = result.user.walletAddress;
 
-        // Look up the canonical OMENX price from the OmenX product catalog (server-side, tamper-proof)
         const productsRes = await sdk.getProducts();
         const products = productsRes?.products || productsRes || [];
         const product = products.find(p => p.sku === skuId);
@@ -55,16 +52,10 @@ Deno.serve(async (req) => {
             return Response.json({ error: `No OMENX price for SKU: ${skuId}` }, { status: 400 });
         }
 
-        const base44 = createClientFromRequest(req);
-        const userClient = base44;  // User-scoped for auth check
-        const db = base44.asServiceRole;  // Admin-scoped for TokenPool/TokenSpendLog
-
-        // Generate crypto-random UUID-style idempotency key for true idempotence
         const idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
         console.log(`[purchaseSku] Purchasing SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${walletAddress}`);
 
-        // Charge the player via OmenX SDK — paymentCurrency + paymentAmount triggers on-chain deduction
         const purchaseData = await sdk.createPurchase({
             playerWallet: walletAddress,
             skuId,
@@ -77,7 +68,6 @@ Deno.serve(async (req) => {
         const totalAmount = amount * quantity;
         console.log(`[purchaseSku] OmenX charge confirmed, txHash: ${purchaseData.transactionId || purchaseData.paymentTxHash}, amount: ${totalAmount}`);
 
-        // Ensure PlayerSave exists (in case initializeFirstLogin hasn't been called yet)
         try {
             const existing = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
             if (existing.length === 0) {
@@ -96,16 +86,11 @@ Deno.serve(async (req) => {
             }
         } catch (e) {
             console.error(`[purchaseSku] Failed to ensure PlayerSave exists:`, e);
-            // Don't fail the purchase if this happens, just log it
         }
 
-        // Log the spend and update pools
         const playerName = playerNameParam || walletAddress;
-        
-        // Validate user_id before logging (use wallet as fallback)
         const validUserId = userId || walletAddress;
         if (!validUserId) {
-            console.error('[purchaseSku] No valid user ID or wallet for spend log');
             return Response.json({ error: 'Invalid user identification' }, { status: 400 });
         }
 
@@ -120,7 +105,6 @@ Deno.serve(async (req) => {
             season_id,
         });
 
-        // Update weekly and seasonal pools in parallel
         const [weeklyPools, seasonalPools] = await Promise.all([
             db.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),
             db.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' }),

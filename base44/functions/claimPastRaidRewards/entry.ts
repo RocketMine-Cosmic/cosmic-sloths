@@ -1,15 +1,33 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import moment from 'npm:moment@2.30.1';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+
+function getCurrentWeekId() {
+    const now = new Date();
+    const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+    const startOfWeek = new Date(startOfYear);
+    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+    return `${now.getUTCFullYear()}-W${String(isoWeek).padStart(2, '0')}`;
+}
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const body = await req.json();
+        const { accessToken } = body;
+        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
 
-        const currentWeekId = moment().format('YYYY-[W]ww');
-        
-        const contribs = await base44.asServiceRole.entities.GlobalBossContribution.filter({ user_id: user.wallet_address || user.id });
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
+        const verifyResult = await sdk.verifyOAuthUser(accessToken);
+        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        const walletAddress = verifyResult.user.walletAddress;
+
+        const currentWeekId = getCurrentWeekId();
+        const contribs = await db.entities.GlobalBossContribution.filter({ user_id: walletAddress });
         
         let totalGold = 0;
         let pastUnclaimedCount = 0;
@@ -17,7 +35,7 @@ Deno.serve(async (req) => {
         for (const cont of contribs) {
             if (cont.week_id === currentWeekId) continue;
             
-            const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id: cont.week_id });
+            const bossRecords = await db.entities.GlobalBoss.filter({ week_id: cont.week_id });
             if (bossRecords.length === 0) continue;
             
             const boss = bossRecords[0];
@@ -36,7 +54,7 @@ Deno.serve(async (req) => {
             }
             
             if (newlyClaimed.length > 0) {
-                await base44.asServiceRole.entities.GlobalBossContribution.update(cont.id, { claimed_milestones });
+                await db.entities.GlobalBossContribution.update(cont.id, { claimed_milestones });
             }
         }
         

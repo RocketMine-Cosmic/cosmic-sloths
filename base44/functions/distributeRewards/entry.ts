@@ -1,35 +1,24 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import moment from 'npm:moment@2.30.1';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
-const CHAIN_ID = '56';
-const MAX_PAYOUT_PER_PLAYER = 10000; // Cap individual payouts to prevent data corruption exploits
+const MAX_PAYOUT_PER_PLAYER = 10000;
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        
-        // Check admin authorization: role='admin' OR wallet in AdminWallet entity
-        let isAdmin = user?.role === 'admin';
-        if (!isAdmin && user?.wallet_address) {
-            const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: user.wallet_address });
-            isAdmin = adminWallets.length > 0;
-        }
-        if (!isAdmin) {
-            return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+        const { adminKey } = await req.json();
+        const expectedKey = Deno.env.get('AdminDash');
+        if (!adminKey || adminKey !== expectedKey) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        const sdk = new OmenXServerSDK({
-            apiKey,
-            apiBaseUrl,
-        });
+        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
-        // Use canonical period calculation to ensure uniformity across all systems
         const getCurrentPeriodIds = () => {
             const now = new Date();
             const year = now.getUTCFullYear();
@@ -44,25 +33,22 @@ Deno.serve(async (req) => {
         };
         const { week_id: currentWeekId, season_id: currentSeasonId } = getCurrentPeriodIds();
 
-        // CRITICAL: Reconcile TokenPool with TokenSpendLog — auto-heal any mismatches
         const reconcilePoolBeforeDistribution = async (pool) => {
             const filterKey = pool.period_type === 'weekly' ? { week_id: pool.period_id } : { season_id: pool.period_id };
-            const logs = await base44.asServiceRole.entities.TokenSpendLog.filter(filterKey);
+            const logs = await db.entities.TokenSpendLog.filter(filterKey);
             const logTotal = logs.reduce((sum, log) => sum + (log.amount || 0), 0);
-            
             if (Math.abs(logTotal - pool.total_spent) > 0.01) {
                 console.warn(`[distributeRewards] MISMATCH: ${pool.period_id} (${pool.period_type}): pool=${pool.total_spent}, logs=${logTotal}. Auto-correcting...`);
-                // Always use log total as source of truth (it's from purchaseSku which is verified by OmenX)
-                await base44.asServiceRole.entities.TokenPool.update(pool.id, { total_spent: logTotal });
-                pool.total_spent = logTotal; // Update in-memory reference for distribution
+                await db.entities.TokenPool.update(pool.id, { total_spent: logTotal });
+                pool.total_spent = logTotal;
             }
             console.log(`[distributeRewards] RECONCILED ${pool.period_type} ${pool.period_id}: ${pool.total_spent} OMENX`);
         };
 
-        const undistributedPools = await base44.asServiceRole.entities.TokenPool.filter({ distributed: false });
+        const undistributedPools = await db.entities.TokenPool.filter({ distributed: false });
 
         console.log(`[distributeRewards] Current period: week=${currentWeekId} season=${currentSeasonId}`);
-        console.log(`[distributeRewards] Found ${undistributedPools.length} undistributed pools: ${undistributedPools.map(p => `${p.period_id}(${p.period_type})`).join(', ')}`);
+        console.log(`[distributeRewards] Found ${undistributedPools.length} undistributed pools`);
 
         const results = [];
 
@@ -71,15 +57,12 @@ Deno.serve(async (req) => {
             const isClosedSeasonal = pool.period_type === 'seasonal' && pool.period_id !== currentSeasonId;
 
             if (!isClosedWeekly && !isClosedSeasonal) {
-                console.log(`[distributeRewards] SKIPPING ${pool.period_id} (${pool.period_type}) — still current period, not yet closed`);
                 results.push({ pool: pool.period_id, type: pool.period_type, skipped: 'current period not yet closed' });
                 continue;
             }
 
-            // Double-distribution guard — re-fetch from DB to confirm still undistributed
-            const freshPool = await base44.asServiceRole.entities.TokenPool.get(pool.id);
+            const freshPool = await db.entities.TokenPool.get(pool.id);
             if (freshPool.distributed) {
-                console.warn(`[distributeRewards] DOUBLE-DISTRIBUTION GUARD: ${pool.period_id} already distributed, skipping`);
                 results.push({ pool: pool.period_id, type: pool.period_type, skipped: 'already distributed' });
                 continue;
             }
@@ -87,8 +70,7 @@ Deno.serve(async (req) => {
             if (isClosedWeekly) {
                 try {
                     await reconcilePoolBeforeDistribution(pool);
-                    console.log(`[distributeRewards] PRE-FLIGHT weekly ${pool.period_id}: total_spent=${pool.total_spent} reward_pool=${Math.floor(pool.total_spent * 0.25)} OMENX`);
-                    const result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
+                    const result = await distributeWeekly(sdk, pool, apiBaseUrl, apiKey);
                     results.push({ pool: pool.period_id, type: 'weekly', ...result });
                 } catch (err) {
                     console.error('[distributeRewards] WEEKLY FAILED:', err.message);
@@ -97,8 +79,7 @@ Deno.serve(async (req) => {
             } else if (isClosedSeasonal) {
                 try {
                     await reconcilePoolBeforeDistribution(pool);
-                    console.log(`[distributeRewards] PRE-FLIGHT seasonal ${pool.period_id}: total_spent=${pool.total_spent} reward_pool=${Math.floor(pool.total_spent * 0.35)} OMENX`);
-                    const result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
+                    const result = await distributeSeasonal(sdk, pool, apiBaseUrl, apiKey);
                     results.push({ pool: pool.period_id, type: 'seasonal', ...result });
                 } catch (err) {
                     console.error('[distributeRewards] SEASONAL FAILED:', err.message);
@@ -135,8 +116,9 @@ function getSeasonalRewardPercentage(rank) {
     return 0;
 }
 
+const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
+
 function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
-    // Dedup strictly by wallet_address (primary), then user_id fallback
     const uniqueScores = [];
     const seenWallets = new Set();
     const seenUserIds = new Set();
@@ -145,29 +127,23 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
         if (uniqueScores.length >= maxRank) break;
         const wallet = score.wallet_address;
         const userId = score.user_id;
-
-        // Must have a wallet to receive on-chain rewards
         if (!wallet) continue;
         if (seenWallets.has(wallet)) continue;
         if (userId && seenUserIds.has(userId)) continue;
-
         seenWallets.add(wallet);
         if (userId) seenUserIds.add(userId);
         uniqueScores.push(score);
     }
 
-    // Normalise percentages so they sum to 100%
     let totalPct = 0;
     for (let i = 0; i < uniqueScores.length; i++) totalPct += getPercentageFn(i + 1);
     if (totalPct === 0 || uniqueScores.length === 0) return [];
 
     const multiplier = 1 / totalPct;
-
     const payments = [];
     for (let i = 0; i < uniqueScores.length; i++) {
         let amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
-        // Cap payout per player to prevent corruption exploits
-        amount = Math.min(amount, MAX_PAYOUT_PER_PLAYER);
+        amount = Math.min(amount, MAX_PAYOUT_PER_PLAYER_CAP);
         if (amount >= 1) {
             payments.push({
                 walletAddress: uniqueScores[i].wallet_address,
@@ -180,26 +156,19 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
-async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
-    // Ensure pool has valid amount (min 1 OMENX to distribute)
+async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
     if (!pool.total_spent || pool.total_spent <= 0) {
-        console.warn(`[distributeRewards] Weekly ${pool.period_id}: zero spend, marking as distributed with no payouts`);
-        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'zero spend' };
     }
 
-    // Fetch admin wallets for staff payments (2% of total_spent each, on top of player pool)
-    const adminWallets = await base44.asServiceRole.entities.AdminWallet.list();
+    const adminWallets = await db.entities.AdminWallet.list();
     const STAFF_PCT_PER_WALLET = 0.02;
 
     const rewardPool = Math.floor(pool.total_spent * 0.25);
-    const [scores] = await Promise.all([
-        base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300),
-    ]);
-
+    const scores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
 
-    // Build staff payments — 2% of total_spent per admin wallet
     const staffPayments = adminWallets
         .filter(a => a.wallet_address)
         .map(a => ({
@@ -213,123 +182,82 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const allPayments = [...payments, ...staffPayments];
 
     if (allPayments.length === 0) {
-        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    console.log(`[distributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players + ${staffPayments.length} staff, player_pool=${rewardPool} OMENX, staff_total=${staffPayments.reduce((s, p) => s + p.amount, 0)} OMENX`);
-
     const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
-            payments: allPayments.map(p => ({ 
-                walletAddress: p.walletAddress, 
-                amount: p.amount.toString()
-            })),
+            payments: allPayments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
             note: `weekly payout ${pool.period_id}`,
         }),
     });
     const batchResult = await response.json();
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-    }
-
-    console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
 
     const txId = batchResult?.transactionId || batchResult?.txHash || '';
     await Promise.all([
-        base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true }),
-        ...payments.map(p => base44.asServiceRole.entities.PayoutLog.create({
-            period_id: pool.period_id,
-            period_type: 'weekly',
-            wallet_address: p.walletAddress,
-            player_name: p.player_name || p.walletAddress,
-            amount: p.amount,
-            rank: p.rank,
-            tx_id: txId,
+        db.entities.TokenPool.update(pool.id, { distributed: true }),
+        ...payments.map(p => db.entities.PayoutLog.create({
+            period_id: pool.period_id, period_type: 'weekly',
+            wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+            amount: p.amount, rank: p.rank, tx_id: txId,
         })),
-        ...staffPayments.map(p => base44.asServiceRole.entities.PayoutLog.create({
-            period_id: pool.period_id,
-            period_type: 'staff_weekly',
-            wallet_address: p.walletAddress,
-            player_name: p.player_name,
-            amount: p.amount,
-            rank: 0,
-            tx_id: txId,
+        ...staffPayments.map(p => db.entities.PayoutLog.create({
+            period_id: pool.period_id, period_type: 'staff_weekly',
+            wallet_address: p.walletAddress, player_name: p.player_name,
+            amount: p.amount, rank: 0, tx_id: txId,
         })),
     ]);
 
     return {
-        paid: payments.length,
-        staff_paid: staffPayments.length,
+        paid: payments.length, staff_paid: staffPayments.length,
         totalOmenx: payments.reduce((s, p) => s + p.amount, 0),
         staffOmenx: staffPayments.reduce((s, p) => s + p.amount, 0),
-        payments,
-        staffPayments,
+        payments, staffPayments,
     };
 }
 
-async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
-    // Ensure pool has valid amount (min 1 OMENX to distribute)
+async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
     if (!pool.total_spent || pool.total_spent <= 0) {
-        console.warn(`[distributeRewards] Seasonal ${pool.period_id}: zero spend, marking as distributed with no payouts`);
-        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'zero spend' };
     }
 
     const rewardPool = Math.floor(pool.total_spent * 0.35);
-    const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
-
+    const scores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
 
     if (payments.length === 0) {
-        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    console.log(`[distributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
-
     const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
-            payments: payments.map(p => ({ 
-                walletAddress: p.walletAddress, 
-                amount: p.amount.toString()
-            })),
+            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
             gameId: GAME_ID,
             gameName: GAME_NAME,
             note: `seasonal payout ${pool.period_id}`,
         }),
     });
     const batchResult = await response.json();
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-    }
-
-    console.log(`[distributeRewards] Batch result:`, JSON.stringify(batchResult));
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
 
     const txId = batchResult?.transactionId || batchResult?.txHash || '';
     await Promise.all([
-        base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true }),
-        ...payments.map(p => base44.asServiceRole.entities.PayoutLog.create({
-            period_id: pool.period_id,
-            period_type: 'seasonal',
-            wallet_address: p.walletAddress,
-            player_name: p.player_name || p.walletAddress,
-            amount: p.amount,
-            rank: p.rank,
-            tx_id: txId
-        }))
+        db.entities.TokenPool.update(pool.id, { distributed: true }),
+        ...payments.map(p => db.entities.PayoutLog.create({
+            period_id: pool.period_id, period_type: 'seasonal',
+            wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+            amount: p.amount, rank: p.rank, tx_id: txId,
+        })),
     ]);
 
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };

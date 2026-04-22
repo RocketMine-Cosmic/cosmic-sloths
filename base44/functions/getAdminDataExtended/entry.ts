@@ -1,12 +1,13 @@
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
         const body = await req.json();
         const { type, walletAddress, accessToken, query, period, squadId } = body;
 
-        // Verify OAuth token
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
         
         const sdk = new OmenXServerSDK({
@@ -18,9 +19,6 @@ Deno.serve(async (req) => {
 
         if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
 
-        const base44 = createClientFromRequest(req);
-        const db = base44.asServiceRole;
-
         if (type === 'overview') {
             const [scores, saves] = await Promise.all([
                 db.entities.RunScore.list('-created_date', 1000),
@@ -30,7 +28,6 @@ Deno.serve(async (req) => {
             const totalPlayers = saves.length;
             const totalScores = scores.length;
 
-            // Character usage
             const charCounts = {};
             scores.forEach(s => {
                 if (s.character_id) {
@@ -73,7 +70,6 @@ Deno.serve(async (req) => {
         if (type === 'playerSearch') {
             const saves = await db.entities.PlayerSave.list('-updated_at', 500);
             if (!query) {
-                // No query — return 30 most recently active players
                 return Response.json({ players: saves.slice(0, 30) });
             }
             const q = query.toLowerCase();

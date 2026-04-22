@@ -1,11 +1,9 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 
-// DANGER: This function deletes ALL player data across every entity.
-// It is admin-key protected and should only be called once before public launch.
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { adminKey, confirm } = await req.json();
 
         const expectedKey = Deno.env.get('AdminDash');
@@ -17,7 +15,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Must pass confirm: "RESET_ALL_PLAYER_DATA"' }, { status: 400 });
         }
 
-        const db = base44.asServiceRole;
         const results = {};
 
         const deleteAll = async (entityName, listFn) => {
@@ -31,13 +28,11 @@ Deno.serve(async (req) => {
             return deleted;
         };
 
-        // Delete all player entities
         results.RunScore       = await deleteAll('RunScore',       () => db.entities.RunScore.list(null, 50));
         results.PlayerSave     = await deleteAll('PlayerSave',     () => db.entities.PlayerSave.list(null, 50));
         results.TokenPool      = await deleteAll('TokenPool',      () => db.entities.TokenPool.list(null, 50));
         results.TokenSpendLog  = await deleteAll('TokenSpendLog',  () => db.entities.TokenSpendLog.list(null, 50));
         results.PayoutLog      = await deleteAll('PayoutLog',      () => db.entities.PayoutLog.list(null, 50));
-        results.PendingReward  = await deleteAll('PendingReward',  () => db.entities.PendingReward.list(null, 50));
         results.Squad          = await deleteAll('Squad',          () => db.entities.Squad.list(null, 50));
         results.SquadMember    = await deleteAll('SquadMember',    () => db.entities.SquadMember.list(null, 50));
         results.SquadMessage   = await deleteAll('SquadMessage',   () => db.entities.SquadMessage.list(null, 50));

@@ -1,7 +1,8 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-// Canonical period ID calculation — must match purchaseSku, saveScore, and lib/periodIds.js exactly
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+
 function getCurrentPeriodIds() {
     const now = new Date();
     const year = now.getUTCFullYear();
@@ -19,9 +20,6 @@ const MAX_DAMAGE_PER_SUBMISSION = 1_000_000;
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const db = base44.asServiceRole;
-
         const body = await req.json();
         const { damage, playerName, accessToken } = body;
 
@@ -69,7 +67,6 @@ Deno.serve(async (req) => {
             damage: clampedDamage, level: boss.level || 1, message: eventMessage
         });
 
-        // Use walletAddress as the canonical identity
         const existing = await db.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
         if (existing.length > 0) {
             await db.entities.GlobalBossContribution.update(existing[0].id, {

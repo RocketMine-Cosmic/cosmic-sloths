@@ -1,5 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -12,9 +14,6 @@ function getCurrentWeekId() {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const db = base44.asServiceRole;
-
         const body = await req.json();
         const { claim_level, walletAddress: clientWallet, accessToken } = body;
 
@@ -41,7 +40,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Boss level not defeated yet' }, { status: 400 });
         }
 
-        // Use walletAddress as canonical identity
         const contribs = await db.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
         if (contribs.length === 0) return Response.json({ error: 'No contribution found' }, { status: 400 });
 

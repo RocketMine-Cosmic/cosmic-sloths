@@ -1,4 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -20,10 +22,6 @@ function getRankEmoji(rank) {
     return `**#${rank}**`;
 }
 
-function getPilotIcon(score) {
-    return score.pilot_icon || '🦥';
-}
-
 function dedup(scores, limit = 10) {
     const seen = new Set();
     const result = [];
@@ -38,7 +36,6 @@ function dedup(scores, limit = 10) {
 }
 
 function getWeeklyCloseDate(week_id) {
-    // Week closes next Monday 00:00 UTC
     const [year, weekStr] = week_id.split('-W');
     const isoWeek = parseInt(weekStr);
     const jan1 = new Date(Date.UTC(parseInt(year), 0, 1));
@@ -54,7 +51,6 @@ function getWeeklyCloseDate(week_id) {
 }
 
 function getSeasonalCloseDate(season_id) {
-    // Season closes at end of its 4-week span
     const [year, seasonStr] = season_id.split('-S');
     const seasonNum = parseInt(seasonStr);
     const startWeek = (seasonNum - 1) * 4 + 1;
@@ -83,7 +79,7 @@ function formatCountdown(closeDate) {
 function buildRows(scores) {
     return scores.map((s, i) => {
         const rank = i + 1;
-        const icon = getPilotIcon(s);
+        const icon = s.pilot_icon || '🦥';
         const name = s.player_name || 'Unknown';
         const title = s.player_title ? ` *${s.player_title}*` : '';
         const score = s.score?.toLocaleString() || '0';
@@ -94,11 +90,8 @@ function buildRows(scores) {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const webhookUrl = Deno.env.get('DISCORD_LEADERBOARD_WEBHOOK');
-        if (!webhookUrl) {
-            return Response.json({ error: 'Discord webhook not configured' }, { status: 500 });
-        }
+        if (!webhookUrl) return Response.json({ error: 'Discord webhook not configured' }, { status: 500 });
 
         let body = {};
         try { body = await req.json(); } catch {}
@@ -106,10 +99,9 @@ Deno.serve(async (req) => {
         const week_id = body.week_id || defaultWeek;
         const season_id = body.season_id || defaultSeason;
 
-        // Fetch both leaderboards in parallel
         const [weeklyScores, seasonalScores] = await Promise.all([
-            base44.asServiceRole.entities.RunScore.filter({ week_id }, '-score', 300),
-            base44.asServiceRole.entities.RunScore.filter({ season_id }, '-score', 400),
+            db.entities.RunScore.filter({ week_id }, '-score', 300),
+            db.entities.RunScore.filter({ season_id }, '-score', 400),
         ]);
 
         const weeklyUnique = dedup(weeklyScores, 10);
@@ -119,10 +111,9 @@ Deno.serve(async (req) => {
 
         if (weeklyUnique.length > 0) {
             const weeklyClose = getWeeklyCloseDate(week_id);
-            const weeklyCountdown = formatCountdown(weeklyClose);
             embeds.push({
                 title: '🏆 Weekly Leaderboard',
-                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${weeklyCountdown}\n\n${buildRows(weeklyUnique)}`,
+                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${formatCountdown(weeklyClose)}\n\n${buildRows(weeklyUnique)}`,
                 color: 0x0CA7B8,
                 timestamp: new Date().toISOString(),
             });
@@ -130,21 +121,17 @@ Deno.serve(async (req) => {
 
         if (seasonalUnique.length > 0) {
             const seasonalClose = getSeasonalCloseDate(season_id);
-            const seasonalCountdown = formatCountdown(seasonalClose);
             embeds.push({
                 title: '🗓️ Seasonal Leaderboard',
-                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${seasonalCountdown}\n\n${buildRows(seasonalUnique)}`,
+                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${formatCountdown(seasonalClose)}\n\n${buildRows(seasonalUnique)}`,
                 color: 0xD946EF,
                 footer: { text: 'Cosmic Sloths · Compete for OMENX rewards' },
                 timestamp: new Date().toISOString(),
             });
         }
 
-        if (embeds.length === 0) {
-            return Response.json({ message: 'No scores to post' });
-        }
+        if (embeds.length === 0) return Response.json({ message: 'No scores to post' });
 
-        // Dry run — return preview without posting
         if (body.dry_run) {
             return Response.json({ preview: embeds, week_id, season_id, would_post: { weekly: weeklyUnique.length, seasonal: seasonalUnique.length } });
         }

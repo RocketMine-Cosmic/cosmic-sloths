@@ -1,13 +1,13 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
-const CHAIN_ID = '56';
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { period_id, period_type, adminKey } = await req.json();
         const expectedKey = Deno.env.get('AdminDash');
         if (!adminKey || adminKey !== expectedKey) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -17,34 +17,21 @@ Deno.serve(async (req) => {
 
         const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!apiKey) {
-            console.error('[manuallyDistributeRewards] OMENX_API_KEY not set');
-            return Response.json({ error: 'OMENX_API_KEY not configured' }, { status: 500 });
-        }
+        if (!apiKey) return Response.json({ error: 'OMENX_API_KEY not configured' }, { status: 500 });
 
-        const sdk = new OmenXServerSDK({
-            apiKey,
-            apiBaseUrl,
-        });
+        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
-        // Fetch the pool
-        const pools = await base44.asServiceRole.entities.TokenPool.filter({ 
-            period_id, 
-            period_type 
-        });
-
-        if (pools.length === 0) {
-            return Response.json({ error: 'No pool found for this period' }, { status: 404 });
-        }
+        const pools = await db.entities.TokenPool.filter({ period_id, period_type });
+        if (pools.length === 0) return Response.json({ error: 'No pool found for this period' }, { status: 404 });
 
         const pool = pools[0];
         console.log(`[manuallyDistributeRewards] Distributing ${period_type} ${period_id}, pool total_spent=${pool.total_spent}`);
 
         let result;
         if (period_type === 'weekly') {
-            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
+            result = await distributeWeekly(sdk, pool, apiBaseUrl, apiKey);
         } else if (period_type === 'seasonal') {
-            result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
+            result = await distributeSeasonal(sdk, pool, apiBaseUrl, apiKey);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
@@ -52,7 +39,6 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, ...result });
     } catch (error) {
         console.error('[manuallyDistributeRewards] ERROR:', error);
-        console.error('[manuallyDistributeRewards] Stack:', error?.stack);
         return Response.json({ error: error?.message || String(error) }, { status: 500 });
     }
 });
@@ -87,11 +73,9 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
         if (uniqueScores.length >= maxRank) break;
         const wallet = score.wallet_address;
         const userId = score.user_id;
-
         if (!wallet) continue;
         if (seenWallets.has(wallet)) continue;
         if (userId && seenUserIds.has(userId)) continue;
-
         seenWallets.add(wallet);
         if (userId) seenUserIds.add(userId);
         uniqueScores.push(score);
@@ -102,134 +86,78 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     if (totalPct === 0 || uniqueScores.length === 0) return [];
 
     const multiplier = 1 / totalPct;
-
     const payments = [];
     for (let i = 0; i < uniqueScores.length; i++) {
         const amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
         if (amount >= 1) {
-            payments.push({
-                walletAddress: uniqueScores[i].wallet_address,
-                amount,
-                rank: i + 1,
-                player_name: uniqueScores[i].player_name,
-            });
+            payments.push({ walletAddress: uniqueScores[i].wallet_address, amount, rank: i + 1, player_name: uniqueScores[i].player_name });
         }
     }
     return payments;
 }
 
-async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
+async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.25);
-    const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
-
+    const scores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
 
     if (payments.length === 0) {
-        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    console.log(`[manuallyDistributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
+    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+            gameId: GAME_ID, gameName: GAME_NAME, note: `weekly payout ${pool.period_id}`,
+        }),
+    });
+    const batchResult = await response.json();
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
 
-    try {
-        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-                payments: payments.map(p => ({ 
-                    walletAddress: p.walletAddress, 
-                    amount: p.amount.toString()
-                })),
-                gameId: GAME_ID,
-                gameName: GAME_NAME,
-                note: `weekly payout ${pool.period_id}`,
-            }),
+    for (const p of payments) {
+        await db.entities.PayoutLog.create({
+            period_id: pool.period_id, period_type: 'weekly',
+            wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+            amount: p.amount, rank: p.rank, tx_id: batchResult?.transactionId || batchResult?.txHash || ''
         });
-        const batchResult = await response.json();
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-        }
-        console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
-
-        // Write payout log records
-        for (const p of payments) {
-            await base44.asServiceRole.entities.PayoutLog.create({
-                period_id: pool.period_id,
-                period_type: 'weekly',
-                wallet_address: p.walletAddress,
-                player_name: p.player_name || p.walletAddress,
-                amount: p.amount,
-                rank: p.rank,
-                tx_id: batchResult?.transactionId || batchResult?.txHash || ''
-            });
-        }
-    } catch (sdkErr) {
-        console.error('[manuallyDistributeRewards] SDK grant error:', sdkErr?.message);
-        console.error('[manuallyDistributeRewards] SDK error response:', sdkErr?.response?.data || sdkErr?.response);
-        throw sdkErr;
     }
 
-    await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+    await db.entities.TokenPool.update(pool.id, { distributed: true });
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
 
-async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
+async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.35);
-    const scores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
-
+    const scores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
 
     if (payments.length === 0) {
-        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    console.log(`[manuallyDistributeRewards] Seasonal ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
+    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+            gameId: GAME_ID, gameName: GAME_NAME, note: `seasonal payout ${pool.period_id}`,
+        }),
+    });
+    const batchResult = await response.json();
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
 
-    try {
-        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-                payments: payments.map(p => ({ 
-                    walletAddress: p.walletAddress, 
-                    amount: p.amount.toString()
-                })),
-                gameId: GAME_ID,
-                gameName: GAME_NAME,
-                note: `seasonal payout ${pool.period_id}`,
-            }),
+    for (const p of payments) {
+        await db.entities.PayoutLog.create({
+            period_id: pool.period_id, period_type: 'seasonal',
+            wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+            amount: p.amount, rank: p.rank, tx_id: batchResult?.transactionId || batchResult?.txHash || ''
         });
-        const batchResult = await response.json();
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-        }
-        console.log(`[manuallyDistributeRewards] Batch result:`, JSON.stringify(batchResult));
-
-        // Write payout log records
-        for (const p of payments) {
-            await base44.asServiceRole.entities.PayoutLog.create({
-                period_id: pool.period_id,
-                period_type: 'seasonal',
-                wallet_address: p.walletAddress,
-                player_name: p.player_name || p.walletAddress,
-                amount: p.amount,
-                rank: p.rank,
-                tx_id: batchResult?.transactionId || batchResult?.txHash || ''
-            });
-        }
-    } catch (sdkErr) {
-        console.error('[manuallyDistributeRewards] SDK grant error:', sdkErr?.message);
-        console.error('[manuallyDistributeRewards] SDK error response:', sdkErr?.response?.data || sdkErr?.response);
-        throw sdkErr;
     }
 
-    await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+    await db.entities.TokenPool.update(pool.id, { distributed: true });
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
