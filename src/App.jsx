@@ -40,8 +40,12 @@ const MainApp = () => {
         setSaveInitialized(true);
         const save = SaveManager.load();
         const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        if (omenxAuth?.walletAddress && !save.hasSetProfileName) {
-            setNeedsProfileName(true);
+        if (omenxAuth?.walletAddress) {
+            const pilotName = save.pilotName || '';
+            const isNameInvalid = !save.hasSetProfileName || !pilotName || pilotName.toLowerCase() === 'anonymous' || pilotName.trim() === '';
+            if (isNameInvalid) {
+                setNeedsProfileName(true);
+            }
         }
     });
   }, []);
