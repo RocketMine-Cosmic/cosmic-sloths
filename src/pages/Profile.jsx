@@ -16,6 +16,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
 import NFTPerkBadge from '../components/game/NFTPerkBadge';
+import UnlockedCharactersTable from '../components/game/UnlockedCharactersTable';
 
 export default function Profile({ isCarousel }) {
     const navigate = useNavigate();
@@ -409,6 +410,17 @@ export default function Profile({ isCarousel }) {
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Unlocked Characters */}
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-pink-500/30 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_30px_rgba(236,72,153,0.15)]">
+                        <h2 className="text-lg md:text-xl font-bold text-pink-400 mb-4 md:mb-6 flex items-center gap-2">
+                            🎮 Unlocked Characters
+                        </h2>
+                        <UnlockedCharactersTable 
+                          unlockedCharacters={SaveManager.load().unlockedCharacters || []} 
+                          nftCharacters={user?.nftCharacters || []}
+                        />
                     </div>
 
                     {/* VIP Status */}
