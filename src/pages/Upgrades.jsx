@@ -20,6 +20,8 @@ import StatPips, { SmallStatPips } from '../components/game/StatPips';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
+import { NFTPerkManager } from '../game/NFTPerks';
+import NFTPerkBadge from '../components/game/NFTPerkBadge';
 
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [15, 30, 60, 120, 240] },
@@ -126,7 +128,8 @@ export default function Upgrades({ isCarousel }) {
         
         if (currentLevel >= typeConfig.goldCosts.length) return;
         
-        const goldCost = typeConfig.goldCosts[currentLevel];
+        const baseCost = typeConfig.goldCosts[currentLevel];
+        const goldCost = Math.floor(baseCost * NFTPerkManager.getUpgradeCostMultiplier());
         const tokenCost = typeConfig.tokenCosts[currentLevel];
 
         if (currency === 'gold' && currentSave.gold >= goldCost) {
@@ -1080,6 +1083,9 @@ export default function Upgrades({ isCarousel }) {
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest" style={{ background: 'linear-gradient(90deg, #D946EF, #8B5CF6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(217,70,239,0.5))' }}>UPGRADE LOUNGE</h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Enhance your operatives and arsenal.</p>
+                        <div className="mt-2 md:mt-3">
+                            <NFTPerkBadge />
+                        </div>
                     </div>
                     <CurrencyHeader />
                 </header>

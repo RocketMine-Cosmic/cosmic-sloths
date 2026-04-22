@@ -3,6 +3,7 @@ import { BOUNTIES_POOL, DAILY_MISSIONS_POOL } from './Constants';
 import { base44 } from '@/api/base44Client';
 import { getOmenXUser } from '@/lib/omenxUser';
 import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
+import { NFTPerkManager } from './NFTPerks';
 
 let syncTimeout = null;
 let pendingSync = false;
@@ -54,7 +55,7 @@ export const SaveManager = {
             console.log('[SaveManager] Loaded from backend');
             let saveData = response.saveData;
             
-            // Fetch NFT-unlocked characters and merge
+            // Fetch NFT-unlocked characters and merge + apply perks
             try {
               const { data: nftRes } = await base44.functions.invoke('getNFTCharacters', { accessToken });
               if (nftRes?.unlockedCharacters?.length > 0) {
@@ -62,6 +63,8 @@ export const SaveManager = {
                 const nftChars = nftRes.unlockedCharacters.filter(c => typeof c === 'string');
                 saveData.unlockedCharacters = [...new Set([...defaultChars, ...nftChars])];
                 console.log('[SaveManager] Unlocked NFT characters:', nftChars);
+                // Apply NFT-based perks (gold multiplier, cost reductions, etc.)
+                NFTPerkManager.applyNFTPerks(nftChars);
               }
             } catch (e) {
               console.log('[SaveManager] NFT fetch failed:', e.message);
