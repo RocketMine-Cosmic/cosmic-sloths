@@ -188,17 +188,36 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
         return { paid: 0, skipped: 'zero spend' };
     }
 
+    // Fetch admin wallets for staff payments (2% of total_spent each, on top of player pool)
+    const adminWallets = await base44.asServiceRole.entities.AdminWallet.list();
+    const STAFF_PCT_PER_WALLET = 0.02;
+
     const rewardPool = Math.floor(pool.total_spent * 0.25);
-    const scores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
+    const [scores] = await Promise.all([
+        base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300),
+    ]);
 
     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
 
-    if (payments.length === 0) {
+    // Build staff payments — 2% of total_spent per admin wallet
+    const staffPayments = adminWallets
+        .filter(a => a.wallet_address)
+        .map(a => ({
+            walletAddress: a.wallet_address,
+            amount: Math.floor(pool.total_spent * STAFF_PCT_PER_WALLET),
+            player_name: a.admin_name || a.wallet_address,
+            isStaff: true,
+        }))
+        .filter(p => p.amount >= 1);
+
+    const allPayments = [...payments, ...staffPayments];
+
+    if (allPayments.length === 0) {
         await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    console.log(`[distributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players, pool=${rewardPool} OMENX`);
+    console.log(`[distributeRewards] Weekly ${pool.period_id}: paying ${payments.length} players + ${staffPayments.length} staff, player_pool=${rewardPool} OMENX, staff_total=${staffPayments.reduce((s, p) => s + p.amount, 0)} OMENX`);
 
     const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
         method: 'POST',
@@ -207,7 +226,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
             'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-            payments: payments.map(p => ({ 
+            payments: allPayments.map(p => ({ 
                 walletAddress: p.walletAddress, 
                 amount: p.amount.toString()
             })),
@@ -233,11 +252,27 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
             player_name: p.player_name || p.walletAddress,
             amount: p.amount,
             rank: p.rank,
-            tx_id: txId
-        }))
+            tx_id: txId,
+        })),
+        ...staffPayments.map(p => base44.asServiceRole.entities.PayoutLog.create({
+            period_id: pool.period_id,
+            period_type: 'staff_weekly',
+            wallet_address: p.walletAddress,
+            player_name: p.player_name,
+            amount: p.amount,
+            rank: 0,
+            tx_id: txId,
+        })),
     ]);
 
-    return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
+    return {
+        paid: payments.length,
+        staff_paid: staffPayments.length,
+        totalOmenx: payments.reduce((s, p) => s + p.amount, 0),
+        staffOmenx: staffPayments.reduce((s, p) => s + p.amount, 0),
+        payments,
+        staffPayments,
+    };
 }
 
 async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
