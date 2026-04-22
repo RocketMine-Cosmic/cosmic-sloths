@@ -36,24 +36,10 @@ Deno.serve(async (req) => {
             return Response.json({ unlockedCharacters: [] });
         }
 
-        // Fetch NFTs from custom API
-        const customApiUrl = Deno.env.get('CUSTOM_NFT_API_URL');
-        if (!customApiUrl) {
-            console.warn('[getNFTCharacters] CUSTOM_NFT_API_URL not configured');
-            return Response.json({ unlockedCharacters: [] });
-        }
-
-        const nftRes = await fetch(`${customApiUrl}?wallet=${walletAddress}`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        if (!nftRes.ok) {
-            console.error(`[getNFTCharacters] API failed: ${nftRes.status}`);
-            return Response.json({ unlockedCharacters: [] });
-        }
-
-        const nftData = await nftRes.json();
-        const nftNames = (nftData.nfts || [])
+        // Fetch NFTs from OmenX
+        const nfts = await sdk.getPlayerNfts(walletAddress, '8453', { limit: 100 });
+        
+        const nftNames = (nfts || [])
             .map(nft => (nft.name || '').toLowerCase().trim())
             .filter(Boolean);
         
