@@ -57,7 +57,9 @@ export const SaveManager = {
             
             // Fetch NFT-unlocked characters and merge + apply perks
             try {
+              console.log('[SaveManager] Fetching NFTs with accessToken:', !!accessToken);
               const { data: nftRes } = await base44.functions.invoke('getNFTCharacters', { accessToken });
+              console.log('[SaveManager] NFT response:', nftRes);
               if (nftRes?.unlockedCharacters?.length > 0) {
                 const defaultChars = ['neobyte'];
                 const nftChars = nftRes.unlockedCharacters.filter(c => typeof c === 'string');
@@ -65,9 +67,11 @@ export const SaveManager = {
                 console.log('[SaveManager] Unlocked NFT characters:', nftChars);
                 // Apply NFT-based perks (gold multiplier, cost reductions, etc.)
                 NFTPerkManager.applyNFTPerks(nftChars);
+              } else {
+                console.log('[SaveManager] No NFTs found or empty response');
               }
             } catch (e) {
-              console.log('[SaveManager] NFT fetch failed:', e.message);
+              console.error('[SaveManager] NFT fetch failed:', e);
             }
             
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(saveData));
