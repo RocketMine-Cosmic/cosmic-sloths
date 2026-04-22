@@ -44,49 +44,6 @@ export const SaveManager = {
       
       SaveManager._walletAddress = walletAddress;
       console.log('[SaveManager] Initialized');
-      
-      // Load from backend FIRST (backend is source of truth)
-      if (accessToken) {
-        try {
-          const { data: response } = await base44.functions.invoke('loadSave', {
-            walletAddress: SaveManager._walletAddress,
-            accessToken: accessToken
-          });
-          if (response?.saveData) {
-            console.log('[SaveManager] Loaded from backend');
-            let saveData = response.saveData;
-            
-            // Fetch NFT-unlocked characters and merge + apply perks
-            try {
-              console.log('[SaveManager] Fetching player data (includes NFTs) with accessToken:', !!accessToken);
-              const { data: playerRes } = await base44.functions.invoke('getPlayerData', { walletAddress, accessToken });
-              console.log('[SaveManager] Player response:', playerRes);
-              if (playerRes?.nfts?.length > 0) {
-                const defaultChars = ['neobyte'];
-                const nftChars = playerRes.nfts
-                  .map(nft => (nft.metadata?.name || '').toLowerCase().trim())
-                  .filter(Boolean);
-                saveData.unlockedCharacters = [...new Set([...defaultChars, ...nftChars])];
-                console.log('[SaveManager] Unlocked NFT characters:', nftChars);
-                // Apply NFT-based perks (gold multiplier, cost reductions, etc.)
-                NFTPerkManager.applyNFTPerks(nftChars);
-              } else {
-                console.log('[SaveManager] No NFTs found or empty response');
-              }
-            } catch (e) {
-              console.error('[SaveManager] NFT fetch failed:', e);
-            }
-            
-            localStorage.setItem('cosmic_sloth_save', JSON.stringify(saveData));
-            return;
-          }
-        } catch (e) {
-          console.log('[SaveManager] Backend load failed:', e.message);
-        }
-      }
-      
-      // Fallback: if backend failed and we have accessToken, try loadSave again silently
-      // (no direct entity calls — avoid Base44 session requirement)
     } catch (e) {
       console.error('[SaveManager] Init error');
     }

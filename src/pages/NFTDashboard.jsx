@@ -30,10 +30,12 @@ export default function NFTDashboard({ isCarousel }) {
 
                 if (playerRes?.nfts?.length > 0) {
                     setNfts(playerRes.nfts);
+                } else if (playerRes?.error) {
+                    console.error('[NFTDashboard] API error:', playerRes.error);
                 }
-                setLoading(false);
             } catch (e) {
                 console.error('[NFTDashboard] Failed to fetch NFTs:', e);
+            } finally {
                 setLoading(false);
             }
         };
