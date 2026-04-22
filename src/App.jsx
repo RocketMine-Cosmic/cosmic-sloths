@@ -38,6 +38,11 @@ const MainApp = () => {
   useEffect(() => {
     SaveManager.initialize().then(async () => {
         setSaveInitialized(true);
+        const save = SaveManager.load();
+        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        if (omenxAuth?.walletAddress && !save.hasSetProfileName) {
+            setNeedsProfileName(true);
+        }
     });
   }, []);
 
