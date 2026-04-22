@@ -21,14 +21,22 @@ Deno.serve(async (req) => {
             const authenticatedWallet = verifyResult.user.walletAddress;
 
             if (walletAddress !== authenticatedWallet) {
-                return Response.json({ balance: 0 });
+                return Response.json({ balance: 0, unlockedCharacters: [] });
             }
 
-            const data = await sdk.getPlayerBalances(walletAddress, '56');
-            const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+            const playerData = await sdk.getPlayer(walletAddress, '56');
+            
+            // Extract OMENX balance
+            const omenxToken = playerData?.balances?.tokens?.find(t => t.symbol === 'OMENX');
             const balance = parseFloat(omenxToken?.balance ?? '0');
+            
+            // Extract NFT character names
+            const nfts = playerData?.nfts || [];
+            const unlockedCharacters = nfts
+                .map(nft => (nft.name || '').toLowerCase().trim())
+                .filter(Boolean);
 
-            return Response.json({ balance });
+            return Response.json({ balance, unlockedCharacters });
         } catch {
             // Token verification or balance fetch failed, return 0
         }
