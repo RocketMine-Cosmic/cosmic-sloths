@@ -18,6 +18,7 @@ import Squads from './pages/Squads';
 import Bestiary from './pages/Bestiary';
 import SynergyCodex from './pages/SynergyCodex';
 import Profile from './pages/Profile';
+import NFTDashboard from './pages/NFTDashboard';
 import LeviathanTrials from './pages/LeviathanTrials';
 import Dailys from './pages/Dailys';
 import GlobalRaid from './pages/GlobalRaid';
@@ -69,6 +70,7 @@ const MainApp = () => {
           <Route path="/bestiary" element={<Bestiary />} />
           <Route path="/synergy-codex" element={<SynergyCodex />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/nft-dashboard" element={<NFTDashboard />} />
           <Route path="/trials" element={<LeviathanTrials />} />
           <Route path="/dailys" element={<Dailys />} />
           <Route path="/global-raid" element={<GlobalRaid />} />
@@ -106,6 +108,7 @@ const MainApp = () => {
       <Route path="/bestiary" element={<Bestiary />} />
       <Route path="/synergy-codex" element={<SynergyCodex />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/nft-dashboard" element={<NFTDashboard />} />
       <Route path="/trials" element={<LeviathanTrials />} />
       <Route path="/dailys" element={<Dailys />} />
       <Route path="/global-raid" element={<GlobalRaid />} />
