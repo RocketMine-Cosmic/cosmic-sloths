@@ -6,21 +6,57 @@ export const NFT_PERK_MAPPINGS = {
   // Adjust patterns based on your actual OmenX NFT names/metadata
 };
 
+// Rarity-based perk multipliers (applied per character selected in a run)
+const RARITY_PERKS = {
+  common: { goldMult: 1.05, relicMult: 1.05 },
+  uncommon: { goldMult: 1.07, relicMult: 1.08 },
+  rare: { goldMult: 1.10, relicMult: 1.10 },
+  epic: { goldMult: 1.12, relicMult: 1.13 },
+  legendary: { goldMult: 1.15, relicMult: 1.15 },
+};
+
 export const PERKS = {
-  GOLD_MULTIPLIER: { id: 'gold_mult', name: 'Gold Multiplier', baseValue: 1.1 }, // 10% bonus
-  UPGRADE_COST_REDUCTION: { id: 'upgrade_cost', name: 'Reduced Upgrade Costs', baseValue: 0.9 }, // 10% discount
-  RELIC_FRAGMENT_BONUS: { id: 'relic_bonus', name: 'Relic Fragment Bonus', baseValue: 1.15 }, // 15% more fragments
+  GOLD_MULTIPLIER: { id: 'gold_mult', name: 'Gold Multiplier' },
+  RELIC_FRAGMENT_BONUS: { id: 'relic_bonus', name: 'Relic Fragment Bonus' },
 };
 
 // Default perks (will be enhanced by NFT ownership)
 const DEFAULT_PERKS = {
   goldMultiplier: 1.0,
-  upgradeCostMultiplier: 1.0,
   relicFragmentMultiplier: 1.0,
 };
 
 export class NFTPerkManager {
   static perks = { ...DEFAULT_PERKS };
+
+  // Get bonuses for a specific character when used in a run
+  static getCharacterPerks(characterId, nftData) {
+    const perks = { ...DEFAULT_PERKS };
+
+    if (!nftData || !Array.isArray(nftData)) return perks;
+
+    // Find if this character is in the NFT collection
+    const nftForChar = nftData.find(nft => 
+      (nft.metadata?.name || '').toLowerCase() === characterId.toLowerCase()
+    );
+
+    if (nftForChar && nftForChar.metadata?.attributes) {
+      // Extract rarity from attributes
+      const rarityAttr = nftForChar.metadata.attributes.find(
+        attr => attr.trait_type === 'rarity'
+      );
+      const rarity = rarityAttr?.value?.toLowerCase();
+
+      if (rarity && RARITY_PERKS[rarity]) {
+        const rarityPerks = RARITY_PERKS[rarity];
+        perks.goldMultiplier = rarityPerks.goldMult;
+        perks.relicFragmentMultiplier = rarityPerks.relicMult;
+        console.log(`[NFTPerkManager] Applying ${rarity} perks for ${characterId}`);
+      }
+    }
+
+    return perks;
+  }
 
   static applyNFTPerks(nftData) {
     // Reset to defaults
@@ -28,33 +64,18 @@ export class NFTPerkManager {
 
     if (!nftData || !Array.isArray(nftData)) return;
 
-    // Check for specific NFT patterns and apply perks
-    const nftNames = nftData.map(nft => 
-      (typeof nft === 'string' ? nft : nft.name || '').toLowerCase().trim()
-    );
-
-    console.log('[NFTPerkManager] Applying perks for NFTs:', nftNames);
-
-    // Example: Any NFT owner gets gold bonus
-    if (nftNames.length > 0) {
-      this.perks.goldMultiplier = 1.1; // +10% gold
-      this.perks.upgradeCostMultiplier = 0.9; // -10% upgrade costs
-      console.log('[NFTPerkManager] Holder perks applied');
+    // Legacy: any NFT holder gets base bonus (will be overridden by character-specific perks in-game)
+    if (nftData.length > 0) {
+      this.perks.goldMultiplier = 1.05;
+      this.perks.relicFragmentMultiplier = 1.05;
+      console.log('[NFTPerkManager] Base NFT holder perks applied');
     }
-
-    // You can add more sophisticated mapping here:
-    // if (nftNames.includes('rare_sloth')) { this.perks.goldMultiplier = 1.2; }
-    // if (nftNames.includes('legendary_sloth')) { this.perks.upgradeCostMultiplier = 0.8; this.perks.relicFragmentMultiplier = 1.2; }
 
     return this.perks;
   }
 
   static getGoldMultiplier() {
     return this.perks.goldMultiplier;
-  }
-
-  static getUpgradeCostMultiplier() {
-    return this.perks.upgradeCostMultiplier;
   }
 
   static getRelicFragmentMultiplier() {
@@ -65,9 +86,6 @@ export class NFTPerkManager {
     const active = [];
     if (this.perks.goldMultiplier > 1.0) {
       active.push({ ...PERKS.GOLD_MULTIPLIER, value: this.perks.goldMultiplier });
-    }
-    if (this.perks.upgradeCostMultiplier < 1.0) {
-      active.push({ ...PERKS.UPGRADE_COST_REDUCTION, value: this.perks.upgradeCostMultiplier });
     }
     if (this.perks.relicFragmentMultiplier > 1.0) {
       active.push({ ...PERKS.RELIC_FRAGMENT_BONUS, value: this.perks.relicFragmentMultiplier });

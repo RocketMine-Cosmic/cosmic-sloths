@@ -48,12 +48,7 @@ export default function NFTDashboard({ isCarousel }) {
         return char || null;
     };
 
-    const getPerksList = () => {
-        return [
-            { id: 'gold_mult', icon: '🪙', name: 'Gold Multiplier', desc: '+10% Gold Income', active: nfts.length > 0 },
-            { id: 'relic_bonus', icon: '✨', name: 'Relic Fragment Bonus', desc: '+15% Relic Fragments', active: nfts.length > 0 }
-        ];
-    };
+
 
     if (loading) {
         return (
@@ -146,34 +141,32 @@ export default function NFTDashboard({ isCarousel }) {
                             })}
                         </div>
 
-                        {/* Active Perks */}
+                        {/* Rarity-Based Perks */}
                         <div className="bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-amber-500/30 shadow-[0_0_30px_rgba(234,179,8,0.15)]">
                             <h2 className="text-lg md:text-xl font-bold text-amber-400 mb-4 flex items-center gap-2">
-                                ⚡ Active NFT Perks
+                                ⚡ Rarity-Based Perks (Per Run)
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                                {getPerksList().map(perk => (
-                                    <div 
-                                        key={perk.id}
-                                        className={`p-4 rounded-lg border-2 transition-all ${
-                                            perk.active
-                                                ? 'bg-amber-950/40 border-amber-500/60 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
-                                                : 'bg-slate-800/30 border-slate-700/50'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className="text-2xl">{perk.icon}</span>
-                                            <div>
-                                                <h3 className={`font-bold text-sm md:text-base ${perk.active ? 'text-amber-300' : 'text-slate-500'}`}>
-                                                    {perk.name}
-                                                </h3>
-                                            </div>
-                                        </div>
-                                        <p className={`text-xs md:text-sm ${perk.active ? 'text-amber-200' : 'text-slate-600'}`}>
-                                            {perk.desc}
-                                        </p>
-                                    </div>
-                                ))}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                                <div className="p-3 md:p-4 rounded-lg border border-slate-600 bg-slate-800/30">
+                                    <h3 className="text-xs md:text-sm font-bold text-slate-400 uppercase mb-2">Common</h3>
+                                    <div className="text-xs md:text-sm text-slate-300">+5% Gold, +5% Relic Fragments</div>
+                                </div>
+                                <div className="p-3 md:p-4 rounded-lg border border-blue-600/50 bg-blue-950/20">
+                                    <h3 className="text-xs md:text-sm font-bold text-blue-300 uppercase mb-2">Uncommon</h3>
+                                    <div className="text-xs md:text-sm text-blue-200">+7% Gold, +8% Relic Fragments</div>
+                                </div>
+                                <div className="p-3 md:p-4 rounded-lg border border-purple-600/50 bg-purple-950/20">
+                                    <h3 className="text-xs md:text-sm font-bold text-purple-300 uppercase mb-2">Rare</h3>
+                                    <div className="text-xs md:text-sm text-purple-200">+10% Gold, +10% Relic Fragments</div>
+                                </div>
+                                <div className="p-3 md:p-4 rounded-lg border border-orange-600/50 bg-orange-950/20">
+                                    <h3 className="text-xs md:text-sm font-bold text-orange-300 uppercase mb-2">Epic</h3>
+                                    <div className="text-xs md:text-sm text-orange-200">+12% Gold, +13% Relic Fragments</div>
+                                </div>
+                                <div className="p-3 md:p-4 rounded-lg border border-yellow-600/50 bg-yellow-950/20">
+                                    <h3 className="text-xs md:text-sm font-bold text-yellow-300 uppercase mb-2">Legendary</h3>
+                                    <div className="text-xs md:text-sm text-yellow-200">+15% Gold, +15% Relic Fragments</div>
+                                </div>
                             </div>
                         </div>
 
