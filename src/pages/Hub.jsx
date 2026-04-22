@@ -27,7 +27,7 @@ export default function Hub({ isCarousel }) {
     const navigate = useNavigate();
     const initialSave = SaveManager.load() || {};
     const safeInitialSave = {
-        unlockedCharacters: initialSave?.unlockedCharacters ?? ['neobyte'],
+        unlockedCharacters: (initialSave?.unlockedCharacters ?? []).length > 0 ? initialSave.unlockedCharacters : ['neobyte'],
         unlockedArenasByCharacter: initialSave?.unlockedArenasByCharacter ?? {},
         unlockedCosmetics: (initialSave?.unlockedCosmetics?.length ?? 0) > 0 ? initialSave.unlockedCosmetics : ['default'],
         cosmetics: initialSave?.cosmetics ?? {},
@@ -88,6 +88,11 @@ export default function Hub({ isCarousel }) {
                      // Then load merged save
                      const mergedSave = SaveManager.load();
                      if (!isMounted) return;
+
+                     // Sanitize unlocked characters to only NeoByte if no extra unlocks
+                     if (mergedSave.unlockedCharacters && !mergedSave.totalKills) {
+                         mergedSave.unlockedCharacters = ['neobyte'];
+                     }
 
                      // Auto-unlock NFT characters
                      try {
