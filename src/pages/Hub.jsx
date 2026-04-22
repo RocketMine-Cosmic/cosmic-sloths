@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
+import { CharacterUnlockManager } from '../game/CharacterUnlocks';
 import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMETICS, getCharacterMastery } from '../game/Constants';
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Coins } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -89,26 +90,28 @@ export default function Hub({ isCarousel }) {
                      const mergedSave = SaveManager.load();
                      if (!isMounted) return;
 
-                     // Sanitize unlocked characters to only NeoByte if no extra unlocks
-                     if (mergedSave.unlockedCharacters && !mergedSave.totalKills) {
-                         mergedSave.unlockedCharacters = ['neobyte'];
-                     }
-
-                     // Auto-unlock NFT characters
+                     // Recompute unlocked characters: kill milestones + current NFTs
                      try {
                          const { data: playerData } = await base44.functions.invoke('getPlayerData', {
                              walletAddress: auth.walletAddress,
                              accessToken: auth.accessToken,
                          });
-                         if (playerData?.nfts?.length > 0) {
-                             const nftCharIds = playerData.nfts
-                                 .map(nft => nft.metadata?.name?.toLowerCase())
-                                 .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
-                             const updatedChars = [...new Set([...mergedSave.unlockedCharacters, ...nftCharIds])];
-                             if (updatedChars.length > mergedSave.unlockedCharacters.length) {
-                                 mergedSave.unlockedCharacters = updatedChars;
-                                 SaveManager.save(mergedSave);
-                             }
+
+                         // Get NFT-unlocked characters (current ownership)
+                         const nftCharIds = (playerData?.nfts || [])
+                             .map(nft => nft.metadata?.name?.toLowerCase())
+                             .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
+
+                         // Get milestone-unlocked characters (always kept)
+                         const milestoneChars = CharacterUnlockManager.getUnlockedByMilestones(mergedSave.totalKills || 0);
+
+                         // Combine: NFT unlocks (dynamic) + milestone unlocks (permanent)
+                         const recomputedChars = [...new Set([...milestoneChars, ...nftCharIds])];
+
+                         // Update if different (preserves mastery/kills in characterKills)
+                         if (JSON.stringify(recomputedChars.sort()) !== JSON.stringify(mergedSave.unlockedCharacters.sort())) {
+                             mergedSave.unlockedCharacters = recomputedChars;
+                             SaveManager.save(mergedSave);
                          }
                      } catch (nftErr) {
                          console.error('Failed to sync NFT unlocks:', nftErr);
