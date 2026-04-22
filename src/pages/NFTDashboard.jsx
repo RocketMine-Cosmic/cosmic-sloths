@@ -97,7 +97,7 @@ export default function NFTDashboard({ isCarousel }) {
                     <>
                         {/* NFT Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
-                            {nfts.map((nft, idx) => {
+                            {nfts.filter(nft => getCharacterData(nft.metadata?.name || '')).map((nft, idx) => {
                                 const charData = getCharacterData(nft.metadata?.name || '');
                                 const charName = (nft.metadata?.name || '').toLowerCase();
                                 
