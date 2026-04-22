@@ -1,5 +1,5 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
