@@ -15,6 +15,24 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Check for existing squad with same name or tag
+        const [existingName, existingTag] = await Promise.all([
+            base44.asServiceRole.entities.Squad.filter({ name: squadName }),
+            base44.asServiceRole.entities.Squad.filter({ tag: squadTag.toUpperCase().substring(0, 4) }),
+        ]);
+        if (existingName.length > 0) {
+            return Response.json({ error: 'A squad with that name already exists. Please choose a different name.' }, { status: 409 });
+        }
+        if (existingTag.length > 0) {
+            return Response.json({ error: 'A squad with that tag already exists. Please choose a different tag.' }, { status: 409 });
+        }
+
+        // Check the player isn't already in a squad
+        const existingMembership = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
+        if (existingMembership.length > 0) {
+            return Response.json({ error: 'You are already a member of a squad. Leave your current squad first.' }, { status: 409 });
+        }
+
         // Create squad with service role to bypass RLS
         const squad = await base44.asServiceRole.entities.Squad.create({
             name: squadName,

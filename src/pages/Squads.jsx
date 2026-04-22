@@ -232,7 +232,7 @@ export default function Squads({ isCarousel }) {
             });
             
             if (!res.data?.success) {
-                toast({ title: "Error", description: res.data?.error || "Failed to create squad." });
+                toast({ title: "Error", description: res.data?.error || "Failed to create squad. Please try again." });
                 return;
             }
             
@@ -240,7 +240,7 @@ export default function Squads({ isCarousel }) {
             setMyMemberRecord(res.data.member);
         } catch (e) {
             console.error(e);
-            toast({ title: "Error", description: "Failed to create squad. Name might be taken." });
+            toast({ title: "Error", description: e?.response?.data?.error || e?.message || "Failed to create squad. Please try again." });
         }
     };
 
