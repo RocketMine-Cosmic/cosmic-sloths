@@ -1,6 +1,5 @@
 import moment from 'moment';
 import { BOUNTIES_POOL, DAILY_MISSIONS_POOL } from './Constants';
-import { base44 } from '@/api/base44Client';
 import { getOmenXUser } from '@/lib/omenxUser';
 import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { NFTPerkManager } from './NFTPerks';
@@ -50,33 +49,13 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
-    if (!SaveManager._walletAddress) return;
-    
-    try {
-      const localSave = localStorage.getItem('cosmic_sloth_save');
-      if (!localSave) return;
-
-      const saveData = JSON.parse(localSave);
-      const accessToken = (() => {
-        try { return JSON.parse(localStorage.getItem('omenx_auth_data'))?.accessToken; } catch { return null; }
-      })();
-      if (!accessToken) return;
-
-      await base44.functions.invoke('syncSave', {
-        walletAddress: SaveManager._walletAddress,
-        saveData,
-        accessToken,
-      });
-    } catch (e) {
-      console.error('[SaveManager] Sync error:', e.message);
-    }
+    // Sync disabled - no Base44 auth available from frontend
+    return;
   },
 
   syncToBackendImmediate: async () => {
-    // Flush pending sync and call immediately (no debounce)
-    if (syncTimeout) clearTimeout(syncTimeout);
-    pendingSync = false;
-    return SaveManager.syncToBackend();
+    // Sync disabled - no Base44 auth available from frontend
+    return;
   },
 
   load: () => {
