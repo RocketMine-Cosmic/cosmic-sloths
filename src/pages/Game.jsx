@@ -244,6 +244,7 @@ export default function Game() {
                     stats.unlockedCharacter = grantedChar;
                 }
                 SaveManager.save(currentSave);
+                SaveManager.syncToBackendImmediate(); // Sync immediately on game end
                 const currentSaveForGameOver = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const goArenaIndex = ARENAS.findIndex(a => a.id === arenaId);
                 const goArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, goArenaIndex) * 0.2);
@@ -301,6 +302,7 @@ export default function Game() {
                     stats.unlockedCharacter = grantedChar;
                 }
                 SaveManager.save(currentSave);
+                SaveManager.syncToBackendImmediate(); // Sync immediately on game end
                 const currentSaveForVictory = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const vicArenaIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 const vicArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, vicArenaIndex) * 0.2);

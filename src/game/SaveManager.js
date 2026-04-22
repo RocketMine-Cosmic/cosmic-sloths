@@ -92,13 +92,14 @@ export const SaveManager = {
         saveData: JSON.parse(localSave),
         accessToken: SaveManager._accessToken,
       });
-      console.log('[SaveManager] Cloud sync successful');
+      console.log('[SaveManager] Cloud sync');
     } catch (e) {
-      console.error('[SaveManager] Cloud sync failed:', e.message);
+      console.warn('[SaveManager] Sync failed:', e.message);
     }
   },
 
   syncToBackendImmediate: async () => {
+    // Emergency sync for critical events (game end) — skip debounce
     if (syncTimeout) clearTimeout(syncTimeout);
     pendingSync = false;
     await SaveManager.syncToBackend();
