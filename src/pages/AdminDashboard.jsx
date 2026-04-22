@@ -19,6 +19,7 @@ import AdminBulkScoreDelete from '../components/admin/AdminBulkScoreDelete';
 import AdminChangesLogViewer from '../components/admin/AdminChangesLogViewer';
 import AdminManagers from '../components/admin/AdminManagers';
 import AdminOrphanedData from '../components/admin/AdminOrphanedData';
+import AdminDiscordGuide from '../components/admin/AdminDiscordGuide';
 
 const TABS = [
     { id: 'overview',    label: 'Overview',    icon: BarChart3 },
@@ -35,6 +36,7 @@ const TABS = [
     { id: 'cleanup',     label: '🧹 Cleanup',  icon: Database },
     { id: 'changelog',   label: '📋 Audit Log', icon: Database },
     { id: 'managers',    label: '👥 Managers', icon: Users },
+    { id: 'discord',     label: '💬 Discord Guide', icon: Database },
 ];
 
 export default function AdminDashboard() {
@@ -113,6 +115,7 @@ export default function AdminDashboard() {
         cleanup: <AdminOrphanedData walletAddress={adminWallet} />,
         changelog: <AdminChangesLogViewer />,
         managers: <AdminManagers walletAddress={adminWallet} />,
+        discord: <AdminDiscordGuide />,
     };
 
     return (
