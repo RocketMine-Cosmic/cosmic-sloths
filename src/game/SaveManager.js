@@ -139,7 +139,7 @@ export const SaveManager = {
         return { week_id: `${year}-W${String(isoWeek).padStart(2, '0')}`, season_id: `${year}-S${Math.floor((isoWeek - 1) / 4) + 1}` };
     })();
 
-    const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
+    const defaultChars = ['neobyte'];
 
     const defaultSave = {
       gold: 0,

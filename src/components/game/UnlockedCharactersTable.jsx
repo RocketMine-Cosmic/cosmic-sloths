@@ -2,7 +2,7 @@ import React from 'react';
 import { CHARACTERS } from '@/game/Constants';
 import { Lock, Unlock } from 'lucide-react';
 
-const DEFAULT_CHARACTERS = ['neobyte', 'pandypaws', 'novabyte'];
+const DEFAULT_CHARACTERS = ['neobyte'];
 
 export default function UnlockedCharactersTable({ unlockedCharacters = [], nftCharacters = [] }) {
   const charList = CHARACTERS.filter(c => unlockedCharacters.includes(c.id));
