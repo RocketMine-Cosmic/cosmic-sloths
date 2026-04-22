@@ -164,7 +164,7 @@ Each tier = **+1% Damage** & **+1% Max HP** per run. Bonuses **stack** with all 
 - 🟣 **Epic** — +12% Gold, +13% Relic Fragments
 - 🟡 **Legendary** — +15% Gold, +15% Relic Fragments
 
-**Note:** Bonuses from multiple NFTs stack. Mastery is shared across unlock paths.
+**Note:** Bonuses are per-character-per-run (only the character you're playing gets its NFT bonus). Mastery is shared across unlock paths.
 
 ---
 
