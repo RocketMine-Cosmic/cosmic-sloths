@@ -1,6 +1,4 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -90,6 +88,7 @@ function buildRows(scores) {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const webhookUrl = Deno.env.get('DISCORD_LEADERBOARD_WEBHOOK');
         if (!webhookUrl) return Response.json({ error: 'Discord webhook not configured' }, { status: 500 });
 
@@ -100,8 +99,8 @@ Deno.serve(async (req) => {
         const season_id = body.season_id || defaultSeason;
 
         const [weeklyScores, seasonalScores] = await Promise.all([
-            db.entities.RunScore.filter({ week_id }, '-score', 300),
-            db.entities.RunScore.filter({ season_id }, '-score', 400),
+            base44.asServiceRole.entities.RunScore.filter({ week_id }, '-score', 300),
+            base44.asServiceRole.entities.RunScore.filter({ season_id }, '-score', 400),
         ]);
 
         const weeklyUnique = dedup(weeklyScores, 10);

@@ -1,9 +1,8 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { adminKey } = await req.json();
         const expectedKey = Deno.env.get('AdminDash');
         if (!adminKey || adminKey !== expectedKey) {
@@ -13,12 +12,12 @@ Deno.serve(async (req) => {
         const week_id = '2026-W16';
         const testAmount = 531;
 
-        const existing = await db.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+        const existing = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
         if (existing.length > 0) {
-            await db.entities.TokenPool.delete(existing[0].id);
+            await base44.asServiceRole.entities.TokenPool.delete(existing[0].id);
         }
 
-        const pool = await db.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: testAmount, distributed: false });
+        const pool = await base44.asServiceRole.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: testAmount, distributed: false });
 
         const spends = [
             { user_id: 'test-player-1', player_name: 'Test Player 1', wallet_address: '0xtest1', amount: 200 },
@@ -27,7 +26,7 @@ Deno.serve(async (req) => {
         ];
 
         for (const spend of spends) {
-            await db.entities.TokenSpendLog.create({ ...spend, week_id, season_id: '2026-S2' });
+            await base44.asServiceRole.entities.TokenSpendLog.create({ ...spend, week_id, season_id: '2026-S2' });
         }
 
         console.log(`[seedTestTokenPool] Seeded 2026-W16 with 531 OMEN pool and 3 test spend logs`);

@@ -1,10 +1,9 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { adminKey } = await req.json();
         const expectedKey = Deno.env.get('AdminDash');
         if (!adminKey || adminKey !== expectedKey) {
@@ -18,7 +17,7 @@ Deno.serve(async (req) => {
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
         console.log('[validateTokenSpends] Fetching all TokenSpendLog entries...');
-        const allLogs = await db.entities.TokenSpendLog.list('', 10000);
+        const allLogs = await base44.asServiceRole.entities.TokenSpendLog.list('', 10000);
         console.log(`[validateTokenSpends] Found ${allLogs.length} spend log entries`);
 
         const phantomSpends = [];
@@ -40,13 +39,13 @@ Deno.serve(async (req) => {
 
         const totalValid = validSpends.reduce((sum, log) => sum + (log.amount || 0), 0);
         
-        const allPools = await db.entities.TokenPool.list('', 10000);
+        const allPools = await base44.asServiceRole.entities.TokenPool.list('', 10000);
         for (const pool of allPools) {
-            await db.entities.TokenPool.delete(pool.id);
+            await base44.asServiceRole.entities.TokenPool.delete(pool.id);
         }
 
-        await db.entities.TokenPool.create({ period_id: '2026-W01', period_type: 'weekly', total_spent: totalValid, distributed: false });
-        await db.entities.TokenPool.create({ period_id: '2026-S1', period_type: 'seasonal', total_spent: totalValid, distributed: false });
+        await base44.asServiceRole.entities.TokenPool.create({ period_id: '2026-W01', period_type: 'weekly', total_spent: totalValid, distributed: false });
+        await base44.asServiceRole.entities.TokenPool.create({ period_id: '2026-S1', period_type: 'seasonal', total_spent: totalValid, distributed: false });
 
         return Response.json({
             success: true,
