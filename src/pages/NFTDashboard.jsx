@@ -137,11 +137,17 @@ export default function NFTDashboard({ isCarousel }) {
                                                     <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                                                         ⚡ Instant unlock + perks active
                                                     </div>
-                                                    {rarity && (
-                                                        <span className="bg-amber-900/50 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-600/50 capitalize">
-                                                            {rarity}
-                                                        </span>
-                                                    )}
+                                                    {rarity && (() => {
+                                                        const rarityBadgeMap = {
+                                                            legendary: 'bg-yellow-900/50 text-yellow-400 border-yellow-600/50',
+                                                            epic: 'bg-purple-900/50 text-purple-400 border-purple-600/50',
+                                                            rare: 'bg-cyan-900/50 text-cyan-400 border-cyan-600/50',
+                                                            uncommon: 'bg-green-900/50 text-green-400 border-green-600/50',
+                                                            common: 'bg-slate-800/50 text-slate-300 border-slate-600/50'
+                                                        };
+                                                        const badgeClass = rarityBadgeMap[rarity?.toLowerCase()] || rarityBadgeMap.common;
+                                                        return <span className={`${badgeClass} text-[10px] font-bold px-2 py-0.5 rounded border capitalize`}>{rarity}</span>;
+                                                    })()}
                                                 </div>
                                                 <p className="text-slate-400 text-xs md:text-sm leading-snug mb-2">
                                                     {nft.metadata?.description || 'NFT'}
