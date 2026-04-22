@@ -59,7 +59,7 @@ export const SaveManager = {
             // Fetch NFT-unlocked characters and merge + apply perks
             try {
               console.log('[SaveManager] Fetching balances (includes NFTs) with accessToken:', !!accessToken);
-              const { data: playerRes } = await base44.functions.invoke('getOmenXBalance', { walletAddress, accessToken });
+              const { data: playerRes } = await base44.functions.invoke('getPlayerData', { walletAddress, accessToken });
               console.log('[SaveManager] Player response:', playerRes);
               if (playerRes?.unlockedCharacters?.length > 0) {
                 const defaultChars = ['neobyte'];
