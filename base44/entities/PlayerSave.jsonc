@@ -3,7 +3,8 @@
   "type": "object",
   "properties": {
     "wallet_address": {
-      "type": "string"
+      "type": "string",
+      "unique": true
     },
     "save_data": {
       "type": "object",
