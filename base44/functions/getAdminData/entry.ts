@@ -1,10 +1,9 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { type, accessToken } = await req.json();
         
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
@@ -18,21 +17,21 @@ Deno.serve(async (req) => {
 
         const walletAddress = verifyResult.user?.walletAddress;
         if (!walletAddress) return Response.json({ error: 'Forbidden' }, { status: 403 });
-        const adminWallets = await db.entities.AdminWallet.filter({ wallet_address: walletAddress });
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress });
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         if (type === 'pools') {
-            const pools = await db.entities.TokenPool.list('-created_date', 100);
+            const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);
             return Response.json({ pools });
         }
 
         if (type === 'logs') {
-            const logs = await db.entities.TokenSpendLog.list('-created_date', 50);
+            const logs = await base44.asServiceRole.entities.TokenSpendLog.list('-created_date', 50);
             return Response.json({ logs });
         }
 
         if (type === 'payouts') {
-            const payouts = await db.entities.PayoutLog.list('-created_date', 200);
+            const payouts = await base44.asServiceRole.entities.PayoutLog.list('-created_date', 200);
             return Response.json({ payouts });
         }
 

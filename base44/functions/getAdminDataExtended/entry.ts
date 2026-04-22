@@ -1,10 +1,9 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const body = await req.json();
         const { type, walletAddress, accessToken, query, period, squadId } = body;
 
@@ -21,8 +20,8 @@ Deno.serve(async (req) => {
 
         if (type === 'overview') {
             const [scores, saves] = await Promise.all([
-                db.entities.RunScore.list('-created_date', 1000),
-                db.entities.PlayerSave.list('-updated_at', 500),
+                base44.asServiceRole.entities.RunScore.list('-created_date', 1000),
+                base44.asServiceRole.entities.PlayerSave.list('-updated_at', 500),
             ]);
 
             const totalPlayers = saves.length;
@@ -43,7 +42,7 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'scores') {
-            let allScores = await db.entities.RunScore.list('-score', 200);
+            let allScores = await base44.asServiceRole.entities.RunScore.list('-score', 200);
             if (period === 'weekly') {
                 const now = new Date();
                 const year = now.getUTCFullYear();
@@ -68,7 +67,7 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'playerSearch') {
-            const saves = await db.entities.PlayerSave.list('-updated_at', 500);
+            const saves = await base44.asServiceRole.entities.PlayerSave.list('-updated_at', 500);
             if (!query) {
                 return Response.json({ players: saves.slice(0, 30) });
             }
@@ -81,13 +80,13 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'squads') {
-            const squads = await db.entities.Squad.list('-weekly_kills', 200);
+            const squads = await base44.asServiceRole.entities.Squad.list('-weekly_kills', 200);
             return Response.json({ squads });
         }
 
         if (type === 'squadMembers') {
             if (!squadId) return Response.json({ members: [] });
-            const members = await db.entities.SquadMember.filter({ squad_id: squadId });
+            const members = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
             return Response.json({ members });
         }
 
@@ -101,8 +100,8 @@ Deno.serve(async (req) => {
             const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
 
             const [bosses, contributions] = await Promise.all([
-                db.entities.GlobalBoss.filter({ week_id }),
-                db.entities.GlobalBossContribution.filter({ week_id }),
+                base44.asServiceRole.entities.GlobalBoss.filter({ week_id }),
+                base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id }),
             ]);
 
             const boss = bosses.length > 0 ? bosses[0] : null;

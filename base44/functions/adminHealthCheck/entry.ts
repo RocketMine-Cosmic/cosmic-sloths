@@ -1,10 +1,9 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const body = await req.json();
         const { walletAddress, accessToken } = body;
 
@@ -28,13 +27,13 @@ Deno.serve(async (req) => {
         const season_id = `${year}-S${seasonNum}`;
 
         const [pools, saves, weekScores, squads, members, bosses, contributions] = await Promise.all([
-            db.entities.TokenPool.filter({ distributed: false }),
-            db.entities.PlayerSave.list('-updated_at', 1),
-            db.entities.RunScore.filter({ week_id }),
-            db.entities.Squad.list('-created_date', 500),
-            db.entities.SquadMember.list('-created_date', 1000),
-            db.entities.GlobalBoss.filter({ week_id }),
-            db.entities.GlobalBossContribution.filter({ week_id }),
+            base44.asServiceRole.entities.TokenPool.filter({ distributed: false }),
+            base44.asServiceRole.entities.PlayerSave.list('-updated_at', 1),
+            base44.asServiceRole.entities.RunScore.filter({ week_id }),
+            base44.asServiceRole.entities.Squad.list('-created_date', 500),
+            base44.asServiceRole.entities.SquadMember.list('-created_date', 1000),
+            base44.asServiceRole.entities.GlobalBoss.filter({ week_id }),
+            base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id }),
         ]);
 
         const walletMap = {};
@@ -53,7 +52,7 @@ Deno.serve(async (req) => {
         const boss = bosses.length > 0 ? bosses[0] : null;
         const bossHpPct = boss ? Math.round((boss.current_hp / boss.max_hp) * 100) : null;
 
-        const allSaves = await db.entities.PlayerSave.list('-updated_at', 1000);
+        const allSaves = await base44.asServiceRole.entities.PlayerSave.list('-updated_at', 1000);
 
         return Response.json({
             week_id, season_id,

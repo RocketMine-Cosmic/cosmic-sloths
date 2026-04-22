@@ -5,6 +5,7 @@ const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID'
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { newName, newTitle, newIcon, accessToken } = await req.json();
 
         if (!accessToken) {
@@ -25,7 +26,7 @@ Deno.serve(async (req) => {
         const walletAddress = verifyResult.user.walletAddress;
 
         // Update pilotName in PlayerSave
-        const saves = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
+        const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
         for (const save of saves) {
             const updatedSaveData = {
                 ...save.save_data,
@@ -35,38 +36,38 @@ Deno.serve(async (req) => {
             };
             if (newTitle !== undefined) updatedSaveData.player_title = newTitle;
             if (newIcon !== undefined) updatedSaveData.pilot_icon = newIcon;
-            await db.entities.PlayerSave.update(save.id, { save_data: updatedSaveData, updated_at: Date.now() });
+            await base44.asServiceRole.entities.PlayerSave.update(save.id, { save_data: updatedSaveData, updated_at: Date.now() });
         }
 
         // Update RunScore records
-        const runScores = await db.entities.RunScore.filter({ wallet_address: walletAddress });
+        const runScores = await base44.asServiceRole.entities.RunScore.filter({ wallet_address: walletAddress });
         for (const score of runScores) {
             const updatePayload = { player_name: newName };
             if (newTitle !== undefined) updatePayload.player_title = newTitle;
             if (newIcon !== undefined) updatePayload.pilot_icon = newIcon;
-            await db.entities.RunScore.update(score.id, updatePayload);
+            await base44.asServiceRole.entities.RunScore.update(score.id, updatePayload);
         }
 
         // Update SquadMember records
-        const members = await db.entities.SquadMember.filter({ wallet_address: walletAddress });
+        const members = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
         for (const member of members) {
             const updatePayload = { player_name: newName };
             if (newTitle !== undefined) updatePayload.player_title = newTitle;
-            await db.entities.SquadMember.update(member.id, updatePayload);
+            await base44.asServiceRole.entities.SquadMember.update(member.id, updatePayload);
         }
 
         // Update SquadMessage records
-        const messages = await db.entities.SquadMessage.filter({ wallet_address: walletAddress });
+        const messages = await base44.asServiceRole.entities.SquadMessage.filter({ wallet_address: walletAddress });
         for (const msg of messages) {
             const updatePayload = { player_name: newName };
             if (newTitle !== undefined) updatePayload.player_title = newTitle;
-            await db.entities.SquadMessage.update(msg.id, updatePayload);
+            await base44.asServiceRole.entities.SquadMessage.update(msg.id, updatePayload);
         }
 
         // Update TokenSpendLog records
-        const spendLogs = await db.entities.TokenSpendLog.filter({ wallet_address: walletAddress });
+        const spendLogs = await base44.asServiceRole.entities.TokenSpendLog.filter({ wallet_address: walletAddress });
         for (const log of spendLogs) {
-            await db.entities.TokenSpendLog.update(log.id, { player_name: newName });
+            await base44.asServiceRole.entities.TokenSpendLog.update(log.id, { player_name: newName });
         }
 
         return Response.json({ success: true });

@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
         }
         const walletAddress = verifyResult.user.walletAddress;
 
-        const base44 = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+        const base44 = createClientFromRequest(req);
         const tag = squadTag.toUpperCase().substring(0, 4);
 
         // Check for existing squad with same name or tag, and existing membership

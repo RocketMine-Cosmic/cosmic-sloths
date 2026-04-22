@@ -21,7 +21,8 @@ Deno.serve(async (req) => {
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
         const walletAddress = await verifyToken(sdk, accessToken);
-        const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') }).asServiceRole;
+        const base44 = createClientFromRequest(req);
+        const db = base44.asServiceRole.entities;
 
         // --- JOIN SQUAD ---
         if (action === 'join') {

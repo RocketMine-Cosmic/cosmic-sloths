@@ -1,9 +1,8 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { adminKey, confirm } = await req.json();
 
         const expectedKey = Deno.env.get('AdminDash');
@@ -22,23 +21,23 @@ Deno.serve(async (req) => {
             let batch;
             do {
                 batch = await listFn();
-                await Promise.all(batch.map(r => db.entities[entityName].delete(r.id)));
+                await Promise.all(batch.map(r => base44.asServiceRole.entities[entityName].delete(r.id)));
                 deleted += batch.length;
             } while (batch.length > 0);
             return deleted;
         };
 
-        results.RunScore       = await deleteAll('RunScore',       () => db.entities.RunScore.list(null, 50));
-        results.PlayerSave     = await deleteAll('PlayerSave',     () => db.entities.PlayerSave.list(null, 50));
-        results.TokenPool      = await deleteAll('TokenPool',      () => db.entities.TokenPool.list(null, 50));
-        results.TokenSpendLog  = await deleteAll('TokenSpendLog',  () => db.entities.TokenSpendLog.list(null, 50));
-        results.PayoutLog      = await deleteAll('PayoutLog',      () => db.entities.PayoutLog.list(null, 50));
-        results.Squad          = await deleteAll('Squad',          () => db.entities.Squad.list(null, 50));
-        results.SquadMember    = await deleteAll('SquadMember',    () => db.entities.SquadMember.list(null, 50));
-        results.SquadMessage   = await deleteAll('SquadMessage',   () => db.entities.SquadMessage.list(null, 50));
-        results.GlobalBoss               = await deleteAll('GlobalBoss',               () => db.entities.GlobalBoss.list(null, 50));
-        results.GlobalBossContribution   = await deleteAll('GlobalBossContribution',   () => db.entities.GlobalBossContribution.list(null, 50));
-        results.GlobalBossEvent          = await deleteAll('GlobalBossEvent',          () => db.entities.GlobalBossEvent.list(null, 50));
+        results.RunScore       = await deleteAll('RunScore',       () => base44.asServiceRole.entities.RunScore.list(null, 50));
+        results.PlayerSave     = await deleteAll('PlayerSave',     () => base44.asServiceRole.entities.PlayerSave.list(null, 50));
+        results.TokenPool      = await deleteAll('TokenPool',      () => base44.asServiceRole.entities.TokenPool.list(null, 50));
+        results.TokenSpendLog  = await deleteAll('TokenSpendLog',  () => base44.asServiceRole.entities.TokenSpendLog.list(null, 50));
+        results.PayoutLog      = await deleteAll('PayoutLog',      () => base44.asServiceRole.entities.PayoutLog.list(null, 50));
+        results.Squad          = await deleteAll('Squad',          () => base44.asServiceRole.entities.Squad.list(null, 50));
+        results.SquadMember    = await deleteAll('SquadMember',    () => base44.asServiceRole.entities.SquadMember.list(null, 50));
+        results.SquadMessage   = await deleteAll('SquadMessage',   () => base44.asServiceRole.entities.SquadMessage.list(null, 50));
+        results.GlobalBoss               = await deleteAll('GlobalBoss',               () => base44.asServiceRole.entities.GlobalBoss.list(null, 50));
+        results.GlobalBossContribution   = await deleteAll('GlobalBossContribution',   () => base44.asServiceRole.entities.GlobalBossContribution.list(null, 50));
+        results.GlobalBossEvent          = await deleteAll('GlobalBossEvent',          () => base44.asServiceRole.entities.GlobalBossEvent.list(null, 50));
 
         console.log('[resetAllPlayerData] Complete:', JSON.stringify(results));
         return Response.json({ success: true, deleted: results });

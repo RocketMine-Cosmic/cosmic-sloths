@@ -1,7 +1,5 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -14,6 +12,7 @@ function getCurrentWeekId() {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, accessToken } = await req.json();
 
         if (!clientWallet || !accessToken) return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
@@ -27,7 +26,7 @@ Deno.serve(async (req) => {
         const walletAddress = verifyResult.user.walletAddress;
 
         const week_id = getCurrentWeekId();
-        const contribs = await db.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
+        const contribs = await base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
 
         return Response.json({ contribution: contribs.length > 0 ? contribs[0] : null });
     } catch (error) {

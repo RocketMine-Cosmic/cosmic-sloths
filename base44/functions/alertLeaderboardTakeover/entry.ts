@@ -1,6 +1,4 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -27,19 +25,7 @@ async function postToDiscord(webhookUrl, embed) {
     }
 }
 
-async function getTopTwo(filter) {
-    const scores = await db.entities.RunScore.filter(filter, '-score', 50);
-    const seen = new Set();
-    const unique = [];
-    for (const s of scores) {
-        const key = s.wallet_address || s.user_id;
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-        unique.push(s);
-        if (unique.length >= 2) break;
-    }
-    return unique;
-}
+
 
 function isTakeover(top2, newScore) {
     const currentTop = top2[0];
@@ -53,6 +39,7 @@ function isTakeover(top2, newScore) {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const webhookUrl = Deno.env.get('DISCORD_ALERT_WEBHOOK');
         if (!webhookUrl) return Response.json({ error: 'DISCORD_ALERT_WEBHOOK not configured' }, { status: 500 });
 
@@ -74,9 +61,23 @@ Deno.serve(async (req) => {
 
         const alerts = [];
 
+        const getTopTwoWithBase44 = async (filter) => {
+            const scores = await base44.asServiceRole.entities.RunScore.filter(filter, '-score', 50);
+            const seen = new Set();
+            const unique = [];
+            for (const s of scores) {
+                const key = s.wallet_address || s.user_id;
+                if (!key || seen.has(key)) continue;
+                seen.add(key);
+                unique.push(s);
+                if (unique.length >= 2) break;
+            }
+            return unique;
+        };
+
         const [weeklyTop2, seasonalTop2] = await Promise.all([
-            isCurrentWeek   ? getTopTwo({ week_id })   : Promise.resolve([]),
-            isCurrentSeason ? getTopTwo({ season_id }) : Promise.resolve([]),
+            isCurrentWeek   ? getTopTwoWithBase44({ week_id })   : Promise.resolve([]),
+            isCurrentSeason ? getTopTwoWithBase44({ season_id }) : Promise.resolve([]),
         ]);
 
         if (isCurrentWeek && isTakeover(weeklyTop2, newScore)) {

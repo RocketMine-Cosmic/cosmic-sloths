@@ -1,7 +1,5 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -18,6 +16,7 @@ function getCurrentPeriodIds() {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { skuId, quantity = 1, walletAddress: clientWallet, userId, playerName: playerNameParam, accessToken } = await req.json();
 
         if (!skuId) return Response.json({ error: 'Missing skuId' }, { status: 400 });
@@ -69,10 +68,10 @@ Deno.serve(async (req) => {
         console.log(`[purchaseSku] OmenX charge confirmed, txHash: ${purchaseData.transactionId || purchaseData.paymentTxHash}, amount: ${totalAmount}`);
 
         try {
-            const existing = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
+            const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
             if (existing.length === 0) {
                 console.log(`[purchaseSku] PlayerSave missing for ${walletAddress}, creating default...`);
-                await db.entities.PlayerSave.create({
+                await base44.asServiceRole.entities.PlayerSave.create({
                     wallet_address: walletAddress,
                     save_data: {
                         unlockedCharacters: ['neobyte'],
@@ -96,7 +95,7 @@ Deno.serve(async (req) => {
 
         console.log(`[purchaseSku] Creating TokenSpendLog: week=${week_id}, season=${season_id}, amount=${totalAmount}`);
         
-        await db.entities.TokenSpendLog.create({
+        await base44.asServiceRole.entities.TokenSpendLog.create({
             user_id: validUserId,
             player_name: playerName,
             wallet_address: walletAddress,
@@ -106,17 +105,17 @@ Deno.serve(async (req) => {
         });
 
         const [weeklyPools, seasonalPools] = await Promise.all([
-            db.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),
-            db.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' }),
+            base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),
+            base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' }),
         ]);
 
         await Promise.all([
             weeklyPools.length > 0
-                ? db.entities.TokenPool.update(weeklyPools[0].id, { total_spent: weeklyPools[0].total_spent + totalAmount })
-                : db.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false }),
+                ? base44.asServiceRole.entities.TokenPool.update(weeklyPools[0].id, { total_spent: weeklyPools[0].total_spent + totalAmount })
+                : base44.asServiceRole.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false }),
             seasonalPools.length > 0
-                ? db.entities.TokenPool.update(seasonalPools[0].id, { total_spent: seasonalPools[0].total_spent + totalAmount })
-                : db.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false }),
+                ? base44.asServiceRole.entities.TokenPool.update(seasonalPools[0].id, { total_spent: seasonalPools[0].total_spent + totalAmount })
+                : base44.asServiceRole.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false }),
         ]);
 
         console.log(`[purchaseSku] Pool sync complete: week=${week_id} season=${season_id} amount=${totalAmount}`);

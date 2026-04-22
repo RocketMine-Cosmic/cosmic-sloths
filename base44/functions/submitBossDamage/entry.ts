@@ -1,7 +1,5 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -20,6 +18,7 @@ const MAX_DAMAGE_PER_SUBMISSION = 1_000_000;
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const body = await req.json();
         const { damage, playerName, accessToken } = body;
 
@@ -37,7 +36,7 @@ Deno.serve(async (req) => {
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);
         const { week_id } = getCurrentPeriodIds();
 
-        const bossRecords = await db.entities.GlobalBoss.filter({ week_id });
+        const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
         if (bossRecords.length === 0) return Response.json({ error: 'No boss active' }, { status: 404 });
 
         const boss = bossRecords[0];
@@ -54,7 +53,7 @@ Deno.serve(async (req) => {
             newHp = nextMaxHp;
         }
 
-        await db.entities.GlobalBoss.update(boss.id, updates);
+        await base44.asServiceRole.entities.GlobalBoss.update(boss.id, updates);
 
         const displayName = playerName || walletAddress;
         const eventType = killed ? 'kill' : 'damage';
@@ -62,19 +61,19 @@ Deno.serve(async (req) => {
             ? `${displayName} defeated the Level ${boss.level || 1} Boss!`
             : `${displayName} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`;
 
-        await db.entities.GlobalBossEvent.create({
+        await base44.asServiceRole.entities.GlobalBossEvent.create({
             week_id, player_name: displayName, event_type: eventType,
             damage: clampedDamage, level: boss.level || 1, message: eventMessage
         });
 
-        const existing = await db.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
+        const existing = await base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
         if (existing.length > 0) {
-            await db.entities.GlobalBossContribution.update(existing[0].id, {
+            await base44.asServiceRole.entities.GlobalBossContribution.update(existing[0].id, {
                 damage: existing[0].damage + clampedDamage,
                 player_name: displayName
             });
         } else {
-            await db.entities.GlobalBossContribution.create({
+            await base44.asServiceRole.entities.GlobalBossContribution.create({
                 week_id, user_id: walletAddress, player_name: displayName,
                 damage: clampedDamage, claimed: false
             });

@@ -1,10 +1,9 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { saveId, patch, accessToken } = await req.json();
 
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
@@ -18,13 +17,13 @@ Deno.serve(async (req) => {
         const verifyResult = await sdk.verifyOAuthUser(accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
-        const existing = await db.entities.PlayerSave.get(saveId);
+        const existing = await base44.asServiceRole.entities.PlayerSave.get(saveId);
         if (!existing) return Response.json({ error: 'Save not found' }, { status: 404 });
 
         const currentSave = existing.save_data || {};
         const newSaveData = deepMerge(currentSave, patch);
 
-        const updated = await db.entities.PlayerSave.update(saveId, {
+        const updated = await base44.asServiceRole.entities.PlayerSave.update(saveId, {
             save_data: newSaveData,
             updated_at: Date.now(),
         });
