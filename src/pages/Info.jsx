@@ -125,7 +125,7 @@ const TABS_CONTENT = {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Unlock new sloths by reaching kill milestones. Each character has unique stats, abilities, and exclusive Talent Trees.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Unlock new sloths by reaching kill milestones, or instantly unlock by owning the character's NFT. Each character has unique stats, abilities, and exclusive Talent Trees.</p>
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">⬆️ Stat Upgrades</div>
@@ -189,7 +189,7 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div>
                         <h4 className="text-sm font-bold text-amber-400 mb-2">🔓 Unlocking Characters</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed">Unlock new sloths by reaching cumulative kill milestones. Once unlocked, you can play them in future runs without cost.</p>
+                        <p className="text-xs text-slate-400 leading-relaxed"><strong className="text-amber-300">NFT Holders:</strong> Instantly unlock the character when you own its NFT, plus earn +5% to +15% Gold & Relic Fragments per run based on rarity. <strong className="text-amber-300">Non-NFT Players:</strong> Unlock sloths by reaching cumulative kill milestones (2k, 5k, 10k, 20k kills).</p>
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-amber-400 mb-2">📊 Character Mastery</h4>

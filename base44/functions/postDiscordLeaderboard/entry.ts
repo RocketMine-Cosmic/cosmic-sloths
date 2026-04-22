@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
             const weeklyClose = getWeeklyCloseDate(week_id);
             embeds.push({
                 title: '🏆 Weekly Leaderboard — Cosmic Sloths',
-                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${formatCountdown(weeklyClose)}\n\n${buildRows(weeklyUnique)}\n\n*Earn OMENX by ranking in the top 30. Unlock characters through kill milestones. NFT holders get bonus Gold & Relic Fragments per run.*`,
+                description: `**Week ${week_id}** — Top ${weeklyUnique.length} Pilots\n⏳ ${formatCountdown(weeklyClose)}\n\n${buildRows(weeklyUnique)}\n\n*Earn OMENX by ranking in the top 30. Unlock characters via kill milestones or own their NFT for instant unlock + per-run bonuses (+5% to +15% Gold & Relic Fragments).*`,
                 color: 0x0CA7B8,
                 timestamp: new Date().toISOString(),
             });
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
             const seasonalClose = getSeasonalCloseDate(season_id);
             embeds.push({
                 title: '🗓️ Seasonal Leaderboard — Cosmic Sloths',
-                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${formatCountdown(seasonalClose)}\n\n${buildRows(seasonalUnique)}\n\n*Earn OMENX by ranking in the top 40. Unlock characters through kill milestones. NFT holders get +5% to +15% Gold & Relic Fragments!*`,
+                description: `**Season ${season_id}** — Top ${seasonalUnique.length} Pilots\n⏳ ${formatCountdown(seasonalClose)}\n\n${buildRows(seasonalUnique)}\n\n*Earn OMENX by ranking in the top 40. Unlock characters via kill milestones or own their NFT for instant unlock + per-run bonuses (+5% to +15% Gold & Relic Fragments).*`,
                 color: 0xD946EF,
                 footer: { text: 'Cosmic Sloths · Compete for OMENX rewards' },
                 timestamp: new Date().toISOString(),
