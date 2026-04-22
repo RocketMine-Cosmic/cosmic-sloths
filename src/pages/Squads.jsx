@@ -101,7 +101,7 @@ export default function Squads({ isCarousel }) {
                         
                         const squad = await base44.entities.Squad.get(member.squad_id);
                         
-                        // Check weekly reset
+                        // Check weekly/daily reset
                         const currentWeek = getCurrentWeek();
                         const currentDay = moment().format('YYYY-MM-DD');
                         let needsUpdate = false;
@@ -109,7 +109,6 @@ export default function Squads({ isCarousel }) {
                         let updatedSquad = squad;
 
                         if (squad.current_week !== currentWeek) {
-                            // Award XP from last week's kills before resetting
                             const earnedXp = squad.weekly_kills || 0;
                             const newXp = (squad.xp || 0) + earnedXp;
                             const newLevelData = getSquadLevel(newXp);
@@ -127,7 +126,16 @@ export default function Squads({ isCarousel }) {
                         }
 
                         if (needsUpdate) {
-                            updatedSquad = await base44.entities.Squad.update(squad.id, updateData);
+                            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                            if (authData?.accessToken) {
+                                const res = await base44.functions.invoke('squadActions', {
+                                    action: 'resetPeriods',
+                                    accessToken: authData.accessToken,
+                                    squadId: squad.id,
+                                    updateData,
+                                });
+                                if (res.data?.squad) updatedSquad = res.data.squad;
+                            }
                         }
                         
                         setMySquad(updatedSquad);

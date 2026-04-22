@@ -197,6 +197,19 @@ Deno.serve(async (req) => {
             return Response.json({ success: true, member: updated });
         }
 
+        // --- RESET WEEKLY/DAILY KILLS ---
+        if (action === 'resetPeriods') {
+            const { squadId, updateData } = body;
+            if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
+
+            // Verify caller is a member of this squad
+            const members = await db.entities.SquadMember.filter({ squad_id: squadId, wallet_address: walletAddress });
+            if (members.length === 0) return Response.json({ error: 'Not a member of this squad.' }, { status: 403 });
+
+            const updated = await db.entities.Squad.update(squadId, updateData);
+            return Response.json({ success: true, squad: updated });
+        }
+
         return Response.json({ error: 'Unknown action' }, { status: 400 });
     } catch (error) {
         console.error('[squadActions]', error.message);
