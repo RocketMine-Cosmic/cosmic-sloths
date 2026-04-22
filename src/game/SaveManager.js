@@ -52,7 +52,22 @@ export const SaveManager = {
           });
           if (response?.saveData) {
             console.log('[SaveManager] Loaded from backend');
-            localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
+            let saveData = response.saveData;
+            
+            // Fetch NFT-unlocked characters and merge
+            try {
+              const { data: nftRes } = await base44.functions.invoke('getNFTCharacters', { accessToken });
+              if (nftRes?.unlockedCharacters?.length > 0) {
+                const defaultChars = ['neobyte', 'pandypaws', 'novabyte'];
+                const nftChars = nftRes.unlockedCharacters.filter(c => typeof c === 'string');
+                saveData.unlockedCharacters = [...new Set([...defaultChars, ...nftChars])];
+                console.log('[SaveManager] Unlocked NFT characters:', nftChars);
+              }
+            } catch (e) {
+              console.log('[SaveManager] NFT fetch failed:', e.message);
+            }
+            
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(saveData));
             return;
           }
         } catch (e) {
