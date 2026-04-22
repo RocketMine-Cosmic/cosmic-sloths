@@ -28,6 +28,7 @@ import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
 import { initOmenX } from '@/lib/omenx';
+import { updateOmenXUser } from '@/lib/omenxUser';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 
@@ -113,10 +114,8 @@ const MainApp = () => {
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     {needsProfileName && (
-      <SetProfileNameModal onComplete={() => {
-          const save = SaveManager.load();
-          save.hasSetProfileName = true;
-          SaveManager.save(save);
+      <SetProfileNameModal onComplete={(chosenName) => {
+          updateOmenXUser({ player_name: chosenName });
           setNeedsProfileName(false);
       }} />
     )}
