@@ -27,7 +27,7 @@ Between runs, visit your cosmic base and spend **Gold** and **OMENX** to get str
 
 | Feature | What You Get |
 |---------|-------------|
-| **👤 Characters** | Unlock unique sloths with exclusive Talent Trees |
+| **👤 Characters** | Unlock sloths via **kill milestones OR NFT ownership**. Own an NFT? Instant unlock + per-run bonuses (+5-15% Gold & Fragments based on rarity). |
 | **⬆️ Stat Upgrades** | 3 tiers: Permanent / Weekly / Seasonal—stronger each cycle |
 | **🔫 Armory** | Master weapons (Damage + Area + Cooldown) to unlock ultimate forms |
 | **💎 Ancient Relics** | Equip for global buffs. Upgrade with Relic Fragments. |
@@ -147,6 +147,24 @@ Each tier = **+1% Damage** & **+1% Max HP** per run. Bonuses **stack** with all 
 **14 Tiers Available:** Bronze 1–2 → Silver 1–3 → Gold 1–2 → Platinum 1–3 → Diamond 1–4
 
 *(VIP is automatically detected from your OmenX wallet — no setup required.)*
+
+---
+
+## 💎 NFT INTEGRATION
+
+### 🔓 **Character Unlocks**
+- **Own the NFT?** → Instantly unlock the character + earn rarity-based per-run bonuses
+- **No NFT?** → Reach cumulative kill milestones (2k, 5k, 10k, 20k kills) for permanent unlocks
+- **Sell your NFT?** → Character is removed from roster, but mastery is preserved for re-acquisition
+
+### 🎁 **Rarity-Based Per-Run Bonuses**
+- ⬜ **Common** — +5% Gold, +5% Relic Fragments
+- 🟢 **Uncommon** — +7% Gold, +8% Relic Fragments
+- 🔵 **Rare** — +10% Gold, +10% Relic Fragments
+- 🟣 **Epic** — +12% Gold, +13% Relic Fragments
+- 🟡 **Legendary** — +15% Gold, +15% Relic Fragments
+
+**Note:** Bonuses from multiple NFTs stack. Mastery is shared across unlock paths.
 
 ---
 
