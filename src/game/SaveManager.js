@@ -181,16 +181,7 @@ export const SaveManager = {
         const parsed = JSON.parse(data);
         if (!parsed.foundCharacters) parsed.foundCharacters = [];
         
-        const last7 = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'];
-        
-        if (parsed.unlockedCharacters) {
-            parsed.unlockedCharacters = parsed.unlockedCharacters.filter(c => !last7.includes(c) || parsed.foundCharacters.includes(c));
-            defaultChars.forEach(dc => {
-                if (!parsed.unlockedCharacters.includes(dc)) {
-                    parsed.unlockedCharacters.push(dc);
-                }
-            });
-        } else {
+        if (!parsed.unlockedCharacters) {
             parsed.unlockedCharacters = [...defaultChars];
         }
 
@@ -232,6 +223,7 @@ export const SaveManager = {
         if (parsed.totalKills === undefined) parsed.totalKills = 0;
         if (parsed.totalGoldEarned === undefined) parsed.totalGoldEarned = 0;
         if (parsed.maxLevelReached === undefined) parsed.maxLevelReached = 0;
+        if (!parsed.foundCharacters) parsed.foundCharacters = [];
         
         if (!parsed.bounties) {
             parsed.bounties = { date: '', active: [], dailyMission: null };
