@@ -95,6 +95,13 @@ export default function Squads({ isCarousel }) {
                 setUser(omenxUser);
                 if (omenxUser) {
                     const memberships = await base44.entities.SquadMember.filter({ wallet_address: omenxUser.wallet_address || omenxUser.walletAddress });
+                    // Cache membership for Game.jsx to read without network call
+                    const walletKey = omenxUser.wallet_address || omenxUser.walletAddress;
+                    if (memberships.length > 0) {
+                        localStorage.setItem(`squad_membership_${walletKey}`, JSON.stringify(memberships[0]));
+                    } else {
+                        localStorage.removeItem(`squad_membership_${walletKey}`);
+                    }
                     if (memberships.length > 0) {
                         const member = memberships[0];
                         setMyMemberRecord(member);

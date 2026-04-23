@@ -45,23 +45,8 @@ export default function Game() {
         const initGame = async () => {
             const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
             
-            // Load from backend first if available (via backend function — no session required)
-            try {
-              const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-              if (omenxAuth?.walletAddress && omenxAuth?.accessToken) {
-                const { data: response } = await base44.functions.invoke('loadSave', {
-                  walletAddress: omenxAuth.walletAddress,
-                  accessToken: omenxAuth.accessToken,
-                });
-                if (response?.saveData) {
-                  localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
-                }
-              }
-            } catch (e) {
-              console.error('Failed to load from backend:', e);
-            }
-            
-            const save = SaveManager.load(); // Note: now includes cloud sync
+            // SaveManager.initialize() already ran in App.jsx — just read local
+            const save = SaveManager.load();
         
         const canvas = canvasRef.current;
         const resizeCanvas = () => {
@@ -104,75 +89,58 @@ export default function Game() {
             }
         };
 
-        const saveScore = async (stats, isVictory) => {
-            try {
-                const user = getOmenXUserSync();
-                if (!user) return;
-                const displayName = user.player_name || user.full_name;
-                const walletAddress = user.walletAddress;
-                
-                // Enforce pilot name validation - no wallets, emails, or empty names on leaderboard
-                if (!displayName || displayName.includes('@') || displayName.includes('0x') || displayName.trim() === '') {
-                    console.warn('[saveScore] Player has no proper pilot name set - score not recorded');
-                    return;
-                }
-
-                const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
-                const arenaMultiplier = isEndless ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
-                const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + (isVictory ? 5000 : 0);
-                const currentSaveForScore = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
-                const bulletHellMult = (currentSaveForScore.bossModifiers && currentSaveForScore.bossModifiers.bullet_hell) ? 1.3 : 1.0;
-                const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
-
-                const { week_id, season_id } = getCurrentPeriodIds();
-                const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
-
-                const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
-                
-                const scoreData = {
-                    user_id: walletAddress,
-                    wallet_address: walletAddress,
-                    player_name: displayName,
-                    player_title: user.data?.player_title || '',
-                    pilot_icon: pilotIcon,
-                    score,
-                    time_survived: stats.time,
-                    level: stats.level,
-                    kills: stats.kills,
-                    character_id: stats.characterId || characterId,
-                    arena_id,
-                    week_id,
-                    season_id
-                };
-
-                // Get squad info if player is in one (read from local storage — no session required)
-                let squadStats = null;
+        const saveScore = (stats, isVictory) => {
+            // Fire-and-forget — never block the game-over screen
+            (async () => {
                 try {
-                    if (walletAddress) {
-                        const memberships = await base44.entities.SquadMember.filter({ wallet_address: walletAddress });
-                        if (memberships.length > 0) {
-                            squadStats = {
-                                squadId: memberships[0].squad_id,
-                                kills: stats.kills
-                            };
-                        }
+                    const user = getOmenXUserSync();
+                    if (!user) return;
+                    const displayName = user.player_name || user.full_name;
+                    const walletAddress = user.walletAddress;
+                    
+                    if (!displayName || displayName.includes('@') || displayName.includes('0x') || displayName.trim() === '') {
+                        console.warn('[saveScore] No proper pilot name — score not recorded');
+                        return;
                     }
-                } catch (err) {
-                    console.error('Failed to get squad info', err);
-                }
 
-                // Route through backend function — all Base44 entity operations happen server-side
-                const omenxAuthForScore = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                const res = await base44.functions.invoke('saveScore', {
-                    scoreData,
-                    walletAddress,
-                    squadStats,
-                    accessToken: omenxAuthForScore?.accessToken || null,
-                });
-                console.log('[saveScore] Response:', res?.data);
-            } catch (e) {
-                console.error('saveScore: FAILED:', e?.message || e);
-            }
+                    const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
+                    const arenaMultiplier = isEndless ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
+                    const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + (isVictory ? 5000 : 0);
+                    const currentSaveForScore = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
+                    const bulletHellMult = (currentSaveForScore.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
+                    const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
+
+                    const { week_id, season_id } = getCurrentPeriodIds();
+                    const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
+                    const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
+                    
+                    const scoreData = {
+                        user_id: walletAddress, wallet_address: walletAddress,
+                        player_name: displayName, player_title: user.data?.player_title || '',
+                        pilot_icon: pilotIcon, score, time_survived: stats.time,
+                        level: stats.level, kills: stats.kills,
+                        character_id: stats.characterId || characterId,
+                        arena_id, week_id, season_id
+                    };
+
+                    // Read squad membership from local cache to avoid a network round-trip
+                    let squadStats = null;
+                    try {
+                        const cached = localStorage.getItem(`squad_membership_${walletAddress}`);
+                        if (cached) {
+                            squadStats = { squadId: JSON.parse(cached).squad_id, kills: stats.kills };
+                        }
+                    } catch (_) {}
+
+                    const omenxAuthForScore = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                    base44.functions.invoke('saveScore', {
+                        scoreData, walletAddress, squadStats,
+                        accessToken: omenxAuthForScore?.accessToken || null,
+                    }).catch(e => console.error('saveScore: FAILED:', e?.message || e));
+                } catch (e) {
+                    console.error('saveScore: FAILED:', e?.message || e);
+                }
+            })();
         };
 
         // Inject skin color override into save so GameEngine can read it
@@ -244,7 +212,7 @@ export default function Game() {
                     stats.unlockedCharacter = grantedChar;
                 }
                 SaveManager.save(currentSave);
-                SaveManager.syncToBackendImmediate(); // Sync immediately on game end
+                SaveManager.syncToBackend(); // Non-blocking background sync
                 const currentSaveForGameOver = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const goArenaIndex = ARENAS.findIndex(a => a.id === arenaId);
                 const goArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, goArenaIndex) * 0.2);
@@ -302,7 +270,7 @@ export default function Game() {
                     stats.unlockedCharacter = grantedChar;
                 }
                 SaveManager.save(currentSave);
-                SaveManager.syncToBackendImmediate(); // Sync immediately on game end
+                SaveManager.syncToBackend(); // Non-blocking background sync
                 const currentSaveForVictory = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const vicArenaIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 const vicArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, vicArenaIndex) * 0.2);
