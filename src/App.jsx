@@ -1,12 +1,14 @@
+import React, { useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-// Add page imports here
 import OmenXCallback from './pages/OmenXCallback';
 import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
+import { SaveManager } from './game/SaveManager';
+import SetProfileNameModal from './components/game/SetProfileNameModal';
 // Heavy pages — lazy loaded for faster initial bundle
 const MainMenu = React.lazy(() => import('./pages/MainMenu'));
 const Hub = React.lazy(() => import('./pages/Hub'));
@@ -26,9 +28,6 @@ const GlobalRaid = React.lazy(() => import('./pages/GlobalRaid'));
 const Mastery = React.lazy(() => import('./pages/Mastery'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
-import { SaveManager } from './game/SaveManager';
-import SetProfileNameModal from './components/game/SetProfileNameModal';
-import React, { useState, useEffect } from 'react';
 import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import GamepadManager from './components/GamepadManager';
