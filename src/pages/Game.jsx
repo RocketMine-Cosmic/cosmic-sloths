@@ -488,6 +488,11 @@ export default function Game() {
                             >
                                 REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: 4 OMENX</span>
                             </button>
+                            {(omenxBalance ?? 0) < 4 && (
+                                <a href="https://omen.foundation" target="_blank" rel="noopener noreferrer" className="text-center text-xs text-emerald-400 hover:text-emerald-300 underline underline-offset-2">
+                                    Need OMENX? Get it at omen.foundation →
+                                </a>
+                            )}
                             <button
                                 onClick={handleDeclineRevive}
                                 className="bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-lg font-bold border border-slate-700 transition-colors"
