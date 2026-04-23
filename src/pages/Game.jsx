@@ -395,11 +395,10 @@ export default function Game() {
         const REROLL_COST = 2;
         if ((omenxBalance ?? 0) >= REROLL_COST) {
             confirmPurchase(REROLL_COST, 'Reroll Upgrades', () => {
+                // Grant immediately, pay in background
+                if (engineRef.current) engineRef.current.rerollChoices();
                 purchaseSku(IN_GAME_SKUS.reroll);
-                refreshOmenX();
-                if (engineRef.current) {
-                    engineRef.current.rerollChoices();
-                }
+                setTimeout(refreshOmenX, 3000);
             });
         }
     };
@@ -408,12 +407,13 @@ export default function Game() {
         const BANISH_COST = 1;
         if ((omenxBalance ?? 0) >= BANISH_COST) {
             confirmPurchase(BANISH_COST, 'Banish Upgrade', () => {
-                purchaseSku(IN_GAME_SKUS.banish);
-                refreshOmenX();
+                // Grant immediately, pay in background
                 if (engineRef.current) {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
+                purchaseSku(IN_GAME_SKUS.banish);
+                setTimeout(refreshOmenX, 3000);
             });
         }
     };
@@ -427,9 +427,10 @@ export default function Game() {
     const handleSquadUltimate = () => {
         if ((omenxBalance ?? 0) >= 4 && engineRef.current && !engineRef.current.isPaused) {
             confirmPurchase(4, 'Squad Ultimate', () => {
-                purchaseSku(IN_GAME_SKUS.squadUltimate);
-                refreshOmenX();
+                // Grant immediately, pay in background
                 engineRef.current.triggerSquadUltimate();
+                purchaseSku(IN_GAME_SKUS.squadUltimate);
+                setTimeout(refreshOmenX, 3000);
             });
         }
     };
@@ -451,8 +452,7 @@ export default function Game() {
     const handleRevive = () => {
         if ((omenxBalance ?? 0) >= 4) {
             confirmPurchase(4, 'Emergency Revive', () => {
-                purchaseSku(IN_GAME_SKUS.revive);
-                refreshOmenX();
+                // Grant immediately, pay in background
                 if (engineRef.current) {
                     engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
                     engineRef.current.player.iFrames = 3.0;
@@ -461,6 +461,8 @@ export default function Game() {
                     engineRef.current.isPaused = false;
                     setShowRevivePrompt(false);
                 }
+                purchaseSku(IN_GAME_SKUS.revive);
+                setTimeout(refreshOmenX, 3000);
             });
         }
     };
