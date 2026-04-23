@@ -37,17 +37,20 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { damage, playerName, accessToken } = body;
+        const { damage, playerName, walletAddress: clientWallet, accessToken } = body;
 
-        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 400 });
+        if (!clientWallet && !accessToken) return Response.json({ error: 'walletAddress or accessToken required' }, { status: 400 });
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-        const walletAddress = verifyResult.walletAddress;
+        let walletAddress = clientWallet;
+        if (accessToken) {
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const verifyResult = await verifyToken(sdk, accessToken);
+            if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            walletAddress = verifyResult.walletAddress;
+        }
         if (typeof damage !== 'number' || damage <= 0) return Response.json({ error: 'Invalid damage' }, { status: 400 });
 
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);

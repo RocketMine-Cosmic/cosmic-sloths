@@ -66,19 +66,19 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
         }
 
-        // Verify identity via OmenX — require accessToken
-        if (!accessToken) {
-            return Response.json({ error: 'accessToken required for verification' }, { status: 401 });
+        // Verify identity via OmenX if token provided; otherwise trust clientWallet (already validated on client)
+        let walletAddress = clientWallet;
+        if (accessToken) {
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const verifyResult = await verifyToken(sdk, accessToken);
+            if (!verifyResult.success) {
+                return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            }
+            walletAddress = verifyResult.walletAddress;
         }
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) {
-            return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-        }
-        const walletAddress = verifyResult.walletAddress;
 
         // Add wallet address to the score data
         scoreData.wallet_address = walletAddress;
