@@ -6,7 +6,8 @@ let cachedUser = null;
 let listeners = new Set();
 let fetchInProgress = false;
 let lastFetchTime = 0;
-const USER_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const USER_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes — it's just localStorage, no network call
+let storageListenerRegistered = false;
 
 function notify() {
     listeners.forEach(fn => fn(cachedUser));
@@ -61,16 +62,18 @@ export function useOmenXUser() {
 
         if (cachedUser !== null) { setUser(cachedUser); setLoading(false); }
 
-        const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { lastFetchTime = 0; stopPolling(); fetchUser(true).then(() => startPolling()); } };
-        const onUserUpdated = () => { lastFetchTime = 0; fetchUser(true); };
-        window.addEventListener('storage', onStorage);
-        window.addEventListener('omenxUserUpdated', onUserUpdated);
+        // Register global storage + update listeners only once across all hook instances
+        if (!storageListenerRegistered) {
+            storageListenerRegistered = true;
+            const onStorage = (e) => { if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) { lastFetchTime = 0; stopPolling(); fetchUser(true).then(() => startPolling()); } };
+            const onUserUpdated = () => { lastFetchTime = 0; fetchUser(true); };
+            window.addEventListener('storage', onStorage);
+            window.addEventListener('omenxUserUpdated', onUserUpdated);
+        }
 
         return () => {
             listeners.delete(listener);
-            window.removeEventListener('storage', onStorage);
-            window.removeEventListener('omenxUserUpdated', onUserUpdated);
-            if (listeners.size === 0) { stopPolling(); }
+            if (listeners.size === 0) { stopPolling(); storageListenerRegistered = false; }
         };
     }, []);
 

@@ -10,7 +10,7 @@ let lastFetchTime = 0;
 let startupTimer = null;
 let scheduledFetch = false;
 
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const CACHE_DURATION = 20 * 60 * 1000; // 20 minutes
 
 function getAuthData() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
