@@ -82,23 +82,26 @@ export default function Hub({ isCarousel }) {
 
              if (auth?.walletAddress) {
                  try {
-                     // Initialize SaveManager first (pulls cloud sync)
-                     await SaveManager.initialize();
+                     // Fetch save + player data in parallel for faster load
+                     const [, playerDataResult] = await Promise.all([
+                         SaveManager.initialize(),
+                         base44.functions.invoke('getPlayerData', {
+                             walletAddress: auth.walletAddress,
+                             accessToken: auth.accessToken,
+                         }).catch(e => { console.error('Failed to fetch player data:', e); return { data: null }; }),
+                     ]);
                      if (!isMounted) return;
 
-                     // Then load merged save
+                     // Load merged save (initialize() has completed by now)
                      const mergedSave = SaveManager.load();
                      if (!isMounted) return;
 
+                     const playerData = playerDataResult?.data;
+
                      // Recompute unlocked characters: kill milestones + current NFTs
                      try {
-                         const { data: playerData } = await base44.functions.invoke('getPlayerData', {
-                             walletAddress: auth.walletAddress,
-                             accessToken: auth.accessToken,
-                         });
-
-                         // Get NFT-unlocked characters (current ownership)
-                         const nftCharIds = (playerData?.nfts || [])
+                          // Get NFT-unlocked characters (current ownership)
+                          const nftCharIds = (playerData?.nfts || [])
                              .map(nft => nft.metadata?.name?.toLowerCase())
                              .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
 
@@ -203,7 +206,24 @@ export default function Hub({ isCarousel }) {
         launchGame(mode);
     };
 
-    const launchGame = (mode) => {
+    const launchGame = async (mode) => {
+        // Prefetch save from backend so Game page finds it in localStorage immediately (no blocking wait)
+        const auth = getOmenXAuth();
+        if (auth?.walletAddress && auth?.accessToken) {
+            base44.functions.invoke('loadSave', { walletAddress: auth.walletAddress, accessToken: auth.accessToken })
+                .then(({ data: response }) => {
+                    if (response?.saveData) {
+                        const existing = localStorage.getItem('cosmic_sloth_save');
+                        if (existing) {
+                            const merged = { ...JSON.parse(existing), ...(typeof response.saveData === 'string' ? JSON.parse(response.saveData) : response.saveData) };
+                            localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
+                        } else {
+                            localStorage.setItem('cosmic_sloth_save', JSON.stringify(response.saveData));
+                        }
+                    }
+                })
+                .catch(() => {}); // non-blocking, game will handle failure
+        }
         navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isNGPlus: isNGPlus, isEndless: mode === 'endless' } });
     };
 

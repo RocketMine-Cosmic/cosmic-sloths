@@ -51,9 +51,23 @@ export default function Profile({ isCarousel }) {
                 setNewTitle(omenxUser?.data?.player_title || '');
 
                 if (omenxUser && omenxUser.walletAddress) {
-                     // Fetch best score by wallet address (cross-device safe)
-                     const topScore = await base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress }, '-score', 1);
-                     const maxScore = topScore.length > 0 ? topScore[0].score : 0;
+                     // Fetch best score — use local cache (5 min TTL) to avoid a network round-trip on every visit
+                     const SCORE_CACHE_KEY = `profile_top_score_${omenxUser.walletAddress}`;
+                     const SCORE_CACHE_TTL = 5 * 60 * 1000;
+                     let maxScore = 0;
+                     try {
+                         const cached = JSON.parse(localStorage.getItem(SCORE_CACHE_KEY));
+                         if (cached && Date.now() - cached.ts < SCORE_CACHE_TTL) {
+                             maxScore = cached.score;
+                         } else {
+                             const topScore = await base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress }, '-score', 1);
+                             maxScore = topScore.length > 0 ? topScore[0].score : 0;
+                             localStorage.setItem(SCORE_CACHE_KEY, JSON.stringify({ score: maxScore, ts: Date.now() }));
+                         }
+                     } catch {
+                         const topScore = await base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress }, '-score', 1);
+                         maxScore = topScore.length > 0 ? topScore[0].score : 0;
+                     }
                      const save = SaveManager.load();
                      const enemyKills = save.enemyKills || {};
                      const totalLeviathans = Object.keys(enemyKills)
@@ -65,8 +79,10 @@ export default function Profile({ isCarousel }) {
                          leviathanKills: totalLeviathans,
                          globalRaidDamage: 0
                      });
-                     const rewards = await base44.entities.PayoutLog.filter({ player_name: displayName }, '-period_id', 50);
-                     setRewardsHistory(rewards);
+                     // Fetch rewards in parallel (no dependency on score)
+                     base44.entities.PayoutLog.filter({ player_name: displayName }, '-period_id', 50)
+                         .then(rewards => setRewardsHistory(rewards))
+                         .catch(() => {});
                  }
                 setLoading(false);
             } catch (e) {

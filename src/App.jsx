@@ -5,26 +5,27 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 // Add page imports here
 import OmenXCallback from './pages/OmenXCallback';
-import MainMenu from './pages/MainMenu';
-import Hub from './pages/Hub';
-import Upgrades from './pages/Upgrades.jsx';
-import LeaderboardPage from './pages/LeaderboardPage';
 import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
-import Info from './pages/Info';
-import Credits from './pages/Credits';
-import Achievements from './pages/Achievements';
-import Squads from './pages/Squads';
-import Bestiary from './pages/Bestiary';
-import SynergyCodex from './pages/SynergyCodex';
-import Profile from './pages/Profile';
-import NFTDashboard from './pages/NFTDashboard';
-import LeviathanTrials from './pages/LeviathanTrials';
-import Dailys from './pages/Dailys';
-import GlobalRaid from './pages/GlobalRaid';
-import Mastery from './pages/Mastery';
-import AdminDashboard from './pages/AdminDashboard';
-import SkuEditor from './pages/SkuEditor';
+// Heavy pages — lazy loaded for faster initial bundle
+const MainMenu = React.lazy(() => import('./pages/MainMenu'));
+const Hub = React.lazy(() => import('./pages/Hub'));
+const Upgrades = React.lazy(() => import('./pages/Upgrades'));
+const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'));
+const Info = React.lazy(() => import('./pages/Info'));
+const Credits = React.lazy(() => import('./pages/Credits'));
+const Achievements = React.lazy(() => import('./pages/Achievements'));
+const Squads = React.lazy(() => import('./pages/Squads'));
+const Bestiary = React.lazy(() => import('./pages/Bestiary'));
+const SynergyCodex = React.lazy(() => import('./pages/SynergyCodex'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const NFTDashboard = React.lazy(() => import('./pages/NFTDashboard'));
+const LeviathanTrials = React.lazy(() => import('./pages/LeviathanTrials'));
+const Dailys = React.lazy(() => import('./pages/Dailys'));
+const GlobalRaid = React.lazy(() => import('./pages/GlobalRaid'));
+const Mastery = React.lazy(() => import('./pages/Mastery'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
 import { SaveManager } from './game/SaveManager';
 import SetProfileNameModal from './components/game/SetProfileNameModal';
 import React, { useState, useEffect } from 'react';
@@ -32,6 +33,7 @@ import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
+import { fetchPlayerData } from '@/lib/playerDataCache';
 
 const MainApp = () => {
   const [saveInitialized, setSaveInitialized] = useState(false);
@@ -54,9 +56,11 @@ const MainApp = () => {
 
   // In preview mode, bypass all auth gates
   const isPreview = window.self !== window.top;
+  const fallback = <div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
+
   if (isPreview) {
     return (
-      <>
+      <React.Suspense fallback={fallback}>
         <Routes>
           <Route path="/" element={<PlayCarousel />} />
           <Route path="/hub" element={<Hub />} />
@@ -79,7 +83,7 @@ const MainApp = () => {
           <Route path="/sku-editor" element={<SkuEditor />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
-      </>
+      </React.Suspense>
     );
   }
 
@@ -114,6 +118,7 @@ const MainApp = () => {
       <Route path="/global-raid" element={<GlobalRaid />} />
       <Route path="/mastery" element={<Mastery />} />
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/sku-editor" element={<SkuEditor />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     {needsProfileName && (
@@ -140,6 +145,8 @@ const MainApp = () => {
 function App() {
   useEffect(() => {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
+    // Preload player data (balance + VIP) immediately at app start so pages find it cached
+    fetchPlayerData();
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)
     const onParentMessage = (event) => {
@@ -165,11 +172,13 @@ function App() {
       <CurrencyProvider>
         <GamepadManager />
         <Router>
-          <Routes>
-            {/* OmenX OAuth callback */}
-            <Route path="/auth/callback" element={<OmenXCallback />} />
-            <Route path="*" element={<MainApp />} />
-          </Routes>
+          <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+            <Routes>
+              {/* OmenX OAuth callback */}
+              <Route path="/auth/callback" element={<OmenXCallback />} />
+              <Route path="*" element={<MainApp />} />
+            </Routes>
+          </React.Suspense>
         </Router>
         <Toaster />
       </CurrencyProvider>

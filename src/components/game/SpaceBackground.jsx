@@ -160,11 +160,22 @@ export default function SpaceBackground() {
             animId = requestAnimationFrame(draw);
         };
 
+        // Pause animation when tab is hidden to save CPU
+        const onVisibilityChange = () => {
+            if (document.hidden) {
+                if (animId) { cancelAnimationFrame(animId); animId = null; }
+            } else if (!animId) {
+                animId = requestAnimationFrame(draw);
+            }
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
         animId = requestAnimationFrame(draw);
         return () => {
             observer.disconnect();
             if (animId) cancelAnimationFrame(animId);
             window.removeEventListener('resize', resize);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
         };
     }, []);
 
