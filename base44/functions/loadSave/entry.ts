@@ -1,10 +1,9 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, accessToken } = await req.json();
 
         if (!clientWallet || !accessToken) {
@@ -21,7 +20,7 @@ Deno.serve(async (req) => {
         }
         const walletAddress = verifyResult.user.walletAddress;
 
-        const existing = await db.entities.PlayerSave.filter({ wallet_address: walletAddress });
+        const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
         if (existing.length > 0) {
             return Response.json({ saveData: existing[0].save_data });
         }

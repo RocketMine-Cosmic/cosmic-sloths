@@ -181,7 +181,7 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey, base44) {
     const allPayments = [...payments, ...staffPayments];
 
     if (allPayments.length === 0) {
-        await db.entities.TokenPool.update(pool.id, { distributed: true });
+        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
