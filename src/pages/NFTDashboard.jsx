@@ -16,34 +16,40 @@ export default function NFTDashboard({ isCarousel }) {
     const [nfts, setNfts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchNFTs = async () => {
-            setLoading(true);
-            try {
-                const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                if (!omenxAuth?.walletAddress || !omenxAuth?.accessToken) {
-                    setLoading(false);
-                    return;
-                }
+    const fetchNFTs = async () => {
+        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        if (!omenxAuth?.walletAddress || !omenxAuth?.accessToken) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        try {
+            const { data: playerRes } = await base44.functions.invoke('getPlayerData', {
+                walletAddress: omenxAuth.walletAddress,
+                accessToken: omenxAuth.accessToken
+            });
 
-                const { data: playerRes } = await base44.functions.invoke('getPlayerData', {
-                    walletAddress: omenxAuth.walletAddress,
-                    accessToken: omenxAuth.accessToken
-                });
-
-                if (playerRes?.nfts?.length > 0) {
-                    setNfts(playerRes.nfts);
-                } else if (playerRes?.error) {
-                    console.error('[NFTDashboard] API error:', playerRes.error);
-                }
-            } catch (e) {
-                console.error('[NFTDashboard] Failed to fetch NFTs:', e);
-            } finally {
-                setLoading(false);
+            if (playerRes?.nfts?.length > 0) {
+                setNfts(playerRes.nfts);
+            } else if (playerRes?.error) {
+                console.error('[NFTDashboard] API error:', playerRes.error);
             }
-        };
+        } catch (e) {
+            console.error('[NFTDashboard] Failed to fetch NFTs:', e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchNFTs();
+
+        // Re-fetch when auth arrives (e.g. after OAuth login completes)
+        const onStorage = (e) => {
+            if (e.key === 'omenx_auth_data' && e.newValue) fetchNFTs();
+        };
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
     }, []);
 
     const getCharacterData = (charName) => {
