@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import OmenXAuthButton from './OmenXAuthButton';
 import SpaceBackground from './SpaceBackground';
 
@@ -8,6 +8,16 @@ function getOmenXAuth() {
 
 export default function OmenXGate({ children, isCarousel }) {
     const [auth, setAuth] = useState(getOmenXAuth);
+
+    useEffect(() => {
+        const onStorage = (e) => {
+            if (e.key === 'omenx_auth_data') {
+                setAuth(e.newValue ? JSON.parse(e.newValue) : null);
+            }
+        };
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, []);
 
     // Only bypass auth inside the Base44 preview iframe
     const isPreview = window.self !== window.top && window.location !== window.parent.location;
