@@ -1,5 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
@@ -29,9 +31,7 @@ function getCurrentWeekId() {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const body = await req.json();
-        const { claim_level, walletAddress: clientWallet, accessToken } = body;
+        const { claim_level, walletAddress: clientWallet, accessToken } = await req.json();
 
         if (!clientWallet || !accessToken) return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
 
@@ -48,24 +48,21 @@ Deno.serve(async (req) => {
 
         const week_id = getCurrentWeekId();
 
-        const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
+        const bossRecords = await db.entities.GlobalBoss.filter({ week_id });
         if (bossRecords.length === 0) return Response.json({ error: 'No boss' }, { status: 404 });
 
         const boss = bossRecords[0];
-        if (levelNum >= (boss.level || 1)) {
-            return Response.json({ error: 'Boss level not defeated yet' }, { status: 400 });
-        }
+        if (levelNum >= (boss.level || 1)) return Response.json({ error: 'Boss level not defeated yet' }, { status: 400 });
 
-        const contribs = await base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
+        const contribs = await db.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
         if (contribs.length === 0) return Response.json({ error: 'No contribution found' }, { status: 400 });
 
-        const freshCont = await base44.asServiceRole.entities.GlobalBossContribution.get(contribs[0].id);
+        const freshCont = await db.entities.GlobalBossContribution.get(contribs[0].id);
         const claimed_milestones = freshCont.claimed_milestones || [];
-
         if (claimed_milestones.includes(levelNum)) return Response.json({ error: 'Already claimed' }, { status: 400 });
 
         const uniqueMilestones = [...new Set([...claimed_milestones, levelNum])].sort((a, b) => a - b);
-        await base44.asServiceRole.entities.GlobalBossContribution.update(freshCont.id, { claimed_milestones: uniqueMilestones });
+        await db.entities.GlobalBossContribution.update(freshCont.id, { claimed_milestones: uniqueMilestones });
 
         const goldReward = levelNum * 250;
         return Response.json({ status: 'success', reward: { type: 'gold', id: goldReward.toString() } });

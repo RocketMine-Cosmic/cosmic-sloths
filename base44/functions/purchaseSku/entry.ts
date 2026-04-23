@@ -50,12 +50,12 @@ Deno.serve(async (req) => {
         if (!accessToken) {
             return Response.json({ error: 'accessToken required for verification' }, { status: 401 });
         }
-        
+
         const verifyResult = await verifyToken(sdk, accessToken);
         if (!verifyResult.success) {
             return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
         }
-        
+
         const walletAddress = verifyResult.walletAddress;
 
         const productsRes = await sdk.getProducts();
@@ -87,7 +87,6 @@ Deno.serve(async (req) => {
         try {
             const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
             if (existing.length === 0) {
-                console.log(`[purchaseSku] PlayerSave missing for ${walletAddress}, creating default...`);
                 await base44.asServiceRole.entities.PlayerSave.create({
                     wallet_address: walletAddress,
                     save_data: {
@@ -106,12 +105,7 @@ Deno.serve(async (req) => {
 
         const playerName = playerNameParam || walletAddress;
         const validUserId = userId || walletAddress;
-        if (!validUserId) {
-            return Response.json({ error: 'Invalid user identification' }, { status: 400 });
-        }
 
-        console.log(`[purchaseSku] Creating TokenSpendLog: week=${week_id}, season=${season_id}, amount=${totalAmount}`);
-        
         await base44.asServiceRole.entities.TokenSpendLog.create({
             user_id: validUserId,
             player_name: playerName,
@@ -134,8 +128,6 @@ Deno.serve(async (req) => {
                 ? base44.asServiceRole.entities.TokenPool.update(seasonalPools[0].id, { total_spent: seasonalPools[0].total_spent + totalAmount })
                 : base44.asServiceRole.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false }),
         ]);
-
-        console.log(`[purchaseSku] Pool sync complete: week=${week_id} season=${season_id} amount=${totalAmount}`);
 
         return Response.json({ success: true, purchase: purchaseData, amount: totalAmount });
     } catch (error) {

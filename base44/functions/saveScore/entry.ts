@@ -1,7 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-// Canonical period ID calculation — must match purchaseSku and lib/periodIds.js exactly
 function getCurrentPeriodIds() {
     const now = new Date();
     const year = now.getUTCFullYear();
@@ -15,10 +14,8 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
-// In-memory verify cache — avoids redundant OmenX round-trips for the same token
-// Cache entries expire after 5 minutes; Deno isolate memory is per-instance so this is safe
-const verifyCache = new Map(); // token -> { walletAddress, expiresAt }
-const VERIFY_CACHE_TTL = 60 * 60 * 1000; // 60 minutes
+const verifyCache = new Map();
+const VERIFY_CACHE_TTL = 60 * 60 * 1000;
 
 async function verifyToken(sdk, accessToken) {
     const now = Date.now();
@@ -27,7 +24,6 @@ async function verifyToken(sdk, accessToken) {
     const result = await sdk.verifyOAuthUser(accessToken);
     if (result.success) {
         verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        // Prune stale entries occasionally
         if (verifyCache.size > 500) {
             for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
         }
@@ -35,14 +31,12 @@ async function verifyToken(sdk, accessToken) {
     return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
 }
 
-// Check if leaderboard is locked (Sunday 23:00 UTC to Monday 23:00 UTC for distribution)
 function isLeaderboardLocked() {
     const now = new Date();
     const utcHour = now.getUTCHours();
     const utcDay = now.getUTCDay();
-    // Lock on Sunday 23:00 UTC (day 0, hour 23) through Monday 23:00 UTC (day 1, hour 23)
-    if (utcDay === 0 && utcHour >= 23) return true; // Sunday 23:00+ UTC
-    if (utcDay === 1 && utcHour < 23) return true;   // Monday 00:00-22:59 UTC
+    if (utcDay === 0 && utcHour >= 23) return true;
+    if (utcDay === 1 && utcHour < 23) return true;
     return false;
 }
 
@@ -50,22 +44,19 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
-        
-        // Check if leaderboard is locked during distribution window
+
         if (isLeaderboardLocked()) {
             return Response.json({ error: 'Leaderboard is locked for distribution' }, { status: 423 });
         }
-        
-        // Override week_id and season_id with canonical server-side calculation
-        const { week_id, season_id } = getCurrentPeriodIds();
-        scoreData.week_id = week_id;
-        scoreData.season_id = season_id;
 
         if (!scoreData || !clientWallet) {
             return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
         }
 
-        // Verify identity via OmenX if token provided; otherwise trust clientWallet (already validated on client)
+        const { week_id, season_id } = getCurrentPeriodIds();
+        scoreData.week_id = week_id;
+        scoreData.season_id = season_id;
+
         let walletAddress = clientWallet;
         if (accessToken) {
             const sdk = new OmenXServerSDK({
@@ -79,10 +70,8 @@ Deno.serve(async (req) => {
             walletAddress = verifyResult.walletAddress;
         }
 
-        // Add wallet address to the score data
         scoreData.wallet_address = walletAddress;
 
-        // Check if player already has a score in this period
         const existingScores = await base44.asServiceRole.entities.RunScore.filter({
             wallet_address: walletAddress,
             week_id: scoreData.week_id
@@ -90,15 +79,10 @@ Deno.serve(async (req) => {
 
         let result;
         if (existingScores.length > 0) {
-            // Deduplicate by keeping best score
             const best = existingScores.reduce((a, b) => (a.score > b.score ? a : b));
-            // Delete duplicates
             for (const e of existingScores) {
-                if (e.id !== best.id) {
-                    await base44.asServiceRole.entities.RunScore.delete(e.id);
-                }
+                if (e.id !== best.id) await base44.asServiceRole.entities.RunScore.delete(e.id);
             }
-            // Update if new score is better, or always update player_name
             if (scoreData.score > best.score) {
                 result = await base44.asServiceRole.entities.RunScore.update(best.id, scoreData);
             } else {
@@ -108,25 +92,17 @@ Deno.serve(async (req) => {
             result = await base44.asServiceRole.entities.RunScore.create(scoreData);
         }
 
-        // Update squad kills if provided — verify user is squad member and squadId is valid
         if (squadStats && squadStats.squadId && typeof squadStats.squadId === 'string' && squadStats.squadId.length > 0) {
             try {
                 const [members, squad] = await Promise.all([
                     base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadStats.squadId, wallet_address: walletAddress }),
                     base44.asServiceRole.entities.Squad.get(squadStats.squadId)
                 ]);
-                if (members.length === 0) {
-                    console.error('[saveScore] Player not in squad, rejecting update');
-                    return Response.json({ error: 'Not a member of this squad' }, { status: 403 });
-                }
-                if (squad) {
+                if (members.length > 0 && squad) {
                     const today = new Date().toISOString().split('T')[0];
                     const currentDay = squad.current_day || today;
                     let newDailyKills = (squad.daily_kills || 0) + (squadStats.kills || 0);
-                    // Reset daily kills if day changed
-                    if (currentDay !== today) {
-                        newDailyKills = squadStats.kills || 0;
-                    }
+                    if (currentDay !== today) newDailyKills = squadStats.kills || 0;
                     await base44.asServiceRole.entities.Squad.update(squad.id, {
                         weekly_kills: (squad.weekly_kills || 0) + (squadStats.kills || 0),
                         daily_kills: newDailyKills,
