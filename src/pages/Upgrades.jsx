@@ -444,20 +444,18 @@ export default function Upgrades({ isCarousel }) {
                                                 {!isMax && (
                                                     <button
                                                        onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
+                                                            // Grant upgrade immediately, sync always
+                                                            const s = SaveManager.load();
+                                                            const upg = s[saveKey] || {};
+                                                            s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
+                                                            SaveManager.save(s);
+                                                            setSave(s);
+                                                            SoundManager.playUIClick();
+                                                            SaveManager.syncToBackendImmediate();
+                                                            refreshBalance();
+                                                            // Verify purchase in background (failure doesn't rollback local state)
                                                             const statSku = getStatSku(activeCategory, stat.id, (save[saveKey]?.[stat.id] || 0) + 1);
-                                                            purchaseSku(statSku).then(() => {
-                                                                const s = SaveManager.load();
-                                                                const upg = s[saveKey] || {};
-                                                                s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
-                                                                SaveManager.save(s);
-                                                                setSave(s);
-                                                                SaveManager.syncToBackendImmediate();
-                                                                SoundManager.playUIClick();
-                                                                refreshBalance();
-                                                            }).catch(err => {
-                                                                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                                                                console.error('[handleBuyStat] purchase failed:', err);
-                                                            });
+                                                            purchaseSku(statSku).catch(err => console.error('[handleBuyStat] purchase verification failed:', err));
                                                         })}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
