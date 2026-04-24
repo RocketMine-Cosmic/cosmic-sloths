@@ -36,21 +36,27 @@ Deno.serve(async (req) => {
         if (walletAddress !== authenticatedWallet) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        const [playerDataRes, bonusLevel] = await Promise.all([
-            fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
-                headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
-            }).then(r => r.ok ? r.json() : null).catch((e) => {
-                console.error('[getPlayerData] playerDataRes fetch failed:', e.message);
-                return null;
-            }),
-            sdk.getPlayerGameBonusPointsLevel(walletAddress).catch((e) => {
-                console.error('[getPlayerData] bonusLevel fetch failed:', e.message);
-                return null;
-            }),
-        ]);
+        
+        let bonusLevel = null;
+        try {
+            bonusLevel = await sdk.getPlayerGameBonusPointsLevel(walletAddress);
+        } catch (e) {
+            console.error('[getPlayerData] bonusLevel 401?', e.message);
+            // If token is bad, evict from cache so next request re-verifies
+            if (e.status === 401 || e.message?.includes('401')) {
+                verifyCache.delete(accessToken);
+                return Response.json({ error: 'Token expired' }, { status: 401 });
+            }
+        }
 
-        // Only return zero if BOTH calls definitively failed AND we have no fallback
-        const vipLevel = bonusLevel === null ? 0 : bonusLevel;
+        const playerDataRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
+        }).then(r => r.ok ? r.json() : null).catch((e) => {
+            console.error('[getPlayerData] playerDataRes failed:', e.message);
+            return null;
+        });
+
+        const vipLevel = bonusLevel ?? 0;
         const nfts = playerDataRes?.nfts || [];
 
         console.log(`[getPlayerData] wallet=${walletAddress} vipLevel=${vipLevel} nfts=${nfts.length}`);
