@@ -101,7 +101,7 @@ export default function Upgrades({ isCarousel }) {
         const walletAddress = authData?.walletAddress;
         if (!walletAddress) { console.warn('[purchaseSku] No wallet address found'); return { success: false, error: 'No wallet' }; }
         const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken: authData?.accessToken });
-        if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
+        if (!res.data?.success) { console.error('[purchaseSku] failed:', res.data?.error); return { success: false }; }
         return res.data;
     };
 
