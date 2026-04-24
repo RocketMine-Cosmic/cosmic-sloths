@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { queryClientInstance } from '@/lib/query-client';
@@ -113,31 +113,37 @@ export default function Leaderboard() {
     // Define poolQueryKey before useEffect dependencies
     const { week_id, season_id } = getCurrentPeriodIds();
     const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
+    const fetchTimeoutRef = useRef(null);
+
+    // Debounced fetch to prevent rate limiting from duplicate calls
+    const debouncedFetch = useRef((callback) => {
+        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = setTimeout(callback, 300);
+    }).current;
 
     useEffect(() => {
-        fetchScores();
+        debouncedFetch(() => fetchScores());
         // Subscribe to RunScore changes (new scores, updates)
         const unsubscribeScores = base44.entities.RunScore.subscribe((event) => {
-            // On new create/update, refetch immediately
             if (event.type === 'create' || event.type === 'update') {
-                fetchScores();
+                debouncedFetch(() => fetchScores());
             }
         });
         
         // Subscribe to TokenPool changes (updates reward pool amounts)
         const unsubscribePool = base44.entities.TokenPool.subscribe((event) => {
-            // On any change, invalidate pool query and refetch scores
             if (event.type === 'create' || event.type === 'update') {
                 queryClientInstance.invalidateQueries({ queryKey: poolQueryKey });
-                fetchScores();
+                debouncedFetch(() => fetchScores());
             }
         });
         
         return () => {
             unsubscribeScores();
             unsubscribePool();
+            if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         };
-    }, [view, poolQueryKey]);
+    }, [view, poolQueryKey, debouncedFetch]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
     const { data: poolData } = useQuery({
