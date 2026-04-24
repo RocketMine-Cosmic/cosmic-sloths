@@ -2,7 +2,7 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 // Heavy endpoint — NFT + VIP ONLY. Called once per session.
 const verifyCache = new Map();
-const VERIFY_TTL = 60 * 60 * 1000;
+const VERIFY_TTL = 10 * 60 * 1000; // 10 min — OmenX tokens can expire mid-session, avoid stale cache
 
 Deno.serve(async (req) => {
     try {
