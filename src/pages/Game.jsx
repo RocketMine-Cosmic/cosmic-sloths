@@ -243,11 +243,12 @@ export default function Game() {
                 // Save score first, then persist local save
                 saveScore(stats, false).then(() => {
                     SaveManager.save(currentSave);
-                    SaveManager.syncToBackend();
+                    SaveManager.syncToBackendImmediate();
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
                     // Still save locally even if remote fails
                     SaveManager.save(currentSave);
+                    SaveManager.syncToBackendImmediate();
                 });
                 
                 if (stats.worldBossDamage > 0) {
@@ -309,11 +310,12 @@ export default function Game() {
                 // Save score first, then persist local save
                 saveScore(stats, true).then(() => {
                     SaveManager.save(currentSave);
-                    SaveManager.syncToBackend();
+                    SaveManager.syncToBackendImmediate();
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
                     // Still save locally even if remote fails
                     SaveManager.save(currentSave);
+                    SaveManager.syncToBackendImmediate();
                 });
                 
                 if (stats.worldBossDamage > 0) {
