@@ -371,7 +371,8 @@ export default function Game() {
     const purchaseSku = (skuId) => {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
-        if (!walletAddress || !skuId) return;
+        console.log('[Game purchaseSku] called', { skuId, walletAddress: walletAddress?.slice(0,10), hasToken: !!authData?.accessToken, authKeys: authData ? Object.keys(authData) : 'null' });
+        if (!walletAddress || !skuId) { console.error('[Game purchaseSku] BAILING - walletAddress:', walletAddress, 'skuId:', skuId); return; }
         const { week_id, season_id } = getCurrentPeriodIds();
         base44.functions.invoke('purchaseSku', {
             skuId, quantity: 1, walletAddress,

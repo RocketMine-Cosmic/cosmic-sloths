@@ -99,8 +99,12 @@ export default function Upgrades({ isCarousel }) {
         if (!skuId) { console.warn('[purchaseSku] No SKU mapping found — purchase skipped'); return { success: true, skipped: true }; }
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const walletAddress = authData?.walletAddress;
-        if (!walletAddress) { console.warn('[purchaseSku] No wallet address found'); return { success: false, error: 'No wallet' }; }
-        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken: authData?.accessToken });
+        const accessToken = authData?.accessToken;
+        console.log('[purchaseSku] called', { skuId, walletAddress: walletAddress?.slice(0,10), hasToken: !!accessToken });
+        if (!walletAddress) { console.error('[purchaseSku] No wallet address in localStorage — user not logged in?'); return { success: false, error: 'No wallet' }; }
+        if (!accessToken) { console.error('[purchaseSku] No accessToken in localStorage'); return { success: false, error: 'No token' }; }
+        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken });
+        console.log('[purchaseSku] response', res.data);
         if (!res.data?.success) { console.error('[purchaseSku] failed:', res.data?.error); return { success: false }; }
         return res.data;
     };
