@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
             if (!squadId || !content) return Response.json({ error: 'squadId and content required' }, { status: 400 });
             
             const msgUrl = `https://api.base44.com/apps/${appId}/entities/SquadMessage`;
-            await fetch(msgUrl, {
+            const msgRes = await fetch(msgUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -122,9 +122,10 @@ Deno.serve(async (req) => {
                     player_name: playerName || 'Pilot', player_title: playerTitle || '',
                     content: content.substring(0, 200)
                 })
-            }).catch(e => console.error('[squadActions] Message creation failed:', e.message));
+            }).catch(e => { console.error('[squadActions] Message creation failed:', e.message); return null; });
 
-            return Response.json({ success: true });
+            const createdMessage = msgRes ? await msgRes.json() : null;
+            return Response.json({ success: true, message: createdMessage });
         }
 
         if (action === 'transferLeadership') {
