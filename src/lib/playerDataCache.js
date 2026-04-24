@@ -54,6 +54,7 @@ let lastBalanceFetch = persistedBalance ? persistedBalance.timestamp : 0;
 let startupTimer = null;
 let scheduledFetch = false;
 let isFetchingBalance = false; // Guard concurrent fetches
+let hasSetupSubscription = false; // Global singleton guard
 
 function getAuthData() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -183,27 +184,31 @@ export function subscribePlayerData(fn) {
     listeners.add(fn);
     if (cachedData !== null) fn(cachedData);
 
-    // Only trigger fetch if nothing is in-flight and cache is empty
-    if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
-        fetchPlayerData();
-    }
+    // Global singleton: only setup one listener + fetch cycle across all subscribers
+    if (!hasSetupSubscription) {
+        hasSetupSubscription = true;
 
-    const onStorage = (e) => {
-        if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
-            // New login — clear everything and re-fetch
-            lastBalanceFetch = 0;
-            cachedData = null;
-            try { localStorage.removeItem('omenx_balance_cache'); } catch {}
-            try { sessionStorage.removeItem('omenx_session_data'); } catch {}
-            if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
-            fetchBalance();
-            fetchSessionData();
+        // Only trigger fetch if nothing is in-flight and cache is empty
+        if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
+            fetchPlayerData();
         }
-    };
-    window.addEventListener('storage', onStorage);
+
+        const onStorage = (e) => {
+            if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
+                // New login — clear everything and re-fetch
+                lastBalanceFetch = 0;
+                cachedData = null;
+                try { localStorage.removeItem('omenx_balance_cache'); } catch {}
+                try { sessionStorage.removeItem('omenx_session_data'); } catch {}
+                if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
+                fetchBalance();
+                fetchSessionData();
+            }
+        };
+        window.addEventListener('storage', onStorage);
+    }
 
     return () => {
         listeners.delete(fn);
-        window.removeEventListener('storage', onStorage);
     };
 }
