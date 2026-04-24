@@ -185,14 +185,8 @@ export default function Hub({ isCarousel }) {
     }, [selectedChar, selectedWeapon]);
     
     React.useEffect(() => {
-        setSave(prevSave => {
-            if (prevSave.lastSelectedChar !== selectedChar || prevSave.lastSelectedArena !== selectedArena || prevSave.lastSelectedDifficulty !== selectedDifficulty || prevSave.lastSelectedWeapon !== selectedWeapon) {
-                const newSave = { ...prevSave, lastSelectedChar: selectedChar, lastSelectedArena: selectedArena, lastSelectedDifficulty: selectedDifficulty, lastSelectedWeapon: selectedWeapon };
-                SaveManager.save(newSave);
-                return newSave;
-            }
-            return prevSave;
-        });
+        const newSave = { ...save, lastSelectedChar: selectedChar, lastSelectedArena: selectedArena, lastSelectedDifficulty: selectedDifficulty, lastSelectedWeapon: selectedWeapon };
+        SaveManager.save(newSave);
     }, [selectedChar, selectedArena, selectedDifficulty, selectedWeapon]);
 
     // OmenX-only mode: skip Base44 reward claims
