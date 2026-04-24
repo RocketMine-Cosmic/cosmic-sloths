@@ -21,31 +21,11 @@ export default function OmenXCallback() {
                 }
 
                 const state = params.get('state');
-                // Try multiple storage locations for the PKCE verifier
-                let codeVerifier = null;
-                
-                // 1. Check sessionStorage with state
-                if (state) {
-                    codeVerifier = sessionStorage.getItem(`omenx_pkce_${state}`) ||
-                                  sessionStorage.getItem(`pkce_${state}`);
-                }
-                
-                // 2. Check for any PKCE key in sessionStorage
-                if (!codeVerifier) {
-                    const allKeys = Object.keys(sessionStorage);
-                    for (const key of allKeys) {
-                        if (key.includes('pkce') || key.includes('verifier')) {
-                            codeVerifier = sessionStorage.getItem(key);
-                            if (codeVerifier) break;
-                        }
-                    }
-                }
-                
-                // 3. Check localStorage as fallback
-                if (!codeVerifier) {
-                    codeVerifier = localStorage.getItem(`omenx_pkce_${state}`) ||
-                                  localStorage.getItem(`pkce_${state}`);
-                }
+                const codeVerifier = (state && sessionStorage.getItem(`omenx_pkce_${state}`)) ||
+                                     Object.keys(sessionStorage)
+                                         .filter(k => k.startsWith('omenx_pkce_'))
+                                         .map(k => sessionStorage.getItem(k))[0] ||
+                                     null;
 
                 console.log('[OmenXCallback] Starting token exchange', {
                     currentUrl: window.location.href,
