@@ -14,6 +14,7 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { getAuthData } from '@/lib/getAuthData';
 import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku } from '@/lib/skuMap';
+import { refreshBalance } from '@/lib/playerDataCache';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import ForgePanel from '../components/game/ForgePanel';
@@ -201,6 +202,7 @@ export default function Upgrades({ isCarousel }) {
                 setSave(s);
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
+                refreshBalance();
             }).catch(err => console.error('[handleBuyWeapon] purchase failed:', err))
               .finally(() => setPurchasing(false));
         }
@@ -238,6 +240,7 @@ export default function Upgrades({ isCarousel }) {
                 setSave(s);
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
+                refreshBalance();
             }).catch(err => console.error('[handleBuyTalent] purchase failed:', err))
               .finally(() => setPurchasing(false));
         }
@@ -326,6 +329,7 @@ export default function Upgrades({ isCarousel }) {
                     setSave(s);
                     SaveManager.syncToBackendImmediate();
                     SoundManager.playUIClick();
+                    refreshBalance();
                 }).catch(err => console.error('[handleBuyCosmetic skin] purchase failed:', err))
                   .finally(() => setPurchasing(false));
             }
@@ -372,6 +376,7 @@ export default function Upgrades({ isCarousel }) {
                 setSave(s);
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
+                refreshBalance();
             }).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed:', err))
               .finally(() => setPurchasing(false));
         }
@@ -431,14 +436,15 @@ export default function Upgrades({ isCarousel }) {
                                                 {!isMax && (
                                                     <button
                                                        onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
-                                                            const s = SaveManager.load();
-                                                            const upg = s[saveKey] || {};
-                                                            s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
-                                                            SaveManager.save(s);
-                                                            setSave(s);
-                                                            SaveManager.syncToBackendImmediate();
-                                                            SoundManager.playUIClick();
-                                                        })}
+                                                                             const s = SaveManager.load();
+                                                                             const upg = s[saveKey] || {};
+                                                                             s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
+                                                                             SaveManager.save(s);
+                                                                             setSave(s);
+                                                                             SaveManager.syncToBackendImmediate();
+                                                                             SoundManager.playUIClick();
+                                                                             refreshBalance();
+                                                                         })}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                            canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
