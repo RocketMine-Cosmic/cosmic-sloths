@@ -69,6 +69,7 @@ export default function Upgrades({ isCarousel }) {
     const [selectedWeapon, setSelectedWeapon] = useState('napBeam');
     const [timeLeft, setTimeLeft] = useState('');
     const [purchasing, setPurchasing] = useState(false);
+    const [purchaseError, setPurchaseError] = useState(null);
     const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail', 'kill', or 'skin'
     const [skinCharIndex, setSkinCharIndex] = useState(0);
     const [previewSkinColor, setPreviewSkinColor] = useState(null); // color being previewed (not yet purchased)
@@ -97,16 +98,15 @@ export default function Upgrades({ isCarousel }) {
     }, [activeCategory]);
 
     const purchaseSku = async (skuId) => {
-        if (!skuId) { console.warn('[purchaseSku] No SKU mapping found — purchase skipped'); return { success: true, skipped: true }; }
+        setPurchaseError(null);
+        if (!skuId) { setPurchaseError('No SKU mapping found'); return { success: true, skipped: true }; }
         const authData = await getAuthData();
         const walletAddress = authData?.walletAddress;
         const accessToken = authData?.accessToken;
-        console.log('[purchaseSku] called', { skuId, walletAddress: walletAddress?.slice(0,10), hasToken: !!accessToken });
-        if (!walletAddress) { console.error('[purchaseSku] No wallet address — user not logged in?'); return { success: false, error: 'No wallet' }; }
-        if (!accessToken) { console.error('[purchaseSku] No accessToken'); return { success: false, error: 'No token' }; }
+        if (!walletAddress) { setPurchaseError('No wallet address — are you logged in?'); return { success: false, error: 'No wallet' }; }
+        if (!accessToken) { setPurchaseError('No access token — please log in again'); return { success: false, error: 'No token' }; }
         const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken });
-        console.log('[purchaseSku] response', res.data);
-        if (!res.data?.success) { console.error('[purchaseSku] failed:', res.data?.error); return { success: false }; }
+        if (!res.data?.success) { setPurchaseError(`Purchase failed: ${res.data?.error || 'unknown error'}`); return { success: false }; }
         return res.data;
     };
 
@@ -1178,6 +1178,13 @@ export default function Upgrades({ isCarousel }) {
                 </div>
             </div>
             
+            {purchaseError && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-red-900 border-2 border-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xl max-w-sm text-center">
+                    ❌ {purchaseError}
+                    <button onClick={() => setPurchaseError(null)} className="ml-3 text-red-300 hover:text-white">✕</button>
+                </div>
+            )}
+
             {pending && (
                 <OmenXConfirmation
                     amount={pending.amount}
