@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
         
         const save = saves[0];
         const existingSaveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
-        const mergedData = { ...existingSaveData, pilotName: newName, hasSetProfileName: true, updated_at: Date.now() };
+        const mergedData = { ...existingSaveData, player_name: newName, pilotName: newName, hasSetProfileName: true, updated_at: Date.now() };
         if (newTitle !== undefined) mergedData.player_title = newTitle;
         if (newIcon !== undefined) mergedData.pilot_icon = newIcon;
         
