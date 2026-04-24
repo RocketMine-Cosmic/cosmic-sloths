@@ -48,15 +48,15 @@ export default function Leaderboard() {
     const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier, totalPlayers) => {
         const rewardPool = Math.floor(pool * poolMultiplier);
         
-        // Normalize percentages based on actual player count
+        // Sum percentages only for players that actually exist
         let totalPct = 0;
         for (let i = 1; i <= totalPlayers; i++) {
             totalPct += percentageFn(i);
         }
         if (totalPct === 0) return 0;
-        const multiplier = 1 / totalPct;
         
-        return Math.floor(rewardPool * percentageFn(rank) * multiplier);
+        // Payout = (player_pct / total_pct) * reward_pool
+        return Math.floor((percentageFn(rank) / totalPct) * rewardPool);
     };
 
     useEffect(() => {
