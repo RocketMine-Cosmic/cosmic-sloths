@@ -19,8 +19,8 @@ export default function AdminBlacklist() {
     const fetchBlacklist = async () => {
         try {
             setLoading(true);
-            const records = await base44.asServiceRole.entities.BlacklistedWallet.list();
-            setBlacklist(records);
+            const result = await base44.functions.invoke('manageBlacklist', { action: 'list' });
+            setBlacklist(result.data.records || []);
         } catch (error) {
             toast({ title: 'Error', description: error.message, variant: 'destructive' });
         } finally {
