@@ -61,22 +61,43 @@ export const SaveManager = {
           
           if (localSave) {
             const localData = JSON.parse(localSave);
-            // Cloud wins for persistent data (safer than trusting local)
-            // But preserve any upgrade keys that cloud is missing (in case of partial saves)
+            // CRITICAL: Deep merge upgrades by taking MAX values (never lose paid upgrades)
+            const mergeUpgrades = (local, cloud) => {
+              const result = { ...cloud };
+              if (local) {
+                for (const [key, val] of Object.entries(local)) {
+                  if (typeof val === 'number' && typeof result[key] === 'number') {
+                    result[key] = Math.max(val, result[key]); // Never lose paid upgrades
+                  }
+                }
+              }
+              return result;
+            };
+            const mergeNestedUpgrades = (local, cloud) => {
+              const result = { ...cloud };
+              if (local) {
+                for (const [weaponId, upgrades] of Object.entries(local)) {
+                  if (typeof upgrades === 'object' && upgrades !== null) {
+                    result[weaponId] = mergeUpgrades(upgrades, cloud[weaponId] || {});
+                  }
+                }
+              }
+              return result;
+            };
             const merged = {
               ...localData,
               ...cloudData,
-              permanentUpgrades: { ...localData.permanentUpgrades, ...cloudData.permanentUpgrades },
-              permanentWeaponUpgrades: { ...localData.permanentWeaponUpgrades, ...cloudData.permanentWeaponUpgrades },
+              permanentUpgrades: mergeUpgrades(localData.permanentUpgrades, cloudData.permanentUpgrades || {}),
+              permanentWeaponUpgrades: mergeNestedUpgrades(localData.permanentWeaponUpgrades, cloudData.permanentWeaponUpgrades || {}),
               permanentTalents: { ...localData.permanentTalents, ...cloudData.permanentTalents },
-              weeklyUpgrades: { ...localData.weeklyUpgrades, ...cloudData.weeklyUpgrades },
-              seasonalUpgrades: { ...localData.seasonalUpgrades, ...cloudData.seasonalUpgrades },
-              unlockedRelics: cloudData.unlockedRelics || localData.unlockedRelics || [],
+              weeklyUpgrades: mergeUpgrades(localData.weeklyUpgrades, cloudData.weeklyUpgrades || {}),
+              seasonalUpgrades: mergeUpgrades(localData.seasonalUpgrades, cloudData.seasonalUpgrades || {}),
+              unlockedRelics: [...new Set([...(localData.unlockedRelics || []), ...(cloudData.unlockedRelics || [])])],
               equippedRelics: cloudData.equippedRelics || localData.equippedRelics || []
             };
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
             window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
-            console.log('[SaveManager] Merged cloud save (cloud data preferred)');
+            console.log('[SaveManager] Deep merged upgrades (never losing paid upgrades)');
           } else {
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudData));
             window.dispatchEvent(new CustomEvent('saveUpdated', { detail: cloudData }));
