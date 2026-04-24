@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { CHARACTERS, ARENAS } from '../../game/Constants';
 import { getSquadLevel } from '../../game/SquadLevels';
 import { getCurrentPeriodIds } from '../../lib/periodIds';
-import { getTokenPool } from '../../lib/tokenPoolCache';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -127,11 +126,11 @@ export default function Leaderboard() {
             try {
                 const { week_id, season_id } = getCurrentPeriodIds();
                 if (view === 'weekly') {
-                    const pool = await getTokenPool(week_id, 'weekly');
-                    setCurrentPool(pool ? pool.total_spent : 0);
+                    const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+                    setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
                 } else if (view === 'seasonal') {
-                    const pool = await getTokenPool(season_id, 'seasonal');
-                    setCurrentPool(pool ? pool.total_spent : 0);
+                    const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+                    setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
                 }
             } catch (error) {
                 console.error('Failed to update pool', error);
@@ -161,12 +160,14 @@ export default function Leaderboard() {
             const data = await base44.entities.RunScore.filter(filter, '-score', 300);
             
             if (view === 'weekly') {
-                const pool = await getTokenPool(week_id, 'weekly');
-                const poolAmount = pool ? pool.total_spent : 0;
+                const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+                console.log('[Leaderboard] Weekly pool query:', { week_id, found: pools.length, pool: pools[0] });
+                const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
                 setCurrentPool(poolAmount);
             } else if (view === 'seasonal') {
-                const pool = await getTokenPool(season_id, 'seasonal');
-                const poolAmount = pool ? pool.total_spent : 0;
+                const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+                console.log('[Leaderboard] Seasonal pool query:', { season_id, found: pools.length, pool: pools[0] });
+                const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
                 setCurrentPool(poolAmount);
             } else {
                 setCurrentPool(0);
