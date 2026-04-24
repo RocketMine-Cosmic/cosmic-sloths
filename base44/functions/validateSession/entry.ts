@@ -45,6 +45,10 @@ Deno.serve(async (req) => {
         // Check if this sessionId is the currently active one
         if (cached && cached.expiresAt > now) {
             const isActive = cached.sessionId === sessionId;
+            // Update lastActiveTime if this is the active session
+            if (isActive) {
+                cached.lastActiveTime = now;
+            }
             return Response.json({ 
                 isActive,
                 activeSessionId: cached.sessionId,
@@ -52,8 +56,13 @@ Deno.serve(async (req) => {
             });
         }
 
-        // No active session in cache (shouldn't happen, but treat as inactive)
-        return Response.json({ isActive: false, message: 'No active session' });
+        // No cached session yet — register this one as active
+        sessionCache.set(sessionKey, { 
+            sessionId, 
+            lastActiveTime: now, 
+            expiresAt: now + SESSION_CACHE_TTL 
+        });
+        return Response.json({ isActive: true });
     } catch (error) {
         console.error('[validateSession]', error.message);
         return Response.json({ isActive: false, error: error.message }, { status: 500 });
