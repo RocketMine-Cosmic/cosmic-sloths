@@ -5,8 +5,9 @@ export function useOmenXConfirmation(pageId) {
     const callbackRef = useRef(null);
 
     const isDisabledFor24h = useCallback(() => {
-        // Always show confirmation modal (disabled 24h bypass)
-        return false;
+        const disabledUntil = localStorage.getItem(`omenx_confirm_disabled_${pageId}`);
+        if (!disabledUntil) return false;
+        return Date.now() < parseInt(disabledUntil);
     }, [pageId]);
 
     const confirm = useCallback((amount, itemName, onConfirmCallback) => {
