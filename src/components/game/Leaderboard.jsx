@@ -181,22 +181,17 @@ export default function Leaderboard() {
             }
             // Pool fetch is now handled by useQuery hook above
             
-            // Deduplicate strictly by wallet_address (primary), then user_id fallback
-            // This mirrors the backend distributeRewards logic exactly
+            // Deduplicate by user_id (wallet_address is masked by RLS)
             const uniqueScores = [];
-            const seenWallets = new Set();
             const seenUserIds = new Set();
 
             for (const score of data) {
                 if (view !== 'endless' && score.arena_id === 'endless') continue;
 
-                const wallet = score.wallet_address;
                 const userId = score.user_id;
 
-                if (wallet && seenWallets.has(wallet)) continue;
                 if (userId && seenUserIds.has(userId)) continue;
 
-                if (wallet) seenWallets.add(wallet);
                 if (userId) seenUserIds.add(userId);
                 uniqueScores.push(score);
 
