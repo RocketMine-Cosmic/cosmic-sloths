@@ -100,12 +100,13 @@ Deno.serve(async (req) => {
 
         // Update or create TokenPool entries (fetch first, then upsert)
         try {
-            const weeklyPool = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
-            const seasonalPool = await base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+            // Fetch weekly pool
+            const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({});
+            const weeklyPool = weeklyPools.find(p => p.period_id === week_id && p.period_type === 'weekly');
             
-            if (weeklyPool.length > 0) {
-                await base44.asServiceRole.entities.TokenPool.update(weeklyPool[0].id, {
-                    total_spent: (weeklyPool[0].total_spent || 0) + totalAmount
+            if (weeklyPool) {
+                await base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, {
+                    total_spent: (weeklyPool.total_spent || 0) + totalAmount
                 });
             } else {
                 await base44.asServiceRole.entities.TokenPool.create({
@@ -116,9 +117,13 @@ Deno.serve(async (req) => {
                 });
             }
             
-            if (seasonalPool.length > 0) {
-                await base44.asServiceRole.entities.TokenPool.update(seasonalPool[0].id, {
-                    total_spent: (seasonalPool[0].total_spent || 0) + totalAmount
+            // Fetch seasonal pool (separate from weekly)
+            const seasonalPools = await base44.asServiceRole.entities.TokenPool.filter({});
+            const seasonalPool = seasonalPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
+            
+            if (seasonalPool) {
+                await base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, {
+                    total_spent: (seasonalPool.total_spent || 0) + totalAmount
                 });
             } else {
                 await base44.asServiceRole.entities.TokenPool.create({
