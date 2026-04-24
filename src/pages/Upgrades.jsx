@@ -436,6 +436,7 @@ export default function Upgrades({ isCarousel }) {
                                                             s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
                                                             SaveManager.save(s);
                                                             setSave(s);
+                                                            SaveManager.syncToBackendImmediate();
                                                             SoundManager.playUIClick();
                                                         })}
                                                        disabled={!canAffordToken || purchasing}
