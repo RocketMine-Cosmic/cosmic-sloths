@@ -82,6 +82,11 @@ export class NFTPerkManager {
     return this.perks.relicFragmentMultiplier;
   }
 
+  static getUpgradeCostMultiplier() {
+    // Inverse of gold multiplier — higher gold mult = lower upgrade cost
+    return 1.0 / (this.perks.goldMultiplier || 1.0);
+  }
+
   static getActivePerks() {
     const active = [];
     if (this.perks.goldMultiplier > 1.0) {
