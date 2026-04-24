@@ -158,17 +158,20 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Grant immediately since they paid
+            // Grant immediately + sync before verifying purchase
             const s = SaveManager.load();
             const upg = s[saveKey] || {};
             s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
             SaveManager.save(s);
             setSave(s);
+            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
             SoundManager.playUIClick();
-            SaveManager.syncToBackendImmediate();
-            // Verify purchase in background
+            // Verify purchase in background — upgrade is already saved
             const skuId = getStatSku(activeCategory, stat, currentLevel + 1);
-            purchaseSku(skuId).catch(err => console.error('[handleBuyStat] purchase verification failed:', err));
+            purchaseSku(skuId).catch(err => {
+                console.error('[handleBuyStat] purchase verification failed:', err);
+                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+            });
         }
     };
 
@@ -195,22 +198,25 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
+            // Grant upgrade immediately + sync FIRST, then verify purchase
+            const s = SaveManager.load();
+            if (!s[saveKey]) s[saveKey] = {};
+            if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
+            s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
+            SaveManager.save(s);
+            setSave(s);
+            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
+            SoundManager.playUIClick();
+            
             setPurchasing(true);
-            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1)).then(() => {
-                const s = SaveManager.load();
-                if (!s[saveKey]) s[saveKey] = {};
-                if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
-                s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
-                SoundManager.playUIClick();
+            const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
+            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1)).catch(err => {
+                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                console.error('[handleBuyWeapon] purchase verification failed:', err);
+            }).finally(() => {
+                setPurchasing(false);
                 refreshBalance();
-            }).catch(err => {
-                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyWeapon] purchase failed:', err);
-            }).finally(() => setPurchasing(false));
+            });
         }
     };
 
@@ -236,22 +242,25 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            const charObj = CHARACTERS.find(c => c.id === selectedChar);
+            // Grant talent immediately + sync FIRST, then verify purchase
+            const s = SaveManager.load();
+            if (!s[saveKey]) s[saveKey] = {};
+            if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
+            s[saveKey][selectedChar].push(talent.id);
+            SaveManager.save(s);
+            setSave(s);
+            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
+            SoundManager.playUIClick();
+            
             setPurchasing(true);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).then(() => {
-                const s = SaveManager.load();
-                if (!s[saveKey]) s[saveKey] = {};
-                if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
-                s[saveKey][selectedChar].push(talent.id);
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
-                SoundManager.playUIClick();
+            const charObj = CHARACTERS.find(c => c.id === selectedChar);
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).catch(err => {
+                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                console.error('[handleBuyTalent] purchase verification failed:', err);
+            }).finally(() => {
+                setPurchasing(false);
                 refreshBalance();
-            }).catch(err => {
-                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyTalent] purchase failed:', err);
-            }).finally(() => setPurchasing(false));
+            });
         }
     };
 
@@ -330,22 +339,25 @@ export default function Upgrades({ isCarousel }) {
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+                // Grant cosmetic immediately + sync FIRST, then verify purchase
+                const s = SaveManager.load();
+                const unl = s.unlockedSkins || [];
+                const cos = s.cosmetics || {};
+                s.unlockedSkins = [...unl, cosmetic.id];
+                s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
+                SaveManager.save(s);
+                setSave(s);
+                SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
+                SoundManager.playUIClick();
+                
                 setPurchasing(true);
-                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).then(() => {
-                    const s = SaveManager.load();
-                    const unl = s.unlockedSkins || [];
-                    const cos = s.cosmetics || {};
-                    s.unlockedSkins = [...unl, cosmetic.id];
-                    s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
-                    SaveManager.save(s);
-                    setSave(s);
-                    SaveManager.syncToBackendImmediate();
-                    SoundManager.playUIClick();
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).catch(err => {
+                    setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                    console.error('[handleBuyCosmetic skin] purchase verification failed:', err);
+                }).finally(() => {
+                    setPurchasing(false);
                     refreshBalance();
-                }).catch(err => {
-                    setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                    console.error('[handleBuyCosmetic skin] purchase failed:', err);
-                }).finally(() => setPurchasing(false));
+                });
             }
             return;
         }
@@ -381,22 +393,25 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+            // Grant cosmetic immediately + sync FIRST, then verify purchase
+            const s = SaveManager.load();
+            const unl = s[unlockKey] || [freeId];
+            const cos = s.cosmetics || {};
+            s[unlockKey] = [...unl, cosmetic.id];
+            s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
+            SaveManager.save(s);
+            setSave(s);
+            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
+            SoundManager.playUIClick();
+            
             setPurchasing(true);
-            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).then(() => {
-                const s = SaveManager.load();
-                const unl = s[unlockKey] || [freeId];
-                const cos = s.cosmetics || {};
-                s[unlockKey] = [...unl, cosmetic.id];
-                s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
-                SoundManager.playUIClick();
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).catch(err => {
+                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                console.error('[handleBuyCosmetic trail/kill] purchase verification failed:', err);
+            }).finally(() => {
+                setPurchasing(false);
                 refreshBalance();
-            }).catch(err => {
-                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyCosmetic trail/kill] purchase failed:', err);
-            }).finally(() => setPurchasing(false));
+            });
         }
     };
 
