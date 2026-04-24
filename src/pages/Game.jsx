@@ -14,7 +14,7 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
-import { useOmenXBalance } from '@/hooks/useOmenXBalance';
+import { useCurrency } from '@/lib/CurrencyContext';
 import { getOmenXUserSync } from '@/lib/omenxUser';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
@@ -25,7 +25,7 @@ export default function Game() {
     const engineRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
-    const { balance: omenxBalance, refresh: refreshOmenX } = useOmenXBalance();
+    const { omenxBalance, refresh: refreshOmenX } = useCurrency();
     
     const [gameState, setGameState] = useState({
         hp: 100, maxHp: 100,
