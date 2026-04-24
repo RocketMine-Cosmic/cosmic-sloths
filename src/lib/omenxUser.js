@@ -5,8 +5,10 @@ import { getAuthFromIndexedDB, saveAuthToIndexedDB } from './indexedDbAuth.js';
  */
 export function getOmenXUserSync() {
     try {
-        const authData = JSON.parse(localStorage.getItem('omenx_auth_data'));
-        if (!authData?.walletAddress) return null;
+        const stored = localStorage.getItem('omenx_auth_data');
+        if (!stored) return null;
+        const authData = JSON.parse(stored);
+        if (!authData || !authData.walletAddress) return null;
         return {
             walletAddress: authData.walletAddress,
             username: authData.username,
