@@ -104,6 +104,14 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchScores();
+        // Subscribe to RunScore changes (new scores, updates)
+        const unsubscribe = base44.entities.RunScore.subscribe((event) => {
+            // On new create/update, refetch immediately
+            if (event.type === 'create' || event.type === 'update') {
+                fetchScores();
+            }
+        });
+        return unsubscribe;
     }, [view]);
 
     // Poll pool updates every 30 seconds without re-fetching scores
