@@ -1,4 +1,5 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
@@ -72,84 +73,45 @@ Deno.serve(async (req) => {
         });
 
         const totalAmount = amount * quantity;
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
-
-        // Ensure PlayerSave exists
-        const playerSaveUrl = `https://api.base44.com/apps/${appId}/entities/PlayerSave`;
-        await fetch(playerSaveUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({
-                wallet_address: verifyResult.walletAddress,
-                save_data: {
-                    unlockedCharacters: ['neobyte'],
-                    unlockedArenasByCharacter: { neobyte: ['station'] },
-                    unlockedCosmetics: ['default'],
-                    gold: 0,
-                    relicFragments: 0
-                },
-                updated_at: Date.now()
-            })
-        }).catch(e => console.error('[purchaseSku] PlayerSave ensure failed:', e.message));
+        const base44 = createClientFromRequest(req);
 
         // Log token spend
-        const tokenSpendUrl = `https://api.base44.com/apps/${appId}/entities/TokenSpendLog`;
-        const spendRes = await fetch(tokenSpendUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({
+        try {
+            await base44.asServiceRole.entities.TokenSpendLog.create({
                 user_id: userId || verifyResult.walletAddress,
                 player_name: playerNameParam || verifyResult.walletAddress,
                 wallet_address: verifyResult.walletAddress,
                 amount: totalAmount,
                 week_id,
                 season_id
-            })
-        });
-        if (!spendRes.ok) {
-            const err = await spendRes.text();
-            throw new Error(`TokenSpendLog POST failed: ${spendRes.status} ${err}`);
+            });
+        } catch (err) {
+            console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
+            throw err;
         }
 
         // Update or create TokenPool entries
-        const tokenPoolUrl = `https://api.base44.com/apps/${appId}/entities/TokenPool`;
-        await Promise.all([
-            fetch(tokenPoolUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({
+        try {
+            await Promise.all([
+                base44.asServiceRole.entities.TokenPool.create({
                     period_id: week_id,
                     period_type: 'weekly',
                     total_spent: totalAmount,
                     distributed: false
-                })
-            }).catch(e => console.error('[purchaseSku] Weekly TokenPool failed:', e.message)),
-            fetch(tokenPoolUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({
+                }),
+                base44.asServiceRole.entities.TokenPool.create({
                     period_id: season_id,
                     period_type: 'seasonal',
                     total_spent: totalAmount,
                     distributed: false
                 })
-            }).catch(e => console.error('[purchaseSku] Seasonal TokenPool failed:', e.message))
-        ]);
+            ]);
+        } catch (err) {
+            console.error('[purchaseSku] TokenPool create failed:', err.message);
+            // Don't throw—pools are optional logging
+        }
 
-        // Don't expose raw OmenX transaction data to client
+        console.log('[purchaseSku] Purchase logged for wallet:', verifyResult.walletAddress);
         return Response.json({ success: true, amount: totalAmount });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
