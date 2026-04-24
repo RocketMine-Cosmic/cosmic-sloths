@@ -48,8 +48,8 @@ function saveSessionCache(data) {
 const persistedBalance = loadBalanceCache();
 let cachedData = null; // { balance, vipLevel, nfts }
 let listeners = new Set();
-let balanceFetchInProgress = false;
-let sessionFetchInProgress = false;
+let balanceFetchPromise = null;
+let sessionFetchPromise = null;
 let lastBalanceFetch = persistedBalance ? persistedBalance.timestamp : 0;
 let startupTimer = null;
 let scheduledFetch = false;
@@ -80,7 +80,8 @@ function applySessionData(sessionData) {
 async function fetchBalance(force = false) {
     const now = Date.now();
     if (!force && now - lastBalanceFetch < BALANCE_CACHE_TTL) return;
-    if (balanceFetchInProgress) return;
+    // Return existing in-flight promise to prevent duplicate calls
+    if (balanceFetchPromise) return balanceFetchPromise;
 
     const auth = getAuthData();
     if (!auth?.walletAddress || !auth?.accessToken) {
@@ -88,21 +89,23 @@ async function fetchBalance(force = false) {
         return;
     }
 
-    balanceFetchInProgress = true;
-    try {
-        const res = await base44.functions.invoke('getPlayerBalance', {
-            walletAddress: auth.walletAddress,
-            accessToken: auth.accessToken,
-        });
-        const balance = res.data?.balance ?? 0;
-        lastBalanceFetch = Date.now();
-        saveBalanceCache(balance);
-        applyBalance(balance);
-    } catch {
-        applyBalance(persistedBalance?.balance ?? 0);
-    } finally {
-        balanceFetchInProgress = false;
-    }
+    balanceFetchPromise = (async () => {
+        try {
+            const res = await base44.functions.invoke('getPlayerBalance', {
+                walletAddress: auth.walletAddress,
+                accessToken: auth.accessToken,
+            });
+            const balance = res.data?.balance ?? 0;
+            lastBalanceFetch = Date.now();
+            saveBalanceCache(balance);
+            applyBalance(balance);
+        } catch {
+            applyBalance(persistedBalance?.balance ?? 0);
+        } finally {
+            balanceFetchPromise = null;
+        }
+    })();
+    return balanceFetchPromise;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -115,25 +118,28 @@ async function fetchSessionData() {
         applySessionData(existing);
         return;
     }
-    if (sessionFetchInProgress) return;
+    // Return existing in-flight promise to prevent duplicate calls
+    if (sessionFetchPromise) return sessionFetchPromise;
 
     const auth = getAuthData();
     if (!auth?.walletAddress || !auth?.accessToken) return;
 
-    sessionFetchInProgress = true;
-    try {
-        const res = await base44.functions.invoke('getPlayerData', {
-            walletAddress: auth.walletAddress,
-            accessToken: auth.accessToken,
-        });
-        const sessionData = { vipLevel: res.data?.vipLevel ?? 0, nfts: res.data?.nfts ?? [] };
-        saveSessionCache(sessionData);
-        applySessionData(sessionData);
-    } catch {
-        applySessionData({ vipLevel: 0, nfts: [] });
-    } finally {
-        sessionFetchInProgress = false;
-    }
+    sessionFetchPromise = (async () => {
+        try {
+            const res = await base44.functions.invoke('getPlayerData', {
+                walletAddress: auth.walletAddress,
+                accessToken: auth.accessToken,
+            });
+            const sessionData = { vipLevel: res.data?.vipLevel ?? 0, nfts: res.data?.nfts ?? [] };
+            saveSessionCache(sessionData);
+            applySessionData(sessionData);
+        } catch {
+            applySessionData({ vipLevel: 0, nfts: [] });
+        } finally {
+            sessionFetchPromise = null;
+        }
+    })();
+    return sessionFetchPromise;
 }
 
 // ─────────────────────────────────────────────────────────
