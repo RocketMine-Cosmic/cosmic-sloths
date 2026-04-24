@@ -19,6 +19,7 @@ import { getOmenXUserSync } from '@/lib/omenxUser';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import { CharacterUnlockManager } from '../game/CharacterUnlocks';
+import { getAuthData } from '@/lib/getAuthData';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -368,11 +369,12 @@ export default function Game() {
         }
     }, [omenxBalance]);
 
-    const purchaseSku = (skuId) => {
-        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+    const purchaseSku = async (skuId) => {
+        if (!skuId) return;
+        const authData = await getAuthData();
         const walletAddress = authData?.walletAddress;
-        console.log('[Game purchaseSku] called', { skuId, walletAddress: walletAddress?.slice(0,10), hasToken: !!authData?.accessToken, authKeys: authData ? Object.keys(authData) : 'null' });
-        if (!walletAddress || !skuId) { console.error('[Game purchaseSku] BAILING - walletAddress:', walletAddress, 'skuId:', skuId); return; }
+        console.log('[Game purchaseSku] called', { skuId, walletAddress: walletAddress?.slice(0,10), hasToken: !!authData?.accessToken });
+        if (!walletAddress) { console.error('[Game purchaseSku] No wallet address found'); return; }
         const { week_id, season_id } = getCurrentPeriodIds();
         base44.functions.invoke('purchaseSku', {
             skuId, quantity: 1, walletAddress,

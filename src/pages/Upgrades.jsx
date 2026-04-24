@@ -12,6 +12,7 @@ import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
+import { getAuthData } from '@/lib/getAuthData';
 import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku } from '@/lib/skuMap';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
@@ -97,12 +98,12 @@ export default function Upgrades({ isCarousel }) {
 
     const purchaseSku = async (skuId) => {
         if (!skuId) { console.warn('[purchaseSku] No SKU mapping found — purchase skipped'); return { success: true, skipped: true }; }
-        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        const authData = await getAuthData();
         const walletAddress = authData?.walletAddress;
         const accessToken = authData?.accessToken;
         console.log('[purchaseSku] called', { skuId, walletAddress: walletAddress?.slice(0,10), hasToken: !!accessToken });
-        if (!walletAddress) { console.error('[purchaseSku] No wallet address in localStorage — user not logged in?'); return { success: false, error: 'No wallet' }; }
-        if (!accessToken) { console.error('[purchaseSku] No accessToken in localStorage'); return { success: false, error: 'No token' }; }
+        if (!walletAddress) { console.error('[purchaseSku] No wallet address — user not logged in?'); return { success: false, error: 'No wallet' }; }
+        if (!accessToken) { console.error('[purchaseSku] No accessToken'); return { success: false, error: 'No token' }; }
         const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken });
         console.log('[purchaseSku] response', res.data);
         if (!res.data?.success) { console.error('[purchaseSku] failed:', res.data?.error); return { success: false }; }
@@ -111,7 +112,7 @@ export default function Upgrades({ isCarousel }) {
 
     const syncSaveToBackend = async (updatedSave) => {
         try {
-            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            const authData = await getAuthData();
             if (!authData?.walletAddress || !authData?.accessToken) return;
             await base44.functions.invoke('syncSave', { walletAddress: authData.walletAddress, saveData: updatedSave, accessToken: authData.accessToken });
         } catch (e) {
