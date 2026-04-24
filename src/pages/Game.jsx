@@ -449,14 +449,25 @@ export default function Game() {
     };
 
     const handleQuit = () => {
-        if (engineRef.current) {
-            // Trigger gameOver so kills, gold, score all get saved and submitted
-            engineRef.current.isPaused = false;
-            engineRef.current.gameOver();
+        const engine = engineRef.current;
+        if (engine && !engine.isGameOver && !engine.isVictory) {
+            engine.isPaused = false;
+            // Manually trigger the same save logic as gameOver without showing the modal
+            engine.isGameOver = true;
+            engine.callbacks.onGameOver({
+                time: Math.floor(engine.time),
+                level: engine.level,
+                kills: engine.kills,
+                gold: engine.gold,
+                characterId: engine.characterId,
+                arenaId: engine.arena?.id,
+                encountered: Array.from(engine.encounteredEnemies),
+                enemyKills: engine.enemyKills,
+                worldBossDamage: engine.worldBossDamage || 0,
+                _suppressModal: true,
+            });
         }
-        // Navigate happens via the GameOverModal that renders after gameOver fires,
-        // but we want to go straight to lounge — navigate immediately after a tick
-        setTimeout(() => navigate('/', { state: { slide: 1 } }), 50);
+        navigate('/', { state: { slide: 1 } });
     };
 
     const handleRevive = () => {
@@ -541,7 +552,7 @@ export default function Game() {
                 </div>
             )}
             
-            {gameOverStats && (
+            {gameOverStats && !gameOverStats._suppressModal && (
                 <GameOverModal stats={gameOverStats} />
             )}
             
