@@ -1,10 +1,10 @@
 import { base44 } from '@/api/base44Client';
 
 // ─────────────────────────────────────────────────────────
-// BALANCE cache — localStorage, 5 min TTL (faster than before)
+// BALANCE cache — localStorage, 15 min TTL (reduce API pressure)
 // Refreshed in-game when needed (e.g. after purchases)
 // ─────────────────────────────────────────────────────────
-const BALANCE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const BALANCE_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 function loadBalanceCache() {
     try {
@@ -56,7 +56,7 @@ let startupTimer = null;
 let scheduledFetch = false;
 let isFetchingBalance = false; // Guard concurrent fetches
 let userFetched = false; // Track if user data has been fetched this session
-let firstFetch = true; // Prioritize first fetch (startup optimization)
+let refreshTimer = null; // Debounce multiple refreshBalance() calls
 
 function getAuthData() {
     try {
@@ -224,14 +224,13 @@ export function fetchPlayerData(force = false) {
     }
     if (scheduledFetch) return;
     scheduledFetch = true;
-    // First load: reduce delay to 2.5s; subsequent: skip if cache fresh
-    const delay = firstFetch ? 2500 : 3000;
-    firstFetch = false;
+    // Delay 5s on first load to let the app settle, then fetch once
+    const jitter = 5000 + Math.floor(Math.random() * 5000);
     startupTimer = setTimeout(() => {
         scheduledFetch = false;
         fetchBalance();
         fetchSessionData(); // once per session — no-op if already done
-    }, delay);
+    }, jitter);
 }
 
 let storageListenerAttached = false;
@@ -245,13 +244,8 @@ export function subscribePlayerData(fn) {
         if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
             fetchPlayerData();
         }
-        // Batch user fetch with session data fetch to avoid separate call
         if (!userFetched) {
             fetchUserData();
-            // Prefetch session data early if not cached
-            if (!loadSessionCache()) {
-                fetchSessionData();
-            }
         }
     }
 
@@ -281,8 +275,13 @@ export function subscribePlayerData(fn) {
     };
 }
 
-// Force immediate balance refresh (used after purchases)
+// Force immediate balance refresh (used after purchases) — debounce to avoid 429 errors
 export function refreshBalance() {
-    lastBalanceFetch = 0;
-    return fetchBalance(true);
+    // Only allow one refresh per 2 seconds to prevent hammering API
+    if (refreshTimer) return;
+    refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        lastBalanceFetch = 0;
+        fetchBalance(true);
+    }, 2000);
 }
