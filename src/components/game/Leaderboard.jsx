@@ -115,18 +115,14 @@ export default function Leaderboard() {
     const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
     const fetchTimeoutRef = useRef(null);
 
-    // Debounced fetch to prevent rate limiting from duplicate calls
-    const debouncedFetch = useRef((callback) => {
-        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-        fetchTimeoutRef.current = setTimeout(callback, 300);
-    }).current;
-
     useEffect(() => {
-        debouncedFetch(() => fetchScores());
+        fetchScores();
+        
         // Subscribe to RunScore changes (new scores, updates)
         const unsubscribeScores = base44.entities.RunScore.subscribe((event) => {
             if (event.type === 'create' || event.type === 'update') {
-                debouncedFetch(() => fetchScores());
+                if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+                fetchTimeoutRef.current = setTimeout(() => fetchScores(), 300);
             }
         });
         
@@ -134,7 +130,8 @@ export default function Leaderboard() {
         const unsubscribePool = base44.entities.TokenPool.subscribe((event) => {
             if (event.type === 'create' || event.type === 'update') {
                 queryClientInstance.invalidateQueries({ queryKey: poolQueryKey });
-                debouncedFetch(() => fetchScores());
+                if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+                fetchTimeoutRef.current = setTimeout(() => fetchScores(), 300);
             }
         });
         
@@ -143,7 +140,7 @@ export default function Leaderboard() {
             unsubscribePool();
             if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         };
-    }, [view, poolQueryKey, debouncedFetch]);
+    }, [view, poolQueryKey]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
     const { data: poolData } = useQuery({
