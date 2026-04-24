@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SettingsModal from './SettingsModal';
 
-export default function PauseModal({ onResume }) {
-    const navigate = useNavigate();
+export default function PauseModal({ onResume, onQuit }) {
     const [showSettings, setShowSettings] = useState(false);
 
     return (
@@ -30,7 +29,7 @@ export default function PauseModal({ onResume }) {
                         Settings
                     </button>
                     <button
-                        onClick={() => navigate('/', { state: { slide: 1 } })}
+                        onClick={onQuit}
                         className="w-full bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors border border-slate-600"
                     >
                         Quit to Lounge

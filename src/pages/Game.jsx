@@ -448,6 +448,17 @@ export default function Game() {
         }
     };
 
+    const handleQuit = () => {
+        if (engineRef.current) {
+            // Trigger gameOver so kills, gold, score all get saved and submitted
+            engineRef.current.isPaused = false;
+            engineRef.current.gameOver();
+        }
+        // Navigate happens via the GameOverModal that renders after gameOver fires,
+        // but we want to go straight to lounge — navigate immediately after a tick
+        setTimeout(() => navigate('/', { state: { slide: 1 } }), 50);
+    };
+
     const handleRevive = () => {
         if ((omenxBalance ?? 0) >= 4) {
             confirmPurchase(4, 'Emergency Revive', () => {
@@ -499,7 +510,7 @@ export default function Game() {
             <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />
             
             {isPaused && (
-                <PauseModal onResume={handleResume} />
+                <PauseModal onResume={handleResume} onQuit={handleQuit} />
             )}
 
             {levelUpChoices && (
