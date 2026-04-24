@@ -56,10 +56,14 @@ Deno.serve(async (req) => {
             const existingData = typeof existing[0].save_data === 'string' ? JSON.parse(existing[0].save_data) : existing[0].save_data;
             const merged = { ...existingData, ...saveData };
             
-            // Preserve upgrade objects if incoming is empty/undefined
-            ['permanentUpgrades', 'weeklyUpgrades', 'seasonalUpgrades', 'permanentWeaponUpgrades', 'weeklyWeaponUpgrades', 'seasonalWeaponUpgrades', 'permanentTalents', 'weeklyTalents', 'seasonalTalents'].forEach(key => {
-                if ((!saveData[key] || Object.keys(saveData[key] || {}).length === 0) && existingData[key]) {
+            // Deep merge upgrade objects to prevent loss of partial data
+            const upgradeKeys = ['permanentUpgrades', 'weeklyUpgrades', 'seasonalUpgrades', 'permanentWeaponUpgrades', 'weeklyWeaponUpgrades', 'seasonalWeaponUpgrades', 'permanentTalents', 'weeklyTalents', 'seasonalTalents'];
+            upgradeKeys.forEach(key => {
+                if (existingData[key] && (saveData[key] === undefined || saveData[key] === null)) {
                     merged[key] = existingData[key];
+                } else if (existingData[key] && saveData[key]) {
+                    // Both exist: merge them (incoming takes precedence, but preserve any missing keys)
+                    merged[key] = { ...existingData[key], ...saveData[key] };
                 }
             });
             
