@@ -56,7 +56,13 @@ let scheduledFetch = false;
 let isFetchingBalance = false; // Guard concurrent fetches
 
 function getAuthData() {
-    try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
+    try {
+        const stored = localStorage.getItem('omenx_auth_data');
+        if (!stored) return null;
+        const parsed = JSON.parse(stored);
+        // Validate required fields before returning
+        return (parsed?.walletAddress && parsed?.accessToken) ? parsed : null;
+    } catch { return null; }
 }
 
 function notify() {

@@ -10,7 +10,11 @@ export const OmenXAuthProvider = ({ children }) => {
     // Load from localStorage once
     try {
       const stored = localStorage.getItem('omenx_auth_data');
-      if (stored) setAuthData(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validate required fields exist
+        if (parsed?.walletAddress) setAuthData(parsed);
+      }
     } catch {}
     setLoading(false);
 
@@ -18,8 +22,17 @@ export const OmenXAuthProvider = ({ children }) => {
     const onStorage = (e) => {
       if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
         try {
-          setAuthData(e.newValue ? JSON.parse(e.newValue) : null);
-        } catch {}
+          if (e.newValue) {
+            const parsed = JSON.parse(e.newValue);
+            // Validate required fields exist before accepting
+            if (parsed?.walletAddress) setAuthData(parsed);
+            else setAuthData(null);
+          } else {
+            setAuthData(null);
+          }
+        } catch {
+          setAuthData(null);
+        }
       }
     };
     window.addEventListener('storage', onStorage);

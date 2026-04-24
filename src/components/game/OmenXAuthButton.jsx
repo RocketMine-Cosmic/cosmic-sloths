@@ -5,7 +5,13 @@ import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 const STORAGE_KEY = 'omenx_auth_data';
 
 function getAuthData() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return null;
+        const parsed = JSON.parse(stored);
+        // Validate required fields
+        return parsed?.walletAddress ? parsed : null;
+    } catch { return null; }
 }
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
@@ -40,8 +46,11 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         const onMessage = (event) => {
             if (event.data?.type === 'omenx_auth' && event.data?.authData) {
                 const authData = event.data.authData;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
-                applyAuthData(authData);
+                // Validate before accepting from postMessage
+                if (authData?.walletAddress && authData?.accessToken) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
+                    applyAuthData(authData);
+                }
             }
         };
         

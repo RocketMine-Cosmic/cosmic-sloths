@@ -55,20 +55,28 @@ export default function OmenXCallback() {
                     return;
                 }
 
+                // Validate token data has required fields
+                if (!tokenData.accessToken || !tokenData.walletAddress) {
+                    setStatus('❌ Invalid token response: missing accessToken or walletAddress');
+                    return;
+                }
+
                 const authData = {
                     accessToken: tokenData.accessToken,
                     refreshToken: tokenData.refreshToken,
                     expiresIn: tokenData.expiresIn,
                     walletAddress: tokenData.walletAddress,
-                    username: tokenData.username,
+                    username: tokenData.username || '',
                     // Preserve any existing profile customizations from prior session
                     ...(() => {
                         try {
-                            const existing = JSON.parse(localStorage.getItem('omenx_auth_data')) || {};
+                            const stored = localStorage.getItem('omenx_auth_data');
+                            if (!stored) return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' };
+                            const existing = JSON.parse(stored);
                             return {
-                                player_name: existing.player_name || tokenData.username || '',
-                                player_title: existing.player_title || '',
-                                pilot_icon: existing.pilot_icon || '🦥',
+                                player_name: existing?.player_name || tokenData.username || '',
+                                player_title: existing?.player_title || '',
+                                pilot_icon: existing?.pilot_icon || '🦥',
                             };
                         } catch { return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' }; }
                     })(),
