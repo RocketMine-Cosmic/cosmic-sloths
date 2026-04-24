@@ -48,9 +48,10 @@ const MainApp = () => {
       const save = SaveManager.load();
       const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
       if (omenxAuth?.walletAddress) {
-          const pilotName = save.pilotName || '';
-          const isNameInvalid = !save.hasSetProfileName || !pilotName || pilotName.toLowerCase() === 'anonymous' || pilotName.trim() === '';
-          setNeedsProfileName(isNameInvalid);
+          // Only show modal for NEW players (no play history)
+          const isNewPlayer = !save.totalKills && !save.gold && !save.pilotName;
+          const hasInvalidName = !save.hasSetProfileName || !save.pilotName || save.pilotName.toLowerCase() === 'anonymous' || save.pilotName.trim() === '';
+          setNeedsProfileName(isNewPlayer && hasInvalidName);
       }
     };
     
