@@ -32,7 +32,24 @@ Deno.serve(async (req) => {
         const verifyResult = await verifyToken(sdk, accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
-        console.log('[syncSave] Token verified for wallet:', verifyResult.walletAddress);
+        // Save to database using service role
+        const appId = Deno.env.get('BASE44_APP_ID');
+        const saveRecord = { wallet_address: verifyResult.walletAddress, save_data: saveData, updated_at: Date.now() };
+        
+        // Fetch existing record to update or create new
+        const url = `https://api.base44.com/apps/${appId}/entities/PlayerSave`;
+        const res = await fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: { wallet_address: verifyResult.walletAddress }, data: saveRecord })
+        });
+        
+        if (!res.ok) {
+            console.error('[syncSave] Save failed:', res.status, await res.text());
+            return Response.json({ error: 'Failed to save data' }, { status: 500 });
+        }
+
+        console.log('[syncSave] Saved for wallet:', verifyResult.walletAddress);
         return Response.json({ success: true });
     } catch (error) {
         console.error('[syncSave]', error.message);
