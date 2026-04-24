@@ -26,8 +26,8 @@ export default function AdminDataBackup({ walletAddress }) {
     const loadBackups = async () => {
         try {
             setLoading(true);
-            const res = await base44.entities.DataBackup.list('-created_date', 50);
-            setBackups(res || []);
+            const res = await base44.functions.invoke('getAdminData', { type: 'backups' });
+            setBackups(res.data?.records || []);
         } catch (err) {
             toast({ title: 'Error', description: 'Failed to load backups' });
         } finally {

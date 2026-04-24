@@ -24,7 +24,7 @@ export default function AdminManagers({ walletAddress }) {
 
     const { data: admins, isLoading } = useQuery({
         queryKey: ['adminWallets'],
-        queryFn: () => base44.entities.AdminWallet.list('-created_date', 100),
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'adminWallets' }).then(r => r.data.records || []),
     });
 
     const togglePerm = (id) => {
@@ -35,22 +35,22 @@ export default function AdminManagers({ walletAddress }) {
         if (!newWallet.trim()) { setMsg('Enter a wallet address.'); return; }
         setAdding(true); setMsg('');
         try {
-            await base44.entities.AdminWallet.create({
+            const res = await base44.functions.invoke('manageAdminWallet', {
+                action: 'create',
                 wallet_address: newWallet.trim(),
                 admin_name: newName.trim() || 'Unnamed Manager',
                 permissions: selectedPerms,
                 notes: newNotes.trim(),
+                caller_wallet: walletAddress
             });
-            await base44.entities.AdminChangesLog.create({
-                wallet_address: walletAddress,
-                action_type: 'other',
-                description: `Added manager: ${newName.trim() || newWallet.trim()} with permissions: ${selectedPerms.join(', ')}`,
-                details: { new_wallet: newWallet.trim(), permissions: selectedPerms }
-            });
-            qc.invalidateQueries(['adminWallets']);
-            setMsg('✓ Manager added');
-            setNewWallet(''); setNewName(''); setNewNotes(''); setSelectedPerms(['view_data']);
-            setTimeout(() => setMsg(''), 3000);
+            if (res.data?.success) {
+                qc.invalidateQueries(['adminWallets']);
+                setMsg('✓ Manager added');
+                setNewWallet(''); setNewName(''); setNewNotes(''); setSelectedPerms(['view_data']);
+                setTimeout(() => setMsg(''), 3000);
+            } else {
+                setMsg(`✗ ${res.data?.error || 'Failed to add manager'}`);
+            }
         } catch (e) {
             setMsg(`✗ ${e.message}`);
         }
@@ -60,16 +60,18 @@ export default function AdminManagers({ walletAddress }) {
     const handleDelete = async (admin) => {
         if (!window.confirm(`Remove ${admin.admin_name || admin.wallet_address} as manager?`)) return;
         try {
-            await base44.entities.AdminWallet.delete(admin.id);
-            await base44.entities.AdminChangesLog.create({
-                wallet_address: walletAddress,
-                action_type: 'other',
-                description: `Removed manager: ${admin.admin_name || admin.wallet_address}`,
-                details: { removed_wallet: admin.wallet_address }
+            const res = await base44.functions.invoke('manageAdminWallet', {
+                action: 'delete',
+                admin_id: admin.id,
+                caller_wallet: walletAddress
             });
-            qc.invalidateQueries(['adminWallets']);
-            setMsg('✓ Manager removed');
-            setTimeout(() => setMsg(''), 3000);
+            if (res.data?.success) {
+                qc.invalidateQueries(['adminWallets']);
+                setMsg('✓ Manager removed');
+                setTimeout(() => setMsg(''), 3000);
+            } else {
+                setMsg(`✗ ${res.data?.error || 'Failed to remove manager'}`);
+            }
         } catch (e) {
             setMsg(`✗ ${e.message}`);
         }
@@ -77,7 +79,12 @@ export default function AdminManagers({ walletAddress }) {
 
     const handleUpdatePerms = async (admin, perms) => {
         try {
-            await base44.entities.AdminWallet.update(admin.id, { permissions: perms });
+            await base44.functions.invoke('manageAdminWallet', {
+                action: 'updatePerms',
+                admin_id: admin.id,
+                permissions: perms,
+                caller_wallet: walletAddress
+            });
             qc.invalidateQueries(['adminWallets']);
         } catch (e) { console.error(e); }
     };
