@@ -239,6 +239,8 @@ export default function Game() {
                 const goBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5;
                 const goBHMult = (currentSaveForGameOver.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
                 stats.score = Math.floor(goBase * goArenaMult * goBHMult);
+                stats.difficultyId = difficultyId;
+                stats.isEndless = isEndless;
                 setGameOverStats(stats);
                 saveScore(stats, false);
                 
@@ -297,6 +299,8 @@ export default function Game() {
                 const vicBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + 5000;
                 const vicBHMult = (currentSaveForVictory.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
                 stats.score = Math.floor(vicBase * vicArenaMult * vicBHMult);
+                stats.difficultyId = difficultyId;
+                stats.isEndless = isEndless;
                 setVictoryStats(stats);
                 saveScore(stats, true);
                 

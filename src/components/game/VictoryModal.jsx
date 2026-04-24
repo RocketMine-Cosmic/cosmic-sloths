@@ -55,7 +55,7 @@ export default function VictoryModal({ stats }) {
                     </button>
                     <button
                         onClick={() => {
-                            navigate('/game', { state: { characterId: stats.characterId, arenaId: stats.arenaId, difficultyId: 'normal', isEndless: false, _retry: Date.now() }, replace: true });
+                            navigate('/game', { state: { characterId: stats.characterId, arenaId: stats.arenaId, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, _retry: Date.now() }, replace: true });
                         }}
                         className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
                     >
