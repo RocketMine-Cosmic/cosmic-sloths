@@ -231,7 +231,6 @@ export const SaveManager = {
       encounteredEnemies: [],
       enemyKills: {},
       bossModifiers: {},
-      hasSetProfileName: false,
       newGamePlusUnlocked: false,
       isNGPlus: false,
       unlockedRelics: [],

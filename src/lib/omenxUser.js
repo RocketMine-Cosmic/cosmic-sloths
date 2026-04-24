@@ -9,16 +9,15 @@ export function getOmenXUserSync() {
         if (!stored) return null;
         const authData = JSON.parse(stored);
         if (!authData || !authData.walletAddress) return null;
+        const playerName = authData.player_name || authData.pilotName || authData.username || 'Player';
         return {
             walletAddress: authData.walletAddress,
             username: authData.username,
-            full_name: authData.pilotName || authData.username || 'Player',
-            player_name: authData.pilotName || authData.username || 'Player',
-            pilotName: authData.pilotName || authData.username || 'Player',
+            full_name: playerName,
+            player_name: playerName,
             pilot_icon: authData.pilot_icon || '🦥',
             data: {
-                player_name: authData.pilotName || authData.username || 'Player',
-                pilotName: authData.pilotName || authData.username || 'Player',
+                player_name: playerName,
                 player_title: authData.player_title || '',
                 pilot_icon: authData.pilot_icon || '🦥',
             }
@@ -46,17 +45,15 @@ export async function getOmenXUser() {
             return null;
         }
         
+        const playerName = authData.player_name || authData.pilotName || authData.username || 'Player';
         return {
             walletAddress: authData.walletAddress,
             username: authData.username,
-            full_name: authData.pilotName || authData.username || 'Player',
-            player_name: authData.pilotName || authData.username || 'Player',
-            pilotName: authData.pilotName || authData.username || 'Player',
+            full_name: playerName,
+            player_name: playerName,
             pilot_icon: authData.pilot_icon || '🦥',
-            // Expose nested data fields at top level for compatibility
             data: {
-                player_name: authData.pilotName || authData.username || 'Player',
-                pilotName: authData.pilotName || authData.username || 'Player',
+                player_name: playerName,
                 player_title: authData.player_title || '',
                 pilot_icon: authData.pilot_icon || '🦥',
             }

@@ -46,7 +46,7 @@ export default function Profile({ isCarousel }) {
         (async () => {
             try {
                 setUser(omenxUser);
-                const displayName = omenxUser?.pilotName || omenxUser?.data?.pilotName || omenxUser?.full_name || 'Anonymous';
+                const displayName = omenxUser?.player_name || omenxUser?.data?.player_name || omenxUser?.full_name || 'Anonymous';
                 setNewName(displayName);
                 setNewTitle(omenxUser?.data?.player_title || '');
 
@@ -120,8 +120,8 @@ export default function Profile({ isCarousel }) {
     const handleSaveName = async () => {
          if (!newName.trim()) return;
          const updatedName = newName.trim();
-         await updateOmenXUser({ pilotName: updatedName });
-         setUser(prev => ({ ...prev, pilotName: updatedName, data: { ...prev?.data, pilotName: updatedName } }));
+         await updateOmenXUser({ player_name: updatedName });
+         setUser(prev => ({ ...prev, player_name: updatedName, data: { ...prev?.data, player_name: updatedName } }));
          setIsEditingName(false);
          // Sync to DB via syncProfileName AND update save locally
          const accessToken = getAccessToken();
@@ -137,7 +137,7 @@ export default function Profile({ isCarousel }) {
          SaveManager.save(localSave);
          // Sync name to localStorage for other pages (e.g., Squads) to read
          const authData = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-         authData.pilotName = updatedName;
+         authData.player_name = updatedName;
          localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
          // Dispatch storage event so Squads page knows data changed
          window.dispatchEvent(new StorageEvent('storage', { key: 'omenx_auth_data' }));
