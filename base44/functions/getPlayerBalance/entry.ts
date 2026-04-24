@@ -2,7 +2,9 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 // Lightweight endpoint — balance ONLY. No NFT, no VIP. Called more frequently.
 const verifyCache = new Map();
+const balanceCache = new Map();
 const VERIFY_TTL = 60 * 60 * 1000;
+const BALANCE_CACHE_TTL = 5 * 60 * 1000; // 5 min cache
 
 Deno.serve(async (req) => {
     try {
@@ -35,6 +37,12 @@ Deno.serve(async (req) => {
 
         if (walletAddress !== authenticatedWallet) return Response.json({ balance: 0 });
 
+        // Check balance cache first
+        const cachedBalance = balanceCache.get(walletAddress);
+        if (cachedBalance && cachedBalance.expiresAt > now) {
+            return Response.json({ balance: cachedBalance.balance });
+        }
+
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         const playerDataRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
             headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
@@ -42,6 +50,12 @@ Deno.serve(async (req) => {
 
         const omenxToken = playerDataRes?.balances?.tokens?.find(t => t.symbol === 'OMENX');
         const balance = parseFloat(omenxToken?.balance ?? '0');
+
+        // Cache the result
+        balanceCache.set(walletAddress, { balance, expiresAt: now + BALANCE_CACHE_TTL });
+        if (balanceCache.size > 1000) {
+            for (const [k, v] of balanceCache) { if (v.expiresAt <= now) balanceCache.delete(k); }
+        }
 
         return Response.json({ balance });
     } catch (error) {
