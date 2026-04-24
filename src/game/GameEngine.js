@@ -844,8 +844,8 @@ export class GameEngine {
             // Steeper difficulty curve: exponentially scale HP and Damage based on the sector/arena index
             const sectorDifficultyScale = Math.pow(1.2, arenaIndex); 
             
-            const hpMult = (1.0 + (2.0 * Math.pow(progress, 1.6))) * this.difficulty.enemyHpMult * sectorDifficultyScale;
-            const dmgMult = (1.0 + (1.5 * Math.pow(progress, 1.4))) * this.difficulty.enemyDmgMult * sectorDifficultyScale;
+            const hpMult = (1.0 + (2.5 * Math.pow(progress, 1.6))) * this.difficulty.enemyHpMult * sectorDifficultyScale;
+            const dmgMult = (1.0 + (1.8 * Math.pow(progress, 1.4))) * this.difficulty.enemyDmgMult * sectorDifficultyScale;
             const spdMult = this.difficulty.speedMult || 1.0;
             
             if (this.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
@@ -1273,12 +1273,12 @@ export class GameEngine {
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                     this.isBossActive = false;
                 } else {
-                    const baseGoldChance = this.arena.duration === Infinity ? 0.30 : 0.50;
+                    const baseGoldChance = this.arena.duration === Infinity ? 0.20 : 0.35;
                     if (Math.random() < baseGoldChance + (this.player.luck * 0.02)) {
-                        const maxGoldValue = 50; // Cap gold per drop
-                        const goldValue = Math.min(maxGoldValue, 5 + Math.floor(this.time / 60) * 2); // Slower scaling
-                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 2) : 1;
-                        const goldCount = e.isElite ? 2 : 1;
+                        const maxGoldValue = 35; // Reduced cap
+                        const goldValue = Math.min(maxGoldValue, 2 + Math.floor(this.time / 90) * 1); // Much slower scaling
+                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 1.5) : 1;
+                        const goldCount = e.isElite ? 1 : 1;
                         for (let gi = 0; gi < goldCount; gi++) {
                             this.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });
                         }
