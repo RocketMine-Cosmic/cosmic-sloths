@@ -35,20 +35,25 @@ Deno.serve(async (req) => {
         const appId = Deno.env.get('BASE44_APP_ID');
         const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
 
-        // Batch update PlayerSave records (via bulk endpoint or individual updates)
+        // Update PlayerSave with merged save_data
         const playerSaveUrl = `https://api.base44.com/apps/${appId}/entities/PlayerSave`;
-        const saveUpdateData = { player_name: newName, hasSetProfileName: true };
-        if (newTitle !== undefined) saveUpdateData.player_title = newTitle;
-        if (newIcon !== undefined) saveUpdateData.pilot_icon = newIcon;
+        const saveUpdateData = { 
+            save_data: { 
+                pilotName: newName, 
+                hasSetProfileName: true,
+                updated_at: Date.now()
+            }
+        };
+        if (newTitle !== undefined) saveUpdateData.save_data.player_title = newTitle;
+        if (newIcon !== undefined) saveUpdateData.save_data.pilot_icon = newIcon;
         
-        // Update all PlayerSave records for this wallet
         await fetch(`${playerSaveUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Sync-Secret': syncSecret
             },
-            body: JSON.stringify({ $set: { save_data: saveUpdateData } })
+            body: JSON.stringify(saveUpdateData)
         }).catch(e => console.error('[syncProfileName] PlayerSave update failed:', e.message));
 
         // Update RunScore records
