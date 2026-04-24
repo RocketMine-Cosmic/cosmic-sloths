@@ -377,12 +377,11 @@ export default function Game() {
             console.error('[Game purchaseSku] No auth data found');
             return;
         }
-        return base44.functions.invoke('purchaseSku', {
-            skuId, quantity: 1, walletAddress,
-            userId: walletAddress,
-            playerName: authData?.username || walletAddress,
-            accessToken: authData.accessToken,
-        }).catch(e => console.error('[Game purchaseSku] failed:', e?.message));
+        return fetch('/functions/purchaseSku', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken: authData.accessToken }),
+        }).then(r => r.json()).catch(e => console.error('[Game purchaseSku] failed:', e?.message));
     };
 
     const handleUpgradeSelect = (upgrade) => {

@@ -99,19 +99,27 @@ export default function Upgrades({ isCarousel }) {
 
     const purchaseSku = async (skuId) => {
         setPurchaseError(null);
+        setPurchasing(true);
+        console.log('[Upgrades purchaseSku] CALLED with skuId:', skuId);
         if (!skuId) { setPurchaseError('No SKU mapping found for this item'); throw new Error('No SKU mapping'); }
         const authData = await getAuthData();
+        console.log('[Upgrades purchaseSku] authData:', { wallet: authData?.walletAddress?.slice(0,10), hasToken: !!authData?.accessToken });
         const walletAddress = authData?.walletAddress;
         const accessToken = authData?.accessToken;
         if (!walletAddress) { setPurchaseError('No wallet address — are you logged in?'); throw new Error('No wallet address'); }
         if (!accessToken) { setPurchaseError('No access token — please log in again'); throw new Error('No access token'); }
-        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken });
-        if (!res.data?.success) {
-            const errMsg = res.data?.error || 'Unknown error';
+        const res = await fetch('/functions/purchaseSku', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken }),
+        });
+        const data = await res.json();
+        if (!data?.success) {
+            const errMsg = data?.error || 'Unknown error';
             setPurchaseError(`Purchase failed: ${errMsg}`);
             throw new Error(errMsg);
         }
-        return res.data;
+        return data;
     };
 
     const syncSaveToBackend = async (updatedSave) => {
@@ -149,7 +157,8 @@ export default function Upgrades({ isCarousel }) {
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             setPurchasing(true);
-            purchaseSku(getStatSku(activeCategory, stat, currentLevel + 1)).then(() => {
+            const skuId = getStatSku(activeCategory, stat, currentLevel + 1);
+            purchaseSku(skuId).then(() => {
                 const s = SaveManager.load();
                 const upg = s[saveKey] || {};
                 s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
@@ -157,8 +166,10 @@ export default function Upgrades({ isCarousel }) {
                 setSave(s);
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
-            }).catch(err => console.error('[handleBuyStat] purchase failed:', err))
-              .finally(() => setPurchasing(false));
+            }).catch(err => {
+                console.error('[handleBuyStat] purchase failed:', err);
+                setPurchaseError(`Purchase failed: ${err.message}`);
+            }).finally(() => setPurchasing(false));
         }
     };
 
