@@ -38,6 +38,16 @@ export default function DailyLoginPanel({ save, setSave }) {
         const isAlreadyClaimed = currentLogin.lastDate === today && currentLogin.claimed;
         if (isAlreadyClaimed) {
             setClaiming(false);
+            toast({ title: 'Already Claimed', description: 'You can only claim once per day.' });
+            return;
+        }
+
+        // Triple-check: re-verify claim state in localStorage to prevent race conditions
+        const freshSave = SaveManager.load();
+        const freshLogin = freshSave.dailyLogin || { lastDate: '', streak: 0, claimed: false };
+        if (freshLogin.lastDate === today && freshLogin.claimed) {
+            setClaiming(false);
+            toast({ title: 'Already Claimed', description: 'You can only claim once per day.' });
             return;
         }
 
