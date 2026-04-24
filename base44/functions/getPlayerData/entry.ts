@@ -39,13 +39,21 @@ Deno.serve(async (req) => {
         const [playerDataRes, bonusLevel] = await Promise.all([
             fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
                 headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
-            }).then(r => r.ok ? r.json() : null).catch(() => null),
-            sdk.getPlayerGameBonusPointsLevel(walletAddress).catch(() => null),
+            }).then(r => r.ok ? r.json() : null).catch((e) => {
+                console.error('[getPlayerData] playerDataRes fetch failed:', e.message);
+                return null;
+            }),
+            sdk.getPlayerGameBonusPointsLevel(walletAddress).catch((e) => {
+                console.error('[getPlayerData] bonusLevel fetch failed:', e.message);
+                return null;
+            }),
         ]);
 
-        const vipLevel = bonusLevel ?? 0;
+        // Only return zero if BOTH calls definitively failed AND we have no fallback
+        const vipLevel = bonusLevel === null ? 0 : bonusLevel;
         const nfts = playerDataRes?.nfts || [];
 
+        console.log(`[getPlayerData] wallet=${walletAddress} vipLevel=${vipLevel} nfts=${nfts.length}`);
         return Response.json({ vipLevel, nfts });
     } catch (error) {
         console.error('[getPlayerData]', error.message);
