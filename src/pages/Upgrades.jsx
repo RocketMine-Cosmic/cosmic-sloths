@@ -107,12 +107,13 @@ export default function Upgrades({ isCarousel }) {
         console.log('[Upgrades purchaseSku] authData:', { wallet: authData?.walletAddress?.slice(0,10), hasToken: !!authData?.accessToken });
         const walletAddress = authData?.walletAddress;
         const accessToken = authData?.accessToken;
+        const playerName = save.pilotName || authData?.username || 'Pilot';
         if (!walletAddress) { setPurchaseError('No wallet address — are you logged in?'); throw new Error('No wallet address'); }
         if (!accessToken) { setPurchaseError('No access token — please log in again'); throw new Error('No access token'); }
         const res = await fetch('/functions/purchaseSku', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken }),
+            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName, accessToken }),
         });
         const data = await res.json();
         if (!data?.success) {
