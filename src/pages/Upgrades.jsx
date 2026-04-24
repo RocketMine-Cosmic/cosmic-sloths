@@ -439,10 +439,10 @@ export default function Upgrades({ isCarousel }) {
                                             <div className="flex gap-2 w-full sm:w-auto">
                                                 <button
                                                     onClick={() => handleBuyStat(stat.id, 'gold')}
-                                                    disabled={isMax || !canAffordGold}
+                                                    disabled={isMax || !canAffordGold || purchasing}
                                                     className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                         isMax ? 'bg-slate-700 text-slate-500' :
-                                                        canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                        canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                                         'bg-slate-700 text-slate-400 border border-slate-600'
                                                     }`}
                                                 >
@@ -453,7 +453,7 @@ export default function Upgrades({ isCarousel }) {
                                                 )}
                                                 {!isMax && (
                                                     <button
-                                                       onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
+                                                       onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
                                                             setPurchasing(true);
                                                             const statSku = getStatSku(activeCategory, stat.id, (save[saveKey]?.[stat.id] || 0) + 1);
                                                             purchaseSku(statSku).then(() => {
@@ -589,10 +589,10 @@ export default function Upgrades({ isCarousel }) {
                                     <div className="flex gap-2 w-full">
                                         <button
                                             onClick={() => handleBuyWeapon(weapon.id, stat.id, 'gold')}
-                                            disabled={isMax || !canAffordGold}
+                                            disabled={isMax || !canAffordGold || purchasing}
                                             className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                 isMax ? 'bg-slate-800 text-slate-600' :
-                                                canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                                canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                                 'bg-slate-800 text-slate-500 border border-slate-700'
                                             }`}
                                         >
@@ -600,7 +600,7 @@ export default function Upgrades({ isCarousel }) {
                                         </button>
                                         {!isMax && (
                                             <button
-                                                onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyWeapon(weapon.id, stat.id, 'token'))}
+                                                onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyWeapon(weapon.id, stat.id, 'token'))}
                                                 disabled={!canAffordToken || purchasing}
                                                 className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                     canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
@@ -754,10 +754,10 @@ export default function Upgrades({ isCarousel }) {
                                 <div className="flex gap-2 w-full sm:w-auto pl-[60px] sm:pl-0">
                                     <button
                                         onClick={() => handleBuyTalent(talent, 'gold')}
-                                        disabled={isUnlocked || !canUnlock || !canAffordGold}
+                                        disabled={isUnlocked || !canUnlock || !canAffordGold || purchasing}
                                         className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                             isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
-                                            canUnlock && canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
+                                            canUnlock && canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                             'bg-slate-800 text-slate-600 border border-slate-700'
                                         }`}
                                     >
@@ -768,7 +768,7 @@ export default function Upgrades({ isCarousel }) {
                                     )}
                                     {!isUnlocked && (
                                         <button
-                                            onClick={() => confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
+                                            onClick={() => !purchasing && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
                                             disabled={!canUnlock || !canAffordToken || purchasing}
                                             className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                 canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
@@ -1029,13 +1029,13 @@ export default function Upgrades({ isCarousel }) {
                                                     </button>
                                                     {!skin.isSeasonalReward && (
                                                         <div className="flex gap-1.5">
-                                                            <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold}
-                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                            <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold || purchasing}
+                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
                                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                                             </button>
                                                             {skin.tokenCost > 0 && (
-                                                                <button onClick={() => confirmPurchase(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken}
-                                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                <button onClick={() => !purchasing && confirmPurchase(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing}
+                                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
                                                                         <OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX
                                                                 </button>
                                                             )}
@@ -1091,19 +1091,19 @@ export default function Upgrades({ isCarousel }) {
                                         <div className="flex gap-1.5">
                                             <button
                                                 onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'gold')}
-                                                disabled={!canAffordGold}
+                                                disabled={!canAffordGold || purchasing}
                                                 className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                                    canAffordGold ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                    canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
                                                 <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
                                             </button>
                                             {cosmetic.tokenCost > 0 && (
                                                 <button
-                                                    onClick={() => confirmPurchase(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
-                                                    disabled={!canAffordToken}
+                                                    onClick={() => !purchasing && confirmPurchase(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
+                                                    disabled={!canAffordToken || purchasing}
                                                     className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                                        canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                        canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
                                                     <OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX
