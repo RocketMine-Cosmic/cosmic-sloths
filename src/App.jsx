@@ -34,13 +34,11 @@ import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
 import { fetchPlayerData } from '@/lib/playerDataCache';
-import SessionWarningBanner from './components/SessionWarningBanner';
-import { useSessionValidator } from './hooks/useSessionValidator';
+
 
 const MainApp = () => {
   const [saveInitialized, setSaveInitialized] = useState(false);
   const [needsProfileName, setNeedsProfileName] = useState(false);
-  const sessionStatus = useSessionValidator();
 
   useEffect(() => {
     // Show UI immediately with local save, then merge cloud save in background
@@ -103,11 +101,6 @@ const MainApp = () => {
   // Render the main app
   return (
     <>
-    <SessionWarningBanner 
-      isActive={sessionStatus.isActive}
-      supersededTime={sessionStatus.supersededTime}
-      warning={sessionStatus.warning}
-    />
     <Routes>
       <Route path="/" element={<PlayCarousel />} />
       <Route path="/hub" element={<Hub />} />
