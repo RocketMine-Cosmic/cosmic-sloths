@@ -430,7 +430,14 @@ export default function Upgrades({ isCarousel }) {
                                                 )}
                                                 {!isMax && (
                                                     <button
-                                                       onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyStat(stat.id, 'token'))}
+                                                       onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
+                                                            const s = SaveManager.load();
+                                                            const upg = s[saveKey] || {};
+                                                            s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
+                                                            SaveManager.save(s);
+                                                            setSave(s);
+                                                            SoundManager.playUIClick();
+                                                        })}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                            canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
