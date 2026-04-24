@@ -52,9 +52,16 @@ Deno.serve(async (req) => {
         
         let saveId;
         if (existing.length > 0) {
-            // Merge with existing to preserve upgrades
+            // Deep merge to preserve nested upgrade objects
             const existingData = typeof existing[0].save_data === 'string' ? JSON.parse(existing[0].save_data) : existing[0].save_data;
             const merged = { ...existingData, ...saveData };
+            
+            // Preserve upgrade objects if incoming is empty/undefined
+            ['permanentUpgrades', 'weeklyUpgrades', 'seasonalUpgrades', 'permanentWeaponUpgrades', 'weeklyWeaponUpgrades', 'seasonalWeaponUpgrades', 'permanentTalents', 'weeklyTalents', 'seasonalTalents'].forEach(key => {
+                if ((!saveData[key] || Object.keys(saveData[key] || {}).length === 0) && existingData[key]) {
+                    merged[key] = existingData[key];
+                }
+            });
             
             await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
                 wallet_address: verifyResult.walletAddress,
