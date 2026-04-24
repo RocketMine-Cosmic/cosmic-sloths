@@ -119,9 +119,9 @@ export default function Hub({ isCarousel }) {
                      setSave(mergedSave);
                     
                     // Check profile name requirement AFTER login confirmed
-                    if (!mergedSave.hasSetProfileName) {
+                    if (!mergedSave.hasSetProfileName || !mergedSave.pilotName) {
                         // Grandfather in players who have already played
-                        if (mergedSave.totalKills > 0 || mergedSave.gold > 0) {
+                        if (mergedSave.totalKills > 0 || mergedSave.gold > 0 || mergedSave.pilotName) {
                             mergedSave.hasSetProfileName = true;
                             SaveManager.save(mergedSave);
                         } else if (isMounted) {
