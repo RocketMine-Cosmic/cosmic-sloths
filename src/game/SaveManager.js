@@ -8,6 +8,7 @@ let syncTimeout = null;
 let pendingSync = false;
 let syncRetries = 0;
 const MAX_SYNC_RETRIES = 3;
+let cloudSyncComplete = false;
 
 export const SaveManager = {
   _walletAddress: null,
@@ -111,8 +112,10 @@ export const SaveManager = {
       }
       
       console.log('[SaveManager] Initialized');
+      cloudSyncComplete = true; // Signal that cloud merge is done
     } catch (e) {
       console.error('[SaveManager] Init error:', e.message);
+      cloudSyncComplete = true; // Signal complete even on error
     }
   },
 
@@ -174,6 +177,8 @@ export const SaveManager = {
     await SaveManager.syncToBackend();
   },
 
+  _cloudSyncComplete: cloudSyncComplete,
+  
   load: () => {
     // Check if local save is stale (last update was >5 min ago and cloud might have newer data)
     const localSave = localStorage.getItem('cosmic_sloth_save');
