@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
@@ -19,6 +20,7 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { squadName, squadTag, squadDesc, playerName, playerTitle, accessToken } = await req.json();
 
         if (!squadName || !squadTag) return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -34,51 +36,32 @@ Deno.serve(async (req) => {
 
         const tag = squadTag.toUpperCase().substring(0, 4);
         const today = new Date().toISOString().split('T')[0];
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
 
-        // Create Squad
-        const squadUrl = `https://api.base44.com/apps/${appId}/entities/Squad`;
-        const squadRes = await fetch(squadUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({
-                name: squadName, tag, description: squadDesc || '',
-                owner_wallet: walletAddress, icon: '🛡️',
-                weekly_kills: 0, current_week: today,
-                daily_kills: 0, current_day: today,
-                member_count: 1, xp: 0, level: 1
-            })
+        const [existingName, existingTag, existingMembership] = await Promise.all([
+            base44.asServiceRole.entities.Squad.filter({ name: squadName }),
+            base44.asServiceRole.entities.Squad.filter({ tag }),
+            base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress }),
+        ]);
+
+        if (existingName.length > 0) return Response.json({ error: 'A squad with that name already exists.' }, { status: 409 });
+        if (existingTag.length > 0) return Response.json({ error: 'A squad with that tag already exists.' }, { status: 409 });
+        if (existingMembership.length > 0) return Response.json({ error: 'You are already a member of a squad. Leave your current squad first.' }, { status: 409 });
+
+        const squad = await base44.asServiceRole.entities.Squad.create({
+            name: squadName, tag, description: squadDesc || '',
+            owner_wallet: walletAddress, icon: '🛡️',
+            weekly_kills: 0, current_week: today,
+            daily_kills: 0, current_day: today,
+            member_count: 1, xp: 0, level: 1
         });
-        
-        if (!squadRes.ok) {
-            console.error('[createSquad] Squad creation failed:', squadRes.status);
-            return Response.json({ error: 'Failed to create squad' }, { status: 500 });
-        }
 
-        const squadData = await squadRes.json();
-        const squadId = squadData.id;
+        const member = await base44.asServiceRole.entities.SquadMember.create({
+            squad_id: squad.id, wallet_address: walletAddress,
+            player_name: playerName || 'Leader', player_title: playerTitle || '',
+            role: 'leader', last_payout_week: '', last_daily_payout_date: ''
+        });
 
-        // Create initial SquadMember (leader)
-        const memberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember`;
-        await fetch(memberUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({
-                squad_id: squadId, wallet_address: walletAddress,
-                player_name: playerName || 'Leader', player_title: playerTitle || '',
-                role: 'leader', last_payout_week: '', last_daily_payout_date: ''
-            })
-        }).catch(e => console.error('[createSquad] Member creation failed:', e.message));
-
-        console.log('[createSquad] Created for wallet:', walletAddress);
-        return Response.json({ success: true, squad: squadData });
+        return Response.json({ success: true, squad, member });
     } catch (error) {
         console.error('[createSquad]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
