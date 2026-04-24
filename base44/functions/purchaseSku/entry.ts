@@ -63,14 +63,22 @@ Deno.serve(async (req) => {
 
         console.log(`[purchaseSku] Purchasing SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${verifyResult.walletAddress}`);
 
-        const purchaseData = await sdk.createPurchase({
-            playerWallet: verifyResult.walletAddress,
-            skuId,
-            quantity,
-            idempotencyKey,
-            paymentCurrency: 'OMENX',
-            paymentAmount: amount * quantity,
-        });
+        let purchaseData;
+        try {
+            purchaseData = await sdk.createPurchase({
+                playerWallet: verifyResult.walletAddress,
+                skuId,
+                quantity,
+                idempotencyKey,
+                paymentCurrency: 'OMENX',
+                paymentAmount: amount * quantity,
+            });
+        } catch (err) {
+            if (err.status === 429 || err.message?.includes('rate limit') || err.message?.includes('throttle')) {
+                return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
+            }
+            throw err;
+        }
 
         const totalAmount = amount * quantity;
         const base44 = createClientFromRequest(req);

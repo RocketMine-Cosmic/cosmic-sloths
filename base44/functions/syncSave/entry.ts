@@ -31,7 +31,15 @@ Deno.serve(async (req) => {
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
-        const verifyResult = await verifyToken(sdk, accessToken);
+        let verifyResult;
+        try {
+            verifyResult = await verifyToken(sdk, accessToken);
+        } catch (err) {
+            if (err.status === 429 || err.message?.includes('rate limit')) {
+                return Response.json({ error: 'Too many requests' }, { status: 429 });
+            }
+            throw err;
+        }
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
         // Ensure saveData has required fields
