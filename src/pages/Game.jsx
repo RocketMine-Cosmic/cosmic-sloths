@@ -21,13 +21,14 @@ import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import { CharacterUnlockManager } from '../game/CharacterUnlocks';
 import { getAuthData } from '@/lib/getAuthData';
 import { SpritePreloader } from '../game/SpritePreloader';
+import { refreshBalance } from '@/lib/playerDataCache';
 
 export default function Game() {
     const canvasRef = useRef(null);
     const engineRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
-    const { omenxBalance, refresh: refreshOmenX } = useCurrency();
+    const { omenxBalance } = useCurrency();
     
     const [gameState, setGameState] = useState({
         hp: 100, maxHp: 100,
@@ -414,7 +415,7 @@ export default function Game() {
                 // Grant immediately, pay in background
                 if (engineRef.current) engineRef.current.rerollChoices();
                 purchaseSku(IN_GAME_SKUS.reroll);
-                setTimeout(refreshOmenX, 3000);
+                refreshBalance();
             });
         }
     };
@@ -429,7 +430,7 @@ export default function Game() {
                     engineRef.current.rerollChoices();
                 }
                 purchaseSku(IN_GAME_SKUS.banish);
-                setTimeout(refreshOmenX, 3000);
+                refreshBalance();
             });
         }
     };
@@ -446,7 +447,7 @@ export default function Game() {
                 // Grant immediately, pay in background
                 engineRef.current.triggerSquadUltimate();
                 purchaseSku(IN_GAME_SKUS.squadUltimate);
-                setTimeout(refreshOmenX, 3000);
+                refreshBalance();
             });
         }
     };
@@ -500,7 +501,7 @@ export default function Game() {
                     setShowRevivePrompt(false);
                 }
                 purchaseSku(IN_GAME_SKUS.revive);
-                setTimeout(refreshOmenX, 3000);
+                refreshBalance();
             });
         }
     };

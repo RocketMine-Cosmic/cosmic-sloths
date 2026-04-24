@@ -267,3 +267,9 @@ export function subscribePlayerData(fn) {
         window.removeEventListener('storage', onStorage);
     };
 }
+
+// Force immediate balance refresh (used after purchases)
+export function refreshBalance() {
+    lastBalanceFetch = 0;
+    return fetchBalance(true);
+}
