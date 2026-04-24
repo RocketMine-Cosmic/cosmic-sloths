@@ -61,15 +61,22 @@ export const SaveManager = {
           
           if (localSave) {
             const localData = JSON.parse(localSave);
-            // Cloud wins for persistent data, but keep local if it's newer
-            const localTime = localData.updated_at || 0;
-            const cloudTime = cloudData.updated_at || 0;
-            const merged = cloudTime >= localTime
-              ? { ...localData, ...cloudData }
-              : { ...cloudData, ...localData };
+            // Cloud wins for persistent data (safer than trusting local)
+            // But preserve any upgrade keys that cloud is missing (in case of partial saves)
+            const merged = {
+              ...localData,
+              ...cloudData,
+              permanentUpgrades: { ...localData.permanentUpgrades, ...cloudData.permanentUpgrades },
+              permanentWeaponUpgrades: { ...localData.permanentWeaponUpgrades, ...cloudData.permanentWeaponUpgrades },
+              permanentTalents: { ...localData.permanentTalents, ...cloudData.permanentTalents },
+              weeklyUpgrades: { ...localData.weeklyUpgrades, ...cloudData.weeklyUpgrades },
+              seasonalUpgrades: { ...localData.seasonalUpgrades, ...cloudData.seasonalUpgrades },
+              unlockedRelics: cloudData.unlockedRelics || localData.unlockedRelics || [],
+              equippedRelics: cloudData.equippedRelics || localData.equippedRelics || []
+            };
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
             window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
-            console.log('[SaveManager] Merged cloud save (cloud newer:', cloudTime >= localTime, ')');
+            console.log('[SaveManager] Merged cloud save (cloud data preferred)');
           } else {
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudData));
             window.dispatchEvent(new CustomEvent('saveUpdated', { detail: cloudData }));
