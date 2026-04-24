@@ -1,10 +1,10 @@
 import { base44 } from '@/api/base44Client';
 
 // ─────────────────────────────────────────────────────────
-// BALANCE cache — localStorage, 60 min TTL
+// BALANCE cache — localStorage, 5 min TTL
 // Refreshed in-game when needed (e.g. after purchases)
 // ─────────────────────────────────────────────────────────
-const BALANCE_CACHE_TTL = 60 * 60 * 1000; // 60 minutes
+const BALANCE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function loadBalanceCache() {
     try {
@@ -80,9 +80,10 @@ function applySessionData(sessionData) {
 // ─────────────────────────────────────────────────────────
 async function fetchBalance(force = false) {
     const now = Date.now();
-    if (!force && now - lastBalanceFetch < BALANCE_CACHE_TTL) return;
     // Return existing in-flight promise to prevent duplicate calls
     if (balanceFetchPromise || isFetchingBalance) return balanceFetchPromise;
+    // Skip if cache is fresh
+    if (!force && now - lastBalanceFetch < BALANCE_CACHE_TTL) return;
 
     const auth = getAuthData();
     if (!auth?.walletAddress || !auth?.accessToken) {
@@ -169,9 +170,8 @@ export function fetchPlayerData(force = false) {
     }
     if (scheduledFetch) return;
     scheduledFetch = true;
-    // Delay 2s on first load so SaveManager/loadSave gets priority
-    // Stagger requests randomly up to 30s to smooth launch spikes
-    const jitter = 2000 + Math.floor(Math.random() * 28000);
+    // Delay 5s on first load to let the app settle, then fetch once
+    const jitter = 5000 + Math.floor(Math.random() * 5000);
     startupTimer = setTimeout(() => {
         scheduledFetch = false;
         fetchBalance();

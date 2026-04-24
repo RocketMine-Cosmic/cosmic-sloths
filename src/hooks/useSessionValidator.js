@@ -52,9 +52,9 @@ export function useSessionValidator() {
             }
         };
 
-        // Check every 60 seconds instead of 15
+        // Check every 120 seconds (only on focus after initial check)
         validateSession();
-        const interval = setInterval(validateSession, 60000);
+        const interval = setInterval(validateSession, 120000);
 
         // Also check when tab regains focus
         const onFocus = () => validateSession();
