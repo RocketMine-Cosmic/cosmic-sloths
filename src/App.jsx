@@ -56,14 +56,8 @@ const MainApp = () => {
     
     checkProfileName();
     
-    // Re-check after cloud save merges
-    const handleSaveUpdated = (e) => checkProfileName();
-    window.addEventListener('saveUpdated', handleSaveUpdated);
-    
-    // Load cloud save in background — will merge and dispatch saveUpdated event when ready
+    // Load cloud save in background
     SaveManager.initialize();
-    
-    return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
   }, []);
 
   // In preview mode, bypass all auth gates
