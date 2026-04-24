@@ -91,16 +91,13 @@ export default function Hub({ isCarousel }) {
                      if (!isMounted) return;
 
                      // Use centralized cache for player data (deduped)
-                     let playerData = null;
-                     const unsubscribe = subscribePlayerData((cachedData) => {
-                         if (isMounted) playerData = cachedData;
-                     });
-                     unsubscribe();
+                     // Just subscribe to trigger fetch — NFT sync happens asynchronously
+                     subscribePlayerData(() => {});
 
                      // Recompute unlocked characters: kill milestones + current NFTs
                      try {
                           // Get NFT-unlocked characters (current ownership)
-                          const nftCharIds = (playerData?.nfts || [])
+                          const nftCharIds = ([])
                              .map(nft => nft.metadata?.name?.toLowerCase())
                              .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
 
