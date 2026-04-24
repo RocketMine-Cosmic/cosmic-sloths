@@ -4,78 +4,88 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const user = await base44.auth.me();
-        
+
+        // Admin only
         if (user?.role !== 'admin') {
             return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
         }
 
-        // Get all spend logs
-        const spendLogs = await base44.asServiceRole.entities.TokenSpendLog.filter({}, '-created_date', 500);
-        
-        // Group by wallet
-        const spendByWallet = new Map();
-        for (const log of spendLogs) {
-            if (!spendByWallet.has(log.wallet_address)) {
-                spendByWallet.set(log.wallet_address, []);
-            }
-            spendByWallet.get(log.wallet_address).push(log);
+        const body = await req.json();
+        const { walletAddresses } = body;
+
+        if (!walletAddresses || !Array.isArray(walletAddresses) || walletAddresses.length === 0) {
+            return Response.json({ error: 'walletAddresses array required' }, { status: 400 });
         }
 
-        let recovered = 0;
-        const errors = [];
+        console.log(`[recoverPlayerSaves] Recovering ${walletAddresses.length} wallets`);
 
-        // For each wallet with spend logs, rebuild their save
-        for (const [wallet, spends] of spendByWallet.entries()) {
+        const results = {
+            recovered: [],
+            errors: []
+        };
+
+        for (const wallet of walletAddresses) {
             try {
-                const playerSaves = await base44.asServiceRole.entities.PlayerSave.filter({ 
-                    wallet_address: wallet 
-                });
-
-                if (playerSaves.length === 0) continue;
-
-                const save = playerSaves[0];
-                let saveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data || {};
-
-                // Force reset corrupted structure — create fresh save with minimal data
-                const cleanSave = {
-                    pilotName: `Pilot_${wallet.slice(-6).toUpperCase()}`,
-                    gold: saveData?.gold || 0,
-                    totalKills: saveData?.totalKills || 0,
-                    maxTimeSurvived: saveData?.maxTimeSurvived || 0,
-                    totalGoldEarned: saveData?.totalGoldEarned || 0,
-                    maxLevelReached: saveData?.maxLevelReached || 0,
-                    permanentUpgrades: {},
-                    weeklyUpgrades: {},
-                    seasonalUpgrades: {},
-                    unlockedCharacters: saveData?.unlockedCharacters || ['neobyte'],
-                    cosmetics: saveData?.cosmetics || { trail: 'default', killEffect: 'none' },
-                    hasSetProfileName: true
+                // Reset to default save (clears corrupted upgrade data)
+                const defaultSave = {
+                    gold: 5000,
+                    relicFragments: 50,
+                    unlockedCharacters: ['neobyte'],
+                    foundCharacters: [],
+                    unlockedArenasByCharacter: { neobyte: ['station'] },
+                    permanentUpgrades: { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
+                    weeklyUpgrades: { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
+                    seasonalUpgrades: { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 },
+                    permanentWeaponUpgrades: {},
+                    weeklyWeaponUpgrades: {},
+                    seasonalWeaponUpgrades: {},
+                    permanentTalents: {},
+                    weeklyTalents: {},
+                    seasonalTalents: {},
+                    cosmetics: { trail: 'default' },
+                    unlockedCosmetics: ['default'],
+                    maxTimeSurvived: 0,
+                    totalKills: 0,
+                    totalGoldEarned: 0,
+                    maxLevelReached: 0,
+                    bounties: { date: '', active: [], dailyMission: null },
+                    seasonalPoints: 0,
+                    encounteredEnemies: [],
+                    enemyKills: {},
+                    bossModifiers: {},
+                    newGamePlusUnlocked: false,
+                    isNGPlus: false,
+                    unlockedRelics: [],
+                    equippedRelics: []
                 };
 
-                // Award tokens spent as gold (compensation for lost upgrades)
-                const totalSpent = spends.reduce((sum, log) => sum + (log.amount || 0), 0);
-                cleanSave.gold += Math.floor(totalSpent * 100); // 1 token = 100 gold compensation
-
-                // Update the save with clean structure
-                await base44.asServiceRole.entities.PlayerSave.update(save.id, {
-                    save_data: cleanSave,
-                    updated_at: Date.now()
-                });
-
-                recovered++;
-                console.log(`[recoverPlayerSaves] Recovered ${wallet.slice(0,6)}... (${spends.length} purchases)`);
-            } catch (err) {
-                errors.push({ wallet: wallet.slice(0,6), error: err.message });
+                // Find and update their save
+                const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
+                if (saves && saves.length > 0) {
+                    await base44.asServiceRole.entities.PlayerSave.update(saves[0].id, {
+                        save_data: defaultSave,
+                        updated_at: Date.now()
+                    });
+                    results.recovered.push(wallet);
+                    console.log(`[recoverPlayerSaves] Recovered ${wallet}`);
+                } else {
+                    // No save exists, create one
+                    await base44.asServiceRole.entities.PlayerSave.create({
+                        wallet_address: wallet,
+                        save_data: defaultSave,
+                        updated_at: Date.now()
+                    });
+                    results.recovered.push(wallet);
+                    console.log(`[recoverPlayerSaves] Created new save for ${wallet}`);
+                }
+            } catch (e) {
+                results.errors.push({ wallet, reason: e.message });
+                console.error(`[recoverPlayerSaves] Error for ${wallet}:`, e.message);
             }
         }
 
-        return Response.json({ 
-            success: true,
-            walletsRecovered: recovered,
-            totalWalletsProcessed: spendByWallet.size,
-            totalPurchasesProcessed: spendLogs.length,
-            errors
-        });
+        console.log(`[recoverPlayerSaves] Complete: recovered=${results.recovered.length}, errors=${results.errors.length}`);
+        return Response.json({ success: true, ...results });
     } catch (error) {
         console.error('[recoverPlayerSaves]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
