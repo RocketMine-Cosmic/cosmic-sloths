@@ -90,24 +90,38 @@ Deno.serve(async (req) => {
             throw err;
         }
 
-        // Update or create TokenPool entries
+        // Update or create TokenPool entries (fetch first, then upsert)
         try {
-            await Promise.all([
-                base44.asServiceRole.entities.TokenPool.create({
+            const weeklyPool = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+            const seasonalPool = await base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
+            
+            if (weeklyPool.length > 0) {
+                await base44.asServiceRole.entities.TokenPool.update(weeklyPool[0].id, {
+                    total_spent: (weeklyPool[0].total_spent || 0) + totalAmount
+                });
+            } else {
+                await base44.asServiceRole.entities.TokenPool.create({
                     period_id: week_id,
                     period_type: 'weekly',
                     total_spent: totalAmount,
                     distributed: false
-                }),
-                base44.asServiceRole.entities.TokenPool.create({
+                });
+            }
+            
+            if (seasonalPool.length > 0) {
+                await base44.asServiceRole.entities.TokenPool.update(seasonalPool[0].id, {
+                    total_spent: (seasonalPool[0].total_spent || 0) + totalAmount
+                });
+            } else {
+                await base44.asServiceRole.entities.TokenPool.create({
                     period_id: season_id,
                     period_type: 'seasonal',
                     total_spent: totalAmount,
                     distributed: false
-                })
-            ]);
+                });
+            }
         } catch (err) {
-            console.error('[purchaseSku] TokenPool create failed:', err.message);
+            console.error('[purchaseSku] TokenPool upsert failed:', err.message);
             // Don't throw—pools are optional logging
         }
 
