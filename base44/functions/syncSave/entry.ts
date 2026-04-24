@@ -19,14 +19,10 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
-        const { walletAddress: clientWallet, saveData, accessToken, syncSecret } = await req.json();
+        const { walletAddress: clientWallet, saveData, accessToken } = await req.json();
 
-        if (!clientWallet || !saveData || !accessToken || !syncSecret) {
-            return Response.json({ error: 'walletAddress, saveData, accessToken, and syncSecret required' }, { status: 400 });
-        }
-
-        if (syncSecret !== Deno.env.get('SYNC_SAVE_SECRET')) {
-            return Response.json({ error: 'Invalid sync secret' }, { status: 403 });
+        if (!clientWallet || !saveData || !accessToken) {
+            return Response.json({ error: 'walletAddress, saveData, and accessToken required' }, { status: 400 });
         }
 
         const sdk = new OmenXServerSDK({
@@ -36,15 +32,18 @@ Deno.serve(async (req) => {
         const verifyResult = await verifyToken(sdk, accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
-        // Save to database using service role
+        // Save to database with secret validation
         const appId = Deno.env.get('BASE44_APP_ID');
+        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
         const saveRecord = { wallet_address: verifyResult.walletAddress, save_data: saveData, updated_at: Date.now() };
         
-        // Fetch existing record to update or create new
         const url = `https://api.base44.com/apps/${appId}/entities/PlayerSave`;
         const res = await fetch(url, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Sync-Secret': syncSecret
+            },
             body: JSON.stringify({ query: { wallet_address: verifyResult.walletAddress }, data: saveRecord })
         });
         

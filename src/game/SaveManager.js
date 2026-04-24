@@ -87,7 +87,7 @@ export const SaveManager = {
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
       
-      await fetch('/functions/syncSave', {
+      const res = await fetch('/functions/syncSave', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,7 +96,12 @@ export const SaveManager = {
           accessToken: SaveManager._accessToken,
         }),
       });
-      console.log('[SaveManager] Cloud sync');
+      if (!res.ok) {
+        const data = await res.json();
+        console.warn('[SaveManager] Sync failed:', data.error);
+      } else {
+        console.log('[SaveManager] Cloud sync');
+      }
     } catch (e) {
       console.warn('[SaveManager] Sync failed:', e.message);
     }
