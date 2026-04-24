@@ -19,10 +19,14 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
-        const { walletAddress: clientWallet, saveData, accessToken } = await req.json();
+        const { walletAddress: clientWallet, saveData, accessToken, syncSecret } = await req.json();
 
-        if (!clientWallet || !saveData || !accessToken) {
-            return Response.json({ error: 'walletAddress, saveData, and accessToken required' }, { status: 400 });
+        if (!clientWallet || !saveData || !accessToken || !syncSecret) {
+            return Response.json({ error: 'walletAddress, saveData, accessToken, and syncSecret required' }, { status: 400 });
+        }
+
+        if (syncSecret !== Deno.env.get('SYNC_SAVE_SECRET')) {
+            return Response.json({ error: 'Invalid sync secret' }, { status: 403 });
         }
 
         const sdk = new OmenXServerSDK({
