@@ -1548,6 +1548,7 @@ export class GameEngine {
                     this.addDamageText(this.player.x, this.player.y - 40, `+${finalFrags} Relic Fragment!`, '#a855f7');
 
                 } else if (p.type === 'nuke') {
+                    // Only activate nuke on pickup, not on drop
                     SFXManager.playWeaponFire('novaPulse');
                     this.enemies.forEach(e => {
                         if (!e.isBoss) {
@@ -1578,11 +1579,14 @@ export class GameEngine {
                 return false;
             }
             if (dist < this.player.magnetRange) {
-                // Ensure pickups always move faster than the player
-                const playerMaxSpeed = this.player.speed * (this.player.speedMult || 1) * 60;
-                const speed = Math.max(800, playerMaxSpeed * 2) * dt;
-                p.x += ((this.player.x - p.x) / dist) * speed;
-                p.y += ((this.player.y - p.y) / dist) * speed;
+                // Don't pull nuke toward player — only activate on direct pickup
+                if (p.type !== 'nuke') {
+                    // Ensure pickups always move faster than the player
+                    const playerMaxSpeed = this.player.speed * (this.player.speedMult || 1) * 60;
+                    const speed = Math.max(800, playerMaxSpeed * 2) * dt;
+                    p.x += ((this.player.x - p.x) / dist) * speed;
+                    p.y += ((this.player.y - p.y) / dist) * speed;
+                }
             }
             return true;
         });
