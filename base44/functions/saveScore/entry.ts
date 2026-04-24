@@ -61,20 +61,36 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Failed to save score' }, { status: 500 });
         }
 
-        // Update squad kills if applicable
-        if (squadStats && squadStats.squadId) {
-            const today = new Date().toISOString().split('T')[0];
+        // Update squad kills if applicable — always fetch fresh membership from backend
+        // (don't rely on stale cached data)
+        let squadIdToUpdate = squadStats?.squadId || null;
+        if (!squadIdToUpdate) {
+            // Fetch current squad membership for this player
             try {
-                const squad = await base44.asServiceRole.entities.Squad.read(squadStats.squadId);
+                const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: verifyResult.walletAddress });
+                if (memberRecords && memberRecords.length > 0) {
+                    squadIdToUpdate = memberRecords[0].squad_id;
+                }
+            } catch (err) {
+                console.log('[saveScore] Could not fetch squad membership:', err.message);
+            }
+        }
+
+        if (squadIdToUpdate) {
+            const today = new Date().toISOString().split('T')[0];
+            const killsToAdd = squadStats?.kills || scoreData.kills || 0;
+            try {
+                const squad = await base44.asServiceRole.entities.Squad.read(squadIdToUpdate);
                 // Reset daily_kills if day changed
                 const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
                 const updatedSquad = {
                     ...squad,
-                    weekly_kills: (squad.weekly_kills || 0) + (squadStats.kills || 0),
-                    daily_kills: dailyKillsReset + (squadStats.kills || 0),
+                    weekly_kills: (squad.weekly_kills || 0) + killsToAdd,
+                    daily_kills: dailyKillsReset + killsToAdd,
                     current_day: today
                 };
-                await base44.asServiceRole.entities.Squad.update(squadStats.squadId, updatedSquad);
+                await base44.asServiceRole.entities.Squad.update(squadIdToUpdate, updatedSquad);
+                console.log(`[saveScore] Updated squad ${squadIdToUpdate} +${killsToAdd} kills`);
             } catch (err) {
                 console.error('[saveScore] Squad update failed:', err.message);
             }
