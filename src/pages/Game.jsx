@@ -20,6 +20,7 @@ import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import { CharacterUnlockManager } from '../game/CharacterUnlocks';
 import { getAuthData } from '@/lib/getAuthData';
+import { SpritePreloader } from '../game/SpritePreloader';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -326,6 +327,9 @@ export default function Game() {
         
         SoundManager.init();
         SoundManager.playBGM();
+        
+        // Preload all character sprites in background (non-blocking)
+        SpritePreloader.preload();
 
             return () => {
                 window.removeEventListener('resize', resizeCanvas);
