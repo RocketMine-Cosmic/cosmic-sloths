@@ -19,6 +19,7 @@ import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import SetProfileNameModal from '../components/game/SetProfileNameModal';
+import { subscribePlayerData } from '@/lib/playerDataCache';
 
 function getOmenXAuth() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -82,21 +83,19 @@ export default function Hub({ isCarousel }) {
 
              if (auth?.walletAddress) {
                  try {
-                     // Fetch save + player data in parallel for faster load
-                     const [, playerDataResult] = await Promise.all([
-                         SaveManager.initialize(),
-                         base44.functions.invoke('getPlayerData', {
-                             walletAddress: auth.walletAddress,
-                             accessToken: auth.accessToken,
-                         }).catch(e => { console.error('Failed to fetch player data:', e); return { data: null }; }),
-                     ]);
+                     await SaveManager.initialize();
                      if (!isMounted) return;
 
                      // Load merged save (initialize() has completed by now)
                      const mergedSave = SaveManager.load();
                      if (!isMounted) return;
 
-                     const playerData = playerDataResult?.data;
+                     // Use centralized cache for player data (deduped)
+                     let playerData = null;
+                     const unsubscribe = subscribePlayerData((cachedData) => {
+                         if (isMounted) playerData = cachedData;
+                     });
+                     unsubscribe();
 
                      // Recompute unlocked characters: kill milestones + current NFTs
                      try {
