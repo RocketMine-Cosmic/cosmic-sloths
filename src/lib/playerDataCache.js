@@ -236,14 +236,14 @@ export function subscribePlayerData(fn) {
     listeners.add(fn);
     if (cachedData !== null) fn(cachedData);
 
-    // Only trigger fetch if nothing is in-flight and cache is empty
-    if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
-        fetchPlayerData();
-    }
-
-    // Fetch user data once per session
-    if (!userFetched) {
-        fetchUserData();
+    // Only trigger fetch once (first subscriber initializes)
+    if (listeners.size === 1) {
+        if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
+            fetchPlayerData();
+        }
+        if (!userFetched) {
+            fetchUserData();
+        }
     }
 
     const onStorage = (e) => {
