@@ -112,13 +112,25 @@ export default function Leaderboard() {
     useEffect(() => {
         fetchScores();
         // Subscribe to RunScore changes (new scores, updates)
-        const unsubscribe = base44.entities.RunScore.subscribe((event) => {
+        const unsubscribeScores = base44.entities.RunScore.subscribe((event) => {
             // On new create/update, refetch immediately
             if (event.type === 'create' || event.type === 'update') {
                 fetchScores();
             }
         });
-        return unsubscribe;
+        
+        // Subscribe to TokenPool changes (updates reward pool amounts)
+        const unsubscribePool = base44.entities.TokenPool.subscribe((event) => {
+            // On any change, refetch scores to update reward calculations
+            if (event.type === 'create' || event.type === 'update') {
+                fetchScores();
+            }
+        });
+        
+        return () => {
+            unsubscribeScores();
+            unsubscribePool();
+        };
     }, [view]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
