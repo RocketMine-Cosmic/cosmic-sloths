@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 
@@ -17,8 +18,8 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
         onConfirm();
     };
 
-    return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+    return createPortal(
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -29,7 +30,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                 </div>
                 
                 <h2 className="text-2xl font-bold text-white mb-2 font-mono">CONFIRM PURCHASE</h2>
-                <p className="text-slate-400 mb-6">You're about to spend real OMENX tokens on this page.</p>
+                <p className="text-slate-400 mb-6">You're about to spend real OMENX tokens.</p>
                 
                 <div className="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
                     <div className="text-sm text-slate-400 mb-2">ITEM</div>
@@ -68,6 +69,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                     </button>
                 </div>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 }
