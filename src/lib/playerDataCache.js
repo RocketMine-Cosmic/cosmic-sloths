@@ -1,10 +1,10 @@
 import { base44 } from '@/api/base44Client';
 
 // ─────────────────────────────────────────────────────────
-// BALANCE cache — localStorage, 10 min TTL
+// BALANCE cache — localStorage, 5 min TTL (faster than before)
 // Refreshed in-game when needed (e.g. after purchases)
 // ─────────────────────────────────────────────────────────
-const BALANCE_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const BALANCE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function loadBalanceCache() {
     try {
@@ -56,6 +56,7 @@ let startupTimer = null;
 let scheduledFetch = false;
 let isFetchingBalance = false; // Guard concurrent fetches
 let userFetched = false; // Track if user data has been fetched this session
+let firstFetch = true; // Prioritize first fetch (startup optimization)
 
 function getAuthData() {
     try {
@@ -223,13 +224,14 @@ export function fetchPlayerData(force = false) {
     }
     if (scheduledFetch) return;
     scheduledFetch = true;
-    // Delay 5s on first load to let the app settle, then fetch once
-    const jitter = 5000 + Math.floor(Math.random() * 5000);
+    // First load: reduce delay to 2.5s; subsequent: skip if cache fresh
+    const delay = firstFetch ? 2500 : 3000;
+    firstFetch = false;
     startupTimer = setTimeout(() => {
         scheduledFetch = false;
         fetchBalance();
         fetchSessionData(); // once per session — no-op if already done
-    }, jitter);
+    }, delay);
 }
 
 let storageListenerAttached = false;
@@ -243,8 +245,13 @@ export function subscribePlayerData(fn) {
         if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
             fetchPlayerData();
         }
+        // Batch user fetch with session data fetch to avoid separate call
         if (!userFetched) {
             fetchUserData();
+            // Prefetch session data early if not cached
+            if (!loadSessionCache()) {
+                fetchSessionData();
+            }
         }
     }
 
