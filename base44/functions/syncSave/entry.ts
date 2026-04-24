@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
@@ -19,6 +20,7 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, saveData, accessToken } = await req.json();
 
         if (!clientWallet || !saveData || !accessToken) {
@@ -32,24 +34,21 @@ Deno.serve(async (req) => {
         const verifyResult = await verifyToken(sdk, accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
-        // Save to database with secret validation
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
-        const saveRecord = { wallet_address: verifyResult.walletAddress, save_data: saveData, updated_at: Date.now() };
+        // Save via Base44 SDK (reliable)
+        const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: verifyResult.walletAddress });
         
-        const url = `https://api.base44.com/apps/${appId}/entities/PlayerSave`;
-        const res = await fetch(url, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({ query: { wallet_address: verifyResult.walletAddress }, data: saveRecord })
-        });
-        
-        if (!res.ok) {
-            console.error('[syncSave] Save failed:', res.status, await res.text());
-            return Response.json({ error: 'Failed to save data' }, { status: 500 });
+        if (existing.length > 0) {
+            await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
+                wallet_address: verifyResult.walletAddress,
+                save_data: saveData,
+                updated_at: Date.now()
+            });
+        } else {
+            await base44.asServiceRole.entities.PlayerSave.create({
+                wallet_address: verifyResult.walletAddress,
+                save_data: saveData,
+                updated_at: Date.now()
+            });
         }
 
         console.log('[syncSave] Saved for wallet:', verifyResult.walletAddress);

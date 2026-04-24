@@ -10,8 +10,11 @@ let pendingSync = false;
 export const SaveManager = {
   _walletAddress: null,
   _accessToken: null,
+  _initialized: false,
 
   initialize: async () => {
+    if (SaveManager._initialized) return;
+    SaveManager._initialized = true;
     console.log('[SaveManager] Initialize called');
     try {
       let walletAddress = null;

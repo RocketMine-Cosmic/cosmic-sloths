@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
@@ -19,9 +20,10 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, accessToken } = await req.json();
 
-        if (!clientWallet) {
+        if (!clientWallet || !accessToken) {
             return Response.json({ saveData: null });
         }
 
@@ -29,14 +31,16 @@ Deno.serve(async (req) => {
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
-        const verifyResult = await verifyToken(sdk, accessToken || '');
+        const verifyResult = await verifyToken(sdk, accessToken);
         if (!verifyResult.success) {
-            console.log('[loadSave] Token verification skipped or failed, returning null');
             return Response.json({ saveData: null });
         }
 
-        console.log('[loadSave] Token verified for wallet:', verifyResult.walletAddress);
-        return Response.json({ saveData: null });
+        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: verifyResult.walletAddress });
+        const saveData = records.length > 0 ? records[0].save_data : null;
+
+        console.log('[loadSave] Loaded for wallet:', verifyResult.walletAddress, '- found:', !!saveData);
+        return Response.json({ saveData });
     } catch (error) {
         console.error('[loadSave]', error.message);
         return Response.json({ saveData: null });
