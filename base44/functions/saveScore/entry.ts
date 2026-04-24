@@ -50,41 +50,31 @@ Deno.serve(async (req) => {
         scoreData.season_id = season_id;
         scoreData.wallet_address = verifyResult.walletAddress;
 
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
+        const base44 = createClientFromRequest(req);
 
         // Save RunScore
-        const runScoreUrl = `https://api.base44.com/apps/${appId}/entities/RunScore`;
-        const runScoreRes = await fetch(runScoreUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify(scoreData)
-        });
-        if (!runScoreRes.ok) {
-            console.error('[saveScore] RunScore save failed:', runScoreRes.status);
+        try {
+            await base44.asServiceRole.entities.RunScore.create(scoreData);
+        } catch (err) {
+            console.error('[saveScore] RunScore save failed:', err.message);
             return Response.json({ error: 'Failed to save score' }, { status: 500 });
         }
 
         // Update squad kills if applicable
         if (squadStats && squadStats.squadId) {
-            const squadUrl = `https://api.base44.com/apps/${appId}/entities/Squad/${squadStats.squadId}`;
             const today = new Date().toISOString().split('T')[0];
-            const squadUpdate = {
-                weekly_kills: { $increment: (squadStats.kills || 0) },
-                daily_kills: { $increment: (squadStats.kills || 0) },
-                current_day: today
-            };
-            await fetch(squadUrl, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify(squadUpdate)
-            }).catch(err => console.error('[saveScore] Squad update failed:', err.message));
+            try {
+                const squad = await base44.asServiceRole.entities.Squad.read(squadStats.squadId);
+                const updatedSquad = {
+                    ...squad,
+                    weekly_kills: (squad.weekly_kills || 0) + (squadStats.kills || 0),
+                    daily_kills: (squad.daily_kills || 0) + (squadStats.kills || 0),
+                    current_day: today
+                };
+                await base44.asServiceRole.entities.Squad.update(squadStats.squadId, updatedSquad);
+            } catch (err) {
+                console.error('[saveScore] Squad update failed:', err.message);
+            }
         }
 
         console.log('[saveScore] Saved for wallet:', verifyResult.walletAddress);
