@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const GAME_ID = 'cosmic-sloths';
+const GAME_NAME = 'Cosmic Sloths';
 
 Deno.serve(async (req) => {
     try {
@@ -27,51 +29,51 @@ Deno.serve(async (req) => {
         const refundMap = {};
         spendLogs.forEach(log => {
             if (log.wallet_address) {
-                refundMap[log.wallet_address] = (refundMap[log.wallet_address] || 0) + (log.amount || 0);
+                refundMap[log.wallet_address] = {
+                    amount: (refundMap[log.wallet_address]?.amount || 0) + (log.amount || 0),
+                    player_name: log.player_name
+                };
             }
         });
 
         console.log('[refundAllOmenx] Processing refunds for', Object.keys(refundMap).length, 'wallets');
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_PAYMENT_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        // Build batch refund payments
+        const payments = Object.entries(refundMap).map(([walletAddress, data]) => ({
+            walletAddress,
+            amount: Math.floor(data.amount).toString(),
+            player_name: data.player_name
+        }));
+
+        const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
+        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+
+        // Issue batch refunds via OmenX API
+        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({ 
+                payments, 
+                gameId: GAME_ID, 
+                gameName: GAME_NAME, 
+                note: 'full system refund' 
+            }),
         });
 
-        let successCount = 0;
-        let totalRefunded = 0;
-        const failedWallets = [];
-
-        // Issue refunds
-        for (const [walletAddress, amount] of Object.entries(refundMap)) {
-            try {
-                console.log(`[refundAllOmenx] Refunding ${amount} OMENX to ${walletAddress}`);
-                const refundResult = await sdk.issueRefund({
-                    walletAddress,
-                    amount,
-                    reason: 'Game-wide refund for service incident',
-                });
-                
-                if (refundResult.success) {
-                    successCount++;
-                    totalRefunded += amount;
-                } else {
-                    failedWallets.push({ walletAddress, amount, reason: refundResult.error });
-                }
-            } catch (e) {
-                console.error(`[refundAllOmenx] Refund failed for ${walletAddress}:`, e.message);
-                failedWallets.push({ walletAddress, amount, reason: e.message });
-            }
+        const batchResult = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
         }
 
-        console.log(`[refundAllOmenx] Refund complete: ${successCount} wallets, ${totalRefunded} OMENX total`);
+        const totalRefunded = Object.values(refundMap).reduce((sum, data) => sum + data.amount, 0);
+        console.log(`[refundAllOmenx] Refund complete: ${payments.length} wallets, ${totalRefunded} OMENX total`);
 
         return Response.json({
             success: true,
-            refunded: successCount,
+            refunded: payments.length,
             totalAmount: totalRefunded,
-            failedCount: failedWallets.length,
-            failedWallets: failedWallets.length > 0 ? failedWallets : null,
+            txId: batchResult?.transactionId || batchResult?.txHash || '',
+            failedWallets: [],
         });
     } catch (error) {
         console.error('[refundAllOmenx] Error:', error.message);
