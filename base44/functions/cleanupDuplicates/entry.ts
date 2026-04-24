@@ -59,14 +59,33 @@ Deno.serve(async (req) => {
 
         // 2. Consolidate pilot names per wallet (keep most recent name)
         try {
-            const allRunScores = await base44.asServiceRole.entities.RunScore.list('-created_date', 5000);
             const namesByWallet = {};
 
-            // Map wallet -> most recent player_name (first occurrence due to -created_date sort)
+            // Gather canonical names from all sources (RunScore, SquadMember, PlayerSave)
+            const allRunScores = await base44.asServiceRole.entities.RunScore.list('-created_date', 5000);
             for (const score of allRunScores) {
                 const wallet = score.wallet_address || 'unknown';
+                if (!namesByWallet[wallet] && score.player_name) {
+                    namesByWallet[wallet] = score.player_name;
+                }
+            }
+
+            const allMembers = await base44.asServiceRole.entities.SquadMember.list('-created_date', 5000);
+            for (const member of allMembers) {
+                const wallet = member.wallet_address || 'unknown';
+                if (!namesByWallet[wallet] && member.player_name) {
+                    namesByWallet[wallet] = member.player_name;
+                }
+            }
+
+            const allSaves = await base44.asServiceRole.entities.PlayerSave.list('-created_date', 5000);
+            for (const save of allSaves) {
+                const wallet = save.wallet_address || 'unknown';
                 if (!namesByWallet[wallet]) {
-                    namesByWallet[wallet] = score.player_name; // Most recent name
+                    const saveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
+                    if (saveData?.pilotName) {
+                        namesByWallet[wallet] = saveData.pilotName;
+                    }
                 }
             }
 
@@ -75,7 +94,7 @@ Deno.serve(async (req) => {
                 const wallet = score.wallet_address || 'unknown';
                 const canonicalName = namesByWallet[wallet];
                 
-                if (score.player_name !== canonicalName) {
+                if (canonicalName && score.player_name !== canonicalName) {
                     try {
                         await base44.asServiceRole.entities.RunScore.update(score.id, {
                             player_name: canonicalName
@@ -87,8 +106,7 @@ Deno.serve(async (req) => {
                 }
             }
 
-            // Also update SquadMember records
-            const allMembers = await base44.asServiceRole.entities.SquadMember.list('-created_date', 5000);
+            // Update SquadMember records
             for (const member of allMembers) {
                 const wallet = member.wallet_address || 'unknown';
                 const canonicalName = namesByWallet[wallet];
@@ -105,8 +123,7 @@ Deno.serve(async (req) => {
                 }
             }
 
-            // Also update PlayerSave records with canonical pilotName
-            const allSaves = await base44.asServiceRole.entities.PlayerSave.list('-created_date', 5000);
+            // Update PlayerSave records with canonical pilotName
             for (const save of allSaves) {
                 const wallet = save.wallet_address || 'unknown';
                 const canonicalName = namesByWallet[wallet];
