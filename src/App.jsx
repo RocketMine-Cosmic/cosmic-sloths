@@ -32,6 +32,7 @@ import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
+import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
 import { fetchPlayerData } from '@/lib/playerDataCache';
 
 const MainApp = () => {
@@ -169,9 +170,10 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClientInstance}>
-      <CurrencyProvider>
-        <GamepadManager />
-        <Router>
+      <OmenXAuthProvider>
+        <CurrencyProvider>
+          <GamepadManager />
+          <Router>
           <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>}>
             <Routes>
               {/* OmenX OAuth callback */}
@@ -181,7 +183,8 @@ function App() {
           </React.Suspense>
         </Router>
         <Toaster />
-      </CurrencyProvider>
+        </CurrencyProvider>
+      </OmenXAuthProvider>
     </QueryClientProvider>
   )
 }
