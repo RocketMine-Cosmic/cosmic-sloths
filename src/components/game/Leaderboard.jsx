@@ -277,6 +277,7 @@ export default function Leaderboard() {
                                 const rewardAmount = view === 'weekly' 
                                     ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.25, scores.length)
                                     : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.35, scores.length);
+                                console.log(`[Leaderboard] Rank ${index + 1}: pool=${currentPool}, scores.length=${scores.length}, reward=${rewardAmount}`);
 
                                 if (view === 'squads') {
                                     const squadLvl = getSquadLevel(score.xp || 0);

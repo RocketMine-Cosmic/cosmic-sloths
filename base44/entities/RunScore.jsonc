@@ -63,13 +63,7 @@
     "season_id"
   ],
   "rls": {
-    "read": {
-      "field_mask": {
-        "exclude": [
-          "wallet_address"
-        ]
-      }
-    },
+    "read": {},
     "create": {},
     "update": {
       "user_condition": {
