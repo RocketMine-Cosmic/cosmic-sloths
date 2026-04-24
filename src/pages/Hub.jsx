@@ -674,11 +674,11 @@ export default function Hub({ isCarousel }) {
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-col md:flex-row gap-1 md:gap-3">
+                                            <div className="flex flex-col gap-3 md:flex-row md:gap-3">
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('normal')}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-xs md:text-lg font-black py-1.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-1 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-lg font-black py-4 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#0CA7B8] to-cyan-400 hover:from-cyan-400 hover:to-[#0CA7B8] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(12,167,184,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -689,14 +689,14 @@ export default function Hub({ isCarousel }) {
                                                 ) : !isArenaUnlocked ? (
                                                     <>LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH <ArrowRight className="w-3 h-3 md:w-4 md:h-4" /></>
+                                                    <>LAUNCH <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                             
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('endless')}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-xs md:text-lg font-black py-1.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-1 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-lg font-black py-4 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -707,7 +707,7 @@ export default function Hub({ isCarousel }) {
                                                 ) : !isArenaUnlocked ? (
                                                     <>LOCKED</>
                                                 ) : (
-                                                    <>ENDLESS <ArrowRight className="w-3 h-3 md:w-4 md:h-4" /></>
+                                                    <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                         </div>
