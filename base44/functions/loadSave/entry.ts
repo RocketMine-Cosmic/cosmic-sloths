@@ -4,7 +4,7 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 const verifyCache = new Map();
 const saveCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-const SAVE_CACHE_TTL = 5 * 60 * 1000; // 5 min cache for saves
+const SAVE_CACHE_TTL = 30 * 1000; // 30 sec cache for saves (short to avoid stale data after sync)
 
 async function verifyToken(sdk, accessToken) {
     const now = Date.now();
