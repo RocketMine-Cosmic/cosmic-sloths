@@ -1,6 +1,6 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-// Heavy endpoint — NFT + VIP ONLY. Called once per session.
+// Lightweight endpoint — balance ONLY. No NFT, no VIP. Called more frequently.
 const verifyCache = new Map();
 const VERIFY_TTL = 60 * 60 * 1000;
 
@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
         const { walletAddress, accessToken } = await req.json();
 
         if (!walletAddress || !accessToken) {
-            return Response.json({ vipLevel: 0, nfts: [] });
+            return Response.json({ balance: 0 });
         }
 
         const sdk = new OmenXServerSDK({
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
             authenticatedWallet = cached.walletAddress;
         } else {
             const verifyResult = await sdk.verifyOAuthUser(accessToken);
-            if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            if (!verifyResult.success) return Response.json({ balance: 0 });
             authenticatedWallet = verifyResult.user.walletAddress;
             verifyCache.set(accessToken, { walletAddress: authenticatedWallet, expiresAt: now + VERIFY_TTL });
             if (verifyCache.size > 500) {
@@ -33,22 +33,19 @@ Deno.serve(async (req) => {
             }
         }
 
-        if (walletAddress !== authenticatedWallet) return Response.json({ error: 'Forbidden' }, { status: 403 });
+        if (walletAddress !== authenticatedWallet) return Response.json({ balance: 0 });
 
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        const [playerDataRes, bonusLevel] = await Promise.all([
-            fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
-                headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
-            }).then(r => r.ok ? r.json() : null).catch(() => null),
-            sdk.getPlayerGameBonusPointsLevel(walletAddress).catch(() => null),
-        ]);
+        const playerDataRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
+        }).then(r => r.ok ? r.json() : null).catch(() => null);
 
-        const vipLevel = bonusLevel ?? 0;
-        const nfts = playerDataRes?.nfts || [];
+        const omenxToken = playerDataRes?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+        const balance = parseFloat(omenxToken?.balance ?? '0');
 
-        return Response.json({ vipLevel, nfts });
+        return Response.json({ balance });
     } catch (error) {
-        console.error('[getPlayerData]', error.message);
-        return Response.json({ vipLevel: 0, nfts: [] });
+        console.error('[getPlayerBalance]', error.message);
+        return Response.json({ balance: 0 });
     }
 });
