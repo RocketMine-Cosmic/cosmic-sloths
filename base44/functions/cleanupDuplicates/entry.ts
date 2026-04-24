@@ -104,6 +104,26 @@ Deno.serve(async (req) => {
                     }
                 }
             }
+
+            // Also update PlayerSave records with canonical pilotName
+            const allSaves = await base44.asServiceRole.entities.PlayerSave.list('-created_date', 5000);
+            for (const save of allSaves) {
+                const wallet = save.wallet_address || 'unknown';
+                const canonicalName = namesByWallet[wallet];
+                
+                if (canonicalName && save.save_data?.pilotName !== canonicalName) {
+                    try {
+                        const updatedData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
+                        updatedData.pilotName = canonicalName;
+                        await base44.asServiceRole.entities.PlayerSave.update(save.id, {
+                            save_data: updatedData
+                        });
+                        results.pilotNamesMerged.updated++;
+                    } catch (e) {
+                        results.pilotNamesMerged.errors.push({ saveId: save.id, error: e.message });
+                    }
+                }
+            }
         } catch (e) {
             results.pilotNamesMerged.errors.push({ error: e.message });
         }
