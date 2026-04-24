@@ -22,9 +22,19 @@ Top-down auto-shooter. Weapons auto-fire — you move & dodge. Survive the timer
 
 Three live leaderboards. Real OMENX rewards sent automatically to your wallet (no claiming needed).
 
-📅 **Weekly** — Top 30 earn OMENX
-🗓️ **Seasonal** — Top 40 earn OMENX (4-week cycles)
-♾️ **Endless Void** — All-time high score
+📅 **Weekly** — ALL ranked players earn OMENX
+• Ranks 1–30: Top-tier rewards
+• Ranks 31–50: Mid-tier rewards
+• Ranks 51–100: Lower rewards
+• Rank 100+: Minimal rewards
+
+🗓️ **Seasonal** — ALL ranked players earn OMENX (4-week cycles)
+• Ranks 1–40: Top-tier rewards
+• Ranks 41–60: Mid-tier rewards
+• Ranks 61–100: Lower rewards
+• Rank 100+: Minimal rewards
+
+♾️ **Endless Void** — All-time high score (no rewards, permanent legacy)
 
 💠 **Reward Pool:** Every OMENX spent in-game (rerolls, banishes, power-ups) feeds back into the prize pools. More players spending = bigger rewards.
 
