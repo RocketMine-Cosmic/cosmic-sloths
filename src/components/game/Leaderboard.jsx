@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { queryClientInstance } from '@/lib/query-client';
 import { CHARACTERS, ARENAS } from '../../game/Constants';
 import { getSquadLevel } from '../../game/SquadLevels';
 import { getCurrentPeriodIds } from '../../lib/periodIds';
@@ -121,8 +122,9 @@ export default function Leaderboard() {
         
         // Subscribe to TokenPool changes (updates reward pool amounts)
         const unsubscribePool = base44.entities.TokenPool.subscribe((event) => {
-            // On any change, refetch scores to update reward calculations
+            // On any change, invalidate pool query and refetch scores
             if (event.type === 'create' || event.type === 'update') {
+                queryClientInstance.invalidateQueries({ queryKey: poolQueryKey });
                 fetchScores();
             }
         });
@@ -131,7 +133,7 @@ export default function Leaderboard() {
             unsubscribeScores();
             unsubscribePool();
         };
-    }, [view]);
+    }, [view, poolQueryKey]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
     const { week_id, season_id } = getCurrentPeriodIds();
