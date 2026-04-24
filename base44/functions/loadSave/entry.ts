@@ -2,9 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
-const saveCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-const SAVE_CACHE_TTL = 30 * 1000; // 30 sec cache for saves (short to avoid stale data after sync)
+// NO SAVE CACHE: Always fetch fresh data to prevent stale upgrade loss
 
 async function verifyToken(sdk, accessToken) {
     const now = Date.now();
@@ -46,19 +45,9 @@ Deno.serve(async (req) => {
             }
             wallet = verifyResult.walletAddress;
         }
-        const cached = saveCache.get(wallet);
-        if (cached && cached.expiresAt > now) {
-            console.log('[loadSave] Cache hit for wallet:', wallet);
-            return Response.json({ saveData: cached.saveData });
-        }
 
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
         const saveData = records.length > 0 ? records[0].save_data : null;
-
-        saveCache.set(wallet, { saveData, expiresAt: now + SAVE_CACHE_TTL });
-        if (saveCache.size > 1000) {
-            for (const [k, v] of saveCache) { if (v.expiresAt <= now) saveCache.delete(k); }
-        }
 
         console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData);
         return Response.json({ saveData });
