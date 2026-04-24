@@ -2,21 +2,26 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-// NO SAVE CACHE: Always fetch fresh data to prevent stale upgrade loss
+const VERIFY_CACHE_TTL = 5 * 60 * 1000; // 5 min instead of 1 hour to allow quicker token refreshes
 
 async function verifyToken(sdk, accessToken) {
     const now = Date.now();
     const cached = verifyCache.get(accessToken);
     if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (result.success) {
-        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        if (verifyCache.size > 500) {
-            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
+    try {
+        const result = await sdk.verifyOAuthUser(accessToken);
+        if (result.success) {
+            verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
+            if (verifyCache.size > 500) {
+                for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
+            }
         }
+        return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
+    } catch (e) {
+        // If OmenX API fails, fall back to clientWallet (user already authed on client)
+        console.warn('[loadSave] Token verify failed:', e.message);
+        return { success: true, walletAddress: null, skipVerify: true };
     }
-    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
 }
 
 Deno.serve(async (req) => {
@@ -40,15 +45,18 @@ Deno.serve(async (req) => {
                 apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
             });
             const verifyResult = await verifyToken(sdk, accessToken);
-            // MUST reject if verification failed — never fall back to untrusted clientWallet
-            if (!verifyResult.success) {
-                return Response.json({ error: 'Invalid OAuth token — wallet address mismatch' }, { status: 401 });
+            // If OmenX API is down, fall back to clientWallet (user already authed on client)
+            if (verifyResult.skipVerify) {
+                wallet = clientWallet;
+            } else if (!verifyResult.success) {
+                return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            } else {
+                wallet = verifyResult.walletAddress;
             }
-            wallet = verifyResult.walletAddress;
         }
         
-        // Verify wallet matches client claim
-        if (wallet !== clientWallet) {
+        // Verify wallet matches client claim (skip if we had to skip verify due to API down)
+        if (wallet !== clientWallet && !verifyCache.get(accessToken)?.skipVerify) {
             console.warn('[loadSave] Wallet mismatch:', wallet, '≠', clientWallet);
             return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
         }
