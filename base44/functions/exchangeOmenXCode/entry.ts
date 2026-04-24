@@ -17,23 +17,56 @@ Deno.serve(async (req) => {
     }
 
     // Exchange code for tokens
-    const tokenResponse = await fetch(`${apiBaseUrl}/v1/oauth/token`, {
+    const payload = {
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      client_id: 'cosmic-sloths',
+      client_secret: clientSecret,
+    };
+    
+    // Include PKCE verifier if available
+    if (codeVerifier) {
+      payload.code_verifier = codeVerifier;
+    }
+    
+    let tokenResponse = await fetch(`${apiBaseUrl}/v1/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: redirectUri,
-        client_id: 'cosmic-sloths',
-        client_secret: clientSecret,
-        ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.json();
-      console.error('[exchangeOmenXCode] Token exchange failed:', error);
-      return Response.json({ error: 'Token exchange failed', details: error }, { status: tokenResponse.status });
+      console.error('[exchangeOmenXCode] Token exchange failed:', {
+        status: tokenResponse.status,
+        error,
+        hadVerifier: !!codeVerifier,
+      });
+      
+      // If PKCE failed, retry once without it (fallback for missing verifier)
+      if (!codeVerifier && error?.error?.code === 'INVALID_REQUEST') {
+        console.log('[exchangeOmenXCode] Retrying without PKCE...');
+        tokenResponse = await fetch(`${apiBaseUrl}/v1/oauth/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: redirectUri,
+            client_id: 'cosmic-sloths',
+            client_secret: clientSecret,
+          }),
+        });
+        
+        if (!tokenResponse.ok) {
+          const retryError = await tokenResponse.json();
+          console.error('[exchangeOmenXCode] Retry also failed:', retryError);
+          return Response.json({ error: 'Token exchange failed', details: retryError }, { status: tokenResponse.status });
+        }
+      } else {
+        return Response.json({ error: 'Token exchange failed', details: error }, { status: tokenResponse.status });
+      }
     }
 
     const tokenData = await tokenResponse.json();
