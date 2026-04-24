@@ -53,6 +53,7 @@ let sessionFetchPromise = null;
 let lastBalanceFetch = persistedBalance ? persistedBalance.timestamp : 0;
 let startupTimer = null;
 let scheduledFetch = false;
+let isFetchingBalance = false; // Guard concurrent fetches
 
 function getAuthData() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -81,7 +82,7 @@ async function fetchBalance(force = false) {
     const now = Date.now();
     if (!force && now - lastBalanceFetch < BALANCE_CACHE_TTL) return;
     // Return existing in-flight promise to prevent duplicate calls
-    if (balanceFetchPromise) return balanceFetchPromise;
+    if (balanceFetchPromise || isFetchingBalance) return balanceFetchPromise;
 
     const auth = getAuthData();
     if (!auth?.walletAddress || !auth?.accessToken) {
@@ -89,6 +90,7 @@ async function fetchBalance(force = false) {
         return;
     }
 
+    isFetchingBalance = true;
     balanceFetchPromise = (async () => {
         try {
             const res = await base44.functions.invoke('getPlayerBalance', {
@@ -103,6 +105,7 @@ async function fetchBalance(force = false) {
             applyBalance(persistedBalance?.balance ?? 0);
         } finally {
             balanceFetchPromise = null;
+            isFetchingBalance = false;
         }
     })();
     return balanceFetchPromise;
