@@ -180,6 +180,11 @@ export function subscribePlayerData(fn) {
     listeners.add(fn);
     if (cachedData !== null) fn(cachedData);
 
+    // Only trigger fetch if nothing is in-flight and cache is empty
+    if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
+        fetchPlayerData();
+    }
+
     const onStorage = (e) => {
         if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
             // New login — clear everything and re-fetch

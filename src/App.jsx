@@ -32,7 +32,6 @@ import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
-import { fetchPlayerData } from '@/lib/playerDataCache';
 
 const MainApp = () => {
   const [saveInitialized, setSaveInitialized] = useState(false);
@@ -145,8 +144,7 @@ const MainApp = () => {
 function App() {
   useEffect(() => {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
-    // Preload player data (balance + VIP) immediately at app start so pages find it cached
-    fetchPlayerData();
+    // Player data fetches via CurrencyProvider subscription — don't duplicate here
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)
     const onParentMessage = (event) => {
