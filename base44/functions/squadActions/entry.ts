@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
@@ -25,6 +26,7 @@ Deno.serve(async (req) => {
 
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
 
+        const base44 = createClientFromRequest(req);
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
@@ -116,17 +118,8 @@ Deno.serve(async (req) => {
                 content: content.substring(0, 200)
             };
             
-            const msgUrl = `https://api.base44.com/apps/${appId}/entities/SquadMessage`;
-            await fetch(msgUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify(msgData)
-            }).catch(e => console.error('[squadActions] Message creation failed:', e.message));
-
-            return Response.json({ success: true, message: msgData });
+            const message = await base44.asServiceRole.entities.SquadMessage.create(msgData);
+            return Response.json({ success: true, message });
         }
 
         if (action === 'transferLeadership') {
