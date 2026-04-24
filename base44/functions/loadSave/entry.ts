@@ -38,10 +38,23 @@ Deno.serve(async (req) => {
             return Response.json({ saveData: null });
         }
 
-        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: verifyResult.walletAddress });
+        const wallet = verifyResult.walletAddress;
+        const now = Date.now();
+        const cached = saveCache.get(wallet);
+        if (cached && cached.expiresAt > now) {
+            console.log('[loadSave] Cache hit for wallet:', wallet);
+            return Response.json({ saveData: cached.saveData });
+        }
+
+        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
         const saveData = records.length > 0 ? records[0].save_data : null;
 
-        console.log('[loadSave] Loaded for wallet:', verifyResult.walletAddress, '- found:', !!saveData);
+        saveCache.set(wallet, { saveData, expiresAt: now + SAVE_CACHE_TTL });
+        if (saveCache.size > 1000) {
+            for (const [k, v] of saveCache) { if (v.expiresAt <= now) saveCache.delete(k); }
+        }
+
+        console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData);
         return Response.json({ saveData });
     } catch (error) {
         console.error('[loadSave]', error.message);
