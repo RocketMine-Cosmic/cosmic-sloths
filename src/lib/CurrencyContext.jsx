@@ -57,6 +57,9 @@ export const CurrencyProvider = ({ children }) => {
       {children}
     </CurrencyContext.Provider>
   );
+
+  // User is now fetched by playerDataCache and merged into omenxUser via subscribePlayerData
+  // No additional /v1/oauth/user calls needed — all components share cached data
 };
 
 export const useCurrency = () => {

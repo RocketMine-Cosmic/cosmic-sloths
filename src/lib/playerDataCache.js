@@ -46,14 +46,16 @@ function saveSessionCache(data) {
 // Shared state
 // ─────────────────────────────────────────────────────────
 const persistedBalance = loadBalanceCache();
-let cachedData = null; // { balance, vipLevel, nfts }
+let cachedData = null; // { balance, vipLevel, nfts, user }
 let listeners = new Set();
 let balanceFetchPromise = null;
 let sessionFetchPromise = null;
+let userFetchPromise = null;
 let lastBalanceFetch = persistedBalance ? persistedBalance.timestamp : 0;
 let startupTimer = null;
 let scheduledFetch = false;
 let isFetchingBalance = false; // Guard concurrent fetches
+let userFetched = false; // Track if user data has been fetched this session
 
 function getAuthData() {
     try {
@@ -78,6 +80,12 @@ function applyBalance(balance) {
 // Merge session data (vip + nfts) into cachedData
 function applySessionData(sessionData) {
     cachedData = { ...(cachedData || { balance: 0 }), ...sessionData };
+    notify();
+}
+
+// Merge user data into cachedData
+function applyUserData(user) {
+    cachedData = { ...(cachedData || { vipLevel: 0, nfts: [], balance: 0 }), user };
     notify();
 }
 
@@ -153,6 +161,45 @@ async function fetchSessionData() {
 }
 
 // ─────────────────────────────────────────────────────────
+// Fetch user profile (once per session only)
+// ─────────────────────────────────────────────────────────
+async function fetchUserData() {
+    // Already fetched this session — skip
+    if (userFetched) return;
+    // Return existing in-flight promise to prevent duplicate calls
+    if (userFetchPromise) return userFetchPromise;
+
+    const auth = getAuthData();
+    if (!auth?.walletAddress || !auth?.accessToken) return;
+
+    userFetchPromise = (async () => {
+        try {
+            const stored = localStorage.getItem('omenx_auth_data');
+            const parsed = JSON.parse(stored);
+            const user = {
+                walletAddress: parsed.walletAddress,
+                username: parsed.username || '',
+                full_name: parsed.player_name || parsed.username || 'Player',
+                player_name: parsed.player_name || parsed.username || 'Player',
+                pilot_icon: parsed.pilot_icon || '🦥',
+                data: {
+                    player_name: parsed.player_name || parsed.username || 'Player',
+                    player_title: parsed.player_title || '',
+                    pilot_icon: parsed.pilot_icon || '🦥',
+                }
+            };
+            applyUserData(user);
+            userFetched = true;
+        } catch {
+            userFetched = true;
+        } finally {
+            userFetchPromise = null;
+        }
+    })();
+    return userFetchPromise;
+}
+
+// ─────────────────────────────────────────────────────────
 // Seed from persisted balance immediately (no flicker)
 // ─────────────────────────────────────────────────────────
 if (persistedBalance) {
@@ -194,16 +241,23 @@ export function subscribePlayerData(fn) {
         fetchPlayerData();
     }
 
+    // Fetch user data once per session
+    if (!userFetched) {
+        fetchUserData();
+    }
+
     const onStorage = (e) => {
         if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
             // New login — clear everything and re-fetch
             lastBalanceFetch = 0;
+            userFetched = false;
             cachedData = null;
             try { localStorage.removeItem('omenx_balance_cache'); } catch {}
             try { sessionStorage.removeItem('omenx_session_data'); } catch {}
             if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
             fetchBalance();
             fetchSessionData();
+            fetchUserData();
         }
     };
     window.addEventListener('storage', onStorage);
