@@ -23,8 +23,8 @@ export default function AdminManagers({ walletAddress }) {
     const qc = useQueryClient();
 
     const { data: admins, isLoading } = useQuery({
-        queryKey: ['adminWallets'],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'adminWallets' }).then(r => r.data.records || []),
+        queryKey: ['adminWallets', walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'adminWallets', walletAddress }).then(r => r.data.records || []),
     });
 
     const togglePerm = (id) => {
