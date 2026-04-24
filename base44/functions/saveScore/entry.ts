@@ -30,22 +30,9 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
-function isLeaderboardLocked() {
-    const now = new Date();
-    const utcHour = now.getUTCHours();
-    const utcDay = now.getUTCDay();
-    if (utcDay === 0 && utcHour >= 23) return true;
-    if (utcDay === 1 && utcHour < 23) return true;
-    return false;
-}
-
 Deno.serve(async (req) => {
     try {
         const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
-
-        if (isLeaderboardLocked()) {
-            return Response.json({ error: 'Leaderboard is locked for distribution' }, { status: 423 });
-        }
 
         if (!scoreData || !clientWallet || !accessToken) {
             return Response.json({ error: 'scoreData, walletAddress, and accessToken required' }, { status: 400 });
