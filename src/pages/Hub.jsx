@@ -18,7 +18,7 @@ import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
-import SetProfileNameModal from '../components/game/SetProfileNameModal';
+
 import { subscribePlayerData } from '@/lib/playerDataCache';
 
 function getOmenXAuth() {
@@ -57,7 +57,6 @@ export default function Hub({ isCarousel }) {
     const [save, setSave] = useState(safeInitialSave);
     const [omenxAuth, setOmenxAuth] = useState(null);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
-    const [needsProfileName, setNeedsProfileName] = useState(false);
     const [syncReady, setSyncReady] = useState(false);
     const { vip: vipLevel } = useOmenXVip();
 
@@ -118,19 +117,8 @@ export default function Hub({ isCarousel }) {
                      }
 
                      setSave(mergedSave);
-                    
-                    // Check profile name requirement AFTER login confirmed
-                    if (!mergedSave.hasSetProfileName || !mergedSave.pilotName) {
-                        // Grandfather in players who have already played
-                        if (mergedSave.totalKills > 0 || mergedSave.gold > 0 || mergedSave.pilotName) {
-                            mergedSave.hasSetProfileName = true;
-                            SaveManager.save(mergedSave);
-                        } else if (isMounted) {
-                            setNeedsProfileName(true);
-                        }
-                    }
-                    
-                    // VIP level is now fetched via useOmenXVip hook globally
+
+                     // VIP level is now fetched via useOmenXVip hook globally
                     if (vipLevel > 0 && isMounted) {
                         const s = SaveManager.load();
                         if (s.vipLevel !== vipLevel) {
@@ -244,15 +232,6 @@ export default function Hub({ isCarousel }) {
     return (
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-1.5 pb-16 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
-            {needsProfileName && (
-                <SetProfileNameModal onComplete={() => {
-                    const s = SaveManager.load();
-                    s.hasSetProfileName = true;
-                    SaveManager.save(s);
-                    setSave(s);
-                    setNeedsProfileName(false);
-                }} />
-            )}
             <div className="max-w-6xl mx-auto relative z-10">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-1 md:gap-4 mb-1 md:mb-4 border-b border-fuchsia-900/40 pb-1 md:pb-4">
                     <div>
