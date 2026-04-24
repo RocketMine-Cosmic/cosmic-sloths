@@ -232,6 +232,8 @@ export function fetchPlayerData(force = false) {
     }, jitter);
 }
 
+let storageListenerAttached = false;
+
 export function subscribePlayerData(fn) {
     listeners.add(fn);
     if (cachedData !== null) fn(cachedData);
@@ -246,25 +248,29 @@ export function subscribePlayerData(fn) {
         }
     }
 
-    const onStorage = (e) => {
-        if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
-            // New login — clear everything and re-fetch
-            lastBalanceFetch = 0;
-            userFetched = false;
-            cachedData = null;
-            try { localStorage.removeItem('omenx_balance_cache'); } catch {}
-            try { sessionStorage.removeItem('omenx_session_data'); } catch {}
-            if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
-            fetchBalance();
-            fetchSessionData();
-            fetchUserData();
-        }
-    };
-    window.addEventListener('storage', onStorage);
+    // Attach storage listener only once (all subscribers share it)
+    if (!storageListenerAttached) {
+        storageListenerAttached = true;
+        const onStorage = (e) => {
+            if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
+                // New login — clear everything and re-fetch once
+                lastBalanceFetch = 0;
+                userFetched = false;
+                cachedData = null;
+                try { localStorage.removeItem('omenx_balance_cache'); } catch {}
+                try { sessionStorage.removeItem('omenx_session_data'); } catch {}
+                if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
+                // Single coordinated fetch (not 3 in parallel)
+                fetchBalance();
+                fetchSessionData();
+                fetchUserData();
+            }
+        };
+        window.addEventListener('storage', onStorage);
+    }
 
     return () => {
         listeners.delete(fn);
-        window.removeEventListener('storage', onStorage);
     };
 }
 
