@@ -141,10 +141,15 @@ const MainApp = () => {
           const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
           if (omenxAuth?.accessToken) {
               import('@/api/base44Client').then(({ base44 }) => {
+                  const save = SaveManager.load();
                   base44.functions.invoke('syncProfileName', {
                       newName: chosenName,
                       accessToken: omenxAuth.accessToken,
+                      hasSetProfileName: true,
                   }).catch(e => console.error('[App] profile name sync failed', e));
+                  // Also update local save immediately
+                  save.hasSetProfileName = true;
+                  SaveManager.save(save);
               });
           }
       }} />
