@@ -112,10 +112,10 @@ export const SaveManager = {
       }
       
       console.log('[SaveManager] Initialized');
-      cloudSyncComplete = true; // Signal that cloud merge is done
     } catch (e) {
       console.error('[SaveManager] Init error:', e.message);
-      cloudSyncComplete = true; // Signal complete even on error
+    } finally {
+      cloudSyncComplete = true;
     }
   },
 
