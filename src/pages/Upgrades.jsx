@@ -155,6 +155,7 @@ export default function Upgrades({ isCarousel }) {
             currentSave[saveKey] = { ...upgrades, [stat]: currentLevel + 1 };
             SaveManager.save(currentSave);
             setSave(currentSave);
+            SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             // Grant immediately since they paid
@@ -191,6 +192,7 @@ export default function Upgrades({ isCarousel }) {
             currentSave[saveKey][weaponId][stat] = currentLevel + 1;
             SaveManager.save(currentSave);
             setSave(currentSave);
+            SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
@@ -231,6 +233,7 @@ export default function Upgrades({ isCarousel }) {
             currentSave[saveKey][selectedChar].push(talent.id);
             SaveManager.save(currentSave);
             setSave(currentSave);
+            SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
@@ -277,6 +280,7 @@ export default function Upgrades({ isCarousel }) {
             currentSave.relicLevels = relicLevels;
             SaveManager.save(currentSave);
             setSave(currentSave);
+            SaveManager.syncToBackendImmediate();
             SoundManager.playLevelUp();
         }
     };
@@ -314,6 +318,7 @@ export default function Upgrades({ isCarousel }) {
                 const newSave = { ...save, cosmetics: { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } } };
                 SaveManager.save(newSave);
                 setSave(newSave);
+                SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
                 return;
             }
@@ -322,6 +327,7 @@ export default function Upgrades({ isCarousel }) {
                 newSave.cosmetics = { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } };
                 SaveManager.save(newSave);
                 setSave(newSave);
+                SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
                 setPurchasing(true);
@@ -361,6 +367,7 @@ export default function Upgrades({ isCarousel }) {
             const newSave = { ...save, cosmetics: { ...cosmetics, [cosmeticKey]: cosmetic.id } };
             SaveManager.save(newSave);
             setSave(newSave);
+            SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
             return;
         }
@@ -371,6 +378,7 @@ export default function Upgrades({ isCarousel }) {
             newSave.cosmetics = { ...cosmetics, [cosmeticKey]: cosmetic.id };
             SaveManager.save(newSave);
             setSave(newSave);
+            SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
             setPurchasing(true);
@@ -653,6 +661,7 @@ export default function Upgrades({ isCarousel }) {
             }
             SaveManager.save(newSave);
             setSave(newSave);
+            SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         };
 
