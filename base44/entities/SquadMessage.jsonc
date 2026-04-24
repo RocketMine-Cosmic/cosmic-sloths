@@ -26,7 +26,13 @@
     "content"
   ],
   "rls": {
-    "read": {},
+    "read": {
+      "field_mask": {
+        "exclude": [
+          "wallet_address"
+        ]
+      }
+    },
     "create": {
       "user_condition": {
         "role": "admin"

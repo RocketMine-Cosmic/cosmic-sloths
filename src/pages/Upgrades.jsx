@@ -435,32 +435,30 @@ export default function Upgrades({ isCarousel }) {
                                                 )}
                                                 {!isMax && (
                                                     <button
-                                                       onClick={() => {
-                                                           setPurchasing(true);
-                                                           setPurchaseError(null);
-                                                           const statSku = getStatSku(activeCategory, stat.id, (save[saveKey]?.[stat.id] || 0) + 1);
-                                                           purchaseSku(statSku).then(() => {
-                                                               const s = SaveManager.load();
-                                                               const upg = s[saveKey] || {};
-                                                               s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
-                                                               SaveManager.save(s);
-                                                               setSave(s);
-                                                               SaveManager.syncToBackendImmediate();
-                                                               SoundManager.playUIClick();
-                                                               refreshBalance();
-                                                           }).catch(err => {
-                                                               setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                                                               console.error('[handleBuyStat] purchase failed:', err);
-                                                           }).finally(() => setPurchasing(false));
-                                                       }}
+                                                       onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
+                                                            const statSku = getStatSku(activeCategory, stat.id, (save[saveKey]?.[stat.id] || 0) + 1);
+                                                            purchaseSku(statSku).then(() => {
+                                                                const s = SaveManager.load();
+                                                                const upg = s[saveKey] || {};
+                                                                s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
+                                                                SaveManager.save(s);
+                                                                setSave(s);
+                                                                SaveManager.syncToBackendImmediate();
+                                                                SoundManager.playUIClick();
+                                                                refreshBalance();
+                                                            }).catch(err => {
+                                                                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
+                                                                console.error('[handleBuyStat] purchase failed:', err);
+                                                            });
+                                                        })}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
-                                                           canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                                           'bg-slate-700 text-slate-400 border border-slate-600'
-                                                       }`}
-                                                    >
-                                                       {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
-                                                    </button>
+                                                            canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                            'bg-slate-700 text-slate-400 border border-slate-600'
+                                                        }`}
+                                                     >
+                                                        {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                     </button>
                                                 )}
                                             </div>
                                         </div>
