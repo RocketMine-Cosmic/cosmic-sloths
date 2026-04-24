@@ -7,11 +7,20 @@ const CurrencyContext = createContext();
 export const CurrencyProvider = ({ children }) => {
   const [save, setSave] = useState(SaveManager.load());
   const [omenxBalance, setOmenxBalance] = useState(null);
+  const [vipLevel, setVipLevel] = useState(0);
+  const [omenxUser, setOmenxUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsub = subscribePlayerData((data) => {
-      setOmenxBalance(data?.balance ?? null);
+      if (data) {
+        setOmenxBalance(data.balance ?? null);
+        setVipLevel(data.vipLevel ?? 0);
+        // Extract user info from player data if available
+        if (data.user) {
+          setOmenxUser(data.user);
+        }
+      }
       setLoading(false);
     });
     return unsub;
@@ -24,7 +33,7 @@ export const CurrencyProvider = ({ children }) => {
   }, []);
 
   return (
-    <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true) }}>
+    <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, omenxUser }}>
       {children}
     </CurrencyContext.Provider>
   );
@@ -36,4 +45,28 @@ export const useCurrency = () => {
     throw new Error('useCurrency must be used within CurrencyProvider');
   }
   return context;
+};
+
+export const useOmenXUserFromCurrency = () => {
+  const context = useContext(CurrencyContext);
+  if (!context) {
+    throw new Error('useOmenXUserFromCurrency must be used within CurrencyProvider');
+  }
+  // Return just the user-related data
+  return {
+    user: context.omenxUser,
+    loading: context.loading,
+  };
+};
+
+export const useOmenXVipFromCurrency = () => {
+  const context = useContext(CurrencyContext);
+  if (!context) {
+    throw new Error('useOmenXVipFromCurrency must be used within CurrencyProvider');
+  }
+  // Return just the VIP-related data
+  return {
+    vip: context.vipLevel,
+    loading: context.loading,
+  };
 };
