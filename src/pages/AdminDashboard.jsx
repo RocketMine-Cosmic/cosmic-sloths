@@ -21,6 +21,7 @@ import AdminManagers from '../components/admin/AdminManagers';
 import AdminOrphanedData from '../components/admin/AdminOrphanedData';
 import AdminDiscordGuide from '../components/admin/AdminDiscordGuide';
 import AdminDataBackup from '../components/admin/AdminDataBackup';
+import AdminDataWipe from '../components/admin/AdminDataWipe';
 
 const TABS = [
     { id: 'overview',    label: 'Overview',    icon: BarChart3 },
@@ -39,6 +40,7 @@ const TABS = [
     { id: 'managers',    label: '👥 Managers', icon: Users },
     { id: 'discord',     label: '💬 Discord Guide', icon: Database },
     { id: 'backups',     label: '💾 Backups', icon: Database },
+    { id: 'wipe',        label: '🗑️ Wipe Data', icon: AlertTriangle },
 ];
 
 export default function AdminDashboard() {
@@ -119,6 +121,7 @@ export default function AdminDashboard() {
         managers: <AdminManagers walletAddress={adminWallet} />,
         discord: <AdminDiscordGuide />,
         backups: <AdminDataBackup walletAddress={adminWallet} />,
+        wipe: <AdminDataWipe walletAddress={adminWallet} />,
     };
 
     return (
