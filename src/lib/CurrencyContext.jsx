@@ -32,6 +32,26 @@ export const CurrencyProvider = ({ children }) => {
     return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
   }, []);
 
+  useEffect(() => {
+    const handleOmenXUserUpdated = (e) => {
+      const updatedUser = {
+        walletAddress: e.detail.walletAddress,
+        username: e.detail.username,
+        full_name: e.detail.player_name || e.detail.username || 'Player',
+        player_name: e.detail.player_name || e.detail.username || 'Player',
+        pilot_icon: e.detail.pilot_icon || '🦥',
+        data: {
+          player_name: e.detail.player_name || e.detail.username || 'Player',
+          player_title: e.detail.player_title || '',
+          pilot_icon: e.detail.pilot_icon || '🦥',
+        }
+      };
+      setOmenxUser(updatedUser);
+    };
+    window.addEventListener('omenxUserUpdated', handleOmenXUserUpdated);
+    return () => window.removeEventListener('omenxUserUpdated', handleOmenXUserUpdated);
+  }, []);
+
   return (
     <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, omenxUser }}>
       {children}

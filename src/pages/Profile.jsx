@@ -38,28 +38,6 @@ export default function Profile({ isCarousel }) {
     const { user: omenxUser } = useOmenXUser();
 
     useEffect(() => {
-        const handleOmenXUserUpdated = (e) => {
-            const updatedUser = {
-                walletAddress: e.detail.walletAddress,
-                username: e.detail.username,
-                full_name: e.detail.player_name || e.detail.username || 'Player',
-                player_name: e.detail.player_name || e.detail.username || 'Player',
-                pilot_icon: e.detail.pilot_icon || '🦥',
-                data: {
-                    player_name: e.detail.player_name || e.detail.username || 'Player',
-                    player_title: e.detail.player_title || '',
-                    pilot_icon: e.detail.pilot_icon || '🦥',
-                }
-            };
-            setUser(updatedUser);
-            setNewName(updatedUser.player_name);
-            setNewTitle(updatedUser.data.player_title);
-        };
-        window.addEventListener('omenxUserUpdated', handleOmenXUserUpdated);
-        return () => window.removeEventListener('omenxUserUpdated', handleOmenXUserUpdated);
-    }, []);
-
-    useEffect(() => {
         if (!omenxUser) {
             setLoading(false);
             return;
