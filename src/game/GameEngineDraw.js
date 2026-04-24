@@ -5,6 +5,10 @@ import { drawProjectiles } from './ProjectileRenderer';
 import { getWeaponStatsAndMastery } from './Constants';
 
 export function renderGame() {
+    // Reset composite operation to prevent stuck states from previous frames
+    this.ctx.globalCompositeOperation = 'source-over';
+    this.ctx.globalAlpha = 1.0;
+    
     if (this.webglBg && this.webglBg.gl && this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
         const camCenterX = this.camera.x + (this.canvas.width / this.zoom) / 2;
         const camCenterY = this.camera.y + (this.canvas.height / this.zoom) / 2;
