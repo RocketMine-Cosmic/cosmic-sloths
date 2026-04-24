@@ -8,7 +8,7 @@ import OmenXCallback from './pages/OmenXCallback';
 import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
 import { SaveManager } from './game/SaveManager';
-import SetProfileNameModal from './components/game/SetProfileNameModal';
+
 // Heavy pages — lazy loaded for faster initial bundle
 const MainMenu = React.lazy(() => import('./pages/MainMenu'));
 const Hub = React.lazy(() => import('./pages/Hub'));
@@ -38,24 +38,10 @@ import { fetchPlayerData } from '@/lib/playerDataCache';
 
 const MainApp = () => {
   const [saveInitialized, setSaveInitialized] = useState(false);
-  const [needsProfileName, setNeedsProfileName] = useState(false);
 
   useEffect(() => {
     // Show UI immediately with local save, then merge cloud save in background
     setSaveInitialized(true);
-    
-    const checkProfileName = () => {
-      const save = SaveManager.load();
-      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-      if (omenxAuth?.walletAddress) {
-          // Only show modal for NEW players (no play history)
-          const isNewPlayer = !save.totalKills && !save.gold && !save.pilotName;
-          const hasInvalidName = !save.hasSetProfileName || !save.pilotName || save.pilotName.toLowerCase() === 'anonymous' || save.pilotName.trim() === '';
-          setNeedsProfileName(isNewPlayer && hasInvalidName);
-      }
-    };
-    
-    checkProfileName();
     
     // Load cloud save in background
     SaveManager.initialize();
@@ -128,34 +114,6 @@ const MainApp = () => {
       <Route path="/sku-editor" element={<SkuEditor />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
-    {needsProfileName && (
-      <SetProfileNameModal onComplete={(chosenName) => {
-          // Update local save FIRST before anything async
-          const save = SaveManager.load();
-          save.hasSetProfileName = true;
-          save.pilotName = chosenName;
-          SaveManager.save(save);
-          
-          updateOmenXUser({ player_name: chosenName });
-          setNeedsProfileName(false);
-          
-          // Sync to DB in background
-          const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-          if (omenxAuth?.accessToken) {
-              import('@/api/base44Client').then(({ base44 }) => {
-                  base44.functions.invoke('syncProfileName', {
-                      newName: chosenName,
-                      accessToken: omenxAuth.accessToken,
-                  }).catch(e => console.error('[App] profile name sync failed', e));
-                  base44.functions.invoke('syncSave', { 
-                      walletAddress: omenxAuth.walletAddress, 
-                      saveData: save, 
-                      accessToken: omenxAuth.accessToken 
-                  }).catch(e => console.error('[App] save sync failed', e));
-              });
-          }
-      }} />
-    )}
     </>
   );
 };
