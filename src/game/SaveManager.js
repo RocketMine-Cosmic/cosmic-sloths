@@ -115,7 +115,17 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
-    if (!SaveManager._walletAddress || !SaveManager._accessToken) return;
+    // Always fetch fresh auth from localStorage (may have been set after initialize)
+    let walletAddress = SaveManager._walletAddress;
+    let accessToken = SaveManager._accessToken;
+    
+    if (!walletAddress || !accessToken) {
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+      walletAddress = omenxAuth?.walletAddress;
+      accessToken = omenxAuth?.accessToken;
+    }
+    
+    if (!walletAddress || !accessToken) return;
     
     try {
       const localSave = localStorage.getItem('cosmic_sloth_save');
@@ -125,9 +135,9 @@ export const SaveManager = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          walletAddress: SaveManager._walletAddress,
+          walletAddress,
           saveData: JSON.parse(localSave),
-          accessToken: SaveManager._accessToken,
+          accessToken,
         }),
       });
       if (!res.ok) {
