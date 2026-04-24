@@ -130,21 +130,28 @@ const MainApp = () => {
     </Routes>
     {needsProfileName && (
       <SetProfileNameModal onComplete={(chosenName) => {
+          // Update local save FIRST before anything async
+          const save = SaveManager.load();
+          save.hasSetProfileName = true;
+          save.pilotName = chosenName;
+          SaveManager.save(save);
+          
           updateOmenXUser({ player_name: chosenName });
           setNeedsProfileName(false);
-          // Sync to DB
+          
+          // Sync to DB in background
           const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
           if (omenxAuth?.accessToken) {
               import('@/api/base44Client').then(({ base44 }) => {
-                  const save = SaveManager.load();
                   base44.functions.invoke('syncProfileName', {
                       newName: chosenName,
                       accessToken: omenxAuth.accessToken,
-                      hasSetProfileName: true,
                   }).catch(e => console.error('[App] profile name sync failed', e));
-                  // Also update local save immediately
-                  save.hasSetProfileName = true;
-                  SaveManager.save(save);
+                  base44.functions.invoke('syncSave', { 
+                      walletAddress: omenxAuth.walletAddress, 
+                      saveData: save, 
+                      accessToken: omenxAuth.accessToken 
+                  }).catch(e => console.error('[App] save sync failed', e));
               });
           }
       }} />

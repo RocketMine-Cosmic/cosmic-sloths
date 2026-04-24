@@ -47,14 +47,15 @@ Deno.serve(async (req) => {
         if (newTitle !== undefined) saveUpdateData.save_data.player_title = newTitle;
         if (newIcon !== undefined) saveUpdateData.save_data.pilot_icon = newIcon;
         
-        await fetch(`${playerSaveUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
+        const saveRes = await fetch(`${playerSaveUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Sync-Secret': syncSecret
             },
             body: JSON.stringify(saveUpdateData)
-        }).catch(e => console.error('[syncProfileName] PlayerSave update failed:', e.message));
+        });
+        if (!saveRes.ok) throw new Error(`PlayerSave PATCH failed: ${saveRes.status} ${saveRes.statusText}`);
 
         // Update RunScore records
         const runScoreUrl = `https://api.base44.com/apps/${appId}/entities/RunScore`;
@@ -62,53 +63,57 @@ Deno.serve(async (req) => {
         if (newTitle !== undefined) scoreUpdateData.player_title = newTitle;
         if (newIcon !== undefined) scoreUpdateData.pilot_icon = newIcon;
 
-        await fetch(`${runScoreUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
+        const scoreRes = await fetch(`${runScoreUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Sync-Secret': syncSecret
             },
             body: JSON.stringify(scoreUpdateData)
-        }).catch(e => console.error('[syncProfileName] RunScore update failed:', e.message));
+        });
+        if (!scoreRes.ok) console.warn(`[syncProfileName] RunScore PATCH returned ${scoreRes.status}`);
 
         // Update SquadMember records
         const squadMemberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember`;
         const memberUpdateData = { player_name: newName };
         if (newTitle !== undefined) memberUpdateData.player_title = newTitle;
 
-        await fetch(`${squadMemberUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
+        const memberRes = await fetch(`${squadMemberUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Sync-Secret': syncSecret
             },
             body: JSON.stringify(memberUpdateData)
-        }).catch(e => console.error('[syncProfileName] SquadMember update failed:', e.message));
+        });
+        if (!memberRes.ok) console.warn(`[syncProfileName] SquadMember PATCH returned ${memberRes.status}`);
 
         // Update SquadMessage records
         const messageUrl = `https://api.base44.com/apps/${appId}/entities/SquadMessage`;
         const msgUpdateData = { player_name: newName };
         if (newTitle !== undefined) msgUpdateData.player_title = newTitle;
 
-        await fetch(`${messageUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
+        const msgRes = await fetch(`${messageUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Sync-Secret': syncSecret
             },
             body: JSON.stringify(msgUpdateData)
-        }).catch(e => console.error('[syncProfileName] SquadMessage update failed:', e.message));
+        });
+        if (!msgRes.ok) console.warn(`[syncProfileName] SquadMessage PATCH returned ${msgRes.status}`);
 
         // Update TokenSpendLog records
         const logUrl = `https://api.base44.com/apps/${appId}/entities/TokenSpendLog`;
-        await fetch(`${logUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
+        const logRes = await fetch(`${logUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Sync-Secret': syncSecret
             },
             body: JSON.stringify({ player_name: newName })
-        }).catch(e => console.error('[syncProfileName] TokenSpendLog update failed:', e.message));
+        });
+        if (!logRes.ok) console.warn(`[syncProfileName] TokenSpendLog PATCH returned ${logRes.status}`);
 
         console.log('[syncProfileName] Synced for wallet:', walletAddress);
         return Response.json({ success: true });
