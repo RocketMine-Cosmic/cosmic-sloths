@@ -546,7 +546,7 @@ export default function Upgrades({ isCarousel }) {
                                         </button>
                                         {!isMax && (
                                             <button
-                                                onClick={() => handleBuyWeapon(weapon.id, stat.id, 'token')}
+                                                onClick={() => purchaseWithConfirmation(tokenCost, `${stat.name} Upgrade`, () => handleBuyWeapon(weapon.id, stat.id, 'token'))}
                                                 disabled={!canAffordToken || purchasing}
                                                 className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                     canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
@@ -713,7 +713,7 @@ export default function Upgrades({ isCarousel }) {
                                     )}
                                     {!isUnlocked && (
                                         <button
-                                            onClick={() => handleBuyTalent(talent, 'token')}
+                                            onClick={() => purchaseWithConfirmation(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
                                             disabled={!canUnlock || !canAffordToken || purchasing}
                                             className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                 canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
@@ -979,7 +979,7 @@ export default function Upgrades({ isCarousel }) {
                                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                                             </button>
                                                             {skin.tokenCost > 0 && (
-                                                                <button onClick={() => handleBuyCosmetic(skin, 'skin', 'token')} disabled={!canAffordToken}
+                                                                <button onClick={() => purchaseWithConfirmation(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken}
                                                                         className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
                                                                         <OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX
                                                                 </button>
@@ -1045,7 +1045,7 @@ export default function Upgrades({ isCarousel }) {
                                             </button>
                                             {cosmetic.tokenCost > 0 && (
                                                 <button
-                                                    onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'token')}
+                                                    onClick={() => purchaseWithConfirmation(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
                                                     disabled={!canAffordToken}
                                                     className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                         canAffordToken ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
