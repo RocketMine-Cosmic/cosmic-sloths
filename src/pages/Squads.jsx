@@ -301,7 +301,6 @@ export default function Squads({ isCarousel }) {
             }
             setMyMemberRecord(res.data.member);
             setMySquad(res.data.squad);
-            setAllSquads([]);
         } catch (e) {
             console.error(e);
             toast({ title: "Error", description: e?.response?.data?.error || "Failed to join squad." });
