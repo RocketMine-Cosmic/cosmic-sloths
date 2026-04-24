@@ -161,11 +161,13 @@ export function fetchPlayerData(force = false) {
     if (scheduledFetch) return;
     scheduledFetch = true;
     // Delay 2s on first load so SaveManager/loadSave gets priority
+    // Stagger requests randomly up to 30s to smooth launch spikes
+    const jitter = 2000 + Math.floor(Math.random() * 28000);
     startupTimer = setTimeout(() => {
         scheduledFetch = false;
         fetchBalance();
         fetchSessionData(); // once per session — no-op if already done
-    }, 2000);
+    }, jitter);
 }
 
 export function subscribePlayerData(fn) {
