@@ -142,15 +142,17 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 }
 
 async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
-    if (!pool.total_spent || pool.total_spent <= 0) {
-        await db.entities.TokenPool.update(pool.id, { distributed: true });
-        return { paid: 0, skipped: 'zero spend' };
-    }
-    const adminWallets = await db.entities.AdminWallet.list();
-    const STAFF_PCT_PER_WALLET = 0.02;
-    const rewardPool = Math.floor(pool.total_spent * 0.25);
-    const scores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
-    const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
+     if (!pool.total_spent || pool.total_spent <= 0) {
+         await db.entities.TokenPool.update(pool.id, { distributed: true });
+         return { paid: 0, skipped: 'zero spend' };
+     }
+     const adminWallets = await db.entities.AdminWallet.list();
+     const STAFF_PCT_PER_WALLET = 0.02;
+     const rewardPool = Math.floor(pool.total_spent * 0.25);
+     const scores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 1000);
+     const uniquePlayerCount = new Set(scores.map(s => s.wallet_address)).size;
+     const dynamicMaxRank = Math.max(30, Math.ceil(uniquePlayerCount * 0.10));
+     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, dynamicMaxRank);
     const staffPayments = adminWallets
         .filter(a => a.wallet_address)
         .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * STAFF_PCT_PER_WALLET), player_name: a.admin_name || a.wallet_address, isStaff: true }))
@@ -177,13 +179,15 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
 }
 
 async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
-    if (!pool.total_spent || pool.total_spent <= 0) {
-        await db.entities.TokenPool.update(pool.id, { distributed: true });
-        return { paid: 0, skipped: 'zero spend' };
-    }
-    const rewardPool = Math.floor(pool.total_spent * 0.35);
-    const scores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
-    const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
+     if (!pool.total_spent || pool.total_spent <= 0) {
+         await db.entities.TokenPool.update(pool.id, { distributed: true });
+         return { paid: 0, skipped: 'zero spend' };
+     }
+     const rewardPool = Math.floor(pool.total_spent * 0.35);
+     const scores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 1000);
+     const uniquePlayerCount = new Set(scores.map(s => s.wallet_address)).size;
+     const dynamicMaxRank = Math.max(40, Math.ceil(uniquePlayerCount * 0.08));
+     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, dynamicMaxRank);
     if (payments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
