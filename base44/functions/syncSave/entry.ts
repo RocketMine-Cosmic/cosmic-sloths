@@ -34,25 +34,37 @@ Deno.serve(async (req) => {
         const verifyResult = await verifyToken(sdk, accessToken);
         if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
+        // Ensure saveData has required fields
+        if (!saveData.pilotName) {
+            saveData.pilotName = `Pilot_${verifyResult.walletAddress.slice(-6).toUpperCase()}`;
+        }
+
         // Save via Base44 SDK (reliable)
         const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: verifyResult.walletAddress });
         
+        let saveId;
         if (existing.length > 0) {
+            // Merge with existing to preserve upgrades
+            const existingData = typeof existing[0].save_data === 'string' ? JSON.parse(existing[0].save_data) : existing[0].save_data;
+            const merged = { ...existingData, ...saveData };
+            
             await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
                 wallet_address: verifyResult.walletAddress,
-                save_data: saveData,
+                save_data: merged,
                 updated_at: Date.now()
             });
+            saveId = existing[0].id;
         } else {
-            await base44.asServiceRole.entities.PlayerSave.create({
+            const result = await base44.asServiceRole.entities.PlayerSave.create({
                 wallet_address: verifyResult.walletAddress,
                 save_data: saveData,
                 updated_at: Date.now()
             });
+            saveId = result.id;
         }
 
-        console.log('[syncSave] Saved for wallet:', verifyResult.walletAddress);
-        return Response.json({ success: true });
+        console.log('[syncSave] Saved for wallet:', verifyResult.walletAddress, 'ID:', saveId);
+        return Response.json({ success: true, saveId });
     } catch (error) {
         console.error('[syncSave]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
