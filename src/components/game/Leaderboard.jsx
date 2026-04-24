@@ -162,6 +162,7 @@ export default function Leaderboard() {
         setLoading(true);
         try {
             const { week_id, season_id } = getCurrentPeriodIds();
+            console.log('[Leaderboard] fetchScores called, view=', view, 'week_id=', week_id, 'season_id=', season_id);
 
             const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless' } : {};
             
@@ -176,7 +177,7 @@ export default function Leaderboard() {
             // Fetch top scores (fetch more to allow deduplication)
             console.log('[Leaderboard] Fetching scores with filter:', filter);
             const data = await base44.entities.RunScore.filter(filter, '-score', 300);
-            console.log('[Leaderboard] Fetched scores:', data.length);
+            console.log('[Leaderboard] Fetched scores:', data.length, 'data:', data);
             
             if (view === 'squads') {
                 setCurrentPool(0);
