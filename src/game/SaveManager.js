@@ -6,6 +6,8 @@ import { NFTPerkManager } from './NFTPerks';
 
 let syncTimeout = null;
 let pendingSync = false;
+let syncRetries = 0;
+const MAX_SYNC_RETRIES = 3;
 
 export const SaveManager = {
   _walletAddress: null,
@@ -143,11 +145,24 @@ export const SaveManager = {
       if (!res.ok) {
         const data = await res.json();
         console.warn('[SaveManager] Sync failed:', data.error);
+        syncRetries++;
+        if (syncRetries >= MAX_SYNC_RETRIES) {
+          console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
+          window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'max_retries' } }));
+          syncRetries = 0; // Reset for next batch
+        }
       } else {
         console.log('[SaveManager] Cloud sync');
+        syncRetries = 0; // Reset on success
       }
     } catch (e) {
       console.warn('[SaveManager] Sync failed:', e.message);
+      syncRetries++;
+      if (syncRetries >= MAX_SYNC_RETRIES) {
+        console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
+        window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'network_error' } }));
+        syncRetries = 0;
+      }
     }
   },
 
@@ -155,6 +170,7 @@ export const SaveManager = {
     // Emergency sync for critical events (game end) — skip debounce
     if (syncTimeout) clearTimeout(syncTimeout);
     pendingSync = false;
+    syncRetries = 0; // Reset retry count for critical syncs
     await SaveManager.syncToBackend();
   },
 
@@ -242,6 +258,8 @@ export const SaveManager = {
             if (!parsed.weeklyUpgradeHistory) parsed.weeklyUpgradeHistory = {};
             parsed.weeklyUpgradeHistory[parsed.weeklyUpgrades.weekId] = parsed.weeklyUpgrades;
             parsed.weeklyUpgrades = { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
+            // Mark that archive needs syncing
+            parsed._needsArchiveSync = true;
         } else if (!parsed.weeklyUpgrades) {
             parsed.weeklyUpgrades = { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
         }
@@ -250,6 +268,7 @@ export const SaveManager = {
             if (!parsed.seasonalUpgradeHistory) parsed.seasonalUpgradeHistory = {};
             parsed.seasonalUpgradeHistory[parsed.seasonalUpgrades.seasonId] = parsed.seasonalUpgrades;
             parsed.seasonalUpgrades = { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
+            parsed._needsArchiveSync = true;
         } else if (!parsed.seasonalUpgrades) {
             parsed.seasonalUpgrades = { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
         }

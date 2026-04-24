@@ -98,11 +98,12 @@ Deno.serve(async (req) => {
             throw err;
         }
 
-        // Update or create TokenPool entries (fetch first, then upsert)
+        // Update or create TokenPool entries (single efficient fetch)
         try {
-            // Fetch weekly pool
-            const weeklyPools = await base44.asServiceRole.entities.TokenPool.filter({});
-            const weeklyPool = weeklyPools.find(p => p.period_id === week_id && p.period_type === 'weekly');
+            // Fetch all pools once
+            const allPools = await base44.asServiceRole.entities.TokenPool.filter({});
+            const weeklyPool = allPools.find(p => p.period_id === week_id && p.period_type === 'weekly');
+            const seasonalPool = allPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
             
             if (weeklyPool) {
                 await base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, {
@@ -116,10 +117,6 @@ Deno.serve(async (req) => {
                     distributed: false
                 });
             }
-            
-            // Fetch seasonal pool (separate from weekly)
-            const seasonalPools = await base44.asServiceRole.entities.TokenPool.filter({});
-            const seasonalPool = seasonalPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
             
             if (seasonalPool) {
                 await base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, {

@@ -66,10 +66,12 @@ Deno.serve(async (req) => {
             const today = new Date().toISOString().split('T')[0];
             try {
                 const squad = await base44.asServiceRole.entities.Squad.read(squadStats.squadId);
+                // Reset daily_kills if day changed
+                const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
                 const updatedSquad = {
                     ...squad,
                     weekly_kills: (squad.weekly_kills || 0) + (squadStats.kills || 0),
-                    daily_kills: (squad.daily_kills || 0) + (squadStats.kills || 0),
+                    daily_kills: dailyKillsReset + (squadStats.kills || 0),
                     current_day: today
                 };
                 await base44.asServiceRole.entities.Squad.update(squadStats.squadId, updatedSquad);

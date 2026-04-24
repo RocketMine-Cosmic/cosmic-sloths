@@ -40,8 +40,17 @@ Deno.serve(async (req) => {
                 apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
             });
             const verifyResult = await verifyToken(sdk, accessToken);
-            // If verification failed, use clientWallet (user is already authed on client)
-            wallet = verifyResult.success ? verifyResult.walletAddress : clientWallet;
+            // MUST reject if verification failed — never fall back to untrusted clientWallet
+            if (!verifyResult.success) {
+                return Response.json({ error: 'Invalid OAuth token — wallet address mismatch' }, { status: 401 });
+            }
+            wallet = verifyResult.walletAddress;
+        }
+        
+        // Verify wallet matches client claim
+        if (wallet !== clientWallet) {
+            console.warn('[loadSave] Wallet mismatch:', wallet, '≠', clientWallet);
+            return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
         }
 
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
