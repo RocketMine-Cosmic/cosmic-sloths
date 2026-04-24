@@ -9,6 +9,11 @@ export function useSessionValidator() {
     });
 
     useEffect(() => {
+        // Skip validation in preview mode to save OmenX API quota
+        if (window.self !== window.top) {
+            return;
+        }
+
         const getAuthData = () => {
             try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
         };

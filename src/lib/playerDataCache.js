@@ -1,10 +1,10 @@
 import { base44 } from '@/api/base44Client';
 
 // ─────────────────────────────────────────────────────────
-// BALANCE cache — localStorage, 5 min TTL
+// BALANCE cache — localStorage, 10 min TTL
 // Refreshed in-game when needed (e.g. after purchases)
 // ─────────────────────────────────────────────────────────
-const BALANCE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const BALANCE_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 function loadBalanceCache() {
     try {
