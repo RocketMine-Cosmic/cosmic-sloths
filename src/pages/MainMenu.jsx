@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { SoundManager } from '../game/SoundManager';
+import { useCurrency } from '@/lib/CurrencyContext';
 import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -11,25 +11,15 @@ import SetProfileNameModal from '../components/game/SetProfileNameModal';
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const { omenxUser } = useCurrency();
     const [showSettings, setShowSettings] = useState(false);
     const [showPilotNameModal, setShowPilotNameModal] = useState(false);
 
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const me = await base44.auth.me();
-                setUser(me);
-                
-                // Check if first-time OmenX login requires pilot name
-                if (localStorage.getItem('omenx_require_pilot_name') === 'true') {
-                    setShowPilotNameModal(true);
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        };
-        fetchUser();
+        // Check if first-time OmenX login requires pilot name
+        if (localStorage.getItem('omenx_require_pilot_name') === 'true') {
+            setShowPilotNameModal(true);
+        }
     }, []);
 
 
@@ -89,7 +79,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 >
                     CREDITS
                 </button>
-                {user?.role === 'admin' && (
+                {omenxUser?.data?.role === 'admin' && (
                     <button 
                         onClick={() => { SoundManager.init(); SoundManager.playUIClick(); navigate('/admin'); }}
                         className="col-span-2 w-full bg-red-900/40 hover:bg-red-900/60 backdrop-blur-md text-red-100 hover:text-white text-sm md:text-lg font-black tracking-widest uppercase py-4 md:py-5 transition-all border border-red-500/60 hover:border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center justify-center gap-2"
