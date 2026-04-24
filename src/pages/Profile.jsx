@@ -123,7 +123,7 @@ export default function Profile({ isCarousel }) {
         await updateOmenXUser({ player_name: updatedName });
         setUser(prev => ({ ...prev, player_name: updatedName, data: { ...prev?.data, player_name: updatedName } }));
         setIsEditingName(false);
-        // Sync to DB
+        // Sync to DB via syncProfileName AND update save locally
         const accessToken = getAccessToken();
         if (accessToken) {
             base44.functions.invoke('syncProfileName', {
@@ -131,6 +131,11 @@ export default function Profile({ isCarousel }) {
                 accessToken,
             }).catch(e => console.error('[Profile] name sync failed', e));
         }
+        // Update local game save to match
+        const localSave = SaveManager.load();
+        localSave.player_name = updatedName;
+        localSave.pilotName = updatedName;
+        SaveManager.save(localSave);
     };
 
     const handleSaveTitle = async (title) => {
