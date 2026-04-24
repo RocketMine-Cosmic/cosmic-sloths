@@ -45,15 +45,9 @@ export default function Game() {
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
 
     useEffect(() => {
-        const initGame = async () => {
-            const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
-            
-            // CRITICAL: Initialize SaveManager first to load cloud save + merge upgrades
-            await SaveManager.initialize();
-            
-            const save = SaveManager.load();
-        
         const canvas = canvasRef.current;
+        if (!canvas) return;
+        
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -61,6 +55,14 @@ export default function Game() {
         window.addEventListener('resize', resizeCanvas);
         window.addEventListener('orientationchange', resizeCanvas);
         resizeCanvas();
+
+        const initGame = async () => {
+            const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+            
+            // CRITICAL: Initialize SaveManager first to load cloud save + merge upgrades
+            await SaveManager.initialize();
+            
+            const save = SaveManager.load();
 
         const updateBounties = (currentSave, stats) => {
             if (currentSave.bounties && currentSave.bounties.active) {
@@ -345,16 +347,18 @@ export default function Game() {
         
         // Preload all character sprites in background (non-blocking)
         SpritePreloader.preload();
-
-            return () => {
-                window.removeEventListener('resize', resizeCanvas);
-                window.removeEventListener('orientationchange', resizeCanvas);
-                engine.cleanup();
-                SoundManager.stopBGM();
-            };
         };
         
         initGame();
+        
+        return () => {
+            window.removeEventListener('resize', resizeCanvas);
+            window.removeEventListener('orientationchange', resizeCanvas);
+            if (engineRef.current) {
+                engineRef.current.cleanup();
+            }
+            SoundManager.stopBGM();
+        };
     }, [location.state]);
 
     useEffect(() => {
