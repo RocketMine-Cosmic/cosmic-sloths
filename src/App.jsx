@@ -43,17 +43,27 @@ const MainApp = () => {
   useEffect(() => {
     // Show UI immediately with local save, then merge cloud save in background
     setSaveInitialized(true);
-    const save = SaveManager.load();
-    const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-    if (omenxAuth?.walletAddress) {
-        const pilotName = save.pilotName || '';
-        const isNameInvalid = !save.hasSetProfileName || !pilotName || pilotName.toLowerCase() === 'anonymous' || pilotName.trim() === '';
-        if (isNameInvalid) {
-            setNeedsProfileName(true);
-        }
-    }
+    
+    const checkProfileName = () => {
+      const save = SaveManager.load();
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+      if (omenxAuth?.walletAddress) {
+          const pilotName = save.pilotName || '';
+          const isNameInvalid = !save.hasSetProfileName || !pilotName || pilotName.toLowerCase() === 'anonymous' || pilotName.trim() === '';
+          setNeedsProfileName(isNameInvalid);
+      }
+    };
+    
+    checkProfileName();
+    
+    // Re-check after cloud save merges
+    const handleSaveUpdated = (e) => checkProfileName();
+    window.addEventListener('saveUpdated', handleSaveUpdated);
+    
     // Load cloud save in background — will merge and dispatch saveUpdated event when ready
     SaveManager.initialize();
+    
+    return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
   }, []);
 
   // In preview mode, bypass all auth gates
