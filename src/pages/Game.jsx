@@ -373,17 +373,16 @@ export default function Game() {
         if (!skuId) return;
         const authData = await getAuthData();
         const walletAddress = authData?.walletAddress;
-        console.log('[Game purchaseSku] called', { skuId, walletAddress: walletAddress?.slice(0,10), hasToken: !!authData?.accessToken });
-        if (!walletAddress) { console.error('[Game purchaseSku] No wallet address found'); return; }
-        const { week_id, season_id } = getCurrentPeriodIds();
-        base44.functions.invoke('purchaseSku', {
+        if (!walletAddress || !authData?.accessToken) {
+            console.error('[Game purchaseSku] No auth data found');
+            return;
+        }
+        return base44.functions.invoke('purchaseSku', {
             skuId, quantity: 1, walletAddress,
             userId: walletAddress,
             playerName: authData?.username || walletAddress,
-            week_id,
-            season_id,
-            accessToken: authData?.accessToken || null,
-        }).catch(console.error);
+            accessToken: authData.accessToken,
+        }).catch(e => console.error('[Game purchaseSku] failed:', e?.message));
     };
 
     const handleUpgradeSelect = (upgrade) => {

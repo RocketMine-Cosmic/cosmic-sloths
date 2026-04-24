@@ -99,14 +99,18 @@ export default function Upgrades({ isCarousel }) {
 
     const purchaseSku = async (skuId) => {
         setPurchaseError(null);
-        if (!skuId) { setPurchaseError('No SKU mapping found'); return { success: true, skipped: true }; }
+        if (!skuId) { setPurchaseError('No SKU mapping found for this item'); throw new Error('No SKU mapping'); }
         const authData = await getAuthData();
         const walletAddress = authData?.walletAddress;
         const accessToken = authData?.accessToken;
-        if (!walletAddress) { setPurchaseError('No wallet address — are you logged in?'); return { success: false, error: 'No wallet' }; }
-        if (!accessToken) { setPurchaseError('No access token — please log in again'); return { success: false, error: 'No token' }; }
+        if (!walletAddress) { setPurchaseError('No wallet address — are you logged in?'); throw new Error('No wallet address'); }
+        if (!accessToken) { setPurchaseError('No access token — please log in again'); throw new Error('No access token'); }
         const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken });
-        if (!res.data?.success) { setPurchaseError(`Purchase failed: ${res.data?.error || 'unknown error'}`); return { success: false }; }
+        if (!res.data?.success) {
+            const errMsg = res.data?.error || 'Unknown error';
+            setPurchaseError(`Purchase failed: ${errMsg}`);
+            throw new Error(errMsg);
+        }
         return res.data;
     };
 
