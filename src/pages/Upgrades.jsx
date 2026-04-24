@@ -433,15 +433,7 @@ export default function Upgrades({ isCarousel }) {
                                                 )}
                                                 {!isMax && (
                                                     <button
-                                                       onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
-                                                            const upgrades = upgradesObj;
-                                                            const lvl = upgrades[stat.id] || 0;
-                                                            const skuId = getStatSku(activeCategory, stat, lvl + 1);
-                                                            purchaseSku(skuId).then(() => handleBuyStat(stat.id, 'token')).catch(err => {
-                                                                console.error('[stat token] purchase failed:', err);
-                                                                setPurchaseError(`Purchase failed: ${err.message}`);
-                                                            });
-                                                        })}
+                                                       onClick={() => confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyStat(stat.id, 'token'))}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                            canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
