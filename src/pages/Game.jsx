@@ -91,10 +91,8 @@ export default function Game() {
             }
         };
 
-        const saveScore = (stats, isVictory) => {
-            // Fire-and-forget — never block the game-over screen
-            (async () => {
-                try {
+        const saveScore = async (stats, isVictory) => {
+            try {
                     const user = getOmenXUserSync();
                     if (!user) return;
                     const displayName = user.player_name || user.full_name;
@@ -135,14 +133,14 @@ export default function Game() {
                     } catch (_) {}
 
                     const omenxAuthForScore = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    base44.functions.invoke('saveScore', {
+                    await base44.functions.invoke('saveScore', {
                         scoreData, walletAddress, squadStats,
                         accessToken: omenxAuthForScore?.accessToken || null,
-                    }).catch(e => console.error('saveScore: FAILED:', e?.message || e));
-                } catch (e) {
-                    console.error('saveScore: FAILED:', e?.message || e);
-                }
-            })();
+                    });
+            } catch (e) {
+                console.error('[saveScore] FAILED:', e?.message || e);
+                throw e;
+            }
         };
 
         // Inject skin color override into save so GameEngine can read it
@@ -233,8 +231,6 @@ export default function Game() {
                 if (grantedChar) {
                     stats.unlockedCharacter = grantedChar;
                 }
-                SaveManager.save(currentSave);
-                SaveManager.syncToBackend(); // Non-blocking background sync
                 const currentSaveForGameOver = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const goArenaIndex = ARENAS.findIndex(a => a.id === arenaId);
                 const goArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, goArenaIndex) * 0.2);
@@ -244,7 +240,15 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 setGameOverStats(stats);
-                saveScore(stats, false);
+                // Save score first, then persist local save
+                saveScore(stats, false).then(() => {
+                    SaveManager.save(currentSave);
+                    SaveManager.syncToBackend();
+                }).catch(err => {
+                    console.error('[Game] saveScore failed:', err);
+                    // Still save locally even if remote fails
+                    SaveManager.save(currentSave);
+                });
                 
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
@@ -293,8 +297,6 @@ export default function Game() {
                 if (grantedChar) {
                     stats.unlockedCharacter = grantedChar;
                 }
-                SaveManager.save(currentSave);
-                SaveManager.syncToBackend(); // Non-blocking background sync
                 const currentSaveForVictory = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
                 const vicArenaIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                 const vicArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, vicArenaIndex) * 0.2);
@@ -304,7 +306,15 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 setVictoryStats(stats);
-                saveScore(stats, true);
+                // Save score first, then persist local save
+                saveScore(stats, true).then(() => {
+                    SaveManager.save(currentSave);
+                    SaveManager.syncToBackend();
+                }).catch(err => {
+                    console.error('[Game] saveScore failed:', err);
+                    // Still save locally even if remote fails
+                    SaveManager.save(currentSave);
+                });
                 
                 if (stats.worldBossDamage > 0) {
                     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
