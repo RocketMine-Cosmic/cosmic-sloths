@@ -90,83 +90,92 @@ export default function Squads({ isCarousel }) {
     const getCurrentWeek = () => moment().format('YYYY-[W]ww');
 
     useEffect(() => {
-        const loadUserAndSquad = async () => {
-            try {
-                if (!omenxUser) {
-                    setUser({});
-                    return;
-                }
-                setUser(omenxUser);
-                if (omenxUser) {
-                    const memberships = await base44.entities.SquadMember.filter({ wallet_address: omenxUser.wallet_address || omenxUser.walletAddress });
-                    // Cache membership for Game.jsx to read without network call
-                    const walletKey = omenxUser.wallet_address || omenxUser.walletAddress;
-                    if (memberships.length > 0) {
-                        localStorage.setItem(`squad_membership_${walletKey}`, JSON.stringify(memberships[0]));
-                    } else {
-                        localStorage.removeItem(`squad_membership_${walletKey}`);
-                    }
-                    if (memberships.length > 0) {
-                        const member = memberships[0];
-                        setMyMemberRecord(member);
-                        
-                        const squad = await base44.entities.Squad.get(member.squad_id);
-                        
-                        // Check weekly/daily reset
-                        const currentWeek = getCurrentWeek();
-                        const currentDay = moment().format('YYYY-MM-DD');
-                        let needsUpdate = false;
-                        const updateData = {};
-                        let updatedSquad = squad;
+         const loadUserAndSquad = async () => {
+             try {
+                 if (!omenxUser) {
+                     setUser({});
+                     return;
+                 }
+                 setUser(omenxUser);
+                 if (omenxUser) {
+                     const memberships = await base44.entities.SquadMember.filter({ wallet_address: omenxUser.wallet_address || omenxUser.walletAddress });
+                     // Cache membership for Game.jsx to read without network call
+                     const walletKey = omenxUser.wallet_address || omenxUser.walletAddress;
+                     if (memberships.length > 0) {
+                         localStorage.setItem(`squad_membership_${walletKey}`, JSON.stringify(memberships[0]));
+                     } else {
+                         localStorage.removeItem(`squad_membership_${walletKey}`);
+                     }
+                     if (memberships.length > 0) {
+                         const member = memberships[0];
+                         setMyMemberRecord(member);
 
-                        if (squad.current_week !== currentWeek) {
-                            const earnedXp = squad.weekly_kills || 0;
-                            const newXp = (squad.xp || 0) + earnedXp;
-                            const newLevelData = getSquadLevel(newXp);
-                            updateData.current_week = currentWeek;
-                            updateData.weekly_kills = 0;
-                            updateData.xp = newXp;
-                            updateData.level = newLevelData.level;
-                            needsUpdate = true;
-                        }
-                        
-                        if (squad.current_day !== currentDay) {
-                            updateData.current_day = currentDay;
-                            updateData.daily_kills = 0;
-                            needsUpdate = true;
-                        }
+                         const squad = await base44.entities.Squad.get(member.squad_id);
 
-                        if (needsUpdate) {
-                            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                            if (authData?.accessToken) {
-                                const res = await base44.functions.invoke('squadActions', {
-                                    action: 'resetPeriods',
-                                    accessToken: authData.accessToken,
-                                    squadId: squad.id,
-                                    updateData,
-                                });
-                                if (res.data?.squad) updatedSquad = res.data.squad;
-                            }
-                        }
-                        
-                        setMySquad(updatedSquad);
-                    } else {
-                        // Load all squads
-                        const squads = await base44.entities.Squad.list('-created_date', 50);
-                        setAllSquads(squads);
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-                // Handle RLS or access errors gracefully
-                if (e?.message?.includes('Forbidden') || e?.status === 403) {
-                    setUser({}); // Reset to avoid retry loop
-                    toast({ title: "Access Denied", description: "You may have been removed from your squad." });
-                }
-            }
-        };
-        loadUserAndSquad();
-    }, [omenxUser]);
+                         // Check weekly/daily reset
+                         const currentWeek = getCurrentWeek();
+                         const currentDay = moment().format('YYYY-MM-DD');
+                         let needsUpdate = false;
+                         const updateData = {};
+                         let updatedSquad = squad;
+
+                         if (squad.current_week !== currentWeek) {
+                             const earnedXp = squad.weekly_kills || 0;
+                             const newXp = (squad.xp || 0) + earnedXp;
+                             const newLevelData = getSquadLevel(newXp);
+                             updateData.current_week = currentWeek;
+                             updateData.weekly_kills = 0;
+                             updateData.xp = newXp;
+                             updateData.level = newLevelData.level;
+                             needsUpdate = true;
+                         }
+
+                         if (squad.current_day !== currentDay) {
+                             updateData.current_day = currentDay;
+                             updateData.daily_kills = 0;
+                             needsUpdate = true;
+                         }
+
+                         if (needsUpdate) {
+                             const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                             if (authData?.accessToken) {
+                                 const res = await base44.functions.invoke('squadActions', {
+                                     action: 'resetPeriods',
+                                     accessToken: authData.accessToken,
+                                     squadId: squad.id,
+                                     updateData,
+                                 });
+                                 if (res.data?.squad) updatedSquad = res.data.squad;
+                             }
+                         }
+
+                         setMySquad(updatedSquad);
+                     } else {
+                         // Load all squads
+                         const squads = await base44.entities.Squad.list('-created_date', 50);
+                         setAllSquads(squads);
+                     }
+                 }
+             } catch (e) {
+                 console.error(e);
+                 // Handle RLS or access errors gracefully
+                 if (e?.message?.includes('Forbidden') || e?.status === 403) {
+                     setUser({}); // Reset to avoid retry loop
+                     toast({ title: "Access Denied", description: "You may have been removed from your squad." });
+                 }
+             }
+         };
+         loadUserAndSquad();
+
+         // Re-fetch data if auth data changes (e.g., pilot name updated in Profile)
+         const handleStorageChange = (e) => {
+             if (e.key === 'omenx_auth_data' || e.key === null) {
+                 loadUserAndSquad(); // Refresh when auth data changes
+             }
+         };
+         window.addEventListener('storage', handleStorageChange);
+         return () => window.removeEventListener('storage', handleStorageChange);
+     }, [omenxUser]);
 
     useEffect(() => {
         if (mySquad) {

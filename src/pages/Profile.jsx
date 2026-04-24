@@ -118,24 +118,30 @@ export default function Profile({ isCarousel }) {
     };
 
     const handleSaveName = async () => {
-        if (!newName.trim()) return;
-        const updatedName = newName.trim();
-        await updateOmenXUser({ pilotName: updatedName });
-        setUser(prev => ({ ...prev, pilotName: updatedName, data: { ...prev?.data, pilotName: updatedName } }));
-        setIsEditingName(false);
-        // Sync to DB via syncProfileName AND update save locally
-        const accessToken = getAccessToken();
-        if (accessToken) {
-            base44.functions.invoke('syncProfileName', {
-                newName: updatedName,
-                accessToken,
-            }).catch(e => console.error('[Profile] name sync failed', e));
-        }
-        // Update local game save to match
-        const localSave = SaveManager.load();
-        localSave.pilotName = updatedName;
-        SaveManager.save(localSave);
-    };
+         if (!newName.trim()) return;
+         const updatedName = newName.trim();
+         await updateOmenXUser({ pilotName: updatedName });
+         setUser(prev => ({ ...prev, pilotName: updatedName, data: { ...prev?.data, pilotName: updatedName } }));
+         setIsEditingName(false);
+         // Sync to DB via syncProfileName AND update save locally
+         const accessToken = getAccessToken();
+         if (accessToken) {
+             base44.functions.invoke('syncProfileName', {
+                 newName: updatedName,
+                 accessToken,
+             }).catch(e => console.error('[Profile] name sync failed', e));
+         }
+         // Update local game save to match
+         const localSave = SaveManager.load();
+         localSave.pilotName = updatedName;
+         SaveManager.save(localSave);
+         // Sync name to localStorage for other pages (e.g., Squads) to read
+         const authData = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+         authData.pilotName = updatedName;
+         localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+         // Dispatch storage event so Squads page knows data changed
+         window.dispatchEvent(new StorageEvent('storage', { key: 'omenx_auth_data' }));
+     };
 
     const handleSaveTitle = async (title) => {
         await updateOmenXUser({ player_title: title });
