@@ -110,6 +110,10 @@ export default function Leaderboard() {
         return () => clearInterval(interval);
     }, [view]);
 
+    // Define poolQueryKey before useEffect dependencies
+    const { week_id, season_id } = getCurrentPeriodIds();
+    const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
+
     useEffect(() => {
         fetchScores();
         // Subscribe to RunScore changes (new scores, updates)
@@ -136,9 +140,6 @@ export default function Leaderboard() {
     }, [view, poolQueryKey]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
-    const { week_id, season_id } = getCurrentPeriodIds();
-    const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
-    
     const { data: poolData } = useQuery({
         queryKey: poolQueryKey,
         queryFn: async () => {
