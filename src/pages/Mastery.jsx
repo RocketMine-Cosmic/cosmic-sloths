@@ -18,6 +18,17 @@ export default function Mastery({ isCarousel }) {
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
     }, []);
 
+    // Force reload save when page becomes visible (handles stale data when returning from game)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                setSave(SaveManager.load());
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, []);
+
     const characterKills = save.characterKills || {};
 
     return (
