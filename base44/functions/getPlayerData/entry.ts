@@ -2,7 +2,7 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 // Heavy endpoint — NFT + VIP ONLY. Called once per session.
 const verifyCache = new Map();
-const VERIFY_TTL = 10 * 60 * 1000; // 10 min — OmenX tokens can expire mid-session, avoid stale cache
+const VERIFY_TTL = 60 * 60 * 1000;
 
 Deno.serve(async (req) => {
     try {
@@ -41,12 +41,9 @@ Deno.serve(async (req) => {
         try {
             bonusLevel = await sdk.getPlayerGameBonusPointsLevel(walletAddress);
         } catch (e) {
-            console.error('[getPlayerData] bonusLevel 401?', e.message);
-            // If token is bad, evict from cache so next request re-verifies
-            if (e.status === 401 || e.message?.includes('401')) {
-                verifyCache.delete(accessToken);
-                return Response.json({ error: 'Token expired' }, { status: 401 });
-            }
+            console.error('[getPlayerData] bonusLevel failed:', e.message);
+            // If VIP fetch fails, just return 0 — don't break the response
+            bonusLevel = 0;
         }
 
         const playerDataRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {

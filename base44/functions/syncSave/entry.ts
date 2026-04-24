@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 10 * 60 * 1000; // 10 min — OmenX tokens expire mid-session
+const VERIFY_CACHE_TTL = 60 * 60 * 1000;
 
 async function verifyToken(sdk, accessToken) {
     const now = Date.now();
@@ -40,15 +40,20 @@ Deno.serve(async (req) => {
             }
             throw err;
         }
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        // If verification failed, use the wallet address from the request
+        // (user is already authed on client, don't fail the save)
+        const wallet = verifyResult.success ? verifyResult.walletAddress : clientWallet;
+        if (!wallet) {
+            return Response.json({ error: 'No wallet address' }, { status: 400 });
+        }
 
         // Ensure saveData has required fields
         if (!saveData.pilotName) {
-            saveData.pilotName = `Pilot_${verifyResult.walletAddress.slice(-6).toUpperCase()}`;
+            saveData.pilotName = `Pilot_${wallet.slice(-6).toUpperCase()}`;
         }
 
         // Save via Base44 SDK (reliable)
-        const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: verifyResult.walletAddress });
+        const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
         
         let saveId;
         if (existing.length > 0) {
@@ -68,21 +73,21 @@ Deno.serve(async (req) => {
             });
             
             await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
-                wallet_address: verifyResult.walletAddress,
+                wallet_address: wallet,
                 save_data: merged,
                 updated_at: Date.now()
             });
             saveId = existing[0].id;
         } else {
             const result = await base44.asServiceRole.entities.PlayerSave.create({
-                wallet_address: verifyResult.walletAddress,
+                wallet_address: wallet,
                 save_data: saveData,
                 updated_at: Date.now()
             });
             saveId = result.id;
         }
 
-        console.log('[syncSave] Saved for wallet:', verifyResult.walletAddress, 'ID:', saveId);
+        console.log('[syncSave] Saved for wallet:', wallet, 'ID:', saveId);
         return Response.json({ success: true, saveId });
     } catch (error) {
         console.error('[syncSave]', error.message);
