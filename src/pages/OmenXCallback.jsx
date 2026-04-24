@@ -82,6 +82,10 @@ export default function OmenXCallback() {
                 }
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
                 
+                // Generate and store sessionId for multi-device detection
+                const sessionId = `${authData.walletAddress}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+                localStorage.setItem('omenx_session_data', JSON.stringify({ sessionId, createdAt: Date.now() }));
+                
                 // Notify opener (popup mode) via postMessage — works cross-origin
                 if (window.opener) {
                     try {
