@@ -193,17 +193,19 @@ export default function Upgrades({ isCarousel }) {
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
             setPurchasing(true);
-            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1)).then(() => {
-                const s = SaveManager.load();
-                if (!s[saveKey]) s[saveKey] = {};
-                if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
-                s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
-                SoundManager.playUIClick();
-                refreshBalance();
-            }).catch(err => console.error('[handleBuyWeapon] purchase failed:', err))
+            // Grant upgrade immediately, sync always
+            const s = SaveManager.load();
+            if (!s[saveKey]) s[saveKey] = {};
+            if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
+            s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
+            SaveManager.save(s);
+            setSave(s);
+            SoundManager.playUIClick();
+            SaveManager.syncToBackendImmediate();
+            refreshBalance();
+            // Verify purchase in background (failure doesn't rollback local state)
+            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1))
+              .catch(err => console.error('[handleBuyWeapon] purchase verification failed:', err))
               .finally(() => setPurchasing(false));
         }
     };
@@ -231,17 +233,19 @@ export default function Upgrades({ isCarousel }) {
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
             setPurchasing(true);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).then(() => {
-                const s = SaveManager.load();
-                if (!s[saveKey]) s[saveKey] = {};
-                if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
-                s[saveKey][selectedChar].push(talent.id);
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
-                SoundManager.playUIClick();
-                refreshBalance();
-            }).catch(err => console.error('[handleBuyTalent] purchase failed:', err))
+            // Grant upgrade immediately, sync always
+            const s = SaveManager.load();
+            if (!s[saveKey]) s[saveKey] = {};
+            if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
+            s[saveKey][selectedChar].push(talent.id);
+            SaveManager.save(s);
+            setSave(s);
+            SoundManager.playUIClick();
+            SaveManager.syncToBackendImmediate();
+            refreshBalance();
+            // Verify purchase in background (failure doesn't rollback local state)
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier))
+              .catch(err => console.error('[handleBuyTalent] purchase verification failed:', err))
               .finally(() => setPurchasing(false));
         }
     };
@@ -319,18 +323,20 @@ export default function Upgrades({ isCarousel }) {
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
                 setPurchasing(true);
-                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).then(() => {
-                    const s = SaveManager.load();
-                    const unl = s.unlockedSkins || [];
-                    const cos = s.cosmetics || {};
-                    s.unlockedSkins = [...unl, cosmetic.id];
-                    s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
-                    SaveManager.save(s);
-                    setSave(s);
-                    SaveManager.syncToBackendImmediate();
-                    SoundManager.playUIClick();
-                    refreshBalance();
-                }).catch(err => console.error('[handleBuyCosmetic skin] purchase failed:', err))
+                // Grant upgrade immediately, sync always
+                const s = SaveManager.load();
+                const unl = s.unlockedSkins || [];
+                const cos = s.cosmetics || {};
+                s.unlockedSkins = [...unl, cosmetic.id];
+                s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
+                SaveManager.save(s);
+                setSave(s);
+                SoundManager.playUIClick();
+                SaveManager.syncToBackendImmediate();
+                refreshBalance();
+                // Verify purchase in background (failure doesn't rollback local state)
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost))
+                  .catch(err => console.error('[handleBuyCosmetic skin] purchase verification failed:', err))
                   .finally(() => setPurchasing(false));
             }
             return;
@@ -366,18 +372,20 @@ export default function Upgrades({ isCarousel }) {
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
             setPurchasing(true);
-            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).then(() => {
-                const s = SaveManager.load();
-                const unl = s[unlockKey] || [freeId];
-                const cos = s.cosmetics || {};
-                s[unlockKey] = [...unl, cosmetic.id];
-                s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
-                SoundManager.playUIClick();
-                refreshBalance();
-            }).catch(err => console.error('[handleBuyCosmetic trail/kill] purchase failed:', err))
+            // Grant upgrade immediately, sync always
+            const s = SaveManager.load();
+            const unl = s[unlockKey] || [freeId];
+            const cos = s.cosmetics || {};
+            s[unlockKey] = [...unl, cosmetic.id];
+            s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
+            SaveManager.save(s);
+            setSave(s);
+            SoundManager.playUIClick();
+            SaveManager.syncToBackendImmediate();
+            refreshBalance();
+            // Verify purchase in background (failure doesn't rollback local state)
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost))
+              .catch(err => console.error('[handleBuyCosmetic trail/kill] purchase verification failed:', err))
               .finally(() => setPurchasing(false));
         }
     };
