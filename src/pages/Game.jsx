@@ -383,7 +383,7 @@ export default function Game() {
         if (engineRef.current) {
             engineRef.current.save.omenxBalance = omenxBalance ?? 0;
         }
-    }, [omenxBalance]);
+    }, []);
 
     const purchaseSku = async (skuId) => {
         if (!skuId) return;
