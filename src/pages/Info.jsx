@@ -274,11 +274,11 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
                         <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every <strong className="text-white">Monday</strong>. Top <strong className="text-white">30 players</strong> earn OMENX. Weekly stat upgrades also reset.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every <strong className="text-white">Monday</strong>. <strong className="text-white">All ranked players</strong> earn OMENX with dynamic scaling: top 30 earn the most, ranks 31–50 earn mid-tier rewards, ranks 51–100 earn lower, and beyond rank 100 earn minimal rewards. Weekly stat upgrades also reset.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for <strong className="text-white">4 weeks</strong>. Top <strong className="text-white">40 players</strong> earn OMENX. Seasonal stat upgrades reset at end.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for <strong className="text-white">4 weeks</strong>. <strong className="text-white">All ranked players</strong> earn OMENX with dynamic scaling: top 40 earn the most, ranks 41–60 earn mid-tier rewards, ranks 61–100 earn lower, and beyond rank 100 earn minimal rewards. Seasonal stat upgrades reset at end.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>

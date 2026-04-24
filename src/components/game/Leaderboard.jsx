@@ -22,6 +22,9 @@ export default function Leaderboard() {
         if (rank >= 4 && rank <= 10) return 0.04;
         if (rank >= 11 && rank <= 20) return 0.03;
         if (rank >= 21 && rank <= 30) return 0.018;
+        if (rank >= 31 && rank <= 50) return 0.012;
+        if (rank >= 51 && rank <= 100) return 0.008;
+        if (rank > 100) return 0.003;
         return 0;
     };
 
@@ -33,6 +36,9 @@ export default function Leaderboard() {
         if (rank >= 11 && rank <= 20) return 0.025;
         if (rank >= 21 && rank <= 30) return 0.02;
         if (rank >= 31 && rank <= 40) return 0.015;
+        if (rank >= 41 && rank <= 60) return 0.010;
+        if (rank >= 61 && rank <= 100) return 0.006;
+        if (rank > 100) return 0.002;
         return 0;
     };
 
@@ -262,7 +268,7 @@ export default function Leaderboard() {
                             {scores.map((score, index) => {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
-                                const isEligibleForReward = (view === 'weekly' && index < 30) || (view === 'seasonal' && index < 40);
+                                const isEligibleForReward = view === 'weekly' || view === 'seasonal';
                                 const rewardAmount = view === 'weekly' 
                                     ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.25, scores.length)
                                     : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.35, scores.length);
