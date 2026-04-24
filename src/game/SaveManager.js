@@ -17,26 +17,24 @@ export const SaveManager = {
     SaveManager._initialized = true;
     console.log('[SaveManager] Initialize called');
     try {
-      let walletAddress = null;
-      let accessToken = null;
-      
-      // Try OmenX IndexedDB first (survives browser history clear)
-      try {
-        const omenxAuth = await getAuthFromIndexedDB();
-        if (omenxAuth?.walletAddress) {
-          walletAddress = omenxAuth.walletAddress;
-          accessToken = omenxAuth.accessToken;
-          console.log('[SaveManager] Using OmenX IndexedDB auth');
-        }
-      } catch (e) {
-        console.log('[SaveManager] IndexedDB auth not available:', e.message);
-      }
-      
-      // Fallback to OmenX localStorage
+      // Use localStorage immediately (fastest) — no async wait needed
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+      let walletAddress = omenxAuth?.walletAddress;
+      let accessToken = omenxAuth?.accessToken;
+
+      // In parallel, warm up IndexedDB auth (don't block on it)
       if (!walletAddress) {
-        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        walletAddress = omenxAuth?.walletAddress;
-        accessToken = omenxAuth?.accessToken;
+        try {
+          const idbAuth = await getAuthFromIndexedDB();
+          if (idbAuth?.walletAddress) {
+            walletAddress = idbAuth.walletAddress;
+            accessToken = idbAuth.accessToken;
+            // Sync back to localStorage so next time is instant
+            localStorage.setItem('omenx_auth_data', JSON.stringify(idbAuth));
+          }
+        } catch (e) {
+          console.log('[SaveManager] IndexedDB auth not available:', e.message);
+        }
       }
       
       if (!walletAddress || !accessToken) {
@@ -59,17 +57,20 @@ export const SaveManager = {
         if (response?.saveData) {
           const cloudSave = response.saveData;
           const localSave = localStorage.getItem('cosmic_sloth_save');
+          const cloudData = typeof cloudSave === 'string' ? JSON.parse(cloudSave) : cloudSave;
           
           if (localSave) {
             const localData = JSON.parse(localSave);
-            const cloudData = typeof cloudSave === 'string' ? JSON.parse(cloudSave) : cloudSave;
-            // Merge: cloud data wins for persistent fields, local wins for session state
-            const merged = { ...localData, ...cloudData };
+            // Cloud wins for persistent data, but keep local if it's newer
+            const localTime = localData.updated_at || 0;
+            const cloudTime = cloudData.updated_at || 0;
+            const merged = cloudTime >= localTime
+              ? { ...localData, ...cloudData }
+              : { ...cloudData, ...localData };
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
             window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
-            console.log('[SaveManager] Merged cloud save with local');
+            console.log('[SaveManager] Merged cloud save (cloud newer:', cloudTime >= localTime, ')');
           } else {
-            const cloudData = typeof cloudSave === 'string' ? JSON.parse(cloudSave) : cloudSave;
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudData));
             window.dispatchEvent(new CustomEvent('saveUpdated', { detail: cloudData }));
             console.log('[SaveManager] Loaded cloud save');

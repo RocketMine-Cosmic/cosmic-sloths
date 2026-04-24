@@ -29,17 +29,23 @@ Deno.serve(async (req) => {
             return Response.json({ saveData: null });
         }
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) {
-            return Response.json({ saveData: null });
-        }
-
-        const wallet = verifyResult.walletAddress;
         const now = Date.now();
+        // Quick path: if token is in verify cache, skip external OmenX call
+        const cachedVerify = verifyCache.get(accessToken);
+        let wallet;
+        if (cachedVerify && cachedVerify.expiresAt > now) {
+            wallet = cachedVerify.walletAddress;
+        } else {
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const verifyResult = await verifyToken(sdk, accessToken);
+            if (!verifyResult.success) {
+                return Response.json({ saveData: null });
+            }
+            wallet = verifyResult.walletAddress;
+        }
         const cached = saveCache.get(wallet);
         if (cached && cached.expiresAt > now) {
             console.log('[loadSave] Cache hit for wallet:', wallet);
