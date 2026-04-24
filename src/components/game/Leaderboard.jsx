@@ -174,7 +174,9 @@ export default function Leaderboard() {
             }
 
             // Fetch top scores (fetch more to allow deduplication)
+            console.log('[Leaderboard] Fetching scores with filter:', filter);
             const data = await base44.entities.RunScore.filter(filter, '-score', 300);
+            console.log('[Leaderboard] Fetched scores:', data.length);
             
             if (view === 'squads') {
                 setCurrentPool(0);
