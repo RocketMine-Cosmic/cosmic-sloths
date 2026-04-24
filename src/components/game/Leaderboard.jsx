@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { CHARACTERS, ARENAS } from '../../game/Constants';
 import { getSquadLevel } from '../../game/SquadLevels';
@@ -120,26 +121,30 @@ export default function Leaderboard() {
         return unsubscribe;
     }, [view]);
 
-    // Poll pool updates every 30 seconds without re-fetching scores
+    // Deduplicate TokenPool queries using useQuery (30s stale time)
+    const { week_id, season_id } = getCurrentPeriodIds();
+    const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
+    
+    const { data: poolData } = useQuery({
+        queryKey: poolQueryKey,
+        queryFn: async () => {
+            if (view === 'squads') return 0;
+            const { week_id, season_id } = getCurrentPeriodIds();
+            const filter = view === 'weekly' 
+                ? { period_id: week_id, period_type: 'weekly' }
+                : { period_id: season_id, period_type: 'seasonal' };
+            const pools = await base44.entities.TokenPool.filter(filter);
+            return pools.length > 0 ? pools[0].total_spent : 0;
+        },
+        staleTime: 30000, // 30s — deduplicate within this window
+        enabled: view === 'weekly' || view === 'seasonal',
+    });
+
     useEffect(() => {
-        const updatePool = async () => {
-            try {
-                const { week_id, season_id } = getCurrentPeriodIds();
-                if (view === 'weekly') {
-                    const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
-                    setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
-                } else if (view === 'seasonal') {
-                    const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
-                    setCurrentPool(pools.length > 0 ? pools[0].total_spent : 0);
-                }
-            } catch (error) {
-                console.error('Failed to update pool', error);
-            }
-        };
-        
-        const interval = setInterval(updatePool, 30000);
-        return () => clearInterval(interval);
-    }, [view]);
+        if (poolData !== undefined) {
+            setCurrentPool(poolData);
+        }
+    }, [poolData]);
 
     const fetchScores = async () => {
         setLoading(true);
@@ -159,19 +164,10 @@ export default function Leaderboard() {
             // Fetch top scores (fetch more to allow deduplication)
             const data = await base44.entities.RunScore.filter(filter, '-score', 300);
             
-            if (view === 'weekly') {
-                const pools = await base44.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
-                console.log('[Leaderboard] Weekly pool query:', { week_id, found: pools.length, pool: pools[0] });
-                const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
-                setCurrentPool(poolAmount);
-            } else if (view === 'seasonal') {
-                const pools = await base44.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
-                console.log('[Leaderboard] Seasonal pool query:', { season_id, found: pools.length, pool: pools[0] });
-                const poolAmount = pools.length > 0 ? pools[0].total_spent : 0;
-                setCurrentPool(poolAmount);
-            } else {
+            if (view === 'squads') {
                 setCurrentPool(0);
             }
+            // Pool fetch is now handled by useQuery hook above
             
             // Deduplicate strictly by wallet_address (primary), then user_id fallback
             // This mirrors the backend distributeRewards logic exactly
