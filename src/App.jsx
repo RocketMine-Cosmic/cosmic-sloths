@@ -39,18 +39,19 @@ const MainApp = () => {
   const [needsProfileName, setNeedsProfileName] = useState(false);
 
   useEffect(() => {
-    SaveManager.initialize().then(async () => {
-        setSaveInitialized(true);
-        const save = SaveManager.load();
-        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        if (omenxAuth?.walletAddress) {
-            const pilotName = save.pilotName || '';
-            const isNameInvalid = !save.hasSetProfileName || !pilotName || pilotName.toLowerCase() === 'anonymous' || pilotName.trim() === '';
-            if (isNameInvalid) {
-                setNeedsProfileName(true);
-            }
+    // Show UI immediately with local save, then merge cloud save in background
+    setSaveInitialized(true);
+    const save = SaveManager.load();
+    const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+    if (omenxAuth?.walletAddress) {
+        const pilotName = save.pilotName || '';
+        const isNameInvalid = !save.hasSetProfileName || !pilotName || pilotName.toLowerCase() === 'anonymous' || pilotName.trim() === '';
+        if (isNameInvalid) {
+            setNeedsProfileName(true);
         }
-    });
+    }
+    // Load cloud save in background — will merge and dispatch saveUpdated event when ready
+    SaveManager.initialize();
   }, []);
 
   // In preview mode, bypass all auth gates

@@ -66,10 +66,12 @@ export const SaveManager = {
             // Merge: cloud data wins for persistent fields, local wins for session state
             const merged = { ...localData, ...cloudData };
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
+            window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
             console.log('[SaveManager] Merged cloud save with local');
           } else {
-            const dataToStore = typeof cloudSave === 'string' ? cloudSave : JSON.stringify(cloudSave);
-            localStorage.setItem('cosmic_sloth_save', dataToStore);
+            const cloudData = typeof cloudSave === 'string' ? JSON.parse(cloudSave) : cloudSave;
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudData));
+            window.dispatchEvent(new CustomEvent('saveUpdated', { detail: cloudData }));
             console.log('[SaveManager] Loaded cloud save');
           }
         }
