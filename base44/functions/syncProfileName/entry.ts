@@ -35,27 +35,34 @@ Deno.serve(async (req) => {
         const appId = Deno.env.get('BASE44_APP_ID');
         const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
 
-        // Update PlayerSave with merged save_data
+        // Fetch existing PlayerSave, deep-merge, then update
         const playerSaveUrl = `https://api.base44.com/apps/${appId}/entities/PlayerSave`;
-        const saveUpdateData = { 
-            save_data: { 
-                pilotName: newName, 
-                hasSetProfileName: true,
-                updated_at: Date.now()
+        const getRes = await fetch(`${playerSaveUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Sync-Secret': syncSecret
             }
-        };
-        if (newTitle !== undefined) saveUpdateData.save_data.player_title = newTitle;
-        if (newIcon !== undefined) saveUpdateData.save_data.pilot_icon = newIcon;
+        });
+        if (!getRes.ok) throw new Error(`PlayerSave GET failed: ${getRes.status}`);
+        const saves = await getRes.json();
+        if (!saves || saves.length === 0) throw new Error('PlayerSave not found');
         
-        const saveRes = await fetch(`${playerSaveUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
-            method: 'PATCH',
+        const save = saves[0];
+        const existingSaveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
+        const mergedData = { ...existingSaveData, pilotName: newName, hasSetProfileName: true, updated_at: Date.now() };
+        if (newTitle !== undefined) mergedData.player_title = newTitle;
+        if (newIcon !== undefined) mergedData.pilot_icon = newIcon;
+        
+        const saveRes = await fetch(`${playerSaveUrl}/${save.id}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Sync-Secret': syncSecret
             },
-            body: JSON.stringify(saveUpdateData)
+            body: JSON.stringify({ save_data: mergedData })
         });
-        if (!saveRes.ok) throw new Error(`PlayerSave PATCH failed: ${saveRes.status} ${saveRes.statusText}`);
+        if (!saveRes.ok) throw new Error(`PlayerSave PUT failed: ${saveRes.status} ${saveRes.statusText}`);
 
         // Update RunScore records
         const runScoreUrl = `https://api.base44.com/apps/${appId}/entities/RunScore`;
