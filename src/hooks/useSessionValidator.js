@@ -9,11 +9,6 @@ export function useSessionValidator() {
     });
 
     useEffect(() => {
-        // Skip in preview/builder mode (not live deployed)
-        if (window.self !== window.top) {
-            return;
-        }
-
         const getAuthData = () => {
             try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
         };
