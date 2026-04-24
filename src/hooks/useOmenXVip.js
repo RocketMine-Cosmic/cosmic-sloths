@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchPlayerData, subscribePlayerData } from '@/lib/playerDataCache';
+import { subscribePlayerData } from '@/lib/playerDataCache';
 
 export function useOmenXVip() {
     const [vip, setVip] = useState(null);
@@ -10,7 +10,6 @@ export function useOmenXVip() {
             setVip(data?.vipLevel ?? null);
             setLoading(false);
         });
-        fetchPlayerData();
         return unsub;
     }, []);
 
