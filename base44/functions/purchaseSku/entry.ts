@@ -145,7 +145,8 @@ Deno.serve(async (req) => {
             }).catch(e => console.error('[purchaseSku] Seasonal TokenPool failed:', e.message))
         ]);
 
-        return Response.json({ success: true, purchase: purchaseData, amount: totalAmount });
+        // Don't expose raw OmenX transaction data to client
+        return Response.json({ success: true, amount: totalAmount });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
         return Response.json({ error: error.message }, { status: 500 });
