@@ -412,10 +412,10 @@ export default function Game() {
         const REROLL_COST = 2;
         if ((omenxBalance ?? 0) >= REROLL_COST) {
             confirmPurchase(REROLL_COST, 'Reroll Upgrades', () => {
-                // Grant immediately, pay in background
+                // Grant immediately, pay in background (fire-and-forget)
                 if (engineRef.current) engineRef.current.rerollChoices();
-                purchaseSku(IN_GAME_SKUS.reroll);
-                refreshBalance();
+                purchaseSku(IN_GAME_SKUS.reroll); // no await
+                refreshBalance(); // no await
             });
         }
     };
@@ -424,13 +424,13 @@ export default function Game() {
         const BANISH_COST = 1;
         if ((omenxBalance ?? 0) >= BANISH_COST) {
             confirmPurchase(BANISH_COST, 'Banish Upgrade', () => {
-                // Grant immediately, pay in background
+                // Grant immediately, pay in background (fire-and-forget)
                 if (engineRef.current) {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
-                purchaseSku(IN_GAME_SKUS.banish);
-                refreshBalance();
+                purchaseSku(IN_GAME_SKUS.banish); // no await
+                refreshBalance(); // no await
             });
         }
     };
