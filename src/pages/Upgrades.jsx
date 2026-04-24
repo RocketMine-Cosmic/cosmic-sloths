@@ -154,20 +154,17 @@ export default function Upgrades({ isCarousel }) {
             setSave(currentSave);
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            setPurchasing(true);
+            // Grant immediately since they paid
+            const s = SaveManager.load();
+            const upg = s[saveKey] || {};
+            s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
+            SaveManager.save(s);
+            setSave(s);
+            SoundManager.playUIClick();
+            SaveManager.syncToBackendImmediate();
+            // Verify purchase in background
             const skuId = getStatSku(activeCategory, stat, currentLevel + 1);
-            purchaseSku(skuId).then(() => {
-                const s = SaveManager.load();
-                const upg = s[saveKey] || {};
-                s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
-                SoundManager.playUIClick();
-            }).catch(err => {
-                console.error('[handleBuyStat] purchase failed:', err);
-                setPurchaseError(`Purchase failed: ${err.message}`);
-            }).finally(() => setPurchasing(false));
+            purchaseSku(skuId).catch(err => console.error('[handleBuyStat] purchase verification failed:', err));
         }
     };
 
