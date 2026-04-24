@@ -17,6 +17,7 @@ const DAILY_REWARDS = [
 
 export default function DailyLoginPanel({ save, setSave }) {
     const { toast } = useToast();
+    const [claiming, setClaiming] = useState(false);
     const today = moment().format('YYYY-MM-DD');
 
     const login = save.dailyLogin || { lastDate: '', streak: 0, claimed: false };
@@ -29,10 +30,16 @@ export default function DailyLoginPanel({ save, setSave }) {
     const dayIndex = (streak % 7); // 0-6, which day in the 7-day cycle we're ON
 
     const handleClaim = () => {
+        if (claiming || alreadyClaimed) return;
+        setClaiming(true);
+
         const currentSave = SaveManager.load();
         const currentLogin = currentSave.dailyLogin || { lastDate: '', streak: 0, claimed: false };
         const isAlreadyClaimed = currentLogin.lastDate === today && currentLogin.claimed;
-        if (isAlreadyClaimed) return;
+        if (isAlreadyClaimed) {
+            setClaiming(false);
+            return;
+        }
 
         const newStreak = (currentLogin.lastDate === yesterday ? currentLogin.streak : 0) + 1;
         const rewardDay = DAILY_REWARDS[(newStreak - 1) % 7];
@@ -55,6 +62,8 @@ export default function DailyLoginPanel({ save, setSave }) {
             title: `Day ${newStreak} Reward Claimed!`,
             description: `+${rewardDay.reward} ${rewardDay.currency === 'gold' ? 'Gold' : rewardDay.currency === 'token' ? 'Cosmic Tokens' : 'Relic Fragments'}`,
         });
+        
+        setClaiming(false);
     };
 
     return (
@@ -111,9 +120,9 @@ export default function DailyLoginPanel({ save, setSave }) {
 
             <button
                 onClick={handleClaim}
-                disabled={alreadyClaimed}
+                disabled={alreadyClaimed || claiming}
                 className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all transform ${
-                    alreadyClaimed
+                    alreadyClaimed || claiming
                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                         : 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-95'
                 }`}
