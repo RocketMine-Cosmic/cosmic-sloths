@@ -159,9 +159,15 @@ export const SaveManager = {
   },
 
   load: () => {
-    // Sync cloud to local if needed (synchronously check, but don't block render)
-    if (!localStorage.getItem('cosmic_sloth_save') && SaveManager._walletAddress) {
-      // Cloud load already happened in initialize(), so just continue with local
+    // Check if local save is stale (last update was >5 min ago and cloud might have newer data)
+    const localSave = localStorage.getItem('cosmic_sloth_save');
+    const localMeta = localSave ? JSON.parse(localSave) : null;
+    const now = Date.now();
+    const fiveMinAgo = now - (5 * 60 * 1000);
+    
+    // If local is old and we're authenticated, re-sync in background (don't block load())
+    if (SaveManager._walletAddress && localMeta?.updated_at && localMeta.updated_at < fiveMinAgo) {
+      SaveManager.syncToBackend().catch(e => console.warn('[SaveManager] Background re-sync failed:', e.message));
     }
 
     // Canonical UTC ISO week calculation — must match lib/periodIds.js exactly
@@ -231,10 +237,20 @@ export const SaveManager = {
         });
 
         if (!parsed.permanentUpgrades) parsed.permanentUpgrades = { damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
-        if (!parsed.weeklyUpgrades || parsed.weeklyUpgrades.weekId !== currentWeek) {
+        // Archive old weekly upgrades instead of losing them
+        if (parsed.weeklyUpgrades && parsed.weeklyUpgrades.weekId && parsed.weeklyUpgrades.weekId !== currentWeek) {
+            if (!parsed.weeklyUpgradeHistory) parsed.weeklyUpgradeHistory = {};
+            parsed.weeklyUpgradeHistory[parsed.weeklyUpgrades.weekId] = parsed.weeklyUpgrades;
+            parsed.weeklyUpgrades = { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
+        } else if (!parsed.weeklyUpgrades) {
             parsed.weeklyUpgrades = { weekId: currentWeek, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
         }
-        if (!parsed.seasonalUpgrades || parsed.seasonalUpgrades.seasonId !== currentSeason) {
+        // Archive old seasonal upgrades instead of losing them
+        if (parsed.seasonalUpgrades && parsed.seasonalUpgrades.seasonId && parsed.seasonalUpgrades.seasonId !== currentSeason) {
+            if (!parsed.seasonalUpgradeHistory) parsed.seasonalUpgradeHistory = {};
+            parsed.seasonalUpgradeHistory[parsed.seasonalUpgrades.seasonId] = parsed.seasonalUpgrades;
+            parsed.seasonalUpgrades = { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
+        } else if (!parsed.seasonalUpgrades) {
             parsed.seasonalUpgrades = { seasonId: currentSeason, damage: 0, health: 0, speed: 0, magnet: 0, regen: 0, cooldown: 0, luck: 0 };
         }
         

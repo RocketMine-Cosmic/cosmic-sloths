@@ -198,25 +198,26 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Grant upgrade immediately + sync FIRST, then verify purchase
-            const s = SaveManager.load();
-            if (!s[saveKey]) s[saveKey] = {};
-            if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
-            s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
-            SaveManager.save(s);
-            setSave(s);
-            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
-            SoundManager.playUIClick();
-            
-            setPurchasing(true);
-            const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
-            purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, currentLevel + 1)).catch(err => {
-                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyWeapon] purchase verification failed:', err);
-            }).finally(() => {
-                setPurchasing(false);
-                refreshBalance();
-            });
+           // Grant upgrade immediately + sync FIRST, then verify purchase
+           const s = SaveManager.load();
+           if (!s[saveKey]) s[saveKey] = {};
+           if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
+           const nextLevel = (s[saveKey][weaponId][stat] || 0) + 1;
+           s[saveKey][weaponId][stat] = nextLevel;
+           SaveManager.save(s);
+           setSave(s);
+           SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
+           SoundManager.playUIClick();
+
+           setPurchasing(true);
+           const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
+           purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, nextLevel)).catch(err => {
+               setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+               console.error('[handleBuyWeapon] purchase verification failed:', err);
+           }).finally(() => {
+               setPurchasing(false);
+               refreshBalance();
+           });
         }
     };
 
@@ -470,20 +471,24 @@ export default function Upgrades({ isCarousel }) {
                                                     <button
                                                        onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
                                                             setPurchasing(true);
-                                                            const statSku = getStatSku(activeCategory, stat.id, (save[saveKey]?.[stat.id] || 0) + 1);
-                                                            purchaseSku(statSku).then(() => {
-                                                                const s = SaveManager.load();
-                                                                const upg = s[saveKey] || {};
-                                                                s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
-                                                                SaveManager.save(s);
-                                                                setSave(s);
-                                                                SaveManager.syncToBackendImmediate();
-                                                                SoundManager.playUIClick();
+                                                            // Grant upgrade FIRST, sync IMMEDIATELY, then verify payment
+                                                            const s = SaveManager.load();
+                                                            const upg = s[saveKey] || {};
+                                                            s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
+                                                            SaveManager.save(s);
+                                                            setSave(s);
+                                                            SaveManager.syncToBackendImmediate();
+                                                            SoundManager.playUIClick();
+
+                                                            // Verify payment in background (fire-and-forget)
+                                                            const statSku = getStatSku(activeCategory, stat.id, (upg[stat.id] || 0) + 1);
+                                                            purchaseSku(statSku).catch(err => {
+                                                                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                                                                console.error('[handleBuyStat] payment verification failed:', err);
+                                                            }).finally(() => {
+                                                                setPurchasing(false);
                                                                 refreshBalance();
-                                                            }).catch(err => {
-                                                                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                                                                console.error('[handleBuyStat] purchase failed:', err);
-                                                            }).finally(() => setPurchasing(false));
+                                                            });
                                                         })}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
