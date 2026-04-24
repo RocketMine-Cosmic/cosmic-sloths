@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export function useOmenXConfirmation(pageId) {
-    const [pending, setPending] = useState(null); // { amount, itemName, onConfirm, onCancel }
+    const [pending, setPending] = useState(null);
+    const callbackRef = useRef(null);
 
     const isDisabledFor24h = useCallback(() => {
         const disabledUntil = localStorage.getItem(`omenx_confirm_disabled_${pageId}`);
@@ -15,25 +16,18 @@ export function useOmenXConfirmation(pageId) {
             return;
         }
 
+        // Store callback in ref to avoid stale closure
+        callbackRef.current = onConfirmCallback;
+
         setPending({
             amount,
             itemName,
-            onConfirm: onConfirmCallback,
+            onConfirm: () => {
+                if (callbackRef.current) callbackRef.current();
+            },
             onCancel: () => setPending(null),
-            timestamp: Date.now()
         });
     }, [isDisabledFor24h]);
 
-    const skipConfirmationFor24h = useCallback(() => {
-        const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-        localStorage.setItem(`omenx_confirm_disabled_${pageId}`, expiresAt.toString());
-    }, [pageId]);
-
-    return {
-        pending,
-        setPending,
-        confirm,
-        isDisabledFor24h,
-        skipConfirmationFor24h
-    };
+    return { pending, setPending, confirm };
 }
