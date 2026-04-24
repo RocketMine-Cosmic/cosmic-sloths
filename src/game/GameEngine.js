@@ -372,8 +372,9 @@ export class GameEngine {
         }
 
         if (this.player.hp <= 0) {
-            const currentTokens = this.save.cosmicTokens || 0;
-            if (!this.player.hasRevivedWithTokens && this.callbacks.onDeathPrompt && currentTokens >= 4) {
+            // Use live OMENX balance (passed in via save.omenxBalance, kept in sync by Game.jsx)
+            const currentOmenxBalance = this.save.omenxBalance ?? 0;
+            if (!this.player.hasRevivedWithTokens && this.callbacks.onDeathPrompt && currentOmenxBalance >= 4) {
                  this.isPaused = true;
                  this.callbacks.onDeathPrompt();
                  return;
@@ -441,8 +442,8 @@ export class GameEngine {
                 this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - 0.1);
                 this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - 0.1);
             } else if (killsDelta > 30 && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
-                this.dynamicDifficulty.speedMult = Math.min(1.5, this.dynamicDifficulty.speedMult + 0.1);
-                this.dynamicDifficulty.spawnRateMult = Math.min(1.5, this.dynamicDifficulty.spawnRateMult + 0.1);
+                this.dynamicDifficulty.speedMult = Math.min(2.0, this.dynamicDifficulty.speedMult + 0.1);
+                this.dynamicDifficulty.spawnRateMult = Math.min(2.0, this.dynamicDifficulty.spawnRateMult + 0.1);
             }
             this.dynamicDifficulty.lastKills = this.kills;
             this.dynamicDifficulty.damageTaken = 0;
@@ -1531,12 +1532,20 @@ export class GameEngine {
                     if (this.xp >= this.xpRequired && !this.isPaused) this.levelUp();
                 } else if (p.type === 'gold') {
                     SFXManager.playGoldPickup();
-                    this.gold += Math.floor(p.value * this.player.goldMult);
+                    const nftGoldMult = this.save.nftGoldMultiplier || 1.0;
+                    const finalGold = Math.floor(p.value * this.player.goldMult * nftGoldMult);
+                    this.gold += finalGold;
                     this.callbacks.onGoldChange(this.gold);
+                    if (nftGoldMult > 1.0 && Math.random() < 0.1) {
+                        this.addDamageText(this.player.x, this.player.y - 50, `NFT +${Math.round((nftGoldMult - 1) * 100)}% GOLD`, '#f59e0b');
+                    }
                 } else if (p.type === 'fragment') {
                     SFXManager.playGoldPickup();
-                    if (this.callbacks.onFragmentFound) this.callbacks.onFragmentFound(p.value || 1);
-                    this.addDamageText(this.player.x, this.player.y - 40, `+${p.value || 1} Relic Fragment!`, '#a855f7');
+                    const nftRelicMult = this.save.nftRelicMultiplier || 1.0;
+                    const fragValue = p.value || 1;
+                    const finalFrags = nftRelicMult > 1.0 && Math.random() < (nftRelicMult - 1.0) ? fragValue + 1 : fragValue;
+                    if (this.callbacks.onFragmentFound) this.callbacks.onFragmentFound(finalFrags);
+                    this.addDamageText(this.player.x, this.player.y - 40, `+${finalFrags} Relic Fragment!`, '#a855f7');
 
                 } else if (p.type === 'nuke') {
                     SFXManager.playWeaponFire('novaPulse');

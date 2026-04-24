@@ -152,6 +152,26 @@ export default function Game() {
             }
         }
 
+        // Inject live OMENX balance so GameEngine can gate the revive prompt correctly
+        save.omenxBalance = omenxBalance ?? 0;
+
+        // Inject NFT multipliers from playerDataCache so GameEngine can apply them
+        try {
+            const { fetchPlayerData } = await import('@/lib/playerDataCache');
+            const playerDataModule = await import('@/lib/playerDataCache');
+            // Read cached NFT data synchronously from cache
+            const cachedNftData = (() => { try { return JSON.parse(localStorage.getItem('omenx_nft_data')); } catch { return null; } })();
+            if (cachedNftData && Array.isArray(cachedNftData) && cachedNftData.length > 0) {
+                const { NFTPerkManager } = await import('../game/NFTPerks');
+                NFTPerkManager.applyNFTPerks(cachedNftData);
+                const charPerks = NFTPerkManager.getCharacterPerks(characterId, cachedNftData);
+                save.nftGoldMultiplier = charPerks.goldMultiplier;
+                save.nftRelicMultiplier = charPerks.relicFragmentMultiplier;
+            }
+        } catch (e) {
+            // NFT data unavailable — no bonus applied
+        }
+
         const engine = new GameEngine(canvas, characterId, arenaId, difficultyId, save, {
             onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
             onTimeChange: (time) => setGameState(s => ({ ...s, time })),
@@ -336,6 +356,13 @@ export default function Game() {
         }, 100);
         return () => clearInterval(interval);
     }, []);
+
+    // Keep the engine's view of omenxBalance in sync with the live value
+    useEffect(() => {
+        if (engineRef.current) {
+            engineRef.current.save.omenxBalance = omenxBalance ?? 0;
+        }
+    }, [omenxBalance]);
 
     const purchaseSku = (skuId) => {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
