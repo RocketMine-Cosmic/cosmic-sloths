@@ -23,6 +23,7 @@ import AdminDiscordGuide from '../components/admin/AdminDiscordGuide';
 import AdminDataBackup from '../components/admin/AdminDataBackup';
 import AdminDataWipe from '../components/admin/AdminDataWipe';
 import AdminBlacklist from '../components/admin/AdminBlacklist';
+import AdminRefundOmenx from '../components/admin/AdminRefundOmenx';
 
 const TABS = [
     { id: 'overview',    label: 'Overview',    icon: BarChart3 },
@@ -43,6 +44,7 @@ const TABS = [
     { id: 'backups',     label: '💾 Backups', icon: Database },
     { id: 'blacklist',   label: '🚫 Blacklist', icon: AlertTriangle },
     { id: 'wipe',        label: '🗑️ Wipe Data', icon: AlertTriangle },
+    { id: 'refund',      label: '💸 Refund OMENX', icon: AlertTriangle },
 ];
 
 export default function AdminDashboard() {
@@ -125,6 +127,7 @@ export default function AdminDashboard() {
         backups: <AdminDataBackup walletAddress={adminWallet} />,
         blacklist: <AdminBlacklist />,
         wipe: <AdminDataWipe walletAddress={adminWallet} />,
+        refund: <AdminRefundOmenx walletAddress={adminWallet} />,
     };
 
     return (
