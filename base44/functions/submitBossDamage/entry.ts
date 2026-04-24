@@ -1,4 +1,3 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
@@ -35,72 +34,68 @@ const MAX_DAMAGE_PER_SUBMISSION = 1_000_000;
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const body = await req.json();
-        const { damage, playerName, walletAddress: clientWallet, accessToken } = body;
+        const { damage, playerName, walletAddress: clientWallet, accessToken } = await req.json();
 
-        if (!clientWallet && !accessToken) return Response.json({ error: 'walletAddress or accessToken required' }, { status: 400 });
-
-        let walletAddress = clientWallet;
-        if (accessToken) {
-            const sdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-            });
-            const verifyResult = await verifyToken(sdk, accessToken);
-            if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            walletAddress = verifyResult.walletAddress;
+        if (!clientWallet || !accessToken) {
+            return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
         }
-        if (typeof damage !== 'number' || damage <= 0) return Response.json({ error: 'Invalid damage' }, { status: 400 });
+
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
+
+        const verifyResult = await verifyToken(sdk, accessToken);
+        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+
+        if (typeof damage !== 'number' || damage <= 0) {
+            return Response.json({ error: 'Invalid damage' }, { status: 400 });
+        }
 
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);
         const { week_id } = getCurrentPeriodIds();
+        const appId = Deno.env.get('BASE44_APP_ID');
+        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
 
-        const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
-        if (bossRecords.length === 0) return Response.json({ error: 'No boss active' }, { status: 404 });
+        // Create GlobalBossEvent
+        const eventUrl = `https://api.base44.com/apps/${appId}/entities/GlobalBossEvent`;
+        const eventMessage = `${playerName || verifyResult.walletAddress} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`;
+        await fetch(eventUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Sync-Secret': syncSecret
+            },
+            body: JSON.stringify({
+                week_id,
+                player_name: playerName || verifyResult.walletAddress,
+                event_type: 'damage',
+                damage: clampedDamage,
+                message: eventMessage
+            })
+        }).catch(e => console.error('[submitBossDamage] Event creation failed:', e.message));
 
-        const boss = bossRecords[0];
-        if (boss.is_defeated) return Response.json({ error: 'Boss already defeated' }, { status: 400 });
+        // Update or create GlobalBossContribution
+        const contributionUrl = `https://api.base44.com/apps/${appId}/entities/GlobalBossContribution`;
+        await fetch(contributionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Sync-Secret': syncSecret
+            },
+            body: JSON.stringify({
+                week_id,
+                user_id: verifyResult.walletAddress,
+                player_name: playerName || verifyResult.walletAddress,
+                damage: clampedDamage,
+                claimed: false
+            })
+        }).catch(e => console.error('[submitBossDamage] Contribution failed:', e.message));
 
-        let newHp = Math.max(0, boss.current_hp - clampedDamage);
-        let updates = { current_hp: newHp };
-
-        const killed = newHp === 0;
-        if (killed) {
-            const nextLevel = (boss.level || 1) + 1;
-            const nextMaxHp = Math.floor(boss.max_hp * 1.5);
-            updates = { level: nextLevel, max_hp: nextMaxHp, current_hp: nextMaxHp, is_defeated: false };
-            newHp = nextMaxHp;
-        }
-
-        await base44.asServiceRole.entities.GlobalBoss.update(boss.id, updates);
-
-        const displayName = playerName || walletAddress;
-        const eventType = killed ? 'kill' : 'damage';
-        const eventMessage = killed
-            ? `${displayName} defeated the Level ${boss.level || 1} Boss!`
-            : `${displayName} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`;
-
-        await base44.asServiceRole.entities.GlobalBossEvent.create({
-            week_id, player_name: displayName, event_type: eventType,
-            damage: clampedDamage, level: boss.level || 1, message: eventMessage
-        });
-
-        const existing = await base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id, user_id: walletAddress });
-        if (existing.length > 0) {
-            await base44.asServiceRole.entities.GlobalBossContribution.update(existing[0].id, {
-                damage: existing[0].damage + clampedDamage,
-                player_name: displayName
-            });
-        } else {
-            await base44.asServiceRole.entities.GlobalBossContribution.create({
-                week_id, user_id: walletAddress, player_name: displayName,
-                damage: clampedDamage, claimed: false
-            });
-        }
-
-        return Response.json({ status: 'success', boss: { ...boss, current_hp: newHp } });
+        console.log('[submitBossDamage] Recorded damage:', clampedDamage, 'for wallet:', verifyResult.walletAddress);
+        return Response.json({ success: true, damage: clampedDamage });
     } catch (error) {
+        console.error('[submitBossDamage]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });

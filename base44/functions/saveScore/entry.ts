@@ -1,4 +1,22 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const verifyCache = new Map();
+const VERIFY_CACHE_TTL = 60 * 60 * 1000;
+
+async function verifyToken(sdk, accessToken) {
+    const now = Date.now();
+    const cached = verifyCache.get(accessToken);
+    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
+    const result = await sdk.verifyOAuthUser(accessToken);
+    if (result.success) {
+        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
+        if (verifyCache.size > 500) {
+            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
+        }
+    }
+    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
+}
+
 function getCurrentPeriodIds() {
     const now = new Date();
     const year = now.getUTCFullYear();
@@ -23,69 +41,69 @@ function isLeaderboardLocked() {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
 
         if (isLeaderboardLocked()) {
             return Response.json({ error: 'Leaderboard is locked for distribution' }, { status: 423 });
         }
 
-        if (!scoreData || !clientWallet) {
-            return Response.json({ error: 'scoreData and walletAddress required' }, { status: 400 });
+        if (!scoreData || !clientWallet || !accessToken) {
+            return Response.json({ error: 'scoreData, walletAddress, and accessToken required' }, { status: 400 });
         }
+
+        const sdk = new OmenXServerSDK({
+            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+        });
+        const verifyResult = await verifyToken(sdk, accessToken);
+        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
         const { week_id, season_id } = getCurrentPeriodIds();
         scoreData.week_id = week_id;
         scoreData.season_id = season_id;
+        scoreData.wallet_address = verifyResult.walletAddress;
 
-        const walletAddress = clientWallet;
-        scoreData.wallet_address = walletAddress;
+        const appId = Deno.env.get('BASE44_APP_ID');
+        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
 
-        const existingScores = await base44.asServiceRole.entities.RunScore.filter({
-            wallet_address: walletAddress,
-            week_id: scoreData.week_id
+        // Save RunScore
+        const runScoreUrl = `https://api.base44.com/apps/${appId}/entities/RunScore`;
+        const runScoreRes = await fetch(runScoreUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Sync-Secret': syncSecret
+            },
+            body: JSON.stringify(scoreData)
         });
-
-        let result;
-        if (existingScores.length > 0) {
-            const best = existingScores.reduce((a, b) => (a.score > b.score ? a : b));
-            for (const e of existingScores) {
-                if (e.id !== best.id) await base44.asServiceRole.entities.RunScore.delete(e.id);
-            }
-            if (scoreData.score > best.score) {
-                result = await base44.asServiceRole.entities.RunScore.update(best.id, scoreData);
-            } else {
-                result = await base44.asServiceRole.entities.RunScore.update(best.id, { player_name: scoreData.player_name });
-            }
-        } else {
-            result = await base44.asServiceRole.entities.RunScore.create(scoreData);
+        if (!runScoreRes.ok) {
+            console.error('[saveScore] RunScore save failed:', runScoreRes.status);
+            return Response.json({ error: 'Failed to save score' }, { status: 500 });
         }
 
-        if (squadStats && squadStats.squadId && typeof squadStats.squadId === 'string' && squadStats.squadId.length > 0) {
-            try {
-                const [members, squad] = await Promise.all([
-                    base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadStats.squadId, wallet_address: walletAddress }),
-                    base44.asServiceRole.entities.Squad.get(squadStats.squadId)
-                ]);
-                if (members.length > 0 && squad) {
-                    const today = new Date().toISOString().split('T')[0];
-                    const currentDay = squad.current_day || today;
-                    let newDailyKills = (squad.daily_kills || 0) + (squadStats.kills || 0);
-                    if (currentDay !== today) newDailyKills = squadStats.kills || 0;
-                    await base44.asServiceRole.entities.Squad.update(squad.id, {
-                        weekly_kills: (squad.weekly_kills || 0) + (squadStats.kills || 0),
-                        daily_kills: newDailyKills,
-                        current_day: today
-                    });
-                }
-            } catch (err) {
-                console.error('[saveScore] Failed to update squad kills:', err);
-            }
+        // Update squad kills if applicable
+        if (squadStats && squadStats.squadId) {
+            const squadUrl = `https://api.base44.com/apps/${appId}/entities/Squad/${squadStats.squadId}`;
+            const today = new Date().toISOString().split('T')[0];
+            const squadUpdate = {
+                weekly_kills: { $increment: (squadStats.kills || 0) },
+                daily_kills: { $increment: (squadStats.kills || 0) },
+                current_day: today
+            };
+            await fetch(squadUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Sync-Secret': syncSecret
+                },
+                body: JSON.stringify(squadUpdate)
+            }).catch(err => console.error('[saveScore] Squad update failed:', err.message));
         }
 
-        return Response.json({ success: true, scoreId: result.id });
+        console.log('[saveScore] Saved for wallet:', verifyResult.walletAddress);
+        return Response.json({ success: true });
     } catch (error) {
-        console.error('[saveScore] error:', error);
+        console.error('[saveScore]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
