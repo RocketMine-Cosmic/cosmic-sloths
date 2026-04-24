@@ -117,8 +117,10 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchScores();
-        
-        // Subscribe to RunScore changes (new scores, updates)
+    }, [view]);
+
+    useEffect(() => {
+        // Subscribe to RunScore changes
         const unsubscribeScores = base44.entities.RunScore.subscribe((event) => {
             if (event.type === 'create' || event.type === 'update') {
                 if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
@@ -126,7 +128,7 @@ export default function Leaderboard() {
             }
         });
         
-        // Subscribe to TokenPool changes (updates reward pool amounts)
+        // Subscribe to TokenPool changes
         const unsubscribePool = base44.entities.TokenPool.subscribe((event) => {
             if (event.type === 'create' || event.type === 'update') {
                 queryClientInstance.invalidateQueries({ queryKey: poolQueryKey });
@@ -140,7 +142,7 @@ export default function Leaderboard() {
             unsubscribePool();
             if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         };
-    }, [view, poolQueryKey]);
+    }, []);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
     const { data: poolData } = useQuery({
