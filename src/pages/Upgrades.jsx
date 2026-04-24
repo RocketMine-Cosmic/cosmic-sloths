@@ -118,7 +118,8 @@ export default function Upgrades({ isCarousel }) {
         const data = await res.json();
         if (!data?.success) {
             const errMsg = data?.error || 'Unknown error';
-            setPurchaseError(`Purchase failed: ${errMsg}`);
+            const isThrottle = res.status === 429 || errMsg.includes('429');
+            setPurchaseError(isThrottle ? 'Server is busy. Please try again in a moment.' : `Purchase failed: ${errMsg}`);
             throw new Error(errMsg);
         }
         return data;
