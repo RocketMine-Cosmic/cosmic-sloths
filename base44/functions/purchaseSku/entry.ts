@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
         // Log token spend
         const tokenSpendUrl = `https://api.base44.com/apps/${appId}/entities/TokenSpendLog`;
-        await fetch(tokenSpendUrl, {
+        const spendRes = await fetch(tokenSpendUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -112,7 +112,11 @@ Deno.serve(async (req) => {
                 week_id,
                 season_id
             })
-        }).catch(e => console.error('[purchaseSku] TokenSpendLog failed:', e.message));
+        });
+        if (!spendRes.ok) {
+            const err = await spendRes.text();
+            throw new Error(`TokenSpendLog POST failed: ${spendRes.status} ${err}`);
+        }
 
         // Update or create TokenPool entries
         const tokenPoolUrl = `https://api.base44.com/apps/${appId}/entities/TokenPool`;
