@@ -105,15 +105,18 @@ export default function AdminRefundOmenx({ walletAddress }) {
                 </div>
             ) : (
                 <div className="space-y-3">
+                    <div className="p-2 bg-blue-950/50 border border-blue-600/50 rounded text-blue-300 text-xs font-bold">
+                        🔍 PREVIEW MODE — Click below to see what WOULD be refunded. Nothing will be sent until you confirm on the next screen.
+                    </div>
                     <p className="text-slate-300 text-sm">Calculates total OMENX spent by all players and issues refunds via OmenX API.</p>
                     {error && <p className="text-red-400 text-sm">{error}</p>}
                     <button
                         onClick={handleDryRun}
                         disabled={loading}
-                        className="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        {loading ? 'Preview...' : 'Preview Refund (Dry Run)'}
+                        {loading ? 'Loading preview...' : '👁️ Preview What Would Be Refunded (TEST)'}
                     </button>
                 </div>
             )}
