@@ -23,6 +23,7 @@ export function useOmenXConfirmation(pageId) {
             amount,
             itemName,
             onConfirm: () => {
+                setPending(null);
                 if (callbackRef.current) callbackRef.current();
             },
             onCancel: () => setPending(null),
