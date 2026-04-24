@@ -46,11 +46,12 @@ export const SaveManager = {
       
       // Load cloud save on init
       try {
-        const { base44 } = await import('@/api/base44Client');
-        const { data: response } = await base44.functions.invoke('loadSave', {
-          walletAddress,
-          accessToken,
+        const res = await fetch('/functions/loadSave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress, accessToken }),
         });
+        const response = await res.json();
         
         if (response?.saveData) {
           const cloudSave = response.saveData;
@@ -83,14 +84,17 @@ export const SaveManager = {
     if (!SaveManager._walletAddress || !SaveManager._accessToken) return;
     
     try {
-      const { base44 } = await import('@/api/base44Client');
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
       
-      await base44.functions.invoke('syncSave', {
-        walletAddress: SaveManager._walletAddress,
-        saveData: JSON.parse(localSave),
-        accessToken: SaveManager._accessToken,
+      await fetch('/functions/syncSave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: SaveManager._walletAddress,
+          saveData: JSON.parse(localSave),
+          accessToken: SaveManager._accessToken,
+        }),
       });
       console.log('[SaveManager] Cloud sync');
     } catch (e) {
