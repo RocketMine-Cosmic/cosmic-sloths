@@ -154,8 +154,7 @@ const MainApp = () => {
 function App() {
   useEffect(() => {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
-    // Kick off centralized fetch once — CurrencyProvider subscription guards against duplicates
-    fetchPlayerData();
+    // CurrencyProvider subscription will handle centralized fetch
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)
     const onParentMessage = (event) => {
