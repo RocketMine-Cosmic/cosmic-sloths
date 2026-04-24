@@ -9,6 +9,11 @@ export function useSessionValidator() {
     });
 
     useEffect(() => {
+        // Skip in preview/builder mode (not live deployed)
+        if (window.self !== window.top) {
+            return;
+        }
+
         const getAuthData = () => {
             try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
         };
@@ -52,9 +57,9 @@ export function useSessionValidator() {
             }
         };
 
-        // Check every 15 seconds
+        // Check every 60 seconds instead of 15
         validateSession();
-        const interval = setInterval(validateSession, 15000);
+        const interval = setInterval(validateSession, 60000);
 
         // Also check when tab regains focus
         const onFocus = () => validateSession();
