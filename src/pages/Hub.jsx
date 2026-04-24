@@ -97,7 +97,8 @@ export default function Hub({ isCarousel }) {
                      // Recompute unlocked characters: kill milestones + current NFTs
                      try {
                           // Get NFT-unlocked characters (current ownership)
-                          const nftCharIds = ([])
+                          const cachedNfts = (() => { try { return JSON.parse(localStorage.getItem('omenx_nft_data')) || []; } catch { return []; } })();
+                          const nftCharIds = cachedNfts
                              .map(nft => nft.metadata?.name?.toLowerCase())
                              .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
 
