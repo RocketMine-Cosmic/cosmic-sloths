@@ -4,6 +4,12 @@ export default function AuthCallback() {
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Prevent automatic closing
+    const originalClose = window.close;
+    window.close = () => {
+      console.log('[AuthCallback] window.close() called but prevented for debugging');
+    };
+
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const state = params.get('state');
@@ -12,7 +18,6 @@ export default function AuthCallback() {
     
     if (!code || !state) {
       console.error('[AuthCallback] Missing code or state');
-      window.close();
       return;
     }
 
@@ -29,8 +34,6 @@ export default function AuthCallback() {
     } catch (e) {
       console.error('[AuthCallback] postMessage failed:', e);
     }
-
-    // Keep popup open for debugging—user can close manually
   }, []);
 
   return (
