@@ -1,7 +1,15 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
 
 // Redirect URI MUST match portal registration (exact string)
-const REDIRECT_URI = `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`;
+const REDIRECT_URI = (() => {
+  if (typeof window === 'undefined') return '';
+  // Live
+  if (window.location.hostname === 'cosmic-sloths.com') {
+    return 'https://cosmic-sloths.com/auth/callback';
+  }
+  // Default (preview/localhost)
+  return `${window.location.origin}/auth/callback`;
+})();
 
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
