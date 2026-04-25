@@ -95,20 +95,20 @@ export default function OmenXCallback() {
                 const sessionId = `${authData.walletAddress}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
                 localStorage.setItem('omenx_session_data', JSON.stringify({ sessionId, createdAt: Date.now() }));
                 
-                // Notify opener (popup mode) via postMessage — works cross-origin
-                if (window.opener) {
-                    try {
-                        window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
-                    } catch(e) { /* ignore */ }
-                    // Also try same-origin storage event as fallback
-                    try {
-                        window.opener.dispatchEvent(new StorageEvent('storage', {
-                            key: 'omenx_auth_data',
-                            newValue: JSON.stringify(authData),
-                            storageArea: localStorage,
-                        }));
-                    } catch(e) { /* cross-origin, ignore */ }
-                }
+                // DEBUG: postMessage to opener disabled — SDK was closing popup on receipt.
+                // Re-enable after debugging.
+                // if (window.opener) {
+                //     try {
+                //         window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
+                //     } catch(e) { /* ignore */ }
+                //     try {
+                //         window.opener.dispatchEvent(new StorageEvent('storage', {
+                //             key: 'omenx_auth_data',
+                //             newValue: JSON.stringify(authData),
+                //             storageArea: localStorage,
+                //         }));
+                //     } catch(e) { /* cross-origin, ignore */ }
+                // }
                 
                 // Create initial save file and PlayerSave on first login
                 const existingProfile = localStorage.getItem('omenx_user_profile');
