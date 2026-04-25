@@ -30,7 +30,6 @@ const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
 import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
-import { startOmenXRefresh } from '@/lib/omenxRefresh';
 import GamepadManager from './components/GamepadManager';
 import Base44AuthLinker from './components/Base44AuthLinker';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
@@ -124,7 +123,6 @@ const MainApp = () => {
 function App() {
   useEffect(() => {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
-    startOmenXRefresh(); // Auto-refresh OmenX token every 50 min
     // CurrencyProvider subscription will handle centralized fetch
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)

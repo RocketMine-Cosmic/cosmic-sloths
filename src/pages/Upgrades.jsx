@@ -103,22 +103,12 @@ export default function Upgrades({ isCarousel }) {
         setPurchasing(true);
         console.log('[Upgrades purchaseSku] CALLED with skuId:', skuId);
         if (!skuId) { setPurchaseError('No SKU mapping found for this item'); throw new Error('No SKU mapping'); }
-        const authData = await getAuthData();
-        console.log('[Upgrades purchaseSku] authData:', { wallet: authData?.walletAddress?.slice(0,10), hasToken: !!authData?.accessToken });
-        const walletAddress = authData?.walletAddress;
-        const accessToken = authData?.accessToken;
-        const playerName = save.pilotName || authData?.username || 'Pilot';
-        if (!walletAddress) { setPurchaseError('No wallet address — are you logged in?'); throw new Error('No wallet address'); }
-        if (!accessToken) { setPurchaseError('No access token — please log in again'); throw new Error('No access token'); }
-        const res = await fetch('/functions/purchaseSku', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName, accessToken }),
-        });
-        const data = await res.json();
+        const playerName = save.pilotName || 'Pilot';
+        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName });
+        const data = res.data;
         if (!data?.success) {
             const errMsg = data?.error || 'Unknown error';
-            const isThrottle = res.status === 429 || errMsg.includes('429');
+            const isThrottle = errMsg.includes('429') || errMsg.toLowerCase().includes('rate');
             setPurchaseError(isThrottle ? 'Server is busy. Please try again in a moment.' : `Purchase failed: ${errMsg}`);
             throw new Error(errMsg);
         }
@@ -127,9 +117,7 @@ export default function Upgrades({ isCarousel }) {
 
     const syncSaveToBackend = async (updatedSave) => {
         try {
-            const authData = await getAuthData();
-            if (!authData?.walletAddress || !authData?.accessToken) return;
-            await base44.functions.invoke('syncSave', { walletAddress: authData.walletAddress, saveData: updatedSave, accessToken: authData.accessToken });
+            await base44.functions.invoke('syncSave', { saveData: updatedSave });
         } catch (e) {
             console.error('[syncSaveToBackend] Sync failed:', e);
         }

@@ -1,22 +1,7 @@
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (result.success) {
-        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        if (verifyCache.size > 500) {
-            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-        }
-    }
-    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
-}
+// Auth: Base44 session. Wallet: from linked User.wallet_address.
+// No OmenX accessToken required.
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -33,25 +18,21 @@ function getCurrentPeriodIds() {
 
 Deno.serve(async (req) => {
     try {
-        const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!scoreData || !clientWallet || !accessToken) {
-            return Response.json({ error: 'scoreData, walletAddress, and accessToken required' }, { status: 400 });
-        }
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        const { scoreData, squadStats } = await req.json();
+        if (!scoreData) return Response.json({ error: 'scoreData required' }, { status: 400 });
 
         const { week_id, season_id } = getCurrentPeriodIds();
         scoreData.week_id = week_id;
         scoreData.season_id = season_id;
-        scoreData.wallet_address = verifyResult.walletAddress;
-
-        const base44 = createClientFromRequest(req);
+        scoreData.wallet_address = walletAddress;
+        scoreData.user_id = me.id;
 
         // Save RunScore
         try {
@@ -61,13 +42,11 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Failed to save score' }, { status: 500 });
         }
 
-        // Update squad kills if applicable — always fetch fresh membership from backend
-        // (don't rely on stale cached data)
+        // Update squad kills if applicable
         let squadIdToUpdate = squadStats?.squadId || null;
         if (!squadIdToUpdate) {
-            // Fetch current squad membership for this player
             try {
-                const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: verifyResult.walletAddress });
+                const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
                 if (memberRecords && memberRecords.length > 0) {
                     squadIdToUpdate = memberRecords[0].squad_id;
                 }
@@ -81,7 +60,6 @@ Deno.serve(async (req) => {
             const killsToAdd = squadStats?.kills || scoreData.kills || 0;
             try {
                 const squad = await base44.asServiceRole.entities.Squad.read(squadIdToUpdate);
-                // Reset daily_kills if day changed
                 const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
                 const updatedSquad = {
                     ...squad,
@@ -96,7 +74,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        console.log('[saveScore] Saved for wallet:', verifyResult.walletAddress);
+        console.log('[saveScore] Saved for wallet:', walletAddress);
         return Response.json({ success: true });
     } catch (error) {
         console.error('[saveScore]', error.message);

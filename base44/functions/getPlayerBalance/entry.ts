@@ -1,37 +1,21 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
 // Lightweight endpoint — balance ONLY. No NFT, no VIP. Called more frequently.
+// Auth: Base44 session. Wallet: comes from the linked User.wallet_address.
+
 const balanceCache = new Map();
 const BALANCE_CACHE_TTL = 5 * 60 * 1000; // 5 min cache
 
-function decodeJwtPayload(token) {
-    try {
-        const parts = token.split('.');
-        if (parts.length < 2) return null;
-        const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-        const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
-        return JSON.parse(atob(padded));
-    } catch {
-        return null;
-    }
-}
-
 Deno.serve(async (req) => {
     try {
-        const { walletAddress, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ balance: 0 });
 
-        if (!walletAddress || !accessToken) {
-            return Response.json({ balance: 0 });
-        }
-
-        // Cross-check wallet against JWT payload (no /v1/oauth/user call)
-        const payload = decodeJwtPayload(accessToken);
-        const jwtWallet = payload?.walletAddress?.toLowerCase();
-        if (jwtWallet && jwtWallet !== walletAddress.toLowerCase()) {
-            return Response.json({ balance: 0 });
-        }
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ balance: 0 });
 
         const now = Date.now();
-
-        // Check balance cache first
         const cachedBalance = balanceCache.get(walletAddress);
         if (cachedBalance && cachedBalance.expiresAt > now) {
             return Response.json({ balance: cachedBalance.balance });
@@ -47,7 +31,6 @@ Deno.serve(async (req) => {
         const omenxToken = playerDataRes?.balances?.tokens?.find(t => t.symbol === 'OMENX');
         const balance = parseFloat(omenxToken?.balance ?? '0');
 
-        // Cache the result
         balanceCache.set(walletAddress, { balance, expiresAt: now + BALANCE_CACHE_TTL });
         if (balanceCache.size > 1000) {
             for (const [k, v] of balanceCache) { if (v.expiresAt <= now) balanceCache.delete(k); }

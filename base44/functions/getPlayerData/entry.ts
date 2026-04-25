@@ -1,33 +1,17 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 // Heavy endpoint — NFT + VIP ONLY. Called once per session.
-
-function decodeJwtPayload(token) {
-    try {
-        const parts = token.split('.');
-        if (parts.length < 2) return null;
-        const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-        const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
-        return JSON.parse(atob(padded));
-    } catch {
-        return null;
-    }
-}
+// Auth: Base44 session. Wallet: from linked User.wallet_address.
 
 Deno.serve(async (req) => {
     try {
-        const { walletAddress, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ vipLevel: 0, nfts: [] });
 
-        if (!walletAddress || !accessToken) {
-            return Response.json({ vipLevel: 0, nfts: [] });
-        }
-
-        // Cross-check wallet against JWT payload (no /v1/oauth/user call)
-        const payload = decodeJwtPayload(accessToken);
-        const jwtWallet = payload?.walletAddress?.toLowerCase();
-        if (jwtWallet && jwtWallet !== walletAddress.toLowerCase()) {
-            return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ vipLevel: 0, nfts: [] });
 
         let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
@@ -37,18 +21,15 @@ Deno.serve(async (req) => {
             apiBaseUrl: apiBaseUrlEnv,
         });
 
-        const apiBaseUrl = apiBaseUrlEnv;
-        
         let bonusLevel = null;
         try {
             bonusLevel = await sdk.getPlayerGameBonusPointsLevel(walletAddress);
         } catch (e) {
             console.error('[getPlayerData] bonusLevel failed:', e.message);
-            // If VIP fetch fails, just return 0 — don't break the response
             bonusLevel = 0;
         }
 
-        const playerDataRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+        const playerDataRes = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
             headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
         }).then(r => r.ok ? r.json() : null).catch((e) => {
             console.error('[getPlayerData] playerDataRes failed:', e.message);

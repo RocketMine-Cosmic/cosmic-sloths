@@ -137,11 +137,7 @@ export default function Game() {
                         }
                     } catch (_) {}
 
-                    const omenxAuthForScore = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    await base44.functions.invoke('saveScore', {
-                        scoreData, walletAddress, squadStats,
-                        accessToken: omenxAuthForScore?.accessToken || null,
-                    });
+                    await base44.functions.invoke('saveScore', { scoreData, squadStats });
             } catch (e) {
                 console.error('[saveScore] FAILED:', e?.message || e);
                 throw e;
@@ -394,17 +390,11 @@ export default function Game() {
 
     const purchaseSku = async (skuId) => {
         if (!skuId) return;
-        const authData = await getAuthData();
-        const walletAddress = authData?.walletAddress;
-        if (!walletAddress || !authData?.accessToken) {
-            console.error('[Game purchaseSku] No auth data found');
-            return;
-        }
-        return fetch('/functions/purchaseSku', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken: authData.accessToken }),
-        }).then(r => r.json()).catch(e => console.error('[Game purchaseSku] failed:', e?.message));
+        const user = getOmenXUserSync();
+        const playerName = user?.player_name || user?.full_name || 'Pilot';
+        return base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName })
+            .then(r => r.data)
+            .catch(e => console.error('[Game purchaseSku] failed:', e?.message));
     };
 
     const handleUpgradeSelect = (upgrade) => {

@@ -1,22 +1,9 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (result.success) {
-        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        if (verifyCache.size > 500) {
-            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-        }
-    }
-    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
-}
+// Auth: Base44 session. Wallet: from linked User.wallet_address.
+// No OmenX accessToken required — Base44 session is the proof of identity,
+// and the wallet was verified at link-time via linkWalletToUser.
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -33,19 +20,23 @@ function getCurrentPeriodIds() {
 
 Deno.serve(async (req) => {
     try {
-        const { skuId, quantity = 1, walletAddress: clientWallet, userId, playerName: playerNameParam, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!skuId || !clientWallet || !accessToken) {
-            return Response.json({ error: 'skuId, walletAddress, and accessToken required' }, { status: 400 });
-        }
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+
+        const { skuId, quantity = 1, playerName: playerNameParam } = await req.json();
+        if (!skuId) return Response.json({ error: 'skuId required' }, { status: 400 });
+
+        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
 
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_PAYMENT_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation'
+            apiBaseUrl,
         });
-
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
 
         const { week_id, season_id } = getCurrentPeriodIds();
 
@@ -59,14 +50,14 @@ Deno.serve(async (req) => {
             return Response.json({ error: `No OMENX price for SKU: ${skuId}` }, { status: 400 });
         }
 
-        const idempotencyKey = `${verifyResult.walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
+        const idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
-        console.log(`[purchaseSku] Purchasing SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${verifyResult.walletAddress}`);
+        console.log(`[purchaseSku] SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${walletAddress}`);
 
         let purchaseData;
         try {
             purchaseData = await sdk.createPurchase({
-                playerWallet: verifyResult.walletAddress,
+                playerWallet: walletAddress,
                 skuId,
                 quantity,
                 idempotencyKey,
@@ -81,14 +72,13 @@ Deno.serve(async (req) => {
         }
 
         const totalAmount = amount * quantity;
-        const base44 = createClientFromRequest(req);
 
         // Log token spend
         try {
             await base44.asServiceRole.entities.TokenSpendLog.create({
-                user_id: userId || verifyResult.walletAddress,
-                player_name: playerNameParam || verifyResult.walletAddress,
-                wallet_address: verifyResult.walletAddress,
+                user_id: me.id,
+                player_name: playerNameParam || me.full_name || walletAddress,
+                wallet_address: walletAddress,
                 amount: totalAmount,
                 week_id,
                 season_id
@@ -100,11 +90,10 @@ Deno.serve(async (req) => {
 
         // Update or create TokenPool entries (single efficient fetch)
         try {
-            // Fetch all pools once
             const allPools = await base44.asServiceRole.entities.TokenPool.filter({});
             const weeklyPool = allPools.find(p => p.period_id === week_id && p.period_type === 'weekly');
             const seasonalPool = allPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
-            
+
             if (weeklyPool) {
                 await base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, {
                     total_spent: (weeklyPool.total_spent || 0) + totalAmount
@@ -117,7 +106,7 @@ Deno.serve(async (req) => {
                     distributed: false
                 });
             }
-            
+
             if (seasonalPool) {
                 await base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, {
                     total_spent: (seasonalPool.total_spent || 0) + totalAmount
@@ -132,10 +121,10 @@ Deno.serve(async (req) => {
             }
         } catch (err) {
             console.error('[purchaseSku] TokenPool upsert failed:', err.message);
-            // Don't throw—pools are optional logging
+            // Non-fatal — pools are reporting only
         }
 
-        console.log('[purchaseSku] Purchase logged for wallet:', verifyResult.walletAddress);
+        console.log('[purchaseSku] Purchase logged for wallet:', walletAddress);
         return Response.json({ success: true, amount: totalAmount });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
