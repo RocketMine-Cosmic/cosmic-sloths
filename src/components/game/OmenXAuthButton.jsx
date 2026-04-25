@@ -130,7 +130,8 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         setLoading(true);
         try {
             console.log('[OmenXAuthButton] Calling omenx.authenticate...');
-            await omenx.authenticate({ redirectUri: 'https://cosmic-sloths.com/auth/callback' });
+            const redirectUri = `${window.location.origin}/auth/callback`;
+            await omenx.authenticate({ redirectUri });
             console.log('[OmenXAuthButton] authenticate() returned');
             // onAuth callback will fire and sync wallet to Base44
         } catch (err) {
