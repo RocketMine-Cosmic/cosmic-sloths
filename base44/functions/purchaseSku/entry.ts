@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
 
         const wallet = user.data?.omenx_wallet;
         if (!wallet) {
-            return Response.json({ error: 'OmenX wallet not linked' }, { status: 400 });
+            return Response.json({ error: 'OmenX wallet required. Please link your wallet.' }, { status: 400 });
         }
 
         const { skuId, quantity = 1, playerName: playerNameParam } = await req.json();

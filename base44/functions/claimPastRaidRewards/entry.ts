@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
 
         const wallet = user.data?.omenx_wallet;
         if (!wallet) {
-            return Response.json({ error: 'OmenX wallet not linked' }, { status: 400 });
+            return Response.json({ error: 'OmenX wallet required to claim rewards. Please link your wallet.' }, { status: 400 });
         }
 
         const currentWeekId = getCurrentWeekId();

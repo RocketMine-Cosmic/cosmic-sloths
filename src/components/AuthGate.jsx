@@ -132,7 +132,8 @@ export default function AuthGate({ children }) {
 
         {authState === 'omenx-login' && (
           <div className="space-y-4">
-            <p className="text-slate-300 text-sm text-center">Step 2: Connect OmenX Wallet</p>
+            <p className="text-slate-300 text-sm text-center font-bold">Step 2: Connect OmenX Wallet (Required)</p>
+            <p className="text-slate-400 text-xs text-center">You need an OmenX wallet to receive leaderboard and raid rewards.</p>
             <button
               onClick={handleOmenXLogin}
               className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
