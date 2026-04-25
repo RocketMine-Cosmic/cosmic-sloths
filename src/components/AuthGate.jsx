@@ -28,26 +28,33 @@ export default function AuthGate({ children }) {
       // Check if OmenX wallet is already in localStorage (user logged in with OmenX)
       const omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
       if (omenxAuth?.walletAddress) {
-        // OmenX is authenticated, now check/sync Base44
+        // OmenX is authenticated, now enforce Base44 login (required for saves)
         try {
           const isBase44Auth = await base44.auth.isAuthenticated();
-          if (isBase44Auth) {
-            const user = await base44.auth.me();
-            if (!user?.data?.omenx_wallet) {
-              // Sync wallet to Base44
-              await base44.functions.invoke('syncOmenXWallet', { 
-                walletAddress: omenxAuth.walletAddress 
-              });
-              console.log('[AuthGate] Synced OmenX wallet to Base44');
-            }
+          if (!isBase44Auth) {
+            console.log('[AuthGate] OmenX ready but Base44 not authenticated, redirecting to login');
+            base44.auth.redirectToLogin();
+            return;
           }
+          
+          const user = await base44.auth.me();
+          if (!user?.data?.omenx_wallet) {
+            // Sync wallet to Base44
+            await base44.functions.invoke('syncOmenXWallet', { 
+              walletAddress: omenxAuth.walletAddress 
+            });
+            console.log('[AuthGate] Synced OmenX wallet to Base44');
+          }
+          
+          console.log('[AuthGate] Full auth complete (OmenX + Base44)');
+          setHasWallet(true);
+          setReady(true);
+          return;
         } catch (e) {
-          console.warn('[AuthGate] Base44 sync failed, but OmenX is ready:', e.message);
+          console.error('[AuthGate] Base44 auth check failed:', e.message);
+          base44.auth.redirectToLogin();
+          return;
         }
-        
-        setHasWallet(true);
-        setReady(true);
-        return;
       }
       
       // No OmenX wallet yet - show link wallet screen
