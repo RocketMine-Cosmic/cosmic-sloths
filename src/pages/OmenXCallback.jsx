@@ -9,176 +9,94 @@ export default function OmenXCallback() {
     useLayoutEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const exchangeToken = async () => {
+        const handleCallback = async () => {
             try {
-                const params = new URLSearchParams(window.location.search);
-                const code = params.get('code');
-
-                if (!code) {
-                    setStatus('❌ No authorization code received');
-                    console.error('[OmenXCallback] Missing code in URL:', window.location.href);
-                    setTimeout(() => window.close(), 30000);
-                    return;
-                }
-
-                const state = params.get('state');
-                const codeVerifier = (state && sessionStorage.getItem(`omenx_pkce_${state}`)) ||
-                                     Object.keys(sessionStorage)
-                                         .filter(k => k.startsWith('omenx_pkce_'))
-                                         .map(k => sessionStorage.getItem(k))[0] ||
-                                     null;
-
-                console.log('[OmenXCallback] Starting token exchange', {
-                    currentUrl: window.location.href,
-                    origin: window.location.origin,
-                    codePresent: !!code,
-                    state,
-                    hasCodeVerifier: !!codeVerifier,
-                });
-
-                const redirectUri = `${window.location.origin}/auth/callback`;
-                const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier, redirectUri });
-                const tokenData = res.data;
-                console.log('[OmenXCallback] Exchange response', tokenData);
-
-                if (!tokenData || tokenData.error) {
-                    const errMsg = tokenData?.details?.error?.message || tokenData?.details?.error?.code || tokenData?.error || 'unknown';
-                    const debugPayload = {
-                        currentUrl: window.location.href,
-                        origin: window.location.origin,
-                        state,
-                        hasCodeVerifier: !!codeVerifier,
-                        response: tokenData,
-                    };
-                    console.error('[OmenXCallback] Exchange failed', debugPayload);
-                    setDebugInfo(debugPayload);
-                    setStatus(`❌ ${errMsg}`);
-                    return;
-                }
-
-                // Validate token data has required fields
-                if (!tokenData.accessToken || !tokenData.walletAddress) {
-                    setStatus('❌ Invalid token response: missing accessToken or walletAddress');
-                    return;
-                }
-
-                const authData = {
-                    accessToken: tokenData.accessToken,
-                    refreshToken: tokenData.refreshToken,
-                    expiresIn: tokenData.expiresIn,
-                    walletAddress: tokenData.walletAddress,
-                    username: tokenData.username || '',
-                    // Preserve any existing profile customizations from prior session
-                    ...(() => {
-                        try {
-                            const stored = localStorage.getItem('omenx_auth_data');
-                            if (!stored) return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' };
-                            const existing = JSON.parse(stored);
-                            return {
-                                player_name: existing?.player_name || tokenData.username || '',
-                                player_title: existing?.player_title || '',
-                                pilot_icon: existing?.pilot_icon || '🦥',
-                            };
-                        } catch { return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' }; }
-                    })(),
-                };
-
-                // Save to IndexedDB (survives history clear) and localStorage (fallback)
-                try {
-                    await saveAuthToIndexedDB(authData);
-                } catch (e) {
-                    console.error('[OmenXCallback] Storage error');
-                }
-                localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+                setStatus('✓ SDK is handling token exchange...');
+                console.log('[OmenXCallback] SDK should have already exchanged token, just waiting...');
                 
-                // Generate and store sessionId for multi-device detection
-                const sessionId = `${authData.walletAddress}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-                localStorage.setItem('omenx_session_data', JSON.stringify({ sessionId, createdAt: Date.now() }));
+                // Give the SDK time to process and call onAuth
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 
-                // Notify opener (popup mode) via postMessage — works cross-origin
-                if (window.opener) {
+                // Check if auth data is in localStorage (SDK's onAuth should have put it there)
+                const authData = (() => {
                     try {
-                        window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
-                    } catch(e) { /* ignore */ }
-                    // Also try same-origin storage event as fallback
-                    try {
-                        window.opener.dispatchEvent(new StorageEvent('storage', {
-                            key: 'omenx_auth_data',
-                            newValue: JSON.stringify(authData),
-                            storageArea: localStorage,
-                        }));
-                    } catch(e) { /* cross-origin, ignore */ }
-                }
-                
-                // Create initial save file and PlayerSave on first login
-                const existingProfile = localStorage.getItem('omenx_user_profile');
-                if (!existingProfile) {
-                    const initialSave = {
-                        unlockedCharacters: ['neobyte'],
-                        unlockedArenasByCharacter: { neobyte: ['station'] },
-                        unlockedCosmetics: ['default'],
-                        cosmetics: { skins: {}, trail: 'default', killEffect: 'none' },
-                        gold: 0,
-                        sessionBuffs: {},
-                        characterKills: {},
-                        foundCharacters: [],
-                        encounteredEnemies: [],
-                        enemyKills: {},
-                        relicFragments: 0,
-                        cosmicTokens: 0,
-                        lastSelectedChar: 'neobyte',
-                        lastSelectedArena: 'station',
-                        lastSelectedDifficulty: 'normal',
-                        lastSelectedWeapon: 'neoBlaster',
-                        isNGPlus: false,
-                        newGamePlusUnlocked: false,
-                        hasSetProfileName: false,
-                        bounties: { active: [], dailyMission: null },
-                        maxTimeSurvived: 0,
-                        totalGoldEarned: 0,
-                        maxLevelReached: 0,
-                        totalKills: 0
-                    };
-                    localStorage.setItem('cosmic_sloth_save', JSON.stringify(initialSave));
-                    localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: '', playerTitle: '', pilotIcon: '🦥' }));
+                        const stored = localStorage.getItem('omenx_auth_data');
+                        return stored ? JSON.parse(stored) : null;
+                    } catch { return null; }
+                })();
+
+                if (authData && authData.walletAddress && authData.accessToken) {
+                    setStatus('✓ Login successful! Closing...');
+                    console.log('[OmenXCallback] SDK auth data found, notifying opener');
                     
-                    // Create PlayerSave record via backend function
-                    try {
-                        const base44 = await import('@/api/base44Client').then(m => m.base44);
-                        await base44.functions.invoke('initializeFirstLogin', {
-                            walletAddress: authData.walletAddress,
-                            accessToken: authData.accessToken,
-                            initialSave
-                        });
-                    } catch (e) {
-                        console.error('Failed to initialize first login:', e);
+                    // Notify opener if this was opened as popup
+                    if (window.opener) {
+                        try {
+                            window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
+                        } catch(e) { console.log('[OmenXCallback] postMessage failed (cross-origin?)', e); }
                     }
-                }
+                    
+                    // Create initial save on first login
+                    const existingProfile = localStorage.getItem('omenx_user_profile');
+                    if (!existingProfile) {
+                        const initialSave = {
+                            unlockedCharacters: ['neobyte'],
+                            unlockedArenasByCharacter: { neobyte: ['station'] },
+                            unlockedCosmetics: ['default'],
+                            cosmetics: { skins: {}, trail: 'default', killEffect: 'none' },
+                            gold: 0,
+                            sessionBuffs: {},
+                            characterKills: {},
+                            foundCharacters: [],
+                            encounteredEnemies: [],
+                            enemyKills: {},
+                            relicFragments: 0,
+                            cosmicTokens: 0,
+                            lastSelectedChar: 'neobyte',
+                            lastSelectedArena: 'station',
+                            lastSelectedDifficulty: 'normal',
+                            lastSelectedWeapon: 'neoBlaster',
+                            isNGPlus: false,
+                            newGamePlusUnlocked: false,
+                            hasSetProfileName: false,
+                            bounties: { active: [], dailyMission: null },
+                            maxTimeSurvived: 0,
+                            totalGoldEarned: 0,
+                            maxLevelReached: 0,
+                            totalKills: 0
+                        };
+                        localStorage.setItem('cosmic_sloth_save', JSON.stringify(initialSave));
+                        localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: '', playerTitle: '', pilotIcon: '🦥' }));
+                        
+                        try {
+                            const base44 = await import('@/api/base44Client').then(m => m.base44);
+                            await base44.functions.invoke('initializeFirstLogin', {
+                                walletAddress: authData.walletAddress,
+                                accessToken: authData.accessToken,
+                                initialSave
+                            });
+                        } catch (e) {
+                            console.error('[OmenXCallback] First login init failed:', e);
+                        }
+                    }
 
-                setStatus('✓ Login successful! Closing in 30 seconds...');
-                console.log('[OmenXCallback] Notified opener via postMessage');
-                // Give postMessage time to reach opener before closing
-                setTimeout(() => {
-                    window.close();
-                    // Fallback: if still open (direct navigation), redirect
+                    // Close popup or redirect
                     setTimeout(() => {
-                        window.location.replace('/');
-                    }, 500);
-                }, 30000);
+                        window.close();
+                        setTimeout(() => window.location.replace('/'), 500);
+                    }, 1000);
+                } else {
+                    setStatus('❌ SDK did not provide auth data');
+                    setDebugInfo({ authData, hasWallet: !!authData?.walletAddress, hasToken: !!authData?.accessToken });
+                }
             } catch (err) {
-                const debugPayload = {
-                    currentUrl: typeof window !== 'undefined' ? window.location.href : '',
-                    origin: typeof window !== 'undefined' ? window.location.origin : '',
-                    error: err?.message || 'Unknown error',
-                    response: err?.response?.data || null,
-                };
-                console.error('[OmenXCallback] Unexpected error', debugPayload);
-                setDebugInfo(debugPayload);
+                console.error('[OmenXCallback] Error:', err);
                 setStatus(`❌ ${err.message}`);
+                setDebugInfo({ error: err.message });
             }
         };
 
-        exchangeToken();
+        handleCallback();
     }, []);
 
     return (
