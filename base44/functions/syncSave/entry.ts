@@ -36,35 +36,13 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'saveData required' }, { status: 400 });
         }
 
-        // Ensure saveData has required fields
-        if (!saveData.pilotName) {
-            saveData.pilotName = `Pilot_${wallet.slice(-6).toUpperCase()}`;
-        }
-
-        // Save via Base44 SDK (reliable)
+        // Cloud is source of truth — always overwrite
         const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
 
         let saveId;
         if (existing.length > 0) {
-            // Deep merge to preserve all existing data + nested upgrade objects
-            const existingData = typeof existing[0].save_data === 'string' ? JSON.parse(existing[0].save_data) : existing[0].save_data;
-            const merged = { ...existingData, ...saveData }; // Start with existing, then apply incoming
-
-            // Deep merge upgrade objects to prevent loss of partial data
-            const upgradeKeys = ['permanentUpgrades', 'weeklyUpgrades', 'seasonalUpgrades', 'permanentWeaponUpgrades', 'weeklyWeaponUpgrades', 'seasonalWeaponUpgrades', 'permanentTalents', 'weeklyTalents', 'seasonalTalents'];
-            upgradeKeys.forEach(key => {
-                if (existingData[key] && saveData[key]) {
-                    // Both exist: merge them (incoming takes precedence, but preserve any existing keys)
-                    merged[key] = { ...existingData[key], ...saveData[key] };
-                } else if (existingData[key] && (saveData[key] === undefined || saveData[key] === null)) {
-                    // Preserve existing if incoming is missing
-                    merged[key] = existingData[key];
-                }
-            });
-            
             await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
-                wallet_address: wallet,
-                save_data: merged,
+                save_data: saveData,
                 updated_at: Date.now()
             });
             saveId = existing[0].id;

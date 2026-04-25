@@ -4,8 +4,6 @@ import { getOmenXUser } from '@/lib/omenxUser';
 import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { NFTPerkManager } from './NFTPerks';
 
-let syncTimeout = null;
-let pendingSync = false;
 let syncRetries = 0;
 const MAX_SYNC_RETRIES = 3;
 let cloudSyncComplete = false;
@@ -120,7 +118,7 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
-    // Always fetch fresh auth from localStorage (may have been set after initialize)
+    // Always fetch fresh auth from localStorage
     let walletAddress = SaveManager._walletAddress;
     let accessToken = SaveManager._accessToken;
     
@@ -145,34 +143,26 @@ export const SaveManager = {
       });
       if (!res.ok) {
         const data = await res.json();
-        console.warn('[SaveManager] Sync failed:', data.error);
+        console.error('[SaveManager] Sync failed:', data.error);
         syncRetries++;
         if (syncRetries >= MAX_SYNC_RETRIES) {
-          console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
+          console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries');
           window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'max_retries' } }));
-          syncRetries = 0; // Reset for next batch
+          syncRetries = 0;
         }
       } else {
-        console.log('[SaveManager] Cloud sync');
-        syncRetries = 0; // Reset on success
+        console.log('[SaveManager] Synced to cloud');
+        syncRetries = 0;
       }
     } catch (e) {
-      console.warn('[SaveManager] Sync failed:', e.message);
+      console.error('[SaveManager] Sync error:', e.message);
       syncRetries++;
       if (syncRetries >= MAX_SYNC_RETRIES) {
-        console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
+        console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries');
         window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'network_error' } }));
         syncRetries = 0;
       }
     }
-  },
-
-  syncToBackendImmediate: async () => {
-    // Emergency sync for critical events (game end) — skip debounce
-    if (syncTimeout) clearTimeout(syncTimeout);
-    pendingSync = false;
-    syncRetries = 0; // Reset retry count for critical syncs
-    await SaveManager.syncToBackend();
   },
 
   _cloudSyncComplete: cloudSyncComplete,
@@ -352,16 +342,9 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
-      // Only sync if user is authenticated with OmenX
+      // Sync immediately if authenticated
       if (SaveManager._walletAddress && SaveManager._accessToken) {
-        pendingSync = true;
-        if (syncTimeout) clearTimeout(syncTimeout);
-        syncTimeout = setTimeout(() => {
-          if (pendingSync) {
-            SaveManager.syncToBackend();
-            pendingSync = false;
-          }
-        }, 10000); // Debounce to 10 seconds
+        SaveManager.syncToBackend();
       }
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);
