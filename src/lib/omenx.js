@@ -7,8 +7,17 @@ const REDIRECT_URI = (() => {
   if (window.location.hostname === 'cosmic-sloths.com') {
     return 'https://cosmic-sloths.com/auth/callback';
   }
-  // Default (preview/localhost)
-  return `${window.location.origin}/auth/callback`;
+  // Preview/localhost: cache the first URL seen so it stays consistent across refreshes
+  try {
+    const cached = localStorage.getItem('omenx_redirect_uri');
+    if (cached) return cached;
+    
+    const uri = `${window.location.origin}/auth/callback`;
+    localStorage.setItem('omenx_redirect_uri', uri);
+    return uri;
+  } catch {
+    return `${window.location.origin}/auth/callback`;
+  }
 })();
 
 export const omenx = new OmenXGameSDK({
