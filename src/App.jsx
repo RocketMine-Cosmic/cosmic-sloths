@@ -7,6 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 
 import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
+import AuthCallback from './pages/AuthCallback';
 import { SaveManager } from './game/SaveManager';
 
 // Heavy pages — lazy loaded for faster initial bundle
@@ -57,6 +58,7 @@ const MainApp = () => {
     return (
       <React.Suspense fallback={fallback}>
         <Routes>
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/" element={<PlayCarousel />} />
           <Route path="/hub" element={<Hub />} />
           <Route path="/upgrades" element={<Upgrades />} />
