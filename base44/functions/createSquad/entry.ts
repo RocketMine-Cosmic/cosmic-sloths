@@ -1,5 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
@@ -20,7 +22,6 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { squadName, squadTag, squadDesc, playerName, playerTitle, accessToken } = await req.json();
 
         if (!squadName || !squadTag) return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -38,16 +39,16 @@ Deno.serve(async (req) => {
         const today = new Date().toISOString().split('T')[0];
 
         const [existingName, existingTag, existingMembership] = await Promise.all([
-            base44.asServiceRole.entities.Squad.filter({ name: squadName }),
-            base44.asServiceRole.entities.Squad.filter({ tag }),
-            base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress }),
+            db.entities.Squad.filter({ name: squadName }),
+            db.entities.Squad.filter({ tag }),
+            db.entities.SquadMember.filter({ wallet_address: walletAddress }),
         ]);
 
         if (existingName.length > 0) return Response.json({ error: 'A squad with that name already exists.' }, { status: 409 });
         if (existingTag.length > 0) return Response.json({ error: 'A squad with that tag already exists.' }, { status: 409 });
         if (existingMembership.length > 0) return Response.json({ error: 'You are already a member of a squad. Leave your current squad first.' }, { status: 409 });
 
-        const squad = await base44.asServiceRole.entities.Squad.create({
+        const squad = await db.entities.Squad.create({
             name: squadName, tag, description: squadDesc || '',
             owner_wallet: walletAddress, icon: '🛡️',
             weekly_kills: 0, current_week: today,
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
             member_count: 1, xp: 0, level: 1
         });
 
-        const member = await base44.asServiceRole.entities.SquadMember.create({
+        const member = await db.entities.SquadMember.create({
             squad_id: squad.id, wallet_address: walletAddress,
             player_name: playerName || 'Leader', player_title: playerTitle || '',
             role: 'leader', last_payout_week: '', last_daily_payout_date: ''

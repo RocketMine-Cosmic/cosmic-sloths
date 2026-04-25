@@ -1,5 +1,7 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
@@ -81,11 +83,10 @@ Deno.serve(async (req) => {
         }
 
         const totalAmount = amount * quantity;
-        const base44 = createClientFromRequest(req);
 
-        // Log token spend
+        // Log token spend — non-fatal, never block the purchase
         try {
-            await base44.asServiceRole.entities.TokenSpendLog.create({
+            await db.entities.TokenSpendLog.create({
                 user_id: userId || verifyResult.walletAddress,
                 player_name: playerNameParam || verifyResult.walletAddress,
                 wallet_address: verifyResult.walletAddress,
@@ -94,36 +95,34 @@ Deno.serve(async (req) => {
                 season_id
             });
         } catch (err) {
-            console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
-            throw err;
+            console.error('[purchaseSku] TokenSpendLog create failed (non-fatal):', err.message);
         }
 
-        // Update or create TokenPool entries (single efficient fetch)
+        // Update or create TokenPool entries — non-fatal
         try {
-            // Fetch all pools once
-            const allPools = await base44.asServiceRole.entities.TokenPool.filter({});
+            const allPools = await db.entities.TokenPool.filter({});
             const weeklyPool = allPools.find(p => p.period_id === week_id && p.period_type === 'weekly');
             const seasonalPool = allPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
-            
+
             if (weeklyPool) {
-                await base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, {
+                await db.entities.TokenPool.update(weeklyPool.id, {
                     total_spent: (weeklyPool.total_spent || 0) + totalAmount
                 });
             } else {
-                await base44.asServiceRole.entities.TokenPool.create({
+                await db.entities.TokenPool.create({
                     period_id: week_id,
                     period_type: 'weekly',
                     total_spent: totalAmount,
                     distributed: false
                 });
             }
-            
+
             if (seasonalPool) {
-                await base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, {
+                await db.entities.TokenPool.update(seasonalPool.id, {
                     total_spent: (seasonalPool.total_spent || 0) + totalAmount
                 });
             } else {
-                await base44.asServiceRole.entities.TokenPool.create({
+                await db.entities.TokenPool.create({
                     period_id: season_id,
                     period_type: 'seasonal',
                     total_spent: totalAmount,
@@ -131,11 +130,10 @@ Deno.serve(async (req) => {
                 });
             }
         } catch (err) {
-            console.error('[purchaseSku] TokenPool upsert failed:', err.message);
-            // Don't throw—pools are optional logging
+            console.error('[purchaseSku] TokenPool upsert failed (non-fatal):', err.message);
         }
 
-        console.log('[purchaseSku] Purchase logged for wallet:', verifyResult.walletAddress);
+        console.log('[purchaseSku] Purchase successful for wallet:', verifyResult.walletAddress, 'SKU:', skuId, 'Amount:', totalAmount);
         return Response.json({ success: true, amount: totalAmount });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
