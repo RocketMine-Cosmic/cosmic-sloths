@@ -25,47 +25,38 @@ export default function AuthGate({ children }) {
 
   const checkAuth = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        console.log('[AuthGate] Not authenticated, redirecting to Base44 login');
-        base44.auth.redirectToLogin();
-        return;
-      }
-      
-      const user = await base44.auth.me();
-      let hasWalletLinked = user?.data?.omenx_wallet;
-      
-      // If no wallet linked yet but OmenX auth exists in localStorage, sync it now
-      if (!hasWalletLinked) {
+      // Check if OmenX wallet is already in localStorage (user logged in with OmenX)
+      const omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+      if (omenxAuth?.walletAddress) {
+        // OmenX is authenticated, now check/sync Base44
         try {
-          const omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-          if (omenxAuth?.walletAddress) {
-            const res = await base44.functions.invoke('syncOmenXWallet', { 
-              walletAddress: omenxAuth.walletAddress 
-            });
-            if (res.data?.success) {
-              hasWalletLinked = omenxAuth.walletAddress;
+          const isBase44Auth = await base44.auth.isAuthenticated();
+          if (isBase44Auth) {
+            const user = await base44.auth.me();
+            if (!user?.data?.omenx_wallet) {
+              // Sync wallet to Base44
+              await base44.functions.invoke('syncOmenXWallet', { 
+                walletAddress: omenxAuth.walletAddress 
+              });
               console.log('[AuthGate] Synced OmenX wallet to Base44');
             }
           }
         } catch (e) {
-          console.warn('[AuthGate] Failed to sync OmenX wallet:', e.message);
+          console.warn('[AuthGate] Base44 sync failed, but OmenX is ready:', e.message);
         }
-      }
-      
-      if (!hasWalletLinked) {
-        console.log('[AuthGate] Authenticated but no OmenX wallet linked');
-        setHasWallet(false);
+        
+        setHasWallet(true);
         setReady(true);
         return;
       }
       
-      console.log('[AuthGate] Full auth complete (Base44 + OmenX)');
-      setHasWallet(true);
+      // No OmenX wallet yet - show link wallet screen
+      console.log('[AuthGate] No OmenX wallet linked');
+      setHasWallet(false);
       setReady(true);
     } catch (err) {
       console.error('[AuthGate] Check failed:', err);
-      base44.auth.redirectToLogin();
+      setReady(true);
     }
   };
 
