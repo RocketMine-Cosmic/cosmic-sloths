@@ -41,11 +41,6 @@ export const omenx = new OmenXGameSDK({
   },
 });
 
-export const getOmenXRedirectUri = () => {
-  if (typeof window === 'undefined') return 'https://cosmic-sloths.com/auth/callback';
-  return `${window.location.origin}/auth/callback`;
-};
-
 export const initOmenX = async () => {
   try {
     await omenx.init();
