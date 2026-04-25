@@ -1,7 +1,5 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
@@ -10,6 +8,8 @@ Deno.serve(async (req) => {
         if (!clientWallet || !accessToken) {
             return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
         }
+
+        const db = createClientFromRequest(req).asServiceRole;
 
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),

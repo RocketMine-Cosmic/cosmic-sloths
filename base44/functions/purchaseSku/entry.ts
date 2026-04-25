@@ -1,7 +1,5 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-
-const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
@@ -40,6 +38,8 @@ Deno.serve(async (req) => {
         if (!skuId || !clientWallet || !accessToken) {
             return Response.json({ error: 'skuId, walletAddress, and accessToken required' }, { status: 400 });
         }
+
+        const db = createClientFromRequest(req).asServiceRole;
 
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_PAYMENT_API_KEY'),
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
 
         const totalAmount = amount * quantity;
 
-        // Log token spend — non-fatal, never block the purchase
+        // Log token spend — non-fatal
         try {
             await db.entities.TokenSpendLog.create({
                 user_id: userId || verifyResult.walletAddress,
@@ -105,29 +105,15 @@ Deno.serve(async (req) => {
             const seasonalPool = allPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
 
             if (weeklyPool) {
-                await db.entities.TokenPool.update(weeklyPool.id, {
-                    total_spent: (weeklyPool.total_spent || 0) + totalAmount
-                });
+                await db.entities.TokenPool.update(weeklyPool.id, { total_spent: (weeklyPool.total_spent || 0) + totalAmount });
             } else {
-                await db.entities.TokenPool.create({
-                    period_id: week_id,
-                    period_type: 'weekly',
-                    total_spent: totalAmount,
-                    distributed: false
-                });
+                await db.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false });
             }
 
             if (seasonalPool) {
-                await db.entities.TokenPool.update(seasonalPool.id, {
-                    total_spent: (seasonalPool.total_spent || 0) + totalAmount
-                });
+                await db.entities.TokenPool.update(seasonalPool.id, { total_spent: (seasonalPool.total_spent || 0) + totalAmount });
             } else {
-                await db.entities.TokenPool.create({
-                    period_id: season_id,
-                    period_type: 'seasonal',
-                    total_spent: totalAmount,
-                    distributed: false
-                });
+                await db.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false });
             }
         } catch (err) {
             console.error('[purchaseSku] TokenPool upsert failed (non-fatal):', err.message);
