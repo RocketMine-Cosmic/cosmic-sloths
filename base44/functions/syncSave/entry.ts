@@ -1,5 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
@@ -20,7 +22,6 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, saveData, accessToken } = await req.json();
 
         if (!clientWallet || !saveData || !accessToken) {
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
         }
 
         // Save via Base44 SDK (reliable)
-        const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
+        const existing = await db.entities.PlayerSave.filter({ wallet_address: wallet });
 
         let saveId;
         if (existing.length > 0) {
@@ -73,14 +74,14 @@ Deno.serve(async (req) => {
                 }
             });
             
-            await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
+            await db.entities.PlayerSave.update(existing[0].id, {
                 wallet_address: wallet,
                 save_data: merged,
                 updated_at: Date.now()
             });
             saveId = existing[0].id;
         } else {
-            const result = await base44.asServiceRole.entities.PlayerSave.create({
+            const result = await db.entities.PlayerSave.create({
                 wallet_address: wallet,
                 save_data: saveData,
                 updated_at: Date.now()

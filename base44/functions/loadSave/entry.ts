@@ -1,5 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 5 * 60 * 1000; // 5 min instead of 1 hour to allow quicker token refreshes
@@ -26,7 +28,6 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, accessToken } = await req.json();
 
         if (!clientWallet || !accessToken) {
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
         }
 
-        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
+        const records = await db.entities.PlayerSave.filter({ wallet_address: wallet });
         const saveData = records.length > 0 ? records[0].save_data : null;
 
         console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData);
