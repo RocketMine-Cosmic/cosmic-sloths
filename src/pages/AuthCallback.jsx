@@ -30,14 +30,7 @@ export default function AuthCallback() {
       console.error('[AuthCallback] postMessage failed:', e);
     }
 
-    // Give SDK time to process, then close
-    setTimeout(() => {
-      try {
-        window.close();
-      } catch {
-        /* ignore */
-      }
-    }, 500);
+    // Keep popup open for debugging—user can close manually
   }, []);
 
   return (
