@@ -79,7 +79,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         try {
             const redirectUri = getRedirectUri();
             console.log('[OmenXAuthButton] Calling omenx.authenticate with redirectUri:', redirectUri);
-            await omenx.authenticate({ redirectUri, enablePKCE: true });
+            await omenx.authenticate({ redirectUri, enablePKCE: false });
             console.log('[OmenXAuthButton] authenticate() returned successfully');
         } catch (err) {
             console.error('[OmenXAuthButton] authenticate() failed:', err.message, err);
