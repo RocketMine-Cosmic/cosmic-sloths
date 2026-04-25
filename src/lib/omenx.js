@@ -60,10 +60,6 @@ export const initOmenX = async () => {
 };
 
 export const getRedirectUri = () => {
-  // In preview: use current domain so PKCE code_verifier stays accessible
-  // In production: use registered production domain
-  if (typeof window !== 'undefined' && window.self !== window.top) {
-    return `${window.location.origin}/auth/callback`;
-  }
+  // Must match the registered redirect_uri in OmenX portal EXACTLY
   return 'https://cosmic-sloths.com/auth/callback';
 };
