@@ -172,6 +172,18 @@ export const SaveManager = {
     await SaveManager.syncToBackend();
   },
 
+  // Call before launching a run — flushes any pending debounced sync so the
+  // cloud save is up-to-date before Game.initialize() loads from cloud.
+  flushBeforeLaunch: async () => {
+    if (pendingSync || syncTimeout) {
+      if (syncTimeout) clearTimeout(syncTimeout);
+      pendingSync = false;
+      syncRetries = 0;
+      console.log('[SaveManager] Flushing pending sync before launch');
+      await SaveManager.syncToBackend();
+    }
+  },
+
   _cloudSyncComplete: cloudSyncComplete,
   
   load: () => {

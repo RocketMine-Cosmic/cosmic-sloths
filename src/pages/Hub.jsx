@@ -186,6 +186,9 @@ export default function Hub({ isCarousel }) {
     };
 
     const launchGame = async (mode) => {
+        // Flush any pending debounced sync FIRST — ensures upgrades bought just before launch are in the cloud
+        await SaveManager.flushBeforeLaunch();
+
         // Prefetch save from backend so Game page finds it in localStorage immediately (no blocking wait)
         const auth = getOmenXAuth();
         if (auth?.walletAddress && auth?.accessToken) {
