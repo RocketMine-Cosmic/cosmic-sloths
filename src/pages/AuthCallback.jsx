@@ -1,4 +1,5 @@
 import { useLayoutEffect } from 'react';
+import { exchangeCodeForToken } from '@/lib/omenx';
 
 export default function AuthCallback() {
   useLayoutEffect(() => {
@@ -14,38 +15,26 @@ export default function AuthCallback() {
     
     if (error) {
       console.error('[AuthCallback] ❌ OAuth Error:', error, errorDesc);
+      setTimeout(() => window.close(), 2000);
       return;
     }
 
     if (!code || !state) {
       console.error('[AuthCallback] Missing code or state');
+      setTimeout(() => window.close(), 2000);
       return;
     }
 
-    try {
-      // Write to localStorage so SDK opener can pick it up
-      // Key format: omenx_oauth_callback_${state}
-      const storageKey = `omenx_oauth_callback_${state}`;
-      const payload = {
-        code,
-        state,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(storageKey, JSON.stringify(payload));
-      console.log('[AuthCallback] ✓ Stored callback in localStorage, closing popup in 800ms');
-    } catch (e) {
-      console.error('[AuthCallback] localStorage failed:', e);
-      return;
-    }
-
-    // Close popup after storage flush
-    setTimeout(() => {
-      try {
-        window.close();
-      } catch (e) {
-        console.error('[AuthCallback] Could not close window:', e);
-      }
-    }, 3000);
+    // Exchange code for token
+    exchangeCodeForToken(code, state)
+      .then(() => {
+        console.log('[AuthCallback] ✓ Auth succeeded, closing popup');
+        setTimeout(() => window.close(), 1000);
+      })
+      .catch((err) => {
+        console.error('[AuthCallback] ❌ Token exchange failed:', err.message);
+        setTimeout(() => window.close(), 2000);
+      });
   }, []);
 
   return (
