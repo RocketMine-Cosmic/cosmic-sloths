@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { omenx } from '@/lib/omenx';
-import { base44 } from '@/api/base44Client';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
@@ -19,14 +18,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
-        // Check if authenticated on mount
-        if (omenx.isAuthenticated()) {
-            const data = omenx.getAuthData();
-            setAuthState(data);
-            onAuthChange?.(data);
-        }
-
-        // Listen for storage changes from SDK's onAuth callback
+        // Listen for auth changes from SDK's onAuth callback
         const handleStorageChange = (e) => {
             if (e.key === STORAGE_KEY) {
                 const newAuth = e.newValue ? JSON.parse(e.newValue) : null;
@@ -47,21 +39,19 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            // SDK handles popup internally - don't specify redirectUri
             await omenx.authenticate({ enablePKCE: true });
-            // onAuth callback fires automatically when complete
+            // SDK's onAuth callback will save auth and trigger storage event
         } catch (err) {
-            console.error('[OmenXAuthButton] Authentication failed:', err);
+            console.error('[OmenXAuthButton] Auth failed:', err);
             setLoading(false);
         }
     };
 
     const handleLogout = async () => {
         try {
+            await omenx.logout();
             localStorage.removeItem(STORAGE_KEY);
             setAuthState(null);
-            setSuccessMsg('');
-            await omenx.logout();
         } catch (e) {
             console.error('[OmenXAuthButton] Logout failed:', e);
         }
@@ -84,10 +74,11 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                         : 'bg-purple-900/20 hover:bg-purple-900/40 border-purple-500/60 hover:border-purple-400 text-purple-100 hover:text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]'
                 }`}
             >
-                {loading
-                    ? <span className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin inline-block" />
-                    : <span>{authData ? '⚡' : '🔗'}</span>
-                }
+                {loading ? (
+                    <span className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin inline-block" />
+                ) : (
+                    <span>{authData ? '⚡' : '🔗'}</span>
+                )}
                 {loading ? 'Connecting…' : authData ? 'OmenX — Logout' : 'Login with OmenX'}
             </button>
             {successMsg && (
