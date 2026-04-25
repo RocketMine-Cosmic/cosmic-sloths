@@ -17,7 +17,7 @@ export default function OmenXCallback() {
                 if (!code) {
                     setStatus('❌ No authorization code received');
                     console.error('[OmenXCallback] Missing code in URL:', window.location.href);
-                    setTimeout(() => window.close(), 5000);
+                    setTimeout(() => window.close(), 30000);
                     return;
                 }
 
@@ -155,7 +155,7 @@ export default function OmenXCallback() {
                     }
                 }
 
-                setStatus('✓ Login successful! Closing...');
+                setStatus('✓ Login successful! Closing in 30 seconds...');
                 console.log('[OmenXCallback] Notified opener via postMessage');
                 // Give postMessage time to reach opener before closing
                 setTimeout(() => {
@@ -164,7 +164,7 @@ export default function OmenXCallback() {
                     setTimeout(() => {
                         window.location.replace('/');
                     }, 500);
-                }, 1000);
+                }, 30000);
             } catch (err) {
                 const debugPayload = {
                     currentUrl: typeof window !== 'undefined' ? window.location.href : '',
