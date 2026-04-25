@@ -9,6 +9,8 @@ let pendingSync = false;
 let syncRetries = 0;
 const MAX_SYNC_RETRIES = 3;
 let cloudSyncComplete = false;
+let lastSyncAttempt = 0;
+const MIN_SYNC_INTERVAL = 60 * 1000; // At most once per minute
 
 export const SaveManager = {
   _walletAddress: null,
@@ -120,6 +122,11 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
+    // Rate-limit: at most once per minute
+    const now = Date.now();
+    if (now - lastSyncAttempt < MIN_SYNC_INTERVAL) return;
+    lastSyncAttempt = now;
+
     // Always re-read from localStorage first (most up-to-date, handles token refreshes)
     const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const walletAddress = omenxAuth?.walletAddress || SaveManager._walletAddress;
@@ -165,10 +172,11 @@ export const SaveManager = {
   },
 
   syncToBackendImmediate: async () => {
-    // Emergency sync for critical events (game end) — skip debounce
+    // Emergency sync for critical events (game end) — skip debounce and rate limit
     if (syncTimeout) clearTimeout(syncTimeout);
     pendingSync = false;
-    syncRetries = 0; // Reset retry count for critical syncs
+    syncRetries = 0;
+    lastSyncAttempt = 0; // Reset so the rate limit doesn't block critical syncs
     await SaveManager.syncToBackend();
   },
 
@@ -193,10 +201,7 @@ export const SaveManager = {
     const now = Date.now();
     const fiveMinAgo = now - (5 * 60 * 1000);
     
-    // If local is old and we're authenticated, re-sync in background (don't block load())
-    if (SaveManager._walletAddress && localMeta?.updated_at && localMeta.updated_at < fiveMinAgo) {
-      SaveManager.syncToBackend().catch(e => console.warn('[SaveManager] Background re-sync failed:', e.message));
-    }
+    // Background re-sync is now handled automatically by the save() debounce — no manual trigger needed here
 
     // Canonical UTC ISO week calculation — must match lib/periodIds.js exactly
     const { week_id: currentWeek, season_id: currentSeason } = (() => {
@@ -369,7 +374,7 @@ export const SaveManager = {
           SaveManager.syncToBackend();
           pendingSync = false;
         }
-      }, 10000); // Debounce to 10 seconds
+      }, 30000); // Debounce to 30 seconds
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);
     }
