@@ -40,9 +40,13 @@ export default function AuthGate({ children }) {
         try {
           const omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
           if (omenxAuth?.walletAddress) {
-            await base44.auth.updateMe({ omenx_wallet: omenxAuth.walletAddress });
-            hasWalletLinked = omenxAuth.walletAddress;
-            console.log('[AuthGate] Synced OmenX wallet to Base44');
+            const res = await base44.functions.invoke('syncOmenXWallet', { 
+              walletAddress: omenxAuth.walletAddress 
+            });
+            if (res.data?.success) {
+              hasWalletLinked = omenxAuth.walletAddress;
+              console.log('[AuthGate] Synced OmenX wallet to Base44');
+            }
           }
         } catch (e) {
           console.warn('[AuthGate] Failed to sync OmenX wallet:', e.message);
