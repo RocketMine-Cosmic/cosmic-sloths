@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { omenx, waitForSdkReady } from '@/lib/omenx';
+import { startOmenXAuth, omenx } from '@/lib/omenx';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
@@ -18,7 +18,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
-        // Listen for auth changes from SDK's onAuth callback
+        // Listen for storage changes (SDK's onAuth callback writes here)
         const handleStorageChange = (e) => {
             if (e.key === STORAGE_KEY) {
                 const newAuth = e.newValue ? JSON.parse(e.newValue) : null;
@@ -32,41 +32,19 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             }
         };
 
-        // Listen for OAuth callback from popup
-        const handleMessage = (e) => {
-            if (e.origin !== window.location.origin) return;
-            if (e.data?.type === 'omenx_oauth_callback') {
-                console.log('[OmenXAuthButton] OAuth callback received from popup');
-                // SDK's onAuth callback should fire and update localStorage
-                // Storage event listener above will handle it
-            }
-        };
-
         window.addEventListener('storage', handleStorageChange);
-        window.addEventListener('message', handleMessage);
         return () => {
             window.removeEventListener('storage', handleStorageChange);
-            window.removeEventListener('message', handleMessage);
         };
     }, [onAuthChange]);
 
     const handleLogin = async () => {
         setLoading(true);
         try {
-            console.log('[OmenXAuthButton] Ensuring SDK initialized...');
-            // Ensure SDK is fully initialized before authenticating
-            await omenx.init();
-            console.log('[OmenXAuthButton] Starting OAuth flow...');
-            // authenticate() opens a popup but doesn't wait for completion
-            // onAuth callback will store auth data in localStorage
-            omenx.authenticate({
-                redirectUri: `${window.location.origin}/auth/callback`,
-                enablePKCE: true,
-            });
-            console.log('[OmenXAuthButton] OAuth popup opened');
-            // Don't clear loading here—storage event listener will do it
+            await startOmenXAuth();
+            // Popup opens; SDK listens for localStorage update in opener
         } catch (err) {
-            console.error('[OmenXAuthButton] Auth failed:', err);
+            console.error('[OmenXAuthButton] Auth error:', err);
             setLoading(false);
         }
     };
