@@ -84,11 +84,7 @@ const MainApp = () => {
 
 function App() {
   useEffect(() => {
-    // Delay SDK init to let Base44 settle first
-    const timer = setTimeout(() => {
-      initializeSDK().catch(err => console.error('[OmenX SDK] init failed', err));
-    }, 500);
-    return () => clearTimeout(timer);
+    initializeSDK().catch(err => console.error('[OmenX SDK] init failed', err));
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)
     const onParentMessage = (event) => {
