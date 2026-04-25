@@ -59,4 +59,7 @@ export const initOmenX = async () => {
   }
 };
 
-export const getRedirectUri = () => `${getBaseUrl()}/auth/callback`;
+export const getRedirectUri = () => {
+  // Always use the production domain for OAuth redirect (must match OmenX dev portal)
+  return 'https://cosmic-sloths.com/auth/callback';
+};
