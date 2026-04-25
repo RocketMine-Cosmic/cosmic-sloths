@@ -109,10 +109,7 @@ async function fetchBalance(force = false) {
     isFetchingBalance = true;
     balanceFetchPromise = (async () => {
         try {
-            const res = await base44.functions.invoke('getPlayerBalance', {
-                walletAddress: auth.walletAddress,
-                accessToken: auth.accessToken,
-            });
+            const res = await base44.functions.invoke('getPlayerBalance', {});
             const balance = res.data?.balance ?? 0;
             lastBalanceFetch = Date.now();
             saveBalanceCache(balance);
@@ -145,10 +142,7 @@ async function fetchSessionData() {
 
     sessionFetchPromise = (async () => {
         try {
-            const res = await base44.functions.invoke('getPlayerData', {
-                walletAddress: auth.walletAddress,
-                accessToken: auth.accessToken,
-            });
+            const res = await base44.functions.invoke('getPlayerData', {});
             const sessionData = { vipLevel: res.data?.vipLevel ?? 0, nfts: res.data?.nfts ?? [] };
             saveSessionCache(sessionData);
             applySessionData(sessionData);
