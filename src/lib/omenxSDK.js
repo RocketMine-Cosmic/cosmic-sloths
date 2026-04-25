@@ -1,5 +1,17 @@
 // OmenX SDK Client Initialization
-import { OmenXGameSDK } from '@omen.foundation/game-sdk';
+let OmenXGameSDK = null;
+
+async function loadSDK() {
+  if (OmenXGameSDK) return OmenXGameSDK;
+  try {
+    const mod = await import('@omen.foundation/game-sdk');
+    OmenXGameSDK = mod.OmenXGameSDK;
+    return OmenXGameSDK;
+  } catch (err) {
+    console.error('[OmenX SDK] Failed to load SDK module:', err);
+    throw err;
+  }
+}
 
 let sdkInstance = null;
 
@@ -15,39 +27,41 @@ const REDIRECT_URI = (() => {
 export async function initializeSDK() {
   if (sdkInstance) return sdkInstance;
 
-  console.log('[OmenX SDK] Initializing with GAME_ID:', GAME_ID);
-  console.log('[OmenX SDK] Redirect URI:', REDIRECT_URI);
-
-  sdkInstance = new OmenXGameSDK({
-    gameId: GAME_ID,
-    onAuth: (authData) => {
-      console.log('[OmenX SDK] ✓ Authenticated:', authData.walletAddress);
-      localStorage.setItem('omenx_auth_data', JSON.stringify({
-        accessToken: authData.accessToken,
-        walletAddress: authData.walletAddress,
-        userId: authData.userId,
-        expiresAt: authData.expiresAt || Date.now() + 3600000,
-      }));
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'omenx_auth_data',
-        newValue: localStorage.getItem('omenx_auth_data'),
-        storageArea: localStorage,
-      }));
-    },
-    onAuthError: (error) => {
-      console.error('[OmenX SDK] Auth error:', error);
-    },
-  });
-
   try {
+    const SDK = await loadSDK();
+    
+    console.log('[OmenX SDK] Initializing with GAME_ID:', GAME_ID);
+    console.log('[OmenX SDK] Redirect URI:', REDIRECT_URI);
+
+    sdkInstance = new SDK({
+      gameId: GAME_ID,
+      onAuth: (authData) => {
+        console.log('[OmenX SDK] ✓ Authenticated:', authData.walletAddress);
+        localStorage.setItem('omenx_auth_data', JSON.stringify({
+          accessToken: authData.accessToken,
+          walletAddress: authData.walletAddress,
+          userId: authData.userId,
+          expiresAt: authData.expiresAt || Date.now() + 3600000,
+        }));
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'omenx_auth_data',
+          newValue: localStorage.getItem('omenx_auth_data'),
+          storageArea: localStorage,
+        }));
+      },
+      onAuthError: (error) => {
+        console.error('[OmenX SDK] Auth error:', error);
+      },
+    });
+
     await sdkInstance.init();
     console.log('[OmenX SDK] ✓ SDK initialized');
+    return sdkInstance;
   } catch (err) {
     console.error('[OmenX SDK] Init failed:', err);
+    sdkInstance = null;
     throw err;
   }
-
-  return sdkInstance;
 }
 
 export async function authenticateUser() {

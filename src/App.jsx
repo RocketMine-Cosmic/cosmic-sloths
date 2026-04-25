@@ -84,8 +84,11 @@ const MainApp = () => {
 
 function App() {
   useEffect(() => {
-    initializeSDK().catch(err => console.error('[OmenX SDK] init failed', err));
-    // CurrencyProvider subscription will handle centralized fetch
+    // Delay SDK init to let Base44 settle first
+    const timer = setTimeout(() => {
+      initializeSDK().catch(err => console.error('[OmenX SDK] init failed', err));
+    }, 500);
+    return () => clearTimeout(timer);
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)
     const onParentMessage = (event) => {
