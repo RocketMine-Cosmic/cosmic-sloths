@@ -40,36 +40,31 @@ export const omenx = new OmenXGameSDK({
 });
 
 let sdkReady = false;
+let initPromise = null;
 
 export const initOmenX = async () => {
   if (sdkReady) return Promise.resolve();
   
-  try {
-    console.log('[OmenX] Initializing SDK...');
-    await omenx.init();
-    console.log('[OmenX] SDK initialized successfully');
-    sdkReady = true;
-  } catch (err) {
-    console.error('[OmenX] SDK init failed:', err);
-    throw err;
-  }
-
-  // If embedded in an iframe (e.g. Omen website), request auth token from parent
-  if (window.self !== window.top) {
+  // Prevent multiple concurrent init attempts
+  if (initPromise) return initPromise;
+  
+  initPromise = (async () => {
     try {
-      window.parent.postMessage({ type: 'omenx_request_auth', gameId: 'cosmic-sloths' }, '*');
-      console.log('[OmenX] Requested auth from parent iframe');
-    } catch (e) {
-      console.error('[OmenX] Failed to request auth from parent', e);
+      console.log('[OmenX] Initializing SDK...');
+      await omenx.init();
+      console.log('[OmenX] SDK initialized successfully');
+      sdkReady = true;
+    } catch (err) {
+      console.error('[OmenX] SDK init failed:', err);
+      sdkReady = false;
+      initPromise = null;
+      throw err;
     }
-  }
+  })();
+  
+  return initPromise;
 };
 
 export const waitForSdkReady = async () => {
-  let attempts = 0;
-  while (!sdkReady && attempts < 50) {
-    await new Promise(r => setTimeout(r, 100));
-    attempts++;
-  }
-  if (!sdkReady) throw new Error('SDK failed to initialize');
+  await initOmenX();
 };

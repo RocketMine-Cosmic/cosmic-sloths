@@ -39,8 +39,9 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            console.log('[OmenXAuthButton] Waiting for SDK ready...');
-            await waitForSdkReady();
+            console.log('[OmenXAuthButton] Ensuring SDK initialized...');
+            // Ensure SDK is fully initialized before authenticating
+            await omenx.init();
             console.log('[OmenXAuthButton] Starting OAuth flow...');
             await omenx.authenticate({
                 redirectUri: `${window.location.origin}/auth/callback`,
