@@ -39,29 +39,35 @@ export default function AdminRefundOmenx({ walletAddress }) {
     };
 
     const handleRefund = async () => {
+        console.log('[AdminRefundOmenx] handleRefund called');
         setLoading(true);
         setError(null);
         const adminKey = sessionStorage.getItem('admin_key');
+        console.log('[AdminRefundOmenx] admin_key exists:', !!adminKey);
         if (!adminKey) {
             setError('Admin key not found in session. Please re-enter it.');
             setLoading(false);
             return;
         }
         try {
+            console.log('[AdminRefundOmenx] Invoking refundAllOmenx...');
             const res = await base44.functions.invoke('refundAllOmenx', {
                 adminKey,
                 confirm_refund: true,
             });
+            console.log('[AdminRefundOmenx] Response:', res);
             if (res.data?.error) {
+                console.log('[AdminRefundOmenx] Error from response:', res.data.error);
                 setError(res.data.error);
             } else {
+                console.log('[AdminRefundOmenx] Success:', res.data);
                 setResult(res.data);
                 setConfirmStep(false);
                 setPreview(null);
             }
         } catch (e) {
+            console.error('[AdminRefundOmenx] Caught error:', e);
             setError(e.message || 'Unknown error');
-            console.error('[AdminRefundOmenx] Error:', e);
         } finally {
             setLoading(false);
         }
