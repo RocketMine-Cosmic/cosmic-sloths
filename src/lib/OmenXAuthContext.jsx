@@ -24,7 +24,6 @@ export const OmenXAuthProvider = ({ children }) => {
         try {
           if (e.newValue) {
             const parsed = JSON.parse(e.newValue);
-            // Validate required fields exist before accepting
             if (parsed?.walletAddress) setAuthData(parsed);
             else setAuthData(null);
           } else {
@@ -35,8 +34,21 @@ export const OmenXAuthProvider = ({ children }) => {
         }
       }
     };
+
+    // Listen for postMessage from OAuth popup (same tab — storage event doesn't fire)
+    const onMessage = (event) => {
+      const { type, authData: msgAuthData } = event.data || {};
+      if ((type === 'omenx_auth' || type === 'omenx_auth_response') && msgAuthData?.walletAddress && msgAuthData?.accessToken) {
+        setAuthData(msgAuthData);
+      }
+    };
+
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('message', onMessage);
+    };
   }, []);
 
   return (
