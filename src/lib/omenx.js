@@ -1,6 +1,6 @@
 // Manual OAuth2 flow with PKCE (no SDK)
 
-const API_BASE = 'https://api.omen.foundation/v1/oauth';
+const API_BASE = 'https://api.omen.foundation';
 const GAME_ID = 'cosmic-sloths';
 
 // Get redirect URI (cached on preview to stay consistent across refreshes)
@@ -66,7 +66,7 @@ export async function startOmenXAuth() {
       code_challenge_method: 'S256',
     });
     
-    const authorizeUrl = `${API_BASE}/authorize?${params.toString()}`;
+    const authorizeUrl = `${API_BASE}/v1/oauth/authorize?${params.toString()}`;
     console.log('[OmenX] Opening authorize URL:', authorizeUrl);
     
     // Open popup
@@ -123,7 +123,7 @@ export async function exchangeCodeForToken(code, state) {
     if (!codeVerifier) throw new Error('No code verifier found');
     if (state !== savedState) throw new Error('State mismatch');
     
-    const response = await fetch(`${API_BASE}/token`, {
+    const response = await fetch(`${API_BASE}/v1/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -143,7 +143,7 @@ export async function exchangeCodeForToken(code, state) {
     console.log('[OmenX] ✓ Got access token');
     
     // Fetch user info
-    const userRes = await fetch(`${API_BASE}/user`, {
+    const userRes = await fetch(`${API_BASE}/v1/oauth/user`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     
