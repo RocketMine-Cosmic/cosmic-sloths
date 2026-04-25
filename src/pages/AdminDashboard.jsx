@@ -75,32 +75,61 @@ export default function AdminDashboard() {
         }
     };
 
+    const [adminKeyInput, setAdminKeyInput] = useState('');
+    const [adminKeyError, setAdminKeyError] = useState('');
+    
+    const handleDirectAdminKey = (e) => {
+        e?.preventDefault();
+        if (!adminKeyInput.trim()) {
+            setAdminKeyError('Admin key required');
+            return;
+        }
+        sessionStorage.setItem('admin_key', adminKeyInput);
+        setAdminWallet('admin_mode');
+        setAdminKeyError('');
+    };
+
     if (!adminWallet) {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const omenxWallet = authData?.walletAddress;
         return (
             <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans">
                 <SpaceBackground />
-                <form onSubmit={handleWalletSubmit} className="relative z-10 bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-4 w-full max-w-sm">
-                    <h1 className="text-xl font-black uppercase tracking-widest text-red-400">Admin Access</h1>
+                <div className="relative z-10 space-y-4 w-full max-w-sm">
                     {omenxWallet && (
-                        <button type="button"
-                            onClick={() => handleWalletSubmit(null, omenxWallet)}
-                            className="bg-red-900/40 hover:bg-red-900/70 border border-red-700/50 text-red-300 font-bold py-2.5 rounded-md transition-colors text-sm flex items-center justify-center gap-2">
-                            ⚡ Login as {omenxWallet.slice(0, 6)}...{omenxWallet.slice(-4)}
-                        </button>
+                        <form onSubmit={handleWalletSubmit} className="bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-4">
+                            <h1 className="text-xl font-black uppercase tracking-widest text-red-400">Admin Access (OmenX)</h1>
+                            <button type="button"
+                                onClick={() => handleWalletSubmit(null, omenxWallet)}
+                                className="bg-red-900/40 hover:bg-red-900/70 border border-red-700/50 text-red-300 font-bold py-2.5 rounded-md transition-colors text-sm flex items-center justify-center gap-2">
+                                ⚡ Login as {omenxWallet.slice(0, 6)}...{omenxWallet.slice(-4)}
+                            </button>
+                            <div className="text-center text-slate-600 text-xs">— or enter a different wallet —</div>
+                            <input
+                                type="text"
+                                placeholder="Enter wallet address"
+                                value={walletInput}
+                                onChange={e => setWalletInput(e.target.value)}
+                                className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500 font-mono text-xs"
+                            />
+                            {walletError && <div className="text-red-400 text-sm">{walletError}</div>}
+                            <button type="submit" className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-md transition-colors">Authenticate</button>
+                        </form>
                     )}
-                    {omenxWallet && <div className="text-center text-slate-600 text-xs">— or enter a different wallet —</div>}
-                    <input
-                        type="text"
-                        placeholder="Enter wallet address"
-                        value={walletInput}
-                        onChange={e => setWalletInput(e.target.value)}
-                        className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500 font-mono text-xs"
-                    />
-                    {walletError && <div className="text-red-400 text-sm">{walletError}</div>}
-                    <button type="submit" className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-md transition-colors">Authenticate</button>
-                </form>
+                    <form onSubmit={handleDirectAdminKey} className="bg-[#0b0416]/90 border border-yellow-900/50 rounded-xl p-8 flex flex-col gap-4">
+                        <h1 className="text-xl font-black uppercase tracking-widest text-yellow-400">Admin Access (Direct Key)</h1>
+                        <p className="text-xs text-slate-400">Skip OmenX login with admin key</p>
+                        <input
+                            type="password"
+                            placeholder="Admin key"
+                            value={adminKeyInput}
+                            onChange={e => setAdminKeyInput(e.target.value)}
+                            className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-yellow-500 font-mono text-xs"
+                        />
+                        {adminKeyError && <div className="text-red-400 text-sm">{adminKeyError}</div>}
+                        <button type="submit" className="bg-yellow-700 hover:bg-yellow-600 text-white font-bold py-2 rounded-md transition-colors">Access Admin Panel</button>
+                    </form>
+                </div>
             </div>
         );
     }
