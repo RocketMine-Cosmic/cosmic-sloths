@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { omenx } from '@/lib/omenx';
+import { omenx, getOmenXRedirectUri } from '@/lib/omenx';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { base44 } from '@/api/base44Client';
 
@@ -77,8 +77,9 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            console.log('[OmenXAuthButton] Calling omenx.authenticate...');
-            await omenx.authenticate({ redirectUri: 'https://cosmic-sloths.com/auth/callback' });
+            const redirectUri = getOmenXRedirectUri();
+            console.log('[OmenXAuthButton] Calling omenx.authenticate with redirectUri:', redirectUri);
+            await omenx.authenticate({ redirectUri });
             console.log('[OmenXAuthButton] authenticate() returned');
             // onAuth callback will fire and sync wallet to Base44
         } catch (err) {
