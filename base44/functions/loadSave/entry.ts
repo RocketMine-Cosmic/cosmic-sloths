@@ -37,8 +37,32 @@ Deno.serve(async (req) => {
             return Response.json({ saveData: null });
         }
 
-        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
-        const saveData = records.length > 0 ? records[0].save_data : null;
+        // Try to load by wallet (primary key)
+        let records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
+        let saveData = records.length > 0 ? records[0].save_data : null;
+
+        // Migration: if not found by wallet, try legacy lookup by user_id and migrate
+        if (!saveData && user.id) {
+            console.log('[loadSave] No save for wallet:', wallet, '- attempting legacy migration from user_id:', user.id);
+            const legacyRecords = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: user.id });
+            if (legacyRecords.length > 0) {
+                const legacyData = legacyRecords[0].save_data;
+                console.log('[loadSave] Found legacy save - migrating to wallet:', wallet);
+                
+                // Create new record with wallet_address
+                await base44.asServiceRole.entities.PlayerSave.create({
+                    wallet_address: wallet,
+                    save_data: legacyData,
+                    updated_at: Date.now()
+                });
+                
+                // Delete legacy record
+                await base44.asServiceRole.entities.PlayerSave.delete(legacyRecords[0].id);
+                
+                saveData = legacyData;
+                console.log('[loadSave] Migration complete for wallet:', wallet);
+            }
+        }
 
         console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData);
         return Response.json({ saveData });
