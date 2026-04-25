@@ -34,6 +34,7 @@ import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
 import { fetchPlayerData } from '@/lib/playerDataCache';
+import AuthGate from './components/AuthGate';
 
 
 const MainApp = () => {
@@ -89,9 +90,9 @@ const MainApp = () => {
     );
   }
 
-  // Render the main app
+  // Render the main app with auth gate
   return (
-    <>
+    <AuthGate>
     <Routes>
       <Route path="/" element={<PlayCarousel />} />
       <Route path="/hub" element={<Hub />} />
@@ -114,7 +115,7 @@ const MainApp = () => {
       <Route path="/sku-editor" element={<SkuEditor />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
-    </>
+    </AuthGate>
   );
 };
 

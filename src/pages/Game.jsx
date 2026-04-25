@@ -137,10 +137,8 @@ export default function Game() {
                         }
                     } catch (_) {}
 
-                    const omenxAuthForScore = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                     await base44.functions.invoke('saveScore', {
-                        scoreData, walletAddress, squadStats,
-                        accessToken: omenxAuthForScore?.accessToken || null,
+                        scoreData, squadStats,
                     });
             } catch (e) {
                 console.error('[saveScore] FAILED:', e?.message || e);
