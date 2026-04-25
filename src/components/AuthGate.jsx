@@ -4,20 +4,32 @@ import { Loader2 } from 'lucide-react';
 
 export default function AuthGate({ children }) {
   const [ready, setReady] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    checkWallet();
+    checkAuth();
   }, []);
 
-  const checkWallet = async () => {
+  const checkAuth = async () => {
     try {
-      const user = await base44.auth.me();
-      if (!user?.data?.omenx_wallet) {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
         base44.auth.redirectToLogin();
         return;
       }
+      
+      const user = await base44.auth.me();
+      if (!user?.data?.omenx_wallet) {
+        // User is authenticated but no wallet — let them proceed, wallet can be linked later
+        setIsAuthenticated(true);
+        setReady(true);
+        return;
+      }
+      
+      setIsAuthenticated(true);
       setReady(true);
-    } catch {
+    } catch (err) {
+      console.error('[AuthGate] Check failed:', err);
       base44.auth.redirectToLogin();
     }
   };
