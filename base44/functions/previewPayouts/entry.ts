@@ -79,11 +79,15 @@ Deno.serve(async (req) => {
 
         if (period_type === 'weekly') {
             rewardPool = Math.floor(pool.total_spent * 0.25);
-            const scores = await db.entities.RunScore.filter({ week_id: period_id }, '-score', 300);
+            const allScores = await db.entities.RunScore.filter({ week_id: period_id }, '-score', 300);
+            // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+            const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
         } else if (period_type === 'seasonal') {
             rewardPool = Math.floor(pool.total_spent * 0.35);
-            const scores = await db.entities.RunScore.filter({ season_id: period_id }, '-score', 400);
+            const allScores = await db.entities.RunScore.filter({ season_id: period_id }, '-score', 400);
+            // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+            const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });

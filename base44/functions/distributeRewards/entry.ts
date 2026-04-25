@@ -155,7 +155,9 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
      const adminWallets = await db.entities.AdminWallet.list();
      const STAFF_PCT_PER_WALLET = 0.02;
      const rewardPool = Math.floor(pool.total_spent * 0.25);
-     const scores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 10000);
+     const allScores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 10000);
+     // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+     const scores = allScores.filter(s => s.arena_id !== 'endless');
      const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, scores.length);
     const staffPayments = adminWallets
         .filter(a => a.wallet_address)
@@ -188,7 +190,9 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
          return { paid: 0, skipped: 'zero spend' };
      }
      const rewardPool = Math.floor(pool.total_spent * 0.35);
-     const scores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 10000);
+     const allScores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 10000);
+     // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+     const scores = allScores.filter(s => s.arena_id !== 'endless');
      const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, scores.length);
     if (payments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
