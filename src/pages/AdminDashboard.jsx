@@ -25,6 +25,7 @@ import AdminDataWipe from '../components/admin/AdminDataWipe';
 import AdminBlacklist from '../components/admin/AdminBlacklist';
 import AdminRefundOmenx from '../components/admin/AdminRefundOmenx';
 import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
+import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
 
 const TABS = [
     { id: 'overview',    label: 'Overview',    icon: BarChart3 },
@@ -45,6 +46,7 @@ const TABS = [
     { id: 'backups',     label: '💾 Backups', icon: Database },
     { id: 'blacklist',   label: '🚫 Blacklist', icon: AlertTriangle },
     { id: 'wipe',        label: '🗑️ Wipe Data', icon: AlertTriangle },
+    { id: 'backfill',    label: '🔄 Backfill Wallets', icon: AlertTriangle },
     { id: 'refund',      label: '💸 Refund OMENX', icon: AlertTriangle },
     { id: 'reset',       label: '🔄 FULL RESET', icon: AlertTriangle },
 ];
@@ -158,6 +160,7 @@ export default function AdminDashboard() {
         backups: <AdminDataBackup walletAddress={adminWallet} />,
         blacklist: <AdminBlacklist />,
         wipe: <AdminDataWipe walletAddress={adminWallet} />,
+        backfill: <AdminTokenSpendLogBackfill />,
         refund: <AdminRefundOmenx walletAddress={adminWallet} />,
         reset: <AdminMaintenanceReset walletAddress={adminWallet} />,
     };
