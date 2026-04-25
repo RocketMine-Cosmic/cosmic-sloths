@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
+import OmenXAuthButton from './game/OmenXAuthButton';
+import SpaceBackground from './game/SpaceBackground';
 
 export default function AuthGate({ children }) {
   const [ready, setReady] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasWallet, setHasWallet] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -20,13 +22,12 @@ export default function AuthGate({ children }) {
       
       const user = await base44.auth.me();
       if (!user?.data?.omenx_wallet) {
-        // User is authenticated but no wallet — let them proceed, wallet can be linked later
-        setIsAuthenticated(true);
+        setHasWallet(false);
         setReady(true);
         return;
       }
       
-      setIsAuthenticated(true);
+      setHasWallet(true);
       setReady(true);
     } catch (err) {
       console.error('[AuthGate] Check failed:', err);
@@ -38,6 +39,21 @@ export default function AuthGate({ children }) {
     return (
       <div className="min-h-screen relative flex items-center justify-center bg-slate-950">
         <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!hasWallet) {
+    return (
+      <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans">
+        <SpaceBackground />
+        <div className="relative z-10 bg-[#0b0416]/95 border border-cyan-500/50 rounded-2xl p-8 md:p-12 max-w-md w-full mx-4 shadow-2xl text-center">
+          <h1 className="text-3xl font-black uppercase tracking-widest mb-2" style={{ color: '#06b6d4', textShadow: '0 0 20px rgba(6,182,212,0.5)' }}>
+            Link Your Wallet
+          </h1>
+          <p className="text-slate-400 text-base mb-6">Connect your OmenX wallet to play Cosmic Sloths.</p>
+          <OmenXAuthButton onSuccess={() => { setHasWallet(true); checkAuth(); }} />
+        </div>
       </div>
     );
   }
