@@ -61,11 +61,27 @@ export const initOmenX = async () => {
 
 export const startOmenXAuth = async () => {
   await initOmenX();
-  console.log('[OmenX] Starting OAuth flow to:', REDIRECT_URI);
-  await omenx.authenticate({
-    redirectUri: REDIRECT_URI,
-    enablePKCE: true,
-  });
+  console.log('[OmenX] Starting OAuth flow');
+  console.log('[OmenX] Redirect URI:', REDIRECT_URI);
+  console.log('[OmenX] Game ID: cosmic-sloths');
+  
+  try {
+    await omenx.authenticate({
+      redirectUri: REDIRECT_URI,
+      enablePKCE: true,
+    });
+  } catch (err) {
+    const msg = err?.message || String(err);
+    console.error('[OmenX] Auth failed:', msg);
+    
+    if (msg.includes('CORS') || msg.includes('Failed to fetch')) {
+      console.error('[OmenX] CORS/Network issue — verify redirect URI is registered in OMENX Developer Portal');
+    }
+    if (msg.includes('401') || msg.includes('Unauthorized')) {
+      console.error('[OmenX] Auth 401 — check game ID and credentials');
+    }
+    throw err;
+  }
 };
 
 export const waitForSdkReady = async () => {
