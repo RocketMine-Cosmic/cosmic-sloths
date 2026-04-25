@@ -43,11 +43,14 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             // Ensure SDK is fully initialized before authenticating
             await omenx.init();
             console.log('[OmenXAuthButton] Starting OAuth flow...');
-            await omenx.authenticate({
+            // authenticate() opens a popup but doesn't wait for completion
+            // onAuth callback will store auth data in localStorage
+            omenx.authenticate({
                 redirectUri: `${window.location.origin}/auth/callback`,
                 enablePKCE: true,
             });
-            console.log('[OmenXAuthButton] OAuth window opened, waiting for callback...');
+            console.log('[OmenXAuthButton] OAuth popup opened');
+            // Don't clear loading here—storage event listener will do it
         } catch (err) {
             console.error('[OmenXAuthButton] Auth failed:', err);
             setLoading(false);
