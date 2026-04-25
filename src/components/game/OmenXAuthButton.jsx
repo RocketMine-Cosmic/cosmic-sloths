@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { omenx, getRedirectUri } from '@/lib/omenx';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
+import { base44 } from '@/api/base44Client';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
@@ -43,13 +44,22 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             onAuthChange?.(stored);
         };
 
-        const onMessage = (event) => {
+        const onMessage = async (event) => {
             if (event.data?.type === 'omenx_auth' && event.data?.authData) {
                 const authData = event.data.authData;
                 // Validate before accepting from postMessage
                 if (authData?.walletAddress && authData?.accessToken) {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
                     applyAuthData(authData);
+                    
+                    // Sync wallet to Base44 user entity
+                    try {
+                        await base44.auth.updateMe({
+                            omenx_wallet: authData.walletAddress
+                        });
+                    } catch (e) {
+                        console.warn('[OmenXAuthButton] Failed to sync wallet to Base44:', e.message);
+                    }
                 }
             }
         };
