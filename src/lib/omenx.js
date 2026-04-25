@@ -5,9 +5,9 @@ const REDIRECT_URI = `${typeof window !== 'undefined' ? window.location.origin :
 
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
-  apiBaseUrl: 'https://app.omen.foundation',
-  oauthAuthorizeUrl: 'https://app.omen.foundation/v1/oauth/authorize',
-  oauthTokenUrl: 'https://app.omen.foundation/v1/oauth/token',
+  apiBaseUrl: 'https://api.omen.foundation',
+  oauthAuthorizeUrl: 'https://api.omen.foundation/v1/oauth/authorize',
+  oauthTokenUrl: 'https://api.omen.foundation/v1/oauth/token',
   enableIframeAuth: false, // Standalone Base44 game, not embedded
   onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth callback:', authData.walletAddress);
