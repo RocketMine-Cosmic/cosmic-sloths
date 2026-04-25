@@ -16,7 +16,8 @@ export default function OmenXCallback() {
 
                 if (!code) {
                     setStatus('❌ No authorization code received');
-                    setTimeout(() => window.close(), 2000);
+                    // DEBUG: auto-close disabled
+                    // setTimeout(() => window.close(), 2000);
                     return;
                 }
 
@@ -154,15 +155,13 @@ export default function OmenXCallback() {
                     }
                 }
 
-                setStatus('✓ Login successful!');
-                // Always try to close — works when opened as popup
-                // If this was a direct navigation, window.close() will fail silently
-                // and we fall back to redirect after a short delay
-                window.close();
-                // Fallback: if still open after 1.5s, we're in direct navigation mode
-                setTimeout(() => {
-                    window.location.replace('/');
-                }, 1500);
+                setStatus('✓ Login successful! (popup auto-close disabled for debugging)');
+                // DEBUG: auto-close disabled so console errors can be inspected.
+                // Restore by un-commenting window.close() and the redirect fallback.
+                // window.close();
+                // setTimeout(() => {
+                //     window.location.replace('/');
+                // }, 1500);
             } catch (err) {
                 const debugPayload = {
                     currentUrl: typeof window !== 'undefined' ? window.location.href : '',
