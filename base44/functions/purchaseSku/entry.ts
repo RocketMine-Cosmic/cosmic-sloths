@@ -1,7 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
-// Pricing: server-side via OmenX dev portal SKU config — we don't send paymentAmount.
+// Pricing: server-side via OmenX dev portal. We cache the SKU→price map in memory
+// across invocations so we only hit /v1/skus once per cold start.
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -14,6 +15,34 @@ function getCurrentPeriodIds() {
     const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
     const season_id = `${year}-S${seasonNum}`;
     return { week_id, season_id };
+}
+
+// In-memory SKU price cache (refreshed every 10 minutes per worker)
+let skuPriceCache = null;
+let skuPriceCacheExpiresAt = 0;
+const SKU_CACHE_TTL = 10 * 60 * 1000;
+
+async function getSkuPrice(skuId, apiBaseUrl, apiKey) {
+    const now = Date.now();
+    if (!skuPriceCache || now >= skuPriceCacheExpiresAt) {
+        const res = await fetch(`${apiBaseUrl}/v1/skus`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+        });
+        if (!res.ok) throw new Error(`Failed to fetch SKU catalog: HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data?.skus || data?.items || []);
+        skuPriceCache = {};
+        for (const sku of list) {
+            const id = sku.skuId || sku.id;
+            const price = parseFloat(
+                sku.priceInOmenx ?? sku.price ?? sku.pricesInCurrency?.OMENX ?? 0
+            );
+            if (id && price > 0) skuPriceCache[id] = price;
+        }
+        skuPriceCacheExpiresAt = now + SKU_CACHE_TTL;
+        console.log(`[purchaseSku] SKU price cache refreshed (${Object.keys(skuPriceCache).length} entries)`);
+    }
+    return skuPriceCache[skuId] || 0;
 }
 
 Deno.serve(async (req) => {
@@ -58,30 +87,19 @@ Deno.serve(async (req) => {
         }
 
         const purchaseData = await purchaseRes.json().catch(() => ({}));
-        if (!purchaseRes.ok) {
+        if (!purchaseRes.ok || purchaseData?.status !== 'confirmed') {
             const errMsg = purchaseData?.error || purchaseData?.message || `HTTP ${purchaseRes.status}`;
-            console.error('[purchaseSku] Purchase failed:', errMsg);
-            return Response.json({ error: errMsg }, { status: purchaseRes.status });
+            console.error('[purchaseSku] Purchase failed:', errMsg, purchaseData);
+            return Response.json({ error: errMsg }, { status: purchaseRes.status || 500 });
         }
 
-        // Log full response shape so we know which field carries the amount
-        console.log('[purchaseSku] OmenX response:', JSON.stringify(purchaseData));
-
-        // Server returns the actual amount charged — try common field names
-        const totalAmount = parseFloat(
-            purchaseData?.paymentAmount ??
-            purchaseData?.amount ??
-            purchaseData?.totalAmount ??
-            purchaseData?.priceInOmenx ??
-            purchaseData?.price ??
-            purchaseData?.purchase?.paymentAmount ??
-            purchaseData?.purchase?.amount ??
-            0
-        );
-        if (!totalAmount || totalAmount <= 0) {
-            console.error('[purchaseSku] Could not find amount in response:', purchaseData);
-            return Response.json({ error: 'Invalid amount returned from payment processor', debug: purchaseData }, { status: 500 });
+        // Look up the price from cached SKU catalog (server-truth, set in dev portal)
+        const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKey);
+        if (!unitPrice || unitPrice <= 0) {
+            console.error('[purchaseSku] Unknown SKU price for:', skuId);
+            return Response.json({ error: 'SKU price not configured' }, { status: 500 });
         }
+        const totalAmount = unitPrice * quantity;
 
         const { week_id, season_id } = getCurrentPeriodIds();
 
