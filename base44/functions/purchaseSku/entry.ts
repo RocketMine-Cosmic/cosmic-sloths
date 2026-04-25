@@ -64,11 +64,23 @@ Deno.serve(async (req) => {
             return Response.json({ error: errMsg }, { status: purchaseRes.status });
         }
 
-        // Server returns the actual amount charged — use that for our logs
-        const totalAmount = parseFloat(purchaseData?.paymentAmount ?? purchaseData?.amount ?? 0);
+        // Log full response shape so we know which field carries the amount
+        console.log('[purchaseSku] OmenX response:', JSON.stringify(purchaseData));
+
+        // Server returns the actual amount charged — try common field names
+        const totalAmount = parseFloat(
+            purchaseData?.paymentAmount ??
+            purchaseData?.amount ??
+            purchaseData?.totalAmount ??
+            purchaseData?.priceInOmenx ??
+            purchaseData?.price ??
+            purchaseData?.purchase?.paymentAmount ??
+            purchaseData?.purchase?.amount ??
+            0
+        );
         if (!totalAmount || totalAmount <= 0) {
-            console.error('[purchaseSku] Server returned zero amount:', purchaseData);
-            return Response.json({ error: 'Invalid amount returned from payment processor' }, { status: 500 });
+            console.error('[purchaseSku] Could not find amount in response:', purchaseData);
+            return Response.json({ error: 'Invalid amount returned from payment processor', debug: purchaseData }, { status: 500 });
         }
 
         const { week_id, season_id } = getCurrentPeriodIds();
