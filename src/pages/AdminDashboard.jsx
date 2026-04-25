@@ -52,7 +52,9 @@ const TABS = [
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const [adminWallet, setAdminWallet] = useState(() => sessionStorage.getItem('admin_wallet') || '');
+    const [adminSecret, setAdminSecret] = useState(() => sessionStorage.getItem('admin_secret') || '');
     const [walletInput, setWalletInput] = useState('');
+    const [secretInput, setSecretInput] = useState('');
     const [walletError, setWalletError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
 
@@ -69,6 +71,10 @@ export default function AdminDashboard() {
             if (res.data?.error === 'Forbidden') throw new Error('Forbidden');
             setAdminWallet(wallet);
             sessionStorage.setItem('admin_wallet', wallet);
+            if (secretInput) {
+                setAdminSecret(secretInput);
+                sessionStorage.setItem('admin_secret', secretInput);
+            }
             setWalletError('');
         } catch {
             setWalletError('Wallet not authorized as admin');
@@ -98,6 +104,13 @@ export default function AdminDashboard() {
                         onChange={e => setWalletInput(e.target.value)}
                         className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500 font-mono text-xs"
                     />
+                    <input
+                        type="password"
+                        placeholder="Admin secret (for save editing)"
+                        value={secretInput}
+                        onChange={e => setSecretInput(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500 font-mono text-xs"
+                    />
                     {walletError && <div className="text-red-400 text-sm">{walletError}</div>}
                     <button type="submit" className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-md transition-colors">Authenticate</button>
                 </form>
@@ -109,7 +122,7 @@ export default function AdminDashboard() {
         overview: <AdminOverview walletAddress={adminWallet} />,
         health: <AdminHealthCheck walletAddress={adminWallet} />,
         leaderboard: <AdminLeaderboard walletAddress={adminWallet} />,
-        players: <AdminPlayers walletAddress={adminWallet} />,
+        players: <AdminPlayers walletAddress={adminWallet} adminSecret={adminSecret} />,
         squads: <AdminSquads walletAddress={adminWallet} />,
         raid: <AdminRaid walletAddress={adminWallet} />,
         economy: <AdminEconomy walletAddress={adminWallet} />,
@@ -150,7 +163,7 @@ export default function AdminDashboard() {
                         </h1>
                     </div>
                     <button
-                        onClick={() => { sessionStorage.removeItem('admin_wallet'); setAdminWallet(''); }}
+                        onClick={() => { sessionStorage.removeItem('admin_wallet'); sessionStorage.removeItem('admin_secret'); setAdminWallet(''); setAdminSecret(''); }}
                         className="text-xs text-red-400 hover:text-red-300 border border-red-900/50 px-2 py-1 rounded transition-colors"
                     >
                         Logout

@@ -4,7 +4,7 @@ import { Search, User } from 'lucide-react';
 import moment from 'moment';
 import PlayerSaveEditor from './PlayerSaveEditor';
 
-export default function AdminPlayers({ walletAddress }) {
+export default function AdminPlayers({ walletAddress, adminSecret }) {
     const [search, setSearch] = useState('');
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -89,6 +89,7 @@ export default function AdminPlayers({ walletAddress }) {
                         <div className="bg-slate-900/60 border border-cyan-700/50 rounded-xl p-4">
                             <PlayerSaveEditor
                                 player={selected}
+                                adminSecret={adminSecret}
                                 onClose={() => setSelected(null)}
                                 onSaved={(updated) => {
                                     setSelected(updated);

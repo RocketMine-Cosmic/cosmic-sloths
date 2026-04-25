@@ -1,40 +1,26 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const { saveId, patch, accessToken } = await req.json();
+        const { saveId, patch, adminSecret } = await req.json();
 
         if (!saveId) return Response.json({ error: 'saveId required' }, { status: 400 });
         if (!patch || typeof patch !== 'object') return Response.json({ error: 'patch object required' }, { status: 400 });
 
-        // Auth: accept either a valid Base44 admin session OR the admin secret
-        const adminSecret = Deno.env.get('AdminDash');
-        let authorized = false;
-
-        if (accessToken && adminSecret && accessToken === adminSecret) {
-            authorized = true;
-        }
-
-        if (!authorized) {
-            // Fall back to Base44 user role check
-            try {
-                const user = await base44.auth.me();
-                if (user?.role === 'admin') authorized = true;
-            } catch (_) {}
-        }
-
-        if (!authorized) {
+        const expectedSecret = Deno.env.get('AdminDash');
+        if (!adminSecret || adminSecret !== expectedSecret) {
             return Response.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        const existing = await base44.asServiceRole.entities.PlayerSave.get(saveId);
+        const existing = await db.entities.PlayerSave.get(saveId);
         if (!existing) return Response.json({ error: 'Save not found' }, { status: 404 });
 
         const currentSave = existing.save_data || {};
         const newSaveData = deepMerge(currentSave, patch);
 
-        const updated = await base44.asServiceRole.entities.PlayerSave.update(saveId, {
+        const updated = await db.entities.PlayerSave.update(saveId, {
             save_data: newSaveData,
             updated_at: Date.now(),
         });

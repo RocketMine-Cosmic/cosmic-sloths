@@ -152,7 +152,7 @@ function ToggleChip({ label, active, onClick }) {
     );
 }
 
-export default function PlayerSaveEditor({ player, onSaved, onClose }) {
+export default function PlayerSaveEditor({ player, onSaved, onClose, adminSecret }) {
     const save = player.save_data || {};
     const [draft, setDraft] = useState({ ...save });
     const [saving, setSaving] = useState(false);
@@ -187,7 +187,7 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
         setResetting(true);
         try {
             const defaultSave = { gold: 0, relicFragments: 0, unlockedCharacters: ['neobyte', 'pandypaws', 'novabyte'], unlockedArenasByCharacter: {}, totalKills: 0, totalRuns: 0, seasonalPoints: 0, pilotName: draft.pilotName || '', hasSetProfileName: !!draft.pilotName };
-            await base44.functions.invoke('adminPatchSave', { saveId: player.id, patch: defaultSave });
+            await base44.functions.invoke('adminPatchSave', { saveId: player.id, patch: defaultSave, adminSecret });
             await base44.entities.AdminChangesLog.create({
                 wallet_address: authData?.walletAddress || 'admin',
                 action_type: 'player_action',
@@ -237,6 +237,7 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
             await base44.functions.invoke('adminPatchSave', {
                 saveId: player.id,
                 patch: draft,
+                adminSecret,
             });
             setMsg('✓ Saved successfully');
             onSaved({ ...player, save_data: draft });
