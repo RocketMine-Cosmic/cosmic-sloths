@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
             authenticatedWallet = cached.walletAddress;
         } else {
             const verifyResult = await sdk.verifyOAuthUser(accessToken);
-            if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            if (!verifyResult.success) return Response.json({ vipLevel: 0, nfts: [] });
             authenticatedWallet = verifyResult.user.walletAddress;
             verifyCache.set(accessToken, { walletAddress: authenticatedWallet, expiresAt: now + VERIFY_TTL });
             if (verifyCache.size > 500) {

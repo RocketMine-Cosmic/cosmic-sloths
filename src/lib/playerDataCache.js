@@ -118,6 +118,8 @@ async function fetchBalance(force = false) {
             saveBalanceCache(balance);
             applyBalance(balance);
         } catch {
+            // On failure, set lastBalanceFetch so we don't immediately retry
+            lastBalanceFetch = Date.now();
             applyBalance(persistedBalance?.balance ?? 0);
         } finally {
             balanceFetchPromise = null;
