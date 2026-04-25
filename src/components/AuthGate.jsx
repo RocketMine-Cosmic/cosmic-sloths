@@ -33,7 +33,23 @@ export default function AuthGate({ children }) {
       }
       
       const user = await base44.auth.me();
-      if (!user?.data?.omenx_wallet) {
+      let hasWalletLinked = user?.data?.omenx_wallet;
+      
+      // If no wallet linked yet but OmenX auth exists in localStorage, sync it now
+      if (!hasWalletLinked) {
+        try {
+          const omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+          if (omenxAuth?.walletAddress) {
+            await base44.auth.updateMe({ omenx_wallet: omenxAuth.walletAddress });
+            hasWalletLinked = omenxAuth.walletAddress;
+            console.log('[AuthGate] Synced OmenX wallet to Base44');
+          }
+        } catch (e) {
+          console.warn('[AuthGate] Failed to sync OmenX wallet:', e.message);
+        }
+      }
+      
+      if (!hasWalletLinked) {
         console.log('[AuthGate] Authenticated but no OmenX wallet linked');
         setHasWallet(false);
         setReady(true);

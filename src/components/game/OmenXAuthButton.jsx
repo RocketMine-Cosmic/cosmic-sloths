@@ -52,16 +52,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
                     applyAuthData(authData);
                     
-                    // Sync wallet to Base44 user entity
-                    try {
-                        await base44.auth.updateMe({
-                            omenx_wallet: authData.walletAddress
-                        });
-                        // Dispatch event so AuthGate knows to re-check
-                        window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
-                    } catch (e) {
-                        console.warn('[OmenXAuthButton] Failed to sync wallet to Base44:', e.message);
-                    }
+                    // Wallet is now in localStorage, AuthGate will sync it after Base44 auth completes
                 }
             }
         };

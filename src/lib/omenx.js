@@ -1,5 +1,4 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
-import { base44 } from '@/api/base44Client';
 
 const getBaseUrl = () => {
   if (typeof window === 'undefined') return '';
@@ -11,34 +10,17 @@ export const omenx = new OmenXGameSDK({
   apiBaseUrl: 'https://api.omen.foundation',
   oauthAuthorizeUrl: 'https://api.omen.foundation/v1/oauth/authorize',
   enableIframeAuth: true,
-  onAuth: async (authData) => {
+  onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {
       localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
-      
-      // Sync wallet to Base44 user entity only if user is authenticated with Base44
-      if (authData?.walletAddress) {
-        try {
-          const isAuthenticated = await base44.auth.isAuthenticated();
-          if (!isAuthenticated) {
-            console.warn('[OmenX] User not authenticated with Base44, skipping wallet sync');
-            window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
-            return;
-          }
-          
-          await base44.auth.updateMe({
-            omenx_wallet: authData.walletAddress
-          });
-          console.log('[OmenX] ✓ Wallet synced to Base44');
-          window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
-        } catch (syncErr) {
-          console.error('[OmenX] Wallet sync to Base44 failed:', syncErr.message);
-          window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
-        }
-      }
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'omenx_auth_data',
+        newValue: JSON.stringify(authData),
+        storageArea: localStorage,
+      }));
     } catch (e) {
       console.error('[OmenX] Failed to store auth data', e);
-      window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
     }
   },
   onAuthError: (err) => {
