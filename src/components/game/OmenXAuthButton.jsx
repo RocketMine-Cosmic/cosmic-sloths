@@ -39,8 +39,10 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            await omenx.authenticate({ enablePKCE: true });
-            // SDK's onAuth callback will save auth and trigger storage event
+            console.log('[OmenXAuthButton] Starting authentication...');
+            console.log('[OmenXAuthButton] SDK isAuthenticated:', omenx.isAuthenticated());
+            const result = await omenx.authenticate({ enablePKCE: true });
+            console.log('[OmenXAuthButton] Auth result:', result);
         } catch (err) {
             console.error('[OmenXAuthButton] Auth failed:', err);
             setLoading(false);

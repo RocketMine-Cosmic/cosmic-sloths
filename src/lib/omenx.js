@@ -41,9 +41,11 @@ export const omenx = new OmenXGameSDK({
 
 export const initOmenX = async () => {
   try {
+    console.log('[OmenX] Initializing SDK...');
     await omenx.init();
+    console.log('[OmenX] SDK initialized successfully');
   } catch (err) {
-    // Silently fail - expected in some environments
+    console.error('[OmenX] SDK init failed:', err);
   }
 
   // If embedded in an iframe (e.g. Omen website), request auth token from parent
