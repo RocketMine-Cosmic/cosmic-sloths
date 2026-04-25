@@ -243,14 +243,13 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 setGameOverStats(stats);
-                // Save score first, then persist local save
+                // Save score first, then persist local save and sync
                 saveScore(stats, false).then(() => {
                     SaveManager.save(currentSave);
-                    SaveManager.syncToBackendImmediate();
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
-                    // Still save locally even if remote fails
                     SaveManager.save(currentSave);
+                }).finally(() => {
                     SaveManager.syncToBackendImmediate();
                 });
                 
@@ -310,14 +309,13 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 setVictoryStats(stats);
-                // Save score first, then persist local save
+                // Save score first, then persist local save and sync
                 saveScore(stats, true).then(() => {
                     SaveManager.save(currentSave);
-                    SaveManager.syncToBackendImmediate();
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
-                    // Still save locally even if remote fails
                     SaveManager.save(currentSave);
+                }).finally(() => {
                     SaveManager.syncToBackendImmediate();
                 });
                 

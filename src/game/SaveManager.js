@@ -342,12 +342,13 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
-      // Sync immediately if authenticated
-      if (SaveManager._walletAddress && SaveManager._accessToken) {
-        SaveManager.syncToBackend();
-      }
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);
     }
+  },
+
+  syncToBackendImmediate: async () => {
+    // Called at game end or critical moments
+    await SaveManager.syncToBackend();
   }
 };
