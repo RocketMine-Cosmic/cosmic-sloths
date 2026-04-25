@@ -1,7 +1,6 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-
-const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
 const VERIFY_CACHE_TTL = 60 * 60 * 1000;
@@ -35,7 +34,9 @@ function getCurrentPeriodIds() {
 
 Deno.serve(async (req) => {
     try {
-        const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = await req.json();
+        const body = await req.json();
+        const { scoreData, walletAddress: clientWallet, squadStats, accessToken } = body;
+        const db = createClientFromRequest(req).asServiceRole;
 
         if (!scoreData || !clientWallet || !accessToken) {
             return Response.json({ error: 'scoreData, walletAddress, and accessToken required' }, { status: 400 });

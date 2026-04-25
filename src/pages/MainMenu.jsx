@@ -9,10 +9,35 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 
 
+function getOmenXAuth() {
+    try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
+}
+
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
     const navigate = useNavigate();
     const { omenxUser } = useCurrency();
     const [showSettings, setShowSettings] = useState(false);
+    const [omenxAuth, setOmenxAuth] = useState(getOmenXAuth);
+
+    useEffect(() => {
+        const onMessage = (event) => {
+            const { type, authData } = event.data || {};
+            if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.walletAddress) {
+                setOmenxAuth(authData);
+            }
+        };
+        const onStorage = (e) => {
+            if (e.key === 'omenx_auth_data') {
+                setOmenxAuth(e.newValue ? JSON.parse(e.newValue) : null);
+            }
+        };
+        window.addEventListener('message', onMessage);
+        window.addEventListener('storage', onStorage);
+        return () => {
+            window.removeEventListener('message', onMessage);
+            window.removeEventListener('storage', onStorage);
+        };
+    }, []);
 
 
 
@@ -80,7 +105,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                     </button>
                 )}
                 <div className="col-span-2 w-full flex justify-center rounded-b-2xl overflow-hidden">
-                    <OmenXAuthButton fullWidth />
+                    <OmenXAuthButton fullWidth onAuthChange={(data) => setOmenxAuth(data)} />
                 </div>
             </motion.div>
             
