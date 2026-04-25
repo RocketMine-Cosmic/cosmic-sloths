@@ -59,7 +59,10 @@ Deno.serve(async (req) => {
         }));
 
         const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
-        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrl.startsWith('http')) {
+            apiBaseUrl = `https://${apiBaseUrl}`;
+        }
 
         // Issue batch refunds via OmenX API
         const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
