@@ -93,7 +93,35 @@ const MainApp = () => {
     );
   }
 
-  // Render the main app with auth + maintenance gates
+  // Render the main app with auth + maintenance gates (skip in preview)
+  if (isPreview) {
+    return (
+      <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/" element={<PlayCarousel />} />
+        <Route path="/hub" element={<Hub />} />
+        <Route path="/upgrades" element={<Upgrades />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/game" element={<Game />} />
+        <Route path="/info" element={<Info />} />
+        <Route path="/credits" element={<Credits />} />
+        <Route path="/achievements" element={<Achievements />} />
+        <Route path="/squads" element={<Squads />} />
+        <Route path="/bestiary" element={<Bestiary />} />
+        <Route path="/synergy-codex" element={<SynergyCodex />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/nft-dashboard" element={<NFTDashboard />} />
+        <Route path="/trials" element={<LeviathanTrials />} />
+        <Route path="/dailys" element={<Dailys />} />
+        <Route path="/global-raid" element={<GlobalRaid />} />
+        <Route path="/mastery" element={<Mastery />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/sku-editor" element={<SkuEditor />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/auth/callback" element={<AuthCallback />} />
