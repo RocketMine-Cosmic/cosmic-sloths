@@ -1,178 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import { omenx } from '@/lib/omenx';
-import { clearAuthFromIndexedDB, saveAuthToIndexedDB, getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { base44 } from '@/api/base44Client';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
 function getAuthData() {
-    // Check SDK first, then fallback to localStorage
-    if (omenx.isAuthenticated()) {
-        return omenx.getAuthData();
-    }
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
-        if (!stored) return null;
-        const parsed = JSON.parse(stored);
-        return parsed?.walletAddress ? parsed : null;
-    } catch { return null; }
-}
-
-// Check URL params for OmenX recovery (post-Base44-redirect)
-async function recoverFromUrlOrIndexedDB() {
-    const params = new URLSearchParams(window.location.search);
-    const walletFromUrl = params.get('omenx_wallet');
-    const tokenFromUrl = params.get('omenx_token');
-    
-    if (walletFromUrl && tokenFromUrl) {
-        try {
-            const recovered = { walletAddress: walletFromUrl, accessToken: tokenFromUrl };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(recovered));
-            await saveAuthToIndexedDB(recovered);
-            // Clean URL params
-            window.history.replaceState({}, document.title, window.location.pathname);
-            return recovered;
-        } catch (e) {
-            console.error('[OmenX] URL recovery failed:', e);
-        }
+        return stored ? JSON.parse(stored) : null;
+    } catch {
+        return null;
     }
-    
-    // Fall back to IndexedDB if localStorage is empty
-    const lsAuth = getAuthData();
-    if (lsAuth) return lsAuth;
-    
-    const dbAuth = await getAuthFromIndexedDB();
-    if (dbAuth?.walletAddress) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dbAuth));
-        return dbAuth;
-    }
-    
-    return null;
 }
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [authData, setAuthState] = useState(getAuthData());
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
-    
-    // On mount, check SDK authentication status
+
     useEffect(() => {
-        const checkAuth = async () => {
-            if (omenx.isAuthenticated()) {
-                const data = omenx.getAuthData();
-                setAuthState(data);
-                onAuthChange?.(data);
-            } else {
-                // Fallback to recovery from URL or IndexedDB
-                const recovered = await recoverFromUrlOrIndexedDB();
-                if (recovered) {
-                    setAuthState(recovered);
-                    onAuthChange?.(recovered);
-                }
-            }
-        };
-        checkAuth();
+        // Check if authenticated on mount
+        if (omenx.isAuthenticated()) {
+            const data = omenx.getAuthData();
+            setAuthState(data);
+            onAuthChange?.(data);
+        }
     }, []);
-
-    const applyAuthData = async (data) => {
-        if (data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            await saveAuthToIndexedDB(data);
-            
-            // Send refresh token to backend for storage
-            if (data.refreshToken) {
-                try {
-                    await base44.functions.invoke('syncOmenXWallet', {
-                        walletAddress: data.walletAddress,
-                        refreshToken: data.refreshToken
-                    });
-                } catch (e) {
-                    console.error('[OmenXAuthButton] Failed to sync refresh token:', e);
-                }
-            }
-        } else {
-            localStorage.removeItem(STORAGE_KEY);
-            await clearAuthFromIndexedDB();
-        }
-        setAuthState(data);
-        setLoading(false);
-        if (data) {
-            setSuccessMsg(`Connected as ${data.username || data.walletAddress || 'OmenX User'}`);
-            setTimeout(() => setSuccessMsg(''), 5000);
-        }
-        onAuthChange?.(data);
-    };
-
-    useEffect(() => {
-        const onStorageChange = () => {
-            const stored = getAuthData();
-            setAuthState(stored);
-            setLoading(false);
-            if (stored) {
-                setSuccessMsg(`Connected as ${stored.username || stored.walletAddress || 'OmenX User'}`);
-                setTimeout(() => setSuccessMsg(''), 5000);
-            }
-            onAuthChange?.(stored);
-        };
-
-        const onMessage = async (event) => {
-            if (event.data?.type === 'omenx_auth' && event.data?.authData) {
-                const authData = event.data.authData;
-                // Validate before accepting from postMessage
-                if (authData?.walletAddress && authData?.accessToken) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
-                    applyAuthData(authData);
-                    
-                    // Wallet is now in localStorage, AuthGate will sync it after Base44 auth completes
-                }
-            }
-        };
-        
-        window.addEventListener('storage', onStorageChange);
-        window.addEventListener('message', onMessage);
-        return () => {
-            window.removeEventListener('storage', onStorageChange);
-            window.removeEventListener('message', onMessage);
-        };
-    }, [onAuthChange]);
 
     const handleLogin = async () => {
         setLoading(true);
         try {
-            console.log('[OmenXAuthButton] Calling omenx.authenticate...');
-            const redirectUri = `${window.location.origin}/auth/callback`;
-            await omenx.authenticate({ redirectUri, enablePKCE: true });
-            console.log('[OmenXAuthButton] authenticate() returned');
-            // onAuth callback will fire and sync wallet to Base44
+            // Use the SDK's authenticate method for standalone mode
+            // The SDK will handle the popup and callback internally
+            const response = await omenx.authenticate({
+                redirectUri: `${window.location.origin}/auth/callback`,
+                enablePKCE: true
+            });
+
+            if (response && response.walletAddress) {
+                // Auth successful - save and notify
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(response));
+                setAuthState(response);
+                setSuccessMsg(`Connected as ${response.username || response.walletAddress}`);
+                setTimeout(() => setSuccessMsg(''), 5000);
+                onAuthChange?.(response);
+
+                // Sync wallet to Base44 in background
+                try {
+                    await base44.functions.invoke('syncOmenXWallet', {
+                        walletAddress: response.walletAddress,
+                        refreshToken: response.refreshToken || null
+                    });
+                } catch (e) {
+                    console.error('[OmenXAuthButton] Failed to sync wallet:', e);
+                }
+            }
         } catch (err) {
-            console.error('[OmenXAuthButton] authenticate() failed:', err.message, err);
+            console.error('[OmenXAuthButton] Authentication failed:', err);
+        } finally {
             setLoading(false);
         }
     };
 
     const handleLogout = async () => {
-        // Flush any pending save to backend before logout
         try {
-            const { SaveManager } = await import('@/game/SaveManager');
-            await SaveManager.syncToBackend();
+            localStorage.removeItem(STORAGE_KEY);
+            setAuthState(null);
+            setSuccessMsg('');
+            await omenx.logout();
         } catch (e) {
-            console.error('[handleLogout] Failed to flush save:', e.message);
+            console.error('[OmenXAuthButton] Logout failed:', e);
         }
-        
-        applyAuthData(null);
-        setSuccessMsg('');
-        try { await clearAuthFromIndexedDB(); } catch (e) {}
-        try { await omenx.logout(); } catch (e) {}
         window.location.reload();
     };
 
     return (
         <div className={`flex flex-col ${fullWidth ? 'items-center w-full' : 'items-end'} gap-1`}>
             <button
-                onClick={(e) => { 
-                    console.log('[OmenXAuthButton] onclick fired', e);
-                    (authData ? handleLogout : handleLogin)();
-                }}
+                onClick={authData ? handleLogout : handleLogin}
                 disabled={loading}
                 type="button"
                 className={`font-black tracking-widest uppercase transition-all border flex items-center justify-center gap-2 backdrop-blur-md pointer-events-auto cursor-pointer ${

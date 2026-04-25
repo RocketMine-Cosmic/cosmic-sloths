@@ -7,6 +7,7 @@ const getBaseUrl = () => {
 
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
+  enableIframeAuth: false,
   onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {
