@@ -27,9 +27,12 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'walletAddress, saveData, and accessToken required' }, { status: 400 });
         }
 
+        let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
+
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            apiBaseUrl: apiBaseUrlEnv,
         });
         let verifyResult;
         try {

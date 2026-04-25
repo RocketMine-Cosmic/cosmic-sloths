@@ -12,9 +12,12 @@ Deno.serve(async (req) => {
             return Response.json({ vipLevel: 0, nfts: [] });
         }
 
+        let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
+
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            apiBaseUrl: apiBaseUrlEnv,
         });
 
         // Cached token verify
@@ -35,7 +38,7 @@ Deno.serve(async (req) => {
 
         if (walletAddress !== authenticatedWallet) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        const apiBaseUrl = apiBaseUrlEnv;
         
         let bonusLevel = null;
         try {

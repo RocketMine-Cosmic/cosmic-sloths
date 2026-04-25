@@ -40,9 +40,11 @@ Deno.serve(async (req) => {
         if (cachedVerify && cachedVerify.expiresAt > now) {
             wallet = cachedVerify.walletAddress;
         } else {
+            let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+            if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
             const sdk = new OmenXServerSDK({
                 apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+                apiBaseUrl: apiBaseUrlEnv,
             });
             const verifyResult = await verifyToken(sdk, accessToken);
             // If OmenX API is down, fall back to clientWallet (user already authed on client)

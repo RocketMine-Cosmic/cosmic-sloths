@@ -14,9 +14,12 @@ Deno.serve(async (req) => {
             return Response.json({ balance: 0 });
         }
 
+        let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
+
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            apiBaseUrl: apiBaseUrlEnv,
         });
 
         // Cached token verify
@@ -43,7 +46,7 @@ Deno.serve(async (req) => {
             return Response.json({ balance: cachedBalance.balance });
         }
 
-        const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        const apiBaseUrl = apiBaseUrlEnv;
         const playerDataRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
             headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
         }).then(r => r.ok ? r.json() : null).catch(() => null);

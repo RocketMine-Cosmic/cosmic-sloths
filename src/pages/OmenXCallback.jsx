@@ -16,8 +16,7 @@ export default function OmenXCallback() {
 
                 if (!code) {
                     setStatus('❌ No authorization code received');
-                    // DEBUG: auto-close disabled
-                    // setTimeout(() => window.close(), 2000);
+                    setTimeout(() => window.close(), 2000);
                     return;
                 }
 
@@ -95,20 +94,20 @@ export default function OmenXCallback() {
                 const sessionId = `${authData.walletAddress}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
                 localStorage.setItem('omenx_session_data', JSON.stringify({ sessionId, createdAt: Date.now() }));
                 
-                // DEBUG: postMessage to opener disabled — SDK was closing popup on receipt.
-                // Re-enable after debugging.
-                // if (window.opener) {
-                //     try {
-                //         window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
-                //     } catch(e) { /* ignore */ }
-                //     try {
-                //         window.opener.dispatchEvent(new StorageEvent('storage', {
-                //             key: 'omenx_auth_data',
-                //             newValue: JSON.stringify(authData),
-                //             storageArea: localStorage,
-                //         }));
-                //     } catch(e) { /* cross-origin, ignore */ }
-                // }
+                // Notify opener (popup mode) via postMessage — works cross-origin
+                if (window.opener) {
+                    try {
+                        window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
+                    } catch(e) { /* ignore */ }
+                    // Also try same-origin storage event as fallback
+                    try {
+                        window.opener.dispatchEvent(new StorageEvent('storage', {
+                            key: 'omenx_auth_data',
+                            newValue: JSON.stringify(authData),
+                            storageArea: localStorage,
+                        }));
+                    } catch(e) { /* cross-origin, ignore */ }
+                }
                 
                 // Create initial save file and PlayerSave on first login
                 const existingProfile = localStorage.getItem('omenx_user_profile');
@@ -155,13 +154,15 @@ export default function OmenXCallback() {
                     }
                 }
 
-                setStatus('✓ Login successful! (popup auto-close disabled for debugging)');
-                // DEBUG: auto-close disabled so console errors can be inspected.
-                // Restore by un-commenting window.close() and the redirect fallback.
-                // window.close();
-                // setTimeout(() => {
-                //     window.location.replace('/');
-                // }, 1500);
+                setStatus('✓ Login successful!');
+                // Always try to close — works when opened as popup
+                // If this was a direct navigation, window.close() will fail silently
+                // and we fall back to redirect after a short delay
+                window.close();
+                // Fallback: if still open after 1.5s, we're in direct navigation mode
+                setTimeout(() => {
+                    window.location.replace('/');
+                }, 1500);
             } catch (err) {
                 const debugPayload = {
                     currentUrl: typeof window !== 'undefined' ? window.location.href : '',
