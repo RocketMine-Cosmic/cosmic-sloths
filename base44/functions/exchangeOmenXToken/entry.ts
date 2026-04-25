@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    const { code, redirectUri } = await req.json();
+    const { code, redirectUri, codeVerifier } = await req.json();
 
     if (!code || !redirectUri) {
       return Response.json({ error: 'Missing code or redirectUri' }, { status: 400 });
@@ -14,9 +14,6 @@ Deno.serve(async (req) => {
     if (!clientSecret) {
       return Response.json({ error: 'Missing OMENX_AUTH_API_KEY' }, { status: 500 });
     }
-
-    // Extract code_verifier from request (SDK should have sent it)
-    const { codeVerifier } = await req.json();
 
     // Exchange code for tokens with PKCE
     const tokenResponse = await fetch(`${apiBaseUrl}/v1/oauth/token`, {
