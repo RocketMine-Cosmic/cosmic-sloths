@@ -12,24 +12,36 @@ export default function OmenXCallback() {
 
         const handleCallback = async () => {
             try {
-                setStatus('✓ SDK is handling token exchange...');
-                console.log('[OmenXCallback] Initializing SDK for callback...');
+                setStatus('✓ Exchanging authorization code...');
+                console.log('[OmenXCallback] Starting token exchange...');
                 
-                // Initialize SDK to handle callback + PKCE verification
-                await omenx.init();
-                console.log('[OmenXCallback] SDK initialized, waiting for onAuth...');
-                
-                // Give the SDK time to process and call onAuth
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // The SDK's onAuth callback should have already stored the auth data
-                // Just wait a moment for it to complete
-                const authData = (() => {
-                    try {
-                        const stored = localStorage.getItem('omenx_auth_data');
-                        return stored ? JSON.parse(stored) : null;
-                    } catch { return null; }
-                })();
+                // Extract code from URL
+                const params = new URLSearchParams(window.location.search);
+                const code = params.get('code');
+
+                if (!code) {
+                    setStatus('❌ No authorization code received');
+                    return;
+                }
+
+                // Call backend to exchange code for tokens (can't do this from browser due to client_secret)
+                const response = await fetch('/functions/exchangeOmenXToken', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code,
+                        redirectUri: 'https://cosmic-sloths.com/auth/callback',
+                    }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    setStatus(`❌ Token exchange failed: ${error.error}`);
+                    setDebugInfo(error);
+                    return;
+                }
+
+                const authData = await response.json();
 
                 if (authData && authData.walletAddress && authData.accessToken) {
                     setStatus('✓ Login successful! Closing...');
