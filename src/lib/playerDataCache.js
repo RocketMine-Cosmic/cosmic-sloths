@@ -251,19 +251,19 @@ export function subscribePlayerData(fn) {
         }
     }
 
-    // Attach storage listener only once (all subscribers share it)
+    // Attach listener only once (all subscribers share it)
     if (!storageListenerAttached) {
         storageListenerAttached = true;
+
+        // Handle storage changes (login in other tabs)
         const onStorage = (e) => {
             if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
-                // New login — clear everything and re-fetch once
                 lastBalanceFetch = 0;
                 userFetched = false;
                 cachedData = null;
                 try { localStorage.removeItem('omenx_balance_cache'); } catch {}
                 try { sessionStorage.removeItem('omenx_session_data'); } catch {}
                 if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
-                // Debounce re-fetch to avoid concurrent calls
                 setTimeout(() => {
                     fetchBalance();
                     fetchSessionData();
@@ -271,7 +271,27 @@ export function subscribePlayerData(fn) {
                 }, 100);
             }
         };
+
+        // Handle postMessage from OAuth popup (same tab login)
+        const onMessage = (event) => {
+            const { type, authData: msgAuth } = event.data || {};
+            if ((type === 'omenx_auth' || type === 'omenx_auth_response') && msgAuth?.walletAddress && msgAuth?.accessToken) {
+                lastBalanceFetch = 0;
+                userFetched = false;
+                cachedData = null;
+                try { localStorage.removeItem('omenx_balance_cache'); } catch {}
+                try { sessionStorage.removeItem('omenx_session_data'); } catch {}
+                if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
+                setTimeout(() => {
+                    fetchBalance();
+                    fetchSessionData();
+                    fetchUserData();
+                }, 100);
+            }
+        };
+
         window.addEventListener('storage', onStorage);
+        window.addEventListener('message', onMessage);
     }
 
     return () => {
