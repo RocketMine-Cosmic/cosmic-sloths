@@ -13,73 +13,26 @@ export default function AuthGate({ children }) {
   useEffect(() => {
     checkAuth();
     
-    // Re-check when OmenX wallet is synced to Base44
-    const handleWalletSynced = () => {
-      checkAuth();
-    };
-    
-    // Re-check when OAuth callback popup closes
-    const handleMessage = (e) => {
-      if (e.origin !== window.location.origin) return;
-      if (e.data?.type === 'omenx_oauth_callback') {
-        console.log('[AuthGate] OAuth callback popup closed, rechecking auth...');
-        setTimeout(() => checkAuth(), 100);
+    // Re-check when localStorage changes (OmenX auth)
+    const handleStorageChange = (e) => {
+      if (e.key === 'omenx_auth_data') {
+        console.log('[AuthGate] Auth changed, rechecking...');
+        checkAuth();
       }
     };
     
-    window.addEventListener('omenx_wallet_synced', handleWalletSynced);
-    window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('omenx_wallet_synced', handleWalletSynced);
-      window.removeEventListener('message', handleMessage);
-      clearTimeout(debounceRef.current);
-    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const checkAuth = async () => {
+  const checkAuth = () => {
     try {
-      // Check localStorage first, then IndexedDB for OmenX wallet
-      let omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-      
-      if (!omenxAuth?.walletAddress) {
-        // Fall back to IndexedDB
-        const dbAuth = await getAuthFromIndexedDB();
-        if (dbAuth?.walletAddress) {
-          omenxAuth = dbAuth;
-          localStorage.setItem('omenx_auth_data', JSON.stringify(dbAuth));
-          console.log('[AuthGate] Restored OmenX from IndexedDB');
-        }
-      }
-      
+      const omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
       if (omenxAuth?.walletAddress) {
-        // OmenX is authenticated—allow play immediately (Base44 optional)
-        console.log('[AuthGate] OmenX wallet linked, allowing access');
         setHasWallet(true);
-        setReady(true);
-        
-        // Try to sync to Base44 in background if authenticated
-        try {
-          const isBase44Auth = await base44.auth.isAuthenticated();
-          if (isBase44Auth) {
-            const user = await base44.auth.me();
-            if (!user?.data?.omenx_wallet) {
-              await base44.functions.invoke('syncOmenXWallet', { 
-                walletAddress: omenxAuth.walletAddress,
-                refreshToken: omenxAuth.refreshToken || null
-              });
-              console.log('[AuthGate] Synced OmenX wallet to Base44');
-            }
-          }
-        } catch (e) {
-          // Base44 sync is optional—OmenX-only users can still play
-          console.log('[AuthGate] Base44 sync skipped (optional):', e.message);
-        }
-        return;
+      } else {
+        setHasWallet(false);
       }
-      
-      // No OmenX wallet yet - show link wallet screen
-      console.log('[AuthGate] No OmenX wallet linked');
-      setHasWallet(false);
       setReady(true);
     } catch (err) {
       console.error('[AuthGate] Check failed:', err);
