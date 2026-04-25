@@ -57,20 +57,6 @@ export const initOmenX = async () => {
       await omenx.init();
       console.log('[OmenX] SDK initialized successfully');
       sdkReady = true;
-      
-      // Handle OAuth callback if present in URL
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-      const state = params.get('state');
-      if (code && state) {
-        console.log('[OmenX] OAuth code+state detected, handling exchange...');
-        try {
-          await omenx.handleOAuthCallback(code, state);
-          console.log('[OmenX] OAuth callback handled successfully');
-        } catch (err) {
-          console.error('[OmenX] OAuth callback handling failed:', err);
-        }
-      }
     } catch (err) {
       console.error('[OmenX] SDK init failed:', err);
       sdkReady = false;
