@@ -1,4 +1,5 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
+import { base44 } from '@/api/base44Client';
 
 const getBaseUrl = () => {
   if (typeof window === 'undefined') return '';
@@ -16,16 +17,15 @@ export const omenx = new OmenXGameSDK({
       localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
       
       // Sync wallet to Base44 user entity
-      try {
-        const { base44 } = await import('@/api/base44Client');
-        if (authData?.walletAddress) {
+      if (authData?.walletAddress) {
+        try {
           await base44.auth.updateMe({
             omenx_wallet: authData.walletAddress
           });
           console.log('[OmenX] ✓ Wallet synced to Base44');
+        } catch (syncErr) {
+          console.warn('[OmenX] Wallet sync to Base44 failed:', syncErr.message);
         }
-      } catch (syncErr) {
-        console.warn('[OmenX] Wallet sync to Base44 failed:', syncErr.message);
       }
       
       // Trigger AuthGate re-check
