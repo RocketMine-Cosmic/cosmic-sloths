@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { omenx, getRedirectUri } from '@/lib/omenx';
+import { omenx } from '@/lib/omenx';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { base44 } from '@/api/base44Client';
 
@@ -77,10 +77,10 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            const redirectUri = getRedirectUri();
-            console.log('[OmenXAuthButton] Calling omenx.authenticate with redirectUri:', redirectUri);
-            await omenx.authenticate({ redirectUri, enablePKCE: true });
-            console.log('[OmenXAuthButton] authenticate() returned successfully');
+            console.log('[OmenXAuthButton] Calling omenx.authenticate...');
+            // SDK automatically handles PKCE, code exchange, and calls onAuth callback
+            await omenx.authenticate({ redirectUri: 'https://cosmic-sloths.com/auth/callback' });
+            console.log('[OmenXAuthButton] authenticate() returned');
         } catch (err) {
             console.error('[OmenXAuthButton] authenticate() failed:', err.message, err);
             setLoading(false);

@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import OmenXCallback from './pages/OmenXCallback';
+
 import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
 import { SaveManager } from './game/SaveManager';
@@ -155,8 +155,6 @@ function App() {
           <Router>
           <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>}>
             <Routes>
-              {/* OmenX OAuth callback */}
-              <Route path="/auth/callback" element={<OmenXCallback />} />
               <Route path="*" element={<MainApp />} />
             </Routes>
           </React.Suspense>

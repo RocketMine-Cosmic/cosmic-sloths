@@ -58,8 +58,3 @@ export const initOmenX = async () => {
     }
   }
 };
-
-export const getRedirectUri = () => {
-  // Must match the registered redirect_uri in OmenX portal EXACTLY
-  return 'https://cosmic-sloths.com/auth/callback';
-};
