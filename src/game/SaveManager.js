@@ -48,14 +48,11 @@ export const SaveManager = {
       SaveManager._walletAddress = walletAddress;
       SaveManager._accessToken = accessToken;
       
-      // Load cloud save on init
+      // Load cloud save on init via Base44 SDK (uses Base44 session — no token needed)
       try {
-        const res = await fetch('/functions/loadSave', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ walletAddress, accessToken }),
-        });
-        const response = await res.json();
+        const { base44 } = await import('@/api/base44Client');
+        const res = await base44.functions.invoke('loadSave', {});
+        const response = res.data;
         
         if (response?.saveData) {
           const cloudSave = response.saveData;
@@ -135,19 +132,13 @@ export const SaveManager = {
     try {
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
-      
-      const res = await fetch('/functions/syncSave', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress,
-          saveData: JSON.parse(localSave),
-          accessToken,
-        }),
+
+      const { base44 } = await import('@/api/base44Client');
+      const res = await base44.functions.invoke('syncSave', {
+        saveData: JSON.parse(localSave),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        console.warn('[SaveManager] Sync failed:', data.error);
+      if (res.data?.error) {
+        console.warn('[SaveManager] Sync failed:', res.data.error);
         syncRetries++;
         if (syncRetries >= MAX_SYNC_RETRIES) {
           console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
