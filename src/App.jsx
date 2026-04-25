@@ -50,52 +50,10 @@ const MainApp = () => {
     SaveManager.initialize();
   }, []);
 
-  // In preview mode, bypass all auth gates
-  const isPreview = window.self !== window.top;
   const fallback = <div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
-  if (isPreview) {
-    return (
-      <React.Suspense fallback={fallback}>
-        <Routes>
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/" element={<PlayCarousel />} />
-          <Route path="/hub" element={<Hub />} />
-          <Route path="/upgrades" element={<Upgrades />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/info" element={<Info />} />
-          <Route path="/credits" element={<Credits />} />
-          <Route path="/achievements" element={<Achievements />} />
-          <Route path="/squads" element={<Squads />} />
-          <Route path="/bestiary" element={<Bestiary />} />
-          <Route path="/synergy-codex" element={<SynergyCodex />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/nft-dashboard" element={<NFTDashboard />} />
-          <Route path="/trials" element={<LeviathanTrials />} />
-          <Route path="/dailys" element={<Dailys />} />
-          <Route path="/global-raid" element={<GlobalRaid />} />
-          <Route path="/mastery" element={<Mastery />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/sku-editor" element={<SkuEditor />} />
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
-      </React.Suspense>
-    );
-  }
-
-  // Show loading spinner while initializing save
-  if (!saveInitialized) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Render the main app with auth + maintenance gates (skip in preview)
-  if (isPreview) {
-    return (
+  return (
+    <React.Suspense fallback={fallback}>
       <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/" element={<PlayCarousel />} />
@@ -119,41 +77,7 @@ const MainApp = () => {
         <Route path="/sku-editor" element={<SkuEditor />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-    );
-  }
-
-  return (
-    <Routes>
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="*" element={
-        <AuthGate>
-        <MaintenanceGate>
-        <Routes>
-          <Route path="/" element={<PlayCarousel />} />
-          <Route path="/hub" element={<Hub />} />
-          <Route path="/upgrades" element={<Upgrades />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/info" element={<Info />} />
-          <Route path="/credits" element={<Credits />} />
-          <Route path="/achievements" element={<Achievements />} />
-          <Route path="/squads" element={<Squads />} />
-          <Route path="/bestiary" element={<Bestiary />} />
-          <Route path="/synergy-codex" element={<SynergyCodex />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/nft-dashboard" element={<NFTDashboard />} />
-          <Route path="/trials" element={<LeviathanTrials />} />
-          <Route path="/dailys" element={<Dailys />} />
-          <Route path="/global-raid" element={<GlobalRaid />} />
-          <Route path="/mastery" element={<Mastery />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/sku-editor" element={<SkuEditor />} />
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
-        </MaintenanceGate>
-        </AuthGate>
-      } />
-    </Routes>
+    </React.Suspense>
   );
 };
 
