@@ -390,11 +390,11 @@ export default function Game() {
 
     const purchaseSku = async (skuId) => {
         if (!skuId) return;
-        return fetch('/functions/purchaseSku', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ skuId, quantity: 1 }),
-        }).then(r => r.json()).catch(e => console.error('[Game purchaseSku] failed:', e?.message));
+        try {
+            return await base44.functions.invoke('purchaseSku', { skuId, quantity: 1 });
+        } catch (e) {
+            console.error('[Game purchaseSku] failed:', e?.message);
+        }
     };
 
     const handleUpgradeSelect = (upgrade) => {

@@ -18,42 +18,10 @@ export const SaveManager = {
     SaveManager._initialized = true;
     console.log('[SaveManager] Initialize called');
     try {
-      // Use localStorage immediately (fastest) — no async wait needed
-      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-      let walletAddress = omenxAuth?.walletAddress;
-      let accessToken = omenxAuth?.accessToken;
-
-      // In parallel, warm up IndexedDB auth (don't block on it)
-      if (!walletAddress) {
-        try {
-          const idbAuth = await getAuthFromIndexedDB();
-          if (idbAuth?.walletAddress) {
-            walletAddress = idbAuth.walletAddress;
-            accessToken = idbAuth.accessToken;
-            // Sync back to localStorage so next time is instant
-            localStorage.setItem('omenx_auth_data', JSON.stringify(idbAuth));
-          }
-        } catch (e) {
-          console.log('[SaveManager] IndexedDB auth not available:', e.message);
-        }
-      }
-      
-      if (!walletAddress || !accessToken) {
-        console.log('[SaveManager] No wallet authenticated, using local storage only');
-        return;
-      }
-      
-      SaveManager._walletAddress = walletAddress;
-      SaveManager._accessToken = accessToken;
-      
       // Load cloud save on init
       try {
-          const res = await fetch('/functions/loadSave', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({}),
-          });
-        const response = await res.json();
+        const { base44 } = await import('@/api/base44Client');
+        const response = await base44.functions.invoke('loadSave', {});
         
         if (response?.saveData) {
           const cloudSave = response.saveData;
@@ -118,42 +86,16 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
-    // Always fetch fresh auth from localStorage
-    let walletAddress = SaveManager._walletAddress;
-    let accessToken = SaveManager._accessToken;
-    
-    if (!walletAddress || !accessToken) {
-      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-      walletAddress = omenxAuth?.walletAddress;
-      accessToken = omenxAuth?.accessToken;
-    }
-    
-    if (!walletAddress || !accessToken) return;
-    
     try {
+      const { base44 } = await import('@/api/base44Client');
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
       
-      const res = await fetch('/functions/syncSave', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          saveData: JSON.parse(localSave),
-        }),
+      await base44.functions.invoke('syncSave', {
+        saveData: JSON.parse(localSave),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        console.error('[SaveManager] Sync failed:', data.error);
-        syncRetries++;
-        if (syncRetries >= MAX_SYNC_RETRIES) {
-          console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries');
-          window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'max_retries' } }));
-          syncRetries = 0;
-        }
-      } else {
-        console.log('[SaveManager] Synced to cloud');
-        syncRetries = 0;
-      }
+      console.log('[SaveManager] Synced to cloud');
+      syncRetries = 0;
     } catch (e) {
       console.error('[SaveManager] Sync error:', e.message);
       syncRetries++;
