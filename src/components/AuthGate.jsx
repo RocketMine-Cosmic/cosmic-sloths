@@ -17,9 +17,21 @@ export default function AuthGate({ children }) {
     const handleWalletSynced = () => {
       checkAuth();
     };
+    
+    // Re-check when OAuth callback popup closes
+    const handleMessage = (e) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === 'omenx_oauth_callback') {
+        console.log('[AuthGate] OAuth callback popup closed, rechecking auth...');
+        setTimeout(() => checkAuth(), 100);
+      }
+    };
+    
     window.addEventListener('omenx_wallet_synced', handleWalletSynced);
+    window.addEventListener('message', handleMessage);
     return () => {
       window.removeEventListener('omenx_wallet_synced', handleWalletSynced);
+      window.removeEventListener('message', handleMessage);
       clearTimeout(debounceRef.current);
     };
   }, []);
