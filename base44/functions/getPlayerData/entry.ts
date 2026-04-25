@@ -1,8 +1,18 @@
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 // Heavy endpoint — NFT + VIP ONLY. Called once per session.
-const verifyCache = new Map();
-const VERIFY_TTL = 60 * 60 * 1000;
+
+function decodeJwtPayload(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
+        return JSON.parse(atob(padded));
+    } catch {
+        return null;
+    }
+}
 
 Deno.serve(async (req) => {
     try {
@@ -12,6 +22,13 @@ Deno.serve(async (req) => {
             return Response.json({ vipLevel: 0, nfts: [] });
         }
 
+        // Cross-check wallet against JWT payload (no /v1/oauth/user call)
+        const payload = decodeJwtPayload(accessToken);
+        const jwtWallet = payload?.walletAddress?.toLowerCase();
+        if (jwtWallet && jwtWallet !== walletAddress.toLowerCase()) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
 
@@ -19,24 +36,6 @@ Deno.serve(async (req) => {
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: apiBaseUrlEnv,
         });
-
-        // Cached token verify
-        const now = Date.now();
-        const cached = verifyCache.get(accessToken);
-        let authenticatedWallet;
-        if (cached && cached.expiresAt > now) {
-            authenticatedWallet = cached.walletAddress;
-        } else {
-            const verifyResult = await sdk.verifyOAuthUser(accessToken);
-            if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            authenticatedWallet = verifyResult.user.walletAddress;
-            verifyCache.set(accessToken, { walletAddress: authenticatedWallet, expiresAt: now + VERIFY_TTL });
-            if (verifyCache.size > 500) {
-                for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-            }
-        }
-
-        if (walletAddress !== authenticatedWallet) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const apiBaseUrl = apiBaseUrlEnv;
         

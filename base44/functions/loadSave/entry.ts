@@ -1,26 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 5 * 60 * 1000; // 5 min instead of 1 hour to allow quicker token refreshes
-
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
+// Decode a JWT payload locally (no signature verification — we trust the wallet
+// the client sent and only use the JWT to cross-check it). This avoids hitting
+// /v1/oauth/user on every load.
+function decodeJwtPayload(token) {
     try {
-        const result = await sdk.verifyOAuthUser(accessToken);
-        if (result.success) {
-            verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-            if (verifyCache.size > 500) {
-                for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-            }
-        }
-        return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
-    } catch (e) {
-        // If OmenX API fails, fall back to clientWallet (user already authed on client)
-        console.warn('[loadSave] Token verify failed:', e.message);
-        return { success: true, walletAddress: null, skipVerify: true };
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
+        return JSON.parse(atob(padded));
+    } catch {
+        return null;
     }
 }
 
@@ -33,33 +24,12 @@ Deno.serve(async (req) => {
             return Response.json({ saveData: null });
         }
 
-        const now = Date.now();
-        // Quick path: if token is in verify cache, skip external OmenX call
-        const cachedVerify = verifyCache.get(accessToken);
-        let wallet;
-        if (cachedVerify && cachedVerify.expiresAt > now) {
-            wallet = cachedVerify.walletAddress;
-        } else {
-            let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-            if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
-            const sdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: apiBaseUrlEnv,
-            });
-            const verifyResult = await verifyToken(sdk, accessToken);
-            // If OmenX API is down, fall back to clientWallet (user already authed on client)
-            if (verifyResult.skipVerify) {
-                wallet = clientWallet;
-            } else if (!verifyResult.success) {
-                return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            } else {
-                wallet = verifyResult.walletAddress;
-            }
-        }
-        
-        // Verify wallet matches client claim (skip if we had to skip verify due to API down)
-        if (wallet !== clientWallet && !verifyCache.get(accessToken)?.skipVerify) {
-            console.warn('[loadSave] Wallet mismatch:', wallet, '≠', clientWallet);
+        // Cross-check the client-supplied wallet against the JWT payload.
+        const payload = decodeJwtPayload(accessToken);
+        const jwtWallet = payload?.walletAddress?.toLowerCase();
+        const wallet = (jwtWallet || clientWallet).toLowerCase();
+
+        if (jwtWallet && jwtWallet !== clientWallet.toLowerCase()) {
             return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
         }
 

@@ -1,21 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (result.success) {
-        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        if (verifyCache.size > 500) {
-            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-        }
+// Decode a JWT payload locally (no signature verification — we trust the wallet
+// the client sent and only use the JWT to cross-check it). This avoids hitting
+// /v1/oauth/user on every save, which was causing rate-limit pressure.
+function decodeJwtPayload(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
+        return JSON.parse(atob(padded));
+    } catch {
+        return null;
     }
-    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
 }
 
 Deno.serve(async (req) => {
@@ -27,27 +24,14 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'walletAddress, saveData, and accessToken required' }, { status: 400 });
         }
 
-        let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
+        // Cross-check the client-supplied wallet against the JWT payload.
+        // If the JWT can't be decoded, fall back to clientWallet (best-effort save).
+        const payload = decodeJwtPayload(accessToken);
+        const jwtWallet = payload?.walletAddress?.toLowerCase();
+        const wallet = (jwtWallet || clientWallet).toLowerCase();
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: apiBaseUrlEnv,
-        });
-        let verifyResult;
-        try {
-            verifyResult = await verifyToken(sdk, accessToken);
-        } catch (err) {
-            if (err.status === 429 || err.message?.includes('rate limit')) {
-                return Response.json({ error: 'Too many requests' }, { status: 429 });
-            }
-            throw err;
-        }
-        // If verification failed, use the wallet address from the request
-        // (user is already authed on client, don't fail the save)
-        const wallet = verifyResult.success ? verifyResult.walletAddress : clientWallet;
-        if (!wallet) {
-            return Response.json({ error: 'No wallet address' }, { status: 400 });
+        if (jwtWallet && jwtWallet !== clientWallet.toLowerCase()) {
+            return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
         }
 
         // Ensure saveData has required fields

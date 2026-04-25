@@ -1,10 +1,18 @@
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
 // Lightweight endpoint — balance ONLY. No NFT, no VIP. Called more frequently.
-const verifyCache = new Map();
 const balanceCache = new Map();
-const VERIFY_TTL = 60 * 60 * 1000;
 const BALANCE_CACHE_TTL = 5 * 60 * 1000; // 5 min cache
+
+function decodeJwtPayload(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
+        return JSON.parse(atob(padded));
+    } catch {
+        return null;
+    }
+}
 
 Deno.serve(async (req) => {
     try {
@@ -14,31 +22,14 @@ Deno.serve(async (req) => {
             return Response.json({ balance: 0 });
         }
 
-        let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
-
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: apiBaseUrlEnv,
-        });
-
-        // Cached token verify
-        const now = Date.now();
-        const cached = verifyCache.get(accessToken);
-        let authenticatedWallet;
-        if (cached && cached.expiresAt > now) {
-            authenticatedWallet = cached.walletAddress;
-        } else {
-            const verifyResult = await sdk.verifyOAuthUser(accessToken);
-            if (!verifyResult.success) return Response.json({ balance: 0 });
-            authenticatedWallet = verifyResult.user.walletAddress;
-            verifyCache.set(accessToken, { walletAddress: authenticatedWallet, expiresAt: now + VERIFY_TTL });
-            if (verifyCache.size > 500) {
-                for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-            }
+        // Cross-check wallet against JWT payload (no /v1/oauth/user call)
+        const payload = decodeJwtPayload(accessToken);
+        const jwtWallet = payload?.walletAddress?.toLowerCase();
+        if (jwtWallet && jwtWallet !== walletAddress.toLowerCase()) {
+            return Response.json({ balance: 0 });
         }
 
-        if (walletAddress !== authenticatedWallet) return Response.json({ balance: 0 });
+        const now = Date.now();
 
         // Check balance cache first
         const cachedBalance = balanceCache.get(walletAddress);
@@ -46,7 +37,9 @@ Deno.serve(async (req) => {
             return Response.json({ balance: cachedBalance.balance });
         }
 
-        const apiBaseUrl = apiBaseUrlEnv;
+        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
+
         const playerDataRes = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
             headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
         }).then(r => r.ok ? r.json() : null).catch(() => null);
