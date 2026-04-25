@@ -25,17 +25,17 @@ const SKU_CACHE_TTL = 10 * 60 * 1000;
 async function getSkuPrice(skuId, apiBaseUrl, apiKey) {
     const now = Date.now();
     if (!skuPriceCache || now >= skuPriceCacheExpiresAt) {
-        const res = await fetch(`${apiBaseUrl}/v1/skus`, {
+        const res = await fetch(`${apiBaseUrl}/v1/products`, {
             headers: { 'Authorization': `Bearer ${apiKey}` },
         });
         if (!res.ok) throw new Error(`Failed to fetch SKU catalog: HTTP ${res.status}`);
         const data = await res.json();
-        const list = Array.isArray(data) ? data : (data?.skus || data?.items || []);
+        const list = Array.isArray(data) ? data : (data?.products || data?.skus || data?.items || []);
         skuPriceCache = {};
         for (const sku of list) {
-            const id = sku.skuId || sku.id;
+            const id = sku.sku || sku.skuId || sku.id || sku.productId;
             const price = parseFloat(
-                sku.priceInOmenx ?? sku.price ?? sku.pricesInCurrency?.OMENX ?? 0
+                sku.pricesInCurrency?.OMENX ?? sku.priceInOmenx ?? sku.price ?? 0
             );
             if (id && price > 0) skuPriceCache[id] = price;
         }
@@ -96,8 +96,9 @@ Deno.serve(async (req) => {
         // Look up the price from cached SKU catalog (server-truth, set in dev portal)
         const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKey);
         if (!unitPrice || unitPrice <= 0) {
-            console.error('[purchaseSku] Unknown SKU price for:', skuId);
-            return Response.json({ error: 'SKU price not configured' }, { status: 500 });
+            const sampleKeys = skuPriceCache ? Object.keys(skuPriceCache).slice(0, 5) : [];
+            console.error('[purchaseSku] Unknown SKU price for:', skuId, 'cache size:', skuPriceCache ? Object.keys(skuPriceCache).length : 'null', 'sample keys:', sampleKeys);
+            return Response.json({ error: 'SKU price not configured', skuId, cacheSize: skuPriceCache ? Object.keys(skuPriceCache).length : 0, sampleKeys }, { status: 500 });
         }
         const totalAmount = unitPrice * quantity;
 
