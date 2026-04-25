@@ -8,6 +8,8 @@ export default function AuthCallback() {
     const code = params.get('code');
     const state = params.get('state');
     
+    console.log('[AuthCallback] Received:', { code: code?.slice(0, 20), state: state?.slice(0, 20) });
+    
     if (!code || !state) {
       console.error('[AuthCallback] Missing code or state');
       window.close();
@@ -15,27 +17,35 @@ export default function AuthCallback() {
     }
 
     try {
-      const storageKey = `omenx_oauth_callback_${state}`;
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({ code, state, timestamp: Date.now() }),
-      );
-      console.log('[AuthCallback] Wrote OAuth callback to localStorage:', storageKey);
+      // Signal opener that callback was received
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'omenx_oauth_callback',
+          code,
+          state,
+        }, window.location.origin);
+        console.log('[AuthCallback] Sent postMessage to opener');
+      }
     } catch (e) {
-      console.error('[AuthCallback] localStorage failed:', e);
-      window.close();
-      return;
+      console.error('[AuthCallback] postMessage failed:', e);
     }
 
-    // Close popup after short delay to ensure storage flush
+    // Give SDK time to process, then close
     setTimeout(() => {
       try {
         window.close();
       } catch {
         /* ignore */
       }
-    }, 150);
+    }, 500);
   }, []);
 
-  return null;
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-slate-400 text-sm">Completing authentication...</p>
+      </div>
+    </div>
+  );
 }

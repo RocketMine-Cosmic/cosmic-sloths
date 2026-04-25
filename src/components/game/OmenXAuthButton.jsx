@@ -32,8 +32,22 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             }
         };
 
+        // Listen for OAuth callback from popup
+        const handleMessage = (e) => {
+            if (e.origin !== window.location.origin) return;
+            if (e.data?.type === 'omenx_oauth_callback') {
+                console.log('[OmenXAuthButton] OAuth callback received from popup');
+                // SDK's onAuth callback should fire and update localStorage
+                // Storage event listener above will handle it
+            }
+        };
+
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        window.addEventListener('message', handleMessage);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('message', handleMessage);
+        };
     }, [onAuthChange]);
 
     const handleLogin = async () => {
