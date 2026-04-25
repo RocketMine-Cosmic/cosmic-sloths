@@ -12,17 +12,13 @@ export default function AuthGate({ children }) {
   useEffect(() => {
     checkAuth();
     
-    // Only re-check if OmenX data was added (not every storage change)
-    const handleStorageChange = (e) => {
-      if (e.key === 'omenx_auth_data') {
-        // Debounce rapid storage changes
-        clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => checkAuth(), 100);
-      }
+    // Re-check when OmenX wallet is synced to Base44
+    const handleWalletSynced = () => {
+      checkAuth();
     };
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('omenx_wallet_synced', handleWalletSynced);
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('omenx_wallet_synced', handleWalletSynced);
       clearTimeout(debounceRef.current);
     };
   }, []);

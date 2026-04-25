@@ -57,6 +57,8 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                         await base44.auth.updateMe({
                             omenx_wallet: authData.walletAddress
                         });
+                        // Dispatch event so AuthGate knows to re-check
+                        window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
                     } catch (e) {
                         console.warn('[OmenXAuthButton] Failed to sync wallet to Base44:', e.message);
                     }
