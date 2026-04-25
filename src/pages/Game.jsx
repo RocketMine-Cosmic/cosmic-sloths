@@ -392,16 +392,10 @@ export default function Game() {
 
     const purchaseSku = async (skuId) => {
         if (!skuId) return;
-        const authData = await getAuthData();
-        const walletAddress = authData?.walletAddress;
-        if (!walletAddress || !authData?.accessToken) {
-            console.error('[Game purchaseSku] No auth data found');
-            return;
-        }
         return fetch('/functions/purchaseSku', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken: authData.accessToken }),
+            body: JSON.stringify({ skuId, quantity: 1 }),
         }).then(r => r.json()).catch(e => console.error('[Game purchaseSku] failed:', e?.message));
     };
 

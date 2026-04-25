@@ -21,30 +21,19 @@ async function verifyToken(sdk, accessToken) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { walletAddress: clientWallet, saveData, accessToken } = await req.json();
-
-        if (!clientWallet || !saveData || !accessToken) {
-            return Response.json({ error: 'walletAddress, saveData, and accessToken required' }, { status: 400 });
+        const user = await base44.auth.me();
+        if (!user) {
+            return Response.json({ error: 'Authentication required' }, { status: 401 });
         }
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        let verifyResult;
-        try {
-            verifyResult = await verifyToken(sdk, accessToken);
-        } catch (err) {
-            if (err.status === 429 || err.message?.includes('rate limit')) {
-                return Response.json({ error: 'Too many requests' }, { status: 429 });
-            }
-            throw err;
-        }
-        // If verification failed, use the wallet address from the request
-        // (user is already authed on client, don't fail the save)
-        const wallet = verifyResult.success ? verifyResult.walletAddress : clientWallet;
+        const wallet = user.data?.omenx_wallet;
         if (!wallet) {
-            return Response.json({ error: 'No wallet address' }, { status: 400 });
+            return Response.json({ error: 'OmenX wallet not linked to Base44 account' }, { status: 400 });
+        }
+
+        const { saveData } = await req.json();
+        if (!saveData) {
+            return Response.json({ error: 'saveData required' }, { status: 400 });
         }
 
         // Ensure saveData has required fields

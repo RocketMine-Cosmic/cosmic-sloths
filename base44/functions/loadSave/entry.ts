@@ -27,38 +27,14 @@ async function verifyToken(sdk, accessToken) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { walletAddress: clientWallet, accessToken } = await req.json();
-
-        if (!clientWallet || !accessToken) {
+        const user = await base44.auth.me();
+        if (!user) {
             return Response.json({ saveData: null });
         }
 
-        const now = Date.now();
-        // Quick path: if token is in verify cache, skip external OmenX call
-        const cachedVerify = verifyCache.get(accessToken);
-        let wallet;
-        if (cachedVerify && cachedVerify.expiresAt > now) {
-            wallet = cachedVerify.walletAddress;
-        } else {
-            const sdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-            });
-            const verifyResult = await verifyToken(sdk, accessToken);
-            // If OmenX API is down, fall back to clientWallet (user already authed on client)
-            if (verifyResult.skipVerify) {
-                wallet = clientWallet;
-            } else if (!verifyResult.success) {
-                return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            } else {
-                wallet = verifyResult.walletAddress;
-            }
-        }
-        
-        // Verify wallet matches client claim (skip if we had to skip verify due to API down)
-        if (wallet !== clientWallet && !verifyCache.get(accessToken)?.skipVerify) {
-            console.warn('[loadSave] Wallet mismatch:', wallet, '≠', clientWallet);
-            return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
+        const wallet = user.data?.omenx_wallet;
+        if (!wallet) {
+            return Response.json({ saveData: null });
         }
 
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });

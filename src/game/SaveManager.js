@@ -50,11 +50,11 @@ export const SaveManager = {
       
       // Load cloud save on init
       try {
-        const res = await fetch('/functions/loadSave', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ walletAddress, accessToken }),
-        });
+          const res = await fetch('/functions/loadSave', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
+          });
         const response = await res.json();
         
         if (response?.saveData) {
@@ -140,9 +140,7 @@ export const SaveManager = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          walletAddress,
           saveData: JSON.parse(localSave),
-          accessToken,
         }),
       });
       if (!res.ok) {
