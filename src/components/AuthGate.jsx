@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
 import OmenXAuthButton from './game/OmenXAuthButton';
 import SpaceBackground from './game/SpaceBackground';
+import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 
 export default function AuthGate({ children }) {
   const [ready, setReady] = useState(false);
@@ -25,15 +26,28 @@ export default function AuthGate({ children }) {
 
   const checkAuth = async () => {
     try {
-      // Check if OmenX wallet is already in localStorage (user logged in with OmenX)
-      const omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+      // Check localStorage first, then IndexedDB for OmenX wallet
+      let omenxAuth = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+      
+      if (!omenxAuth?.walletAddress) {
+        // Fall back to IndexedDB
+        const dbAuth = await getAuthFromIndexedDB();
+        if (dbAuth?.walletAddress) {
+          omenxAuth = dbAuth;
+          localStorage.setItem('omenx_auth_data', JSON.stringify(dbAuth));
+          console.log('[AuthGate] Restored OmenX from IndexedDB');
+        }
+      }
+      
       if (omenxAuth?.walletAddress) {
         // OmenX is authenticated, now enforce Base44 login (required for saves)
         try {
           const isBase44Auth = await base44.auth.isAuthenticated();
           if (!isBase44Auth) {
             console.log('[AuthGate] OmenX ready but Base44 not authenticated, redirecting to login');
-            base44.auth.redirectToLogin();
+            // Pass OmenX wallet as URL params for recovery post-login
+            const redirectUrl = `${window.location.pathname}?omenx_wallet=${encodeURIComponent(omenxAuth.walletAddress)}&omenx_token=${encodeURIComponent(omenxAuth.accessToken)}`;
+            base44.auth.redirectToLogin(redirectUrl);
             return;
           }
           

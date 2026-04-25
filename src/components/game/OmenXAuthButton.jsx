@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { omenx } from '@/lib/omenx';
-import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
+import { clearAuthFromIndexedDB, saveAuthToIndexedDB, getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { base44 } from '@/api/base44Client';
 
 const STORAGE_KEY = 'omenx_auth_data';
@@ -15,14 +15,63 @@ function getAuthData() {
     } catch { return null; }
 }
 
+// Check URL params for OmenX recovery (post-Base44-redirect)
+async function recoverFromUrlOrIndexedDB() {
+    const params = new URLSearchParams(window.location.search);
+    const walletFromUrl = params.get('omenx_wallet');
+    const tokenFromUrl = params.get('omenx_token');
+    
+    if (walletFromUrl && tokenFromUrl) {
+        try {
+            const recovered = { walletAddress: walletFromUrl, accessToken: tokenFromUrl };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(recovered));
+            await saveAuthToIndexedDB(recovered);
+            // Clean URL params
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return recovered;
+        } catch (e) {
+            console.error('[OmenX] URL recovery failed:', e);
+        }
+    }
+    
+    // Fall back to IndexedDB if localStorage is empty
+    const lsAuth = getAuthData();
+    if (lsAuth) return lsAuth;
+    
+    const dbAuth = await getAuthFromIndexedDB();
+    if (dbAuth?.walletAddress) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dbAuth));
+        return dbAuth;
+    }
+    
+    return null;
+}
+
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [authData, setAuthState] = useState(getAuthData());
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+    
+    // On mount, try recovery from URL or IndexedDB
+    useEffect(() => {
+        const recover = async () => {
+            const recovered = await recoverFromUrlOrIndexedDB();
+            if (recovered && !authData) {
+                setAuthState(recovered);
+                onAuthChange?.(recovered);
+            }
+        };
+        recover();
+    }, []);
 
-    const applyAuthData = (data) => {
-        if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        else localStorage.removeItem(STORAGE_KEY);
+    const applyAuthData = async (data) => {
+        if (data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            await saveAuthToIndexedDB(data);
+        } else {
+            localStorage.removeItem(STORAGE_KEY);
+            await clearAuthFromIndexedDB();
+        }
         setAuthState(data);
         setLoading(false);
         if (data) {
