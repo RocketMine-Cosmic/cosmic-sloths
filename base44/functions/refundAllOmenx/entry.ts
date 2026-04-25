@@ -1,16 +1,25 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 
+// Verify wallet is an admin via AdminWallet entity
+async function isAdminWallet(walletAddress) {
+    if (!walletAddress) return false;
+    const admins = await db.entities.AdminWallet.filter({ wallet_address: walletAddress });
+    return admins && admins.length > 0;
+}
+
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { adminKey, confirm_refund, dry_run } = body;
+        const { confirm_refund, dry_run, walletAddress, accessToken } = body;
 
-        const expectedKey = Deno.env.get('AdminDash');
-        if (!adminKey || adminKey !== expectedKey) {
+        // Verify admin wallet
+        const isAdmin = await isAdminWallet(walletAddress);
+        if (!isAdmin) {
             return Response.json({ error: 'Admin access required' }, { status: 403 });
         }
 
@@ -19,7 +28,7 @@ Deno.serve(async (req) => {
         }
 
         console.log('[refundAllOmenx] Fetching all token spend logs...');
-        const spendLogs = await base44.asServiceRole.entities.TokenSpendLog.list('', 10000);
+        const spendLogs = await db.entities.TokenSpendLog.list('', 10000);
         
         if (!spendLogs || spendLogs.length === 0) {
             return Response.json({ success: true, refunded: 0, totalAmount: 0, message: 'No spend logs found', isDryRun: dry_run });
@@ -39,8 +48,8 @@ Deno.serve(async (req) => {
         console.log('[refundAllOmenx] Processing refunds for', Object.keys(refundMap).length, 'wallets');
 
         // Build batch refund payments
-        const payments = Object.entries(refundMap).map(([walletAddress, data]) => ({
-            walletAddress,
+        const payments = Object.entries(refundMap).map(([walletAddr, data]) => ({
+            walletAddress: walletAddr,
             amount: Math.floor(data.amount).toString(),
             player_name: data.player_name
         }));
@@ -55,7 +64,7 @@ Deno.serve(async (req) => {
                 isDryRun: true,
                 refunded: payments.length,
                 totalAmount: totalRefunded,
-                payments: payments.slice(0, 10), // Return first 10 as preview
+                payments: payments.slice(0, 10),
                 message: `Preview: ${payments.length} wallets would receive refunds totaling ${totalRefunded} OMENX`
             });
         }

@@ -13,8 +13,11 @@ export default function AdminRefundOmenx({ walletAddress }) {
         setLoading(true);
         setError(null);
         try {
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
             const res = await base44.functions.invoke('refundAllOmenx', {
                 dry_run: true,
+                walletAddress: authData?.walletAddress,
+                accessToken: authData?.accessToken,
             });
             if (res.data?.error) {
                 setError(res.data.error);
@@ -33,8 +36,11 @@ export default function AdminRefundOmenx({ walletAddress }) {
         setLoading(true);
         setError(null);
         try {
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
             const res = await base44.functions.invoke('refundAllOmenx', {
                 confirm_refund: true,
+                walletAddress: authData?.walletAddress,
+                accessToken: authData?.accessToken,
             });
             if (res.data?.error) {
                 setError(res.data.error);
