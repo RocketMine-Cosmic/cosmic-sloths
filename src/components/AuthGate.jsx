@@ -40,35 +40,29 @@ export default function AuthGate({ children }) {
       }
       
       if (omenxAuth?.walletAddress) {
-        // OmenX is authenticated, now enforce Base44 login (required for saves)
+        // OmenX is authenticated—allow play immediately (Base44 optional)
+        console.log('[AuthGate] OmenX wallet linked, allowing access');
+        setHasWallet(true);
+        setReady(true);
+        
+        // Try to sync to Base44 in background if authenticated
         try {
           const isBase44Auth = await base44.auth.isAuthenticated();
-          if (!isBase44Auth) {
-            console.log('[AuthGate] OmenX ready but Base44 not authenticated, redirecting to login');
-            // Pass OmenX wallet as URL params for recovery post-login
-            const redirectUrl = `${window.location.pathname}?omenx_wallet=${encodeURIComponent(omenxAuth.walletAddress)}&omenx_token=${encodeURIComponent(omenxAuth.accessToken)}`;
-            base44.auth.redirectToLogin(redirectUrl);
-            return;
+          if (isBase44Auth) {
+            const user = await base44.auth.me();
+            if (!user?.data?.omenx_wallet) {
+              await base44.functions.invoke('syncOmenXWallet', { 
+                walletAddress: omenxAuth.walletAddress,
+                refreshToken: omenxAuth.refreshToken || null
+              });
+              console.log('[AuthGate] Synced OmenX wallet to Base44');
+            }
           }
-          
-          const user = await base44.auth.me();
-          if (!user?.data?.omenx_wallet) {
-            // Sync wallet to Base44
-            await base44.functions.invoke('syncOmenXWallet', { 
-              walletAddress: omenxAuth.walletAddress 
-            });
-            console.log('[AuthGate] Synced OmenX wallet to Base44');
-          }
-          
-          console.log('[AuthGate] Full auth complete (OmenX + Base44)');
-          setHasWallet(true);
-          setReady(true);
-          return;
         } catch (e) {
-          console.error('[AuthGate] Base44 auth check failed:', e.message);
-          base44.auth.redirectToLogin();
-          return;
+          // Base44 sync is optional—OmenX-only users can still play
+          console.log('[AuthGate] Base44 sync skipped (optional):', e.message);
         }
+        return;
       }
       
       // No OmenX wallet yet - show link wallet screen
@@ -98,7 +92,7 @@ export default function AuthGate({ children }) {
             Link Your Wallet
           </h1>
           <p className="text-slate-400 text-base mb-6">Connect your OmenX wallet to play Cosmic Sloths.</p>
-          <OmenXAuthButton onSuccess={() => { setHasWallet(true); checkAuth(); }} />
+          <OmenXAuthButton onSuccess={() => { setHasWallet(true); checkAuth(); }} fullWidth />
         </div>
       </div>
     );

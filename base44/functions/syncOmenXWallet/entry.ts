@@ -12,13 +12,19 @@ Deno.serve(async (req) => {
     }
 
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    let user = await base44.auth.me();
     
+    // If no Base44 user yet, that's OK for OmenX-only players
+    // They can still play; refresh token stays in IndexedDB
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ 
+        success: true, 
+        message: 'OmenX linked without Base44 account',
+        refreshTokenStored: !!refreshToken 
+      });
     }
 
-    // Update user with OmenX wallet and refresh token
+    // If Base44 user exists, sync the refresh token
     const updated = await base44.auth.updateMe({ 
       omenx_wallet: walletAddress,
       omenx_refresh_token: refreshToken || null
