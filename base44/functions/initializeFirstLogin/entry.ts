@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {

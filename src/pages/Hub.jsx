@@ -74,6 +74,18 @@ export default function Hub({ isCarousel }) {
     const { user: omenxUser } = useOmenXUser();
 
     React.useEffect(() => {
+        // Listen for postMessage from OAuth popup (same-tab storage events don't fire)
+        const onMessage = (event) => {
+            const { type, authData } = event.data || {};
+            if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.walletAddress && authData?.accessToken) {
+                setOmenxAuth(authData);
+            }
+        };
+        window.addEventListener('message', onMessage);
+        return () => window.removeEventListener('message', onMessage);
+    }, []);
+
+    React.useEffect(() => {
          let isMounted = true;
          const initOmenX = async () => {
              const auth = getOmenXAuth();
