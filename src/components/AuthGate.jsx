@@ -10,6 +10,13 @@ export default function AuthGate({ children }) {
 
   useEffect(() => {
     checkAuth();
+    
+    // Re-check auth when storage changes (OAuth callback updates localStorage)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const checkAuth = async () => {
