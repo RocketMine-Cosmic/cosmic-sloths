@@ -96,7 +96,7 @@ function applyUserData(user) {
 async function fetchBalance(force = false) {
     const now = Date.now();
     // Return existing in-flight promise to prevent duplicate calls
-    if (balanceFetchPromise || isFetchingBalance) return balanceFetchPromise;
+    if (balanceFetchPromise) return balanceFetchPromise;
     // Skip if cache is fresh
     if (!force && now - lastBalanceFetch < BALANCE_CACHE_TTL) return;
 
@@ -106,7 +106,6 @@ async function fetchBalance(force = false) {
         return;
     }
 
-    isFetchingBalance = true;
     balanceFetchPromise = (async () => {
         try {
             const res = await base44.functions.invoke('getPlayerBalance', {
@@ -117,13 +116,14 @@ async function fetchBalance(force = false) {
             lastBalanceFetch = Date.now();
             saveBalanceCache(balance);
             applyBalance(balance);
-        } catch {
+        } catch (err) {
             // On failure, set lastBalanceFetch so we don't immediately retry
             lastBalanceFetch = Date.now();
-            applyBalance(persistedBalance?.balance ?? 0);
+            if (err?.response?.status !== 429) {
+                applyBalance(persistedBalance?.balance ?? 0);
+            }
         } finally {
             balanceFetchPromise = null;
-            isFetchingBalance = false;
         }
     })();
     return balanceFetchPromise;
@@ -263,10 +263,12 @@ export function subscribePlayerData(fn) {
                 try { localStorage.removeItem('omenx_balance_cache'); } catch {}
                 try { sessionStorage.removeItem('omenx_session_data'); } catch {}
                 if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
-                // Single coordinated fetch (not 3 in parallel)
-                fetchBalance();
-                fetchSessionData();
-                fetchUserData();
+                // Debounce re-fetch to avoid concurrent calls
+                setTimeout(() => {
+                    fetchBalance();
+                    fetchSessionData();
+                    fetchUserData();
+                }, 100);
             }
         };
         window.addEventListener('storage', onStorage);
