@@ -32,7 +32,7 @@ export default function AuthCallback() {
         timestamp: Date.now(),
       };
       localStorage.setItem(storageKey, JSON.stringify(payload));
-      console.log('[AuthCallback] ✓ Stored callback in localStorage, closing popup in 2s');
+      console.log('[AuthCallback] ✓ Stored callback in localStorage, closing popup in 800ms');
     } catch (e) {
       console.error('[AuthCallback] localStorage failed:', e);
       return;
@@ -45,7 +45,7 @@ export default function AuthCallback() {
       } catch (e) {
         console.error('[AuthCallback] Could not close window:', e);
       }
-    }, 2000);
+    }, 800);
   }, []);
 
   return (
