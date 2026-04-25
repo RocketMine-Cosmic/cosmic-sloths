@@ -16,22 +16,29 @@ export const omenx = new OmenXGameSDK({
     try {
       localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
       
-      // Sync wallet to Base44 user entity
+      // Sync wallet to Base44 user entity only if user is authenticated with Base44
       if (authData?.walletAddress) {
         try {
+          const isAuthenticated = await base44.auth.isAuthenticated();
+          if (!isAuthenticated) {
+            console.warn('[OmenX] User not authenticated with Base44, skipping wallet sync');
+            window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
+            return;
+          }
+          
           await base44.auth.updateMe({
             omenx_wallet: authData.walletAddress
           });
           console.log('[OmenX] ✓ Wallet synced to Base44');
+          window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
         } catch (syncErr) {
-          console.warn('[OmenX] Wallet sync to Base44 failed:', syncErr.message);
+          console.error('[OmenX] Wallet sync to Base44 failed:', syncErr.message);
+          window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
         }
       }
-      
-      // Trigger AuthGate re-check
-      window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
     } catch (e) {
       console.error('[OmenX] Failed to store auth data', e);
+      window.dispatchEvent(new CustomEvent('omenx_wallet_synced'));
     }
   },
   onAuthError: (err) => {
