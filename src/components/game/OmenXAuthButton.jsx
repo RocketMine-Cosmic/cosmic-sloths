@@ -6,11 +6,14 @@ import { base44 } from '@/api/base44Client';
 const STORAGE_KEY = 'omenx_auth_data';
 
 function getAuthData() {
+    // Check SDK first, then fallback to localStorage
+    if (omenx.isAuthenticated()) {
+        return omenx.getAuthData();
+    }
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (!stored) return null;
         const parsed = JSON.parse(stored);
-        // Validate required fields
         return parsed?.walletAddress ? parsed : null;
     } catch { return null; }
 }
@@ -52,16 +55,23 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     
-    // On mount, try recovery from URL or IndexedDB
+    // On mount, check SDK authentication status
     useEffect(() => {
-        const recover = async () => {
-            const recovered = await recoverFromUrlOrIndexedDB();
-            if (recovered && !authData) {
-                setAuthState(recovered);
-                onAuthChange?.(recovered);
+        const checkAuth = async () => {
+            if (omenx.isAuthenticated()) {
+                const data = omenx.getAuthData();
+                setAuthState(data);
+                onAuthChange?.(data);
+            } else {
+                // Fallback to recovery from URL or IndexedDB
+                const recovered = await recoverFromUrlOrIndexedDB();
+                if (recovered) {
+                    setAuthState(recovered);
+                    onAuthChange?.(recovered);
+                }
             }
         };
-        recover();
+        checkAuth();
     }, []);
 
     const applyAuthData = async (data) => {
