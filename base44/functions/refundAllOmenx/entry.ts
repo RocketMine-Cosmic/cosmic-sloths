@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
             player_name: data.player_name
         }));
 
-        const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
+        const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrl.startsWith('http')) {
             apiBaseUrl = `https://${apiBaseUrl}`;
