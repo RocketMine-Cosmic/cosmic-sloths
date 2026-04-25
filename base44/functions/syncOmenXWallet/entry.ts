@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Method not allowed' }, { status: 405 });
     }
 
-    const { walletAddress } = await req.json();
+    const { walletAddress, refreshToken } = await req.json();
     if (!walletAddress) {
       return Response.json({ error: 'walletAddress required' }, { status: 400 });
     }
@@ -18,9 +18,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Update user with OmenX wallet
+    // Update user with OmenX wallet and refresh token
     const updated = await base44.auth.updateMe({ 
-      omenx_wallet: walletAddress 
+      omenx_wallet: walletAddress,
+      omenx_refresh_token: refreshToken || null
     });
 
     return Response.json({ success: true, user: updated });

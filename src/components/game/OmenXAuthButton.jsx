@@ -68,6 +68,18 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         if (data) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             await saveAuthToIndexedDB(data);
+            
+            // Send refresh token to backend for storage
+            if (data.refreshToken) {
+                try {
+                    await base44.functions.invoke('syncOmenXWallet', {
+                        walletAddress: data.walletAddress,
+                        refreshToken: data.refreshToken
+                    });
+                } catch (e) {
+                    console.error('[OmenXAuthButton] Failed to sync refresh token:', e);
+                }
+            }
         } else {
             localStorage.removeItem(STORAGE_KEY);
             await clearAuthFromIndexedDB();
