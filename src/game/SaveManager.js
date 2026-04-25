@@ -4,6 +4,8 @@ import { getOmenXUser } from '@/lib/omenxUser';
 import { getAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { NFTPerkManager } from './NFTPerks';
 
+let syncTimeout = null;
+let pendingSync = false;
 let syncRetries = 0;
 const MAX_SYNC_RETRIES = 3;
 let cloudSyncComplete = false;
@@ -18,10 +20,42 @@ export const SaveManager = {
     SaveManager._initialized = true;
     console.log('[SaveManager] Initialize called');
     try {
+      // Use localStorage immediately (fastest) — no async wait needed
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+      let walletAddress = omenxAuth?.walletAddress;
+      let accessToken = omenxAuth?.accessToken;
+
+      // In parallel, warm up IndexedDB auth (don't block on it)
+      if (!walletAddress) {
+        try {
+          const idbAuth = await getAuthFromIndexedDB();
+          if (idbAuth?.walletAddress) {
+            walletAddress = idbAuth.walletAddress;
+            accessToken = idbAuth.accessToken;
+            // Sync back to localStorage so next time is instant
+            localStorage.setItem('omenx_auth_data', JSON.stringify(idbAuth));
+          }
+        } catch (e) {
+          console.log('[SaveManager] IndexedDB auth not available:', e.message);
+        }
+      }
+      
+      if (!walletAddress || !accessToken) {
+        console.log('[SaveManager] No wallet authenticated, using local storage only');
+        return;
+      }
+      
+      SaveManager._walletAddress = walletAddress;
+      SaveManager._accessToken = accessToken;
+      
       // Load cloud save on init
       try {
-        const { base44 } = await import('@/api/base44Client');
-        const response = await base44.functions.invoke('loadSave', {});
+        const res = await fetch('/functions/loadSave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress, accessToken }),
+        });
+        const response = await res.json();
         
         if (response?.saveData) {
           const cloudSave = response.saveData;
@@ -86,25 +120,61 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
+    // Always fetch fresh auth from localStorage (may have been set after initialize)
+    let walletAddress = SaveManager._walletAddress;
+    let accessToken = SaveManager._accessToken;
+    
+    if (!walletAddress || !accessToken) {
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+      walletAddress = omenxAuth?.walletAddress;
+      accessToken = omenxAuth?.accessToken;
+    }
+    
+    if (!walletAddress || !accessToken) return;
+    
     try {
-      const { base44 } = await import('@/api/base44Client');
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
       
-      await base44.functions.invoke('syncSave', {
-        saveData: JSON.parse(localSave),
+      const res = await fetch('/functions/syncSave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress,
+          saveData: JSON.parse(localSave),
+          accessToken,
+        }),
       });
-      console.log('[SaveManager] Synced to cloud');
-      syncRetries = 0;
+      if (!res.ok) {
+        const data = await res.json();
+        console.warn('[SaveManager] Sync failed:', data.error);
+        syncRetries++;
+        if (syncRetries >= MAX_SYNC_RETRIES) {
+          console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
+          window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'max_retries' } }));
+          syncRetries = 0; // Reset for next batch
+        }
+      } else {
+        console.log('[SaveManager] Cloud sync');
+        syncRetries = 0; // Reset on success
+      }
     } catch (e) {
-      console.error('[SaveManager] Sync error:', e.message);
+      console.warn('[SaveManager] Sync failed:', e.message);
       syncRetries++;
       if (syncRetries >= MAX_SYNC_RETRIES) {
-        console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries');
+        console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
         window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'network_error' } }));
         syncRetries = 0;
       }
     }
+  },
+
+  syncToBackendImmediate: async () => {
+    // Emergency sync for critical events (game end) — skip debounce
+    if (syncTimeout) clearTimeout(syncTimeout);
+    pendingSync = false;
+    syncRetries = 0; // Reset retry count for critical syncs
+    await SaveManager.syncToBackend();
   },
 
   _cloudSyncComplete: cloudSyncComplete,
@@ -135,7 +205,6 @@ export const SaveManager = {
     const defaultChars = ['neobyte'];
 
     const defaultSave = {
-      player_name: '',
       gold: 0,
       relicFragments: 0,
       unlockedCharacters: [...defaultChars],
@@ -285,13 +354,19 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
+      // Only sync if user is authenticated with OmenX
+      if (SaveManager._walletAddress && SaveManager._accessToken) {
+        pendingSync = true;
+        if (syncTimeout) clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
+          if (pendingSync) {
+            SaveManager.syncToBackend();
+            pendingSync = false;
+          }
+        }, 10000); // Debounce to 10 seconds
+      }
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);
     }
-  },
-
-  syncToBackendImmediate: async () => {
-    // Called at game end or critical moments
-    await SaveManager.syncToBackend();
   }
 };

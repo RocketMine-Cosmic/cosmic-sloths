@@ -137,8 +137,10 @@ export default function Game() {
                         }
                     } catch (_) {}
 
+                    const omenxAuthForScore = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
                     await base44.functions.invoke('saveScore', {
-                        scoreData, squadStats,
+                        scoreData, walletAddress, squadStats,
+                        accessToken: omenxAuthForScore?.accessToken || null,
                     });
             } catch (e) {
                 console.error('[saveScore] FAILED:', e?.message || e);
@@ -243,13 +245,14 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 setGameOverStats(stats);
-                // Save score first, then persist local save and sync
+                // Save score first, then persist local save
                 saveScore(stats, false).then(() => {
                     SaveManager.save(currentSave);
+                    SaveManager.syncToBackendImmediate();
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
+                    // Still save locally even if remote fails
                     SaveManager.save(currentSave);
-                }).finally(() => {
                     SaveManager.syncToBackendImmediate();
                 });
                 
@@ -309,13 +312,14 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 setVictoryStats(stats);
-                // Save score first, then persist local save and sync
+                // Save score first, then persist local save
                 saveScore(stats, true).then(() => {
                     SaveManager.save(currentSave);
+                    SaveManager.syncToBackendImmediate();
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
+                    // Still save locally even if remote fails
                     SaveManager.save(currentSave);
-                }).finally(() => {
                     SaveManager.syncToBackendImmediate();
                 });
                 
@@ -390,11 +394,17 @@ export default function Game() {
 
     const purchaseSku = async (skuId) => {
         if (!skuId) return;
-        try {
-            return await base44.functions.invoke('purchaseSku', { skuId, quantity: 1 });
-        } catch (e) {
-            console.error('[Game purchaseSku] failed:', e?.message);
+        const authData = await getAuthData();
+        const walletAddress = authData?.walletAddress;
+        if (!walletAddress || !authData?.accessToken) {
+            console.error('[Game purchaseSku] No auth data found');
+            return;
         }
+        return fetch('/functions/purchaseSku', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skuId, quantity: 1, walletAddress, userId: walletAddress, playerName: authData?.username || walletAddress, accessToken: authData.accessToken }),
+        }).then(r => r.json()).catch(e => console.error('[Game purchaseSku] failed:', e?.message));
     };
 
     const handleUpgradeSelect = (upgrade) => {

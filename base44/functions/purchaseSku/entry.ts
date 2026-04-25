@@ -33,28 +33,21 @@ function getCurrentPeriodIds() {
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-        if (!user) {
-            return Response.json({ error: 'Authentication required' }, { status: 401 });
-        }
+        const { skuId, quantity = 1, walletAddress: clientWallet, userId, playerName: playerNameParam, accessToken } = await req.json();
 
-        const wallet = user.data?.omenx_wallet;
-        if (!wallet) {
-            return Response.json({ error: 'OmenX wallet required. Please link your wallet.' }, { status: 400 });
+        if (!skuId || !clientWallet || !accessToken) {
+            return Response.json({ error: 'skuId, walletAddress, and accessToken required' }, { status: 400 });
         }
-
-        const { skuId, quantity = 1, playerName: playerNameParam } = await req.json();
-        if (!skuId) {
-            return Response.json({ error: 'skuId required' }, { status: 400 });
-        }
-
-        const { week_id, season_id } = getCurrentPeriodIds();
 
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_PAYMENT_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation'
         });
+
+        const verifyResult = await verifyToken(sdk, accessToken);
+        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+
+        const { week_id, season_id } = getCurrentPeriodIds();
 
         const productsRes = await sdk.getProducts();
         const products = productsRes?.products || productsRes || [];
@@ -66,14 +59,14 @@ Deno.serve(async (req) => {
             return Response.json({ error: `No OMENX price for SKU: ${skuId}` }, { status: 400 });
         }
 
-        const idempotencyKey = `${wallet}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
+        const idempotencyKey = `${verifyResult.walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
-        console.log(`[purchaseSku] Purchasing SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${wallet}`);
+        console.log(`[purchaseSku] Purchasing SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${verifyResult.walletAddress}`);
 
         let purchaseData;
         try {
             purchaseData = await sdk.createPurchase({
-                playerWallet: wallet,
+                playerWallet: verifyResult.walletAddress,
                 skuId,
                 quantity,
                 idempotencyKey,
@@ -88,13 +81,14 @@ Deno.serve(async (req) => {
         }
 
         const totalAmount = amount * quantity;
+        const base44 = createClientFromRequest(req);
 
         // Log token spend
         try {
             await base44.asServiceRole.entities.TokenSpendLog.create({
-                user_id: wallet,
-                player_name: playerNameParam || wallet,
-                wallet_address: wallet,
+                user_id: userId || verifyResult.walletAddress,
+                player_name: playerNameParam || verifyResult.walletAddress,
+                wallet_address: verifyResult.walletAddress,
                 amount: totalAmount,
                 week_id,
                 season_id
@@ -141,7 +135,7 @@ Deno.serve(async (req) => {
             // Don't throw—pools are optional logging
         }
 
-        console.log('[purchaseSku] Purchase logged for wallet:', wallet);
+        console.log('[purchaseSku] Purchase logged for wallet:', verifyResult.walletAddress);
         return Response.json({ success: true, amount: totalAmount });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);

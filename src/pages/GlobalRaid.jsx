@@ -88,11 +88,12 @@ export default function GlobalRaid({ isCarousel }) {
                 }
                 if (bosses.length > 0) {
                     setWorldBossData(bosses[0]);
-                    // Read own contribution via backend (will fetch authenticated user's data)
-                    try {
-                        const res = await base44.functions.invoke('getMyBossContribution', { week_id });
-                        if (res.data?.contribution) setWorldBossContribution(res.data.contribution);
-                    } catch (e) { console.log('No contribution found:', e); }
+                    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                    // Read own contribution directly (open RLS)
+                    if (authData?.walletAddress) {
+                        const contribs = await base44.entities.GlobalBossContribution.filter({ week_id, user_id: authData.walletAddress });
+                        if (contribs.length > 0) setWorldBossContribution(contribs[0]);
+                    }
                     const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 10);
                     setTopContributors(allContribs);
                     const events = await base44.entities.GlobalBossEvent.filter({ week_id }, '-created_date', 15);
@@ -107,7 +108,8 @@ export default function GlobalRaid({ isCarousel }) {
         if (!worldBossData || claimingLevel !== null) return;
         setClaimingLevel(level);
         try {
-            const res = await base44.functions.invoke('claimBossReward', { claim_level: level });
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            const res = await base44.functions.invoke('claimBossReward', { claim_level: level, walletAddress: authData?.walletAddress });
             if (res.data.status === 'success') {
                 const { type, id } = res.data.reward;
                 const currentSave = SaveManager.load();
@@ -147,9 +149,12 @@ export default function GlobalRaid({ isCarousel }) {
             return;
         }
 
+        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+
         confirmPurchase(10, 'Buy 5 Raid Runs', async () => {
             try {
-                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1 });
+                if (!authData?.walletAddress) throw new Error('No wallet address');
+                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
                 if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
 
                 // Only grant runs after confirmed charge

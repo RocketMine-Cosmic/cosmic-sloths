@@ -60,7 +60,12 @@ export default function AdminDashboard() {
         if (e) e.preventDefault();
         const wallet = overrideWallet || walletInput;
         try {
-            const res = await base44.functions.invoke('getAdminData', { type: 'pools' });
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            if (!authData?.accessToken) {
+                setWalletError('Please login with OmenX first');
+                return;
+            }
+            const res = await base44.functions.invoke('getAdminData', { type: 'pools', walletAddress: wallet, accessToken: authData.accessToken });
             if (res.data?.error === 'Forbidden') throw new Error('Forbidden');
             setAdminWallet(wallet);
             sessionStorage.setItem('admin_wallet', wallet);

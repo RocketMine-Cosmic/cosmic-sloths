@@ -53,8 +53,14 @@ export default function Upgrades({ isCarousel }) {
         const handleSaveUpdated = (e) => setSave(e.detail);
         window.addEventListener('saveUpdated', handleSaveUpdated);
         
+        const handleBeforeUnload = () => {
+            SaveManager.syncToBackendImmediate();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        
         return () => {
             window.removeEventListener('saveUpdated', handleSaveUpdated);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
         };
     }, []);
 

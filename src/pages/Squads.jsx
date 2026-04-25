@@ -137,12 +137,16 @@ export default function Squads({ isCarousel }) {
                          }
 
                          if (needsUpdate) {
-                             const res = await base44.functions.invoke('squadActions', {
-                                 action: 'resetPeriods',
-                                 squadId: squad.id,
-                                 updateData,
-                             });
-                             if (res.data?.squad) updatedSquad = res.data.squad;
+                             const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                             if (authData?.accessToken) {
+                                 const res = await base44.functions.invoke('squadActions', {
+                                     action: 'resetPeriods',
+                                     accessToken: authData.accessToken,
+                                     squadId: squad.id,
+                                     updateData,
+                                 });
+                                 if (res.data?.squad) updatedSquad = res.data.squad;
+                             }
                          }
 
                          setMySquad(updatedSquad);
@@ -245,13 +249,20 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            if (!authData?.accessToken) {
+                toast({ title: "Error", description: "Please log in with OmenX first." });
+                return;
+            }
             const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
             const res = await base44.functions.invoke('createSquad', {
                 squadName: newSquadName,
                 squadTag: newSquadTag,
                 squadDesc: newSquadDesc,
+                walletAddress: walletAddr,
                 playerName: displayName,
                 playerTitle: (user?.data?.player_title || '').trim(),
+                accessToken: authData.accessToken
             });
             
             if (!res.data?.success) {
@@ -267,7 +278,10 @@ export default function Squads({ isCarousel }) {
         }
     };
 
-
+    const getAuthToken = () => {
+        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        return authData?.accessToken || null;
+    };
 
     const handleJoinSquad = async (squadId) => {
         if (!user) return;
@@ -281,9 +295,12 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
             const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
             const res = await base44.functions.invoke('squadActions', {
-                action: 'join', squadId,
+                action: 'join', accessToken, squadId,
                 playerName: displayName,
                 playerTitle: (user?.data?.player_title || '').trim(),
             });
@@ -303,9 +320,12 @@ export default function Squads({ isCarousel }) {
         if (!myMemberRecord) return;
         try {
             SoundManager.playUIClick();
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
             const leaveName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A pilot').trim();
             const res = await base44.functions.invoke('squadActions', {
-                action: 'leave',
+                action: 'leave', accessToken,
                 memberId: myMemberRecord.id,
                 squadId: mySquad.id,
                 playerName: leaveName,
@@ -349,8 +369,10 @@ export default function Squads({ isCarousel }) {
         setMessages(prev => [...prev, optimisticMsg]);
         
         try {
+            const accessToken = getAuthToken();
+            if (!accessToken) throw new Error('Not authenticated');
             const res = await base44.functions.invoke('squadActions', {
-                action: 'sendMessage',
+                action: 'sendMessage', accessToken,
                 squadId: mySquad.id,
                 content,
                 playerName: displayName,
@@ -371,8 +393,11 @@ export default function Squads({ isCarousel }) {
         if (!isLeader) return;
         try {
             SoundManager.playUIClick();
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
             const res = await base44.functions.invoke('squadActions', {
-                action: 'kick',
+                action: 'kick', accessToken,
                 squadId: mySquad.id,
                 targetMemberId: member.id,
             });
@@ -391,8 +416,11 @@ export default function Squads({ isCarousel }) {
         if (!isLeader) return;
         try {
             SoundManager.playUIClick();
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
             const res = await base44.functions.invoke('squadActions', {
-                action: 'transferLeadership',
+                action: 'transferLeadership', accessToken,
                 squadId: mySquad.id,
                 targetMemberId: member.id,
             });
@@ -418,8 +446,11 @@ export default function Squads({ isCarousel }) {
         if (!editName.trim() || !editTag.trim()) return;
         setIsSavingSettings(true);
         try {
+            const accessToken = getAuthToken();
+            if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
             const res = await base44.functions.invoke('squadActions', {
-                action: 'saveSettings',
+                action: 'saveSettings', accessToken,
                 squadId: mySquad.id,
                 name: editName.trim(),
                 tag: editTag.trim(),
@@ -456,8 +487,11 @@ export default function Squads({ isCarousel }) {
         if ((mySquad.weekly_kills || 0) >= tier.target && myMemberRecord.last_payout_week !== currentWeek) {
             try {
                 SoundManager.playLevelUp();
+                const accessToken = getAuthToken();
+                if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
                 const res = await base44.functions.invoke('squadActions', {
-                    action: 'claimWeekly',
+                    action: 'claimWeekly', accessToken,
                     memberId: myMemberRecord.id,
                     currentWeek,
                 });
@@ -492,8 +526,11 @@ export default function Squads({ isCarousel }) {
         if ((mySquad.daily_kills || 0) >= tier.target && myMemberRecord.last_daily_payout_date !== currentDay) {
             try {
                 SoundManager.playGoldPickup();
+                const accessToken = getAuthToken();
+                if (!accessToken) { toast({ title: "Error", description: "Please log in with OmenX first." }); return; }
+
                 const res = await base44.functions.invoke('squadActions', {
-                    action: 'claimDaily',
+                    action: 'claimDaily', accessToken,
                     memberId: myMemberRecord.id,
                     currentDay,
                 });
