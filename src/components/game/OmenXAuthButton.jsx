@@ -41,9 +41,12 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         try {
             console.log('[OmenXAuthButton] Waiting for SDK ready...');
             await waitForSdkReady();
-            console.log('[OmenXAuthButton] Starting authentication...');
-            await omenx.authenticate({ enablePKCE: true });
-            console.log('[OmenXAuthButton] Auth triggered, waiting for onAuth callback...');
+            console.log('[OmenXAuthButton] Starting OAuth flow...');
+            await omenx.authenticate({
+                redirectUri: `${window.location.origin}/auth/callback`,
+                enablePKCE: true,
+            });
+            console.log('[OmenXAuthButton] OAuth window opened, waiting for callback...');
         } catch (err) {
             console.error('[OmenXAuthButton] Auth failed:', err);
             setLoading(false);
