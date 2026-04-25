@@ -25,39 +25,33 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             setAuthState(data);
             onAuthChange?.(data);
         }
-    }, []);
+
+        // Listen for storage changes from SDK's onAuth callback
+        const handleStorageChange = (e) => {
+            if (e.key === STORAGE_KEY) {
+                const newAuth = e.newValue ? JSON.parse(e.newValue) : null;
+                setAuthState(newAuth);
+                setLoading(false);
+                if (newAuth) {
+                    setSuccessMsg(`Connected as ${newAuth.username || newAuth.walletAddress}`);
+                    setTimeout(() => setSuccessMsg(''), 5000);
+                    onAuthChange?.(newAuth);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [onAuthChange]);
 
     const handleLogin = async () => {
         setLoading(true);
         try {
-            // Use the SDK's authenticate method for standalone mode
-            // The SDK will handle the popup and callback internally
-            const response = await omenx.authenticate({
-                redirectUri: `${window.location.origin}/auth/callback`,
-                enablePKCE: true
-            });
-
-            if (response && response.walletAddress) {
-                // Auth successful - save and notify
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(response));
-                setAuthState(response);
-                setSuccessMsg(`Connected as ${response.username || response.walletAddress}`);
-                setTimeout(() => setSuccessMsg(''), 5000);
-                onAuthChange?.(response);
-
-                // Sync wallet to Base44 in background
-                try {
-                    await base44.functions.invoke('syncOmenXWallet', {
-                        walletAddress: response.walletAddress,
-                        refreshToken: response.refreshToken || null
-                    });
-                } catch (e) {
-                    console.error('[OmenXAuthButton] Failed to sync wallet:', e);
-                }
-            }
+            // SDK handles popup internally - don't specify redirectUri
+            await omenx.authenticate({ enablePKCE: true });
+            // onAuth callback fires automatically when complete
         } catch (err) {
             console.error('[OmenXAuthButton] Authentication failed:', err);
-        } finally {
             setLoading(false);
         }
     };
