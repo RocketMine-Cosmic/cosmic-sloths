@@ -78,9 +78,9 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         setLoading(true);
         try {
             console.log('[OmenXAuthButton] Calling omenx.authenticate...');
-            // SDK automatically handles PKCE, code exchange, and calls onAuth callback
             await omenx.authenticate({ redirectUri: 'https://cosmic-sloths.com/auth/callback' });
             console.log('[OmenXAuthButton] authenticate() returned');
+            // onAuth callback will fire and sync wallet to Base44
         } catch (err) {
             console.error('[OmenXAuthButton] authenticate() failed:', err.message, err);
             setLoading(false);

@@ -27,17 +27,20 @@ export default function AuthGate({ children }) {
     try {
       const isAuth = await base44.auth.isAuthenticated();
       if (!isAuth) {
+        console.log('[AuthGate] Not authenticated, redirecting to Base44 login');
         base44.auth.redirectToLogin();
         return;
       }
       
       const user = await base44.auth.me();
       if (!user?.data?.omenx_wallet) {
+        console.log('[AuthGate] Authenticated but no OmenX wallet linked');
         setHasWallet(false);
         setReady(true);
         return;
       }
       
+      console.log('[AuthGate] Full auth complete (Base44 + OmenX)');
       setHasWallet(true);
       setReady(true);
     } catch (err) {
