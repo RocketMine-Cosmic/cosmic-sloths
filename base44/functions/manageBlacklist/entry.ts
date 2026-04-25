@@ -1,15 +1,16 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
+
+const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 Deno.serve(async (req) => {
     try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+        const { action, wallet_address, reason, notes, adminSecret } = await req.json();
 
-        if (!user || user.role !== 'admin') {
+        // Validate admin secret
+        const expectedSecret = Deno.env.get('AdminDash');
+        if (!adminSecret || adminSecret !== expectedSecret) {
             return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
         }
-
-        const { action, wallet_address, reason, notes } = await req.json();
 
         if (!action || !wallet_address) {
             return Response.json({ error: 'Missing action or wallet_address' }, { status: 400 });
@@ -19,14 +20,14 @@ Deno.serve(async (req) => {
             if (!reason) {
                 return Response.json({ error: 'Reason required for ban' }, { status: 400 });
             }
-            const existing = await base44.asServiceRole.entities.BlacklistedWallet.filter({ wallet_address });
+            const existing = await db.entities.BlacklistedWallet.filter({ wallet_address });
             if (existing.length > 0) {
                 return Response.json({ error: 'Wallet already banned' }, { status: 409 });
             }
-            const record = await base44.asServiceRole.entities.BlacklistedWallet.create({
+            const record = await db.entities.BlacklistedWallet.create({
                 wallet_address,
                 reason,
-                banned_by: user.email,
+                banned_by: 'admin',
                 banned_at: new Date().toISOString(),
                 notes: notes || ''
             });
@@ -34,12 +35,17 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'unban') {
-            const existing = await base44.asServiceRole.entities.BlacklistedWallet.filter({ wallet_address });
+            const existing = await db.entities.BlacklistedWallet.filter({ wallet_address });
             if (existing.length === 0) {
                 return Response.json({ error: 'Wallet not found on blacklist' }, { status: 404 });
             }
-            await base44.asServiceRole.entities.BlacklistedWallet.delete(existing[0].id);
+            await db.entities.BlacklistedWallet.delete(existing[0].id);
             return Response.json({ success: true, message: 'Wallet unbanned' });
+        }
+
+        if (action === 'list') {
+            const records = await db.entities.BlacklistedWallet.list('-created_date', 500);
+            return Response.json({ records });
         }
 
         return Response.json({ error: 'Invalid action' }, { status: 400 });

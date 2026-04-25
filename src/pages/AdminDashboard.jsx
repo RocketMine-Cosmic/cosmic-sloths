@@ -140,7 +140,7 @@ export default function AdminDashboard() {
         managers: <AdminManagers walletAddress={adminWallet} />,
         discord: <AdminDiscordGuide />,
         backups: <AdminDataBackup walletAddress={adminWallet} />,
-        blacklist: <AdminBlacklist />,
+        blacklist: <AdminBlacklist adminSecret={adminSecret} />,
         wipe: <AdminDataWipe walletAddress={adminWallet} />,
         refund: <AdminRefundOmenx walletAddress={adminWallet} />,
         reset: <AdminMaintenanceReset walletAddress={adminWallet} />,
