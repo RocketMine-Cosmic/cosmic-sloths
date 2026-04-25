@@ -29,7 +29,7 @@ const GlobalRaid = React.lazy(() => import('./pages/GlobalRaid'));
 const Mastery = React.lazy(() => import('./pages/Mastery'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
-import { initOmenX } from '@/lib/omenx';
+import { initializeSDK } from '@/lib/omenxSDK';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import GamepadManager from './components/GamepadManager';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
@@ -84,7 +84,7 @@ const MainApp = () => {
 
 function App() {
   useEffect(() => {
-    initOmenX().catch(err => console.error('[OmenX] init failed', err));
+    initializeSDK().catch(err => console.error('[OmenX SDK] init failed', err));
     // CurrencyProvider subscription will handle centralized fetch
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)

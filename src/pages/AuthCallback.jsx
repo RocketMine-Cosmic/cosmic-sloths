@@ -1,42 +1,5 @@
-import { useLayoutEffect } from 'react';
-import { exchangeCodeForToken } from '@/lib/omenx';
-
+// SDK handles callback automatically—this is just a loading screen
 export default function AuthCallback() {
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
-    const error = params.get('error');
-    const errorDesc = params.get('error_description');
-    
-    console.log('[AuthCallback] Received from OMENX redirect:', { code: !!code, state: !!state, error, errorDesc });
-    
-    if (error) {
-      console.error('[AuthCallback] ❌ OAuth Error:', error, errorDesc);
-      setTimeout(() => window.close(), 2000);
-      return;
-    }
-
-    if (!code || !state) {
-      console.error('[AuthCallback] Missing code or state');
-      setTimeout(() => window.close(), 2000);
-      return;
-    }
-
-    // Exchange code for token
-    exchangeCodeForToken(code, state)
-      .then(() => {
-        console.log('[AuthCallback] ✓ Auth succeeded, closing popup');
-        setTimeout(() => window.close(), 1000);
-      })
-      .catch((err) => {
-        console.error('[AuthCallback] ❌ Token exchange failed:', err.message);
-        setTimeout(() => window.close(), 2000);
-      });
-  }, []);
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-black">
       <div className="text-center">
