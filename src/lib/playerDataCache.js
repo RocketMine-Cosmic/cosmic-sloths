@@ -96,7 +96,7 @@ function applyUserData(user) {
 async function fetchBalance(force = false) {
     const now = Date.now();
     // Return existing in-flight promise to prevent duplicate calls
-    if (balanceFetchPromise) return balanceFetchPromise;
+    if (balanceFetchPromise || isFetchingBalance) return balanceFetchPromise;
     // Skip if cache is fresh
     if (!force && now - lastBalanceFetch < BALANCE_CACHE_TTL) return;
 
@@ -106,6 +106,7 @@ async function fetchBalance(force = false) {
         return;
     }
 
+    isFetchingBalance = true;
     balanceFetchPromise = (async () => {
         try {
             const res = await base44.functions.invoke('getPlayerBalance', {
@@ -116,14 +117,11 @@ async function fetchBalance(force = false) {
             lastBalanceFetch = Date.now();
             saveBalanceCache(balance);
             applyBalance(balance);
-        } catch (err) {
-            // On failure, set lastBalanceFetch so we don't immediately retry
-            lastBalanceFetch = Date.now();
-            if (err?.response?.status !== 429) {
-                applyBalance(persistedBalance?.balance ?? 0);
-            }
+        } catch {
+            applyBalance(persistedBalance?.balance ?? 0);
         } finally {
             balanceFetchPromise = null;
+            isFetchingBalance = false;
         }
     })();
     return balanceFetchPromise;
@@ -241,8 +239,8 @@ export function subscribePlayerData(fn) {
     listeners.add(fn);
     if (cachedData !== null) fn(cachedData);
 
-    // Only trigger fetch once (first subscriber initializes) AND only if logged in
-    if (listeners.size === 1 && getAuthData()) {
+    // Only trigger fetch once (first subscriber initializes)
+    if (listeners.size === 1) {
         if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
             fetchPlayerData();
         }
@@ -263,11 +261,10 @@ export function subscribePlayerData(fn) {
                 try { localStorage.removeItem('omenx_balance_cache'); } catch {}
                 try { sessionStorage.removeItem('omenx_session_data'); } catch {}
                 if (startupTimer) { clearTimeout(startupTimer); startupTimer = null; }
-                setTimeout(() => {
-                    fetchBalance();
-                    fetchSessionData();
-                    fetchUserData();
-                }, 100);
+                // Single coordinated fetch (not 3 in parallel)
+                fetchBalance();
+                fetchSessionData();
+                fetchUserData();
             }
         };
         window.addEventListener('storage', onStorage);

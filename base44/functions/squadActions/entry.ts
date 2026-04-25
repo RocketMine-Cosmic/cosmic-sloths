@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
@@ -24,10 +23,10 @@ Deno.serve(async (req) => {
     try {
         const body = await req.json();
         const { action, accessToken } = body;
-        const db = createClientFromRequest(req).asServiceRole;
 
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
 
+        const base44 = createClientFromRequest(req);
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
@@ -119,7 +118,7 @@ Deno.serve(async (req) => {
                 content: content.substring(0, 200)
             };
             
-            const message = await db.entities.SquadMessage.create(msgData);
+            const message = await base44.asServiceRole.entities.SquadMessage.create(msgData);
             return Response.json({ success: true, message });
         }
 

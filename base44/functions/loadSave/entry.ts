@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 5 * 60 * 1000;
+const VERIFY_CACHE_TTL = 5 * 60 * 1000; // 5 min instead of 1 hour to allow quicker token refreshes
 
 async function verifyToken(sdk, accessToken) {
     const now = Date.now();
@@ -18,6 +18,7 @@ async function verifyToken(sdk, accessToken) {
         }
         return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
     } catch (e) {
+        // If OmenX API fails, fall back to clientWallet (user already authed on client)
         console.warn('[loadSave] Token verify failed:', e.message);
         return { success: true, walletAddress: null, skipVerify: true };
     }
@@ -25,15 +26,15 @@ async function verifyToken(sdk, accessToken) {
 
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { walletAddress: clientWallet, accessToken } = await req.json();
 
         if (!clientWallet || !accessToken) {
             return Response.json({ saveData: null });
         }
 
-        const db = createClientFromRequest(req).asServiceRole;
-
         const now = Date.now();
+        // Quick path: if token is in verify cache, skip external OmenX call
         const cachedVerify = verifyCache.get(accessToken);
         let wallet;
         if (cachedVerify && cachedVerify.expiresAt > now) {
@@ -44,6 +45,7 @@ Deno.serve(async (req) => {
                 apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
             });
             const verifyResult = await verifyToken(sdk, accessToken);
+            // If OmenX API is down, fall back to clientWallet (user already authed on client)
             if (verifyResult.skipVerify) {
                 wallet = clientWallet;
             } else if (!verifyResult.success) {
@@ -52,13 +54,14 @@ Deno.serve(async (req) => {
                 wallet = verifyResult.walletAddress;
             }
         }
-
+        
+        // Verify wallet matches client claim (skip if we had to skip verify due to API down)
         if (wallet !== clientWallet && !verifyCache.get(accessToken)?.skipVerify) {
             console.warn('[loadSave] Wallet mismatch:', wallet, '≠', clientWallet);
             return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
         }
 
-        const records = await db.entities.PlayerSave.filter({ wallet_address: wallet });
+        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet });
         const saveData = records.length > 0 ? records[0].save_data : null;
 
         console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData);

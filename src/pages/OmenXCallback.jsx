@@ -155,14 +155,6 @@ export default function OmenXCallback() {
                 }
 
                 setStatus('✓ Login successful!');
-                // Send postMessage before closing (or redirecting)
-                if (window.opener) {
-                    try {
-                        window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
-                        // Give postMessage time to reach opener before closing
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                    } catch(e) { /* ignore */ }
-                }
                 // Always try to close — works when opened as popup
                 // If this was a direct navigation, window.close() will fail silently
                 // and we fall back to redirect after a short delay

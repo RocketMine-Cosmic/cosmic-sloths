@@ -59,9 +59,7 @@ export default function Game() {
         const initGame = async () => {
             const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
             
-            // CRITICAL: Force a fresh cloud load before every run so upgrades bought
-            // before the run are always present (initialize() skips if already called)
-            SaveManager._initialized = false;
+            // CRITICAL: Initialize SaveManager first to load cloud save + merge upgrades
             await SaveManager.initialize();
             
             const save = SaveManager.load();

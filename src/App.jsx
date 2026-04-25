@@ -124,14 +124,6 @@ function App() {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
     // CurrencyProvider subscription will handle centralized fetch
 
-    // Clear auth on browser/tab close so stale tokens don't persist across sessions
-    const onUnload = () => {
-      try { localStorage.removeItem('omenx_auth_data'); } catch {}
-      try { localStorage.removeItem('omenx_balance_cache'); } catch {}
-      try { sessionStorage.removeItem('omenx_session_data'); } catch {}
-    };
-    window.addEventListener('beforeunload', onUnload);
-
     // Listen for auth data pushed from parent page (when embedded on Omen website)
     const onParentMessage = (event) => {
       const { type, authData } = event.data || {};
@@ -148,10 +140,7 @@ function App() {
       }
     };
     window.addEventListener('message', onParentMessage);
-    return () => {
-      window.removeEventListener('message', onParentMessage);
-      window.removeEventListener('beforeunload', onUnload);
-    };
+    return () => window.removeEventListener('message', onParentMessage);
   }, []);
 
   return (

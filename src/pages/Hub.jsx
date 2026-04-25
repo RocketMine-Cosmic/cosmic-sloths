@@ -74,18 +74,6 @@ export default function Hub({ isCarousel }) {
     const { user: omenxUser } = useOmenXUser();
 
     React.useEffect(() => {
-        // Listen for postMessage from OAuth popup (same-tab storage events don't fire)
-        const onMessage = (event) => {
-            const { type, authData } = event.data || {};
-            if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.walletAddress && authData?.accessToken) {
-                setOmenxAuth(authData);
-            }
-        };
-        window.addEventListener('message', onMessage);
-        return () => window.removeEventListener('message', onMessage);
-    }, []);
-
-    React.useEffect(() => {
          let isMounted = true;
          const initOmenX = async () => {
              const auth = getOmenXAuth();
@@ -198,9 +186,6 @@ export default function Hub({ isCarousel }) {
     };
 
     const launchGame = async (mode) => {
-        // Flush any pending debounced sync FIRST — ensures upgrades bought just before launch are in the cloud
-        await SaveManager.flushBeforeLaunch();
-
         // Prefetch save from backend so Game page finds it in localStorage immediately (no blocking wait)
         const auth = getOmenXAuth();
         if (auth?.walletAddress && auth?.accessToken) {
@@ -621,8 +606,7 @@ export default function Hub({ isCarousel }) {
                                 {(() => {
                                     const isCharUnlocked = (save?.unlockedCharacters ?? []).includes(selectedChar);
                                     const isArenaUnlocked = (save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).includes(selectedArena);
-                                    const cloudLoading = omenxAuth && !syncReady;
-                                    const canLaunch = isCharUnlocked && isArenaUnlocked && !cloudLoading;
+                                    const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
                                     const sessionBuffs = save.sessionBuffs || {};
                                     const hasXpBuff = sessionBuffs.xpExpiry > currentTime;
@@ -674,14 +658,12 @@ export default function Hub({ isCarousel }) {
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
-                                                {cloudLoading ? (
-                                                   <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> SYNCING...</>
-                                                ) : !isCharUnlocked ? (
-                                                   <>LOCKED</>
+                                                {!isCharUnlocked ? (
+                                                    <>LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                   <>LOCKED</>
+                                                    <>LOCKED</>
                                                 ) : (
-                                                   <>LAUNCH <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                                    <>LAUNCH <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                             
@@ -694,14 +676,12 @@ export default function Hub({ isCarousel }) {
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
-                                                {cloudLoading ? (
-                                                   <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> SYNCING...</>
-                                                ) : !isCharUnlocked ? (
-                                                   <>LOCKED</>
+                                                {!isCharUnlocked ? (
+                                                    <>LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                   <>LOCKED</>
+                                                    <>LOCKED</>
                                                 ) : (
-                                                   <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                                    <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                         </div>

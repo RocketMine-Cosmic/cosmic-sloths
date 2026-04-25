@@ -24,6 +24,7 @@ export const OmenXAuthProvider = ({ children }) => {
         try {
           if (e.newValue) {
             const parsed = JSON.parse(e.newValue);
+            // Validate required fields exist before accepting
             if (parsed?.walletAddress) setAuthData(parsed);
             else setAuthData(null);
           } else {
@@ -34,36 +35,9 @@ export const OmenXAuthProvider = ({ children }) => {
         }
       }
     };
-
-    // Listen for postMessage from OAuth popup (same tab — storage event doesn't fire)
-    const onMessage = (event) => {
-      const { type, authData: msgAuthData } = event.data || {};
-      if ((type === 'omenx_auth' || type === 'omenx_auth_response') && msgAuthData?.walletAddress && msgAuthData?.accessToken) {
-        setAuthData(msgAuthData);
-      }
-    };
-
-    // Poll localStorage for changes (handles cases where postMessage is missed or timing issues)
-    const pollInterval = setInterval(() => {
-      try {
-        const stored = localStorage.getItem('omenx_auth_data');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed?.walletAddress && (!authData || authData.walletAddress !== parsed.walletAddress)) {
-            setAuthData(parsed);
-          }
-        }
-      } catch {}
-    }, 500);
-
     window.addEventListener('storage', onStorage);
-    window.addEventListener('message', onMessage);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('message', onMessage);
-      clearInterval(pollInterval);
-    };
-  }, [authData]);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   return (
     <OmenXAuthContext.Provider value={{ authData, loading }}>

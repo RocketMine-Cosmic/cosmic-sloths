@@ -9,8 +9,6 @@ let pendingSync = false;
 let syncRetries = 0;
 const MAX_SYNC_RETRIES = 3;
 let cloudSyncComplete = false;
-let lastSyncAttempt = 0;
-const MIN_SYNC_INTERVAL = 60 * 1000; // At most once per minute
 
 export const SaveManager = {
   _walletAddress: null,
@@ -122,15 +120,15 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
-    // Rate-limit: at most once per minute
-    const now = Date.now();
-    if (now - lastSyncAttempt < MIN_SYNC_INTERVAL) return;
-    lastSyncAttempt = now;
-
-    // Always re-read from localStorage first (most up-to-date, handles token refreshes)
-    const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-    const walletAddress = omenxAuth?.walletAddress || SaveManager._walletAddress;
-    const accessToken = omenxAuth?.accessToken || SaveManager._accessToken;
+    // Always fetch fresh auth from localStorage (may have been set after initialize)
+    let walletAddress = SaveManager._walletAddress;
+    let accessToken = SaveManager._accessToken;
+    
+    if (!walletAddress || !accessToken) {
+      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+      walletAddress = omenxAuth?.walletAddress;
+      accessToken = omenxAuth?.accessToken;
+    }
     
     if (!walletAddress || !accessToken) return;
     
@@ -172,24 +170,11 @@ export const SaveManager = {
   },
 
   syncToBackendImmediate: async () => {
-    // Emergency sync for critical events (game end) — skip debounce and rate limit
+    // Emergency sync for critical events (game end) — skip debounce
     if (syncTimeout) clearTimeout(syncTimeout);
     pendingSync = false;
-    syncRetries = 0;
-    lastSyncAttempt = 0; // Reset so the rate limit doesn't block critical syncs
+    syncRetries = 0; // Reset retry count for critical syncs
     await SaveManager.syncToBackend();
-  },
-
-  // Call before launching a run — flushes any pending debounced sync so the
-  // cloud save is up-to-date before Game.initialize() loads from cloud.
-  flushBeforeLaunch: async () => {
-    if (pendingSync || syncTimeout) {
-      if (syncTimeout) clearTimeout(syncTimeout);
-      pendingSync = false;
-      syncRetries = 0;
-      console.log('[SaveManager] Flushing pending sync before launch');
-      await SaveManager.syncToBackend();
-    }
   },
 
   _cloudSyncComplete: cloudSyncComplete,
@@ -201,7 +186,10 @@ export const SaveManager = {
     const now = Date.now();
     const fiveMinAgo = now - (5 * 60 * 1000);
     
-    // Background re-sync is now handled automatically by the save() debounce — no manual trigger needed here
+    // If local is old and we're authenticated, re-sync in background (don't block load())
+    if (SaveManager._walletAddress && localMeta?.updated_at && localMeta.updated_at < fiveMinAgo) {
+      SaveManager.syncToBackend().catch(e => console.warn('[SaveManager] Background re-sync failed:', e.message));
+    }
 
     // Canonical UTC ISO week calculation — must match lib/periodIds.js exactly
     const { week_id: currentWeek, season_id: currentSeason } = (() => {
@@ -366,15 +354,17 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
-      // Always try to sync — syncToBackend will bail if no auth found
-      pendingSync = true;
-      if (syncTimeout) clearTimeout(syncTimeout);
-      syncTimeout = setTimeout(() => {
-        if (pendingSync) {
-          SaveManager.syncToBackend();
-          pendingSync = false;
-        }
-      }, 30000); // Debounce to 30 seconds
+      // Only sync if user is authenticated with OmenX
+      if (SaveManager._walletAddress && SaveManager._accessToken) {
+        pendingSync = true;
+        if (syncTimeout) clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
+          if (pendingSync) {
+            SaveManager.syncToBackend();
+            pendingSync = false;
+          }
+        }, 10000); // Debounce to 10 seconds
+      }
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);
     }

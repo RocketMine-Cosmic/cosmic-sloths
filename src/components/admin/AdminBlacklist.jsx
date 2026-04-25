@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Trash2, Plus, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-export default function AdminBlacklist({ adminSecret }) {
+export default function AdminBlacklist() {
     const [blacklist, setBlacklist] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newWallet, setNewWallet] = useState('');
@@ -19,7 +19,7 @@ export default function AdminBlacklist({ adminSecret }) {
     const fetchBlacklist = async () => {
         try {
             setLoading(true);
-            const result = await base44.functions.invoke('manageBlacklist', { action: 'list', adminSecret });
+            const result = await base44.functions.invoke('manageBlacklist', { action: 'list' });
             setBlacklist(result.data.records || []);
         } catch (error) {
             toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -40,8 +40,7 @@ export default function AdminBlacklist({ adminSecret }) {
                 action: 'ban',
                 wallet_address: newWallet.trim(),
                 reason: newReason.trim(),
-                notes: newNotes.trim(),
-                adminSecret
+                notes: newNotes.trim()
             });
 
             if (result.data.success) {
@@ -64,8 +63,7 @@ export default function AdminBlacklist({ adminSecret }) {
         try {
             const result = await base44.functions.invoke('manageBlacklist', {
                 action: 'unban',
-                wallet_address: wallet,
-                adminSecret
+                wallet_address: wallet
             });
 
             if (result.data.success) {

@@ -15,18 +15,8 @@ export default function OmenXGate({ children, isCarousel }) {
                 setAuth(e.newValue ? JSON.parse(e.newValue) : null);
             }
         };
-        const onMessage = (event) => {
-            const { type, authData } = event.data || {};
-            if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.walletAddress && authData?.accessToken) {
-                setAuth(authData);
-            }
-        };
         window.addEventListener('storage', onStorage);
-        window.addEventListener('message', onMessage);
-        return () => {
-            window.removeEventListener('storage', onStorage);
-            window.removeEventListener('message', onMessage);
-        };
+        return () => window.removeEventListener('storage', onStorage);
     }, []);
 
     // Only bypass auth inside the Base44 preview iframe

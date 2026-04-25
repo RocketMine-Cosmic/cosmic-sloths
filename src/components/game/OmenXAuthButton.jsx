@@ -1,23 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { omenx, getRedirectUri } from '@/lib/omenx';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
-import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
+function getAuthData() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return null;
+        const parsed = JSON.parse(stored);
+        // Validate required fields
+        return parsed?.walletAddress ? parsed : null;
+    } catch { return null; }
+}
+
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
-    const { authData: contextAuth } = useOmenXAuth();
+    const [authData, setAuthState] = useState(getAuthData());
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
-    useEffect(() => {
-        if (contextAuth) {
-            setLoading(false);
-            setSuccessMsg(`Connected as ${contextAuth.username || contextAuth.walletAddress || 'OmenX User'}`);
+    const applyAuthData = (data) => {
+        if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        else localStorage.removeItem(STORAGE_KEY);
+        setAuthState(data);
+        setLoading(false);
+        if (data) {
+            setSuccessMsg(`Connected as ${data.username || data.walletAddress || 'OmenX User'}`);
             setTimeout(() => setSuccessMsg(''), 5000);
-            onAuthChange?.(contextAuth);
         }
-    }, [contextAuth, onAuthChange]);
+        onAuthChange?.(data);
+    };
+
+    useEffect(() => {
+        const onStorageChange = () => {
+            const stored = getAuthData();
+            setAuthState(stored);
+            setLoading(false);
+            if (stored) {
+                setSuccessMsg(`Connected as ${stored.username || stored.walletAddress || 'OmenX User'}`);
+                setTimeout(() => setSuccessMsg(''), 5000);
+            }
+            onAuthChange?.(stored);
+        };
+
+        const onMessage = (event) => {
+            if (event.data?.type === 'omenx_auth' && event.data?.authData) {
+                const authData = event.data.authData;
+                // Validate before accepting from postMessage
+                if (authData?.walletAddress && authData?.accessToken) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
+                    applyAuthData(authData);
+                }
+            }
+        };
+        
+        window.addEventListener('storage', onStorageChange);
+        window.addEventListener('message', onMessage);
+        return () => {
+            window.removeEventListener('storage', onStorageChange);
+            window.removeEventListener('message', onMessage);
+        };
+    }, [onAuthChange]);
 
     const handleLogin = async () => {
         setLoading(true);
@@ -38,7 +81,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             console.error('[handleLogout] Failed to flush save:', e.message);
         }
         
-        localStorage.removeItem(STORAGE_KEY);
+        applyAuthData(null);
         setSuccessMsg('');
         try { await clearAuthFromIndexedDB(); } catch (e) {}
         try { await omenx.logout(); } catch (e) {}
@@ -50,7 +93,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             <button
                 onClick={(e) => { 
                     console.log('[OmenXAuthButton] onclick fired', e);
-                    (contextAuth ? handleLogout : handleLogin)();
+                    (authData ? handleLogout : handleLogin)();
                 }}
                 disabled={loading}
                 type="button"
@@ -59,16 +102,16 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                         ? 'w-full py-4 md:py-5 text-sm md:text-lg px-4'
                         : 'px-3 py-1.5 rounded-lg text-xs'
                 } ${
-                    contextAuth
+                    authData
                         ? 'bg-[#F59E0B]/20 hover:bg-[#F59E0B]/40 border-[#F59E0B]/60 hover:border-[#F59E0B] text-amber-100 hover:text-white shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)]'
                         : 'bg-purple-900/20 hover:bg-purple-900/40 border-purple-500/60 hover:border-purple-400 text-purple-100 hover:text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]'
                 }`}
             >
                 {loading
                     ? <span className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin inline-block" />
-                    : <span>{contextAuth ? '⚡' : '🔗'}</span>
+                    : <span>{authData ? '⚡' : '🔗'}</span>
                 }
-                {loading ? 'Connecting…' : contextAuth ? 'OmenX — Logout' : 'Login with OmenX'}
+                {loading ? 'Connecting…' : authData ? 'OmenX — Logout' : 'Login with OmenX'}
             </button>
             {successMsg && (
                 <div className="text-[10px] text-green-400 font-bold bg-green-950/50 border border-green-700/50 px-2 py-1 rounded max-w-[200px] text-right truncate">

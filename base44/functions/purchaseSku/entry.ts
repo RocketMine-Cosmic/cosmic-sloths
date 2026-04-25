@@ -39,8 +39,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'skuId, walletAddress, and accessToken required' }, { status: 400 });
         }
 
-        const db = createClientFromRequest(req).asServiceRole;
-
         const sdk = new OmenXServerSDK({
             apiKey: Deno.env.get('OMENX_PAYMENT_API_KEY'),
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation'
@@ -83,10 +81,11 @@ Deno.serve(async (req) => {
         }
 
         const totalAmount = amount * quantity;
+        const base44 = createClientFromRequest(req);
 
-        // Log token spend — non-fatal
+        // Log token spend
         try {
-            await db.entities.TokenSpendLog.create({
+            await base44.asServiceRole.entities.TokenSpendLog.create({
                 user_id: userId || verifyResult.walletAddress,
                 player_name: playerNameParam || verifyResult.walletAddress,
                 wallet_address: verifyResult.walletAddress,
@@ -95,31 +94,48 @@ Deno.serve(async (req) => {
                 season_id
             });
         } catch (err) {
-            console.error('[purchaseSku] TokenSpendLog create failed (non-fatal):', err.message);
+            console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
+            throw err;
         }
 
-        // Update or create TokenPool entries — non-fatal
+        // Update or create TokenPool entries (single efficient fetch)
         try {
-            const allPools = await db.entities.TokenPool.filter({});
+            // Fetch all pools once
+            const allPools = await base44.asServiceRole.entities.TokenPool.filter({});
             const weeklyPool = allPools.find(p => p.period_id === week_id && p.period_type === 'weekly');
             const seasonalPool = allPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
-
+            
             if (weeklyPool) {
-                await db.entities.TokenPool.update(weeklyPool.id, { total_spent: (weeklyPool.total_spent || 0) + totalAmount });
+                await base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, {
+                    total_spent: (weeklyPool.total_spent || 0) + totalAmount
+                });
             } else {
-                await db.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false });
+                await base44.asServiceRole.entities.TokenPool.create({
+                    period_id: week_id,
+                    period_type: 'weekly',
+                    total_spent: totalAmount,
+                    distributed: false
+                });
             }
-
+            
             if (seasonalPool) {
-                await db.entities.TokenPool.update(seasonalPool.id, { total_spent: (seasonalPool.total_spent || 0) + totalAmount });
+                await base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, {
+                    total_spent: (seasonalPool.total_spent || 0) + totalAmount
+                });
             } else {
-                await db.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false });
+                await base44.asServiceRole.entities.TokenPool.create({
+                    period_id: season_id,
+                    period_type: 'seasonal',
+                    total_spent: totalAmount,
+                    distributed: false
+                });
             }
         } catch (err) {
-            console.error('[purchaseSku] TokenPool upsert failed (non-fatal):', err.message);
+            console.error('[purchaseSku] TokenPool upsert failed:', err.message);
+            // Don't throw—pools are optional logging
         }
 
-        console.log('[purchaseSku] Purchase successful for wallet:', verifyResult.walletAddress, 'SKU:', skuId, 'Amount:', totalAmount);
+        console.log('[purchaseSku] Purchase logged for wallet:', verifyResult.walletAddress);
         return Response.json({ success: true, amount: totalAmount });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);

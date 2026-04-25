@@ -125,13 +125,13 @@ export default function Upgrades({ isCarousel }) {
         return data;
     };
 
-    // Await the immediate sync so we know the upgrade is persisted before payment clears
-    const awaitSync = async () => {
+    const syncSaveToBackend = async (updatedSave) => {
         try {
-            await SaveManager.syncToBackend();
+            const authData = await getAuthData();
+            if (!authData?.walletAddress || !authData?.accessToken) return;
+            await base44.functions.invoke('syncSave', { walletAddress: authData.walletAddress, saveData: updatedSave, accessToken: authData.accessToken });
         } catch (e) {
-            console.error('[awaitSync] Sync failed:', e);
-            throw e; // rethrow so callers can handle
+            console.error('[syncSaveToBackend] Sync failed:', e);
         }
     };
 
@@ -158,19 +158,19 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Grant immediately, then await sync before firing payment
+            // Grant immediately + sync before verifying purchase
             const s = SaveManager.load();
             const upg = s[saveKey] || {};
             s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
             SaveManager.save(s);
             setSave(s);
+            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
             SoundManager.playUIClick();
-            awaitSync().then(() => {
-                const skuId = getStatSku(activeCategory, stat, currentLevel + 1);
-                return purchaseSku(skuId);
-            }).catch(err => {
-                console.error('[handleBuyStat] purchase/sync failed:', err);
-                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
+            // Verify purchase in background — upgrade is already saved
+            const skuId = getStatSku(activeCategory, stat, currentLevel + 1);
+            purchaseSku(skuId).catch(err => {
+                console.error('[handleBuyStat] purchase verification failed:', err);
+                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
             });
         }
     };
@@ -198,6 +198,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
+           // Grant upgrade immediately + sync FIRST, then verify purchase
            const s = SaveManager.load();
            if (!s[saveKey]) s[saveKey] = {};
            if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
@@ -205,13 +206,14 @@ export default function Upgrades({ isCarousel }) {
            s[saveKey][weaponId][stat] = nextLevel;
            SaveManager.save(s);
            setSave(s);
+           SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
            SoundManager.playUIClick();
 
            setPurchasing(true);
            const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
-           awaitSync().then(() => purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, nextLevel))).catch(err => {
-               setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-               console.error('[handleBuyWeapon] purchase/sync failed:', err);
+           purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, nextLevel)).catch(err => {
+               setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+               console.error('[handleBuyWeapon] purchase verification failed:', err);
            }).finally(() => {
                setPurchasing(false);
                refreshBalance();
@@ -241,19 +243,21 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
+            // Grant talent immediately + sync FIRST, then verify purchase
             const s = SaveManager.load();
             if (!s[saveKey]) s[saveKey] = {};
             if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
             s[saveKey][selectedChar].push(talent.id);
             SaveManager.save(s);
             setSave(s);
+            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
             SoundManager.playUIClick();
             
             setPurchasing(true);
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
-            awaitSync().then(() => purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier))).catch(err => {
-                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyTalent] purchase/sync failed:', err);
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).catch(err => {
+                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                console.error('[handleBuyTalent] purchase verification failed:', err);
             }).finally(() => {
                 setPurchasing(false);
                 refreshBalance();
@@ -336,6 +340,7 @@ export default function Upgrades({ isCarousel }) {
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+                // Grant cosmetic immediately + sync FIRST, then verify purchase
                 const s = SaveManager.load();
                 const unl = s.unlockedSkins || [];
                 const cos = s.cosmetics || {};
@@ -343,12 +348,13 @@ export default function Upgrades({ isCarousel }) {
                 s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
                 SaveManager.save(s);
                 setSave(s);
+                SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
                 SoundManager.playUIClick();
                 
                 setPurchasing(true);
-                awaitSync().then(() => purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost))).catch(err => {
-                    setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                    console.error('[handleBuyCosmetic skin] purchase/sync failed:', err);
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).catch(err => {
+                    setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                    console.error('[handleBuyCosmetic skin] purchase verification failed:', err);
                 }).finally(() => {
                     setPurchasing(false);
                     refreshBalance();
@@ -388,6 +394,7 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+            // Grant cosmetic immediately + sync FIRST, then verify purchase
             const s = SaveManager.load();
             const unl = s[unlockKey] || [freeId];
             const cos = s.cosmetics || {};
@@ -395,12 +402,13 @@ export default function Upgrades({ isCarousel }) {
             s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
             SaveManager.save(s);
             setSave(s);
+            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
             SoundManager.playUIClick();
             
             setPurchasing(true);
-            awaitSync().then(() => purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost))).catch(err => {
-                setPurchaseError(`Purchase failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyCosmetic trail/kill] purchase/sync failed:', err);
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).catch(err => {
+                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                console.error('[handleBuyCosmetic trail/kill] purchase verification failed:', err);
             }).finally(() => {
                 setPurchasing(false);
                 refreshBalance();
@@ -462,7 +470,25 @@ export default function Upgrades({ isCarousel }) {
                                                 {!isMax && (
                                                     <button
                                                        onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
-                                                            handleBuyStat(stat.id, 'token');
+                                                            setPurchasing(true);
+                                                            // Grant upgrade FIRST, sync IMMEDIATELY, then verify payment
+                                                            const s = SaveManager.load();
+                                                            const upg = s[saveKey] || {};
+                                                            s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
+                                                            SaveManager.save(s);
+                                                            setSave(s);
+                                                            SaveManager.syncToBackendImmediate();
+                                                            SoundManager.playUIClick();
+
+                                                            // Verify payment in background (fire-and-forget)
+                                                            const statSku = getStatSku(activeCategory, stat.id, (upg[stat.id] || 0) + 1);
+                                                            purchaseSku(statSku).catch(err => {
+                                                                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+                                                                console.error('[handleBuyStat] payment verification failed:', err);
+                                                            }).finally(() => {
+                                                                setPurchasing(false);
+                                                                refreshBalance();
+                                                            });
                                                         })}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
