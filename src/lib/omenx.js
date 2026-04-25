@@ -53,6 +53,7 @@ export const initOmenX = async () => {
   initPromise = (async () => {
     try {
       console.log('[OmenX] Initializing...');
+      console.log('[OmenX] Using Redirect URI:', REDIRECT_URI);
       await omenx.init();
       sdkReady = true;
       console.log('[OmenX] ✓ Initialized');
