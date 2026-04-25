@@ -43,13 +43,27 @@ export const OmenXAuthProvider = ({ children }) => {
       }
     };
 
+    // Poll localStorage for changes (handles cases where postMessage is missed or timing issues)
+    const pollInterval = setInterval(() => {
+      try {
+        const stored = localStorage.getItem('omenx_auth_data');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.walletAddress && (!authData || authData.walletAddress !== parsed.walletAddress)) {
+            setAuthData(parsed);
+          }
+        }
+      } catch {}
+    }, 500);
+
     window.addEventListener('storage', onStorage);
     window.addEventListener('message', onMessage);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('message', onMessage);
+      clearInterval(pollInterval);
     };
-  }, []);
+  }, [authData]);
 
   return (
     <OmenXAuthContext.Provider value={{ authData, loading }}>
