@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { saveAuthToIndexedDB } from '@/lib/indexedDbAuth';
+import { omenx } from '@/lib/omenx';
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Processing login...');
@@ -12,7 +13,11 @@ export default function OmenXCallback() {
         const handleCallback = async () => {
             try {
                 setStatus('✓ SDK is handling token exchange...');
-                console.log('[OmenXCallback] SDK should have already exchanged token, just waiting...');
+                console.log('[OmenXCallback] Initializing SDK for callback...');
+                
+                // Initialize SDK to handle callback + PKCE verification
+                await omenx.init();
+                console.log('[OmenXCallback] SDK initialized, waiting for onAuth...');
                 
                 // Give the SDK time to process and call onAuth
                 await new Promise(resolve => setTimeout(resolve, 2000));
