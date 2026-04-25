@@ -120,15 +120,10 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
-    // Always fetch fresh auth from localStorage (may have been set after initialize)
-    let walletAddress = SaveManager._walletAddress;
-    let accessToken = SaveManager._accessToken;
-    
-    if (!walletAddress || !accessToken) {
-      const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-      walletAddress = omenxAuth?.walletAddress;
-      accessToken = omenxAuth?.accessToken;
-    }
+    // Always re-read from localStorage first (most up-to-date, handles token refreshes)
+    const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+    const walletAddress = omenxAuth?.walletAddress || SaveManager._walletAddress;
+    const accessToken = omenxAuth?.accessToken || SaveManager._accessToken;
     
     if (!walletAddress || !accessToken) return;
     
@@ -354,17 +349,15 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
-      // Only sync if user is authenticated with OmenX
-      if (SaveManager._walletAddress && SaveManager._accessToken) {
-        pendingSync = true;
-        if (syncTimeout) clearTimeout(syncTimeout);
-        syncTimeout = setTimeout(() => {
-          if (pendingSync) {
-            SaveManager.syncToBackend();
-            pendingSync = false;
-          }
-        }, 10000); // Debounce to 10 seconds
-      }
+      // Always try to sync — syncToBackend will bail if no auth found
+      pendingSync = true;
+      if (syncTimeout) clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
+        if (pendingSync) {
+          SaveManager.syncToBackend();
+          pendingSync = false;
+        }
+      }, 10000); // Debounce to 10 seconds
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);
     }
