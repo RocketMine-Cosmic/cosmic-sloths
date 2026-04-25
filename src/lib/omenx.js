@@ -8,8 +8,6 @@ const getBaseUrl = () => {
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
   enableIframeAuth: false,
-  authorizationEndpoint: 'https://app.omen.foundation/oauth/authorize',
-  tokenEndpoint: 'https://api.omen.foundation/oauth/token',
   onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {
