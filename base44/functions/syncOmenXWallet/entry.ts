@@ -14,12 +14,25 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     let user = await base44.auth.me();
     
-    // If no Base44 user yet, create one with generated email
+    // If no Base44 user yet, check if wallet already has an account
     if (!user) {
       try {
-        const email = `${walletAddress.toLowerCase()}@omenx.local`;
+        // Check if wallet already has an account (browser wipe recovery)
+        const existingUsers = await base44.asServiceRole.entities.User.filter({
+          omenx_wallet: walletAddress
+        });
 
-        // Create Base44 account
+        if (existingUsers.length > 0) {
+          console.log(`[syncOmenXWallet] Account recovered for wallet ${walletAddress}`);
+          return Response.json({ 
+            success: true, 
+            message: 'Account recovered',
+            walletRecovered: true
+          });
+        }
+
+        // No account found—create it
+        const email = `${walletAddress.toLowerCase()}@omenx.local`;
         const inviteRes = await base44.asServiceRole.users.inviteUser(email, 'user');
         if (!inviteRes?.success) {
           throw new Error('Failed to create Base44 user');
