@@ -7,6 +7,36 @@ export default function AdminRefundOmenx({ walletAddress }) {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
     const [confirmStep, setConfirmStep] = useState(false);
+    const [preview, setPreview] = useState(null);
+
+    const handlePreview = async () => {
+        setLoading(true);
+        setError(null);
+        setPreview(null);
+        try {
+            const spendLogs = await base44.entities.TokenSpendLog.list('', 10000);
+            const refundMap = {};
+            spendLogs.forEach(log => {
+                if (log.wallet_address) {
+                    refundMap[log.wallet_address] = {
+                        amount: (refundMap[log.wallet_address]?.amount || 0) + (log.amount || 0),
+                        player_name: log.player_name
+                    };
+                }
+            });
+            const payments = Object.entries(refundMap).map(([walletAddress, data]) => ({
+                walletAddress,
+                amount: Math.floor(data.amount),
+                player_name: data.player_name
+            }));
+            const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+            setPreview({ payments, totalAmount, count: payments.length });
+        } catch (e) {
+            setError(e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleRefund = async () => {
         setLoading(true);
@@ -21,6 +51,7 @@ export default function AdminRefundOmenx({ walletAddress }) {
             } else {
                 setResult(res.data);
                 setConfirmStep(false);
+                setPreview(null);
             }
         } catch (e) {
             setError(e.message);
@@ -56,35 +87,72 @@ export default function AdminRefundOmenx({ walletAddress }) {
                         Reset
                     </button>
                 </div>
-            ) : confirmStep ? (
+            ) : preview ? (
                 <div className="space-y-4">
-                    <p className="text-red-300 text-sm font-bold">This will refund ALL OMENX tokens ever spent by all players. This cannot be undone.</p>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={handleRefund}
-                            disabled={loading}
-                            className="flex items-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
-                        >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                            {loading ? 'Processing...' : 'CONFIRM REFUND'}
-                        </button>
-                        <button
-                            onClick={() => setConfirmStep(false)}
-                            className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded font-bold text-sm"
-                        >
-                            Cancel
-                        </button>
+                    <div className="bg-slate-800/50 rounded-lg p-4 max-h-80 overflow-y-auto">
+                        <p className="text-sm font-bold text-slate-300 mb-3">
+                            Wallets to refund: {preview.count} | Total: {preview.totalAmount} OMENX
+                        </p>
+                        <div className="space-y-1 text-xs font-mono">
+                            {preview.payments.slice(0, 50).map((p, i) => (
+                                <div key={i} className="flex justify-between text-slate-400 border-b border-slate-700 pb-1">
+                                    <span>{p.player_name || p.walletAddress.slice(0, 8)}</span>
+                                    <span>{p.amount} OMENX</span>
+                                </div>
+                            ))}
+                            {preview.payments.length > 50 && (
+                                <p className="text-slate-500 text-center pt-2">... and {preview.payments.length - 50} more</p>
+                            )}
+                        </div>
                     </div>
+                    {confirmStep ? (
+                        <div className="space-y-3">
+                            <p className="text-red-400 font-bold text-sm">⚠️ Click again to confirm execution</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleRefund}
+                                    disabled={loading}
+                                    className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
+                                >
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                    {loading ? 'Processing...' : 'EXECUTE REFUND'}
+                                </button>
+                                <button
+                                    onClick={() => setConfirmStep(false)}
+                                    className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded font-bold text-sm"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmStep(true)}
+                                className="flex-1 bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
+                            >
+                                Proceed to Confirm
+                            </button>
+                            <button
+                                onClick={() => setPreview(null)}
+                                className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded font-bold text-sm"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-3">
                     <p className="text-slate-300 text-sm">Calculates total OMENX spent by all players and issues refunds via OmenX API.</p>
                     {error && <p className="text-red-400 text-sm">{error}</p>}
                     <button
-                        onClick={() => setConfirmStep(true)}
-                        className="bg-orange-600 hover:bg-orange-500 text-white px-6 py-2 rounded font-bold text-sm"
+                        onClick={handlePreview}
+                        disabled={loading}
+                        className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white px-6 py-2 rounded font-bold text-sm flex items-center justify-center gap-2"
                     >
-                        Initiate Refund
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        {loading ? 'Scanning...' : 'Preview Refunds'}
                     </button>
                 </div>
             )}
