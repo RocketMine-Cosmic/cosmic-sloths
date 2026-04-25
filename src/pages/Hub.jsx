@@ -606,7 +606,8 @@ export default function Hub({ isCarousel }) {
                                 {(() => {
                                     const isCharUnlocked = (save?.unlockedCharacters ?? []).includes(selectedChar);
                                     const isArenaUnlocked = (save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).includes(selectedArena);
-                                    const canLaunch = isCharUnlocked && isArenaUnlocked;
+                                    const cloudLoading = omenxAuth && !syncReady;
+                                    const canLaunch = isCharUnlocked && isArenaUnlocked && !cloudLoading;
                                     
                                     const sessionBuffs = save.sessionBuffs || {};
                                     const hasXpBuff = sessionBuffs.xpExpiry > currentTime;
@@ -658,12 +659,14 @@ export default function Hub({ isCarousel }) {
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
-                                                {!isCharUnlocked ? (
-                                                    <>LOCKED</>
+                                                {cloudLoading ? (
+                                                   <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> SYNCING...</>
+                                                ) : !isCharUnlocked ? (
+                                                   <>LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                    <>LOCKED</>
+                                                   <>LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                                   <>LAUNCH <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                             
@@ -676,12 +679,14 @@ export default function Hub({ isCarousel }) {
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
                                                 }`}
                                             >
-                                                {!isCharUnlocked ? (
-                                                    <>LOCKED</>
+                                                {cloudLoading ? (
+                                                   <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> SYNCING...</>
+                                                ) : !isCharUnlocked ? (
+                                                   <>LOCKED</>
                                                 ) : !isArenaUnlocked ? (
-                                                    <>LOCKED</>
+                                                   <>LOCKED</>
                                                 ) : (
-                                                    <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                                   <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
                                                 )}
                                             </button>
                                         </div>
