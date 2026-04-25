@@ -45,7 +45,7 @@ export default function AuthCallback() {
       } catch (e) {
         console.error('[AuthCallback] Could not close window:', e);
       }
-    }, 800);
+    }, 3000);
   }, []);
 
   return (
