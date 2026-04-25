@@ -22,7 +22,8 @@ export default function OmenXCallback() {
                 // Give the SDK time to process and call onAuth
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 
-                // Check if auth data is in localStorage (SDK's onAuth should have put it there)
+                // The SDK's onAuth callback should have already stored the auth data
+                // Just wait a moment for it to complete
                 const authData = (() => {
                     try {
                         const stored = localStorage.getItem('omenx_auth_data');
