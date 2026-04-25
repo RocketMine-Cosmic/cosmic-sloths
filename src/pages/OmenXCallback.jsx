@@ -16,7 +16,8 @@ export default function OmenXCallback() {
 
                 if (!code) {
                     setStatus('❌ No authorization code received');
-                    setTimeout(() => window.close(), 2000);
+                    console.error('[OmenXCallback] Missing code in URL:', window.location.href);
+                    setTimeout(() => window.close(), 5000);
                     return;
                 }
 
@@ -154,15 +155,16 @@ export default function OmenXCallback() {
                     }
                 }
 
-                setStatus('✓ Login successful!');
-                // Always try to close — works when opened as popup
-                // If this was a direct navigation, window.close() will fail silently
-                // and we fall back to redirect after a short delay
-                window.close();
-                // Fallback: if still open after 1.5s, we're in direct navigation mode
+                setStatus('✓ Login successful! Closing...');
+                console.log('[OmenXCallback] Notified opener via postMessage');
+                // Give postMessage time to reach opener before closing
                 setTimeout(() => {
-                    window.location.replace('/');
-                }, 1500);
+                    window.close();
+                    // Fallback: if still open (direct navigation), redirect
+                    setTimeout(() => {
+                        window.location.replace('/');
+                    }, 500);
+                }, 1000);
             } catch (err) {
                 const debugPayload = {
                     currentUrl: typeof window !== 'undefined' ? window.location.href : '',
