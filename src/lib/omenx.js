@@ -8,6 +8,8 @@ const getBaseUrl = () => {
 export const omenx = new OmenXGameSDK({
   gameId: 'cosmic-sloths',
   enableIframeAuth: false,
+  authorizationEndpoint: 'https://app.omen.foundation/oauth/authorize',
+  tokenEndpoint: 'https://api.omen.foundation/oauth/token',
   onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {
@@ -39,13 +41,19 @@ export const omenx = new OmenXGameSDK({
   },
 });
 
+let sdkReady = false;
+
 export const initOmenX = async () => {
+  if (sdkReady) return Promise.resolve();
+  
   try {
     console.log('[OmenX] Initializing SDK...');
     await omenx.init();
     console.log('[OmenX] SDK initialized successfully');
+    sdkReady = true;
   } catch (err) {
     console.error('[OmenX] SDK init failed:', err);
+    throw err;
   }
 
   // If embedded in an iframe (e.g. Omen website), request auth token from parent
@@ -57,4 +65,13 @@ export const initOmenX = async () => {
       console.error('[OmenX] Failed to request auth from parent', e);
     }
   }
+};
+
+export const waitForSdkReady = async () => {
+  let attempts = 0;
+  while (!sdkReady && attempts < 50) {
+    await new Promise(r => setTimeout(r, 100));
+    attempts++;
+  }
+  if (!sdkReady) throw new Error('SDK failed to initialize');
 };

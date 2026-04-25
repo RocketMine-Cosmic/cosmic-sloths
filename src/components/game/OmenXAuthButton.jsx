@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { omenx } from '@/lib/omenx';
+import { omenx, waitForSdkReady } from '@/lib/omenx';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
@@ -39,10 +39,11 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleLogin = async () => {
         setLoading(true);
         try {
+            console.log('[OmenXAuthButton] Waiting for SDK ready...');
+            await waitForSdkReady();
             console.log('[OmenXAuthButton] Starting authentication...');
-            console.log('[OmenXAuthButton] SDK isAuthenticated:', omenx.isAuthenticated());
-            const result = await omenx.authenticate({ enablePKCE: true });
-            console.log('[OmenXAuthButton] Auth result:', result);
+            await omenx.authenticate({ enablePKCE: true });
+            console.log('[OmenXAuthButton] Auth triggered, waiting for onAuth callback...');
         } catch (err) {
             console.error('[OmenXAuthButton] Auth failed:', err);
             setLoading(false);
