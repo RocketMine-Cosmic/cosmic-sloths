@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
 import OmenXAuthButton from './game/OmenXAuthButton';
@@ -7,16 +7,24 @@ import SpaceBackground from './game/SpaceBackground';
 export default function AuthGate({ children }) {
   const [ready, setReady] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
+  const debounceRef = React.useRef(null);
 
   useEffect(() => {
     checkAuth();
     
-    // Re-check auth when storage changes (OAuth callback updates localStorage)
-    const handleStorageChange = () => {
-      checkAuth();
+    // Only re-check if OmenX data was added (not every storage change)
+    const handleStorageChange = (e) => {
+      if (e.key === 'omenx_auth_data') {
+        // Debounce rapid storage changes
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => checkAuth(), 100);
+      }
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearTimeout(debounceRef.current);
+    };
   }, []);
 
   const checkAuth = async () => {
