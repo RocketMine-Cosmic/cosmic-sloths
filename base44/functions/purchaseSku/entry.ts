@@ -1,9 +1,7 @@
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
-// No OmenX accessToken required — Base44 session is the proof of identity,
-// and the wallet was verified at link-time via linkWalletToUser.
+// Pricing: server-side via OmenX dev portal SKU config — we don't send paymentAmount.
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -33,45 +31,47 @@ Deno.serve(async (req) => {
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_PAYMENT_API_KEY'),
-            apiBaseUrl,
-        });
-
-        const { week_id, season_id } = getCurrentPeriodIds();
-
-        const productsRes = await sdk.getProducts();
-        const products = productsRes?.products || productsRes || [];
-        const product = products.find(p => p.sku === skuId);
-        if (!product) return Response.json({ error: `SKU not found: ${skuId}` }, { status: 400 });
-
-        const amount = product.pricesInCurrency?.OMENX;
-        if (typeof amount !== 'number' || amount <= 0) {
-            return Response.json({ error: `No OMENX price for SKU: ${skuId}` }, { status: 400 });
-        }
-
+        const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
         const idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
-        console.log(`[purchaseSku] SKU: ${skuId} x${quantity} amount: ${amount} OMENX wallet: ${walletAddress}`);
+        console.log(`[purchaseSku] SKU: ${skuId} x${quantity} wallet: ${walletAddress}`);
 
-        let purchaseData;
-        try {
-            purchaseData = await sdk.createPurchase({
+        // Single REST call — server resolves price from dev portal SKU config
+        const purchaseRes = await fetch(`${apiBaseUrl}/v1/purchases`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Idempotency-Key': idempotencyKey,
+            },
+            body: JSON.stringify({
                 playerWallet: walletAddress,
                 skuId,
                 quantity,
                 idempotencyKey,
-                paymentCurrency: 'OMENX',
-                paymentAmount: amount * quantity,
-            });
-        } catch (err) {
-            if (err.status === 429 || err.message?.includes('rate limit') || err.message?.includes('throttle')) {
-                return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
-            }
-            throw err;
+                paymentMethod: 'onchain',
+            }),
+        });
+
+        if (purchaseRes.status === 429) {
+            return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
         }
 
-        const totalAmount = amount * quantity;
+        const purchaseData = await purchaseRes.json().catch(() => ({}));
+        if (!purchaseRes.ok) {
+            const errMsg = purchaseData?.error || purchaseData?.message || `HTTP ${purchaseRes.status}`;
+            console.error('[purchaseSku] Purchase failed:', errMsg);
+            return Response.json({ error: errMsg }, { status: purchaseRes.status });
+        }
+
+        // Server returns the actual amount charged — use that for our logs
+        const totalAmount = parseFloat(purchaseData?.paymentAmount ?? purchaseData?.amount ?? 0);
+        if (!totalAmount || totalAmount <= 0) {
+            console.error('[purchaseSku] Server returned zero amount:', purchaseData);
+            return Response.json({ error: 'Invalid amount returned from payment processor' }, { status: 500 });
+        }
+
+        const { week_id, season_id } = getCurrentPeriodIds();
 
         // Log token spend
         try {
@@ -88,43 +88,30 @@ Deno.serve(async (req) => {
             throw err;
         }
 
-        // Update or create TokenPool entries (single efficient fetch)
+        // Update or create TokenPool entries (targeted queries — no full table scan)
         try {
-            const allPools = await base44.asServiceRole.entities.TokenPool.filter({});
-            const weeklyPool = allPools.find(p => p.period_id === week_id && p.period_type === 'weekly');
-            const seasonalPool = allPools.find(p => p.period_id === season_id && p.period_type === 'seasonal');
+            const [weeklyPools, seasonalPools] = await Promise.all([
+                base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),
+                base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' }),
+            ]);
 
-            if (weeklyPool) {
-                await base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, {
-                    total_spent: (weeklyPool.total_spent || 0) + totalAmount
-                });
-            } else {
-                await base44.asServiceRole.entities.TokenPool.create({
-                    period_id: week_id,
-                    period_type: 'weekly',
-                    total_spent: totalAmount,
-                    distributed: false
-                });
-            }
+            const weeklyPool = weeklyPools[0];
+            const seasonalPool = seasonalPools[0];
 
-            if (seasonalPool) {
-                await base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, {
-                    total_spent: (seasonalPool.total_spent || 0) + totalAmount
-                });
-            } else {
-                await base44.asServiceRole.entities.TokenPool.create({
-                    period_id: season_id,
-                    period_type: 'seasonal',
-                    total_spent: totalAmount,
-                    distributed: false
-                });
-            }
+            await Promise.all([
+                weeklyPool
+                    ? base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, { total_spent: (weeklyPool.total_spent || 0) + totalAmount })
+                    : base44.asServiceRole.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false }),
+                seasonalPool
+                    ? base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, { total_spent: (seasonalPool.total_spent || 0) + totalAmount })
+                    : base44.asServiceRole.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false }),
+            ]);
         } catch (err) {
             console.error('[purchaseSku] TokenPool upsert failed:', err.message);
             // Non-fatal — pools are reporting only
         }
 
-        console.log('[purchaseSku] Purchase logged for wallet:', walletAddress);
+        console.log('[purchaseSku] Purchase logged for wallet:', walletAddress, 'amount:', totalAmount);
         return Response.json({ success: true, amount: totalAmount });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
