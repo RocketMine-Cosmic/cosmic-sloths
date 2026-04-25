@@ -15,7 +15,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing OMENX_AUTH_API_KEY' }, { status: 500 });
     }
 
-    // Exchange code for tokens (no PKCE needed)
+    // Extract code_verifier from request (SDK should have sent it)
+    const { codeVerifier } = await req.json();
+
+    // Exchange code for tokens with PKCE
     const tokenResponse = await fetch(`${apiBaseUrl}/v1/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -25,6 +28,7 @@ Deno.serve(async (req) => {
         redirect_uri: redirectUri,
         client_id: 'cosmic-sloths',
         client_secret: clientSecret,
+        ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
       }),
     });
 

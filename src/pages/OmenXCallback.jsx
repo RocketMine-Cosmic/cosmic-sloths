@@ -24,12 +24,16 @@ export default function OmenXCallback() {
                     return;
                 }
 
+                // Get code_verifier from SDK (stored during authenticate())
+                const codeVerifier = await omenx.getCodeVerifier?.();
+
                 // Call backend to exchange code for tokens (can't do this from browser due to client_secret)
                 const response = await fetch('/functions/exchangeOmenXToken', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         code,
+                        codeVerifier,
                         redirectUri: 'https://cosmic-sloths.com/auth/callback',
                     }),
                 });
