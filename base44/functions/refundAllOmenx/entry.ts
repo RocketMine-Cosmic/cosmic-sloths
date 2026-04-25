@@ -21,20 +21,33 @@ Deno.serve(async (req) => {
         console.log('[refundAllOmenx] Fetching all token spend logs...');
         const spendLogs = await base44.asServiceRole.entities.TokenSpendLog.list('', 10000);
         
+        console.log('[refundAllOmenx] Total spend logs fetched:', spendLogs?.length || 0);
+        if (spendLogs?.length > 0) {
+            console.log('[refundAllOmenx] First log sample:', JSON.stringify(spendLogs[0], null, 2));
+        }
+        
         if (!spendLogs || spendLogs.length === 0) {
-            return Response.json({ success: true, refunded: 0, totalAmount: 0, message: 'No spend logs found' });
+            return Response.json({ success: true, refunded: 0, totalAmount: 0, message: 'No spend logs found', debug: { totalLogs: 0 } });
         }
 
         // Group by wallet address and sum amounts
         const refundMap = {};
+        let logsWithWallet = 0;
+        let logsWithoutWallet = 0;
+        
         spendLogs.forEach(log => {
             if (log.wallet_address) {
+                logsWithWallet++;
                 refundMap[log.wallet_address] = {
                     amount: (refundMap[log.wallet_address]?.amount || 0) + (log.amount || 0),
                     player_name: log.player_name
                 };
+            } else {
+                logsWithoutWallet++;
             }
         });
+        
+        console.log('[refundAllOmenx] Logs with wallet_address:', logsWithWallet, 'Logs without:', logsWithoutWallet);
 
         console.log('[refundAllOmenx] Processing refunds for', Object.keys(refundMap).length, 'wallets');
 
