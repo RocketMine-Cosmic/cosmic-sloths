@@ -241,8 +241,8 @@ export function subscribePlayerData(fn) {
     listeners.add(fn);
     if (cachedData !== null) fn(cachedData);
 
-    // Only trigger fetch once (first subscriber initializes)
-    if (listeners.size === 1) {
+    // Only trigger fetch once (first subscriber initializes) AND only if logged in
+    if (listeners.size === 1 && getAuthData()) {
         if (cachedData === null && !balanceFetchPromise && !scheduledFetch && !startupTimer) {
             fetchPlayerData();
         }
