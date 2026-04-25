@@ -35,6 +35,7 @@ import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
 import { fetchPlayerData } from '@/lib/playerDataCache';
 import AuthGate from './components/AuthGate';
+import MaintenanceGate from './components/MaintenanceGate';
 
 
 const MainApp = () => {
@@ -90,9 +91,10 @@ const MainApp = () => {
     );
   }
 
-  // Render the main app with auth gate
+  // Render the main app with auth + maintenance gates
   return (
     <AuthGate>
+    <MaintenanceGate>
     <Routes>
       <Route path="/" element={<PlayCarousel />} />
       <Route path="/hub" element={<Hub />} />
@@ -115,6 +117,7 @@ const MainApp = () => {
       <Route path="/sku-editor" element={<SkuEditor />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </MaintenanceGate>
     </AuthGate>
   );
 };
