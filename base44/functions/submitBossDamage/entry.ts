@@ -1,21 +1,6 @@
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (result.success) {
-        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        if (verifyCache.size > 500) {
-            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-        }
-    }
-    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
-}
+// Auth: Base44 session. Wallet: from linked User.wallet_address.
 
 function getCurrentPeriodIds() {
     const now = new Date();
@@ -34,65 +19,49 @@ const MAX_DAMAGE_PER_SUBMISSION = 1_000_000;
 
 Deno.serve(async (req) => {
     try {
-        const { damage, playerName, walletAddress: clientWallet, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!clientWallet || !accessToken) {
-            return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
-        }
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-
+        const { damage, playerName } = await req.json();
         if (typeof damage !== 'number' || damage <= 0) {
             return Response.json({ error: 'Invalid damage' }, { status: 400 });
         }
 
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);
         const { week_id } = getCurrentPeriodIds();
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
+        const displayName = playerName || me.full_name || walletAddress;
 
         // Create GlobalBossEvent
-        const eventUrl = `https://api.base44.com/apps/${appId}/entities/GlobalBossEvent`;
-        const eventMessage = `${playerName || verifyResult.walletAddress} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`;
-        await fetch(eventUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({
+        try {
+            await base44.asServiceRole.entities.GlobalBossEvent.create({
                 week_id,
-                player_name: playerName || verifyResult.walletAddress,
+                player_name: displayName,
                 event_type: 'damage',
                 damage: clampedDamage,
-                message: eventMessage
-            })
-        }).catch(e => console.error('[submitBossDamage] Event creation failed:', e.message));
+                message: `${displayName} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`
+            });
+        } catch (e) {
+            console.error('[submitBossDamage] Event creation failed:', e.message);
+        }
 
-        // Update or create GlobalBossContribution
-        const contributionUrl = `https://api.base44.com/apps/${appId}/entities/GlobalBossContribution`;
-        await fetch(contributionUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({
+        // Create GlobalBossContribution
+        try {
+            await base44.asServiceRole.entities.GlobalBossContribution.create({
                 week_id,
-                user_id: verifyResult.walletAddress,
-                player_name: playerName || verifyResult.walletAddress,
+                user_id: walletAddress,
+                player_name: displayName,
                 damage: clampedDamage,
                 claimed: false
-            })
-        }).catch(e => console.error('[submitBossDamage] Contribution failed:', e.message));
+            });
+        } catch (e) {
+            console.error('[submitBossDamage] Contribution failed:', e.message);
+        }
 
-        console.log('[submitBossDamage] Recorded damage:', clampedDamage, 'for wallet:', verifyResult.walletAddress);
+        console.log('[submitBossDamage] Recorded damage:', clampedDamage, 'for wallet:', walletAddress);
         return Response.json({ success: true, damage: clampedDamage });
     } catch (error) {
         console.error('[submitBossDamage]', error.message);
