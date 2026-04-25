@@ -133,7 +133,7 @@ export default function Profile({ isCarousel }) {
          }
          // Update local game save to match
          const localSave = SaveManager.load();
-         localSave.pilotName = updatedName;
+         localSave.player_name = updatedName;
          SaveManager.save(localSave);
          // Sync name to localStorage for other pages (e.g., Squads) to read
          const authData = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
@@ -313,25 +313,25 @@ export default function Profile({ isCarousel }) {
                                 <h1 className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-1">Pilot Identity</h1>
                                 {isEditingName ? (
                                     <div className="flex items-center gap-1.5 md:gap-2">
-                                    <input 
-                                        type="text" 
-                                        value={newName} 
-                                        onChange={(e) => setNewName(e.target.value)}
-                                        className="bg-slate-950 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-cyan-500 outline-none text-base md:text-xl w-40 md:w-64 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)]"
-                                        autoFocus
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                                    />
-                                    <button onClick={handleSaveName} className="p-2 bg-green-900/30 text-green-400 hover:bg-green-900/50 rounded-lg transition-colors border border-green-500/30">
-                                        <Check size={20} />
-                                    </button>
-                                    <button onClick={() => { setIsEditingName(false); setNewName(user?.pilotName || user?.data?.pilotName || user?.full_name || ''); }} className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-lg transition-colors border border-red-500/30">
-                                        <X size={20} />
-                                    </button>
-                                    </div>
+                                     <input 
+                                         type="text" 
+                                         value={newName} 
+                                         onChange={(e) => setNewName(e.target.value)}
+                                         className="bg-slate-950 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-cyan-500 outline-none text-base md:text-xl w-40 md:w-64 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                                         autoFocus
+                                         onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                                     />
+                                     <button onClick={handleSaveName} className="p-2 bg-green-900/30 text-green-400 hover:bg-green-900/50 rounded-lg transition-colors border border-green-500/30">
+                                         <Check size={20} />
+                                     </button>
+                                     <button onClick={() => { setIsEditingName(false); setNewName(user?.player_name || user?.data?.player_name || user?.full_name || ''); }} className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-lg transition-colors border border-red-500/30">
+                                         <X size={20} />
+                                     </button>
+                                     </div>
                                 ) : (
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-2xl md:text-3xl font-bold text-white">{user?.pilotName || user?.data?.pilotName || user?.full_name || 'Anonymous'}</span>
+                                            <span className="text-2xl md:text-3xl font-bold text-white">{user?.player_name || user?.data?.player_name || user?.full_name || 'Anonymous'}</span>
                                             <button onClick={() => setIsEditingName(true)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-md transition-colors border border-slate-700 hover:border-slate-500">
                                                 <Pencil size={16} />
                                             </button>

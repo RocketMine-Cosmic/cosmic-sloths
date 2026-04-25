@@ -135,6 +135,7 @@ export const SaveManager = {
     const defaultChars = ['neobyte'];
 
     const defaultSave = {
+      player_name: '',
       gold: 0,
       relicFragments: 0,
       unlockedCharacters: [...defaultChars],
