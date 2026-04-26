@@ -90,6 +90,14 @@ export const OmenXAuthProvider = ({ children }) => {
                 };
                 // Mirror to localStorage so SaveManager + other consumers find the wallet
                 try { localStorage.setItem('omenx_auth_data', JSON.stringify(synthesized)); } catch {}
+                // Notify playerDataCache (balance/VIP/NFT) — it listens for storage events to re-fetch.
+                try {
+                  window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'omenx_auth_data',
+                    newValue: JSON.stringify(synthesized),
+                    storageArea: localStorage,
+                  }));
+                } catch {}
                 // Tell SaveManager to (re)load cloud save now that we know the wallet
                 window.dispatchEvent(new CustomEvent('walletLinked', { detail: { wallet: walletAddress, alreadyLinked: true } }));
                 return synthesized;
