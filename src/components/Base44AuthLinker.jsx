@@ -28,8 +28,9 @@ export default function Base44AuthLinker() {
                 const isAuthed = await base44.auth.isAuthenticated();
 
                 if (!isAuthed) {
-                    // Not signed in to Base44 → redirect to login, come back to current URL
-                    base44.auth.redirectToLogin(window.location.href);
+                    // Not signed in to Base44 → do nothing. The user will sign in
+                    // explicitly via the Sign In button. Auto-redirecting here was
+                    // popping up the login screen on app open and after logout.
                     return;
                 }
 
