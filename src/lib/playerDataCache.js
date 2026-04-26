@@ -163,10 +163,10 @@ function loadUserDataLocal() {
 // ─────────────────────────────────────────────────────────
 
 export function fetchPlayerData(force = false) {
-    // Initial / general-purpose load:
-    //  • balance refreshes per its 15-min TTL
-    //  • VIP + NFTs auto-fetch ONCE if no cached value yet (first login),
-    //    otherwise only refresh via manual buttons.
+    // Initial / general-purpose load: balance only.
+    // VIP and NFTs are deferred — they only fetch when the user opens
+    // Profile / NFT Dashboard (via ensureVipFetched / ensureNftsFetched)
+    // or when the user hits the manual refresh button.
     if (force) {
         if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
         lastBalanceFetchAt = 0;
@@ -180,7 +180,14 @@ export function fetchPlayerData(force = false) {
             fetchBalance();
         }, jitter);
     }
+}
+
+// Lazy fetchers — call on demand from pages that actually need this data.
+// No-ops if a cached value already exists (manual refresh buttons handle re-fetch).
+export function ensureVipFetched() {
     if (lastVipFetchAt === 0) fetchVip();
+}
+export function ensureNftsFetched() {
     if (lastNftFetchAt === 0) fetchNfts();
 }
 
@@ -215,8 +222,7 @@ export function subscribePlayerData(fn) {
                 if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
                 loadUserDataLocal();
                 fetchBalance(true);
-                fetchVip();
-                fetchNfts();
+                // Don't auto-fetch VIP/NFTs on login — wait for Profile/NFT Dashboard mount
             }
         });
     }

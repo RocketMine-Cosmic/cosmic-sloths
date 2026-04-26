@@ -16,7 +16,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
 import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
-import { refreshVipLevel, getVipCooldownEnd } from '@/lib/playerDataCache';
+import { refreshVipLevel, getVipCooldownEnd, ensureVipFetched } from '@/lib/playerDataCache';
 
 
 export default function Profile({ isCarousel }) {
@@ -38,6 +38,9 @@ export default function Profile({ isCarousel }) {
     const [showIconPicker, setShowIconPicker] = useState(false);
     const { vip: vipLevel } = useOmenXVip();
     const { user: omenxUser } = useOmenXUser();
+
+    // Lazy-fetch VIP level only when this page mounts (deferred from boot)
+    useEffect(() => { ensureVipFetched(); }, []);
 
     useEffect(() => {
         if (!omenxUser) {

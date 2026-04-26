@@ -8,7 +8,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
-import { subscribePlayerData, refreshNFTs, getNFTCooldownEnd } from '@/lib/playerDataCache';
+import { subscribePlayerData, refreshNFTs, getNFTCooldownEnd, ensureNftsFetched } from '@/lib/playerDataCache';
 import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
 
 export default function NFTDashboard({ isCarousel }) {
@@ -18,6 +18,8 @@ export default function NFTDashboard({ isCarousel }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Lazy-fetch NFTs only when this page mounts (deferred from boot)
+        ensureNftsFetched();
         // Read NFTs from the unified player-data cache — no extra network call.
         const unsub = subscribePlayerData((data) => {
             if (data) {

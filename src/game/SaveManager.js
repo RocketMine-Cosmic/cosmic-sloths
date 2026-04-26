@@ -73,23 +73,31 @@ export const SaveManager = {
       try {
         const { base44 } = await import('@/api/base44Client');
 
+        const expectedWallet = walletAddress.toLowerCase();
+
+        // Skip the auth poll if we've already verified this wallet is linked
+        // earlier this session (huge speed-up on page reloads / route changes).
+        const cachedLinkedWallet = sessionStorage.getItem('walletLinkedToBase44');
+        let walletLinked = cachedLinkedWallet === expectedWallet;
+
         // CRITICAL: Wait for the Base44 user record to have wallet_address linked
         // before loading. Otherwise loadSave returns null (no wallet linked yet),
         // we treat user as new, and empty local save eventually overwrites cloud.
-        const expectedWallet = walletAddress.toLowerCase();
-        let walletLinked = false;
-        for (let attempt = 0; attempt < 8; attempt++) { // ~4s max (8 × 500ms)
-          try {
-            const isAuthed = await base44.auth.isAuthenticated();
-            if (isAuthed) {
-              const me = await base44.auth.me();
-              if (me?.wallet_address?.toLowerCase() === expectedWallet) {
-                walletLinked = true;
-                break;
+        if (!walletLinked) {
+          for (let attempt = 0; attempt < 8; attempt++) { // ~4s max (8 × 500ms)
+            try {
+              const isAuthed = await base44.auth.isAuthenticated();
+              if (isAuthed) {
+                const me = await base44.auth.me();
+                if (me?.wallet_address?.toLowerCase() === expectedWallet) {
+                  walletLinked = true;
+                  sessionStorage.setItem('walletLinkedToBase44', expectedWallet);
+                  break;
+                }
               }
-            }
-          } catch (_) { /* keep polling */ }
-          await new Promise(r => setTimeout(r, 500));
+            } catch (_) { /* keep polling */ }
+            await new Promise(r => setTimeout(r, 500));
+          }
         }
         if (!walletLinked) {
           console.warn('[SaveManager] Wallet not linked to Base44 user after 4s — skipping cloud load to avoid overwriting cloud save with empty local');
