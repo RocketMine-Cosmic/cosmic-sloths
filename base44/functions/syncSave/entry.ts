@@ -192,8 +192,12 @@ Deno.serve(async (req) => {
             merged[key] = Math.max(a, b);
         }
 
-        // --- 7. Gold: MAX-merge for now (locked in 3c) ---
-        merged.gold = Math.max(Number(existingData.gold || 0), Number(saveData.gold || 0));
+        // --- 7. Gold: SERVER-OWNED. Cloud only. Granted via spendGold/saveScore/claimBounty/claimDailyLogin etc. ---
+        merged.gold = Number(existingData.gold || 0);
+        const clientGold = Number(saveData.gold || 0);
+        if (clientGold > merged.gold) {
+            console.warn(`[syncSave] BLOCKED gold bump from ${walletLower}: client=${clientGold} cloud=${merged.gold}`);
+        }
 
         // --- 8. Discovery arrays: union (lore only, no cheat impact) ---
         for (const key of UNION_DISCOVERY_ARRAYS) {
