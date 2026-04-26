@@ -140,19 +140,22 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Grant immediately + sync before verifying purchase
-            const s = SaveManager.load();
-            const upg = s[saveKey] || {};
-            s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
-            SaveManager.save(s);
-            setSave(s);
-            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
-            SoundManager.playUIClick();
-            // Verify purchase in background — upgrade is already saved
+            // Charge FIRST, then grant only if purchase succeeded
+            setPurchasing(true);
             const skuId = getStatSku(activeCategory, stat, currentLevel + 1);
-            purchaseSku(skuId).catch(err => {
-                console.error('[handleBuyStat] purchase verification failed:', err);
-                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
+            purchaseSku(skuId).then(() => {
+                const s = SaveManager.load();
+                const upg = s[saveKey] || {};
+                s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
+                SaveManager.save(s);
+                setSave(s);
+                SaveManager.syncToBackendImmediate();
+                SoundManager.playUIClick();
+            }).catch(err => {
+                console.error('[handleBuyStat] purchase failed — upgrade NOT granted:', err);
+            }).finally(() => {
+                setPurchasing(false);
+                refreshBalance();
             });
         }
     };
@@ -180,22 +183,21 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-           // Grant upgrade immediately + sync FIRST, then verify purchase
-           const s = SaveManager.load();
-           if (!s[saveKey]) s[saveKey] = {};
-           if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
-           const nextLevel = (s[saveKey][weaponId][stat] || 0) + 1;
-           s[saveKey][weaponId][stat] = nextLevel;
-           SaveManager.save(s);
-           setSave(s);
-           SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
-           SoundManager.playUIClick();
-
+           // Charge FIRST, then grant only if purchase succeeded
            setPurchasing(true);
            const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
-           purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, nextLevel)).catch(err => {
-               setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
-               console.error('[handleBuyWeapon] purchase verification failed:', err);
+           const nextLevel = (currentSave[saveKey]?.[weaponId]?.[stat] || 0) + 1;
+           purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, nextLevel)).then(() => {
+               const s = SaveManager.load();
+               if (!s[saveKey]) s[saveKey] = {};
+               if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
+               s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
+               SaveManager.save(s);
+               setSave(s);
+               SaveManager.syncToBackendImmediate();
+               SoundManager.playUIClick();
+           }).catch(err => {
+               console.error('[handleBuyWeapon] purchase failed — upgrade NOT granted:', err);
            }).finally(() => {
                setPurchasing(false);
                refreshBalance();
@@ -225,21 +227,22 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Grant talent immediately + sync FIRST, then verify purchase
-            const s = SaveManager.load();
-            if (!s[saveKey]) s[saveKey] = {};
-            if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
-            s[saveKey][selectedChar].push(talent.id);
-            SaveManager.save(s);
-            setSave(s);
-            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
-            SoundManager.playUIClick();
-            
+            // Charge FIRST, then grant only if purchase succeeded
             setPurchasing(true);
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).catch(err => {
-                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyTalent] purchase verification failed:', err);
+            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).then(() => {
+                const s = SaveManager.load();
+                if (!s[saveKey]) s[saveKey] = {};
+                if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
+                if (!s[saveKey][selectedChar].includes(talent.id)) {
+                    s[saveKey][selectedChar].push(talent.id);
+                }
+                SaveManager.save(s);
+                setSave(s);
+                SaveManager.syncToBackendImmediate();
+                SoundManager.playUIClick();
+            }).catch(err => {
+                console.error('[handleBuyTalent] purchase failed — talent NOT granted:', err);
             }).finally(() => {
                 setPurchasing(false);
                 refreshBalance();
@@ -322,21 +325,22 @@ export default function Upgrades({ isCarousel }) {
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-                // Grant cosmetic immediately + sync FIRST, then verify purchase
-                const s = SaveManager.load();
-                const unl = s.unlockedSkins || [];
-                const cos = s.cosmetics || {};
-                s.unlockedSkins = [...unl, cosmetic.id];
-                s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
-                SoundManager.playUIClick();
-                
+                // Charge FIRST, then grant only if purchase succeeded
                 setPurchasing(true);
-                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).catch(err => {
-                    setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
-                    console.error('[handleBuyCosmetic skin] purchase verification failed:', err);
+                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).then(() => {
+                    const s = SaveManager.load();
+                    const unl = s.unlockedSkins || [];
+                    const cos = s.cosmetics || {};
+                    if (!unl.includes(cosmetic.id)) {
+                        s.unlockedSkins = [...unl, cosmetic.id];
+                    }
+                    s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
+                    SaveManager.save(s);
+                    setSave(s);
+                    SaveManager.syncToBackendImmediate();
+                    SoundManager.playUIClick();
+                }).catch(err => {
+                    console.error('[handleBuyCosmetic skin] purchase failed — skin NOT granted:', err);
                 }).finally(() => {
                     setPurchasing(false);
                     refreshBalance();
@@ -376,21 +380,22 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-            // Grant cosmetic immediately + sync FIRST, then verify purchase
-            const s = SaveManager.load();
-            const unl = s[unlockKey] || [freeId];
-            const cos = s.cosmetics || {};
-            s[unlockKey] = [...unl, cosmetic.id];
-            s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
-            SaveManager.save(s);
-            setSave(s);
-            SaveManager.syncToBackendImmediate(); // MUST sync before background purchase
-            SoundManager.playUIClick();
-            
+            // Charge FIRST, then grant only if purchase succeeded
             setPurchasing(true);
-            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).catch(err => {
-                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
-                console.error('[handleBuyCosmetic trail/kill] purchase verification failed:', err);
+            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).then(() => {
+                const s = SaveManager.load();
+                const unl = s[unlockKey] || [freeId];
+                const cos = s.cosmetics || {};
+                if (!unl.includes(cosmetic.id)) {
+                    s[unlockKey] = [...unl, cosmetic.id];
+                }
+                s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
+                SaveManager.save(s);
+                setSave(s);
+                SaveManager.syncToBackendImmediate();
+                SoundManager.playUIClick();
+            }).catch(err => {
+                console.error('[handleBuyCosmetic trail/kill] purchase failed — cosmetic NOT granted:', err);
             }).finally(() => {
                 setPurchasing(false);
                 refreshBalance();
@@ -451,27 +456,7 @@ export default function Upgrades({ isCarousel }) {
                                                 )}
                                                 {!isMax && (
                                                     <button
-                                                       onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => {
-                                                            setPurchasing(true);
-                                                            // Grant upgrade FIRST, sync IMMEDIATELY, then verify payment
-                                                            const s = SaveManager.load();
-                                                            const upg = s[saveKey] || {};
-                                                            s[saveKey] = { ...upg, [stat.id]: (upg[stat.id] || 0) + 1 };
-                                                            SaveManager.save(s);
-                                                            setSave(s);
-                                                            SaveManager.syncToBackendImmediate();
-                                                            SoundManager.playUIClick();
-
-                                                            // Verify payment in background (fire-and-forget)
-                                                            const statSku = getStatSku(activeCategory, stat.id, (upg[stat.id] || 0) + 1);
-                                                            purchaseSku(statSku).catch(err => {
-                                                                setPurchaseError(`Purchase verification failed: ${err.message || 'Unknown error'}`);
-                                                                console.error('[handleBuyStat] payment verification failed:', err);
-                                                            }).finally(() => {
-                                                                setPurchasing(false);
-                                                                refreshBalance();
-                                                            });
-                                                        })}
+                                                       onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyStat(stat.id, 'token'))}
                                                        disabled={!canAffordToken || purchasing}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                             canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :

@@ -1,56 +1,74 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CheckCircle, Circle, Gift, Star, ShieldAlert, Coins, Puzzle, Hexagon } from 'lucide-react';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
-import moment from 'moment';
 
 export default function BountiesPanel({ save, setSave }) {
     const { toast } = useToast();
-    
+    const [claiming, setClaiming] = useState(null); // 'mission' | `bounty-${idx}` | null
+
     if (!save.bounties || !save.bounties.active) return null;
 
-    const handleClaim = (bountyIndex) => {
-        const currentSave = SaveManager.load();
-        const bounty = currentSave.bounties.active[bountyIndex];
-        if (bounty.progress >= bounty.target && !bounty.claimed) {
-            currentSave.bounties.active[bountyIndex].claimed = true;
-            
-            if (bounty.currency === 'gold') {
-                currentSave.gold += bounty.reward;
-            } else if (bounty.currency === 'token') {
-                currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + bounty.reward;
-            } else if (bounty.currency === 'fragment') {
-                currentSave.relicFragments = (currentSave.relicFragments || 0) + bounty.reward;
+    // Apply server-authoritative claim result to local save
+    const applyServerResult = (data) => {
+        const s = SaveManager.load();
+        if (data.saveData.gold !== undefined) s.gold = data.saveData.gold;
+        if (data.saveData.relicFragments !== undefined) s.relicFragments = data.saveData.relicFragments;
+        if (data.saveData.cosmicTokens !== undefined) s.cosmicTokens = data.saveData.cosmicTokens;
+        if (data.saveData.seasonalPoints !== undefined) s.seasonalPoints = data.saveData.seasonalPoints;
+        if (data.saveData.bounties) s.bounties = data.saveData.bounties;
+        SaveManager.save(s);
+        setSave(s);
+    };
+
+    const handleClaim = async (bountyIndex) => {
+        if (claiming) return;
+        const key = `bounty-${bountyIndex}`;
+        setClaiming(key);
+        try {
+            const res = await base44.functions.invoke('claimBounty', { type: 'bounty', bountyIndex });
+            const data = res.data;
+            if (!data?.success) {
+                toast({ title: 'Claim Failed', description: data?.error || 'Try again.' });
+                return;
             }
-            
-            SaveManager.save(currentSave);
-            setSave(currentSave);
+            applyServerResult(data);
             SoundManager.playGoldPickup();
-            
+            const currencyLabel = data.reward.currency === 'gold' ? 'Gold' :
+                                  data.reward.currency === 'fragment' ? 'Fragments' : 'Tokens';
             toast({
                 title: "Bounty Claimed!",
-                description: `You received ${bounty.reward} ${bounty.currency === 'gold' ? 'Gold' : bounty.currency === 'fragment' ? 'Fragments' : 'Tokens'}`,
+                description: `You received ${data.reward.amount} ${currencyLabel}`,
             });
+        } catch (e) {
+            toast({ title: 'Claim Failed', description: e.message || 'Network error.' });
+        } finally {
+            setClaiming(null);
         }
     };
 
-    const handleClaimDailyMission = () => {
-        const currentSave = SaveManager.load();
-        const mission = currentSave.bounties.dailyMission;
-        if (mission && mission.progress >= mission.target && !mission.claimed) {
-            currentSave.bounties.dailyMission.claimed = true;
-            currentSave.seasonalPoints = (currentSave.seasonalPoints || 0) + mission.reward;
-            
-            SaveManager.save(currentSave);
-            setSave(currentSave);
+    const handleClaimDailyMission = async () => {
+        if (claiming) return;
+        setClaiming('mission');
+        try {
+            const res = await base44.functions.invoke('claimBounty', { type: 'dailyMission' });
+            const data = res.data;
+            if (!data?.success) {
+                toast({ title: 'Claim Failed', description: data?.error || 'Try again.' });
+                return;
+            }
+            applyServerResult(data);
             SoundManager.playGoldPickup();
-            
             toast({
                 title: "Daily Mission Complete!",
-                description: `You earned ${mission.reward} Seasonal Points!`,
+                description: `You earned ${data.reward.amount} Seasonal Points!`,
             });
+        } catch (e) {
+            toast({ title: 'Claim Failed', description: e.message || 'Network error.' });
+        } finally {
+            setClaiming(null);
         }
     };
 
@@ -68,7 +86,7 @@ export default function BountiesPanel({ save, setSave }) {
                 {save.bounties.active.map((bounty, index) => {
                     const isComplete = bounty.progress >= bounty.target;
                     const isClaimed = bounty.claimed;
-                    const progressPercent = Math.min(100, (bounty.progress / bounty.target) * 100);
+                    const isClaimingThis = claiming === `bounty-${index}`;
 
                     return (
                         <div key={bounty.id + index} className={`p-3 rounded-lg border transition-colors ${
@@ -96,9 +114,10 @@ export default function BountiesPanel({ save, setSave }) {
                                 {isComplete && !isClaimed && (
                                     <button
                                         onClick={() => handleClaim(index)}
-                                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)] flex items-center gap-1"
+                                        disabled={isClaimingThis}
+                                        className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)] flex items-center gap-1"
                                     >
-                                        <Gift className="w-3 h-3" /> CLAIM
+                                        <Gift className="w-3 h-3" /> {isClaimingThis ? '…' : 'CLAIM'}
                                     </button>
                                 )}
                                 {isClaimed && (
@@ -132,6 +151,7 @@ export default function BountiesPanel({ save, setSave }) {
                     const isComplete = mission.progress >= mission.target;
                     const isClaimed = mission.claimed;
                     const mProgressPercent = Math.min(100, (mission.progress / mission.target) * 100);
+                    const isClaimingThis = claiming === 'mission';
                     
                     return (
                         <div className={`p-4 rounded-lg border relative z-10 ${
@@ -153,9 +173,10 @@ export default function BountiesPanel({ save, setSave }) {
                                 {isComplete && !isClaimed && (
                                     <button
                                         onClick={handleClaimDailyMission}
-                                        className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2 rounded animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.5)] flex items-center gap-1"
+                                        disabled={isClaimingThis}
+                                        className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-bold px-3 py-2 rounded animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.5)] flex items-center gap-1"
                                     >
-                                        <Gift className="w-3 h-3" /> CLAIM
+                                        <Gift className="w-3 h-3" /> {isClaimingThis ? '…' : 'CLAIM'}
                                     </button>
                                 )}
                                 {isClaimed && (

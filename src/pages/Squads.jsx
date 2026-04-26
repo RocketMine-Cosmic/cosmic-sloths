@@ -493,16 +493,18 @@ export default function Squads({ isCarousel }) {
                 const res = await base44.functions.invoke('squadActions', {
                     action: 'claimWeekly', accessToken,
                     memberId: myMemberRecord.id,
+                    squadId: mySquad.id,
                     currentWeek,
                 });
                 if (!res.data?.success) { toast({ title: "Error", description: res.data?.error }); return; }
 
+                // Apply server-authoritative totals to local save
                 const currentSave = SaveManager.load();
-                currentSave.gold += tier.gold;
-                currentSave.relicFragments = (currentSave.relicFragments || 0) + tier.fragments;
+                if (res.data.saveData?.gold !== undefined) currentSave.gold = res.data.saveData.gold;
+                if (res.data.saveData?.relicFragments !== undefined) currentSave.relicFragments = res.data.saveData.relicFragments;
                 SaveManager.save(currentSave);
                 setMyMemberRecord(res.data.member);
-                toast({ title: "Weekly Bounty Claimed!", description: `You received ${tier.gold.toLocaleString()} Gold and ${tier.fragments} Relic Fragments!` });
+                toast({ title: "Weekly Bounty Claimed!", description: `You received ${res.data.reward.gold.toLocaleString()} Gold and ${res.data.reward.fragments} Relic Fragments!` });
             } catch (e) {
                 console.error(e);
             }
@@ -532,16 +534,20 @@ export default function Squads({ isCarousel }) {
                 const res = await base44.functions.invoke('squadActions', {
                     action: 'claimDaily', accessToken,
                     memberId: myMemberRecord.id,
+                    squadId: mySquad.id,
                     currentDay,
                 });
                 if (!res.data?.success) { toast({ title: "Error", description: res.data?.error }); return; }
 
+                // Apply server-authoritative totals to local save
                 const currentSave = SaveManager.load();
-                currentSave.gold += tier.gold;
-                currentSave.relicFragments = (currentSave.relicFragments || 0) + tier.fragments;
+                if (res.data.saveData?.gold !== undefined) currentSave.gold = res.data.saveData.gold;
+                if (res.data.saveData?.relicFragments !== undefined) currentSave.relicFragments = res.data.saveData.relicFragments;
                 SaveManager.save(currentSave);
                 setMyMemberRecord(res.data.member);
-                toast({ title: "Daily Bounty Claimed!", description: `You received ${tier.gold.toLocaleString()} Gold${tier.fragments > 0 ? ` and ${tier.fragments} Relic Fragments` : ''}!` });
+                const dGold = res.data.reward.gold;
+                const dFrag = res.data.reward.fragments;
+                toast({ title: "Daily Bounty Claimed!", description: `You received ${dGold.toLocaleString()} Gold${dFrag > 0 ? ` and ${dFrag} Relic Fragments` : ''}!` });
             } catch (e) {
                 console.error(e);
             }
