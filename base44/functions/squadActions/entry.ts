@@ -32,39 +32,27 @@ Deno.serve(async (req) => {
             apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
         });
         const walletAddress = await verifyToken(sdk, accessToken);
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
 
         if (action === 'join') {
             const { squadId, playerName, playerTitle } = body;
             if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
-            
-            const memberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember`;
-            await fetch(memberUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({
-                    squad_id: squadId, wallet_address: walletAddress,
-                    player_name: playerName || 'Pilot', player_title: playerTitle || '',
-                    role: 'member', last_payout_week: '', last_daily_payout_date: ''
-                })
-            }).catch(e => console.error('[squadActions] SquadMember create failed:', e.message));
 
-            const msgUrl = `https://api.base44.com/apps/${appId}/entities/SquadMessage`;
-            await fetch(msgUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({
-                    squad_id: squadId, wallet_address: 'system', player_name: 'SYSTEM',
-                    content: `${playerName || 'A pilot'} has joined the squad!`
-                })
-            }).catch(e => console.error('[squadActions] Message creation failed:', e.message));
+            await base44.asServiceRole.entities.SquadMember.create({
+                squad_id: squadId,
+                wallet_address: walletAddress,
+                player_name: playerName || 'Pilot',
+                player_title: playerTitle || '',
+                role: 'member',
+                last_payout_week: '',
+                last_daily_payout_date: ''
+            });
+
+            await base44.asServiceRole.entities.SquadMessage.create({
+                squad_id: squadId,
+                wallet_address: 'system',
+                player_name: 'SYSTEM',
+                content: `${playerName || 'A pilot'} has joined the squad!`
+            });
 
             return Response.json({ success: true });
         }
@@ -72,25 +60,15 @@ Deno.serve(async (req) => {
         if (action === 'leave') {
             const { memberId, squadId, playerName } = body;
             if (!memberId || !squadId) return Response.json({ error: 'memberId and squadId required' }, { status: 400 });
-            
-            const memberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember/${memberId}`;
-            await fetch(memberUrl, {
-                method: 'DELETE',
-                headers: { 'X-Sync-Secret': syncSecret }
-            }).catch(e => console.error('[squadActions] Member delete failed:', e.message));
 
-            const msgUrl = `https://api.base44.com/apps/${appId}/entities/SquadMessage`;
-            await fetch(msgUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({
-                    squad_id: squadId, wallet_address: 'system', player_name: 'SYSTEM',
-                    content: `${playerName || 'A pilot'} has left the squad.`
-                })
-            }).catch(e => console.error('[squadActions] Message creation failed:', e.message));
+            await base44.asServiceRole.entities.SquadMember.delete(memberId);
+
+            await base44.asServiceRole.entities.SquadMessage.create({
+                squad_id: squadId,
+                wallet_address: 'system',
+                player_name: 'SYSTEM',
+                content: `${playerName || 'A pilot'} has left the squad.`
+            });
 
             return Response.json({ success: true });
         }
@@ -98,12 +76,8 @@ Deno.serve(async (req) => {
         if (action === 'kick') {
             const { targetMemberId, squadId } = body;
             if (!targetMemberId || !squadId) return Response.json({ error: 'targetMemberId and squadId required' }, { status: 400 });
-            
-            const memberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember/${targetMemberId}`;
-            await fetch(memberUrl, {
-                method: 'DELETE',
-                headers: { 'X-Sync-Secret': syncSecret }
-            }).catch(e => console.error('[squadActions] Member delete failed:', e.message));
+
+            await base44.asServiceRole.entities.SquadMember.delete(targetMemberId);
 
             return Response.json({ success: true });
         }
@@ -111,41 +85,31 @@ Deno.serve(async (req) => {
         if (action === 'sendMessage') {
             const { squadId, content, playerName, playerTitle } = body;
             if (!squadId || !content) return Response.json({ error: 'squadId and content required' }, { status: 400 });
-            
-            const msgData = {
-                squad_id: squadId, wallet_address: walletAddress,
-                player_name: playerName || 'Pilot', player_title: playerTitle || '',
+
+            const message = await base44.asServiceRole.entities.SquadMessage.create({
+                squad_id: squadId,
+                wallet_address: walletAddress,
+                player_name: playerName || 'Pilot',
+                player_title: playerTitle || '',
                 content: content.substring(0, 200)
-            };
-            
-            const message = await base44.asServiceRole.entities.SquadMessage.create(msgData);
+            });
             return Response.json({ success: true, message });
         }
 
         if (action === 'transferLeadership') {
             const { targetMemberId, squadId } = body;
             if (!targetMemberId || !squadId) return Response.json({ error: 'targetMemberId and squadId required' }, { status: 400 });
-            
-            const leaderUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember`;
-            // Update old leader to member role
-            await fetch(`${leaderUrl}?squad_id=${squadId}&wallet_address=${encodeURIComponent(walletAddress)}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({ role: 'member' })
-            }).catch(e => console.error('[squadActions] Leader update failed:', e.message));
 
-            // Update new leader
-            await fetch(`${leaderUrl}/${targetMemberId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({ role: 'leader' })
-            }).catch(e => console.error('[squadActions] New leader update failed:', e.message));
+            // Find current leader's member record by squad + wallet
+            const currentLeaderRecords = await base44.asServiceRole.entities.SquadMember.filter({
+                squad_id: squadId,
+                wallet_address: walletAddress
+            });
+            if (currentLeaderRecords.length > 0) {
+                await base44.asServiceRole.entities.SquadMember.update(currentLeaderRecords[0].id, { role: 'member' });
+            }
+
+            await base44.asServiceRole.entities.SquadMember.update(targetMemberId, { role: 'leader' });
 
             return Response.json({ success: true, newLeaderMemberId: targetMemberId });
         }
@@ -153,51 +117,31 @@ Deno.serve(async (req) => {
         if (action === 'saveSettings') {
             const { squadId, name, tag, description, icon } = body;
             if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
-            
-            const squadUrl = `https://api.base44.com/apps/${appId}/entities/Squad/${squadId}`;
-            await fetch(squadUrl, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({
-                    name: name?.trim(),
-                    tag: tag?.trim().toUpperCase().substring(0, 4),
-                    description: description?.trim() || '',
-                    icon: icon || '🛡️'
-                })
-            }).catch(e => console.error('[squadActions] Squad update failed:', e.message));
+
+            await base44.asServiceRole.entities.Squad.update(squadId, {
+                name: name?.trim(),
+                tag: tag?.trim().toUpperCase().substring(0, 4),
+                description: description?.trim() || '',
+                icon: icon || '🛡️'
+            });
 
             return Response.json({ success: true });
         }
 
         if (action === 'claimWeekly') {
             const { memberId, currentWeek } = body;
-            const memberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember/${memberId}`;
-            await fetch(memberUrl, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({ last_payout_week: currentWeek })
-            }).catch(e => console.error('[squadActions] Claim update failed:', e.message));
+            if (!memberId) return Response.json({ error: 'memberId required' }, { status: 400 });
+
+            await base44.asServiceRole.entities.SquadMember.update(memberId, { last_payout_week: currentWeek });
 
             return Response.json({ success: true });
         }
 
         if (action === 'claimDaily') {
             const { memberId, currentDay } = body;
-            const memberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember/${memberId}`;
-            await fetch(memberUrl, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify({ last_daily_payout_date: currentDay })
-            }).catch(e => console.error('[squadActions] Claim update failed:', e.message));
+            if (!memberId) return Response.json({ error: 'memberId required' }, { status: 400 });
+
+            await base44.asServiceRole.entities.SquadMember.update(memberId, { last_daily_payout_date: currentDay });
 
             return Response.json({ success: true });
         }
@@ -205,16 +149,8 @@ Deno.serve(async (req) => {
         if (action === 'resetPeriods') {
             const { squadId, updateData } = body;
             if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
-            
-            const squadUrl = `https://api.base44.com/apps/${appId}/entities/Squad/${squadId}`;
-            await fetch(squadUrl, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Sync-Secret': syncSecret
-                },
-                body: JSON.stringify(updateData)
-            }).catch(e => console.error('[squadActions] Squad reset failed:', e.message));
+
+            await base44.asServiceRole.entities.Squad.update(squadId, updateData);
 
             return Response.json({ success: true });
         }
