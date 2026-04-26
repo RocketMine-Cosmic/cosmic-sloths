@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Cloud, CloudOff, Check, Loader2 } from 'lucide-react';
 
 // Tiny status pill that reflects the SaveManager sync lifecycle.
@@ -15,6 +16,8 @@ import { Cloud, CloudOff, Check, Loader2 } from 'lucide-react';
 export default function SaveStatusIndicator() {
     const [status, setStatus] = useState('idle');
     const hideTimerRef = useRef(null);
+    const location = useLocation();
+    const inGame = location.pathname === '/game';
 
     useEffect(() => {
         const clearHide = () => { if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; } };
@@ -50,7 +53,7 @@ export default function SaveStatusIndicator() {
         };
     }, []);
 
-    if (status === 'idle') return null;
+    if (status === 'idle' || inGame) return null;
 
     const config = {
         pending: { icon: Cloud, text: 'Saving…', color: 'text-slate-300', bg: 'bg-slate-900/80', border: 'border-slate-600/50' },
