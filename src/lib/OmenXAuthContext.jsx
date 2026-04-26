@@ -64,31 +64,12 @@ export const OmenXAuthProvider = ({ children }) => {
   }, []);
 
   // Single shared Base44 auth check (was being run independently by every gate/button).
-  // Also checks if the Base44 user has a previously-linked wallet — if so, we treat
-  // that as "wallet connected" without requiring a fresh OmenX session.
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
       try {
         const isAuthed = await base44.auth.isAuthenticated();
-        if (cancelled) return;
-        setBase44Authed(!!isAuthed);
-
-        // If signed in but no local OmenX auth, fall back to the wallet linked on the Base44 user.
-        if (isAuthed) {
-          try {
-            const me = await base44.auth.me();
-            if (cancelled) return;
-            if (me?.wallet_address) {
-              setAuthData(prev => prev || {
-                walletAddress: me.wallet_address,
-                username: me.username || me.full_name || '',
-                player_name: me.player_name || me.full_name || '',
-                _fromBase44User: true, // marker — no accessToken available
-              });
-            }
-          } catch {}
-        }
+        if (!cancelled) setBase44Authed(!!isAuthed);
       } catch {
         if (!cancelled) setBase44Authed(false);
       }
