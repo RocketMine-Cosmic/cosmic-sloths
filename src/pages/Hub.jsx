@@ -20,7 +20,7 @@ import OmenXGate from '../components/game/OmenXGate';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 
-import { subscribePlayerData } from '@/lib/playerDataCache';
+import { subscribePlayerData, ensureNftsFetched } from '@/lib/playerDataCache';
 
 function getOmenXAuth() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -60,6 +60,7 @@ export default function Hub({ isCarousel }) {
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
     const [syncReady, setSyncReady] = useState(false);
     const { vip: vipLevel } = useOmenXVip();
+    const { nfts } = useCurrency();
 
     React.useEffect(() => {
         // Sync saves to state but don't overwrite initialization data
@@ -71,6 +72,24 @@ export default function Hub({ isCarousel }) {
         window.addEventListener('saveUpdated', handleSaveUpdated);
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
     }, [syncReady]);
+
+    // Recompute unlocked characters whenever NFTs change (kill milestones + NFT ownership).
+    // Runs after sync is ready so we don't clobber cloud data with stale local arrays.
+    React.useEffect(() => {
+        if (!syncReady) return;
+        const current = SaveManager.load();
+        const nftCharIds = (nfts || [])
+            .map(nft => nft.metadata?.name?.toLowerCase())
+            .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
+        const milestoneChars = CharacterUnlockManager.getUnlockedByMilestones(current.totalKills || 0);
+        const recomputedChars = [...new Set([...milestoneChars, ...nftCharIds])];
+        const existing = current.unlockedCharacters || [];
+        if (JSON.stringify([...recomputedChars].sort()) !== JSON.stringify([...existing].sort())) {
+            current.unlockedCharacters = recomputedChars;
+            SaveManager.save(current);
+            setSave(current);
+        }
+    }, [syncReady, nfts]);
 
     const { user: omenxUser } = useOmenXUser();
 
@@ -91,31 +110,9 @@ export default function Hub({ isCarousel }) {
                      if (!isMounted) return;
 
                      // Use centralized cache for player data (deduped)
-                     // Just subscribe to trigger fetch — NFT sync happens asynchronously
                      subscribePlayerData(() => {});
-
-                     // Recompute unlocked characters: kill milestones + current NFTs
-                     try {
-                          // Get NFT-unlocked characters (current ownership)
-                          const cachedNfts = (() => { try { return JSON.parse(localStorage.getItem('omenx_nft_data')) || []; } catch { return []; } })();
-                          const nftCharIds = cachedNfts
-                             .map(nft => nft.metadata?.name?.toLowerCase())
-                             .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
-
-                         // Get milestone-unlocked characters (always kept)
-                         const milestoneChars = CharacterUnlockManager.getUnlockedByMilestones(mergedSave.totalKills || 0);
-
-                         // Combine: NFT unlocks (dynamic) + milestone unlocks (permanent)
-                         const recomputedChars = [...new Set([...milestoneChars, ...nftCharIds])];
-
-                         // Update if different (preserves mastery/kills in characterKills)
-                         if (JSON.stringify(recomputedChars.sort()) !== JSON.stringify(mergedSave.unlockedCharacters.sort())) {
-                             mergedSave.unlockedCharacters = recomputedChars;
-                             SaveManager.save(mergedSave);
-                         }
-                     } catch (nftErr) {
-                         console.error('Failed to sync NFT unlocks:', nftErr);
-                     }
+                     // Trigger NFT fetch if not already cached — required to unlock NFT characters
+                     ensureNftsFetched();
 
                      setSave(mergedSave);
 
