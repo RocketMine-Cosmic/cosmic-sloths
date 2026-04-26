@@ -51,6 +51,30 @@ export const SaveManager = {
       // Load cloud save on init via Base44 SDK (uses Base44 session — no token needed)
       try {
         const { base44 } = await import('@/api/base44Client');
+
+        // CRITICAL: Wait for the Base44 user record to have wallet_address linked
+        // before loading. Otherwise loadSave returns null (no wallet linked yet),
+        // we treat user as new, and empty local save eventually overwrites cloud.
+        const expectedWallet = walletAddress.toLowerCase();
+        let walletLinked = false;
+        for (let attempt = 0; attempt < 20; attempt++) { // ~10s max (20 × 500ms)
+          try {
+            const isAuthed = await base44.auth.isAuthenticated();
+            if (isAuthed) {
+              const me = await base44.auth.me();
+              if (me?.wallet_address?.toLowerCase() === expectedWallet) {
+                walletLinked = true;
+                break;
+              }
+            }
+          } catch (_) { /* keep polling */ }
+          await new Promise(r => setTimeout(r, 500));
+        }
+        if (!walletLinked) {
+          console.warn('[SaveManager] Wallet not linked to Base44 user after 10s — skipping cloud load to avoid overwriting cloud save with empty local');
+          return;
+        }
+
         const res = await base44.functions.invoke('loadSave', {});
         const response = res.data;
         
