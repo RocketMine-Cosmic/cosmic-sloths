@@ -64,12 +64,39 @@ export const OmenXAuthProvider = ({ children }) => {
   }, []);
 
   // Single shared Base44 auth check (was being run independently by every gate/button).
+  // Backend functions only need the wallet linked on the Base44 User record — they
+  // don't require an OmenX accessToken — so a Base44 user with a linked wallet IS
+  // the "connected" state, even without a fresh OmenX OAuth session.
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
       try {
         const isAuthed = await base44.auth.isAuthenticated();
-        if (!cancelled) setBase44Authed(!!isAuthed);
+        if (cancelled) return;
+        setBase44Authed(!!isAuthed);
+
+        if (isAuthed) {
+          try {
+            const me = await base44.auth.me();
+            if (cancelled) return;
+            if (me?.wallet_address) {
+              const walletAddress = me.wallet_address;
+              setAuthData(prev => {
+                if (prev?.walletAddress) return prev; // already set from localStorage/IDB
+                const synthesized = {
+                  walletAddress,
+                  username: me.username || me.full_name || '',
+                  player_name: me.player_name || me.full_name || '',
+                };
+                // Mirror to localStorage so SaveManager + other consumers find the wallet
+                try { localStorage.setItem('omenx_auth_data', JSON.stringify(synthesized)); } catch {}
+                // Tell SaveManager to (re)load cloud save now that we know the wallet
+                window.dispatchEvent(new CustomEvent('walletLinked', { detail: { wallet: walletAddress, alreadyLinked: true } }));
+                return synthesized;
+              });
+            }
+          } catch {}
+        }
       } catch {
         if (!cancelled) setBase44Authed(false);
       }
