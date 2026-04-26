@@ -88,6 +88,19 @@ export default function Profile({ isCarousel }) {
                      base44.entities.PayoutLog.filter({ player_name: displayName }, '-period_id', 50)
                          .then(rewards => setRewardsHistory(rewards))
                          .catch(() => {});
+                     // Fetch squad membership in parallel
+                     base44.entities.SquadMember.filter({ wallet_address: omenxUser.walletAddress })
+                         .then(async (memberships) => {
+                             if (memberships.length > 0) {
+                                 try {
+                                     const squadData = await base44.entities.Squad.get(memberships[0].squad_id);
+                                     setSquad(squadData);
+                                 } catch {}
+                             } else {
+                                 setSquad(null);
+                             }
+                         })
+                         .catch(() => {});
                  }
                 setLoading(false);
             } catch (e) {
