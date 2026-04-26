@@ -12,15 +12,36 @@ export const OmenXAuthProvider = ({ children }) => {
   const [base44Authed, setBase44Authed] = useState(null); // null = checking
 
   useEffect(() => {
-    // Load OmenX auth from localStorage once
+    // Load OmenX auth from localStorage first (instant, no flicker)
+    let foundInLocal = false;
     try {
       const stored = localStorage.getItem('omenx_auth_data');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed?.walletAddress) setAuthData(parsed);
+        if (parsed?.walletAddress) {
+          setAuthData(parsed);
+          foundInLocal = true;
+        }
       }
     } catch {}
     setLoading(false);
+
+    // Fall back to IndexedDB if localStorage was cleared but IDB still has auth
+    // (browsers sometimes clear localStorage independently). Without this, the
+    // "Connect Wallet" button shows even though the user is already authenticated.
+    if (!foundInLocal) {
+      (async () => {
+        try {
+          const { getAuthFromIndexedDB } = await import('@/lib/indexedDbAuth');
+          const idbAuth = await getAuthFromIndexedDB();
+          if (idbAuth?.walletAddress) {
+            // Mirror back to localStorage so other code finds it instantly next time
+            try { localStorage.setItem('omenx_auth_data', JSON.stringify(idbAuth)); } catch {}
+            setAuthData(idbAuth);
+          }
+        } catch {}
+      })();
+    }
 
     // Listen for storage changes (login/logout in other tabs)
     const onStorage = (e) => {
