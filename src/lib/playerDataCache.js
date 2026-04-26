@@ -210,25 +210,33 @@ export function subscribePlayerData(fn) {
 
     if (!storageListenerAttached) {
         storageListenerAttached = true;
+        const onAuthChange = () => {
+            // New login — clear ALL caches and re-fetch.
+            lastBalanceFetchAt = 0;
+            lastVipFetchAt = 0;
+            lastNftFetchAt = 0;
+            userFetched = false;
+            cachedData = null;
+            try {
+                localStorage.removeItem('omenx_balance_cache');
+                localStorage.removeItem('omenx_vip_cache');
+                localStorage.removeItem('omenx_nft_cache');
+            } catch {}
+            if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
+            loadUserDataLocal();
+            fetchBalance(true);
+            // Don't auto-fetch VIP/NFTs on login — wait for Profile/NFT Dashboard mount
+        };
+        // Cross-tab login (real storage event) — has storageArea set
         window.addEventListener('storage', (e) => {
             if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
-                // New login — clear ALL caches and re-fetch.
-                lastBalanceFetchAt = 0;
-                lastVipFetchAt = 0;
-                lastNftFetchAt = 0;
-                userFetched = false;
-                cachedData = null;
-                try {
-                    localStorage.removeItem('omenx_balance_cache');
-                    localStorage.removeItem('omenx_vip_cache');
-                    localStorage.removeItem('omenx_nft_cache');
-                } catch {}
-                if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
-                loadUserDataLocal();
-                fetchBalance(true);
-                // Don't auto-fetch VIP/NFTs on login — wait for Profile/NFT Dashboard mount
+                onAuthChange();
             }
         });
+        // Same-tab synthesized auth (e.g. Base44 user with linked wallet) —
+        // OmenXAuthContext dispatches a StorageEvent but its storageArea is null.
+        // Listen on walletLinked CustomEvent instead, which fires reliably.
+        window.addEventListener('walletLinked', onAuthChange);
     }
 
     return () => { listeners.delete(fn); };

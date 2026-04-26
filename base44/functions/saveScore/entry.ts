@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
             const today = new Date().toISOString().split('T')[0];
             const killsToAdd = validation.killsForLedger;
             try {
-                const squad = await base44.asServiceRole.entities.Squad.read(squadIdToUpdate);
+                const squad = await base44.asServiceRole.entities.Squad.get(squadIdToUpdate);
                 const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
                 const updatedSquad = {
                     ...squad,
