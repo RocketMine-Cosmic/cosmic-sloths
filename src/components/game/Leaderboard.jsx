@@ -5,6 +5,7 @@ import { queryClientInstance } from '@/lib/query-client';
 import { CHARACTERS, ARENAS } from '../../game/Constants';
 import { getSquadLevel } from '../../game/SquadLevels';
 import { getCurrentPeriodIds } from '../../lib/periodIds';
+import { useIsIdle } from '@/hooks/useIsIdle';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -117,6 +118,8 @@ export default function Leaderboard() {
 
     const [lastUpdated, setLastUpdated] = useState(Date.now());
     const pollIntervalRef = useRef(null);
+    // Pause polling after 5 min of no activity to save API calls for AFK users
+    const isIdle = useIsIdle(5 * 60 * 1000);
 
     useEffect(() => {
         fetchScores();
@@ -147,11 +150,13 @@ export default function Leaderboard() {
             }
         });
 
-        // Polling fallback — every 20s while tab is visible
+        // Polling fallback — every 20s while tab is visible AND user is active.
+        // Idle users (5 min no input) get no polling; realtime push still works
+        // if it arrives, and we re-fetch instantly when they come back.
         const startPolling = () => {
-            if (pollIntervalRef.current) return;
+            if (pollIntervalRef.current || isIdle) return;
             pollIntervalRef.current = setInterval(() => {
-                if (!document.hidden) fetchScores();
+                if (!document.hidden && !isIdle) fetchScores();
             }, 20000);
         };
         const stopPolling = () => {
@@ -160,7 +165,7 @@ export default function Leaderboard() {
                 pollIntervalRef.current = null;
             }
         };
-        startPolling();
+        if (!isIdle) startPolling();
 
         // Refetch immediately when tab regains focus (catches any missed updates)
         const onVisibilityChange = () => {
@@ -176,7 +181,7 @@ export default function Leaderboard() {
             document.removeEventListener('visibilitychange', onVisibilityChange);
             if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         };
-    }, [view]);
+    }, [view, isIdle]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
     const { data: poolData } = useQuery({
@@ -265,13 +270,20 @@ export default function Leaderboard() {
                 <div>
                     <div className="flex items-center gap-2">
                         <h2 className="text-xl md:text-2xl font-bold text-white">Hall of Fame</h2>
-                        <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full" title={`Last updated ${Math.round((Date.now() - lastUpdated) / 1000)}s ago — auto-refreshes`}>
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Live</span>
-                        </div>
+                        {isIdle ? (
+                            <div className="flex items-center gap-1.5 bg-slate-800/60 border border-slate-600/40 px-2 py-0.5 rounded-full" title="Paused — move your mouse to resume live updates">
+                                <span className="inline-flex rounded-full h-2 w-2 bg-slate-500"></span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Paused</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full" title={`Last updated ${Math.round((Date.now() - lastUpdated) / 1000)}s ago — auto-refreshes`}>
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Live</span>
+                            </div>
+                        )}
                     </div>
                     {timeLeft && <div className="text-sm text-cyan-400 mt-1 font-bold">Resets in: {timeLeft}</div>}
                 </div>
