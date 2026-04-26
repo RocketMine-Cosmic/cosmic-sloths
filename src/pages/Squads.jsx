@@ -441,15 +441,6 @@ export default function Squads({ isCarousel }) {
         if (!mySquad || !myMemberRecord) return;
         const currentWeek = getCurrentWeek();
         const tier = getBountyTier(mySquad.level || 1);
-        
-        if (myMemberRecord.created_date) {
-            const joinDate = new Date(myMemberRecord.created_date).getTime();
-            if (Date.now() - joinDate < 24 * 60 * 60 * 1000) {
-                const hoursLeft = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - joinDate)) / (60 * 60 * 1000));
-                toast({ title: "New Member Cooldown", description: `You must be in the squad for 24 hours before claiming rewards. (${hoursLeft}h left)` });
-                return;
-            }
-        }
 
         if ((mySquad.weekly_kills || 0) >= tier.target && myMemberRecord.last_payout_week !== currentWeek) {
             try {
@@ -479,15 +470,6 @@ export default function Squads({ isCarousel }) {
         if (!mySquad || !myMemberRecord) return;
         const currentDay = moment().format('YYYY-MM-DD');
         const tier = getDailyBountyTier(mySquad.level || 1);
-        
-        if (myMemberRecord.created_date) {
-            const joinDate = new Date(myMemberRecord.created_date).getTime();
-            if (Date.now() - joinDate < 24 * 60 * 60 * 1000) {
-                const hoursLeft = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - joinDate)) / (60 * 60 * 1000));
-                toast({ title: "New Member Cooldown", description: `You must be in the squad for 24 hours before claiming rewards. (${hoursLeft}h left)` });
-                return;
-            }
-        }
 
         if ((mySquad.daily_kills || 0) >= tier.target && myMemberRecord.last_daily_payout_date !== currentDay) {
             try {

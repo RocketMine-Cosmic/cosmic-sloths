@@ -80,14 +80,27 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'You are already in a squad' }, { status: 400 });
             }
 
+            // Mark current period as already-claimed so the new member can't claim
+            // bounties earned by the squad before they joined. They'll be eligible
+            // for the NEXT daily/weekly bounty once the period rolls over.
+            const today = new Date().toISOString().split('T')[0];
+            const currentWeek = (() => {
+                const d = new Date();
+                const year = d.getUTCFullYear();
+                const startOfYear = new Date(Date.UTC(year, 0, 1));
+                const startOfWeek = new Date(startOfYear);
+                startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+                const isoWeek = Math.ceil(((d - startOfWeek) / 86400000 + 1) / 7);
+                return `${year}-W${String(isoWeek).padStart(2, '0')}`;
+            })();
             const member = await base44.asServiceRole.entities.SquadMember.create({
                 squad_id: squadId,
                 wallet_address: walletAddress,
                 player_name: playerName || 'Pilot',
                 player_title: playerTitle || '',
                 role: 'member',
-                last_payout_week: '',
-                last_daily_payout_date: ''
+                last_payout_week: currentWeek,
+                last_daily_payout_date: today
             });
 
             // Increment member count
@@ -205,14 +218,6 @@ Deno.serve(async (req) => {
             if (!member) return Response.json({ error: 'Member not found' }, { status: 404 });
             if (member.wallet_address !== walletAddress) return Response.json({ error: 'Forbidden' }, { status: 403 });
             if (member.squad_id !== squadId) return Response.json({ error: 'Member not in squad' }, { status: 400 });
-
-            // 24h new-member cooldown
-            if (member.created_date) {
-                const joinDate = new Date(member.created_date).getTime();
-                if (Date.now() - joinDate < 24 * 60 * 60 * 1000) {
-                    return Response.json({ error: 'New member cooldown — wait 24h after joining' }, { status: 403 });
-                }
-            }
 
             const squad = await base44.asServiceRole.entities.Squad.get(squadId);
             if (!squad) return Response.json({ error: 'Squad not found' }, { status: 404 });
