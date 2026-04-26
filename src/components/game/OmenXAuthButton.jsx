@@ -21,7 +21,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
-    // Check Base44 session
+    // Check Base44 session — ONCE on mount. Re-check on tab focus only.
     useEffect(() => {
         let cancelled = false;
         const check = async () => {
@@ -35,8 +35,9 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             }
         };
         check();
-        const interval = setInterval(check, 5000); // re-check every 5s to catch login completion
-        return () => { cancelled = true; clearInterval(interval); };
+        const onFocus = () => { if (!document.hidden) check(); };
+        document.addEventListener('visibilitychange', onFocus);
+        return () => { cancelled = true; document.removeEventListener('visibilitychange', onFocus); };
     }, []);
 
     const applyAuthData = (data) => {

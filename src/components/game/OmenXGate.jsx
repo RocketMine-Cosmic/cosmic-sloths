@@ -32,8 +32,10 @@ export default function OmenXGate({ children, isCarousel }) {
             }
         };
         check();
-        const interval = setInterval(check, 5000);
-        return () => { cancelled = true; clearInterval(interval); };
+        // Re-check only when tab regains focus (not on a timer) to avoid 429s
+        const onFocus = () => { if (!document.hidden) check(); };
+        document.addEventListener('visibilitychange', onFocus);
+        return () => { cancelled = true; document.removeEventListener('visibilitychange', onFocus); };
     }, []);
 
     // Bypass auth inside Base44 preview iframe
