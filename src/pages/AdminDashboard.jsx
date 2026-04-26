@@ -126,43 +126,48 @@ export default function AdminDashboard() {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
         const linkedWallet = authData?.walletAddress;
         return (
-            <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans">
+            <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans p-4">
                 <SpaceBackground />
-                <div className="relative z-10 space-y-4 w-full max-w-sm">
-                    {linkedWallet && (
-                        <form onSubmit={handleWalletSubmit} className="bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-4">
-                            <h1 className="text-xl font-black uppercase tracking-widest text-red-400">Admin Access</h1>
-                            <p className="text-xs text-slate-400">Auth uses your linked Base44 session. Enter the wallet you logged in with.</p>
+                <div className="relative z-10 w-full max-w-sm">
+                    <div className="bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-5 shadow-[0_0_40px_rgba(239,68,68,0.15)]">
+                        <div className="text-center">
+                            <h1 className="text-2xl font-black uppercase tracking-widest text-red-400">Admin Access</h1>
+                            <p className="text-xs text-slate-400 mt-2">
+                                {linkedWallet
+                                    ? <>Signed in as <span className="font-mono text-slate-300">{linkedWallet.slice(0, 6)}...{linkedWallet.slice(-4)}</span></>
+                                    : 'Sign in with your admin wallet to continue.'}
+                            </p>
+                        </div>
+
+                        {linkedWallet && (
                             <button type="button"
                                 onClick={() => handleWalletSubmit(null, linkedWallet)}
-                                className="bg-red-900/40 hover:bg-red-900/70 border border-red-700/50 text-red-300 font-bold py-2.5 rounded-md transition-colors text-sm flex items-center justify-center gap-2">
-                                ⚡ Continue as {linkedWallet.slice(0, 6)}...{linkedWallet.slice(-4)}
+                                className="bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-md transition-colors flex items-center justify-center gap-2">
+                                ⚡ Enter Admin Panel
                             </button>
-                            <div className="text-center text-slate-600 text-xs">— or enter a different wallet —</div>
-                            <input
-                                type="text"
-                                placeholder="Enter wallet address"
-                                value={walletInput}
-                                onChange={e => setWalletInput(e.target.value)}
-                                className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-red-500 font-mono text-xs"
-                            />
-                            {walletError && <div className="text-red-400 text-sm">{walletError}</div>}
-                            <button type="submit" className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-md transition-colors">Authenticate</button>
-                        </form>
-                    )}
-                    <form onSubmit={handleDirectAdminKey} className="bg-[#0b0416]/90 border border-yellow-900/50 rounded-xl p-8 flex flex-col gap-4">
-                        <h1 className="text-xl font-black uppercase tracking-widest text-yellow-400">Emergency Master Key</h1>
-                        <p className="text-xs text-slate-400">Bypasses permission checks. Use only when login is unavailable.</p>
-                        <input
-                            type="password"
-                            placeholder="Master admin key"
-                            value={adminKeyInput}
-                            onChange={e => setAdminKeyInput(e.target.value)}
-                            className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-yellow-500 font-mono text-xs"
-                        />
-                        {adminKeyError && <div className="text-red-400 text-sm">{adminKeyError}</div>}
-                        <button type="submit" className="bg-yellow-700 hover:bg-yellow-600 text-white font-bold py-2 rounded-md transition-colors">Access Admin Panel</button>
-                    </form>
+                        )}
+                        {walletError && <div className="text-red-400 text-xs text-center">{walletError}</div>}
+
+                        <div className="border-t border-slate-800 pt-4">
+                            <details className="group">
+                                <summary className="text-[11px] text-slate-500 hover:text-yellow-400 cursor-pointer text-center uppercase tracking-widest font-bold transition-colors list-none flex items-center justify-center gap-1.5">
+                                    <span>🔑 Emergency Master Key</span>
+                                </summary>
+                                <form onSubmit={handleDirectAdminKey} className="mt-3 flex flex-col gap-2">
+                                    <p className="text-[10px] text-slate-500 text-center">Bypasses permission checks. Use only when login is unavailable.</p>
+                                    <input
+                                        type="password"
+                                        placeholder="Master admin key"
+                                        value={adminKeyInput}
+                                        onChange={e => setAdminKeyInput(e.target.value)}
+                                        className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-xs focus:outline-none focus:border-yellow-500 font-mono"
+                                    />
+                                    {adminKeyError && <div className="text-red-400 text-xs">{adminKeyError}</div>}
+                                    <button type="submit" className="bg-yellow-700/80 hover:bg-yellow-600 text-white font-bold py-1.5 rounded-md transition-colors text-xs uppercase tracking-widest">Override Access</button>
+                                </form>
+                            </details>
+                        </div>
+                    </div>
                 </div>
             </div>
         );

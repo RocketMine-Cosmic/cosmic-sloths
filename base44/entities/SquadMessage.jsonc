@@ -7,7 +7,19 @@
     },
     "wallet_address": {
       "type": "string",
-      "description": "Wallet address of the message author"
+      "description": "Wallet address of the message author",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        "write": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     },
     "player_name": {
       "type": "string"
@@ -26,13 +38,7 @@
     "content"
   ],
   "rls": {
-    "read": {
-      "field_mask": {
-        "exclude": [
-          "wallet_address"
-        ]
-      }
-    },
+    "read": {},
     "create": {
       "user_condition": {
         "role": "admin"

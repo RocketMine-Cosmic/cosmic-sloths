@@ -28,7 +28,9 @@
         "role": "admin"
       }
     },
-    "read": {},
+    "read": {
+      "data.wallet_address": "{{user.data.wallet_address}}"
+    },
     "update": {
       "user_condition": {
         "role": "admin"
