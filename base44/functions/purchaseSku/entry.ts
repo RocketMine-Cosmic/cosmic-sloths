@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
 // Pricing: server-side via OmenX dev portal. We cache the SKU→price map in memory
@@ -65,32 +66,34 @@ Deno.serve(async (req) => {
 
         console.log(`[purchaseSku] SKU: ${skuId} x${quantity} wallet: ${walletAddress}`);
 
-        // Single REST call — server resolves price from dev portal SKU config
-        const purchaseRes = await fetch(`${apiBaseUrl}/v1/purchases`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'Idempotency-Key': idempotencyKey,
-            },
-            body: JSON.stringify({
+        // Use the OmenX SDK to settle on-chain. The SDK handles signing & gas
+        // through the developer's payment key and returns a real transaction hash.
+        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
+
+        let purchaseData;
+        try {
+            purchaseData = await sdk.createPurchase({
                 playerWallet: walletAddress,
                 skuId,
                 quantity,
                 idempotencyKey,
-                paymentMethod: 'onchain',
-            }),
-        });
-
-        if (purchaseRes.status === 429) {
-            return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
+            });
+        } catch (err) {
+            const msg = err?.message || String(err);
+            if (msg.includes('429')) return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
+            console.error('[purchaseSku] SDK purchase failed:', msg);
+            return Response.json({ error: msg }, { status: 500 });
         }
 
-        const purchaseData = await purchaseRes.json().catch(() => ({}));
-        if (!purchaseRes.ok || purchaseData?.status !== 'confirmed') {
-            const errMsg = purchaseData?.error || purchaseData?.message || `HTTP ${purchaseRes.status}`;
-            console.error('[purchaseSku] Purchase failed:', errMsg, purchaseData);
-            return Response.json({ error: errMsg }, { status: purchaseRes.status || 500 });
+        const txHash = purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.tx_id || null;
+        const status = purchaseData?.status || 'unknown';
+        console.log(`[purchaseSku] OmenX response status=${status} txHash=${txHash || 'NONE'}`);
+        if (status !== 'confirmed') {
+            console.error('[purchaseSku] Purchase not confirmed:', JSON.stringify(purchaseData).slice(0, 500));
+            return Response.json({ error: 'Purchase not confirmed', detail: purchaseData }, { status: 500 });
+        }
+        if (!txHash) {
+            console.warn('[purchaseSku] WARNING: Confirmed but no txHash — SKU may be off-chain. Full response:', JSON.stringify(purchaseData).slice(0, 500));
         }
 
         // Look up the price from cached SKU catalog (server-truth, set in dev portal)
