@@ -24,6 +24,11 @@ const MAX_LEVEL = 500;
 const MAX_TIME_SEC = 60 * 60; // 60 minutes
 const MIN_TIME_SEC = 1;       // No instant runs
 
+// Endless mode anti-exploit caps. Long endless runs were granting up to 800k gold,
+// breaking the upgrade economy. Cap gold/kills written from endless runs server-side.
+const ENDLESS_GOLD_CAP_PER_RUN = 5000;
+const ENDLESS_KILLS_CAP_PER_RUN = 2000;
+
 // Arena progression — must mirror game/Constants.js ARENAS order.
 const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'voidring', 'singularity'];
 
@@ -43,9 +48,9 @@ function getArenaMultiplier(arenaId) {
 
 function validateAndRecompute(scoreData) {
     const time = Number(scoreData.time_survived) || 0;
-    const kills = Number(scoreData.kills) || 0;
+    let kills = Number(scoreData.kills) || 0;
     const level = Number(scoreData.level) || 1;
-    const gold = Number(scoreData.gold) || 0;
+    let gold = Number(scoreData.gold) || 0;
 
     if (time < MIN_TIME_SEC || time > MAX_TIME_SEC) {
         return { ok: false, reason: `time out of range: ${time}` };
@@ -60,12 +65,35 @@ function validateAndRecompute(scoreData) {
         return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills` };
     }
 
+    // Endless economy nerf: cap gold + kills credited from endless runs.
+    // Score uses uncapped values; ledger/aggregates use capped values.
+    const isEndless = scoreData.arena_id === 'endless';
+    let goldForLedger = gold;
+    let killsForLedger = kills;
+    let endlessGoldCapped = false;
+    let endlessKillsCapped = false;
+    if (isEndless) {
+        if (gold > ENDLESS_GOLD_CAP_PER_RUN) {
+            goldForLedger = ENDLESS_GOLD_CAP_PER_RUN;
+            endlessGoldCapped = true;
+        }
+        if (kills > ENDLESS_KILLS_CAP_PER_RUN) {
+            killsForLedger = ENDLESS_KILLS_CAP_PER_RUN;
+            endlessKillsCapped = true;
+        }
+    }
+
     const arenaMult = getArenaMultiplier(scoreData.arena_id);
     const isVictory = !!scoreData.is_victory;
     const baseScore = kills * 10 + level * 100 + time * 5 + gold * 5 + (isVictory ? 5000 : 0);
     const score = Math.floor(baseScore * arenaMult);
 
-    return { ok: true, score, kills, time, level, gold };
+    return {
+        ok: true, score,
+        kills, time, level, gold, // raw values (for score / leaderboard display)
+        goldForLedger, killsForLedger, // capped values (for PlayerSave aggregation)
+        endlessGoldCapped, endlessKillsCapped, isEndless
+    };
 }
 
 // Sanitise per-enemy kill counts: cap to validated total kills.
@@ -87,7 +115,8 @@ function sanitiseEnemyKills(rawEnemyKills, capTotal) {
 }
 
 // Update bounty + daily mission progress in-place. Server is source of truth (Phase 3f).
-function updateBountyProgress(s, run) {
+// Endless runs are EXCLUDED from gold + play bounty progress (anti-farm).
+function updateBountyProgress(s, run, isEndless) {
     const stats = {
         kills: run.kills,
         time: run.time,
@@ -102,10 +131,14 @@ function updateBountyProgress(s, run) {
         } else if (b.type === 'survive') {
             if (stats.time > Number(b.progress || 0)) b.progress = stats.time;
         } else if (b.type === 'gold') {
+            // Endless runs cannot progress "earn X gold (single run)" bounties — was being farmed
+            if (isEndless) return;
             if (stats.gold > Number(b.progress || 0)) b.progress = stats.gold;
         } else if (b.type === 'level') {
             if (stats.level > Number(b.progress || 0)) b.progress = stats.level;
         } else if (b.type === 'play') {
+            // Endless runs no longer count toward "Play X runs" bounty (was being cycled)
+            if (isEndless) return;
             b.progress = Number(b.progress || 0) + 1;
         }
     };
@@ -123,10 +156,10 @@ function updateBountyProgress(s, run) {
 }
 
 // Apply run results to PlayerSave server-side. Returns updated save_data.
-function applyRunToSave(save, run, isVictory, charId) {
+function applyRunToSave(save, run, isVictory, charId, isEndless) {
     const s = { ...save };
 
-    // Currencies
+    // Currencies — use capped values from validation (endless caps applied here)
     s.gold = Number(s.gold || 0) + run.gold;
     s.totalGoldEarned = Number(s.totalGoldEarned || 0) + run.gold;
 
@@ -190,8 +223,8 @@ function applyRunToSave(save, run, isVictory, charId) {
         s.unlockedCharacters = unlocked;
     }
 
-    // Bounty / daily mission progress (Phase 3f)
-    updateBountyProgress(s, run);
+    // Bounty / daily mission progress (Phase 3f). Endless excluded from gold/play bounties.
+    updateBountyProgress(s, run, isEndless);
 
     s.updated_at = Date.now();
     return { saveData: s, unlockedArena, grantedCharacter };
@@ -218,7 +251,8 @@ Deno.serve(async (req) => {
 
         const isVictory = !!scoreData.is_victory;
         const charId = scoreData.character_id || 'neobyte';
-        const sanitisedEnemyKills = sanitiseEnemyKills(scoreData.enemyKills, validation.kills);
+        // Cap enemyKills total to the (possibly capped) ledger kills to keep aggregates consistent.
+        const sanitisedEnemyKills = sanitiseEnemyKills(scoreData.enemyKills, validation.killsForLedger);
 
         // Apply run to PlayerSave (server-authoritative aggregation)
         const walletLower = walletAddress.toLowerCase();
@@ -232,14 +266,14 @@ Deno.serve(async (req) => {
             : saveRecord.save_data;
 
         const { saveData: updatedSave, unlockedArena, grantedCharacter } = applyRunToSave(saveData, {
-            kills: validation.kills,
+            kills: validation.killsForLedger,
             time: validation.time,
             level: validation.level,
-            gold: validation.gold,
+            gold: validation.goldForLedger,
             arena_id: scoreData.arena_id,
             encountered: Array.isArray(scoreData.encountered) ? scoreData.encountered : [],
             enemyKills: sanitisedEnemyKills,
-        }, isVictory, charId);
+        }, isVictory, charId, validation.isEndless);
 
         await base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
             save_data: updatedSave,
@@ -271,7 +305,7 @@ Deno.serve(async (req) => {
             // Save was already applied; return success with warning
         }
 
-        // Update squad kills if applicable — use validated/capped kills
+        // Update squad kills if applicable — use ledger-capped kills (endless capped, others raw)
         let squadIdToUpdate = squadStats?.squadId || null;
         if (!squadIdToUpdate) {
             try {
@@ -286,7 +320,7 @@ Deno.serve(async (req) => {
 
         if (squadIdToUpdate) {
             const today = new Date().toISOString().split('T')[0];
-            const killsToAdd = validation.kills;
+            const killsToAdd = validation.killsForLedger;
             try {
                 const squad = await base44.asServiceRole.entities.Squad.read(squadIdToUpdate);
                 const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
@@ -302,7 +336,9 @@ Deno.serve(async (req) => {
             }
         }
 
-        console.log(`[saveScore] ${walletAddress} score=${validation.score} kills=${validation.kills} victory=${isVictory}${grantedCharacter ? ` granted=${grantedCharacter}` : ''}${unlockedArena ? ` unlockedArena=${unlockedArena}` : ''}`);
+        if (validation.endlessGoldCapped) console.log(`[saveScore] ${walletAddress} ENDLESS gold capped: raw=${validation.gold} → ledger=${validation.goldForLedger}`);
+        if (validation.endlessKillsCapped) console.log(`[saveScore] ${walletAddress} ENDLESS kills capped: raw=${validation.kills} → ledger=${validation.killsForLedger}`);
+        console.log(`[saveScore] ${walletAddress} score=${validation.score} kills=${validation.kills} gold=${validation.goldForLedger} victory=${isVictory} endless=${validation.isEndless}${grantedCharacter ? ` granted=${grantedCharacter}` : ''}${unlockedArena ? ` unlockedArena=${unlockedArena}` : ''}`);
         return Response.json({
             success: true,
             score: validation.score,
