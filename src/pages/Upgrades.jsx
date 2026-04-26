@@ -52,15 +52,20 @@ export default function Upgrades({ isCarousel }) {
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
         window.addEventListener('saveUpdated', handleSaveUpdated);
-        
-        const handleBeforeUnload = () => {
-            SaveManager.syncToBackendImmediate();
+
+        // Sync on visibility change (tab hidden) — fires while page is still alive,
+        // so the async fetch reliably completes. `beforeunload` async fetches are
+        // routinely cancelled by browsers so they're not safe for save persistence.
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                SaveManager.syncToBackendImmediate();
+            }
         };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         return () => {
             window.removeEventListener('saveUpdated', handleSaveUpdated);
-            window.removeEventListener('beforeunload', handleBeforeUnload);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, []);
 
