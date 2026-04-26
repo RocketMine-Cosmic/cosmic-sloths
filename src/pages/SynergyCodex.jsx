@@ -71,7 +71,7 @@ export default function SynergyCodex({ isCarousel }) {
                 <div className="flex-1 overflow-y-auto pr-1 space-y-4 pb-20">
                     {activeTab === 'synergies' && (
                         <>
-                            <p className="text-slate-300 text-xs md:text-base text-center">Combine specific fully leveled weapons to create devastating synergies.</p>
+                            <p className="text-slate-300 text-xs md:text-base text-center">Combine specific weapons during a run to create devastating synergies.</p>
                             <div className="text-center text-xs text-rose-400 font-bold mb-4">Discovered: {discovered.length} / {SYNERGIES.length}</div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         {SYNERGIES.map((synergy, index) => {
