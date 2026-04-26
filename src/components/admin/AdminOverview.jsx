@@ -35,7 +35,11 @@ export default function AdminOverview({ walletAddress }) {
     const seasonalData = (pools || []).filter(p => p.period_type === 'seasonal')
         .sort((a, b) => a.period_id.localeCompare(b.period_id));
 
-    const totalSpent = (pools || []).reduce((s, p) => s + (p.total_spent || 0), 0);
+    // Sum only weekly pools — seasonal pools aggregate the same spend (4 weeks each),
+    // so summing both period types double-counts every transaction.
+    const totalSpent = (pools || [])
+        .filter(p => p.period_type === 'weekly')
+        .reduce((s, p) => s + (p.total_spent || 0), 0);
     const weeklySpent = weeklyData.slice(-1)[0]?.total_spent || 0;
 
     return (
