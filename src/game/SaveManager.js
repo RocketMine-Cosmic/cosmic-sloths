@@ -83,17 +83,23 @@ export const SaveManager = {
         // CRITICAL: Wait for the Base44 user record to have wallet_address linked
         // before loading. Otherwise loadSave returns null (no wallet linked yet),
         // we treat user as new, and empty local save eventually overwrites cloud.
+        // If the user is NOT signed into Base44 (anonymous browsing), skip silently —
+        // never trigger the login modal here. They'll get cloud sync once they Sign In.
         if (!walletLinked) {
+          let isAuthed = false;
+          try { isAuthed = await base44.auth.isAuthenticated(); } catch { isAuthed = false; }
+          if (!isAuthed) {
+            console.log('[SaveManager] Not signed into Base44 — skipping cloud load (local-only mode)');
+            window.dispatchEvent(new CustomEvent('firstTimeSetupEnd'));
+            return;
+          }
           for (let attempt = 0; attempt < 8; attempt++) { // ~4s max (8 × 500ms)
             try {
-              const isAuthed = await base44.auth.isAuthenticated();
-              if (isAuthed) {
-                const me = await base44.auth.me();
-                if (me?.wallet_address?.toLowerCase() === expectedWallet) {
-                  walletLinked = true;
-                  sessionStorage.setItem('walletLinkedToBase44', expectedWallet);
-                  break;
-                }
+              const me = await base44.auth.me();
+              if (me?.wallet_address?.toLowerCase() === expectedWallet) {
+                walletLinked = true;
+                sessionStorage.setItem('walletLinkedToBase44', expectedWallet);
+                break;
               }
             } catch (_) { /* keep polling */ }
             await new Promise(r => setTimeout(r, 500));
