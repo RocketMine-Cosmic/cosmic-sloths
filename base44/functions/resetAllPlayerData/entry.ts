@@ -36,16 +36,27 @@ Deno.serve(async (req) => {
         } catch {}
 
         const results = {};
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+        // Sequential deletes with small delay to avoid 429 rate limits.
         const deleteAll = async (entityName) => {
             let deleted = 0;
             let batch;
             do {
-                // Use filter({}) — list() can return 0 under restrictive RLS even with service role.
                 batch = await base44.asServiceRole.entities[entityName].filter({}, null, 50);
                 if (batch.length === 0) break;
-                await Promise.all(batch.map(r => base44.asServiceRole.entities[entityName].delete(r.id)));
-                deleted += batch.length;
+                for (const r of batch) {
+                    try {
+                        await base44.asServiceRole.entities[entityName].delete(r.id);
+                        deleted++;
+                    } catch (e) {
+                        if (String(e.message || '').includes('Rate limit')) {
+                            await sleep(1500);
+                            try { await base44.asServiceRole.entities[entityName].delete(r.id); deleted++; } catch {}
+                        }
+                    }
+                    await sleep(40);
+                }
             } while (batch.length > 0);
             return deleted;
         };

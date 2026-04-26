@@ -39,15 +39,27 @@ Deno.serve(async (req) => {
         } catch {}
 
         const results = {};
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+        // Sequential deletes with small delay to avoid 429 rate limits.
         const deleteAll = async (entityName) => {
             let deleted = 0;
             let batch;
             do {
                 batch = await base44.asServiceRole.entities[entityName].filter({}, null, 50);
                 if (batch.length === 0) break;
-                await Promise.all(batch.map(r => base44.asServiceRole.entities[entityName].delete(r.id)));
-                deleted += batch.length;
+                for (const r of batch) {
+                    try {
+                        await base44.asServiceRole.entities[entityName].delete(r.id);
+                        deleted++;
+                    } catch (e) {
+                        if (String(e.message || '').includes('Rate limit')) {
+                            await sleep(1500);
+                            try { await base44.asServiceRole.entities[entityName].delete(r.id); deleted++; } catch {}
+                        }
+                    }
+                    await sleep(40);
+                }
             } while (batch.length > 0);
             return deleted;
         };
@@ -97,8 +109,14 @@ Deno.serve(async (req) => {
                 await base44.asServiceRole.entities.User.delete(u.id);
                 userDeleted++;
             } catch (e) {
-                console.error('[fullWipeIncludingUsers] failed to delete user', u.id, e.message);
+                if (String(e.message || '').includes('Rate limit')) {
+                    await sleep(1500);
+                    try { await base44.asServiceRole.entities.User.delete(u.id); userDeleted++; } catch {}
+                } else {
+                    console.error('[fullWipeIncludingUsers] failed to delete user', u.id, e.message);
+                }
             }
+            await sleep(40);
         }
 
         results.User_deleted = userDeleted;
