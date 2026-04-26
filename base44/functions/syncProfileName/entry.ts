@@ -30,20 +30,31 @@ Deno.serve(async (req) => {
         const { newName, newTitle, newIcon } = await req.json();
         if (!newName) return Response.json({ error: 'newName required' }, { status: 400 });
 
-        // 1. Update PlayerSave (deep-merge into save_data, also update top-level player_name column)
+        // 1. Update PlayerSave — create if missing (new users who haven't played yet
+        // can still set a name/title/icon on the profile page).
         const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
-        if (saves.length === 0) throw new Error('PlayerSave not found');
+        if (saves.length === 0) {
+            const seedData = { player_name: newName, updated_at: Date.now() };
+            if (newTitle !== undefined) seedData.player_title = newTitle;
+            if (newIcon !== undefined) seedData.pilot_icon = newIcon;
+            await base44.asServiceRole.entities.PlayerSave.create({
+                wallet_address: walletAddress,
+                player_name: newName,
+                save_data: seedData,
+                updated_at: Date.now(),
+            });
+        } else {
+            const save = saves[0];
+            const existingSaveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
+            const mergedData = { ...existingSaveData, player_name: newName, updated_at: Date.now() };
+            if (newTitle !== undefined) mergedData.player_title = newTitle;
+            if (newIcon !== undefined) mergedData.pilot_icon = newIcon;
 
-        const save = saves[0];
-        const existingSaveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
-        const mergedData = { ...existingSaveData, player_name: newName, updated_at: Date.now() };
-        if (newTitle !== undefined) mergedData.player_title = newTitle;
-        if (newIcon !== undefined) mergedData.pilot_icon = newIcon;
-
-        await base44.asServiceRole.entities.PlayerSave.update(save.id, {
-            player_name: newName,
-            save_data: mergedData
-        });
+            await base44.asServiceRole.entities.PlayerSave.update(save.id, {
+                player_name: newName,
+                save_data: mergedData
+            });
+        }
 
         // 2. Update related records in parallel
         const scorePatch = { player_name: newName };
