@@ -210,6 +210,13 @@ export const SaveManager = {
           syncRetries = 0; // Reset for next batch
         }
       } else {
+        // Adopt server-merged save + new timestamp so we don't keep looking "stale"
+        // on subsequent syncs (was causing infinite sync loop pre-fix).
+        if (res.data?.saveData && res.data?.updated_at) {
+          const merged = { ...res.data.saveData, updated_at: res.data.updated_at };
+          localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
+          window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
+        }
         console.log('[SaveManager] Cloud sync');
         syncRetries = 0; // Reset on success
         window.dispatchEvent(new CustomEvent('saveSyncSuccess'));

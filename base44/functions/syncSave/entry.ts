@@ -254,14 +254,18 @@ Deno.serve(async (req) => {
             merged.bounties = cloudBounties;
         }
 
+        const newTs = Date.now();
+        merged.updated_at = newTs;
         await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
             wallet_address: walletLower,
             player_name: merged.player_name || merged.pilotName || '',
             save_data: merged,
-            updated_at: Date.now()
+            updated_at: newTs
         });
 
-        return Response.json({ success: true, saveId: existing[0].id });
+        // Return merged save + new timestamp so client can adopt it and break the
+        // "stale client → cloud bumps timestamp → still stale" sync loop.
+        return Response.json({ success: true, saveId: existing[0].id, saveData: merged, updated_at: newTs });
     } catch (error) {
         console.error('[syncSave]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
