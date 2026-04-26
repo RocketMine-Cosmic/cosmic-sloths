@@ -40,16 +40,41 @@ export default function Base44AuthLinker() {
                 const wallet = omenxAuth.walletAddress.toLowerCase();
 
                 if (me?.wallet_address?.toLowerCase() !== wallet) {
-                    await base44.functions.invoke('linkWalletToUser', {
-                        walletAddress: wallet,
-                        accessToken: omenxAuth.accessToken,
-                    });
-                    console.log('[Base44AuthLinker] ✓ Wallet linked to Base44 user');
+                    // Retry up to 3 times with backoff for transient failures
+                    let lastErr = null;
+                    let linked = false;
+                    for (let attempt = 1; attempt <= 3; attempt++) {
+                        if (cancelled) return;
+                        try {
+                            const res = await base44.functions.invoke('linkWalletToUser', {
+                                walletAddress: wallet,
+                                accessToken: omenxAuth.accessToken,
+                            });
+                            if (res?.data?.error) throw new Error(res.data.error);
+                            linked = true;
+                            console.log(`[Base44AuthLinker] ✓ Wallet linked (attempt ${attempt})`);
+                            break;
+                        } catch (err) {
+                            lastErr = err;
+                            console.warn(`[Base44AuthLinker] link attempt ${attempt} failed:`, err.message);
+                            if (attempt < 3) {
+                                await new Promise(r => setTimeout(r, attempt * 1000)); // 1s, 2s backoff
+                            }
+                        }
+                    }
+                    if (!linked) {
+                        // Persistent failure — surface so UI can show a warning
+                        window.dispatchEvent(new CustomEvent('walletLinkFailed', {
+                            detail: { wallet, error: lastErr?.message || 'unknown' }
+                        }));
+                        console.error('[Base44AuthLinker] FAILED after 3 attempts. Cloud saves disabled until linked.');
+                        return; // don't set linkedWalletRef — allow retry on next mount
+                    }
                 }
 
                 linkedWalletRef.current = wallet;
             } catch (e) {
-                console.warn('[Base44AuthLinker] failed:', e.message);
+                console.warn('[Base44AuthLinker] unexpected error:', e.message);
             }
         })();
 
