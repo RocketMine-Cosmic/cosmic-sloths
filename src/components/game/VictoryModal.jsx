@@ -52,24 +52,32 @@ export default function VictoryModal({ stats }) {
                     )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-                    <button
-                        onClick={() => navigate('/', { state: { slide: 1 } })}
-                        className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
-                    >
-                        Return to Lounge
-                    </button>
-                    <button
-                        onClick={() => {
-                            const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
-                            const nextArena = currentIndex >= 0 && currentIndex < ARENAS.length - 1 ? ARENAS[currentIndex + 1] : ARENAS[currentIndex];
-                            navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true });
-                        }}
-                        className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
-                    >
-                        Try Next Sector
-                    </button>
-                </div>
+                {/* Wait until the server has saved this run before letting the player start a new one — otherwise the in-flight save could clobber the new run's progress. */}
+                {!stats.score ? (
+                    <div className="text-center text-xs md:text-sm text-slate-400 italic flex items-center justify-center gap-2">
+                        <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin inline-block" />
+                        Saving run progress…
+                    </div>
+                ) : (
+                    <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+                        <button
+                            onClick={() => navigate('/', { state: { slide: 1 } })}
+                            className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                        >
+                            Return to Lounge
+                        </button>
+                        <button
+                            onClick={() => {
+                                const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
+                                const nextArena = currentIndex >= 0 && currentIndex < ARENAS.length - 1 ? ARENAS[currentIndex + 1] : ARENAS[currentIndex];
+                                navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true });
+                            }}
+                            className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                        >
+                            Try Next Sector
+                        </button>
+                    </div>
+                )}
             </motion.div>
         </div>
     );
