@@ -33,6 +33,15 @@ export const SaveManager = {
           SaveManager.syncToBackendImmediate();
         }
       });
+
+      // After Base44AuthLinker successfully links a wallet, re-run the cloud
+      // load so users who signed in AFTER app boot get their save without a
+      // page refresh.
+      window.addEventListener('walletLinked', () => {
+        console.log('[SaveManager] walletLinked event — reloading cloud save');
+        SaveManager._initialized = false;
+        SaveManager.initialize();
+      });
     }
     try {
       // Use localStorage immediately (fastest) — no async wait needed

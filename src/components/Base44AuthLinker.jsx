@@ -74,6 +74,11 @@ export default function Base44AuthLinker() {
                 }
 
                 linkedWalletRef.current = wallet;
+
+                // Tell SaveManager to (re)load cloud save now that the wallet is linked.
+                // Without this, users who sign in after app boot don't see their cloud
+                // save until they refresh the page.
+                window.dispatchEvent(new CustomEvent('walletLinked', { detail: { wallet } }));
             } catch (e) {
                 console.warn('[Base44AuthLinker] unexpected error:', e.message);
             }
