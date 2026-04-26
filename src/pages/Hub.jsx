@@ -214,13 +214,10 @@ export default function Hub({ isCarousel }) {
     // If not logged in with OmenX, show a gate (bypass in preview)
     if (!syncReady) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
     if (!save) return <div>Loading...</div>;
-    if (!omenxAuth && window.self === window.top) {
-        return <OmenXGate isCarousel={isCarousel} />;
-    }
-
     if (!syncReady) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
     return (
+      <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-1.5 pb-16 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-6xl mx-auto relative z-10">
@@ -685,5 +682,6 @@ export default function Hub({ isCarousel }) {
                 </div>
             </div>
         </div>
+      </OmenXGate>
     );
 }
