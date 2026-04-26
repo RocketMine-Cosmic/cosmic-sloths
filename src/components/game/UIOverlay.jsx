@@ -6,7 +6,7 @@ function OmenXIcon({ className }) {
 }
 
 // Endless-mode reward caps — must mirror functions/saveScore.js
-const ENDLESS_GOLD_CAP = 5000;
+const ENDLESS_GOLD_CAP = 10000;
 
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, onPause, onSquadUltimate }) {
     const formatTime = (s) => {

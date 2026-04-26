@@ -26,7 +26,7 @@ const MIN_TIME_SEC = 1;       // No instant runs
 
 // Endless mode anti-exploit caps. Long endless runs were granting up to 800k gold,
 // breaking the upgrade economy. Cap gold/kills written from endless runs server-side.
-const ENDLESS_GOLD_CAP_PER_RUN = 5000;
+const ENDLESS_GOLD_CAP_PER_RUN = 10000;
 const ENDLESS_KILLS_CAP_PER_RUN = 2000;
 
 // Arena progression — must mirror game/Constants.js ARENAS order.
