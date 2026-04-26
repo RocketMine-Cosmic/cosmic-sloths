@@ -6,7 +6,6 @@ import moment from 'moment';
 
 export default function AdminEconomy({ walletAddress }) {
     const [preset, setPreset] = useState('this_week');
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
     const PRESETS = [
         { id: 'today',      label: 'Today' },
@@ -27,14 +26,14 @@ export default function AdminEconomy({ walletAddress }) {
 
     const { data: spendLogs, isLoading: logsLoading } = useQuery({
         queryKey: ['tokenSpendLogs', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'logs', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.logs || []),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'logs' }).then(r => r.data?.logs || []),
+        enabled: !!walletAddress
     });
 
     const { data: pools, isLoading: poolsLoading } = useQuery({
         queryKey: ['adminPools', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.pools || []),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
+        enabled: !!walletAddress
     });
 
     const [start, end] = getDateRange(preset);

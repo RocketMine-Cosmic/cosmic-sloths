@@ -3,9 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { Trash2, Plus, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-function getAuthData() {
-    try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
-}
 function getAdminKey() { return sessionStorage.getItem('admin_key') || ''; }
 
 export default function AdminBlacklist() {
@@ -21,11 +18,7 @@ export default function AdminBlacklist() {
         fetchBlacklist();
     }, []);
 
-    const buildAuth = () => {
-        const auth = getAuthData();
-        const adminKey = getAdminKey();
-        return { accessToken: auth?.accessToken, adminKey };
-    };
+    const buildAuth = () => ({ adminKey: getAdminKey() });
 
     const fetchBlacklist = async () => {
         try {

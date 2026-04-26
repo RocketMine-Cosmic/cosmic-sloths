@@ -4,16 +4,13 @@ import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function AdminRetentionChart({ walletAddress }) {
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-
     const { data, isLoading } = useQuery({
         queryKey: ['adminRetention', walletAddress],
         queryFn: async () => {
             // Fetch all scores sorted by created_date to detect return visits
-            const scores = await base44.asServiceRole?.entities?.RunScore?.list('-created_date', 1000)
-                ?? (await base44.functions.invoke('getAdminDataExtended', {
-                    type: 'scores', period: 'all', walletAddress, accessToken: authData?.accessToken
-                })).data?.scores ?? [];
+            const scores = (await base44.functions.invoke('getAdminDataExtended', {
+                type: 'scores', period: 'all'
+            })).data?.scores ?? [];
 
             // Group scores by wallet, find first play date per wallet
             const firstPlay = {};
@@ -53,7 +50,7 @@ export default function AdminRetentionChart({ walletAddress }) {
 
             return { retention, total };
         },
-        enabled: !!walletAddress && !!authData?.accessToken,
+        enabled: !!walletAddress,
     });
 
     const COLORS = ['#22d3ee', '#06b6d4', '#0891b2', '#0e7490', '#155e75'];

@@ -17,18 +17,16 @@ function StatCard({ label, value, color = 'text-white', sub }) {
 }
 
 export default function AdminOverview({ walletAddress }) {
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-
     const { data: pools } = useQuery({
         queryKey: ['adminPools', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.pools || []),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
+        enabled: !!walletAddress
     });
 
     const { data: ext } = useQuery({
         queryKey: ['adminExt-overview', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'overview', walletAddress, accessToken: authData?.accessToken }).then(r => r.data || {}),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'overview' }).then(r => r.data || {}),
+        enabled: !!walletAddress
     });
 
     const weeklyData = (pools || []).filter(p => p.period_type === 'weekly')

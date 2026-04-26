@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { Trash2, AlertTriangle } from 'lucide-react';
 
 export default function AdminBulkScoreDelete({ walletAddress }) {
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const [period, setPeriod] = useState('');
     const [periodType, setPeriodType] = useState('week');
     const [confirm, setConfirm] = useState(false);

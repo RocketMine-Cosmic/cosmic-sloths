@@ -160,8 +160,6 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
     const [rank, setRank] = useState(null);
     const [resetting, setResetting] = useState(false);
 
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-
     // Load weekly rank
     useEffect(() => {
         const loadRank = async () => {
@@ -186,13 +184,7 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
         setResetting(true);
         try {
             const defaultSave = { gold: 0, relicFragments: 0, unlockedCharacters: ['neobyte', 'pandypaws', 'novabyte'], unlockedArenasByCharacter: {}, totalKills: 0, totalRuns: 0, seasonalPoints: 0, pilotName: draft.pilotName || '', hasSetProfileName: !!draft.pilotName };
-            await base44.functions.invoke('adminPatchSave', { saveId: player.id, patch: defaultSave, accessToken: authData?.accessToken });
-            await base44.entities.AdminChangesLog.create({
-                wallet_address: authData?.walletAddress || 'admin',
-                action_type: 'player_action',
-                description: `Reset save for player: ${draft.pilotName || player.wallet_address}`,
-                details: { wallet: player.wallet_address }
-            });
+            await base44.functions.invoke('adminPatchSave', { saveId: player.id, patch: defaultSave });
             setMsg('✓ Save reset');
             onSaved({ ...player, save_data: defaultSave });
         } catch (e) { setMsg(`✗ ${e.message}`); }
@@ -236,7 +228,6 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
             await base44.functions.invoke('adminPatchSave', {
                 saveId: player.id,
                 patch: draft,
-                accessToken: authData?.accessToken,
             });
             setMsg('✓ Saved successfully');
             onSaved({ ...player, save_data: draft });

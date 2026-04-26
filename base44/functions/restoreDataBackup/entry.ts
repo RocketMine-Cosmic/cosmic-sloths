@@ -1,24 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+// Auth: Base44 session + 'manage_backups' permission, OR emergency master key.
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { adminKey, accessToken, backup_id, confirm_restore } = body;
+        const { adminKey, backup_id, confirm_restore } = body;
 
-        // Auth: OAuth + manage_backups permission, OR emergency admin key
         let callerWallet = 'EMERGENCY_KEY';
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-            const sdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-            });
-            const v = await sdk.verifyOAuthUser(accessToken);
-            if (!v.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            callerWallet = v.user?.walletAddress;
-            if (!callerWallet) return Response.json({ error: 'No wallet on token' }, { status: 401 });
+            const me = await base44.auth.me();
+            if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            callerWallet = me.wallet_address?.toLowerCase();
+            if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
             const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
             if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
             const perms = records[0].permissions || [];
@@ -54,7 +49,6 @@ Deno.serve(async (req) => {
 
         console.log('[restoreDataBackup] Clearing existing data and restoring...');
 
-        // Delete all existing records from critical entities
         const [existingPlayerSaves, existingRunScores, existingSquads, existingSquadMembers, existingTokenPools, existingPayoutLogs, existingGlobalBosses] = await Promise.all([
             base44.asServiceRole.entities.PlayerSave.list('', 10000),
             base44.asServiceRole.entities.RunScore.list('', 10000),
@@ -65,7 +59,6 @@ Deno.serve(async (req) => {
             base44.asServiceRole.entities.GlobalBoss.list('', 10000),
         ]);
 
-        // Delete in parallel
         await Promise.all([
             ...existingPlayerSaves.map(e => base44.asServiceRole.entities.PlayerSave.delete(e.id)),
             ...existingRunScores.map(e => base44.asServiceRole.entities.RunScore.delete(e.id)),
@@ -78,56 +71,32 @@ Deno.serve(async (req) => {
 
         console.log('[restoreDataBackup] Restoring from snapshot...');
 
-        // Restore in parallel (strip out DB-managed fields)
         const restoreTasks = [];
+        const stripFields = (e) => {
+            const { id, created_date, updated_date, created_by, ...data } = e;
+            return data;
+        };
 
         if (snapshot_data.playerSaves?.length > 0) {
-            restoreTasks.push(...snapshot_data.playerSaves.map(e => {
-                const { id, created_date, updated_date, created_by, ...data } = e;
-                return base44.asServiceRole.entities.PlayerSave.create(data);
-            }));
+            restoreTasks.push(...snapshot_data.playerSaves.map(e => base44.asServiceRole.entities.PlayerSave.create(stripFields(e))));
         }
-
         if (snapshot_data.runScores?.length > 0) {
-            restoreTasks.push(...snapshot_data.runScores.map(e => {
-                const { id, created_date, updated_date, created_by, ...data } = e;
-                return base44.asServiceRole.entities.RunScore.create(data);
-            }));
+            restoreTasks.push(...snapshot_data.runScores.map(e => base44.asServiceRole.entities.RunScore.create(stripFields(e))));
         }
-
         if (snapshot_data.squads?.length > 0) {
-            restoreTasks.push(...snapshot_data.squads.map(e => {
-                const { id, created_date, updated_date, created_by, ...data } = e;
-                return base44.asServiceRole.entities.Squad.create(data);
-            }));
+            restoreTasks.push(...snapshot_data.squads.map(e => base44.asServiceRole.entities.Squad.create(stripFields(e))));
         }
-
         if (snapshot_data.squadMembers?.length > 0) {
-            restoreTasks.push(...snapshot_data.squadMembers.map(e => {
-                const { id, created_date, updated_date, created_by, ...data } = e;
-                return base44.asServiceRole.entities.SquadMember.create(data);
-            }));
+            restoreTasks.push(...snapshot_data.squadMembers.map(e => base44.asServiceRole.entities.SquadMember.create(stripFields(e))));
         }
-
         if (snapshot_data.tokenPools?.length > 0) {
-            restoreTasks.push(...snapshot_data.tokenPools.map(e => {
-                const { id, created_date, updated_date, created_by, ...data } = e;
-                return base44.asServiceRole.entities.TokenPool.create(data);
-            }));
+            restoreTasks.push(...snapshot_data.tokenPools.map(e => base44.asServiceRole.entities.TokenPool.create(stripFields(e))));
         }
-
         if (snapshot_data.payoutLogs?.length > 0) {
-            restoreTasks.push(...snapshot_data.payoutLogs.map(e => {
-                const { id, created_date, updated_date, created_by, ...data } = e;
-                return base44.asServiceRole.entities.PayoutLog.create(data);
-            }));
+            restoreTasks.push(...snapshot_data.payoutLogs.map(e => base44.asServiceRole.entities.PayoutLog.create(stripFields(e))));
         }
-
         if (snapshot_data.globalBosses?.length > 0) {
-            restoreTasks.push(...snapshot_data.globalBosses.map(e => {
-                const { id, created_date, updated_date, created_by, ...data } = e;
-                return base44.asServiceRole.entities.GlobalBoss.create(data);
-            }));
+            restoreTasks.push(...snapshot_data.globalBosses.map(e => base44.asServiceRole.entities.GlobalBoss.create(stripFields(e))));
         }
 
         await Promise.all(restoreTasks);

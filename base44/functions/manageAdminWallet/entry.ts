@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-// Manages staff/admin wallets. Only callers with `manage_admins` permission can use this.
+// Manages staff/admin wallets. Auth = Base44 session → me.wallet_address → AdminWallet lookup.
+// (No OmenX OAuth token — that goes stale once a user stops re-logging-in.)
 // `owner` permission is sticky — only owners can grant/remove the owner flag.
 
 const ALL_PERMISSIONS = [
@@ -10,21 +10,20 @@ const ALL_PERMISSIONS = [
     'refund_omenx', 'manage_backups', 'owner'
 ];
 
-async function verifyCaller(base44, accessToken) {
-    if (!accessToken) return { error: 'accessToken required', status: 401 };
-    const sdk = new OmenXServerSDK({
-        apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-        apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-    });
-    const verifyResult = await sdk.verifyOAuthUser(accessToken);
-    if (!verifyResult.success) return { error: 'Invalid OAuth token', status: 401 };
-    const wallet = verifyResult.user?.walletAddress;
-    if (!wallet) return { error: 'No wallet on token', status: 401 };
-
+async function verifyCaller(base44, adminKey) {
+    // Emergency master key — bypasses all checks
+    if (adminKey && adminKey === Deno.env.get('AdminDash')) {
+        return { admin: { permissions: ['owner', 'manage_admins'] }, wallet: 'EMERGENCY_KEY', isEmergency: true };
+    }
+    const me = await base44.auth.me();
+    if (!me) return { error: 'Unauthorized', status: 401 };
+    const wallet = me.wallet_address?.toLowerCase();
+    if (!wallet) return { error: 'No wallet linked to user', status: 401 };
     const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: wallet });
     if (records.length === 0) return { error: 'Forbidden — not an admin', status: 403 };
     const admin = records[0];
-    if (!(admin.permissions || []).includes('manage_admins')) {
+    const perms = admin.permissions || [];
+    if (!perms.includes('owner') && !perms.includes('manage_admins')) {
         return { error: 'Forbidden — manage_admins permission required', status: 403 };
     }
     return { admin, wallet };
@@ -47,9 +46,9 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { action, accessToken } = body;
+        const { action, adminKey } = body;
 
-        const auth = await verifyCaller(base44, accessToken);
+        const auth = await verifyCaller(base44, adminKey);
         if (auth.error) return Response.json({ error: auth.error }, { status: auth.status });
 
         const callerIsOwner = (auth.admin.permissions || []).includes('owner');
@@ -87,11 +86,9 @@ Deno.serve(async (req) => {
             const targetIsOwner = (target.permissions || []).includes('owner');
             const willBeOwner = cleanPerms.includes('owner');
 
-            // Only owners can change owner flag (add or remove)
             if ((targetIsOwner !== willBeOwner) && !callerIsOwner) {
                 return Response.json({ error: 'Only owners can change owner permission' }, { status: 403 });
             }
-            // Owners cannot demote themselves if they're the last owner
             if (targetIsOwner && !willBeOwner && target.wallet_address === auth.wallet) {
                 const allOwners = await base44.asServiceRole.entities.AdminWallet.list();
                 const ownerCount = allOwners.filter(a => (a.permissions || []).includes('owner')).length;
@@ -115,7 +112,6 @@ Deno.serve(async (req) => {
             if ((target.permissions || []).includes('owner') && !callerIsOwner) {
                 return Response.json({ error: 'Only owners can remove owners' }, { status: 403 });
             }
-            // Prevent removing the last owner
             if ((target.permissions || []).includes('owner')) {
                 const allAdmins = await base44.asServiceRole.entities.AdminWallet.list();
                 const ownerCount = allAdmins.filter(a => (a.permissions || []).includes('owner')).length;

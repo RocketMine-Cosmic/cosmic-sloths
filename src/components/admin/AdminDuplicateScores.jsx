@@ -15,7 +15,6 @@ function getCurrentWeekId() {
 }
 
 export default function AdminDuplicateScores({ walletAddress }) {
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const [period, setPeriod] = useState(getCurrentWeekId());
     const [deleting, setDeleting] = useState({});
     const [msg, setMsg] = useState('');
@@ -24,9 +23,9 @@ export default function AdminDuplicateScores({ walletAddress }) {
     const { data: scores, isLoading } = useQuery({
         queryKey: ['adminAllScores', period],
         queryFn: () => base44.functions.invoke('getAdminDataExtended', {
-            type: 'scores', period: 'all', walletAddress, accessToken: authData?.accessToken
+            type: 'scores', period: 'all'
         }).then(r => (r.data?.scores || []).filter(s => period === 'all' || s.week_id === period)),
-        enabled: !!walletAddress && !!authData?.accessToken,
+        enabled: !!walletAddress,
     });
 
     // Find duplicates — same wallet, same week, more than one score

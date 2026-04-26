@@ -1,29 +1,24 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
-
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 
+// Auth: Base44 session + 'distribute_rewards' permission, OR emergency master key.
+
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { period_id, period_type, adminKey, accessToken } = body;
+        const { period_id, period_type, adminKey } = body;
 
-        // Auth: OAuth + distribute_rewards permission, OR emergency admin key
         let callerWallet = 'EMERGENCY_KEY';
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-            const authSdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-            });
-            const v = await authSdk.verifyOAuthUser(accessToken);
-            if (!v.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            callerWallet = v.user?.walletAddress;
-            if (!callerWallet) return Response.json({ error: 'No wallet on token' }, { status: 401 });
-            const records = await db.entities.AdminWallet.filter({ wallet_address: callerWallet });
+            const me = await base44.auth.me();
+            if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            callerWallet = me.wallet_address?.toLowerCase();
+            if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
+            const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
             if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
             const perms = records[0].permissions || [];
             if (!perms.includes('distribute_rewards') && !perms.includes('owner')) {
@@ -32,7 +27,7 @@ Deno.serve(async (req) => {
         }
 
         try {
-            await db.entities.AdminChangesLog.create({
+            await base44.asServiceRole.entities.AdminChangesLog.create({
                 wallet_address: callerWallet,
                 action_type: 'reward_adjustment',
                 description: `Manual ${period_type} payout for ${period_id}`,
@@ -50,7 +45,7 @@ Deno.serve(async (req) => {
 
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
-        const pools = await db.entities.TokenPool.filter({ period_id, period_type });
+        const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type });
         if (pools.length === 0) return Response.json({ error: 'No pool found for this period' }, { status: 404 });
 
         const pool = pools[0];
@@ -58,9 +53,9 @@ Deno.serve(async (req) => {
 
         let result;
         if (period_type === 'weekly') {
-            result = await distributeWeekly(sdk, pool, apiBaseUrl, apiKey);
+            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
         } else if (period_type === 'seasonal') {
-            result = await distributeSeasonal(sdk, pool, apiBaseUrl, apiKey);
+            result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
@@ -125,15 +120,14 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
-async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
+async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.25);
-    const allScores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
-    // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+    const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
 
     if (payments.length === 0) {
-        await db.entities.TokenPool.update(pool.id, { distributed: true });
+        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
@@ -149,26 +143,25 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
 
     for (const p of payments) {
-        await db.entities.PayoutLog.create({
+        await base44.asServiceRole.entities.PayoutLog.create({
             period_id: pool.period_id, period_type: 'weekly',
             wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
             amount: p.amount, rank: p.rank, tx_id: batchResult?.transactionId || batchResult?.txHash || ''
         });
     }
 
-    await db.entities.TokenPool.update(pool.id, { distributed: true });
+    await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
 
-async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
+async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.35);
-    const allScores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
-    // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+    const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
 
     if (payments.length === 0) {
-        await db.entities.TokenPool.update(pool.id, { distributed: true });
+        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
@@ -184,13 +177,13 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
 
     for (const p of payments) {
-        await db.entities.PayoutLog.create({
+        await base44.asServiceRole.entities.PayoutLog.create({
             period_id: pool.period_id, period_type: 'seasonal',
             wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
             amount: p.amount, rank: p.rank, tx_id: batchResult?.transactionId || batchResult?.txHash || ''
         });
     }
 
-    await db.entities.TokenPool.update(pool.id, { distributed: true });
+    await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
     return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }

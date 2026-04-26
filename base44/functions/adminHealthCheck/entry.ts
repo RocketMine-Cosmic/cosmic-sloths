@@ -1,20 +1,17 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
+// Auth: Base44 session → linked wallet → AdminWallet lookup.
 
 Deno.serve(async (req) => {
     try {
-        const { walletAddress, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const callerWallet = me.wallet_address?.toLowerCase();
+        if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
 
-        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await sdk.verifyOAuthUser(accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
+        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const now = new Date();
         const year = now.getUTCFullYear();
@@ -27,12 +24,12 @@ Deno.serve(async (req) => {
         const season_id = `${year}-S${seasonNum}`;
 
         const [pools, weekScores, squads, members, bosses, contributions] = await Promise.all([
-            db.entities.TokenPool.filter({ distributed: false }),
-            db.entities.RunScore.filter({ week_id }),
-            db.entities.Squad.list('-created_date', 500),
-            db.entities.SquadMember.list('-created_date', 1000),
-            db.entities.GlobalBoss.filter({ week_id }),
-            db.entities.GlobalBossContribution.filter({ week_id }),
+            base44.asServiceRole.entities.TokenPool.filter({ distributed: false }),
+            base44.asServiceRole.entities.RunScore.filter({ week_id }),
+            base44.asServiceRole.entities.Squad.list('-created_date', 500),
+            base44.asServiceRole.entities.SquadMember.list('-created_date', 1000),
+            base44.asServiceRole.entities.GlobalBoss.filter({ week_id }),
+            base44.asServiceRole.entities.GlobalBossContribution.filter({ week_id }),
         ]);
 
         const walletMap = {};
@@ -47,7 +44,7 @@ Deno.serve(async (req) => {
         const seasonalPool = pools.find(p => p.period_type === 'seasonal' && p.period_id === season_id);
         const boss = bosses.length > 0 ? bosses[0] : null;
         const bossHpPct = boss ? Math.round((boss.current_hp / boss.max_hp) * 100) : null;
-        const allSaves = await db.entities.PlayerSave.list('-updated_at', 1000);
+        const allSaves = await base44.asServiceRole.entities.PlayerSave.list('-updated_at', 1000);
 
         return Response.json({
             week_id, season_id,

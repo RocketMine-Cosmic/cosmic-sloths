@@ -1,24 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+// Auth: automated bypass, OR Base44 session + 'manage_backups' permission, OR emergency master key.
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { adminKey, accessToken, backup_notes, is_automated } = body;
+        const { adminKey, backup_notes, is_automated } = body;
 
-        // Auth: automated/emergency-key bypass, OR OAuth + manage_backups permission
         let callerWallet = is_automated ? 'AUTOMATION' : 'EMERGENCY_KEY';
         if (!is_automated && !(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-            const sdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-            });
-            const v = await sdk.verifyOAuthUser(accessToken);
-            if (!v.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            callerWallet = v.user?.walletAddress;
-            if (!callerWallet) return Response.json({ error: 'No wallet on token' }, { status: 401 });
+            const me = await base44.auth.me();
+            if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            callerWallet = me.wallet_address?.toLowerCase();
+            if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
             const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
             if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
             const perms = records[0].permissions || [];
@@ -64,7 +59,7 @@ Deno.serve(async (req) => {
 
         const backup = await base44.asServiceRole.entities.DataBackup.create({
             backup_name,
-            backup_type: 'manual',
+            backup_type: is_automated ? 'automated' : 'manual',
             snapshot_data,
             entity_counts,
             restore_available: true,

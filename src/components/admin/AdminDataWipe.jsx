@@ -19,8 +19,7 @@ export default function AdminDataWipe({ walletAddress }) {
         setLoading(true);
         setResults(null);
         try {
-            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-            const res = await base44.functions.invoke('resetAllPlayerData', { adminKey, accessToken: authData?.accessToken, confirm });
+            const res = await base44.functions.invoke('resetAllPlayerData', { adminKey, confirm });
             if (res.data?.error) throw new Error(res.data.error);
             setResults(res.data.deleted);
             toast({ title: '✅ Wipe Complete', description: 'All player data has been deleted.' });

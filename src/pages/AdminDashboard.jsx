@@ -69,9 +69,7 @@ export default function AdminDashboard() {
             setCallerPerms(isEmergencyKey ? ['__emergency__'] : null);
             return;
         }
-        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        if (!authData?.accessToken) return;
-        base44.functions.invoke('getAdminData', { type: 'adminWallets', walletAddress: adminWallet, accessToken: authData.accessToken })
+        base44.functions.invoke('getAdminData', { type: 'adminWallets' })
             .then(r => {
                 const me = (r.data?.records || []).find(a => a.wallet_address?.toLowerCase() === adminWallet.toLowerCase());
                 setCallerPerms(me?.permissions || []);
@@ -98,18 +96,15 @@ export default function AdminDashboard() {
         if (e) e.preventDefault();
         const wallet = overrideWallet || walletInput;
         try {
-            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-            if (!authData?.accessToken) {
-                setWalletError('Please login with OmenX first');
-                return;
-            }
-            const res = await base44.functions.invoke('getAdminData', { type: 'pools', walletAddress: wallet, accessToken: authData.accessToken });
-            if (res.data?.error === 'Forbidden') throw new Error('Forbidden');
+            // Server reads the caller from the Base44 session — wallet param ignored,
+            // we only check that the logged-in user is an admin.
+            const res = await base44.functions.invoke('getAdminData', { type: 'pools' });
+            if (res.data?.error) throw new Error(res.data.error);
             setAdminWallet(wallet);
             sessionStorage.setItem('admin_wallet', wallet);
             setWalletError('');
         } catch {
-            setWalletError('Wallet not authorized as admin');
+            setWalletError('Your logged-in wallet is not authorized as an admin');
         }
     };
 
@@ -129,18 +124,19 @@ export default function AdminDashboard() {
 
     if (!adminWallet) {
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        const omenxWallet = authData?.walletAddress;
+        const linkedWallet = authData?.walletAddress;
         return (
             <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans">
                 <SpaceBackground />
                 <div className="relative z-10 space-y-4 w-full max-w-sm">
-                    {omenxWallet && (
+                    {linkedWallet && (
                         <form onSubmit={handleWalletSubmit} className="bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-4">
-                            <h1 className="text-xl font-black uppercase tracking-widest text-red-400">Admin Access (OmenX)</h1>
+                            <h1 className="text-xl font-black uppercase tracking-widest text-red-400">Admin Access</h1>
+                            <p className="text-xs text-slate-400">Auth uses your linked Base44 session. Enter the wallet you logged in with.</p>
                             <button type="button"
-                                onClick={() => handleWalletSubmit(null, omenxWallet)}
+                                onClick={() => handleWalletSubmit(null, linkedWallet)}
                                 className="bg-red-900/40 hover:bg-red-900/70 border border-red-700/50 text-red-300 font-bold py-2.5 rounded-md transition-colors text-sm flex items-center justify-center gap-2">
-                                ⚡ Login as {omenxWallet.slice(0, 6)}...{omenxWallet.slice(-4)}
+                                ⚡ Continue as {linkedWallet.slice(0, 6)}...{linkedWallet.slice(-4)}
                             </button>
                             <div className="text-center text-slate-600 text-xs">— or enter a different wallet —</div>
                             <input
@@ -156,7 +152,7 @@ export default function AdminDashboard() {
                     )}
                     <form onSubmit={handleDirectAdminKey} className="bg-[#0b0416]/90 border border-yellow-900/50 rounded-xl p-8 flex flex-col gap-4">
                         <h1 className="text-xl font-black uppercase tracking-widest text-yellow-400">Emergency Master Key</h1>
-                        <p className="text-xs text-slate-400">Bypasses permission checks. Use only when OmenX login is unavailable.</p>
+                        <p className="text-xs text-slate-400">Bypasses permission checks. Use only when login is unavailable.</p>
                         <input
                             type="password"
                             placeholder="Master admin key"

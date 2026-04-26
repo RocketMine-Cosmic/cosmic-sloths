@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClient, createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
@@ -10,19 +10,15 @@ const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 Deno.serve(async (req) => {
     try {
         const body = await req.json();
-        const { adminKey, accessToken } = body;
+        const { adminKey } = body;
 
-        // Auth: OAuth + distribute_rewards permission, OR emergency admin key (also used by automation)
+        // Auth: emergency admin key (used by automation/cron), OR Base44 session + 'distribute_rewards' permission.
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-            const authSdk = new OmenXServerSDK({
-                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-            });
-            const v = await authSdk.verifyOAuthUser(accessToken);
-            if (!v.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-            const callerWallet = v.user?.walletAddress;
-            if (!callerWallet) return Response.json({ error: 'No wallet on token' }, { status: 401 });
+            const base44 = createClientFromRequest(req);
+            const me = await base44.auth.me();
+            if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            const callerWallet = me.wallet_address?.toLowerCase();
+            if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
             const records = await db.entities.AdminWallet.filter({ wallet_address: callerWallet });
             if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
             const perms = records[0].permissions || [];

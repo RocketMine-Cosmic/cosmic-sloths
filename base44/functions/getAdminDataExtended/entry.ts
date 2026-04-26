@@ -1,22 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+// Auth: Base44 session → linked wallet → AdminWallet lookup.
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const body = await req.json();
-        const { type, walletAddress, accessToken, query, period, squadId } = body;
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const callerWallet = me.wallet_address?.toLowerCase();
+        if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
+        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-        
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await sdk.verifyOAuthUser(accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-
-        if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
+        const { type, query, period, squadId } = await req.json();
 
         if (type === 'overview') {
             const [scores, saves] = await Promise.all([

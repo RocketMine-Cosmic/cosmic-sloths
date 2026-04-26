@@ -8,8 +8,6 @@ export default function AdminOrphanedData({ walletAddress }) {
     const [cleaning, setCleaning] = useState(false);
     const [msg, setMsg] = useState('');
 
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-
     const runScan = async () => {
         setLoading(true); setResults(null); setMsg('');
         try {

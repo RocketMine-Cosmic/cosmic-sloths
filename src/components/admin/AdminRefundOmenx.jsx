@@ -42,16 +42,9 @@ export default function AdminRefundOmenx({ walletAddress }) {
         setLoading(true);
         setError(null);
         const adminKey = sessionStorage.getItem('admin_key');
-        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        if (!adminKey && !authData?.accessToken) {
-            setError('Login with OmenX or enter admin key first.');
-            setLoading(false);
-            return;
-        }
         try {
             const res = await base44.functions.invoke('refundAllOmenx', {
                 adminKey,
-                accessToken: authData?.accessToken,
                 confirm_refund: true,
             });
             if (res.data?.error) {

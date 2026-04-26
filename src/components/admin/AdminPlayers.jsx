@@ -9,13 +9,11 @@ export default function AdminPlayers({ walletAddress }) {
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [selected, setSelected] = useState(null);
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-
     // Auto-load recent players on mount
     useEffect(() => {
-        if (!walletAddress || !authData?.accessToken) return;
+        if (!walletAddress) return;
         setLoading(true);
-        base44.functions.invoke('getAdminDataExtended', { type: 'playerSearch', query: '', walletAddress, accessToken: authData?.accessToken })
+        base44.functions.invoke('getAdminDataExtended', { type: 'playerSearch', query: '' })
             .then(res => setResults(res.data?.players || []))
             .catch(() => setResults([]))
             .finally(() => setLoading(false));
@@ -25,7 +23,7 @@ export default function AdminPlayers({ walletAddress }) {
         setLoading(true);
         setSelected(null);
         try {
-            const res = await base44.functions.invoke('getAdminDataExtended', { type: 'playerSearch', query: search.trim(), walletAddress, accessToken: authData?.accessToken });
+            const res = await base44.functions.invoke('getAdminDataExtended', { type: 'playerSearch', query: search.trim() });
             setResults(res.data?.players || []);
         } catch (e) {
             setResults([]);

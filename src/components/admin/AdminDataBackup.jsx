@@ -12,8 +12,6 @@ export default function AdminDataBackup({ walletAddress }) {
     const [notes, setNotes] = useState('');
 
     const adminKey = sessionStorage.getItem('admin_key') || '';
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-    const accessToken = authData?.accessToken;
 
     useEffect(() => {
         loadBackups();
@@ -36,7 +34,7 @@ export default function AdminDataBackup({ walletAddress }) {
         try {
             setCreatingBackup(true);
             const res = await base44.functions.invoke('backupData', {
-                adminKey, accessToken,
+                adminKey,
                 backup_notes: notes,
             });
             if (res.data?.success) {
@@ -59,7 +57,7 @@ export default function AdminDataBackup({ walletAddress }) {
         try {
             setRestoring(backupId);
             const res = await base44.functions.invoke('restoreDataBackup', {
-                adminKey, accessToken,
+                adminKey,
                 backup_id: backupId,
                 confirm_restore: true,
             });

@@ -7,12 +7,11 @@ import moment from 'moment';
 export default function AdminSquads({ walletAddress }) {
     const [selected, setSelected] = useState(null);
     const [search, setSearch] = useState('');
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
     const { data, isLoading } = useQuery({
         queryKey: ['adminSquads', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squads', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.squads || []),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squads' }).then(r => r.data?.squads || []),
+        enabled: !!walletAddress
     });
 
     const filtered = (data || []).filter(s =>
@@ -83,11 +82,10 @@ export default function AdminSquads({ walletAddress }) {
 }
 
 function SquadMembers({ squadId, walletAddress }) {
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const { data, isLoading } = useQuery({
         queryKey: ['adminSquadMembers', squadId, walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squadMembers', squadId, walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.members || []),
-        enabled: !!squadId && !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'squadMembers', squadId }).then(r => r.data?.members || []),
+        enabled: !!squadId && !!walletAddress
     });
 
     if (isLoading) return <div className="text-slate-500 text-xs">Loading members...</div>;

@@ -27,14 +27,13 @@ export default function AdminRewards({ walletAddress }) {
     const [previewing, setPreviewing] = useState(false);
     const [previewData, setPreviewData] = useState(null);
     const [previewError, setPreviewError] = useState('');
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const { week_id: currentWeekId, season_id: currentSeasonId } = getCurrentPeriodIds();
 
     // Load all pools for the dropdowns
     const { data: allPools = [] } = useQuery({
         queryKey: ['allPools', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.pools || []),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
+        enabled: !!walletAddress
     });
 
     // Build dropdown options: undistributed pools + current period always present
@@ -53,15 +52,15 @@ export default function AdminRewards({ walletAddress }) {
 
     const { data: payoutLogs } = useQuery({
         queryKey: ['payoutLogs', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts', walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.payouts || []),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts' }).then(r => r.data?.payouts || []),
+        enabled: !!walletAddress
     });
 
     const handlePreview = async () => {
         if (!previewPeriod) { setPreviewError('Select a period'); return; }
         setPreviewing(true); setPreviewData(null); setPreviewError('');
         try {
-            const res = await base44.functions.invoke('previewPayouts', { period_id: previewPeriod, period_type: previewType, walletAddress, accessToken: authData?.accessToken });
+            const res = await base44.functions.invoke('previewPayouts', { period_id: previewPeriod, period_type: previewType });
             setPreviewData(res.data);
         } catch (err) { setPreviewError(err.message); }
         setPreviewing(false);
@@ -71,7 +70,7 @@ export default function AdminRewards({ walletAddress }) {
         if (!distributePeriod) { setDistributeMsg('Select a period'); return; }
         setDistributing(true); setDistributeMsg('');
         try {
-            const res = await base44.functions.invoke('manuallyDistributeRewards', { period_id: distributePeriod, period_type: distributeType, walletAddress, accessToken: authData?.accessToken });
+            const res = await base44.functions.invoke('manuallyDistributeRewards', { period_id: distributePeriod, period_type: distributeType });
             setDistributeMsg(`✓ Distributed to ${res.data?.paid} players — ${res.data?.totalOmenx} OMENX total`);
             setDistributePeriod('');
             setTimeout(() => setDistributeMsg(''), 6000);

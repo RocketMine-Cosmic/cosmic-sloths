@@ -1,6 +1,6 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const db = createClient({ serviceRole: true, appId: Deno.env.get('BASE44_APP_ID') });
+// Auth: Base44 session → linked wallet → AdminWallet lookup.
 
 function getWeeklyRewardPercentage(rank) {
     if (rank === 1) return 0.10;
@@ -63,14 +63,19 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 
 Deno.serve(async (req) => {
     try {
-        const { period_id, period_type, walletAddress } = await req.json();
-        if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
-        
-        const adminWallets = await db.entities.AdminWallet.filter({ wallet_address: walletAddress });
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const callerWallet = me.wallet_address?.toLowerCase();
+        if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
+
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+        const { period_id, period_type } = await req.json();
         if (!period_id || !period_type) return Response.json({ error: 'period_id and period_type required' }, { status: 400 });
 
-        const pools = await db.entities.TokenPool.filter({ period_id, period_type });
+        const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type });
         if (pools.length === 0) return Response.json({ error: 'No pool found for that period' }, { status: 404 });
 
         const pool = pools[0];
@@ -79,14 +84,12 @@ Deno.serve(async (req) => {
 
         if (period_type === 'weekly') {
             rewardPool = Math.floor(pool.total_spent * 0.25);
-            const allScores = await db.entities.RunScore.filter({ week_id: period_id }, '-score', 300);
-            // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+            const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: period_id }, '-score', 300);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
         } else if (period_type === 'seasonal') {
             rewardPool = Math.floor(pool.total_spent * 0.35);
-            const allScores = await db.entities.RunScore.filter({ season_id: period_id }, '-score', 400);
-            // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
+            const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: period_id }, '-score', 400);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
         } else {

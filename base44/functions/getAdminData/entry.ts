@@ -1,41 +1,34 @@
-import { createClient } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
+// Auth: Base44 session → linked wallet → AdminWallet lookup. (No OmenX OAuth — that goes stale.)
 
 Deno.serve(async (req) => {
     try {
-        const { type, walletAddress, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const wallet = me.wallet_address?.toLowerCase();
+        if (!wallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
 
-        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await sdk.verifyOAuthUser(accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Forbidden' }, { status: 403 });
-
-        const verifiedWallet = verifyResult.user?.walletAddress;
-        if (!verifiedWallet) return Response.json({ error: 'Forbidden' }, { status: 403 });
-
-        const adminWallets = await db.entities.AdminWallet.filter({ wallet_address: verifiedWallet });
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: wallet });
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
+        const { type } = await req.json();
+
         if (type === 'pools') {
-            const pools = await db.entities.TokenPool.list('-created_date', 100);
+            const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);
             return Response.json({ pools });
         }
         if (type === 'logs') {
-            const logs = await db.entities.TokenSpendLog.list('-created_date', 50);
+            const logs = await base44.asServiceRole.entities.TokenSpendLog.list('-created_date', 50);
             return Response.json({ logs });
         }
         if (type === 'payouts') {
-            const payouts = await db.entities.PayoutLog.list('-created_date', 200);
+            const payouts = await base44.asServiceRole.entities.PayoutLog.list('-created_date', 200);
             return Response.json({ payouts });
         }
         if (type === 'adminWallets') {
-            const records = await db.entities.AdminWallet.list('-created_date', 200);
+            const records = await base44.asServiceRole.entities.AdminWallet.list('-created_date', 200);
             return Response.json({ records });
         }
 

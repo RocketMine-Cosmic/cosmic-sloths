@@ -18,8 +18,6 @@ const ALL_PERMISSIONS = [
     { id: 'owner',              label: '👑 Owner',                 desc: 'Full access. Bypasses all checks. Only owners can grant.' },
 ];
 
-function getAuthData() { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } }
-
 export default function AdminManagers({ walletAddress }) {
     const [newWallet, setNewWallet] = useState('');
     const [newName, setNewName] = useState('');
@@ -29,11 +27,9 @@ export default function AdminManagers({ walletAddress }) {
     const [msg, setMsg] = useState('');
     const qc = useQueryClient();
 
-    const accessToken = getAuthData()?.accessToken;
-
     const { data: admins, isLoading } = useQuery({
         queryKey: ['adminWallets', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'adminWallets', walletAddress, accessToken })
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'adminWallets' })
             .then(r => r.data.records || []),
     });
 
@@ -53,7 +49,6 @@ export default function AdminManagers({ walletAddress }) {
                 admin_name: newName.trim() || 'Unnamed',
                 permissions: selectedPerms,
                 notes: newNotes.trim(),
-                accessToken,
             });
             if (res.data?.success) {
                 qc.invalidateQueries({ queryKey: ['adminWallets'] });
@@ -77,7 +72,6 @@ export default function AdminManagers({ walletAddress }) {
             const res = await base44.functions.invoke('manageAdminWallet', {
                 action: 'delete',
                 admin_id: admin.id,
-                accessToken,
             });
             if (res.data?.success) {
                 qc.invalidateQueries({ queryKey: ['adminWallets'] });
@@ -94,7 +88,6 @@ export default function AdminManagers({ walletAddress }) {
                 action: 'updatePerms',
                 admin_id: admin.id,
                 permissions: perms,
-                accessToken,
             });
             if (res.data?.success) {
                 qc.invalidateQueries({ queryKey: ['adminWallets'] });

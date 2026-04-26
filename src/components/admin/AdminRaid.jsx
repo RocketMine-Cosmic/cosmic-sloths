@@ -5,11 +5,10 @@ import { Skull } from 'lucide-react';
 import moment from 'moment';
 
 export default function AdminRaid({ walletAddress }) {
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const { data, isLoading } = useQuery({
         queryKey: ['adminRaid', walletAddress],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'raid', walletAddress, accessToken: authData?.accessToken }).then(r => r.data || {}),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'raid' }).then(r => r.data || {}),
+        enabled: !!walletAddress
     });
 
     const boss = data?.boss;

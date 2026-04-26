@@ -38,13 +38,12 @@ function StatusRow({ label, status, value, detail }) {
 }
 
 export default function AdminHealthCheck({ walletAddress }) {
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
     const { week_id, season_id } = getCurrentPeriodIds();
 
     const { data, isLoading, refetch, isFetching } = useQuery({
         queryKey: ['adminHealthCheck', walletAddress],
-        queryFn: () => base44.functions.invoke('adminHealthCheck', { walletAddress, accessToken: authData?.accessToken }).then(r => r.data || {}),
-        enabled: !!walletAddress && !!authData?.accessToken,
+        queryFn: () => base44.functions.invoke('adminHealthCheck', {}).then(r => r.data || {}),
+        enabled: !!walletAddress,
         refetchInterval: 60000,
     });
 

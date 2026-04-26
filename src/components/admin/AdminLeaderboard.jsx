@@ -6,12 +6,11 @@ import moment from 'moment';
 export default function AdminLeaderboard({ walletAddress }) {
     const [period, setPeriod] = useState('weekly');
     const [search, setSearch] = useState('');
-    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
     const { data, isLoading } = useQuery({
         queryKey: ['adminScores', walletAddress, period],
-        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'scores', period, walletAddress, accessToken: authData?.accessToken }).then(r => r.data?.scores || []),
-        enabled: !!walletAddress && !!authData?.accessToken
+        queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'scores', period }).then(r => r.data?.scores || []),
+        enabled: !!walletAddress
     });
 
     const filtered = (data || []).filter(s =>
