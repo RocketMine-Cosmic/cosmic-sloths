@@ -1,0 +1,90 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+// Server-authoritative daily login claim. Uses cloud PlayerSave as source of truth
+// so users can't claim multiple times by tampering with localStorage or switching devices.
+
+const DAILY_REWARDS = [
+    { day: 1, reward: 400,  currency: 'gold' },
+    { day: 2, reward: 800,  currency: 'gold' },
+    { day: 3, reward: 1000, currency: 'gold' },
+    { day: 4, reward: 1,    currency: 'fragment' },
+    { day: 5, reward: 2000, currency: 'gold' },
+    { day: 6, reward: 2,    currency: 'fragment' },
+    { day: 7, reward: 4000, currency: 'gold' },
+];
+
+// UTC date in YYYY-MM-DD form. Server-side date is the source of truth so users
+// can't change their device clock to claim again.
+function todayUTC() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function yesterdayUTC() {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().split('T')[0];
+}
+
+Deno.serve(async (req) => {
+    try {
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+        const wallet = me.wallet_address;
+        if (!wallet) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+
+        const walletLower = wallet.toLowerCase();
+        const today = todayUTC();
+        const yesterday = yesterdayUTC();
+
+        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+        if (records.length === 0) return Response.json({ error: 'PlayerSave not found' }, { status: 404 });
+
+        const record = records[0];
+        const saveData = typeof record.save_data === 'string' ? JSON.parse(record.save_data) : record.save_data;
+
+        const login = saveData.dailyLogin || { lastDate: '', streak: 0, claimed: false };
+
+        // Already claimed today? Reject.
+        if (login.lastDate === today && login.claimed) {
+            return Response.json({ error: 'Already claimed today', alreadyClaimed: true }, { status: 409 });
+        }
+
+        // Compute new streak: continues if yesterday, resets otherwise.
+        const newStreak = (login.lastDate === yesterday ? login.streak : 0) + 1;
+        const rewardDay = DAILY_REWARDS[(newStreak - 1) % 7];
+
+        // Apply reward to save_data
+        if (rewardDay.currency === 'gold') {
+            saveData.gold = (saveData.gold || 0) + rewardDay.reward;
+        } else if (rewardDay.currency === 'token') {
+            saveData.cosmicTokens = (saveData.cosmicTokens || 0) + rewardDay.reward;
+        } else if (rewardDay.currency === 'fragment') {
+            saveData.relicFragments = (saveData.relicFragments || 0) + rewardDay.reward;
+        }
+
+        saveData.dailyLogin = { lastDate: today, streak: newStreak, claimed: true };
+        saveData.updated_at = Date.now();
+
+        await base44.asServiceRole.entities.PlayerSave.update(record.id, {
+            save_data: saveData,
+            updated_at: Date.now()
+        });
+
+        return Response.json({
+            success: true,
+            reward: rewardDay,
+            streak: newStreak,
+            saveData: {
+                gold: saveData.gold,
+                cosmicTokens: saveData.cosmicTokens,
+                relicFragments: saveData.relicFragments,
+                dailyLogin: saveData.dailyLogin
+            }
+        });
+    } catch (error) {
+        console.error('[claimDailyLogin]', error.message);
+        return Response.json({ error: error.message }, { status: 500 });
+    }
+});

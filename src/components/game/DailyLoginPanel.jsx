@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Gift, Flame, CheckCircle, Coins, Puzzle, Hexagon } from 'lucide-react';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { useToast } from "@/components/ui/use-toast";
+import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 
 const DAILY_REWARDS = [
@@ -18,62 +19,58 @@ const DAILY_REWARDS = [
 export default function DailyLoginPanel({ save, setSave }) {
     const { toast } = useToast();
     const [claiming, setClaiming] = useState(false);
-    const today = moment().format('YYYY-MM-DD');
+    const today = moment.utc().format('YYYY-MM-DD');
 
     const login = save.dailyLogin || { lastDate: '', streak: 0, claimed: false };
     const alreadyClaimed = login.lastDate === today && login.claimed;
 
-    // Calculate current streak (reset if missed a day)
-    const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+    // Calculate current streak (reset if missed a day) — display only.
+    const yesterday = moment.utc().subtract(1, 'day').format('YYYY-MM-DD');
     const streakActive = login.lastDate === today || login.lastDate === yesterday;
     const streak = streakActive ? login.streak : 0;
-    const dayIndex = (streak % 7); // 0-6, which day in the 7-day cycle we're ON
+    const dayIndex = (streak % 7);
 
-    const handleClaim = () => {
+    const handleClaim = async () => {
         if (claiming || alreadyClaimed) return;
         setClaiming(true);
 
-        const currentSave = SaveManager.load();
-        const currentLogin = currentSave.dailyLogin || { lastDate: '', streak: 0, claimed: false };
-        const isAlreadyClaimed = currentLogin.lastDate === today && currentLogin.claimed;
-        if (isAlreadyClaimed) {
+        try {
+            const res = await base44.functions.invoke('claimDailyLogin', {});
+            const data = res.data;
+
+            if (!data?.success) {
+                if (data?.alreadyClaimed) {
+                    // Sync local save with the truth so UI reflects it immediately
+                    const s = SaveManager.load();
+                    s.dailyLogin = { ...(s.dailyLogin || {}), lastDate: today, claimed: true };
+                    SaveManager.save(s);
+                    setSave(s);
+                    toast({ title: 'Already Claimed', description: 'You can only claim once per day.' });
+                } else {
+                    toast({ title: 'Claim Failed', description: data?.error || 'Please try again.' });
+                }
+                return;
+            }
+
+            // Apply server-authoritative reward to local save
+            const s = SaveManager.load();
+            if (data.saveData.gold !== undefined) s.gold = data.saveData.gold;
+            if (data.saveData.cosmicTokens !== undefined) s.cosmicTokens = data.saveData.cosmicTokens;
+            if (data.saveData.relicFragments !== undefined) s.relicFragments = data.saveData.relicFragments;
+            s.dailyLogin = data.saveData.dailyLogin;
+            SaveManager.save(s);
+            setSave(s);
+            SoundManager.playGoldPickup();
+
+            toast({
+                title: `Day ${data.streak} Reward Claimed!`,
+                description: `+${data.reward.reward} ${data.reward.currency === 'gold' ? 'Gold' : data.reward.currency === 'token' ? 'Cosmic Tokens' : 'Relic Fragments'}`,
+            });
+        } catch (e) {
+            toast({ title: 'Claim Failed', description: e.message || 'Network error.' });
+        } finally {
             setClaiming(false);
-            toast({ title: 'Already Claimed', description: 'You can only claim once per day.' });
-            return;
         }
-
-        // Triple-check: re-verify claim state in localStorage to prevent race conditions
-        const freshSave = SaveManager.load();
-        const freshLogin = freshSave.dailyLogin || { lastDate: '', streak: 0, claimed: false };
-        if (freshLogin.lastDate === today && freshLogin.claimed) {
-            setClaiming(false);
-            toast({ title: 'Already Claimed', description: 'You can only claim once per day.' });
-            return;
-        }
-
-        const newStreak = (currentLogin.lastDate === yesterday ? currentLogin.streak : 0) + 1;
-        const rewardDay = DAILY_REWARDS[(newStreak - 1) % 7];
-
-        currentSave.dailyLogin = { lastDate: today, streak: newStreak, claimed: true };
-
-        if (rewardDay.currency === 'gold') {
-            currentSave.gold = (currentSave.gold || 0) + rewardDay.reward;
-        } else if (rewardDay.currency === 'token') {
-            currentSave.cosmicTokens = (currentSave.cosmicTokens || 0) + rewardDay.reward;
-        } else if (rewardDay.currency === 'fragment') {
-            currentSave.relicFragments = (currentSave.relicFragments || 0) + rewardDay.reward;
-        }
-
-        SaveManager.save(currentSave);
-        setSave(currentSave);
-        SoundManager.playGoldPickup();
-
-        toast({
-            title: `Day ${newStreak} Reward Claimed!`,
-            description: `+${rewardDay.reward} ${rewardDay.currency === 'gold' ? 'Gold' : rewardDay.currency === 'token' ? 'Cosmic Tokens' : 'Relic Fragments'}`,
-        });
-        
-        setClaiming(false);
     };
 
     return (
@@ -138,7 +135,7 @@ export default function DailyLoginPanel({ save, setSave }) {
                 }`}
             >
                 <Gift className="w-5 h-5" />
-                {alreadyClaimed ? 'Come Back Tomorrow!' : `Claim Day ${(dayIndex) + 1} Reward`}
+                {claiming ? 'Claiming…' : alreadyClaimed ? 'Come Back Tomorrow!' : `Claim Day ${(dayIndex) + 1} Reward`}
             </button>
         </div>
     );
