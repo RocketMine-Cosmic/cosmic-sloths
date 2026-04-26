@@ -1,5 +1,4 @@
 import React from 'react';
-import OmenXAuthButton from './OmenXAuthButton';
 import SpaceBackground from './SpaceBackground';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 
@@ -37,7 +36,6 @@ export default function OmenXGate({ children, isCarousel }) {
                 <div className="text-6xl mb-2">{icon}</div>
                 <h2 className="text-2xl md:text-3xl font-black tracking-widest uppercase text-white">{title}</h2>
                 <p className="text-slate-400 text-sm max-w-xs">{subtitle}</p>
-                <OmenXAuthButton fullWidth />
             </div>
         </div>
     );
