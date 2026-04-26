@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SaveManager } from '../../game/SaveManager';
 import { CHARACTERS, WEAPONS } from '../../game/Constants';
 import { SoundManager } from '../../game/SoundManager';
+import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star, Coins, Hexagon } from 'lucide-react';
 
 const GOLD_PER_FRAGMENT = 10000;
@@ -95,6 +96,40 @@ export default function ForgePanel({ save, setSave }) {
     const [selectedWeaponId, setSelectedWeaponId] = useState('napBeam');
     const [selectedCharIndex, setSelectedCharIndex] = useState(0);
     const [convertAmount, setConvertAmount] = useState(1);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState(null);
+
+    const applyServerSave = (data) => {
+        if (!data?.saveData) return;
+        const s = SaveManager.load();
+        s.gold = data.saveData.gold ?? s.gold;
+        s.starFragments = data.saveData.starFragments ?? s.starFragments;
+        s.forgeWeaponAugments = data.saveData.forgeWeaponAugments ?? s.forgeWeaponAugments;
+        s.forgeCharAugments = data.saveData.forgeCharAugments ?? s.forgeCharAugments;
+        s.forgeConvertedToday = data.saveData.forgeConvertedToday ?? s.forgeConvertedToday;
+        SaveManager.save(s);
+        setSave(s);
+    };
+
+    const callForge = async (action, payload) => {
+        setError(null);
+        setBusy(true);
+        try {
+            const res = await base44.functions.invoke('forgeAction', { action, payload });
+            const data = res.data;
+            if (!data?.success) {
+                setError(data?.error || 'Forge failed');
+                return false;
+            }
+            applyServerSave(data);
+            return true;
+        } catch (e) {
+            setError(e.message || 'Forge failed');
+            return false;
+        } finally {
+            setBusy(false);
+        }
+    };
 
     const fragments = save.starFragments || 0;
     const convertedToday = save.forgeConvertedToday?.date === getToday()
@@ -107,53 +142,29 @@ export default function ForgePanel({ save, setSave }) {
         DAILY_CONVERT_CAP - convertedToday
     );
 
-    const handleConvert = () => {
+    const handleConvert = async () => {
         const amount = Math.min(convertAmount, maxConvert);
-        if (amount <= 0) return;
+        if (amount <= 0 || busy) return;
         SoundManager.playUIClick();
-        const goldCost = amount * GOLD_PER_FRAGMENT;
-        const newSave = {
-            ...save,
-            gold: save.gold - goldCost,
-            starFragments: (save.starFragments || 0) + amount,
-            forgeConvertedToday: { date: getToday(), count: convertedToday + amount }
-        };
-        SaveManager.save(newSave);
-        setSave(newSave);
+        await callForge('convert', { amount });
     };
 
-    const handleForgeWeaponAugment = (augment) => {
+    const handleForgeWeaponAugment = async (augment) => {
+        if (busy) return;
         const owned = save.forgeWeaponAugments?.[selectedWeaponId] || [];
         if (owned.includes(augment.id)) return;
         if (fragments < augment.cost) return;
         SoundManager.playUIClick();
-        const newSave = {
-            ...save,
-            starFragments: fragments - augment.cost,
-            forgeWeaponAugments: {
-                ...save.forgeWeaponAugments,
-                [selectedWeaponId]: [...owned, augment.id]
-            }
-        };
-        SaveManager.save(newSave);
-        setSave(newSave);
+        await callForge('forgeWeaponAugment', { weaponId: selectedWeaponId, augmentId: augment.id });
     };
 
-    const handleForgeCharAugment = (charId, augment) => {
+    const handleForgeCharAugment = async (charId, augment) => {
+        if (busy) return;
         const owned = save.forgeCharAugments?.[charId] || [];
         if (owned.includes(augment.id)) return;
         if (fragments < augment.cost) return;
         SoundManager.playUIClick();
-        const newSave = {
-            ...save,
-            starFragments: fragments - augment.cost,
-            forgeCharAugments: {
-                ...save.forgeCharAugments,
-                [charId]: [...owned, augment.id]
-            }
-        };
-        SaveManager.save(newSave);
-        setSave(newSave);
+        await callForge('forgeCharAugment', { charId, augmentId: augment.id });
     };
 
     const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
@@ -165,6 +176,12 @@ export default function ForgePanel({ save, setSave }) {
 
     return (
         <div>
+            {error && (
+                <div className="mb-3 bg-red-900/50 border border-red-500 text-red-200 px-3 py-2 rounded-lg text-xs flex items-center justify-between">
+                    <span>❌ {error}</span>
+                    <button onClick={() => setError(null)} className="text-red-300 hover:text-white ml-2">✕</button>
+                </div>
+            )}
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl md:text-2xl font-bold text-yellow-400 flex items-center gap-2">
                     <Hammer className="w-6 h-6" /> The Forge

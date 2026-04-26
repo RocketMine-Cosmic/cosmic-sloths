@@ -86,6 +86,42 @@ function sanitiseEnemyKills(rawEnemyKills, capTotal) {
     return out;
 }
 
+// Update bounty + daily mission progress in-place. Server is source of truth (Phase 3f).
+function updateBountyProgress(s, run) {
+    const stats = {
+        kills: run.kills,
+        time: run.time,
+        level: run.level,
+        gold: run.gold,
+    };
+
+    const apply = (b) => {
+        if (!b || b.claimed) return;
+        if (b.type === 'kills') {
+            b.progress = Number(b.progress || 0) + stats.kills;
+        } else if (b.type === 'survive') {
+            if (stats.time > Number(b.progress || 0)) b.progress = stats.time;
+        } else if (b.type === 'gold') {
+            if (stats.gold > Number(b.progress || 0)) b.progress = stats.gold;
+        } else if (b.type === 'level') {
+            if (stats.level > Number(b.progress || 0)) b.progress = stats.level;
+        } else if (b.type === 'play') {
+            b.progress = Number(b.progress || 0) + 1;
+        }
+    };
+
+    if (s.bounties) {
+        if (Array.isArray(s.bounties.active)) {
+            s.bounties.active = s.bounties.active.map(b => { const c = { ...b }; apply(c); return c; });
+        }
+        if (s.bounties.dailyMission) {
+            const c = { ...s.bounties.dailyMission };
+            apply(c);
+            s.bounties.dailyMission = c;
+        }
+    }
+}
+
 // Apply run results to PlayerSave server-side. Returns updated save_data.
 function applyRunToSave(save, run, isVictory, charId) {
     const s = { ...save };
@@ -153,6 +189,9 @@ function applyRunToSave(save, run, isVictory, charId) {
         }
         s.unlockedCharacters = unlocked;
     }
+
+    // Bounty / daily mission progress (Phase 3f)
+    updateBountyProgress(s, run);
 
     s.updated_at = Date.now();
     return { saveData: s, unlockedArena, grantedCharacter };

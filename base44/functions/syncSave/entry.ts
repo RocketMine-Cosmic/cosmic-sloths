@@ -52,6 +52,7 @@ const SERVER_OWNED_NUMBER_MAPS = [
 const SERVER_OWNED_RUN_STATS = [
     'maxTimeSurvived', 'maxLevelReached', 'totalKills', 'totalGoldEarned',
     'relicFragments', 'cosmicTokens', 'seasonalPoints',
+    'starFragments', // Phase 3e — Forge currency
 ];
 
 // SERVER-OWNED nested aggregates (cloud is truth).
@@ -220,6 +221,38 @@ Deno.serve(async (req) => {
 
         // --- 11. NG+ unlock: server-owned (granted by saveScore on final-arena victory) ---
         merged.newGamePlusUnlocked = !!existingData.newGamePlusUnlocked;
+
+        // --- 12. SERVER-OWNED Forge augments + daily convert ledger (Phase 3e) ---
+        merged.forgeWeaponAugments = existingData.forgeWeaponAugments
+            ? JSON.parse(JSON.stringify(existingData.forgeWeaponAugments)) : {};
+        merged.forgeCharAugments = existingData.forgeCharAugments
+            ? JSON.parse(JSON.stringify(existingData.forgeCharAugments)) : {};
+        merged.forgeConvertedToday = existingData.forgeConvertedToday
+            ? { ...existingData.forgeConvertedToday } : { date: '', count: 0 };
+
+        // --- 13. SERVER-OWNED bounty progress (Phase 3f) ---
+        // Cloud writes are exclusive: saveScore (progress) + claimBounty (claimed/reward).
+        // Client may rotate the bounty list locally on a new day; we accept the LIST
+        // from the client only when it's a new day reset. Otherwise cloud wins.
+        const cloudBounties = existingData.bounties || null;
+        const clientBounties = saveData.bounties || null;
+        if (cloudBounties && clientBounties && cloudBounties.lastReset === clientBounties.lastReset) {
+            // Same day — cloud is truth (server already tracked progress).
+            merged.bounties = JSON.parse(JSON.stringify(cloudBounties));
+        } else if (clientBounties) {
+            // Client rolled to a new day or has fresh bounties — accept the new structure
+            // but null-out progress/claimed so server can re-track from zero.
+            const fresh = JSON.parse(JSON.stringify(clientBounties));
+            if (Array.isArray(fresh.active)) {
+                fresh.active = fresh.active.map(b => ({ ...b, progress: 0, claimed: false }));
+            }
+            if (fresh.dailyMission) {
+                fresh.dailyMission = { ...fresh.dailyMission, progress: 0, claimed: false };
+            }
+            merged.bounties = fresh;
+        } else {
+            merged.bounties = cloudBounties;
+        }
 
         await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
             wallet_address: walletLower,

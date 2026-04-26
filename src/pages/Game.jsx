@@ -63,38 +63,6 @@ export default function Game() {
             
             const save = SaveManager.load();
 
-        const updateBounties = (currentSave, stats) => {
-            if (currentSave.bounties && currentSave.bounties.active) {
-                currentSave.bounties.active.forEach(bounty => {
-                    if (bounty.type === 'kills') {
-                        bounty.progress += stats.kills;
-                    } else if (bounty.type === 'survive') {
-                        if (stats.time > bounty.progress) {
-                            bounty.progress = stats.time;
-                        }
-                    } else if (bounty.type === 'gold') {
-                        if (stats.gold > bounty.progress) {
-                            bounty.progress = stats.gold;
-                        }
-                    } else if (bounty.type === 'level') {
-                        if (stats.level > bounty.progress) {
-                            bounty.progress = stats.level;
-                        }
-                    } else if (bounty.type === 'play') {
-                        bounty.progress += 1;
-                    }
-                });
-            }
-            if (currentSave.bounties && currentSave.bounties.dailyMission) {
-                const mission = currentSave.bounties.dailyMission;
-                if (mission.type === 'kills') mission.progress += stats.kills;
-                else if (mission.type === 'survive') { if (stats.time > mission.progress) mission.progress = stats.time; }
-                else if (mission.type === 'gold') { if (stats.gold > mission.progress) mission.progress = stats.gold; }
-                else if (mission.type === 'level') { if (stats.level > mission.progress) mission.progress = stats.level; }
-                else if (mission.type === 'play') mission.progress += 1;
-            }
-        };
-
         const saveScore = async (stats, isVictory) => {
             try {
                     const user = getOmenXUserSync();
@@ -215,16 +183,10 @@ export default function Game() {
                 // Server validates run, applies aggregates to PlayerSave, returns updated save.
                 saveScore(stats, false).then((res) => {
                     if (res?.success) {
-                        // Apply server-truthful save (gold/totals/kills/arena/etc.)
+                        // Apply server-truthful save (includes gold/kills/bounty progress/etc.)
                         if (res.saveData) {
                             SaveManager.save(res.saveData);
                         }
-                        // Apply local-only fields (bounties)
-                        const currentSave = SaveManager.load();
-                        updateBounties(currentSave, stats);
-                        SaveManager.save(currentSave);
-                        SaveManager.syncToBackendImmediate();
-                        // Update modal with server-validated score + grants
                         setGameOverStats(s => ({
                             ...s,
                             score: res.score,
@@ -252,10 +214,6 @@ export default function Game() {
                         if (res.saveData) {
                             SaveManager.save(res.saveData);
                         }
-                        const currentSave = SaveManager.load();
-                        updateBounties(currentSave, stats);
-                        SaveManager.save(currentSave);
-                        SaveManager.syncToBackendImmediate();
                         setVictoryStats(s => ({
                             ...s,
                             score: res.score,
