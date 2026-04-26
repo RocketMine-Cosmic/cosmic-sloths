@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Cloud, CloudOff, Check, Loader2 } from 'lucide-react';
 
 // Tiny status pill that reflects the SaveManager sync lifecycle.
@@ -15,9 +14,18 @@ import { Cloud, CloudOff, Check, Loader2 } from 'lucide-react';
 
 export default function SaveStatusIndicator() {
     const [status, setStatus] = useState('idle');
+    const [path, setPath] = useState(typeof window !== 'undefined' ? window.location.pathname : '');
     const hideTimerRef = useRef(null);
-    const location = useLocation();
-    const inGame = location.pathname === '/game';
+    const inGame = path === '/game';
+
+    // Track route changes without depending on Router context (this component
+    // is rendered outside <Router> in App.jsx).
+    useEffect(() => {
+        const update = () => setPath(window.location.pathname);
+        window.addEventListener('popstate', update);
+        const interval = setInterval(update, 500);
+        return () => { window.removeEventListener('popstate', update); clearInterval(interval); };
+    }, []);
 
     useEffect(() => {
         const clearHide = () => { if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; } };
