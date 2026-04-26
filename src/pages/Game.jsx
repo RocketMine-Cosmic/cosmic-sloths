@@ -18,7 +18,6 @@ import { useCurrency } from '@/lib/CurrencyContext';
 import { getOmenXUserSync } from '@/lib/omenxUser';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
-import { CharacterUnlockManager } from '../game/CharacterUnlocks';
 import { getAuthData } from '@/lib/getAuthData';
 import { SpritePreloader } from '../game/SpritePreloader';
 import { refreshBalance } from '@/lib/playerDataCache';
@@ -99,35 +98,33 @@ export default function Game() {
         const saveScore = async (stats, isVictory) => {
             try {
                     const user = getOmenXUserSync();
-                    if (!user) return;
+                    if (!user) return null;
                     const displayName = user.player_name || user.full_name;
                     const walletAddress = user.walletAddress;
                     
                     if (!displayName || displayName.includes('@') || displayName.includes('0x') || displayName.trim() === '') {
                         console.warn('[saveScore] No proper pilot name — score not recorded');
-                        return;
+                        return null;
                     }
 
-                    const arenaIndex = ARENAS.findIndex(a => a.id === (stats.arenaId || arenaId));
-                    const arenaMultiplier = isEndless ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
-                    const baseScore = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + (isVictory ? 5000 : 0);
-                    const currentSaveForScore = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
-                    const bulletHellMult = (currentSaveForScore.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
-                    const score = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
-
-                    const { week_id, season_id } = getCurrentPeriodIds();
                     const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
                     const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
                     
+                    // Server validates, recomputes score, and writes run aggregates to PlayerSave.
                     const scoreData = {
-                        user_id: walletAddress, wallet_address: walletAddress,
-                        player_name: displayName, player_title: user.data?.player_title || '',
-                        pilot_icon: pilotIcon, score, time_survived: stats.time,
-                        level: stats.level, kills: stats.kills,
+                        player_name: displayName,
+                        player_title: user.data?.player_title || '',
+                        pilot_icon: pilotIcon,
+                        time_survived: stats.time,
+                        level: stats.level,
+                        kills: stats.kills,
                         character_id: stats.characterId || characterId,
-                        arena_id, week_id, season_id,
-                        // Extra fields for server-side validation (stripped before DB write)
-                        gold: stats.gold, is_victory: !!isVictory
+                        arena_id,
+                        // Server-side validation/aggregation fields:
+                        gold: stats.gold,
+                        is_victory: !!isVictory,
+                        encountered: stats.encountered || [],
+                        enemyKills: stats.enemyKills || {},
                     };
 
                     // Read squad membership from local cache to avoid a network round-trip
@@ -139,7 +136,8 @@ export default function Game() {
                         }
                     } catch (_) {}
 
-                    await base44.functions.invoke('saveScore', { scoreData, squadStats });
+                    const res = await base44.functions.invoke('saveScore', { scoreData, squadStats });
+                    return res?.data || null;
             } catch (e) {
                 console.error('[saveScore] FAILED:', e?.message || e);
                 throw e;
@@ -209,49 +207,32 @@ export default function Game() {
                 }
             },
             onGameOver: (stats) => {
-                const currentSave = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
-                currentSave.gold += stats.gold;
-                const prevTotalKills = currentSave.totalKills || 0;
-                currentSave.totalKills = prevTotalKills + stats.kills;
-                if (!currentSave.characterKills) currentSave.characterKills = {};
-                const activeCharId = stats.characterId || characterId;
-                currentSave.characterKills[activeCharId] = (currentSave.characterKills[activeCharId] || 0) + stats.kills;
-                currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
-                currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
-                currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
-                updateBounties(currentSave, stats);
-                if (stats.encountered) {
-                    currentSave.encounteredEnemies = [...new Set([...(currentSave.encounteredEnemies || []), ...stats.encountered])];
-                }
-                if (stats.enemyKills) {
-                    if (!currentSave.enemyKills) currentSave.enemyKills = {};
-                    for (const [id, count] of Object.entries(stats.enemyKills)) {
-                        currentSave.enemyKills[id] = (currentSave.enemyKills[id] || 0) + count;
-                    }
-                }
-                // Check for character unlocks from kill milestones
-                const grantedChar = CharacterUnlockManager.checkAndGrantRandomUnlock(currentSave, currentSave.totalKills);
-                if (grantedChar) {
-                    stats.unlockedCharacter = grantedChar;
-                }
-                const currentSaveForGameOver = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
-                const goArenaIndex = ARENAS.findIndex(a => a.id === arenaId);
-                const goArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, goArenaIndex) * 0.2);
-                const goBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5;
-                const goBHMult = (currentSaveForGameOver.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
-                stats.score = Math.floor(goBase * goArenaMult * goBHMult);
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
+                // Score is recomputed server-side; show 0 until response arrives.
+                stats.score = 0;
                 setGameOverStats(stats);
-                // Save score first, then persist local save
-                saveScore(stats, false).then(() => {
-                    SaveManager.save(currentSave);
-                    SaveManager.syncToBackendImmediate();
+                // Server validates run, applies aggregates to PlayerSave, returns updated save.
+                saveScore(stats, false).then((res) => {
+                    if (res?.success) {
+                        // Apply server-truthful save (gold/totals/kills/arena/etc.)
+                        if (res.saveData) {
+                            SaveManager.save(res.saveData);
+                        }
+                        // Apply local-only fields (bounties)
+                        const currentSave = SaveManager.load();
+                        updateBounties(currentSave, stats);
+                        SaveManager.save(currentSave);
+                        SaveManager.syncToBackendImmediate();
+                        // Update modal with server-validated score + grants
+                        setGameOverStats(s => ({
+                            ...s,
+                            score: res.score,
+                            unlockedCharacter: res.grantedCharacter || null,
+                        }));
+                    }
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
-                    // Still save locally even if remote fails
-                    SaveManager.save(currentSave);
-                    SaveManager.syncToBackendImmediate();
                 });
                 
                 if (stats.worldBossDamage > 0) {
@@ -261,63 +242,28 @@ export default function Game() {
                 }
             },
             onVictory: (stats) => {
-                const currentSave = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
-                currentSave.gold += stats.gold;
-                const prevTotalKills = currentSave.totalKills || 0;
-                currentSave.totalKills = prevTotalKills + stats.kills;
-                if (!currentSave.characterKills) currentSave.characterKills = {};
-                const activeCharId = stats.characterId || characterId;
-                currentSave.characterKills[activeCharId] = (currentSave.characterKills[activeCharId] || 0) + stats.kills;
-                currentSave.maxTimeSurvived = Math.max(currentSave.maxTimeSurvived || 0, stats.time);
-                currentSave.totalGoldEarned = (currentSave.totalGoldEarned || 0) + stats.gold;
-                currentSave.maxLevelReached = Math.max(currentSave.maxLevelReached || 0, stats.level);
-                updateBounties(currentSave, stats);
-                if (stats.encountered) {
-                    currentSave.encounteredEnemies = [...new Set([...(currentSave.encounteredEnemies || []), ...stats.encountered])];
-                }
-                if (stats.enemyKills) {
-                    if (!currentSave.enemyKills) currentSave.enemyKills = {};
-                    for (const [id, count] of Object.entries(stats.enemyKills)) {
-                        currentSave.enemyKills[id] = (currentSave.enemyKills[id] || 0) + count;
-                    }
-                }
-                const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
-                if (currentIndex >= 0 && currentIndex < ARENAS.length - 1) {
-                    const nextArena = ARENAS[currentIndex + 1];
-                    if (!currentSave.unlockedArenasByCharacter[stats.characterId]) {
-                        currentSave.unlockedArenasByCharacter[stats.characterId] = ['station'];
-                    }
-                    if (!currentSave.unlockedArenasByCharacter[stats.characterId].includes(nextArena.id)) {
-                        currentSave.unlockedArenasByCharacter[stats.characterId].push(nextArena.id);
-                    }
-                } else if (currentIndex === ARENAS.length - 1) {
-                    if (!currentSave.newGamePlusUnlocked) {
-                        currentSave.newGamePlusUnlocked = true;
-                    }
-                }
-                // Check for character unlocks from kill milestones
-                const grantedChar = CharacterUnlockManager.checkAndGrantRandomUnlock(currentSave, currentSave.totalKills);
-                if (grantedChar) {
-                    stats.unlockedCharacter = grantedChar;
-                }
-                const currentSaveForVictory = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : {};
-                const vicArenaIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
-                const vicArenaMult = isEndless ? 2.0 : 1.0 + (Math.max(0, vicArenaIndex) * 0.2);
-                const vicBase = stats.kills * 10 + stats.level * 100 + stats.time * 5 + stats.gold * 5 + 5000;
-                const vicBHMult = (currentSaveForVictory.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
-                stats.score = Math.floor(vicBase * vicArenaMult * vicBHMult);
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
+                stats.score = 0;
                 setVictoryStats(stats);
-                // Save score first, then persist local save
-                saveScore(stats, true).then(() => {
-                    SaveManager.save(currentSave);
-                    SaveManager.syncToBackendImmediate();
+                // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
+                saveScore(stats, true).then((res) => {
+                    if (res?.success) {
+                        if (res.saveData) {
+                            SaveManager.save(res.saveData);
+                        }
+                        const currentSave = SaveManager.load();
+                        updateBounties(currentSave, stats);
+                        SaveManager.save(currentSave);
+                        SaveManager.syncToBackendImmediate();
+                        setVictoryStats(s => ({
+                            ...s,
+                            score: res.score,
+                            unlockedCharacter: res.grantedCharacter || null,
+                        }));
+                    }
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
-                    // Still save locally even if remote fails
-                    SaveManager.save(currentSave);
-                    SaveManager.syncToBackendImmediate();
                 });
                 
                 if (stats.worldBossDamage > 0) {

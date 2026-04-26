@@ -47,15 +47,22 @@ const SERVER_OWNED_NUMBER_MAPS = [
     'relicLevels',
 ];
 
-// High-water-mark stats — MAX-merge keeps highest seen (still mostly client-fed
-// until Phase 3c, but cap-merge prevents loss).
-const HIGH_WATER_KEYS = [
+// SERVER-OWNED run-aggregate stats (Phase 3c). Cloud is truth.
+// Written exclusively by saveScore / claimBounty / claimDailyLogin / submitBossDamage.
+const SERVER_OWNED_RUN_STATS = [
     'maxTimeSurvived', 'maxLevelReached', 'totalKills', 'totalGoldEarned',
-    'relicFragments', 'cosmicTokens', 'seasonalPoints'
+    'relicFragments', 'cosmicTokens', 'seasonalPoints',
 ];
 
-// Discovery arrays — union-merge (no cheat impact: they unlock lore only).
-const UNION_DISCOVERY_ARRAYS = [
+// SERVER-OWNED nested aggregates (cloud is truth).
+const SERVER_OWNED_NESTED_AGGREGATES = [
+    'characterKills',           // { charId: kills }
+    'enemyKills',               // { enemyId: kills }
+    'unlockedArenasByCharacter',// { charId: [arenaIds] }
+];
+
+// Discovery arrays — server-owned (cloud only).
+const SERVER_OWNED_DISCOVERY = [
     'foundCharacters',
     'encounteredEnemies',
 ];
@@ -185,11 +192,13 @@ Deno.serve(async (req) => {
             merged[key] = { ...(existingData[key] || {}) };
         }
 
-        // --- 6. High-water-mark stats: MAX-merge (still client-fed, locked in 3c) ---
-        for (const key of HIGH_WATER_KEYS) {
-            const a = Number(existingData[key] || 0);
-            const b = Number(saveData[key] || 0);
-            merged[key] = Math.max(a, b);
+        // --- 6. SERVER-OWNED run-aggregate stats: cloud only (Phase 3c) ---
+        for (const key of SERVER_OWNED_RUN_STATS) {
+            merged[key] = Number(existingData[key] || 0);
+            const clientVal = Number(saveData[key] || 0);
+            if (clientVal > merged[key]) {
+                console.warn(`[syncSave] BLOCKED ${key} bump from ${walletLower}: client=${clientVal} cloud=${merged[key]}`);
+            }
         }
 
         // --- 7. Gold: SERVER-OWNED. Cloud only. Granted via spendGold/saveScore/claimBounty/claimDailyLogin etc. ---
@@ -199,50 +208,18 @@ Deno.serve(async (req) => {
             console.warn(`[syncSave] BLOCKED gold bump from ${walletLower}: client=${clientGold} cloud=${merged.gold}`);
         }
 
-        // --- 8. Discovery arrays: union (lore only, no cheat impact) ---
-        for (const key of UNION_DISCOVERY_ARRAYS) {
-            const a = Array.isArray(existingData[key]) ? existingData[key] : [];
-            const b = Array.isArray(saveData[key]) ? saveData[key] : [];
-            merged[key] = [...new Set([...a, ...b])];
+        // --- 8. SERVER-OWNED discovery arrays: cloud only ---
+        for (const key of SERVER_OWNED_DISCOVERY) {
+            merged[key] = Array.isArray(existingData[key]) ? [...existingData[key]] : [];
         }
 
-        // --- 9. Sum-merge character / enemy kill counts (MAX, since each device
-        // accumulates the full count not deltas) ---
-        if (existingData.characterKills || saveData.characterKills) {
-            const a = existingData.characterKills || {};
-            const b = saveData.characterKills || {};
-            const out = {};
-            for (const charId of new Set([...Object.keys(a), ...Object.keys(b)])) {
-                out[charId] = Math.max(Number(a[charId] || 0), Number(b[charId] || 0));
-            }
-            merged.characterKills = out;
-        }
-        if (existingData.enemyKills || saveData.enemyKills) {
-            const a = existingData.enemyKills || {};
-            const b = saveData.enemyKills || {};
-            const out = {};
-            for (const enemyId of new Set([...Object.keys(a), ...Object.keys(b)])) {
-                out[enemyId] = Math.max(Number(a[enemyId] || 0), Number(b[enemyId] || 0));
-            }
-            merged.enemyKills = out;
+        // --- 9-10. SERVER-OWNED nested aggregates (kills, arena unlocks): cloud only ---
+        for (const key of SERVER_OWNED_NESTED_AGGREGATES) {
+            merged[key] = existingData[key] ? JSON.parse(JSON.stringify(existingData[key])) : {};
         }
 
-        // --- 10. unlockedArenasByCharacter: union per character (lore-tier unlocks
-        // gated by run completion in saveScore — locked properly in 3c). ---
-        if (existingData.unlockedArenasByCharacter || saveData.unlockedArenasByCharacter) {
-            const a = existingData.unlockedArenasByCharacter || {};
-            const b = saveData.unlockedArenasByCharacter || {};
-            const out = { ...a, ...b };
-            for (const charId of new Set([...Object.keys(a), ...Object.keys(b)])) {
-                const ac = Array.isArray(a[charId]) ? a[charId] : [];
-                const bc = Array.isArray(b[charId]) ? b[charId] : [];
-                out[charId] = [...new Set([...ac, ...bc])];
-            }
-            merged.unlockedArenasByCharacter = out;
-        }
-
-        // --- 11. NG+ unlock: once true, always true ---
-        merged.newGamePlusUnlocked = !!(existingData.newGamePlusUnlocked || saveData.newGamePlusUnlocked);
+        // --- 11. NG+ unlock: server-owned (granted by saveScore on final-arena victory) ---
+        merged.newGamePlusUnlocked = !!existingData.newGamePlusUnlocked;
 
         await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
             wallet_address: walletLower,
