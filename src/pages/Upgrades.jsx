@@ -275,33 +275,29 @@ export default function Upgrades({ isCarousel }) {
         }
     };
 
-    const handleBuyRelic = (relic) => {
-        const currentSave = SaveManager.load();
-        const unlocked = currentSave.unlockedRelics || [];
-        const relicLevels = currentSave.relicLevels || {};
-        const isOwned = unlocked.includes(relic.id);
-        const currentLevel = isOwned ? (relicLevels[relic.id] || 1) : 0;
-        
-        if (currentLevel >= 5) return;
-        
-        const costMultiplier = currentLevel === 0 ? 1 : Math.pow(2, currentLevel);
-        const cost = relic.fragmentCost * costMultiplier;
-
-        if ((currentSave.relicFragments || 0) >= cost) {
-            currentSave.relicFragments -= cost;
-            
-            if (!isOwned) {
-                currentSave.unlockedRelics = [...unlocked, relic.id];
-                relicLevels[relic.id] = 1;
-            } else {
-                relicLevels[relic.id] = currentLevel + 1;
+    const handleBuyRelic = async (relic) => {
+        setPurchaseError(null);
+        setPurchasing(true);
+        try {
+            const res = await base44.functions.invoke('craftRelic', { relicId: relic.id });
+            const data = res.data;
+            if (!data?.success) {
+                setPurchaseError(data?.error || 'Craft failed');
+                return;
             }
-            
-            currentSave.relicLevels = relicLevels;
-            SaveManager.save(currentSave);
-            setSave(currentSave);
-            SaveManager.syncToBackendImmediate();
+            if (data.saveData) {
+                const s = SaveManager.load();
+                s.relicFragments = data.saveData.relicFragments;
+                s.unlockedRelics = data.saveData.unlockedRelics;
+                s.relicLevels = data.saveData.relicLevels;
+                SaveManager.save(s);
+                setSave(s);
+            }
             SoundManager.playLevelUp();
+        } catch (e) {
+            setPurchaseError(e.message || 'Craft failed');
+        } finally {
+            setPurchasing(false);
         }
     };
 
