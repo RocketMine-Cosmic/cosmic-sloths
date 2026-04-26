@@ -125,7 +125,9 @@ export default function Game() {
                         pilot_icon: pilotIcon, score, time_survived: stats.time,
                         level: stats.level, kills: stats.kills,
                         character_id: stats.characterId || characterId,
-                        arena_id, week_id, season_id
+                        arena_id, week_id, season_id,
+                        // Extra fields for server-side validation (stripped before DB write)
+                        gold: stats.gold, is_victory: !!isVictory
                     };
 
                     // Read squad membership from local cache to avoid a network round-trip
