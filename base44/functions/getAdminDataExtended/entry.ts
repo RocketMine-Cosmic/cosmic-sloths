@@ -15,9 +15,28 @@ Deno.serve(async (req) => {
         const { type, query, period, squadId } = await req.json();
 
         if (type === 'overview') {
+            // Page through all records to get accurate totals (Base44 list defaults are capped per request)
+            const fetchAll = async (entity, sort, useFilter = false) => {
+                const all = [];
+                let page = 1;
+                const PAGE = 500;
+                while (true) {
+                    const batch = useFilter
+                        ? await entity.filter({}, sort, PAGE, page)
+                        : await entity.list(sort, PAGE, page);
+                    if (!batch || batch.length === 0) break;
+                    all.push(...batch);
+                    if (batch.length < PAGE) break;
+                    page++;
+                    if (page > 50) break;
+                }
+                return all;
+            };
             const [scores, saves] = await Promise.all([
-                base44.asServiceRole.entities.RunScore.list('-created_date', 1000),
-                base44.asServiceRole.entities.PlayerSave.list('-updated_at', 500),
+                fetchAll(base44.asServiceRole.entities.RunScore, '-created_date'),
+                // PlayerSave has restrictive read RLS — use filter({}) which the service role
+                // bypasses correctly, list() returns empty under RLS.
+                fetchAll(base44.asServiceRole.entities.PlayerSave, '-created_date', true),
             ]);
 
             const totalPlayers = saves.length;
@@ -63,14 +82,32 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'playerSearch') {
-            const saves = await base44.asServiceRole.entities.PlayerSave.list('-updated_at', 500);
             if (!query) {
-                return Response.json({ players: saves.slice(0, 30) });
+                console.error('[playerSearch] DEBUG: caller wallet =', callerWallet);
+                const filterSaves = await base44.asServiceRole.entities.PlayerSave.filter({}, '-created_date', 30);
+                console.error('[playerSearch] DEBUG: filter({}) returned', filterSaves.length);
+                const listSaves = await base44.asServiceRole.entities.PlayerSave.list('-created_date', 30);
+                console.error('[playerSearch] DEBUG: list() returned', listSaves.length);
+                const filterByWallet = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: '0xd2ebe0c69df70b97e3218fecffa8295a00dd9b21' });
+                console.error('[playerSearch] DEBUG: filter({wallet_address:...}) returned', filterByWallet.length);
+                return Response.json({ players: filterSaves.length > 0 ? filterSaves : listSaves });
             }
             const q = query.toLowerCase();
-            const matched = saves.filter(s =>
+            const all = [];
+            let page = 1;
+            const PAGE = 500;
+            while (true) {
+                const batch = await base44.asServiceRole.entities.PlayerSave.filter({}, '-created_date', PAGE, page);
+                if (!batch || batch.length === 0) break;
+                all.push(...batch);
+                if (batch.length < PAGE) break;
+                page++;
+                if (page > 50) break;
+            }
+            const matched = all.filter(s =>
                 s.wallet_address?.toLowerCase().includes(q) ||
-                s.save_data?.player_name?.toLowerCase().includes(q)
+                s.save_data?.player_name?.toLowerCase().includes(q) ||
+                s.player_name?.toLowerCase().includes(q)
             ).slice(0, 30);
             return Response.json({ players: matched });
         }
