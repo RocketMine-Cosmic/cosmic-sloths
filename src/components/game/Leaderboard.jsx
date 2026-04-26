@@ -115,34 +115,68 @@ export default function Leaderboard() {
     const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
     const fetchTimeoutRef = useRef(null);
 
+    const [lastUpdated, setLastUpdated] = useState(Date.now());
+    const pollIntervalRef = useRef(null);
+
     useEffect(() => {
         fetchScores();
     }, [view]);
 
+    // Realtime subscriptions + polling fallback (every 20s while page is visible).
+    // The polling is the safety net — realtime keeps it instant, polling guarantees
+    // freshness even if the websocket drops or the user has been idle.
     useEffect(() => {
-        // Subscribe to RunScore changes
+        const triggerRefetch = (delay = 300) => {
+            if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+            fetchTimeoutRef.current = setTimeout(() => fetchScores(), delay);
+        };
+
         const unsubscribeScores = base44.entities.RunScore.subscribe((event) => {
-            if (event.type === 'create' || event.type === 'update') {
-                if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-                fetchTimeoutRef.current = setTimeout(() => fetchScores(), 300);
-            }
+            if (event.type === 'create' || event.type === 'update') triggerRefetch();
         });
-        
-        // Subscribe to TokenPool changes
         const unsubscribePool = base44.entities.TokenPool.subscribe((event) => {
             if (event.type === 'create' || event.type === 'update') {
                 queryClientInstance.invalidateQueries({ queryKey: poolQueryKey });
-                if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-                fetchTimeoutRef.current = setTimeout(() => fetchScores(), 300);
+                triggerRefetch();
             }
         });
-        
+        const unsubscribeSquads = base44.entities.Squad.subscribe((event) => {
+            // Only re-fetch if the user is on the Squads view (otherwise irrelevant)
+            if ((event.type === 'create' || event.type === 'update') && view === 'squads') {
+                triggerRefetch();
+            }
+        });
+
+        // Polling fallback — every 20s while tab is visible
+        const startPolling = () => {
+            if (pollIntervalRef.current) return;
+            pollIntervalRef.current = setInterval(() => {
+                if (!document.hidden) fetchScores();
+            }, 20000);
+        };
+        const stopPolling = () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        };
+        startPolling();
+
+        // Refetch immediately when tab regains focus (catches any missed updates)
+        const onVisibilityChange = () => {
+            if (!document.hidden) fetchScores();
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
         return () => {
             unsubscribeScores();
             unsubscribePool();
+            unsubscribeSquads();
+            stopPolling();
+            document.removeEventListener('visibilitychange', onVisibilityChange);
             if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         };
-    }, []);
+    }, [view]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
     const { data: poolData } = useQuery({
@@ -210,6 +244,7 @@ export default function Leaderboard() {
             }
             
             setScores(uniqueScores);
+            setLastUpdated(Date.now());
         } catch (error) {
             console.error('Failed to fetch leaderboard', error);
         }
@@ -228,7 +263,16 @@ export default function Leaderboard() {
         <div className="flex flex-col h-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h2 className="text-xl md:text-2xl font-bold text-white">Hall of Fame</h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-xl md:text-2xl font-bold text-white">Hall of Fame</h2>
+                        <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full" title={`Last updated ${Math.round((Date.now() - lastUpdated) / 1000)}s ago — auto-refreshes`}>
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Live</span>
+                        </div>
+                    </div>
                     {timeLeft && <div className="text-sm text-cyan-400 mt-1 font-bold">Resets in: {timeLeft}</div>}
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
