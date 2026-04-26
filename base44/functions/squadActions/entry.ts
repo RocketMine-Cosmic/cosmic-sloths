@@ -64,7 +64,23 @@ Deno.serve(async (req) => {
             const { squadId, playerName, playerTitle } = body;
             if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
 
-            await base44.asServiceRole.entities.SquadMember.create({
+            // Validate squad exists & has space; reject duplicate joins.
+            let squad;
+            try {
+                squad = await base44.asServiceRole.entities.Squad.get(squadId);
+            } catch {
+                return Response.json({ error: 'Squad not found' }, { status: 404 });
+            }
+            if (!squad) return Response.json({ error: 'Squad not found' }, { status: 404 });
+            if ((squad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
+                return Response.json({ error: 'Squad is full' }, { status: 400 });
+            }
+            const existingMember = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
+            if (existingMember.length > 0) {
+                return Response.json({ error: 'You are already in a squad' }, { status: 400 });
+            }
+
+            const member = await base44.asServiceRole.entities.SquadMember.create({
                 squad_id: squadId,
                 wallet_address: walletAddress,
                 player_name: playerName || 'Pilot',
@@ -74,6 +90,11 @@ Deno.serve(async (req) => {
                 last_daily_payout_date: ''
             });
 
+            // Increment member count
+            const updatedSquad = await base44.asServiceRole.entities.Squad.update(squadId, {
+                member_count: (squad.member_count || 0) + 1
+            });
+
             await base44.asServiceRole.entities.SquadMessage.create({
                 squad_id: squadId,
                 wallet_address: 'system',
@@ -81,7 +102,7 @@ Deno.serve(async (req) => {
                 content: `${playerName || 'A pilot'} has joined the squad!`
             });
 
-            return Response.json({ success: true });
+            return Response.json({ success: true, member, squad: updatedSquad });
         }
 
         if (action === 'leave') {
@@ -89,6 +110,16 @@ Deno.serve(async (req) => {
             if (!memberId || !squadId) return Response.json({ error: 'memberId and squadId required' }, { status: 400 });
 
             await base44.asServiceRole.entities.SquadMember.delete(memberId);
+
+            // Decrement member count
+            try {
+                const squad = await base44.asServiceRole.entities.Squad.get(squadId);
+                if (squad) {
+                    await base44.asServiceRole.entities.Squad.update(squadId, {
+                        member_count: Math.max(0, (squad.member_count || 1) - 1)
+                    });
+                }
+            } catch {}
 
             await base44.asServiceRole.entities.SquadMessage.create({
                 squad_id: squadId,
@@ -105,6 +136,16 @@ Deno.serve(async (req) => {
             if (!targetMemberId || !squadId) return Response.json({ error: 'targetMemberId and squadId required' }, { status: 400 });
 
             await base44.asServiceRole.entities.SquadMember.delete(targetMemberId);
+
+            // Decrement member count
+            try {
+                const squad = await base44.asServiceRole.entities.Squad.get(squadId);
+                if (squad) {
+                    await base44.asServiceRole.entities.Squad.update(squadId, {
+                        member_count: Math.max(0, (squad.member_count || 1) - 1)
+                    });
+                }
+            } catch {}
 
             return Response.json({ success: true });
         }
@@ -160,7 +201,7 @@ Deno.serve(async (req) => {
             if (!memberId || !squadId) return Response.json({ error: 'memberId and squadId required' }, { status: 400 });
 
             // Load member + squad to validate
-            const member = await base44.asServiceRole.entities.SquadMember.read(memberId);
+            const member = await base44.asServiceRole.entities.SquadMember.get(memberId);
             if (!member) return Response.json({ error: 'Member not found' }, { status: 404 });
             if (member.wallet_address !== walletAddress) return Response.json({ error: 'Forbidden' }, { status: 403 });
             if (member.squad_id !== squadId) return Response.json({ error: 'Member not in squad' }, { status: 400 });
@@ -173,7 +214,7 @@ Deno.serve(async (req) => {
                 }
             }
 
-            const squad = await base44.asServiceRole.entities.Squad.read(squadId);
+            const squad = await base44.asServiceRole.entities.Squad.get(squadId);
             if (!squad) return Response.json({ error: 'Squad not found' }, { status: 404 });
 
             const isWeekly = action === 'claimWeekly';

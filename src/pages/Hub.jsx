@@ -73,23 +73,20 @@ export default function Hub({ isCarousel }) {
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
     }, [syncReady]);
 
-    // Recompute unlocked characters whenever NFTs change (kill milestones + NFT ownership).
-    // Runs after sync is ready so we don't clobber cloud data with stale local arrays.
-    React.useEffect(() => {
-        if (!syncReady) return;
-        const current = SaveManager.load();
-        const nftCharIds = (nfts || [])
+    // Compute NFT-unlocked characters for UI only (do NOT persist via SaveManager —
+    // syncSave is server-authoritative and blocks client-side unlockedCharacters writes).
+    // The cloud already grants NFT unlocks via its own logic; this just makes them
+    // visible immediately in the UI without waiting for the next cloud sync round-trip.
+    const nftUnlockedChars = React.useMemo(() => {
+        return (nfts || [])
             .map(nft => nft.metadata?.name?.toLowerCase())
             .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
-        const milestoneChars = CharacterUnlockManager.getUnlockedByMilestones(current.totalKills || 0);
-        const recomputedChars = [...new Set([...milestoneChars, ...nftCharIds])];
-        const existing = current.unlockedCharacters || [];
-        if (JSON.stringify([...recomputedChars].sort()) !== JSON.stringify([...existing].sort())) {
-            current.unlockedCharacters = recomputedChars;
-            SaveManager.save(current);
-            setSave(current);
-        }
-    }, [syncReady, nfts]);
+    }, [nfts]);
+
+    // Merge save's cloud-authoritative unlockedCharacters with NFT unlocks (UI only).
+    const effectiveUnlockedCharacters = React.useMemo(() => {
+        return [...new Set([...(save.unlockedCharacters || []), ...nftUnlockedChars])];
+    }, [save.unlockedCharacters, nftUnlockedChars]);
 
     const { user: omenxUser } = useOmenXUser();
 
@@ -282,7 +279,7 @@ export default function Hub({ isCarousel }) {
                                         >
                                             {(() => {
                                                 const char = CHARACTERS.find(c => c.id === selectedChar);
-                                                const isUnlocked = (save?.unlockedCharacters ?? []).includes(char?.id);
+                                                const isUnlocked = effectiveUnlockedCharacters.includes(char?.id);
                                                 const canAfford = save.gold >= char.cost;
                                                 const isFindable = ['glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'].includes(char.id);
                                                 
@@ -605,7 +602,7 @@ export default function Hub({ isCarousel }) {
                                 </div>
 
                                 {(() => {
-                                    const isCharUnlocked = (save?.unlockedCharacters ?? []).includes(selectedChar);
+                                    const isCharUnlocked = effectiveUnlockedCharacters.includes(selectedChar);
                                     const isArenaUnlocked = (save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).includes(selectedArena);
                                     const canLaunch = isCharUnlocked && isArenaUnlocked;
                                     
