@@ -23,7 +23,15 @@ function OmenXIcon({ className }) {
 export default function GlobalRaid({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const { omenxBalance } = useCurrency();
+    const { omenxBalance, nfts } = useCurrency();
+
+    // Merge NFT-unlocked characters with cloud unlocks (UI only — same logic as Hub).
+    const effectiveUnlockedCharacters = React.useMemo(() => {
+        const nftUnlocked = (nfts || [])
+            .map(nft => nft.metadata?.name?.toLowerCase())
+            .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
+        return [...new Set([...(save.unlockedCharacters || ['neobyte']), ...nftUnlocked])];
+    }, [save.unlockedCharacters, nfts]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('global-raid');
 
     React.useEffect(() => {
@@ -312,7 +320,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     setSelectedChar(CHARACTERS[idx >= CHARACTERS.length - 1 ? 0 : idx + 1].id);
                                 }} className="p-1 md:p-2 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700 text-white transition-colors">&gt;</button>
                             </div>
-                            {!(save.unlockedCharacters || ['neobyte']).includes(selectedChar) && (
+                            {!effectiveUnlockedCharacters.includes(selectedChar) && (
                                 <div className="text-[10px] md:text-xs text-red-400 mt-1 font-bold uppercase">Character Locked</div>
                             )}
                         </div>
@@ -332,7 +340,7 @@ export default function GlobalRaid({ isCarousel }) {
                         ) : (
                             <button
                                 onClick={handleLaunchRaid}
-                                disabled={worldBossData?.is_defeated || !(save.unlockedCharacters || ['neobyte']).includes(selectedChar)}
+                                disabled={worldBossData?.is_defeated || !effectiveUnlockedCharacters.includes(selectedChar)}
                                 className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 md:py-4 rounded-xl font-bold text-sm md:text-lg uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all flex items-center justify-center gap-2"
                             >
                                 <Crosshair className="w-4 h-4 md:w-5 md:h-5" />
