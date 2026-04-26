@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Auth: Base44 session + 'wipe_data' permission, OR emergency master key.
+// FULL NUKE: wipes all player data + deletes every Base44 User except admins.
+// Auth: requires 'wipe_data' or 'owner' permission, OR the emergency master key.
 
 Deno.serve(async (req) => {
     try {
@@ -9,10 +10,12 @@ Deno.serve(async (req) => {
         const { adminKey, confirm } = body;
 
         let callerWallet = 'EMERGENCY_KEY';
+        let callerEmail = null;
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
             const me = await base44.auth.me();
             if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
             callerWallet = me.wallet_address?.toLowerCase();
+            callerEmail = me.email;
             if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
             const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
             if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
@@ -22,15 +25,15 @@ Deno.serve(async (req) => {
             }
         }
 
-        if (confirm !== 'RESET_ALL_PLAYER_DATA') {
-            return Response.json({ error: 'Must pass confirm: "RESET_ALL_PLAYER_DATA"' }, { status: 400 });
+        if (confirm !== 'NUKE_EVERYTHING_INCLUDING_USERS') {
+            return Response.json({ error: 'Must pass confirm: "NUKE_EVERYTHING_INCLUDING_USERS"' }, { status: 400 });
         }
 
         try {
             await base44.asServiceRole.entities.AdminChangesLog.create({
                 wallet_address: callerWallet,
                 action_type: 'other',
-                description: 'FULL DATA WIPE triggered',
+                description: 'FULL NUKE triggered (data + Base44 users)',
                 details: {}
             });
         } catch {}
@@ -41,7 +44,6 @@ Deno.serve(async (req) => {
             let deleted = 0;
             let batch;
             do {
-                // Use filter({}) — list() can return 0 under restrictive RLS even with service role.
                 batch = await base44.asServiceRole.entities[entityName].filter({}, null, 50);
                 if (batch.length === 0) break;
                 await Promise.all(batch.map(r => base44.asServiceRole.entities[entityName].delete(r.id)));
@@ -50,6 +52,7 @@ Deno.serve(async (req) => {
             return deleted;
         };
 
+        // 1) Wipe all gameplay data
         results.RunScore                 = await deleteAll('RunScore');
         results.PlayerSave               = await deleteAll('PlayerSave');
         results.TokenPool                = await deleteAll('TokenPool');
@@ -62,11 +65,50 @@ Deno.serve(async (req) => {
         results.GlobalBossContribution   = await deleteAll('GlobalBossContribution');
         results.GlobalBossEvent          = await deleteAll('GlobalBossEvent');
 
-        console.log('[resetAllPlayerData] Complete:', JSON.stringify(results));
+        // 2) Build admin wallet whitelist — never delete those Base44 users.
+        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({}, null, 500);
+        const adminWalletSet = new Set((adminWallets || []).map(a => a.wallet_address?.toLowerCase()).filter(Boolean));
+
+        // 3) Fetch ALL Base44 Users once (paginated), filter out admins, then delete the rest.
+        const allUsers = [];
+        let page = 1;
+        const PAGE = 100;
+        while (true) {
+            const batch = await base44.asServiceRole.entities.User.filter({}, '-created_date', PAGE, page);
+            if (!batch || batch.length === 0) break;
+            allUsers.push(...batch);
+            if (batch.length < PAGE) break;
+            page++;
+            if (page > 100) break; // safety cap (10k users)
+        }
+
+        let userDeleted = 0;
+        let userSkipped = 0;
+        for (const u of allUsers) {
+            const w = u.wallet_address?.toLowerCase();
+            const isAdminRole = u.role === 'admin';
+            const isWhitelisted = w && adminWalletSet.has(w);
+            const isCaller = callerEmail && u.email === callerEmail;
+            if (isAdminRole || isWhitelisted || isCaller) {
+                userSkipped++;
+                continue;
+            }
+            try {
+                await base44.asServiceRole.entities.User.delete(u.id);
+                userDeleted++;
+            } catch (e) {
+                console.error('[fullWipeIncludingUsers] failed to delete user', u.id, e.message);
+            }
+        }
+
+        results.User_deleted = userDeleted;
+        results.User_skipped_admins = userSkipped;
+
+        console.log('[fullWipeIncludingUsers] Complete:', JSON.stringify(results));
         return Response.json({ success: true, deleted: results });
 
     } catch (error) {
-        console.error('[resetAllPlayerData]', error.message);
+        console.error('[fullWipeIncludingUsers]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
