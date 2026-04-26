@@ -6,6 +6,10 @@
       "type": "string",
       "unique": true
     },
+    "player_name": {
+      "type": "string",
+      "description": "Player's display name (mirrored from save_data for easy admin search)"
+    },
     "save_data": {
       "type": "object",
       "additionalProperties": true

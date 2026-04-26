@@ -211,6 +211,7 @@ Deno.serve(async (req) => {
 
             await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
                 wallet_address: walletLower,
+                player_name: merged.player_name || merged.pilotName || '',
                 save_data: merged,
                 updated_at: Date.now()
             });
@@ -218,6 +219,7 @@ Deno.serve(async (req) => {
         } else {
             const result = await base44.asServiceRole.entities.PlayerSave.create({
                 wallet_address: walletLower,
+                player_name: saveData.player_name || saveData.pilotName || '',
                 save_data: saveData,
                 updated_at: Date.now()
             });

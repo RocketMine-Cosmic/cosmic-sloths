@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const verifyCache = new Map();
@@ -17,8 +18,25 @@ async function verifyToken(sdk, accessToken) {
     return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
 }
 
+// Helper: update all records matching wallet_address with the given patch.
+// Done in parallel for speed; individual failures are logged but don't fail the whole sync.
+async function bulkUpdateByWallet(entity, walletAddress, patch, label) {
+    try {
+        const records = await entity.filter({ wallet_address: walletAddress });
+        if (records.length === 0) return;
+        const results = await Promise.allSettled(
+            records.map(r => entity.update(r.id, patch))
+        );
+        const failed = results.filter(r => r.status === 'rejected').length;
+        if (failed > 0) console.warn(`[syncProfileName] ${label}: ${failed}/${records.length} updates failed`);
+    } catch (e) {
+        console.warn(`[syncProfileName] ${label} bulk update failed:`, e.message);
+    }
+}
+
 Deno.serve(async (req) => {
     try {
+        const base44 = createClientFromRequest(req);
         const { newName, newTitle, newIcon, accessToken } = await req.json();
 
         if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
@@ -32,95 +50,38 @@ Deno.serve(async (req) => {
         if (!verifyResult.success) return Response.json({ error: 'Invalid access token' }, { status: 401 });
         const walletAddress = verifyResult.walletAddress;
 
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
+        // 1. Update PlayerSave (deep-merge into save_data, also update top-level player_name column)
+        const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
+        if (saves.length === 0) throw new Error('PlayerSave not found');
 
-        // Fetch existing PlayerSave, deep-merge, then update
-        const playerSaveUrl = `https://api.base44.com/apps/${appId}/entities/PlayerSave`;
-        const getRes = await fetch(`${playerSaveUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            }
-        });
-        if (!getRes.ok) throw new Error(`PlayerSave GET failed: ${getRes.status}`);
-        const saves = await getRes.json();
-        if (!saves || saves.length === 0) throw new Error('PlayerSave not found');
-        
         const save = saves[0];
         const existingSaveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
         const mergedData = { ...existingSaveData, player_name: newName, updated_at: Date.now() };
         if (newTitle !== undefined) mergedData.player_title = newTitle;
         if (newIcon !== undefined) mergedData.pilot_icon = newIcon;
-        
-        const saveRes = await fetch(`${playerSaveUrl}/${save.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({ save_data: mergedData })
+
+        await base44.asServiceRole.entities.PlayerSave.update(save.id, {
+            player_name: newName,
+            save_data: mergedData
         });
-        if (!saveRes.ok) throw new Error(`PlayerSave PUT failed: ${saveRes.status} ${saveRes.statusText}`);
 
-        // Update RunScore records
-        const runScoreUrl = `https://api.base44.com/apps/${appId}/entities/RunScore`;
-        const scoreUpdateData = { player_name: newName };
-        if (newTitle !== undefined) scoreUpdateData.player_title = newTitle;
-        if (newIcon !== undefined) scoreUpdateData.pilot_icon = newIcon;
+        // 2. Update related records in parallel
+        const scorePatch = { player_name: newName };
+        if (newTitle !== undefined) scorePatch.player_title = newTitle;
+        if (newIcon !== undefined) scorePatch.pilot_icon = newIcon;
 
-        const scoreRes = await fetch(`${runScoreUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify(scoreUpdateData)
-        });
-        if (!scoreRes.ok) console.warn(`[syncProfileName] RunScore PATCH returned ${scoreRes.status}`);
+        const memberPatch = { player_name: newName };
+        if (newTitle !== undefined) memberPatch.player_title = newTitle;
 
-        // Update SquadMember records
-        const squadMemberUrl = `https://api.base44.com/apps/${appId}/entities/SquadMember`;
-        const memberUpdateData = { player_name: newName };
-        if (newTitle !== undefined) memberUpdateData.player_title = newTitle;
+        const messagePatch = { player_name: newName };
+        if (newTitle !== undefined) messagePatch.player_title = newTitle;
 
-        const memberRes = await fetch(`${squadMemberUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify(memberUpdateData)
-        });
-        if (!memberRes.ok) console.warn(`[syncProfileName] SquadMember PATCH returned ${memberRes.status}`);
-
-        // Update SquadMessage records
-        const messageUrl = `https://api.base44.com/apps/${appId}/entities/SquadMessage`;
-        const msgUpdateData = { player_name: newName };
-        if (newTitle !== undefined) msgUpdateData.player_title = newTitle;
-
-        const msgRes = await fetch(`${messageUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify(msgUpdateData)
-        });
-        if (!msgRes.ok) console.warn(`[syncProfileName] SquadMessage PATCH returned ${msgRes.status}`);
-
-        // Update TokenSpendLog records
-        const logUrl = `https://api.base44.com/apps/${appId}/entities/TokenSpendLog`;
-        const logRes = await fetch(`${logUrl}?wallet_address=${encodeURIComponent(walletAddress)}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({ player_name: newName })
-        });
-        if (!logRes.ok) console.warn(`[syncProfileName] TokenSpendLog PATCH returned ${logRes.status}`);
+        await Promise.all([
+            bulkUpdateByWallet(base44.asServiceRole.entities.RunScore, walletAddress, scorePatch, 'RunScore'),
+            bulkUpdateByWallet(base44.asServiceRole.entities.SquadMember, walletAddress, memberPatch, 'SquadMember'),
+            bulkUpdateByWallet(base44.asServiceRole.entities.SquadMessage, walletAddress, messagePatch, 'SquadMessage'),
+            bulkUpdateByWallet(base44.asServiceRole.entities.TokenSpendLog, walletAddress, { player_name: newName }, 'TokenSpendLog'),
+        ]);
 
         console.log('[syncProfileName] Synced for wallet:', walletAddress);
         return Response.json({ success: true });
