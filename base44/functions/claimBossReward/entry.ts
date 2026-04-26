@@ -1,21 +1,6 @@
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (result.success) {
-        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        if (verifyCache.size > 500) {
-            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-        }
-    }
-    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
-}
+// Auth: Base44 session. Wallet: from linked User.wallet_address.
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -28,42 +13,38 @@ function getCurrentWeekId() {
 
 Deno.serve(async (req) => {
     try {
-        const { claim_level, walletAddress: clientWallet, accessToken } = await req.json();
+        const base44 = createClientFromRequest(req);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!clientWallet || !accessToken) return Response.json({ error: 'walletAddress and accessToken required' }, { status: 400 });
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
 
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
-        const walletAddress = verifyResult.walletAddress;
-
+        const { claim_level } = await req.json();
         const levelNum = parseInt(claim_level, 10);
         if (isNaN(levelNum) || levelNum < 1) return Response.json({ error: 'Invalid level' }, { status: 400 });
 
         const week_id = getCurrentWeekId();
-        const appId = Deno.env.get('BASE44_APP_ID');
-        const syncSecret = Deno.env.get('SYNC_SAVE_SECRET');
 
-        // Update GlobalBossContribution with claimed milestone
-        const contribUrl = `https://api.base44.com/apps/${appId}/entities/GlobalBossContribution`;
-        const updateRes = await fetch(`${contribUrl}?week_id=${week_id}&user_id=${encodeURIComponent(walletAddress)}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sync-Secret': syncSecret
-            },
-            body: JSON.stringify({
-                $push: { claimed_milestones: levelNum }
-            })
+        // Find this player's contribution record for the current week
+        const contribs = await base44.asServiceRole.entities.GlobalBossContribution.filter({
+            week_id,
+            user_id: walletAddress,
         });
-
-        if (!updateRes.ok) {
-            console.error('[claimBossReward] Update failed:', updateRes.status);
-            return Response.json({ error: 'Failed to claim reward' }, { status: 500 });
+        if (!contribs || contribs.length === 0) {
+            return Response.json({ error: 'No contribution found for this week' }, { status: 404 });
         }
+        const contrib = contribs[0];
+        const claimed = Array.isArray(contrib.claimed_milestones) ? contrib.claimed_milestones : [];
+
+        // Idempotent: already claimed → return success without granting again
+        if (claimed.includes(levelNum)) {
+            return Response.json({ status: 'success', alreadyClaimed: true, reward: { type: 'gold', id: String(levelNum * 250) } });
+        }
+
+        await base44.asServiceRole.entities.GlobalBossContribution.update(contrib.id, {
+            claimed_milestones: [...claimed, levelNum],
+        });
 
         const goldReward = levelNum * 250;
         console.log('[claimBossReward] Claimed level', levelNum, 'for wallet:', walletAddress);

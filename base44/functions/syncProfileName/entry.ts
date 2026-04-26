@@ -1,22 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
-
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return { success: true, walletAddress: cached.walletAddress };
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (result.success) {
-        verifyCache.set(accessToken, { walletAddress: result.user.walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-        if (verifyCache.size > 500) {
-            for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-        }
-    }
-    return result.success ? { success: true, walletAddress: result.user.walletAddress } : { success: false };
-}
+// Auth: Base44 session. Wallet: from linked User.wallet_address.
 
 // Helper: update all records matching wallet_address with the given patch.
 // Done in parallel for speed; individual failures are logged but don't fail the whole sync.
@@ -37,18 +21,14 @@ async function bulkUpdateByWallet(entity, walletAddress, patch, label) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { newName, newTitle, newIcon, accessToken } = await req.json();
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+
+        const { newName, newTitle, newIcon } = await req.json();
         if (!newName) return Response.json({ error: 'newName required' }, { status: 400 });
-
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const verifyResult = await verifyToken(sdk, accessToken);
-        if (!verifyResult.success) return Response.json({ error: 'Invalid access token' }, { status: 401 });
-        const walletAddress = verifyResult.walletAddress;
 
         // 1. Update PlayerSave (deep-merge into save_data, also update top-level player_name column)
         const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });

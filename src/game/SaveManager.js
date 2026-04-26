@@ -55,13 +55,13 @@ export const SaveManager = {
         }
       }
       
-      if (!walletAddress || !accessToken) {
+      if (!walletAddress) {
         console.log('[SaveManager] No wallet authenticated, using local storage only');
         return;
       }
-      
+
       SaveManager._walletAddress = walletAddress;
-      SaveManager._accessToken = accessToken;
+      SaveManager._accessToken = accessToken; // kept for reference; not required by backend anymore
       
       // Load cloud save on init via Base44 SDK (uses Base44 session — no token needed)
       try {
@@ -164,17 +164,16 @@ export const SaveManager = {
       return;
     }
 
-    // Always fetch fresh auth from localStorage (may have been set after initialize)
+    // Always fetch fresh wallet from localStorage (may have been set after initialize).
+    // Backend reads wallet from the Base44 session (linked at first login) — no token needed.
     let walletAddress = SaveManager._walletAddress;
-    let accessToken = SaveManager._accessToken;
 
-    if (!walletAddress || !accessToken) {
+    if (!walletAddress) {
       const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
       walletAddress = omenxAuth?.walletAddress;
-      accessToken = omenxAuth?.accessToken;
     }
 
-    if (!walletAddress || !accessToken) return;
+    if (!walletAddress) return;
 
     syncInFlight = true;
     try {
@@ -401,8 +400,8 @@ export const SaveManager = {
       const serialized = JSON.stringify(data);
       localStorage.setItem('cosmic_sloth_save', serialized);
       window.dispatchEvent(new CustomEvent('saveUpdated', { detail: data }));
-      // Only sync if user is authenticated with OmenX
-      if (SaveManager._walletAddress && SaveManager._accessToken) {
+      // Only sync once a wallet is linked (Base44 session handles auth server-side)
+      if (SaveManager._walletAddress) {
         pendingSync = true;
         if (syncTimeout) clearTimeout(syncTimeout);
         syncTimeout = setTimeout(() => {

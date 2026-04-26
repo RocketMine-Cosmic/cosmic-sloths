@@ -108,8 +108,7 @@ export default function GlobalRaid({ isCarousel }) {
         if (!worldBossData || claimingLevel !== null) return;
         setClaimingLevel(level);
         try {
-            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-            const res = await base44.functions.invoke('claimBossReward', { claim_level: level, walletAddress: authData?.walletAddress });
+            const res = await base44.functions.invoke('claimBossReward', { claim_level: level });
             if (res.data.status === 'success') {
                 const { type, id } = res.data.reward;
                 const currentSave = SaveManager.load();

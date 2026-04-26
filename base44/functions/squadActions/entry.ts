@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-const verifyCache = new Map();
-const VERIFY_CACHE_TTL = 60 * 60 * 1000;
+// Auth: Base44 session. Wallet: from linked User.wallet_address.
+// No OmenX token needed — wallet was linked at first login.
+
 const MAX_SQUAD_MEMBERS = 5;
 
 // Server-authoritative bounty reward tables (must mirror pages/Squads.jsx for UI display)
@@ -48,33 +48,17 @@ async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
     return { gold: saveData.gold, relicFragments: saveData.relicFragments || 0 };
 }
 
-async function verifyToken(sdk, accessToken) {
-    const now = Date.now();
-    const cached = verifyCache.get(accessToken);
-    if (cached && cached.expiresAt > now) return cached.walletAddress;
-    const result = await sdk.verifyOAuthUser(accessToken);
-    if (!result.success) throw new Error('Invalid OAuth token');
-    const walletAddress = result.user.walletAddress;
-    verifyCache.set(accessToken, { walletAddress, expiresAt: now + VERIFY_CACHE_TTL });
-    if (verifyCache.size > 500) {
-        for (const [k, v] of verifyCache) { if (v.expiresAt <= now) verifyCache.delete(k); }
-    }
-    return walletAddress;
-}
-
 Deno.serve(async (req) => {
     try {
-        const body = await req.json();
-        const { action, accessToken } = body;
-
-        if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
-
         const base44 = createClientFromRequest(req);
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
-        });
-        const walletAddress = await verifyToken(sdk, accessToken);
+        const me = await base44.auth.me();
+        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+        const walletAddress = me.wallet_address;
+        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+
+        const body = await req.json();
+        const { action } = body;
 
         if (action === 'join') {
             const { squadId, playerName, playerTitle } = body;
