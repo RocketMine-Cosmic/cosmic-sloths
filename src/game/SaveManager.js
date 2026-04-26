@@ -172,13 +172,14 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
-    // Mutex: if a sync is already running, mark that another is needed and bail.
-    // The in-flight one will trigger one more pass when it finishes — coalesces
-    // burst calls (e.g. rapid purchases) into at most 2 requests instead of N.
-    if (syncInFlight) {
-      queuedSyncWhileInFlight = true;
-      return;
-    }
+  // Mutex: if a sync is already running, mark that another is needed and bail.
+  // The in-flight one will trigger one more pass when it finishes — coalesces
+  // burst calls (e.g. rapid purchases) into at most 2 requests instead of N.
+  if (syncInFlight) {
+    queuedSyncWhileInFlight = true;
+    return;
+  }
+  window.dispatchEvent(new CustomEvent('saveSyncStart'));
 
     // Always fetch fresh wallet from localStorage (may have been set after initialize).
     // Backend reads wallet from the Base44 session (linked at first login) — no token needed.
@@ -211,6 +212,7 @@ export const SaveManager = {
       } else {
         console.log('[SaveManager] Cloud sync');
         syncRetries = 0; // Reset on success
+        window.dispatchEvent(new CustomEvent('saveSyncSuccess'));
       }
     } catch (e) {
       console.warn('[SaveManager] Sync failed:', e.message);

@@ -34,6 +34,7 @@ import GamepadManager from './components/GamepadManager';
 import Base44AuthLinker from './components/Base44AuthLinker';
 import SyncStatusBanner from './components/SyncStatusBanner';
 import FirstTimeSetupLoader from './components/FirstTimeSetupLoader';
+import SaveStatusIndicator from './components/SaveStatusIndicator';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
 import { fetchPlayerData } from '@/lib/playerDataCache';
@@ -154,6 +155,7 @@ function App() {
           <Base44AuthLinker />
           <SyncStatusBanner />
           <FirstTimeSetupLoader />
+          <SaveStatusIndicator />
           <Router>
           <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>}>
             <Routes>
