@@ -324,13 +324,14 @@ Deno.serve(async (req) => {
             try {
                 const squad = await base44.asServiceRole.entities.Squad.get(squadIdToUpdate);
                 const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
-                const updatedSquad = {
-                    ...squad,
+                // Only update the fields we're changing — spreading the full entity
+                // (with id/created_date/etc.) was causing the update to fail silently.
+                await base44.asServiceRole.entities.Squad.update(squadIdToUpdate, {
                     weekly_kills: (squad.weekly_kills || 0) + killsToAdd,
                     daily_kills: dailyKillsReset + killsToAdd,
                     current_day: today
-                };
-                await base44.asServiceRole.entities.Squad.update(squadIdToUpdate, updatedSquad);
+                });
+                console.log(`[saveScore] Squad ${squadIdToUpdate} +${killsToAdd} kills (weekly=${(squad.weekly_kills || 0) + killsToAdd}, daily=${dailyKillsReset + killsToAdd})`);
             } catch (err) {
                 console.error('[saveScore] Squad update failed:', err.message);
             }
