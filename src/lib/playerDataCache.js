@@ -51,11 +51,15 @@ if (persistedBalance || persistedVip || persistedNfts) {
 }
 
 function getAuthData() {
+    // Only walletAddress is required — backend functions authenticate via the
+    // Base44 session and read the wallet from the linked User record. accessToken
+    // is no longer needed (and won't exist for users who came in via Base44 login
+    // without going through the OmenX OAuth flow).
     try {
         const stored = localStorage.getItem('omenx_auth_data');
         if (!stored) return null;
         const parsed = JSON.parse(stored);
-        return (parsed?.walletAddress && parsed?.accessToken) ? parsed : null;
+        return parsed?.walletAddress ? parsed : null;
     } catch { return null; }
 }
 
