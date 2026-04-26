@@ -55,6 +55,13 @@ export default function Game() {
         window.addEventListener('orientationchange', resizeCanvas);
         resizeCanvas();
 
+        // Reset modal/state from any previous run so the new game starts clean
+        setGameOverStats(null);
+        setVictoryStats(null);
+        setLevelUpChoices(null);
+        setShowRevivePrompt(false);
+        setIsPaused(false);
+
         const initGame = async () => {
             const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
             
@@ -177,6 +184,7 @@ export default function Game() {
             onGameOver: (stats) => {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
+                stats.startingWeaponId = startingWeaponId;
                 // Score is recomputed server-side; show 0 until response arrives.
                 stats.score = 0;
                 setGameOverStats(stats);
@@ -211,6 +219,7 @@ export default function Game() {
             onVictory: (stats) => {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
+                stats.startingWeaponId = startingWeaponId;
                 stats.score = 0;
                 setVictoryStats(stats);
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.

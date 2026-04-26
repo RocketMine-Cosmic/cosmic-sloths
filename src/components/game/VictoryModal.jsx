@@ -63,7 +63,7 @@ export default function VictoryModal({ stats }) {
                         onClick={() => {
                             const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
                             const nextArena = currentIndex >= 0 && currentIndex < ARENAS.length - 1 ? ARENAS[currentIndex + 1] : ARENAS[currentIndex];
-                            navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, _retry: Date.now() }, replace: true });
+                            navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true });
                         }}
                         className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
                     >
