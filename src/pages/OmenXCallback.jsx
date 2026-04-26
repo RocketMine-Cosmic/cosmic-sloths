@@ -109,50 +109,11 @@ export default function OmenXCallback() {
                     } catch(e) { /* cross-origin, ignore */ }
                 }
                 
-                // Create initial save file and PlayerSave on first login
-                const existingProfile = localStorage.getItem('omenx_user_profile');
-                if (!existingProfile) {
-                    const initialSave = {
-                        unlockedCharacters: ['neobyte'],
-                        unlockedArenasByCharacter: { neobyte: ['station'] },
-                        unlockedCosmetics: ['default'],
-                        cosmetics: { skins: {}, trail: 'default', killEffect: 'none' },
-                        gold: 0,
-                        sessionBuffs: {},
-                        characterKills: {},
-                        foundCharacters: [],
-                        encounteredEnemies: [],
-                        enemyKills: {},
-                        relicFragments: 0,
-                        cosmicTokens: 0,
-                        lastSelectedChar: 'neobyte',
-                        lastSelectedArena: 'station',
-                        lastSelectedDifficulty: 'normal',
-                        lastSelectedWeapon: 'neoBlaster',
-                        isNGPlus: false,
-                        newGamePlusUnlocked: false,
-                        hasSetProfileName: false,
-                        bounties: { active: [], dailyMission: null },
-                        maxTimeSurvived: 0,
-                        totalGoldEarned: 0,
-                        maxLevelReached: 0,
-                        totalKills: 0
-                    };
-                    localStorage.setItem('cosmic_sloth_save', JSON.stringify(initialSave));
-                    localStorage.setItem('omenx_user_profile', JSON.stringify({ pilotName: '', playerTitle: '', pilotIcon: '🦥' }));
-                    
-                    // Create PlayerSave record via backend function
-                    try {
-                        const base44 = await import('@/api/base44Client').then(m => m.base44);
-                        await base44.functions.invoke('initializeFirstLogin', {
-                            walletAddress: authData.walletAddress,
-                            accessToken: authData.accessToken,
-                            initialSave
-                        });
-                    } catch (e) {
-                        console.error('Failed to initialize first login:', e);
-                    }
-                }
+                // NOTE: We intentionally do NOT pre-write a blank cosmic_sloth_save here.
+                // SaveManager.load() returns sensible defaults if missing, and
+                // SaveManager.initialize() handles cloud load + merge for returning users
+                // (including new devices). Writing a blank save here was wiping returning
+                // players' UI state with zeros until cloud sync caught up.
 
                 setStatus('✓ Login successful!');
                 // Always try to close — works when opened as popup
