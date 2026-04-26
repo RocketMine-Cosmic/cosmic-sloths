@@ -345,6 +345,11 @@ Deno.serve(async (req) => {
             saveData: updatedSave,
             grantedCharacter,
             unlockedArena,
+            // Tell client what was actually credited (may be < raw values for endless mode).
+            goldCredited: validation.goldForLedger,
+            killsCredited: validation.killsForLedger,
+            endlessGoldCapped: !!validation.endlessGoldCapped,
+            endlessKillsCapped: !!validation.endlessKillsCapped,
         });
     } catch (error) {
         console.error('[saveScore]', error.message);

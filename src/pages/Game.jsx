@@ -191,6 +191,11 @@ export default function Game() {
                             ...s,
                             score: res.score,
                             unlockedCharacter: res.grantedCharacter || null,
+                            // Show server-credited values (endless mode caps gold/kills)
+                            gold: res.goldCredited ?? s.gold,
+                            kills: res.killsCredited ?? s.kills,
+                            endlessGoldCapped: res.endlessGoldCapped,
+                            endlessKillsCapped: res.endlessKillsCapped,
                         }));
                     }
                 }).catch(err => {
@@ -218,6 +223,10 @@ export default function Game() {
                             ...s,
                             score: res.score,
                             unlockedCharacter: res.grantedCharacter || null,
+                            gold: res.goldCredited ?? s.gold,
+                            kills: res.killsCredited ?? s.kills,
+                            endlessGoldCapped: res.endlessGoldCapped,
+                            endlessKillsCapped: res.endlessKillsCapped,
                         }));
                     }
                 }).catch(err => {

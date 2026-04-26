@@ -39,6 +39,11 @@ export default function GameOverModal({ stats }) {
                         <span className="text-sm md:text-base text-slate-400">Gold Earned</span>
                         <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
                     </div>
+                    {(stats.endlessGoldCapped || stats.endlessKillsCapped) && (
+                        <div className="text-[10px] md:text-xs text-amber-400/80 italic text-right -mt-2">
+                            Endless mode caps applied to credited rewards
+                        </div>
+                    )}
                     {stats.worldBossDamage > 0 && (
                         <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
                             <span className="text-sm md:text-base text-slate-400">Boss Damage Dealt</span>
