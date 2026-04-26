@@ -85,7 +85,8 @@ Deno.serve(async (req) => {
             return Response.json({ error: msg }, { status: 500 });
         }
 
-        const txHash = purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.tx_id || null;
+        console.log('[purchaseSku] FULL OmenX response:', JSON.stringify(purchaseData));
+        const txHash = purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.tx_id || purchaseData?.txId || purchaseData?.hash || null;
         const status = purchaseData?.status || 'unknown';
         console.log(`[purchaseSku] OmenX response status=${status} txHash=${txHash || 'NONE'}`);
         if (status !== 'confirmed') {
