@@ -174,10 +174,26 @@ export default function Hub({ isCarousel }) {
         }
     }, [selectedChar, selectedWeapon]);
     
+    // When save data arrives from cloud (after init), sync the selection state
+    // to whatever was last used. Without this, selectedChar stays at the local
+    // default ('neobyte') even if the cloud save says otherwise — and the
+    // save-back effect below would then overwrite the cloud value.
     React.useEffect(() => {
+        if (!syncReady) return;
+        if (save.lastSelectedChar && save.lastSelectedChar !== selectedChar) setSelectedChar(save.lastSelectedChar);
+        if (save.lastSelectedArena && save.lastSelectedArena !== selectedArena) setSelectedArena(save.lastSelectedArena);
+        if (save.lastSelectedDifficulty && save.lastSelectedDifficulty !== selectedDifficulty) setSelectedDifficulty(save.lastSelectedDifficulty);
+        if (save.lastSelectedWeapon && save.lastSelectedWeapon !== selectedWeapon) setSelectedWeapon(save.lastSelectedWeapon);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [syncReady, save.lastSelectedChar, save.lastSelectedArena, save.lastSelectedDifficulty, save.lastSelectedWeapon]);
+
+    React.useEffect(() => {
+        // Don't write back to save until cloud sync has completed — otherwise
+        // we overwrite the cloud value with the local default.
+        if (!syncReady) return;
         const newSave = { ...save, lastSelectedChar: selectedChar, lastSelectedArena: selectedArena, lastSelectedDifficulty: selectedDifficulty, lastSelectedWeapon: selectedWeapon };
         SaveManager.save(newSave);
-    }, [selectedChar, selectedArena, selectedDifficulty, selectedWeapon]);
+    }, [syncReady, selectedChar, selectedArena, selectedDifficulty, selectedWeapon]);
 
     // OmenX-only mode: skip Base44 reward claims
 
