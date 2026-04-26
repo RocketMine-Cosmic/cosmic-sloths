@@ -417,11 +417,17 @@ export default function Leaderboard() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                {arena && view !== 'endless' && (
-                                                    <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5">
-                                                        📍 {arena.name}
-                                                    </div>
-                                                )}
+                                                <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5 flex items-center gap-2 flex-wrap">
+                                                    {char && (
+                                                        <span className="flex items-center gap-1" style={{ color: char.color }}>
+                                                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: char.color, boxShadow: `0 0 4px ${char.color}` }}></span>
+                                                            {char.name}
+                                                        </span>
+                                                    )}
+                                                    {arena && view !== 'endless' && (
+                                                        <span>📍 {arena.name}</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
