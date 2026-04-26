@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS } from '../game/Constants';
 import { ArrowLeft, Zap, Coins } from 'lucide-react';
@@ -9,6 +8,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
+import { subscribePlayerData } from '@/lib/playerDataCache';
 
 export default function NFTDashboard({ isCarousel }) {
     const navigate = useNavigate();
@@ -16,40 +16,15 @@ export default function NFTDashboard({ isCarousel }) {
     const [nfts, setNfts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchNFTs = async () => {
-        const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-        if (!omenxAuth?.walletAddress || !omenxAuth?.accessToken) {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
-        try {
-            const { data: playerRes } = await base44.functions.invoke('getPlayerData', {
-                walletAddress: omenxAuth.walletAddress,
-                accessToken: omenxAuth.accessToken
-            });
-
-            if (playerRes?.nfts?.length > 0) {
-                setNfts(playerRes.nfts);
-            } else if (playerRes?.error) {
-                console.error('[NFTDashboard] API error:', playerRes.error);
-            }
-        } catch (e) {
-            console.error('[NFTDashboard] Failed to fetch NFTs:', e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchNFTs();
-
-        // Re-fetch when auth arrives (e.g. after OAuth login completes)
-        const onStorage = (e) => {
-            if (e.key === 'omenx_auth_data' && e.newValue) fetchNFTs();
-        };
-        window.addEventListener('storage', onStorage);
-        return () => window.removeEventListener('storage', onStorage);
+        // Read NFTs from the unified player-data cache — no extra network call.
+        const unsub = subscribePlayerData((data) => {
+            if (data) {
+                setNfts(data.nfts || []);
+                setLoading(false);
+            }
+        });
+        return unsub;
     }, []);
 
     const getCharacterData = (charName) => {

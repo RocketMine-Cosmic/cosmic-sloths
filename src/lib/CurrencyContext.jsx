@@ -8,6 +8,7 @@ export const CurrencyProvider = ({ children }) => {
   const [save, setSave] = useState(SaveManager.load());
   const [omenxBalance, setOmenxBalance] = useState(null);
   const [vipLevel, setVipLevel] = useState(0);
+  const [nfts, setNfts] = useState([]);
   const [omenxUser, setOmenxUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -16,10 +17,8 @@ export const CurrencyProvider = ({ children }) => {
       if (data) {
         setOmenxBalance(data.balance ?? null);
         setVipLevel(data.vipLevel ?? 0);
-        // Extract user info from player data if available
-        if (data.user) {
-          setOmenxUser(data.user);
-        }
+        setNfts(data.nfts ?? []);
+        if (data.user) setOmenxUser(data.user);
       }
       setLoading(false);
     });
@@ -36,7 +35,7 @@ export const CurrencyProvider = ({ children }) => {
   // This prevents state inconsistency from competing updates
 
   return (
-    <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, omenxUser }}>
+    <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, nfts, omenxUser }}>
       {children}
     </CurrencyContext.Provider>
   );
