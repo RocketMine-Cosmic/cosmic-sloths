@@ -30,11 +30,19 @@ export default function SaveStatusIndicator() {
     useEffect(() => {
         const clearHide = () => { if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; } };
 
+        const hasWallet = () => {
+            try {
+                const a = JSON.parse(localStorage.getItem('omenx_auth_data'));
+                return !!a?.walletAddress;
+            } catch { return false; }
+        };
+
         const onPending = () => {
+            // Don't show "Saving…" for anonymous users — there's no sync happening.
+            if (!hasWallet()) return;
             clearHide();
             setStatus('pending');
-            // Auto-clear after 5s if no sync is actually triggered (e.g. user not signed in,
-            // or saveUpdated fired during load — local-only save). Prevents the pill getting stuck.
+            // Auto-clear after 5s if no sync is actually triggered (e.g. wallet not linked yet).
             hideTimerRef.current = setTimeout(() => {
                 setStatus(s => (s === 'pending' ? 'idle' : s));
             }, 5000);

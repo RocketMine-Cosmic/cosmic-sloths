@@ -40,7 +40,8 @@ export default function Base44AuthLinker() {
                 const me = await base44.auth.me();
                 const wallet = omenxAuth.walletAddress.toLowerCase();
 
-                if (me?.wallet_address?.toLowerCase() !== wallet) {
+                const alreadyLinked = me?.wallet_address?.toLowerCase() === wallet;
+                if (!alreadyLinked) {
                     // Retry up to 3 times with backoff for transient failures
                     let lastErr = null;
                     let linked = false;
@@ -76,9 +77,9 @@ export default function Base44AuthLinker() {
                 linkedWalletRef.current = wallet;
 
                 // Tell SaveManager to (re)load cloud save now that the wallet is linked.
-                // Without this, users who sign in after app boot don't see their cloud
-                // save until they refresh the page.
-                window.dispatchEvent(new CustomEvent('walletLinked', { detail: { wallet } }));
+                // Fires whether we just linked it or it was already linked — the SaveManager
+                // needs this signal to load cloud data when a user signs in after app boot.
+                window.dispatchEvent(new CustomEvent('walletLinked', { detail: { wallet, alreadyLinked } }));
             } catch (e) {
                 console.warn('[Base44AuthLinker] unexpected error:', e.message);
             }
