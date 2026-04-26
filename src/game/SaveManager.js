@@ -9,6 +9,9 @@ let pendingSync = false;
 let syncRetries = 0;
 const MAX_SYNC_RETRIES = 3;
 let cloudSyncComplete = false;
+let syncInFlight = false;          // prevents concurrent sync races
+let queuedSyncWhileInFlight = false; // if save() fires during a sync, run one more after
+let visibilityListenerAttached = false;
 
 export const SaveManager = {
   _walletAddress: null,
@@ -19,6 +22,18 @@ export const SaveManager = {
     if (SaveManager._initialized) return;
     SaveManager._initialized = true;
     console.log('[SaveManager] Initialize called');
+
+    // Global visibility-change listener — fires on tab hide, mobile background,
+    // navigation away. Browser keeps the page alive long enough for the async
+    // fetch to complete (unlike beforeunload). One listener covers all pages.
+    if (!visibilityListenerAttached && typeof document !== 'undefined') {
+      visibilityListenerAttached = true;
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && SaveManager._walletAddress) {
+          SaveManager.syncToBackendImmediate();
+        }
+      });
+    }
     try {
       // Use localStorage immediately (fastest) — no async wait needed
       const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
@@ -141,18 +156,27 @@ export const SaveManager = {
   },
 
   syncToBackend: async () => {
+    // Mutex: if a sync is already running, mark that another is needed and bail.
+    // The in-flight one will trigger one more pass when it finishes — coalesces
+    // burst calls (e.g. rapid purchases) into at most 2 requests instead of N.
+    if (syncInFlight) {
+      queuedSyncWhileInFlight = true;
+      return;
+    }
+
     // Always fetch fresh auth from localStorage (may have been set after initialize)
     let walletAddress = SaveManager._walletAddress;
     let accessToken = SaveManager._accessToken;
-    
+
     if (!walletAddress || !accessToken) {
       const omenxAuth = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
       walletAddress = omenxAuth?.walletAddress;
       accessToken = omenxAuth?.accessToken;
     }
-    
+
     if (!walletAddress || !accessToken) return;
-    
+
+    syncInFlight = true;
     try {
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
@@ -180,6 +204,14 @@ export const SaveManager = {
         console.error('[SaveManager] Sync failed after', MAX_SYNC_RETRIES, 'retries. User data may be out of sync.');
         window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'network_error' } }));
         syncRetries = 0;
+      }
+    } finally {
+      syncInFlight = false;
+      // If a save() came in while we were syncing, run one more pass so the
+      // newest state reaches the cloud. Single follow-up — won't loop.
+      if (queuedSyncWhileInFlight) {
+        queuedSyncWhileInFlight = false;
+        SaveManager.syncToBackend();
       }
     }
   },
