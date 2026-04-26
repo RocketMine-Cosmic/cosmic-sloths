@@ -29,7 +29,16 @@
       }
     },
     "read": {
-      "data.wallet_address": "{{user.data.wallet_address}}"
+      "$or": [
+        {
+          "data.wallet_address": "{{user.data.wallet_address}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "update": {
       "user_condition": {

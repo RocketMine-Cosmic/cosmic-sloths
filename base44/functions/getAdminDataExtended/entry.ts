@@ -83,14 +83,8 @@ Deno.serve(async (req) => {
 
         if (type === 'playerSearch') {
             if (!query) {
-                console.error('[playerSearch] DEBUG: caller wallet =', callerWallet);
-                const filterSaves = await base44.asServiceRole.entities.PlayerSave.filter({}, '-created_date', 30);
-                console.error('[playerSearch] DEBUG: filter({}) returned', filterSaves.length);
-                const listSaves = await base44.asServiceRole.entities.PlayerSave.list('-created_date', 30);
-                console.error('[playerSearch] DEBUG: list() returned', listSaves.length);
-                const filterByWallet = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: '0xd2ebe0c69df70b97e3218fecffa8295a00dd9b21' });
-                console.error('[playerSearch] DEBUG: filter({wallet_address:...}) returned', filterByWallet.length);
-                return Response.json({ players: filterSaves.length > 0 ? filterSaves : listSaves });
+                const saves = await base44.asServiceRole.entities.PlayerSave.list('-created_date', 30);
+                return Response.json({ players: saves });
             }
             const q = query.toLowerCase();
             const all = [];
