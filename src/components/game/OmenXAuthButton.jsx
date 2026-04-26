@@ -2,85 +2,53 @@ import React, { useState, useEffect } from 'react';
 import { omenx, getRedirectUri } from '@/lib/omenx';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { base44 } from '@/api/base44Client';
+import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
-function getAuthData() {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (!stored) return null;
-        const parsed = JSON.parse(stored);
-        return parsed?.walletAddress ? parsed : null;
-    } catch { return null; }
-}
-
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
-    const [authData, setAuthState] = useState(getAuthData());
-    const [base44Authed, setBase44Authed] = useState(false);
-    const [checkingBase44, setCheckingBase44] = useState(true);
+    // Pull from shared context — no per-button `me` call (was running on every page mount).
+    const { authData, base44Authed } = useOmenXAuth();
+    const checkingBase44 = base44Authed === null;
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
-
-    // Check Base44 session — ONCE on mount. Re-check on tab focus only.
-    useEffect(() => {
-        let cancelled = false;
-        const check = async () => {
-            try {
-                const isAuthed = await base44.auth.isAuthenticated();
-                if (!cancelled) setBase44Authed(!!isAuthed);
-            } catch {
-                if (!cancelled) setBase44Authed(false);
-            } finally {
-                if (!cancelled) setCheckingBase44(false);
-            }
-        };
-        check();
-        const onFocus = () => { if (!document.hidden) check(); };
-        document.addEventListener('visibilitychange', onFocus);
-        return () => { cancelled = true; document.removeEventListener('visibilitychange', onFocus); };
-    }, []);
 
     const applyAuthData = (data) => {
         if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         else localStorage.removeItem(STORAGE_KEY);
-        setAuthState(data);
         setLoading(false);
         if (data) {
             setSuccessMsg(`Wallet connected: ${data.username || data.walletAddress?.slice(0, 8) || 'OmenX'}`);
             setTimeout(() => setSuccessMsg(''), 5000);
         }
+        // Trigger storage event so OmenXAuthContext picks up the change in this tab.
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: STORAGE_KEY,
+            newValue: data ? JSON.stringify(data) : null,
+            storageArea: localStorage,
+        }));
         onAuthChange?.(data);
     };
 
     useEffect(() => {
-        const onStorageChange = () => {
-            const stored = getAuthData();
-            setAuthState(stored);
-            setLoading(false);
-            if (stored) {
-                setSuccessMsg(`Wallet connected: ${stored.username || stored.walletAddress?.slice(0, 8) || 'OmenX'}`);
-                setTimeout(() => setSuccessMsg(''), 5000);
-            }
-            onAuthChange?.(stored);
-        };
-
         const onMessage = (event) => {
             if (event.data?.type === 'omenx_auth' && event.data?.authData) {
                 const ad = event.data.authData;
                 if (ad?.walletAddress && ad?.accessToken) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(ad));
                     applyAuthData(ad);
                 }
             }
         };
-
-        window.addEventListener('storage', onStorageChange);
         window.addEventListener('message', onMessage);
-        return () => {
-            window.removeEventListener('storage', onStorageChange);
-            window.removeEventListener('message', onMessage);
-        };
+        return () => window.removeEventListener('message', onMessage);
     }, [onAuthChange]);
+
+    // Show success message briefly when wallet connects from elsewhere
+    useEffect(() => {
+        if (authData) {
+            setLoading(false);
+        }
+    }, [authData]);
 
     const handleBase44SignIn = () => {
         setLoading(true);
