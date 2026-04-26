@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart3, Users, Coins, Gift, Shield, Skull, Trophy, Database, AlertTriangle } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
@@ -27,28 +27,31 @@ import AdminRefundOmenx from '../components/admin/AdminRefundOmenx';
 import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
 import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
 
+// Each tab declares what permission(s) it requires.
+// 'any' = visible to anyone with at least view_data.
+// 'emergency' = only visible when the user authenticated via the AdminDash master key.
 const TABS = [
-    { id: 'overview',    label: 'Overview',    icon: BarChart3 },
-    { id: 'health',      label: '🩺 Health',   icon: BarChart3 },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
-    { id: 'players',     label: 'Players',     icon: Users },
-    { id: 'squads',      label: 'Squads',      icon: Shield },
-    { id: 'raid',        label: 'Global Raid', icon: Skull },
-    { id: 'economy',     label: 'Economy',     icon: Coins },
-    { id: 'rewards',     label: 'Rewards',     icon: Gift },
-    { id: 'skus',        label: 'SKUs',        icon: Gift },
-    { id: 'content',     label: 'Content',     icon: Database },
-    { id: 'duplicates',  label: '⚠️ Duplicates', icon: AlertTriangle },
-    { id: 'cleanup',     label: '🧹 Cleanup',  icon: Database },
-    { id: 'changelog',   label: '📋 Audit Log', icon: Database },
-    { id: 'managers',    label: '👥 Managers', icon: Users },
-    { id: 'discord',     label: '💬 Discord Guide', icon: Database },
-    { id: 'backups',     label: '💾 Backups', icon: Database },
-    { id: 'blacklist',   label: '🚫 Blacklist', icon: AlertTriangle },
-    { id: 'wipe',        label: '🗑️ Wipe Data', icon: AlertTriangle },
-    { id: 'backfill',    label: '🔄 Backfill Wallets', icon: AlertTriangle },
-    { id: 'refund',      label: '💸 Refund OMENX', icon: AlertTriangle },
-    { id: 'reset',       label: '🔄 FULL RESET', icon: AlertTriangle },
+    { id: 'overview',    label: 'Overview',     icon: BarChart3,    perm: 'view_data' },
+    { id: 'health',      label: '🩺 Health',    icon: BarChart3,    perm: 'view_data' },
+    { id: 'leaderboard', label: 'Leaderboard',  icon: Trophy,       perm: 'view_data' },
+    { id: 'players',     label: 'Players',      icon: Users,        perm: 'view_data' },
+    { id: 'squads',      label: 'Squads',       icon: Shield,       perm: 'view_data' },
+    { id: 'raid',        label: 'Global Raid',  icon: Skull,        perm: 'manage_raid' },
+    { id: 'economy',     label: 'Economy',      icon: Coins,        perm: 'view_data' },
+    { id: 'rewards',     label: 'Rewards',      icon: Gift,         perm: 'distribute_rewards' },
+    { id: 'skus',        label: 'SKUs',         icon: Gift,         perm: 'view_data' },
+    { id: 'content',     label: 'Content',      icon: Database,     perm: 'view_data' },
+    { id: 'duplicates',  label: '⚠️ Duplicates',icon: AlertTriangle,perm: 'delete_scores' },
+    { id: 'cleanup',     label: '🧹 Cleanup',   icon: Database,     perm: 'edit_players' },
+    { id: 'changelog',   label: '📋 Audit Log', icon: Database,     perm: 'view_data' },
+    { id: 'managers',    label: '👥 Managers',  icon: Users,        perm: 'manage_admins' },
+    { id: 'discord',     label: '💬 Discord Guide', icon: Database, perm: 'view_data' },
+    { id: 'backups',     label: '💾 Backups',   icon: Database,     perm: 'manage_backups' },
+    { id: 'blacklist',   label: '🚫 Blacklist', icon: AlertTriangle,perm: 'manage_blacklist' },
+    { id: 'wipe',        label: '🗑️ Wipe Data', icon: AlertTriangle,perm: 'wipe_data' },
+    { id: 'backfill',    label: '🔄 Backfill Wallets', icon: AlertTriangle, perm: 'owner' },
+    { id: 'refund',      label: '💸 Refund OMENX', icon: AlertTriangle, perm: 'refund_omenx' },
+    { id: 'reset',       label: '🔄 FULL RESET', icon: AlertTriangle, perm: 'wipe_data' },
 ];
 
 export default function AdminDashboard() {
@@ -57,6 +60,39 @@ export default function AdminDashboard() {
     const [walletInput, setWalletInput] = useState('');
     const [walletError, setWalletError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
+    const [callerPerms, setCallerPerms] = useState(null);
+    const isEmergencyKey = adminWallet === 'admin_mode';
+
+    // Load the caller's permissions so we can filter tabs.
+    useEffect(() => {
+        if (!adminWallet || isEmergencyKey) {
+            setCallerPerms(isEmergencyKey ? ['__emergency__'] : null);
+            return;
+        }
+        const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+        if (!authData?.accessToken) return;
+        base44.functions.invoke('getAdminData', { type: 'adminWallets', walletAddress: adminWallet, accessToken: authData.accessToken })
+            .then(r => {
+                const me = (r.data?.records || []).find(a => a.wallet_address?.toLowerCase() === adminWallet.toLowerCase());
+                setCallerPerms(me?.permissions || []);
+            })
+            .catch(() => setCallerPerms([]));
+    }, [adminWallet, isEmergencyKey]);
+
+    const canSeeTab = (tab) => {
+        if (isEmergencyKey) return true; // emergency key sees everything
+        if (!callerPerms) return false;
+        if (callerPerms.includes('owner')) return true;
+        return callerPerms.includes(tab.perm);
+    };
+    const visibleTabs = TABS.filter(canSeeTab);
+
+    // If active tab is not visible (perms changed / first load), reset to first available
+    useEffect(() => {
+        if (visibleTabs.length > 0 && !visibleTabs.find(t => t.id === activeTab)) {
+            setActiveTab(visibleTabs[0].id);
+        }
+    }, [visibleTabs, activeTab]);
 
     const handleWalletSubmit = async (e, overrideWallet) => {
         if (e) e.preventDefault();
@@ -79,7 +115,7 @@ export default function AdminDashboard() {
 
     const [adminKeyInput, setAdminKeyInput] = useState('');
     const [adminKeyError, setAdminKeyError] = useState('');
-    
+
     const handleDirectAdminKey = (e) => {
         e?.preventDefault();
         if (!adminKeyInput.trim()) {
@@ -119,11 +155,11 @@ export default function AdminDashboard() {
                         </form>
                     )}
                     <form onSubmit={handleDirectAdminKey} className="bg-[#0b0416]/90 border border-yellow-900/50 rounded-xl p-8 flex flex-col gap-4">
-                        <h1 className="text-xl font-black uppercase tracking-widest text-yellow-400">Admin Access (Direct Key)</h1>
-                        <p className="text-xs text-slate-400">Skip OmenX login with admin key</p>
+                        <h1 className="text-xl font-black uppercase tracking-widest text-yellow-400">Emergency Master Key</h1>
+                        <p className="text-xs text-slate-400">Bypasses permission checks. Use only when OmenX login is unavailable.</p>
                         <input
                             type="password"
-                            placeholder="Admin key"
+                            placeholder="Master admin key"
                             value={adminKeyInput}
                             onChange={e => setAdminKeyInput(e.target.value)}
                             className="bg-slate-900 border border-slate-700 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-yellow-500 font-mono text-xs"
@@ -165,12 +201,18 @@ export default function AdminDashboard() {
         reset: <AdminMaintenanceReset walletAddress={adminWallet} />,
     };
 
+    const callerLabel = isEmergencyKey
+        ? '🔑 Emergency Key Mode'
+        : callerPerms?.includes('owner')
+            ? `👑 Owner — ${adminWallet.slice(0, 6)}...${adminWallet.slice(-4)}`
+            : `Staff — ${adminWallet.slice(0, 6)}...${adminWallet.slice(-4)}`;
+
     return (
         <div className="min-h-screen relative text-slate-200 font-sans">
             <SpaceBackground />
             <div className="max-w-7xl mx-auto relative z-10 p-3 md:p-6 pb-20">
-                <header className="flex items-center justify-between mb-4 border-b border-red-900/40 pb-3">
-                    <div className="flex items-center gap-3">
+                <header className="flex items-center justify-between mb-4 border-b border-red-900/40 pb-3 gap-3 flex-wrap">
+                    <div className="flex items-center gap-3 flex-wrap">
                         <button
                             onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
                             className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700"
@@ -180,9 +222,14 @@ export default function AdminDashboard() {
                         <h1 className="text-lg md:text-3xl font-black tracking-widest uppercase flex items-center gap-2" style={{ color: '#ef4444', textShadow: '0 0 10px rgba(239,68,68,0.5)' }}>
                             <BarChart3 className="w-5 h-5 md:w-7 md:h-7" /> ADMIN DASHBOARD
                         </h1>
+                        <span className="text-[10px] md:text-xs font-mono text-slate-500 hidden md:inline">{callerLabel}</span>
                     </div>
                     <button
-                        onClick={() => { sessionStorage.removeItem('admin_wallet'); setAdminWallet(''); }}
+                        onClick={() => {
+                            sessionStorage.removeItem('admin_wallet');
+                            sessionStorage.removeItem('admin_key');
+                            setAdminWallet('');
+                        }}
                         className="text-xs text-red-400 hover:text-red-300 border border-red-900/50 px-2 py-1 rounded transition-colors"
                     >
                         Logout
@@ -191,7 +238,7 @@ export default function AdminDashboard() {
 
                 {/* Tab Nav */}
                 <div className="flex gap-1.5 flex-wrap mb-5">
-                    {TABS.map(tab => {
+                    {visibleTabs.map(tab => {
                         const Icon = tab.icon;
                         return (
                             <button
@@ -209,7 +256,13 @@ export default function AdminDashboard() {
                     })}
                 </div>
 
-                {TabContent[activeTab]}
+                {visibleTabs.length === 0 ? (
+                    <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-6 text-center text-slate-400">
+                        Loading permissions...
+                    </div>
+                ) : (
+                    TabContent[activeTab]
+                )}
             </div>
         </div>
     );

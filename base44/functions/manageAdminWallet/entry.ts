@@ -1,0 +1,137 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+
+// Manages staff/admin wallets. Only callers with `manage_admins` permission can use this.
+// `owner` permission is sticky — only owners can grant/remove the owner flag.
+
+const ALL_PERMISSIONS = [
+    'view_data', 'edit_players', 'delete_scores', 'manage_blacklist',
+    'distribute_rewards', 'manage_raid', 'manage_admins', 'wipe_data',
+    'refund_omenx', 'manage_backups', 'owner'
+];
+
+async function verifyCaller(base44, accessToken) {
+    if (!accessToken) return { error: 'accessToken required', status: 401 };
+    const sdk = new OmenXServerSDK({
+        apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+        apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+    });
+    const verifyResult = await sdk.verifyOAuthUser(accessToken);
+    if (!verifyResult.success) return { error: 'Invalid OAuth token', status: 401 };
+    const wallet = verifyResult.user?.walletAddress;
+    if (!wallet) return { error: 'No wallet on token', status: 401 };
+
+    const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: wallet });
+    if (records.length === 0) return { error: 'Forbidden — not an admin', status: 403 };
+    const admin = records[0];
+    if (!(admin.permissions || []).includes('manage_admins')) {
+        return { error: 'Forbidden — manage_admins permission required', status: 403 };
+    }
+    return { admin, wallet };
+}
+
+async function logAction(base44, callerWallet, description, details) {
+    try {
+        await base44.asServiceRole.entities.AdminChangesLog.create({
+            wallet_address: callerWallet,
+            action_type: 'other',
+            description,
+            details,
+        });
+    } catch (e) {
+        console.error('[manageAdminWallet] audit log failed:', e.message);
+    }
+}
+
+Deno.serve(async (req) => {
+    try {
+        const base44 = createClientFromRequest(req);
+        const body = await req.json();
+        const { action, accessToken } = body;
+
+        const auth = await verifyCaller(base44, accessToken);
+        if (auth.error) return Response.json({ error: auth.error }, { status: auth.status });
+
+        const callerIsOwner = (auth.admin.permissions || []).includes('owner');
+
+        if (action === 'create') {
+            const { wallet_address, admin_name, permissions, notes } = body;
+            if (!wallet_address) return Response.json({ error: 'wallet_address required' }, { status: 400 });
+
+            const cleanPerms = (permissions || []).filter(p => ALL_PERMISSIONS.includes(p));
+            if (cleanPerms.includes('owner') && !callerIsOwner) {
+                return Response.json({ error: 'Only owners can grant owner permission' }, { status: 403 });
+            }
+
+            const existing = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: wallet_address.toLowerCase() });
+            if (existing.length > 0) return Response.json({ error: 'Wallet is already an admin' }, { status: 409 });
+
+            const created = await base44.asServiceRole.entities.AdminWallet.create({
+                wallet_address: wallet_address.toLowerCase(),
+                admin_name: admin_name || 'Unnamed',
+                permissions: cleanPerms,
+                notes: notes || '',
+            });
+            await logAction(base44, auth.wallet, `Added admin: ${admin_name || wallet_address}`, { wallet: wallet_address, permissions: cleanPerms });
+            return Response.json({ success: true, record: created });
+        }
+
+        if (action === 'updatePerms') {
+            const { admin_id, permissions } = body;
+            if (!admin_id) return Response.json({ error: 'admin_id required' }, { status: 400 });
+            const cleanPerms = (permissions || []).filter(p => ALL_PERMISSIONS.includes(p));
+
+            const target = await base44.asServiceRole.entities.AdminWallet.get(admin_id);
+            if (!target) return Response.json({ error: 'Admin not found' }, { status: 404 });
+
+            const targetIsOwner = (target.permissions || []).includes('owner');
+            const willBeOwner = cleanPerms.includes('owner');
+
+            // Only owners can change owner flag (add or remove)
+            if ((targetIsOwner !== willBeOwner) && !callerIsOwner) {
+                return Response.json({ error: 'Only owners can change owner permission' }, { status: 403 });
+            }
+            // Owners cannot demote themselves if they're the last owner
+            if (targetIsOwner && !willBeOwner && target.wallet_address === auth.wallet) {
+                const allOwners = await base44.asServiceRole.entities.AdminWallet.list();
+                const ownerCount = allOwners.filter(a => (a.permissions || []).includes('owner')).length;
+                if (ownerCount <= 1) {
+                    return Response.json({ error: 'Cannot remove last owner' }, { status: 400 });
+                }
+            }
+
+            await base44.asServiceRole.entities.AdminWallet.update(admin_id, { permissions: cleanPerms });
+            await logAction(base44, auth.wallet, `Updated permissions for ${target.admin_name || target.wallet_address}`, { wallet: target.wallet_address, permissions: cleanPerms });
+            return Response.json({ success: true });
+        }
+
+        if (action === 'delete') {
+            const { admin_id } = body;
+            if (!admin_id) return Response.json({ error: 'admin_id required' }, { status: 400 });
+
+            const target = await base44.asServiceRole.entities.AdminWallet.get(admin_id);
+            if (!target) return Response.json({ error: 'Admin not found' }, { status: 404 });
+
+            if ((target.permissions || []).includes('owner') && !callerIsOwner) {
+                return Response.json({ error: 'Only owners can remove owners' }, { status: 403 });
+            }
+            // Prevent removing the last owner
+            if ((target.permissions || []).includes('owner')) {
+                const allAdmins = await base44.asServiceRole.entities.AdminWallet.list();
+                const ownerCount = allAdmins.filter(a => (a.permissions || []).includes('owner')).length;
+                if (ownerCount <= 1) {
+                    return Response.json({ error: 'Cannot remove last owner' }, { status: 400 });
+                }
+            }
+
+            await base44.asServiceRole.entities.AdminWallet.delete(admin_id);
+            await logAction(base44, auth.wallet, `Removed admin: ${target.admin_name || target.wallet_address}`, { wallet: target.wallet_address });
+            return Response.json({ success: true });
+        }
+
+        return Response.json({ error: 'Invalid action' }, { status: 400 });
+    } catch (error) {
+        console.error('[manageAdminWallet]', error.message);
+        return Response.json({ error: error.message }, { status: 500 });
+    }
+});

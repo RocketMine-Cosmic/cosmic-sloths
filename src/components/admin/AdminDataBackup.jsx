@@ -11,13 +11,9 @@ export default function AdminDataBackup({ walletAddress }) {
     const [restoring, setRestoring] = useState(null);
     const [notes, setNotes] = useState('');
 
-    const adminKey = (() => {
-        try {
-            return sessionStorage.getItem('admin_key') || '';
-        } catch {
-            return '';
-        }
-    })();
+    const adminKey = sessionStorage.getItem('admin_key') || '';
+    const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+    const accessToken = authData?.accessToken;
 
     useEffect(() => {
         loadBackups();
@@ -26,8 +22,9 @@ export default function AdminDataBackup({ walletAddress }) {
     const loadBackups = async () => {
         try {
             setLoading(true);
-            const res = await base44.functions.invoke('getAdminData', { type: 'backups' });
-            setBackups(res.data?.records || []);
+            // DataBackup is admin-only RLS so we can read it directly with the SDK
+            const records = await base44.entities.DataBackup.list('-created_date', 50);
+            setBackups(records || []);
         } catch (err) {
             toast({ title: 'Error', description: 'Failed to load backups' });
         } finally {
@@ -39,7 +36,7 @@ export default function AdminDataBackup({ walletAddress }) {
         try {
             setCreatingBackup(true);
             const res = await base44.functions.invoke('backupData', {
-                adminKey,
+                adminKey, accessToken,
                 backup_notes: notes,
             });
             if (res.data?.success) {
@@ -62,7 +59,7 @@ export default function AdminDataBackup({ walletAddress }) {
         try {
             setRestoring(backupId);
             const res = await base44.functions.invoke('restoreDataBackup', {
-                adminKey,
+                adminKey, accessToken,
                 backup_id: backupId,
                 confirm_restore: true,
             });

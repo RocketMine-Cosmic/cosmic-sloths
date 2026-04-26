@@ -34,6 +34,10 @@ Deno.serve(async (req) => {
             const payouts = await db.entities.PayoutLog.list('-created_date', 200);
             return Response.json({ payouts });
         }
+        if (type === 'adminWallets') {
+            const records = await db.entities.AdminWallet.list('-created_date', 200);
+            return Response.json({ records });
+        }
 
         return Response.json({ error: 'Invalid type' }, { status: 400 });
     } catch (error) {

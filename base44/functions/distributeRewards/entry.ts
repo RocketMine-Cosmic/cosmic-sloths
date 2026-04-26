@@ -9,10 +9,26 @@ const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 
 Deno.serve(async (req) => {
     try {
-        const { adminKey } = await req.json();
-        const expectedKey = Deno.env.get('AdminDash');
-        if (!adminKey || adminKey !== expectedKey) {
-            return Response.json({ error: 'Forbidden' }, { status: 403 });
+        const body = await req.json();
+        const { adminKey, accessToken } = body;
+
+        // Auth: OAuth + distribute_rewards permission, OR emergency admin key (also used by automation)
+        if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
+            if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
+            const authSdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const v = await authSdk.verifyOAuthUser(accessToken);
+            if (!v.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            const callerWallet = v.user?.walletAddress;
+            if (!callerWallet) return Response.json({ error: 'No wallet on token' }, { status: 401 });
+            const records = await db.entities.AdminWallet.filter({ wallet_address: callerWallet });
+            if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
+            const perms = records[0].permissions || [];
+            if (!perms.includes('distribute_rewards') && !perms.includes('owner')) {
+                return Response.json({ error: "Forbidden — 'distribute_rewards' permission required" }, { status: 403 });
+            }
         }
 
         const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');

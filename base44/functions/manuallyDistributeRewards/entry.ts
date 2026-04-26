@@ -8,9 +8,38 @@ const GAME_NAME = 'Cosmic Sloths';
 
 Deno.serve(async (req) => {
     try {
-        const { period_id, period_type, adminKey } = await req.json();
-        const expectedKey = Deno.env.get('AdminDash');
-        if (!adminKey || adminKey !== expectedKey) return Response.json({ error: 'Forbidden' }, { status: 403 });
+        const body = await req.json();
+        const { period_id, period_type, adminKey, accessToken } = body;
+
+        // Auth: OAuth + distribute_rewards permission, OR emergency admin key
+        let callerWallet = 'EMERGENCY_KEY';
+        if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
+            if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
+            const authSdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const v = await authSdk.verifyOAuthUser(accessToken);
+            if (!v.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            callerWallet = v.user?.walletAddress;
+            if (!callerWallet) return Response.json({ error: 'No wallet on token' }, { status: 401 });
+            const records = await db.entities.AdminWallet.filter({ wallet_address: callerWallet });
+            if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
+            const perms = records[0].permissions || [];
+            if (!perms.includes('distribute_rewards') && !perms.includes('owner')) {
+                return Response.json({ error: "Forbidden — 'distribute_rewards' permission required" }, { status: 403 });
+            }
+        }
+
+        try {
+            await db.entities.AdminChangesLog.create({
+                wallet_address: callerWallet,
+                action_type: 'reward_adjustment',
+                description: `Manual ${period_type} payout for ${period_id}`,
+                details: { period_id, period_type }
+            });
+        } catch {}
+
         if (!period_id || !period_type) {
             return Response.json({ error: 'Missing period_id or period_type' }, { status: 400 });
         }

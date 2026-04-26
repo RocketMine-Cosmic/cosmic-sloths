@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
@@ -7,16 +8,40 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { adminKey, confirm_refund } = body;
+        const { adminKey, accessToken, confirm_refund } = body;
 
-        const expectedKey = Deno.env.get('AdminDash');
-        if (!adminKey || adminKey !== expectedKey) {
-            return Response.json({ error: 'Admin access required' }, { status: 403 });
+        // Auth: OAuth + refund_omenx permission, OR emergency admin key
+        let callerWallet = 'EMERGENCY_KEY';
+        if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
+            if (!accessToken) return Response.json({ error: 'accessToken required' }, { status: 401 });
+            const sdk = new OmenXServerSDK({
+                apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
+                apiBaseUrl: Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation',
+            });
+            const v = await sdk.verifyOAuthUser(accessToken);
+            if (!v.success) return Response.json({ error: 'Invalid OAuth token' }, { status: 401 });
+            callerWallet = v.user?.walletAddress;
+            if (!callerWallet) return Response.json({ error: 'No wallet on token' }, { status: 401 });
+            const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
+            if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
+            const perms = records[0].permissions || [];
+            if (!perms.includes('refund_omenx') && !perms.includes('owner')) {
+                return Response.json({ error: "Forbidden — 'refund_omenx' permission required" }, { status: 403 });
+            }
         }
 
         if (!confirm_refund) {
             return Response.json({ error: 'Refund must be confirmed with confirm_refund: true' }, { status: 400 });
         }
+
+        try {
+            await base44.asServiceRole.entities.AdminChangesLog.create({
+                wallet_address: callerWallet,
+                action_type: 'other',
+                description: 'Triggered full OMENX refund',
+                details: {}
+            });
+        } catch {}
 
         console.log('[refundAllOmenx] Fetching all token spend logs...');
         const spendLogs = await base44.asServiceRole.entities.TokenSpendLog.list('', 10000);

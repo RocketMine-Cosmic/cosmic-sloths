@@ -3,6 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { Trash2, Plus, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
+function getAuthData() {
+    try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
+}
+function getAdminKey() { return sessionStorage.getItem('admin_key') || ''; }
+
 export default function AdminBlacklist() {
     const [blacklist, setBlacklist] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -16,10 +21,16 @@ export default function AdminBlacklist() {
         fetchBlacklist();
     }, []);
 
+    const buildAuth = () => {
+        const auth = getAuthData();
+        const adminKey = getAdminKey();
+        return { accessToken: auth?.accessToken, adminKey };
+    };
+
     const fetchBlacklist = async () => {
         try {
             setLoading(true);
-            const result = await base44.functions.invoke('manageBlacklist', { action: 'list' });
+            const result = await base44.functions.invoke('manageBlacklist', { action: 'list', ...buildAuth() });
             setBlacklist(result.data.records || []);
         } catch (error) {
             toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -33,22 +44,21 @@ export default function AdminBlacklist() {
             toast({ title: 'Error', description: 'Wallet and reason required' });
             return;
         }
-
         setSubmitting(true);
         try {
             const result = await base44.functions.invoke('manageBlacklist', {
                 action: 'ban',
                 wallet_address: newWallet.trim(),
                 reason: newReason.trim(),
-                notes: newNotes.trim()
+                notes: newNotes.trim(),
+                ...buildAuth(),
             });
-
             if (result.data.success) {
                 toast({ title: 'Success', description: 'Wallet banned' });
-                setNewWallet('');
-                setNewReason('');
-                setNewNotes('');
+                setNewWallet(''); setNewReason(''); setNewNotes('');
                 fetchBlacklist();
+            } else {
+                toast({ title: 'Error', description: result.data.error || 'Failed', variant: 'destructive' });
             }
         } catch (error) {
             toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -59,16 +69,17 @@ export default function AdminBlacklist() {
 
     const handleUnban = async (id, wallet) => {
         if (!confirm(`Unban ${wallet}?`)) return;
-
         try {
             const result = await base44.functions.invoke('manageBlacklist', {
                 action: 'unban',
-                wallet_address: wallet
+                wallet_address: wallet,
+                ...buildAuth(),
             });
-
             if (result.data.success) {
                 toast({ title: 'Success', description: 'Wallet unbanned' });
                 fetchBlacklist();
+            } else {
+                toast({ title: 'Error', description: result.data.error || 'Failed', variant: 'destructive' });
             }
         } catch (error) {
             toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -82,32 +93,17 @@ export default function AdminBlacklist() {
                     <AlertCircle className="w-5 h-5" /> Ban Wallet
                 </h3>
                 <div className="space-y-4">
-                    <input
-                        type="text"
-                        placeholder="Wallet address (0x...)"
-                        value={newWallet}
+                    <input type="text" placeholder="Wallet address (0x...)" value={newWallet}
                         onChange={(e) => setNewWallet(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500"
-                    />
-                    <input
-                        type="text"
-                        placeholder="Reason (abuse, exploit, fraud, etc)"
-                        value={newReason}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500" />
+                    <input type="text" placeholder="Reason (abuse, exploit, fraud, etc)" value={newReason}
                         onChange={(e) => setNewReason(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500"
-                    />
-                    <textarea
-                        placeholder="Additional notes (optional)"
-                        value={newNotes}
-                        onChange={(e) => setNewNotes(e.target.value)}
-                        rows={3}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500"
-                    />
-                    <button
-                        onClick={handleBan}
-                        disabled={submitting}
-                        className="w-full bg-red-600 hover:bg-red-500 disabled:bg-slate-700 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    >
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500" />
+                    <textarea placeholder="Additional notes (optional)" value={newNotes}
+                        onChange={(e) => setNewNotes(e.target.value)} rows={3}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500" />
+                    <button onClick={handleBan} disabled={submitting}
+                        className="w-full bg-red-600 hover:bg-red-500 disabled:bg-slate-700 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
                         <Plus className="w-4 h-4" /> Ban Wallet
                     </button>
                 </div>
@@ -131,11 +127,8 @@ export default function AdminBlacklist() {
                                         Banned by {entry.banned_by} • {new Date(entry.banned_at).toLocaleDateString()}
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleUnban(entry.id, entry.wallet_address)}
-                                    className="shrink-0 p-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors"
-                                    title="Unban"
-                                >
+                                <button onClick={() => handleUnban(entry.id, entry.wallet_address)}
+                                    className="shrink-0 p-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors" title="Unban">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>

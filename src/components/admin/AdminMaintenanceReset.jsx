@@ -13,20 +13,22 @@ export default function AdminMaintenanceReset({ walletAddress }) {
         setError(null);
         try {
             const adminKey = sessionStorage.getItem('admin_key');
-            
+            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+            const accessToken = authData?.accessToken;
+
             // Step 1: Refund all OMENX
             setStep(1);
             const refundRes = await base44.functions.invoke('refundAllOmenx', {
-                adminKey,
+                adminKey, accessToken,
                 confirm_refund: true,
             });
             if (refundRes.data?.error) throw new Error(`Refund failed: ${refundRes.data.error}`);
-            
+
             // Step 2: Wipe all player data
             setStep(2);
             const wipeRes = await base44.functions.invoke('resetAllPlayerData', {
-                adminKey,
-                confirm_wipe: true,
+                adminKey, accessToken,
+                confirm: 'RESET_ALL_PLAYER_DATA',
             });
             if (wipeRes.data?.error) throw new Error(`Wipe failed: ${wipeRes.data.error}`);
             
