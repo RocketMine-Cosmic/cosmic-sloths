@@ -92,19 +92,35 @@ export default function Upgrades({ isCarousel }) {
         return () => clearInterval(interval);
     }, [activeCategory]);
 
-    const purchaseSku = async (skuId) => {
+    const purchaseSku = async (skuId, grantInfo = null) => {
         setPurchaseError(null);
         setPurchasing(true);
-        console.log('[Upgrades purchaseSku] CALLED with skuId:', skuId);
+        console.log('[Upgrades purchaseSku] CALLED with skuId:', skuId, 'grant:', grantInfo?.type);
         if (!skuId) { setPurchaseError('No SKU mapping found for this item'); throw new Error('No SKU mapping'); }
         const playerName = save.pilotName || 'Pilot';
-        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName });
+        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName, grantInfo });
         const data = res.data;
         if (!data?.success) {
             const errMsg = data?.error || 'Unknown error';
             const isThrottle = errMsg.includes('429') || errMsg.toLowerCase().includes('rate');
             setPurchaseError(isThrottle ? 'Server is busy. Please try again in a moment.' : `Purchase failed: ${errMsg}`);
             throw new Error(errMsg);
+        }
+        // If server applied a grant, replace the relevant local save fields with server truth
+        if (data.saveData) {
+            const s = SaveManager.load();
+            // Copy server-owned fields back from response
+            const SERVER_FIELDS = [
+                'permanentUpgrades', 'weeklyUpgrades', 'seasonalUpgrades',
+                'permanentWeaponUpgrades', 'weeklyWeaponUpgrades', 'seasonalWeaponUpgrades',
+                'permanentTalents', 'weeklyTalents', 'seasonalTalents',
+                'unlockedCosmetics', 'unlockedKillEffects', 'unlockedSkins', 'cosmetics'
+            ];
+            for (const k of SERVER_FIELDS) {
+                if (data.saveData[k] !== undefined) s[k] = data.saveData[k];
+            }
+            SaveManager.save(s);
+            setSave(s);
         }
         return data;
     };
@@ -140,16 +156,11 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Charge FIRST, then grant only if purchase succeeded
             setPurchasing(true);
             const skuId = getStatSku(activeCategory, stat, currentLevel + 1);
-            purchaseSku(skuId).then(() => {
-                const s = SaveManager.load();
-                const upg = s[saveKey] || {};
-                s[saveKey] = { ...upg, [stat]: (upg[stat] || 0) + 1 };
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
+            const grantInfo = { type: 'stat', tier: activeCategory, stat, level: currentLevel + 1 };
+            purchaseSku(skuId, grantInfo).then(() => {
+                // Server already wrote grant; purchaseSku() applied saveData to local
                 SoundManager.playUIClick();
             }).catch(err => {
                 console.error('[handleBuyStat] purchase failed — upgrade NOT granted:', err);
@@ -183,18 +194,12 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-           // Charge FIRST, then grant only if purchase succeeded
            setPurchasing(true);
            const weaponObj = Object.values(WEAPONS).find(w => w.id === weaponId);
            const nextLevel = (currentSave[saveKey]?.[weaponId]?.[stat] || 0) + 1;
-           purchaseSku(getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, nextLevel)).then(() => {
-               const s = SaveManager.load();
-               if (!s[saveKey]) s[saveKey] = {};
-               if (!s[saveKey][weaponId]) s[saveKey][weaponId] = {};
-               s[saveKey][weaponId][stat] = (s[saveKey][weaponId][stat] || 0) + 1;
-               SaveManager.save(s);
-               setSave(s);
-               SaveManager.syncToBackendImmediate();
+           const skuId = getWeaponSku(activeCategory, weaponObj?.name || weaponId, stat, nextLevel);
+           const grantInfo = { type: 'weapon', tier: activeCategory, weaponId, stat, level: nextLevel };
+           purchaseSku(skuId, grantInfo).then(() => {
                SoundManager.playUIClick();
            }).catch(err => {
                console.error('[handleBuyWeapon] purchase failed — upgrade NOT granted:', err);
@@ -227,19 +232,11 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= tokenCost) {
-            // Charge FIRST, then grant only if purchase succeeded
             setPurchasing(true);
             const charObj = CHARACTERS.find(c => c.id === selectedChar);
-            purchaseSku(getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier)).then(() => {
-                const s = SaveManager.load();
-                if (!s[saveKey]) s[saveKey] = {};
-                if (!s[saveKey][selectedChar]) s[saveKey][selectedChar] = [];
-                if (!s[saveKey][selectedChar].includes(talent.id)) {
-                    s[saveKey][selectedChar].push(talent.id);
-                }
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
+            const skuId = getTalentSku(activeCategory, charObj?.name || selectedChar, talent.name, talent.tier);
+            const grantInfo = { type: 'talent', tier: activeCategory, charId: selectedChar, talentId: talent.id, talentTier: talent.tier };
+            purchaseSku(skuId, grantInfo).then(() => {
                 SoundManager.playUIClick();
             }).catch(err => {
                 console.error('[handleBuyTalent] purchase failed — talent NOT granted:', err);
@@ -325,19 +322,10 @@ export default function Upgrades({ isCarousel }) {
                 SaveManager.syncToBackendImmediate();
                 SoundManager.playUIClick();
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-                // Charge FIRST, then grant only if purchase succeeded
                 setPurchasing(true);
-                purchaseSku(getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost)).then(() => {
-                    const s = SaveManager.load();
-                    const unl = s.unlockedSkins || [];
-                    const cos = s.cosmetics || {};
-                    if (!unl.includes(cosmetic.id)) {
-                        s.unlockedSkins = [...unl, cosmetic.id];
-                    }
-                    s.cosmetics = { ...cos, skins: { ...(cos.skins || {}), [cosmetic.charId]: cosmetic.id } };
-                    SaveManager.save(s);
-                    setSave(s);
-                    SaveManager.syncToBackendImmediate();
+                const skuId = getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost);
+                const grantInfo = { type: 'cosmetic', slot: 'skin', cosmeticId: cosmetic.id, charId: cosmetic.charId };
+                purchaseSku(skuId, grantInfo).then(() => {
                     SoundManager.playUIClick();
                 }).catch(err => {
                     console.error('[handleBuyCosmetic skin] purchase failed — skin NOT granted:', err);
@@ -380,19 +368,10 @@ export default function Upgrades({ isCarousel }) {
             SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
-            // Charge FIRST, then grant only if purchase succeeded
             setPurchasing(true);
-            purchaseSku(getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost)).then(() => {
-                const s = SaveManager.load();
-                const unl = s[unlockKey] || [freeId];
-                const cos = s.cosmetics || {};
-                if (!unl.includes(cosmetic.id)) {
-                    s[unlockKey] = [...unl, cosmetic.id];
-                }
-                s.cosmetics = { ...cos, [cosmeticKey]: cosmetic.id };
-                SaveManager.save(s);
-                setSave(s);
-                SaveManager.syncToBackendImmediate();
+            const skuId = getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost);
+            const grantInfo = { type: 'cosmetic', slot, cosmeticId: cosmetic.id };
+            purchaseSku(skuId, grantInfo).then(() => {
                 SoundManager.playUIClick();
             }).catch(err => {
                 console.error('[handleBuyCosmetic trail/kill] purchase failed — cosmetic NOT granted:', err);
