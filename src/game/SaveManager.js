@@ -410,7 +410,7 @@ export const SaveManager = {
             SaveManager.syncToBackend();
             pendingSync = false;
           }
-        }, 10000); // Debounce to 10 seconds
+        }, 3000); // Debounce to 3 seconds — short enough to limit free-currency loss on tab close, long enough to coalesce bursts
       }
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);
