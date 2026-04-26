@@ -1,22 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import MainMenu from './MainMenu';
-import Hub from './Hub';
-import Dailys from './Dailys';
-import Upgrades from './Upgrades';
-import LeaderboardPage from './LeaderboardPage';
-import Squads from './Squads';
-import Bestiary from './Bestiary';
-import SynergyCodex from './SynergyCodex';
-import Mastery from './Mastery';
-import LeviathanTrials from './LeviathanTrials';
-import Profile from './Profile';
-import NFTDashboard from './NFTDashboard';
-import GlobalRaid from './GlobalRaid';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+
+// Lazy-load each carousel slide. Only the active slide + its immediate
+// neighbors are mounted at any time — this keeps initial bundle small
+// and prevents 13 pages from firing entity API calls simultaneously.
+const MainMenu = React.lazy(() => import('./MainMenu'));
+const Hub = React.lazy(() => import('./Hub'));
+const Dailys = React.lazy(() => import('./Dailys'));
+const Upgrades = React.lazy(() => import('./Upgrades'));
+const LeaderboardPage = React.lazy(() => import('./LeaderboardPage'));
+const Squads = React.lazy(() => import('./Squads'));
+const Bestiary = React.lazy(() => import('./Bestiary'));
+const SynergyCodex = React.lazy(() => import('./SynergyCodex'));
+const Mastery = React.lazy(() => import('./Mastery'));
+const LeviathanTrials = React.lazy(() => import('./LeviathanTrials'));
+const GlobalRaid = React.lazy(() => import('./GlobalRaid'));
+const NFTDashboard = React.lazy(() => import('./NFTDashboard'));
+const Profile = React.lazy(() => import('./Profile'));
+
+const SLIDE_LABELS = [
+    { name: 'Main Menu', color: 'text-white' },
+    { name: 'Sloth Lounge', color: 'text-cyan-300' },
+    { name: 'Mission Board', color: 'text-emerald-300' },
+    { name: 'Upgrade Lounge', color: 'text-fuchsia-300' },
+    { name: 'Hall of Fame', color: 'text-amber-300' },
+    { name: 'Sloth Squads', color: 'text-orange-300' },
+    { name: 'Cosmic Codex', color: 'text-rose-300' },
+    { name: 'Synergy Codex', color: 'text-pink-400' },
+    { name: 'Character Mastery', color: 'text-amber-500' },
+    { name: 'Leviathan Trials', color: 'text-red-400' },
+    { name: 'Global Raid', color: 'text-red-500' },
+    { name: 'NFT Collection', color: 'text-purple-300' },
+    { name: 'Pilot Profile', color: 'text-violet-300' },
+];
+
+const SlideFallback = () => (
+    <div className="w-full h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+);
+
+// Renders a slide ONLY when it's active or adjacent. Off-screen slides stay
+// as empty divs (carousel layout preserved) until the user navigates near them.
+function LazySlide({ children, shouldMount }) {
+    const [hasMounted, setHasMounted] = useState(shouldMount);
+
+    useEffect(() => {
+        // Once mounted, keep mounted (so state isn't lost when scrolling away).
+        if (shouldMount && !hasMounted) setHasMounted(true);
+    }, [shouldMount, hasMounted]);
+
+    return (
+        <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
+            {hasMounted ? (
+                <Suspense fallback={<SlideFallback />}>{children}</Suspense>
+            ) : null}
+        </div>
+    );
+}
 
 export default function PlayCarousel() {
     const location = useLocation();
@@ -38,6 +83,14 @@ export default function PlayCarousel() {
         onSelect();
     }, [emblaApi]);
 
+    // A slide should mount if it's the current one or one adjacent (handles
+    // wrap-around at start/end since the carousel is loop:true).
+    const TOTAL = SLIDE_LABELS.length;
+    const isNear = (idx) => {
+        const diff = Math.abs(idx - selectedIndex);
+        return diff <= 1 || diff >= TOTAL - 1;
+    };
+
     return (
         <div className="h-[100dvh] bg-[#0b0416] flex flex-col overflow-hidden select-none relative font-sans">
             <SpaceBackground />
@@ -54,19 +107,7 @@ export default function PlayCarousel() {
                         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
                     <div className="flex-1 text-center font-black text-sm md:text-base tracking-widest uppercase select-none z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        {selectedIndex === 0 && <span className="text-white">Main Menu</span>}
-                        {selectedIndex === 1 && <span className="text-cyan-300">Sloth Lounge</span>}
-                        {selectedIndex === 2 && <span className="text-emerald-300">Mission Board</span>}
-                        {selectedIndex === 3 && <span className="text-fuchsia-300">Upgrade Lounge</span>}
-                        {selectedIndex === 4 && <span className="text-amber-300">Hall of Fame</span>}
-                        {selectedIndex === 5 && <span className="text-orange-300">Sloth Squads</span>}
-                        {selectedIndex === 6 && <span className="text-rose-300">Cosmic Codex</span>}
-                        {selectedIndex === 7 && <span className="text-pink-400">Synergy Codex</span>}
-                        {selectedIndex === 8 && <span className="text-amber-500">Character Mastery</span>}
-                        {selectedIndex === 9 && <span className="text-red-400">Leviathan Trials</span>}
-                        {selectedIndex === 10 && <span className="text-red-500">Global Raid</span>}
-                        {selectedIndex === 11 && <span className="text-purple-300">NFT Collection</span>}
-                        {selectedIndex === 12 && <span className="text-violet-300">Pilot Profile</span>}
+                        <span className={SLIDE_LABELS[selectedIndex].color}>{SLIDE_LABELS[selectedIndex].name}</span>
                     </div>
                     <button 
                         onClick={() => { 
@@ -82,45 +123,19 @@ export default function PlayCarousel() {
 
             <div className="flex-1 overflow-hidden" ref={emblaRef}>
                 <div className="flex h-full touch-pan-y">
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Hub isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Dailys isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Upgrades isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <LeaderboardPage isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Squads isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Bestiary isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <SynergyCodex isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Mastery isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <LeviathanTrials isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <GlobalRaid isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <NFTDashboard isCarousel={true} />
-                    </div>
-                    <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
-                        <Profile isCarousel={true} />
-                    </div>
+                    <LazySlide shouldMount={isNear(0)}><MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} /></LazySlide>
+                    <LazySlide shouldMount={isNear(1)}><Hub isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(2)}><Dailys isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(3)}><Upgrades isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(4)}><LeaderboardPage isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(5)}><Squads isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(6)}><Bestiary isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(7)}><SynergyCodex isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(8)}><Mastery isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(9)}><LeviathanTrials isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(10)}><GlobalRaid isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(11)}><NFTDashboard isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(12)}><Profile isCarousel={true} /></LazySlide>
                 </div>
             </div>
         </div>

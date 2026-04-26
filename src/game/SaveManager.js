@@ -64,6 +64,12 @@ export const SaveManager = {
       SaveManager._accessToken = accessToken; // kept for reference; not required by backend anymore
       
       // Load cloud save on init via Base44 SDK (uses Base44 session — no token needed)
+      const hasLocalSave = !!localStorage.getItem('cosmic_sloth_save');
+      // Signal first-time setup is in progress only when there's no local save
+      // (otherwise the user can play with local data while cloud syncs in background).
+      if (!hasLocalSave) {
+        window.dispatchEvent(new CustomEvent('firstTimeSetupStart'));
+      }
       try {
         const { base44 } = await import('@/api/base44Client');
 
@@ -72,7 +78,7 @@ export const SaveManager = {
         // we treat user as new, and empty local save eventually overwrites cloud.
         const expectedWallet = walletAddress.toLowerCase();
         let walletLinked = false;
-        for (let attempt = 0; attempt < 20; attempt++) { // ~10s max (20 × 500ms)
+        for (let attempt = 0; attempt < 8; attempt++) { // ~4s max (8 × 500ms)
           try {
             const isAuthed = await base44.auth.isAuthenticated();
             if (isAuthed) {
@@ -86,7 +92,8 @@ export const SaveManager = {
           await new Promise(r => setTimeout(r, 500));
         }
         if (!walletLinked) {
-          console.warn('[SaveManager] Wallet not linked to Base44 user after 10s — skipping cloud load to avoid overwriting cloud save with empty local');
+          console.warn('[SaveManager] Wallet not linked to Base44 user after 4s — skipping cloud load to avoid overwriting cloud save with empty local');
+          window.dispatchEvent(new CustomEvent('firstTimeSetupEnd'));
           return;
         }
 
@@ -152,6 +159,7 @@ export const SaveManager = {
       console.error('[SaveManager] Init error:', e.message);
     } finally {
       cloudSyncComplete = true;
+      window.dispatchEvent(new CustomEvent('firstTimeSetupEnd'));
     }
   },
 
