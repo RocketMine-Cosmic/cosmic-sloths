@@ -33,8 +33,21 @@ Deno.serve(async (req) => {
                 ? JSON.parse(existing[0].save_data)
                 : existing[0].save_data;
 
-            // Start with client-wins shallow merge (covers cosmetics, bounties, etc.)
-            const merged = { ...existingData, ...saveData };
+            // Determine which side is fresher via the updated_at timestamp the client
+            // stamps on every SaveManager.save(). If the incoming client save is OLDER
+            // than what's in the cloud, the client is stale (e.g. a long-idle tab that
+            // missed a purchase made in another tab) — flip the base merge so cloud
+            // wins for non-merged scalar fields like gold, cosmetics, bounties, etc.
+            // The MAX/union rules below are commutative so they're unaffected.
+            const clientTs = Number(saveData.updated_at || 0);
+            const cloudTs = Number(existing[0].updated_at || existingData.updated_at || 0);
+            const clientIsStale = cloudTs > 0 && clientTs > 0 && clientTs < cloudTs;
+            const merged = clientIsStale
+                ? { ...saveData, ...existingData }   // cloud wins (client is stale)
+                : { ...existingData, ...saveData };  // client wins (normal)
+            if (clientIsStale) {
+                console.log(`[syncSave] Stale client detected (client=${clientTs} cloud=${cloudTs}) — cloud wins for scalar fields`);
+            }
 
             // 1. MAX-merge for high-water-mark stats — never lose progress
             const HIGH_WATER_KEYS = [
