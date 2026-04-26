@@ -16,6 +16,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
+import OmenXGate from '../components/game/OmenXGate';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 
@@ -214,17 +215,7 @@ export default function Hub({ isCarousel }) {
     if (!syncReady) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
     if (!save) return <div>Loading...</div>;
     if (!omenxAuth && window.self === window.top) {
-        return (
-            <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 flex flex-col items-center justify-center gap-6 p-6 font-sans`}>
-                {!isCarousel && <SpaceBackground />}
-                <div className="relative z-10 text-center flex flex-col items-center gap-4">
-                    <div className="text-6xl mb-2">🔒</div>
-                    <h2 className="text-2xl md:text-3xl font-black tracking-widest uppercase text-white">Login Required</h2>
-                    <p className="text-slate-400 text-sm max-w-xs">You need to login with OmenX to access the Sloth Lounge and launch missions.</p>
-                    <OmenXAuthButton fullWidth onAuthChange={(data) => setOmenxAuth(data)} />
-                </div>
-            </div>
-        );
+        return <OmenXGate isCarousel={isCarousel} />;
     }
 
     if (!syncReady) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
