@@ -29,24 +29,172 @@ Deno.serve(async (req) => {
 
         let saveId;
         if (existing.length > 0) {
-            // Deep merge to preserve all existing data + nested upgrade objects
             const existingData = typeof existing[0].save_data === 'string'
                 ? JSON.parse(existing[0].save_data)
                 : existing[0].save_data;
+
+            // Start with client-wins shallow merge (covers cosmetics, bounties, etc.)
             const merged = { ...existingData, ...saveData };
 
-            const upgradeKeys = [
-                'permanentUpgrades', 'weeklyUpgrades', 'seasonalUpgrades',
-                'permanentWeaponUpgrades', 'weeklyWeaponUpgrades', 'seasonalWeaponUpgrades',
-                'permanentTalents', 'weeklyTalents', 'seasonalTalents'
+            // 1. MAX-merge for high-water-mark stats — never lose progress
+            const HIGH_WATER_KEYS = [
+                'maxTimeSurvived', 'maxLevelReached', 'totalKills', 'totalGoldEarned',
+                'relicFragments', 'cosmicTokens', 'seasonalPoints'
             ];
-            upgradeKeys.forEach(key => {
-                if (existingData[key] && saveData[key]) {
-                    merged[key] = { ...existingData[key], ...saveData[key] };
-                } else if (existingData[key] && (saveData[key] === undefined || saveData[key] === null)) {
-                    merged[key] = existingData[key];
+            for (const key of HIGH_WATER_KEYS) {
+                const a = Number(existingData[key] || 0);
+                const b = Number(saveData[key] || 0);
+                merged[key] = Math.max(a, b);
+            }
+
+            // 2. Union-merge for unlock arrays — never lose unlocks
+            const UNION_ARRAY_KEYS = [
+                'unlockedCharacters', 'foundCharacters', 'unlockedRelics',
+                'unlockedCosmetics', 'unlockedKillEffects', 'unlockedSkins',
+                'encounteredEnemies'
+            ];
+            for (const key of UNION_ARRAY_KEYS) {
+                const a = Array.isArray(existingData[key]) ? existingData[key] : [];
+                const b = Array.isArray(saveData[key]) ? saveData[key] : [];
+                merged[key] = [...new Set([...a, ...b])];
+            }
+
+            // Helper: detect if periodic upgrade containers are from different periods.
+            // If so, the client's reset wins (period rolled over) — no MAX merge.
+            const periodMismatch = (a, b, idKey) => {
+                if (!a || !b || !a[idKey] || !b[idKey]) return false;
+                return a[idKey] !== b[idKey];
+            };
+
+            // 3. MAX-merge for nested upgrade levels (permanent/weekly/seasonal stats)
+            const STAT_UPGRADE_KEYS = [
+                { key: 'permanentUpgrades', idKey: null },
+                { key: 'weeklyUpgrades', idKey: 'weekId' },
+                { key: 'seasonalUpgrades', idKey: 'seasonId' }
+            ];
+            for (const { key, idKey } of STAT_UPGRADE_KEYS) {
+                const a = existingData[key] || {};
+                const b = saveData[key] || {};
+                // Period rollover → client wins outright (don't preserve old period's levels)
+                if (idKey && periodMismatch(a, b, idKey)) {
+                    merged[key] = { ...b };
+                    continue;
                 }
-            });
+                const out = { ...a, ...b };
+                for (const stat of Object.keys({ ...a, ...b })) {
+                    if (typeof a[stat] === 'number' || typeof b[stat] === 'number') {
+                        out[stat] = Math.max(Number(a[stat] || 0), Number(b[stat] || 0));
+                    }
+                }
+                if (b.weekId) out.weekId = b.weekId;
+                if (b.seasonId) out.seasonId = b.seasonId;
+                merged[key] = out;
+            }
+
+            // 4. MAX-merge for nested-nested weapon upgrade levels
+            const WEAPON_UPGRADE_KEYS = [
+                { key: 'permanentWeaponUpgrades', idKey: null },
+                { key: 'weeklyWeaponUpgrades', idKey: 'weekId' },
+                { key: 'seasonalWeaponUpgrades', idKey: 'seasonId' }
+            ];
+            for (const { key, idKey } of WEAPON_UPGRADE_KEYS) {
+                const a = existingData[key] || {};
+                const b = saveData[key] || {};
+                if (idKey && periodMismatch(a, b, idKey)) {
+                    merged[key] = { ...b };
+                    continue;
+                }
+                const out = { ...a, ...b };
+                for (const weaponId of Object.keys({ ...a, ...b })) {
+                    if (weaponId === 'weekId' || weaponId === 'seasonId') continue;
+                    const aw = a[weaponId] || {};
+                    const bw = b[weaponId] || {};
+                    const wOut = { ...aw, ...bw };
+                    for (const stat of Object.keys({ ...aw, ...bw })) {
+                        if (typeof aw[stat] === 'number' || typeof bw[stat] === 'number') {
+                            wOut[stat] = Math.max(Number(aw[stat] || 0), Number(bw[stat] || 0));
+                        }
+                    }
+                    out[weaponId] = wOut;
+                }
+                if (b.weekId) out.weekId = b.weekId;
+                if (b.seasonId) out.seasonId = b.seasonId;
+                merged[key] = out;
+            }
+
+            // 5. Union-merge for talents (each character has an array of unlocked talent IDs)
+            const TALENT_KEYS = [
+                { key: 'permanentTalents', idKey: null },
+                { key: 'weeklyTalents', idKey: 'weekId' },
+                { key: 'seasonalTalents', idKey: 'seasonId' }
+            ];
+            for (const { key, idKey } of TALENT_KEYS) {
+                const a = existingData[key] || {};
+                const b = saveData[key] || {};
+                if (idKey && periodMismatch(a, b, idKey)) {
+                    merged[key] = { ...b };
+                    continue;
+                }
+                const out = { ...a, ...b };
+                for (const charId of Object.keys({ ...a, ...b })) {
+                    if (charId === 'weekId' || charId === 'seasonId') continue;
+                    const ac = Array.isArray(a[charId]) ? a[charId] : [];
+                    const bc = Array.isArray(b[charId]) ? b[charId] : [];
+                    out[charId] = [...new Set([...ac, ...bc])];
+                }
+                if (b.weekId) out.weekId = b.weekId;
+                if (b.seasonId) out.seasonId = b.seasonId;
+                merged[key] = out;
+            }
+
+            // 6. Sum-merge for character kill counts (preserves cumulative count across devices)
+            if (existingData.characterKills || saveData.characterKills) {
+                const a = existingData.characterKills || {};
+                const b = saveData.characterKills || {};
+                const out = {};
+                for (const charId of new Set([...Object.keys(a), ...Object.keys(b)])) {
+                    out[charId] = Math.max(Number(a[charId] || 0), Number(b[charId] || 0));
+                }
+                merged.characterKills = out;
+            }
+
+            // 7. MAX-merge for enemy kill counts
+            if (existingData.enemyKills || saveData.enemyKills) {
+                const a = existingData.enemyKills || {};
+                const b = saveData.enemyKills || {};
+                const out = {};
+                for (const enemyId of new Set([...Object.keys(a), ...Object.keys(b)])) {
+                    out[enemyId] = Math.max(Number(a[enemyId] || 0), Number(b[enemyId] || 0));
+                }
+                merged.enemyKills = out;
+            }
+
+            // 8. MAX-merge for relic levels (upgrades only go up)
+            if (existingData.relicLevels || saveData.relicLevels) {
+                const a = existingData.relicLevels || {};
+                const b = saveData.relicLevels || {};
+                const out = {};
+                for (const relicId of new Set([...Object.keys(a), ...Object.keys(b)])) {
+                    out[relicId] = Math.max(Number(a[relicId] || 0), Number(b[relicId] || 0));
+                }
+                merged.relicLevels = out;
+            }
+
+            // 9. Union-merge unlocked arenas per character
+            if (existingData.unlockedArenasByCharacter || saveData.unlockedArenasByCharacter) {
+                const a = existingData.unlockedArenasByCharacter || {};
+                const b = saveData.unlockedArenasByCharacter || {};
+                const out = { ...a, ...b };
+                for (const charId of new Set([...Object.keys(a), ...Object.keys(b)])) {
+                    const ac = Array.isArray(a[charId]) ? a[charId] : [];
+                    const bc = Array.isArray(b[charId]) ? b[charId] : [];
+                    out[charId] = [...new Set([...ac, ...bc])];
+                }
+                merged.unlockedArenasByCharacter = out;
+            }
+
+            // 10. newGamePlusUnlocked: once true, always true
+            merged.newGamePlusUnlocked = !!(existingData.newGamePlusUnlocked || saveData.newGamePlusUnlocked);
 
             await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
                 wallet_address: walletLower,
