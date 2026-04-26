@@ -70,6 +70,16 @@ Deno.serve(async (req) => {
         // through the developer's payment key and returns a real transaction hash.
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
+        // Look up unit price BEFORE purchase so we can pass paymentAmount
+        // (OmenX only executes on-chain when paymentAmount > 0)
+        const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKey);
+        if (!unitPrice || unitPrice <= 0) {
+            const sampleKeys = skuPriceCache ? Object.keys(skuPriceCache).slice(0, 5) : [];
+            console.error('[purchaseSku] Unknown SKU price for:', skuId, 'cache size:', skuPriceCache ? Object.keys(skuPriceCache).length : 'null', 'sample keys:', sampleKeys);
+            return Response.json({ error: 'SKU price not configured', skuId, cacheSize: skuPriceCache ? Object.keys(skuPriceCache).length : 0, sampleKeys }, { status: 500 });
+        }
+        const totalAmount = unitPrice * quantity;
+
         let purchaseData;
         try {
             purchaseData = await sdk.createPurchase({
@@ -77,6 +87,8 @@ Deno.serve(async (req) => {
                 skuId,
                 quantity,
                 idempotencyKey,
+                paymentCurrency: 'OMENX',
+                paymentAmount: totalAmount,
             });
         } catch (err) {
             const msg = err?.message || String(err);
@@ -86,7 +98,7 @@ Deno.serve(async (req) => {
         }
 
         console.log('[purchaseSku] FULL OmenX response:', JSON.stringify(purchaseData));
-        const txHash = purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.tx_id || purchaseData?.txId || purchaseData?.hash || null;
+        const txHash = purchaseData?.transactionId || purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.paymentTxHash || null;
         const status = purchaseData?.status || 'unknown';
         console.log(`[purchaseSku] OmenX response status=${status} txHash=${txHash || 'NONE'}`);
         if (status !== 'confirmed') {
@@ -96,15 +108,6 @@ Deno.serve(async (req) => {
         if (!txHash) {
             console.warn('[purchaseSku] WARNING: Confirmed but no txHash — SKU may be off-chain. Full response:', JSON.stringify(purchaseData).slice(0, 500));
         }
-
-        // Look up the price from cached SKU catalog (server-truth, set in dev portal)
-        const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKey);
-        if (!unitPrice || unitPrice <= 0) {
-            const sampleKeys = skuPriceCache ? Object.keys(skuPriceCache).slice(0, 5) : [];
-            console.error('[purchaseSku] Unknown SKU price for:', skuId, 'cache size:', skuPriceCache ? Object.keys(skuPriceCache).length : 'null', 'sample keys:', sampleKeys);
-            return Response.json({ error: 'SKU price not configured', skuId, cacheSize: skuPriceCache ? Object.keys(skuPriceCache).length : 0, sampleKeys }, { status: 500 });
-        }
-        const totalAmount = unitPrice * quantity;
 
         const { week_id, season_id } = getCurrentPeriodIds();
 
