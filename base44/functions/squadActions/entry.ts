@@ -80,6 +80,13 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'You are already in a squad' }, { status: 400 });
             }
 
+            // Re-check immediately before create to close the race window where two
+            // simultaneous join requests both pass the filter check above.
+            const raceCheck = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
+            if (raceCheck.length > 0) {
+                return Response.json({ error: 'You are already in a squad' }, { status: 400 });
+            }
+
             const member = await base44.asServiceRole.entities.SquadMember.create({
                 squad_id: squadId,
                 wallet_address: walletAddress,
