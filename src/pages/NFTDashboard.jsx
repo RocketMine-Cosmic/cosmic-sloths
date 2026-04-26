@@ -8,7 +8,8 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
-import { subscribePlayerData } from '@/lib/playerDataCache';
+import { subscribePlayerData, refreshNFTs, getNFTCooldownEnd } from '@/lib/playerDataCache';
+import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
 
 export default function NFTDashboard({ isCarousel }) {
     const navigate = useNavigate();
@@ -72,6 +73,14 @@ export default function NFTDashboard({ isCarousel }) {
                             NFT COLLECTION
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">View your NFTs and exclusive perks.</p>
+                        <div className="mt-2 md:mt-3">
+                            <RefreshOmenXDataButton
+                                label="Refresh NFTs"
+                                title="Refresh NFT inventory from OmenX"
+                                onRefresh={refreshNFTs}
+                                getCooldownEnd={getNFTCooldownEnd}
+                            />
+                        </div>
                     </div>
                     <CurrencyHeader />
                 </header>

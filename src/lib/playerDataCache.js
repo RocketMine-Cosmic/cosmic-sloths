@@ -1,49 +1,53 @@
 import { base44 } from '@/api/base44Client';
 
 // ─────────────────────────────────────────────────────────
-// Player data cache:
-//   • BALANCE  — live OMENX balance, refreshed regularly (15min TTL,
-//                 force-refreshable after purchases via refreshBalance()).
-//   • STATIC   — VIP level + NFTs. These rarely change, so we cache for
-//                 24h and only refetch on explicit user action via
-//                 refreshStaticPlayerData() (tied to the Profile refresh
-//                 button). VIP level never decreases.
+// Player data cache. Three independent data streams:
+//   • BALANCE — live OMENX balance, 15min auto-refresh + post-purchase forced refresh.
+//   • VIP     — VIP level. Rarely changes & never decreases.
+//                Manual refresh only via Profile button (24h cooldown).
+//   • NFTs    — NFT inventory. Manual refresh only via NFT Dashboard
+//                button (24h cooldown).
+// VIP and NFT have SEPARATE cooldowns so users can refresh either independently.
 // ─────────────────────────────────────────────────────────
 
 const BALANCE_TTL = 15 * 60 * 1000;          // 15 min
-const STATIC_TTL  = 24 * 60 * 60 * 1000;     // 24 h
+const VIP_COOLDOWN = 24 * 60 * 60 * 1000;    // 24 h
+const NFT_COOLDOWN = 24 * 60 * 60 * 1000;    // 24 h
 
 // ── Persistence helpers ──────────────────────────────────
-function loadJSON(key, store = localStorage) {
-    try { return JSON.parse(store.getItem(key)); } catch { return null; }
+function loadJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
 }
-function saveJSON(key, value, store = localStorage) {
-    try { store.setItem(key, JSON.stringify(value)); } catch {}
+function saveJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
 const persistedBalance = loadJSON('omenx_balance_cache');
-const persistedStatic  = loadJSON('omenx_static_cache');
+const persistedVip     = loadJSON('omenx_vip_cache');
+const persistedNfts    = loadJSON('omenx_nft_cache');
 
 // ── State ────────────────────────────────────────────────
 let cachedData = null; // { balance, vipLevel, nfts, user }
 const listeners = new Set();
 let inFlightBalance = null;
-let inFlightStatic = null;
+let inFlightVip = null;
+let inFlightNfts = null;
 let lastBalanceFetchAt = persistedBalance?.timestamp || 0;
-let lastStaticFetchAt = persistedStatic?.timestamp || 0;
+let lastVipFetchAt     = persistedVip?.timestamp || 0;
+let lastNftFetchAt     = persistedNfts?.timestamp || 0;
 let scheduledBalanceTimer = null;
 let refreshBalanceTimer = null;
 let userFetched = false;
 
 // Seed from persisted caches immediately (no flicker)
-if (persistedBalance || persistedStatic) {
+if (persistedBalance || persistedVip || persistedNfts) {
     cachedData = {
         balance: persistedBalance?.balance ?? 0,
-        vipLevel: persistedStatic?.vipLevel ?? 0,
-        nfts: persistedStatic?.nfts ?? [],
+        vipLevel: persistedVip?.vipLevel ?? 0,
+        nfts: persistedNfts?.nfts ?? [],
     };
     // Mirror NFTs to legacy localStorage key consumed by NFTPerks at game-start.
-    if (persistedStatic?.nfts) saveJSON('omenx_nft_data', persistedStatic.nfts);
+    if (persistedNfts?.nfts) saveJSON('omenx_nft_data', persistedNfts.nfts);
 }
 
 function getAuthData() {
@@ -85,30 +89,49 @@ async function fetchBalance(force = false) {
     return inFlightBalance;
 }
 
-// ── Static (VIP + NFT) fetch — manual / 24h cooldown ─────
-async function fetchStatic(force = false) {
-    if (inFlightStatic) return inFlightStatic;
-    if (!force && Date.now() - lastStaticFetchAt < STATIC_TTL) return;
-
+// ── VIP fetch (manual, 24h cooldown) ─────────────────────
+async function fetchVip() {
+    if (inFlightVip) return inFlightVip;
     const auth = getAuthData();
-    if (!auth?.walletAddress) { applyData({ vipLevel: 0, nfts: [] }); return; }
+    if (!auth?.walletAddress) return;
 
-    inFlightStatic = (async () => {
+    inFlightVip = (async () => {
         try {
-            const res = await base44.functions.invoke('getStaticPlayerData', {});
+            const res = await base44.functions.invoke('getVipLevel', {});
             const vipLevel = res.data?.vipLevel ?? 0;
-            const nfts = res.data?.nfts ?? [];
-            lastStaticFetchAt = Date.now();
-            saveJSON('omenx_static_cache', { vipLevel, nfts, timestamp: lastStaticFetchAt });
-            saveJSON('omenx_nft_data', nfts);
-            applyData({ vipLevel, nfts });
+            lastVipFetchAt = Date.now();
+            saveJSON('omenx_vip_cache', { vipLevel, timestamp: lastVipFetchAt });
+            applyData({ vipLevel });
         } catch (e) {
-            console.error('[playerDataCache] static fetch failed:', e?.message);
+            console.error('[playerDataCache] vip fetch failed:', e?.message);
         } finally {
-            inFlightStatic = null;
+            inFlightVip = null;
         }
     })();
-    return inFlightStatic;
+    return inFlightVip;
+}
+
+// ── NFT fetch (manual, 24h cooldown) ─────────────────────
+async function fetchNfts() {
+    if (inFlightNfts) return inFlightNfts;
+    const auth = getAuthData();
+    if (!auth?.walletAddress) return;
+
+    inFlightNfts = (async () => {
+        try {
+            const res = await base44.functions.invoke('getNFTs', {});
+            const nfts = res.data?.nfts ?? [];
+            lastNftFetchAt = Date.now();
+            saveJSON('omenx_nft_cache', { nfts, timestamp: lastNftFetchAt });
+            saveJSON('omenx_nft_data', nfts);
+            applyData({ nfts });
+        } catch (e) {
+            console.error('[playerDataCache] nft fetch failed:', e?.message);
+        } finally {
+            inFlightNfts = null;
+        }
+    })();
+    return inFlightNfts;
 }
 
 // User profile — local-only (read from omenx_auth_data) — no network.
@@ -141,8 +164,9 @@ function loadUserDataLocal() {
 
 export function fetchPlayerData(force = false) {
     // Initial / general-purpose load:
-    //  • balance refreshes per its TTL
-    //  • static (VIP + NFTs) only fetches if cache is missing / stale (24h)
+    //  • balance refreshes per its 15-min TTL
+    //  • VIP + NFTs auto-fetch ONCE if no cached value yet (first login),
+    //    otherwise only refresh via manual buttons.
     if (force) {
         if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
         lastBalanceFetchAt = 0;
@@ -156,7 +180,8 @@ export function fetchPlayerData(force = false) {
             fetchBalance();
         }, jitter);
     }
-    fetchStatic(); // respects 24h TTL
+    if (lastVipFetchAt === 0) fetchVip();
+    if (lastNftFetchAt === 0) fetchNfts();
 }
 
 let storageListenerAttached = false;
@@ -176,19 +201,22 @@ export function subscribePlayerData(fn) {
         storageListenerAttached = true;
         window.addEventListener('storage', (e) => {
             if (e.key === 'omenx_auth_data' && e.storageArea === localStorage) {
-                // New login — clear caches and re-fetch.
+                // New login — clear ALL caches and re-fetch.
                 lastBalanceFetchAt = 0;
-                lastStaticFetchAt = 0;
+                lastVipFetchAt = 0;
+                lastNftFetchAt = 0;
                 userFetched = false;
                 cachedData = null;
                 try {
                     localStorage.removeItem('omenx_balance_cache');
-                    localStorage.removeItem('omenx_static_cache');
+                    localStorage.removeItem('omenx_vip_cache');
+                    localStorage.removeItem('omenx_nft_cache');
                 } catch {}
                 if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
                 loadUserDataLocal();
                 fetchBalance(true);
-                fetchStatic(true);
+                fetchVip();
+                fetchNfts();
             }
         });
     }
@@ -205,17 +233,20 @@ export function refreshBalance() {
     }, 2000);
 }
 
-// Manual refresh of VIP + NFTs (Profile page button).
-// Returns the next available refresh timestamp (Date.now() + 24h) on success,
-// or the existing cooldown end time if still on cooldown.
-export async function refreshStaticPlayerData() {
-    const cooldownEnd = lastStaticFetchAt + STATIC_TTL;
+// Manual VIP refresh — Profile page button. Returns next cooldown end.
+export async function refreshVipLevel() {
+    const cooldownEnd = lastVipFetchAt + VIP_COOLDOWN;
     if (Date.now() < cooldownEnd) return { ok: false, cooldownEnd };
-    await fetchStatic(true);
-    return { ok: true, cooldownEnd: lastStaticFetchAt + STATIC_TTL };
+    await fetchVip();
+    return { ok: true, cooldownEnd: lastVipFetchAt + VIP_COOLDOWN };
 }
+export function getVipCooldownEnd() { return lastVipFetchAt + VIP_COOLDOWN; }
 
-// Read-only accessor for cooldown (used by the Profile UI to show timer).
-export function getStaticRefreshCooldownEnd() {
-    return lastStaticFetchAt + STATIC_TTL;
+// Manual NFT refresh — NFT Dashboard button. Returns next cooldown end.
+export async function refreshNFTs() {
+    const cooldownEnd = lastNftFetchAt + NFT_COOLDOWN;
+    if (Date.now() < cooldownEnd) return { ok: false, cooldownEnd };
+    await fetchNfts();
+    return { ok: true, cooldownEnd: lastNftFetchAt + NFT_COOLDOWN };
 }
+export function getNFTCooldownEnd() { return lastNftFetchAt + NFT_COOLDOWN; }

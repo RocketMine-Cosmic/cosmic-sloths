@@ -16,6 +16,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
 import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
+import { refreshVipLevel, getVipCooldownEnd } from '@/lib/playerDataCache';
 
 
 export default function Profile({ isCarousel }) {
@@ -375,7 +376,12 @@ export default function Profile({ isCarousel }) {
                                 <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Joined</div>
                                 <div className="text-sm text-slate-300">{moment(user?.created_date).format('MMMM Do YYYY')}</div>
                             </div>
-                            <RefreshOmenXDataButton />
+                            <RefreshOmenXDataButton
+                                label="Refresh VIP"
+                                title="Refresh VIP level from OmenX"
+                                onRefresh={refreshVipLevel}
+                                getCooldownEnd={getVipCooldownEnd}
+                            />
                         </div>
                     </div>
 
