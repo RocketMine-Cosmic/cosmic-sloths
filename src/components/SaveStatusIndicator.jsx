@@ -19,7 +19,15 @@ export default function SaveStatusIndicator() {
     useEffect(() => {
         const clearHide = () => { if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; } };
 
-        const onPending = () => { clearHide(); setStatus('pending'); };
+        const onPending = () => {
+            clearHide();
+            setStatus('pending');
+            // Auto-clear after 5s if no sync is actually triggered (e.g. user not signed in,
+            // or saveUpdated fired during load — local-only save). Prevents the pill getting stuck.
+            hideTimerRef.current = setTimeout(() => {
+                setStatus(s => (s === 'pending' ? 'idle' : s));
+            }, 5000);
+        };
         const onSyncing = () => { clearHide(); setStatus('syncing'); };
         const onSaved = () => {
             clearHide();
