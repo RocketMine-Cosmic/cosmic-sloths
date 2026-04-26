@@ -15,6 +15,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
+import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
 
 
 export default function Profile({ isCarousel }) {
@@ -369,9 +370,12 @@ export default function Profile({ isCarousel }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-center md:text-right">
-                            <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Joined</div>
-                            <div className="text-sm text-slate-300">{moment(user?.created_date).format('MMMM Do YYYY')}</div>
+                        <div className="text-center md:text-right flex flex-col items-center md:items-end gap-2">
+                            <div>
+                                <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Joined</div>
+                                <div className="text-sm text-slate-300">{moment(user?.created_date).format('MMMM Do YYYY')}</div>
+                            </div>
+                            <RefreshOmenXDataButton />
                         </div>
                     </div>
 
