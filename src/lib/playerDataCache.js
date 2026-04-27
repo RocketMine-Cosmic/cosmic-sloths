@@ -216,7 +216,11 @@ export function subscribePlayerData(fn) {
 
     if (listeners.size === 1) {
         loadUserDataLocal();
-        if (cachedData === null && !inFlightBalance && !scheduledBalanceTimer) {
+        // Always kick off a fetch on first subscribe — fetchBalance's TTL guard
+        // will skip the network call if the persisted cache is still fresh.
+        // Without this, users with a persisted (stale) localStorage balance
+        // never refetch until the next auth event.
+        if (!inFlightBalance && !scheduledBalanceTimer) {
             fetchPlayerData();
         }
     }
