@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+import SlideErrorBoundary from '../components/SlideErrorBoundary';
 
 // Lazy-load each carousel slide. Only the active slide + its immediate
 // neighbors are mounted at any time — this keeps initial bundle small
@@ -57,7 +58,9 @@ function LazySlide({ children, shouldMount }) {
     return (
         <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
             {hasMounted ? (
-                <Suspense fallback={<SlideFallback />}>{children}</Suspense>
+                <SlideErrorBoundary>
+                    <Suspense fallback={<SlideFallback />}>{children}</Suspense>
+                </SlideErrorBoundary>
             ) : null}
         </div>
     );
