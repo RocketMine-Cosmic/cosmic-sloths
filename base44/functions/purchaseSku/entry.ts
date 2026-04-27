@@ -22,13 +22,33 @@ let skuPriceCache = null;
 let skuPriceCacheExpiresAt = 0;
 const SKU_CACHE_TTL = 10 * 60 * 1000;
 
-async function getSkuPrice(skuId, apiBaseUrl, apiKey) {
+// Load balance across multiple payment API keys (each 100 req/min). Returns a shuffled array
+// so callers pick a different key per request and can retry on rate-limit (429).
+function getPaymentKeys() {
+    const keys = [
+        Deno.env.get('OMENX_PAYMENT_API_KEY'),
+        Deno.env.get('OMENX_PAYMENT_API_KEY_2'),
+        Deno.env.get('OMENX_PAYMENT_API_KEY_3'),
+        Deno.env.get('OMENX_PAYMENT_API_KEY_4'),
+    ].filter(Boolean);
+    return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
+}
+
+async function getSkuPrice(skuId, apiBaseUrl, apiKeys) {
     const now = Date.now();
     if (!skuPriceCache || now >= skuPriceCacheExpiresAt) {
-        const res = await fetch(`${apiBaseUrl}/v1/products`, {
-            headers: { 'Authorization': `Bearer ${apiKey}` },
-        });
-        if (!res.ok) throw new Error(`Failed to fetch SKU catalog: HTTP ${res.status}`);
+        let res, lastStatus = 0;
+        for (const key of apiKeys) {
+            res = await fetch(`${apiBaseUrl}/v1/products`, {
+                headers: { 'Authorization': `Bearer ${key}` },
+            });
+            if (res.ok) break;
+            lastStatus = res.status;
+            // Only retry on rate-limit / server errors
+            if (res.status !== 429 && res.status < 500) break;
+            console.warn('[purchaseSku] catalog HTTP', res.status, '— trying next key');
+        }
+        if (!res || !res.ok) throw new Error(`Failed to fetch SKU catalog: HTTP ${lastStatus || res?.status}`);
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data?.products || data?.skus || data?.items || []);
         skuPriceCache = {};
@@ -172,15 +192,16 @@ Deno.serve(async (req) => {
 
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
-        const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
+        const apiKeys = getPaymentKeys();
+        if (apiKeys.length === 0) {
+            return Response.json({ error: 'No payment API keys configured' }, { status: 500 });
+        }
         const idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
         console.log(`[purchaseSku] SKU: ${skuId} x${quantity} wallet: ${walletAddress} grant: ${grantInfo?.type || 'none'}`);
 
-        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
-
         // Look up unit price BEFORE purchase so paymentAmount > 0 triggers on-chain settle.
-        const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKey);
+        const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys);
         if (!unitPrice || unitPrice <= 0) {
             const sampleKeys = skuPriceCache ? Object.keys(skuPriceCache).slice(0, 5) : [];
             console.error('[purchaseSku] Unknown SKU price for:', skuId, 'cache size:', skuPriceCache ? Object.keys(skuPriceCache).length : 'null', 'sample keys:', sampleKeys);
@@ -212,20 +233,36 @@ Deno.serve(async (req) => {
         }
 
         // --- Charge OmenX ---
+        // Try each payment key in order; retry on 429 (rate-limit) only. Idempotency key
+        // ensures retries don't double-charge if a previous attempt actually went through.
         let purchaseData;
-        try {
-            purchaseData = await sdk.createPurchase({
-                playerWallet: walletAddress,
-                skuId,
-                quantity,
-                idempotencyKey,
-                paymentCurrency: 'OMENX',
-                paymentAmount: totalAmount,
-            });
-        } catch (err) {
-            const msg = err?.message || String(err);
-            if (msg.includes('429')) return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
-            console.error('[purchaseSku] SDK purchase failed:', msg);
+        let lastErr = null;
+        for (let i = 0; i < apiKeys.length; i++) {
+            const sdk = new OmenXServerSDK({ apiKey: apiKeys[i], apiBaseUrl });
+            try {
+                purchaseData = await sdk.createPurchase({
+                    playerWallet: walletAddress,
+                    skuId,
+                    quantity,
+                    idempotencyKey,
+                    paymentCurrency: 'OMENX',
+                    paymentAmount: totalAmount,
+                });
+                break; // success
+            } catch (err) {
+                lastErr = err;
+                const msg = err?.message || String(err);
+                if (msg.includes('429') && i < apiKeys.length - 1) {
+                    console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
+                    continue;
+                }
+                if (msg.includes('429')) return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
+                console.error('[purchaseSku] SDK purchase failed:', msg);
+                return Response.json({ error: msg }, { status: 500 });
+            }
+        }
+        if (!purchaseData) {
+            const msg = lastErr?.message || 'Purchase failed';
             return Response.json({ error: msg }, { status: 500 });
         }
 
