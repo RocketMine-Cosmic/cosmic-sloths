@@ -162,14 +162,18 @@ export const SaveManager = {
               weeklyUpgrades: mergeUpgrades(localData.weeklyUpgrades, cloudData.weeklyUpgrades || {}),
               seasonalUpgrades: mergeUpgrades(localData.seasonalUpgrades, cloudData.seasonalUpgrades || {}),
               unlockedRelics: [...new Set([...(localData.unlockedRelics || []), ...(cloudData.unlockedRelics || [])])],
-              equippedRelics: cloudData.equippedRelics || localData.equippedRelics || []
+              equippedRelics: cloudData.equippedRelics || localData.equippedRelics || [],
+              // Adopt the freshest known timestamp so subsequent syncSave calls don't
+              // immediately get flagged "stale" against this same cloudData.
+              updated_at: Math.max(Number(localData.updated_at || 0), Number(cloudData.updated_at || 0)) || Date.now()
             };
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
             window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
             console.log('[SaveManager] Deep merged upgrades (never losing paid upgrades)');
           } else {
-            localStorage.setItem('cosmic_sloth_save', JSON.stringify(cloudData));
-            window.dispatchEvent(new CustomEvent('saveUpdated', { detail: cloudData }));
+            const seeded = { ...cloudData, updated_at: Number(cloudData.updated_at) || Date.now() };
+            localStorage.setItem('cosmic_sloth_save', JSON.stringify(seeded));
+            window.dispatchEvent(new CustomEvent('saveUpdated', { detail: seeded }));
             console.log('[SaveManager] Loaded cloud save');
           }
         }
@@ -406,6 +410,11 @@ export const SaveManager = {
                     active: shuffled.slice(0, 3).map(b => ({ ...b, progress: 0, claimed: false })),
                     dailyMission: { ...shuffledMissions[0], progress: 0, claimed: false }
                 };
+                // Bump timestamp so this local mutation isn't flagged as "stale" by syncSave.
+                // Without this, every load() rewrites localStorage with an old updated_at,
+                // which made syncSave repeatedly choose cloud over fresh local edits
+                // (the root cause of "name not sticking, gold disappearing").
+                parsed.updated_at = Date.now();
                 localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
             } catch (e) {
                 console.error('[SaveManager] Failed to reset daily bounties:', e.message);
@@ -415,6 +424,7 @@ export const SaveManager = {
             try {
                 const shuffledMissions = [...DAILY_MISSIONS_POOL].sort(() => 0.5 - Math.random());
                 parsed.bounties.dailyMission = { ...shuffledMissions[0], progress: 0, claimed: false };
+                parsed.updated_at = Date.now();
                 localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
             } catch (e) {
                 console.error('[SaveManager] Failed to initialize daily mission:', e.message);
@@ -424,6 +434,7 @@ export const SaveManager = {
         if (parsed.rerollTokens !== undefined) {
             parsed.relicFragments = (parsed.relicFragments || 0) + parsed.rerollTokens;
             delete parsed.rerollTokens;
+            parsed.updated_at = Date.now();
             localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
         }
         

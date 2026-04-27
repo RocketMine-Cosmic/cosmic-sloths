@@ -135,14 +135,17 @@ export default function Profile({ isCarousel }) {
          await updateOmenXUser({ player_name: updatedName });
          setUser(prev => ({ ...prev, player_name: updatedName, data: { ...prev?.data, player_name: updatedName } }));
          setIsEditingName(false);
+         // Update local game save FIRST (with fresh updated_at via SaveManager.save) so
+         // the subsequent syncSave call sends a non-stale timestamp + the new name,
+         // instead of the server's anti-stale guard reverting it to the old cloud name.
+         const localSave = SaveManager.load();
+         localSave.pilotName = updatedName;
+         localSave.player_name = updatedName;
+         SaveManager.save(localSave);
          // Sync to DB via syncProfileName (Base44 session auth)
          base44.functions.invoke('syncProfileName', {
              newName: updatedName,
          }).catch(e => console.error('[Profile] name sync failed', e));
-         // Update local game save to match
-         const localSave = SaveManager.load();
-         localSave.pilotName = updatedName;
-         SaveManager.save(localSave);
          // Sync name to localStorage for other pages (e.g., Squads) to read
          const authData = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
          authData.player_name = updatedName;
