@@ -1,0 +1,79 @@
+// Per-character active mechanics (banners, decoys, hacks, sonic boom, phantom boost)
+// extracted from GameEngine.update().
+
+export function updateCharacterMechanics(engine, dt, dx, dy) {
+    if (engine.characterId === 'neobyte') {
+        engine.characterMechanics.bannerTimer += dt;
+        if (engine.characterMechanics.bannerTimer >= 15) {
+            engine.characterMechanics.bannerTimer = 0;
+            engine.characterMechanics.banners.push({ x: engine.player.x, y: engine.player.y, life: 10, radius: 150 });
+        }
+        let nearBanner = false;
+        engine.characterMechanics.banners = engine.characterMechanics.banners.filter(b => {
+            b.life -= dt;
+            if (Math.hypot(engine.player.x - b.x, engine.player.y - b.y) < b.radius) {
+                nearBanner = true;
+                if (engine.frameCount % 10 === 0) engine.addParticle(engine.player.x + (Math.random()-0.5)*40, engine.player.y + (Math.random()-0.5)*40, '#0066FF', 1, 'glow');
+            }
+            return b.life > 0;
+        });
+        engine.player.bannerBuff = nearBanner;
+    }
+
+    if (engine.characterId === 'holodrift' || engine.player.charAugments?.includes('glt_copy')) {
+        engine.characterMechanics.decoyTimer += dt;
+        const threshold = engine.characterId === 'holodrift' ? 20 : 60;
+        if (engine.characterMechanics.decoyTimer >= threshold) {
+            engine.characterMechanics.decoyTimer = 0;
+            engine.characterMechanics.decoys.push({ x: engine.player.x, y: engine.player.y, hp: 100, maxHp: 100, life: 15 });
+            engine.addParticle(engine.player.x, engine.player.y, engine.characterId === 'holodrift' ? '#00FA9A' : '#FF00FF', 15, 'spark', 1.5);
+        }
+        engine.characterMechanics.decoys = engine.characterMechanics.decoys.filter(d => d.hp > 0 && d.life > 0);
+        engine.characterMechanics.decoys.forEach(d => {
+            d.life -= dt;
+            if (engine.frameCount % 15 === 0) engine.addParticle(d.x, d.y, engine.characterId === 'holodrift' ? '#00FA9A' : '#FF00FF', 1, 'glow', 0.5);
+        });
+    }
+
+    if (engine.characterId === 'codebreaker') {
+        engine.characterMechanics.hackTimer += dt;
+        if (engine.characterMechanics.hackTimer >= 10) {
+            engine.characterMechanics.hackTimer = 0;
+            const targets = engine.enemies.filter(e => !e.isBoss && !e.hacked && Math.hypot(engine.player.x - e.x, engine.player.y - e.y) < 400);
+            if (targets.length > 0) {
+                const target = targets[Math.floor(Math.random() * targets.length)];
+                target.hacked = true;
+                target.color = '#39FF14';
+                engine.characterMechanics.hackedEnemies.push(target);
+                engine.addDamageText(target.x, target.y - 20, "HACKED", '#39FF14');
+                engine.addParticle(target.x, target.y, '#39FF14', 15, 'spark', 2.0);
+            }
+        }
+        engine.characterMechanics.hackedEnemies = engine.characterMechanics.hackedEnemies.filter(e => e.hp > 0 && engine.enemies.includes(e));
+    }
+
+    if (engine.characterId === 'skybyte') {
+        if (engine.player.isMoving) {
+            engine.characterMechanics.sonicCharge = Math.min(100, (engine.characterMechanics.sonicCharge || 0) + dt * 20);
+            const moveDot = dx * engine.characterMechanics.lastMoveDir.x + dy * engine.characterMechanics.lastMoveDir.y;
+            if (moveDot < 0.5 && engine.characterMechanics.sonicCharge >= 100) {
+                engine.triggerSonicBoom();
+            }
+        } else if (engine.characterMechanics.sonicCharge >= 100) {
+            engine.triggerSonicBoom();
+        }
+        if (dx !== 0 || dy !== 0) {
+            engine.characterMechanics.lastMoveDir = { x: dx, y: dy };
+        }
+        if (engine.characterMechanics.sonicCharge >= 100 && engine.frameCount % 5 === 0) {
+            engine.addParticle(engine.player.x, engine.player.y, '#00D4FF', 1, 'spark', 1.5);
+        }
+    }
+
+    if (engine.characterId === 'dataphantom') {
+        engine.player.phantomBoostTimer = (engine.player.phantomBoostTimer || 0) - dt;
+        if (engine.player.phantomBoostTimer > 0 && engine.frameCount % 5 === 0) {
+            engine.addParticle(engine.player.x, engine.player.y, '#98FF98', 1, 'glow', 1.0);
+        }
+    }
+}
