@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -6,23 +6,52 @@ import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import SlideErrorBoundary from '../components/SlideErrorBoundary';
 
-// Direct imports — lazy-loading caused stale-chunk fetch errors in the Vite
-// preview sandbox (modules requested at an old ?t=... timestamp that no longer
-// exists after HMR). The shouldMount gating below still prevents off-screen
-// slides from running their effects / API calls.
-import MainMenu from './MainMenu';
-import Hub from './Hub';
-import Dailys from './Dailys';
-import Upgrades from './Upgrades';
-import LeaderboardPage from './LeaderboardPage';
-import Squads from './Squads';
-import Bestiary from './Bestiary';
-import SynergyCodex from './SynergyCodex';
-import Mastery from './Mastery';
-import LeviathanTrials from './LeviathanTrials';
-import GlobalRaid from './GlobalRaid';
-import NFTDashboard from './NFTDashboard';
-import Profile from './Profile';
+// Lazy-import with retry: when Vite's HMR invalidates a module mid-session,
+// the browser may request the OLD ?t=... timestamp and get a "Failed to fetch
+// dynamically imported module" error. Reloading the page once recovers it.
+const lazyWithRetry = (importer) => React.lazy(async () => {
+    try {
+        return await importer();
+    } catch (err) {
+        const msg = String(err?.message || err);
+        const isChunkErr = msg.includes('Failed to fetch dynamically imported module')
+            || msg.includes('Importing a module script failed');
+        // Use sessionStorage to avoid an infinite reload loop.
+        const reloadedKey = 'playcarousel_chunk_reloaded';
+        if (isChunkErr && !sessionStorage.getItem(reloadedKey)) {
+            sessionStorage.setItem(reloadedKey, '1');
+            window.location.reload();
+            // Return a placeholder while the reload is in flight.
+            return { default: () => null };
+        }
+        throw err;
+    }
+});
+
+const MainMenu = lazyWithRetry(() => import('./MainMenu'));
+const Hub = lazyWithRetry(() => import('./Hub'));
+const Dailys = lazyWithRetry(() => import('./Dailys'));
+const Upgrades = lazyWithRetry(() => import('./Upgrades'));
+const LeaderboardPage = lazyWithRetry(() => import('./LeaderboardPage'));
+const Squads = lazyWithRetry(() => import('./Squads'));
+const Bestiary = lazyWithRetry(() => import('./Bestiary'));
+const SynergyCodex = lazyWithRetry(() => import('./SynergyCodex'));
+const Mastery = lazyWithRetry(() => import('./Mastery'));
+const LeviathanTrials = lazyWithRetry(() => import('./LeviathanTrials'));
+const GlobalRaid = lazyWithRetry(() => import('./GlobalRaid'));
+const NFTDashboard = lazyWithRetry(() => import('./NFTDashboard'));
+const Profile = lazyWithRetry(() => import('./Profile'));
+
+// Clear the reload flag once we successfully render.
+if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('playcarousel_chunk_reloaded');
+}
+
+const SlideFallback = () => (
+    <div className="w-full h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+);
 
 const SLIDE_LABELS = [
     { name: 'Main Menu', color: 'text-white' },
@@ -53,7 +82,9 @@ function LazySlide({ children, shouldMount }) {
     return (
         <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
             {hasMounted ? (
-                <SlideErrorBoundary>{children}</SlideErrorBoundary>
+                <SlideErrorBoundary>
+                    <Suspense fallback={<SlideFallback />}>{children}</Suspense>
+                </SlideErrorBoundary>
             ) : null}
         </div>
     );
