@@ -118,28 +118,28 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
             </div>
 
             {/* Floating Squad ULT buttons (bottom-right) — Lite & Full tiers */}
-            <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 flex flex-col gap-2 pointer-events-auto z-40">
+            <div className="fixed bottom-24 md:bottom-6 right-2 md:right-6 flex flex-col gap-1.5 md:gap-2 pointer-events-auto z-40">
                 <button
                     id="squad-ult-lite-btn"
                     onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate('lite'); }}
                     disabled={omenxBalance < 5}
-                    className="bg-[#0b0416]/90 px-3 py-2 md:px-4 md:py-3 rounded-xl border-2 border-purple-500/80 hover:bg-purple-900 hover:border-purple-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                    className="bg-[#0b0416]/90 px-2 py-1 md:px-4 md:py-3 rounded-lg md:rounded-xl border md:border-2 border-purple-500/80 hover:bg-purple-900 hover:border-purple-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_10px_rgba(168,85,247,0.25)] md:shadow-[0_0_15px_rgba(168,85,247,0.3)]"
                     style={{ touchAction: 'none' }}
                     title="Squad Lite — capped clone power (5 OMENX)"
                 >
-                    <span className="text-xs md:text-sm font-black text-purple-300 tracking-widest uppercase">ULT LITE</span>
-                    <span className="text-[10px] md:text-xs font-bold text-slate-300">5 OMENX</span>
+                    <span className="text-[10px] md:text-sm font-black text-purple-300 tracking-wider md:tracking-widest uppercase leading-tight">ULT LITE</span>
+                    <span className="text-[8px] md:text-xs font-bold text-slate-300 leading-tight">5 OMENX</span>
                 </button>
                 <button
                     id="squad-ult-full-btn"
                     onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate('full'); }}
                     disabled={omenxBalance < 10}
-                    className="bg-[#0b0416]/90 px-3 py-2 md:px-4 md:py-3 rounded-xl border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_15px_rgba(217,70,239,0.3)]"
+                    className="bg-[#0b0416]/90 px-2 py-1 md:px-4 md:py-3 rounded-lg md:rounded-xl border md:border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_10px_rgba(217,70,239,0.25)] md:shadow-[0_0_15px_rgba(217,70,239,0.3)]"
                     style={{ touchAction: 'none' }}
                     title="Squad Ultimate — scales with your full upgrades (10 OMENX)"
                 >
-                    <span className="text-xs md:text-sm font-black text-fuchsia-300 tracking-widest uppercase">ULT FULL</span>
-                    <span className="text-[10px] md:text-xs font-bold text-slate-300">10 OMENX</span>
+                    <span className="text-[10px] md:text-sm font-black text-fuchsia-300 tracking-wider md:tracking-widest uppercase leading-tight">ULT FULL</span>
+                    <span className="text-[8px] md:text-xs font-bold text-slate-300 leading-tight">10 OMENX</span>
                 </button>
             </div>
 
