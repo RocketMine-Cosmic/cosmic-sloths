@@ -13,7 +13,7 @@ import { base44 } from '@/api/base44Client';
 
 const BALANCE_TTL = 15 * 60 * 1000;          // 15 min
 const VIP_COOLDOWN = 24 * 60 * 60 * 1000;    // 24 h
-const NFT_COOLDOWN = 24 * 60 * 60 * 1000;    // 24 h
+const NFT_COOLDOWN = 2 * 60 * 1000;          // 2 min — short cooldown so users can refresh after buying a new NFT
 
 // ── Persistence helpers ──────────────────────────────────
 function loadJSON(key) {
@@ -261,19 +261,6 @@ export function subscribePlayerData(fn) {
         // Listen on walletLinked CustomEvent instead, which fires reliably.
         window.addEventListener('walletLinked', onAuthChange);
 
-        // Auto-refresh balance when user returns to the tab — fixes stale OMENX
-        // values when users buy tokens / receive rewards in another tab.
-        // 30s minimum gap between refreshes to avoid hammering the API.
-        const FOCUS_REFRESH_MIN_GAP = 30 * 1000;
-        const onTabFocus = () => {
-            if (document.hidden) return;
-            const auth = getAuthData();
-            if (!auth?.walletAddress) return;
-            if (Date.now() - lastBalanceFetchAt < FOCUS_REFRESH_MIN_GAP) return;
-            fetchBalance(true);
-        };
-        document.addEventListener('visibilitychange', onTabFocus);
-        window.addEventListener('focus', onTabFocus);
     }
 
     return () => { listeners.delete(fn); };
