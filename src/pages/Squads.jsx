@@ -707,7 +707,7 @@ export default function Squads({ isCarousel }) {
                                 </div>
 
                                 {/* DESKTOP full left panel */}
-                                <div className="hidden md:flex w-80 flex-col gap-4 shrink-0">
+                                <div className="hidden md:flex w-80 flex-col gap-4 shrink-0 overflow-y-auto min-h-0 pr-1">
                                     <div className="bg-[#0b0416]/80 backdrop-blur-xl rounded-xl p-4" style={{ border: `2px solid ${lvlData.borderColor}`, boxShadow: `0 0 30px ${lvlData.glowColor}` }}>
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
