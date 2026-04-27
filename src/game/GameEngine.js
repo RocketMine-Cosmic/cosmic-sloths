@@ -290,8 +290,8 @@ export class GameEngine {
         this.animationId = requestAnimationFrame(this.loop.bind(this));
     }
 
-    triggerSquadUltimate() {
-        triggerSquadUltimate(this);
+    triggerSquadUltimate(tier) {
+        triggerSquadUltimate(this, tier);
     }
 
     triggerSonicBoom() {

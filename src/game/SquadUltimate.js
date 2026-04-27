@@ -1,15 +1,19 @@
 import { CHARACTERS } from './Constants';
 import { SFXManager } from './SFXManager';
 
-export function triggerSquadUltimate(engine) {
+export function triggerSquadUltimate(engine, tier = 'full') {
     const chars = engine.save.unlockedCharacters && engine.save.unlockedCharacters.length > 0 ? engine.save.unlockedCharacters : ['neobyte'];
     const cloneCharId = chars[Math.floor(Math.random() * chars.length)];
     const charData = CHARACTERS.find(c => c.id === cloneCharId) || CHARACTERS[0];
-    
-    engine.addDamageText(engine.player.x, engine.player.y - 60, "SQUAD ULTIMATE DEPLOYED!", '#a855f7');
-    engine.particleManager.createExplosion(engine.player.x, engine.player.y, '#a855f7', 2.0);
-    SFXManager.playLevelUp(); 
-    
+
+    const isLite = tier === 'lite';
+    const label = isLite ? "SQUAD LITE DEPLOYED!" : "SQUAD ULTIMATE DEPLOYED!";
+    const explosionScale = isLite ? 1.2 : 2.0;
+
+    engine.addDamageText(engine.player.x, engine.player.y - 60, label, '#a855f7');
+    engine.particleManager.createExplosion(engine.player.x, engine.player.y, '#a855f7', explosionScale);
+    SFXManager.playLevelUp();
+
     let playerImage = null;
     if (charData.image) { playerImage = new Image(); playerImage.src = charData.image; }
     let idleImage = null;
@@ -17,16 +21,23 @@ export function triggerSquadUltimate(engine) {
     let walkImage = null;
     if (charData.walkSprite) { walkImage = new Image(); walkImage.src = charData.walkSprite; }
 
+    // Lite tier: capped damage (no player upgrade scaling) and shorter duration.
+    // Full tier: scales with player's full upgrade stack — current behaviour.
+    const damageMult = isLite
+        ? (charData.damageMult || 1) * 1.0
+        : (charData.damageMult || 1) * engine.player.damageMult * 1.5;
+    const life = isLite ? 10 : 15;
+
     engine.squadClones = engine.squadClones || [];
     engine.squadClones.push({
         x: engine.player.x + (Math.random() - 0.5) * 100,
         y: engine.player.y + (Math.random() - 0.5) * 100,
         radius: 16,
-        life: 15,
+        life,
         charId: cloneCharId,
         color: charData.color,
         speed: charData.speed * 60,
-        damageMult: (charData.damageMult || 1) * engine.player.damageMult * 1.5,
+        damageMult,
         image: playerImage,
         idleImage: idleImage,
         walkImage: walkImage,

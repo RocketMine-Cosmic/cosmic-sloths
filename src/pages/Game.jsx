@@ -362,12 +362,15 @@ export default function Game() {
         }
     };
 
-    const handleSquadUltimate = () => {
-        if ((omenxBalance ?? 0) >= 4 && engineRef.current && !engineRef.current.isPaused) {
-            confirmPurchase(4, 'Squad Ultimate', () => {
+    const handleSquadUltimate = (tier = 'full') => {
+        const cost = tier === 'lite' ? 5 : 10;
+        const itemName = tier === 'lite' ? 'Squad Lite (capped power)' : 'Squad Ultimate (full power)';
+        const skuId = tier === 'lite' ? IN_GAME_SKUS.squadUltimateLite : IN_GAME_SKUS.squadUltimateFull;
+        if ((omenxBalance ?? 0) >= cost && engineRef.current && !engineRef.current.isPaused) {
+            confirmPurchase(cost, itemName, () => {
                 // Grant immediately, pay in background
-                engineRef.current.triggerSquadUltimate();
-                purchaseSku(IN_GAME_SKUS.squadUltimate);
+                engineRef.current.triggerSquadUltimate(tier);
+                purchaseSku(skuId);
                 refreshBalance();
             });
         }
