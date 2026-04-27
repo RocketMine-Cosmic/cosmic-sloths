@@ -20,7 +20,7 @@ import OmenXGate from '../components/game/OmenXGate';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 
-import { subscribePlayerData, ensureNftsFetched } from '@/lib/playerDataCache';
+import { subscribePlayerData, ensureNftsFetched, refreshBalance } from '@/lib/playerDataCache';
 
 function getOmenXAuth() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -636,6 +636,7 @@ export default function Hub({ isCarousel }) {
                                             newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
                                             SaveManager.save(newSave);
                                             setSave(newSave);
+                                            refreshBalance();
                                             toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
                                         } finally {
                                             setBuffPurchasing(false);

@@ -15,6 +15,7 @@ import { useCurrency } from '@/lib/CurrencyContext';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
+import { refreshBalance } from '@/lib/playerDataCache';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -169,6 +170,7 @@ export default function GlobalRaid({ isCarousel }) {
                 currentSave.extraRaidRuns[todayDate] = (currentSave.extraRaidRuns[todayDate] || 0) + 5;
                 SaveManager.save(currentSave);
                 setSave(currentSave);
+                refreshBalance();
                 toast({ title: 'Success', description: 'Bought 5 more Global Raid runs!' });
             } catch (err) {
                 console.error('[handleBuyMoreRuns] purchase failed:', err);
