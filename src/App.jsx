@@ -7,6 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 import OmenXCallback from './pages/OmenXCallback';
 import PlayCarousel from './pages/PlayCarousel';
 import Game from './pages/Game';
+import Bestiary from './pages/Bestiary';
 import { SaveManager } from './game/SaveManager';
 
 // Heavy pages — lazy loaded for faster initial bundle
@@ -18,7 +19,6 @@ const Info = React.lazy(() => import('./pages/Info'));
 const Credits = React.lazy(() => import('./pages/Credits'));
 const Achievements = React.lazy(() => import('./pages/Achievements'));
 const Squads = React.lazy(() => import('./pages/Squads'));
-import Bestiary from './pages/Bestiary';
 const SynergyCodex = React.lazy(() => import('./pages/SynergyCodex'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const NFTDashboard = React.lazy(() => import('./pages/NFTDashboard'));
