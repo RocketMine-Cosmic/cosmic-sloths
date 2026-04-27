@@ -11,7 +11,7 @@ import { base44 } from '@/api/base44Client';
 // VIP and NFT have SEPARATE cooldowns so users can refresh either independently.
 // ─────────────────────────────────────────────────────────
 
-const BALANCE_TTL = 15 * 60 * 1000;          // 15 min
+const BALANCE_TTL = 5 * 60 * 1000;           // 5 min — refetched only while tab is visible
 const VIP_COOLDOWN = 24 * 60 * 60 * 1000;    // 24 h
 const NFT_COOLDOWN = 12 * 60 * 60 * 1000;    // 12 h — protect upstream NFT API costs
 
@@ -188,13 +188,36 @@ export function fetchPlayerData(force = false) {
         fetchBalance(true);
         return;
     }
-    if (!scheduledBalanceTimer && !inFlightBalance) {
-        const jitter = 5000 + Math.floor(Math.random() * 5000);
-        scheduledBalanceTimer = setTimeout(() => {
-            scheduledBalanceTimer = null;
-            fetchBalance();
-        }, jitter);
-    }
+    // Honour TTL — fetchBalance() will no-op if cache is fresh.
+    fetchBalance();
+}
+
+// ── Visible-tab-only polling loop ────────────────────────
+// While the tab is visible, refetch balance every BALANCE_TTL.
+// When hidden, stop polling. When it becomes visible again,
+// fetch immediately (if cache is stale) and resume the loop.
+let pollTimer = null;
+function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(() => fetchBalance(), BALANCE_TTL);
+}
+function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+let visibilityListenerAttached = false;
+function attachVisibilityListener() {
+    if (visibilityListenerAttached) return;
+    visibilityListenerAttached = true;
+    const onVisibility = () => {
+        if (document.visibilityState === 'visible') {
+            fetchBalance(); // TTL-gated — only fetches if stale
+            startPolling();
+        } else {
+            stopPolling();
+        }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    if (document.visibilityState === 'visible') startPolling();
 }
 
 // Lazy fetchers — call on demand from pages that actually need this data.
@@ -216,13 +239,8 @@ export function subscribePlayerData(fn) {
 
     if (listeners.size === 1) {
         loadUserDataLocal();
-        // Always kick off a fetch on first subscribe — fetchBalance's TTL guard
-        // will skip the network call if the persisted cache is still fresh.
-        // Without this, users with a persisted (stale) localStorage balance
-        // never refetch until the next auth event.
-        if (!inFlightBalance && !scheduledBalanceTimer) {
-            fetchPlayerData();
-        }
+        fetchPlayerData();        // TTL-gated initial fetch
+        attachVisibilityListener(); // 5-min loop while tab is visible
     }
 
     if (!storageListenerAttached) {
