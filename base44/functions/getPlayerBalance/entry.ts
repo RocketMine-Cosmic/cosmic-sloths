@@ -15,17 +15,45 @@ Deno.serve(async (req) => {
         let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
 
-        const res = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
-            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
-        });
-        if (!res.ok) {
-            console.error('[getPlayerBalance] HTTP', res.status);
+        // Load balance across multiple balance API keys (each 100 req/min). Pick one at random
+        // per request so concurrent users distribute evenly; on rate-limit (429), try the next.
+        const apiKeys = [
+            Deno.env.get('OMENX_BALANCE_API_KEY'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_2'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_3'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_4'),
+        ].filter(Boolean);
+
+        if (apiKeys.length === 0) {
+            console.error('[getPlayerBalance] No balance API keys configured');
             return Response.json({ balance: 0 });
         }
-        const data = await res.json();
-        const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
-        const balance = parseFloat(omenxToken?.balance ?? '0');
-        return Response.json({ balance });
+
+        // Shuffle keys so retries hit different ones
+        const shuffled = apiKeys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
+
+        let lastStatus = 0;
+        for (const key of shuffled) {
+            const res = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
+                headers: { 'Authorization': `Bearer ${key}` },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+                const balance = parseFloat(omenxToken?.balance ?? '0');
+                return Response.json({ balance });
+            }
+            lastStatus = res.status;
+            // Only fall through to the next key on rate-limit / server errors. Other errors
+            // (e.g. 401/404) won't be fixed by trying another key — bail immediately.
+            if (res.status !== 429 && res.status < 500) {
+                console.error('[getPlayerBalance] HTTP', res.status, '— not retrying');
+                return Response.json({ balance: 0 });
+            }
+            console.warn('[getPlayerBalance] HTTP', res.status, '— trying next key');
+        }
+        console.error('[getPlayerBalance] All', shuffled.length, 'keys exhausted, last status:', lastStatus);
+        return Response.json({ balance: 0 });
     } catch (error) {
         console.error('[getPlayerBalance]', error.message);
         return Response.json({ balance: 0 });
