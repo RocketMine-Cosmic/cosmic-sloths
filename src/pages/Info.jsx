@@ -111,8 +111,8 @@ const TABS_CONTENT = {
 
             <SectionCard title="💎 In-Run Pickups" color="purple">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                    <PickupCard icon={<Gem className="w-8 h-8 fill-emerald-400 text-emerald-400" />} label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. Fill your XP bar to level up and pick upgrades." />
-                    <PickupCard icon={<Coins className="w-8 h-8 fill-yellow-500 text-yellow-500" />} label="Gold Coins" color="text-yellow-400" desc="Random enemy drops. Spent in the Sloth Lounge on upgrades." />
+                    <PickupCard icon={<Gem className="w-8 h-8 fill-emerald-400 text-emerald-400" />} label="XP Gems" color="text-emerald-400" desc="Dropped by every enemy. The icon tells you the value at a glance: shard (1-4), crystal (5-19), cluster (20-99), or glowing core (100+)." />
+                    <PickupCard icon={<Coins className="w-8 h-8 fill-yellow-500 text-yellow-500" />} label="Gold Drops" color="text-yellow-400" desc="Random enemy drops. The icon scales with value: single coin (1-9), coin stack (10-49), money bag (50-199), treasure chest (200-999), or pile of gold (1000+)." />
                     <PickupCard icon={<Puzzle className="w-8 h-8 fill-fuchsia-400 text-fuchsia-400" />} label="Relic Fragments" color="text-fuchsia-400" desc="Dropped by Bosses. Craft and upgrade Ancient Relics in the Sloth Lounge." />
                     <PickupCard icon="☢️" label="Nuke" color="text-red-400" desc="Instantly destroys all non-boss enemies on screen." />
                     <PickupCard icon="🧲" label="Magnet Surge" color="text-blue-400" desc="Instantly pulls all nearby XP and Gold to you." />
