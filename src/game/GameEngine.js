@@ -807,7 +807,7 @@ export class GameEngine {
             }
         }
 
-        if (this.isBossActive) return; // Prevent normal enemy spawns while boss is active
+        if (this.isBossActive || (this.postBossGraceUntil && this.time < this.postBossGraceUntil)) return; // Block normal spawns while boss active or in post-boss pickup grace (endless)
 
         const progress = this.arena.duration === Infinity ? this.time / 300 : Math.min(1, this.time / this.arena.duration);
         const effectiveProgress = Math.min(1, progress);
@@ -1271,7 +1271,7 @@ export class GameEngine {
                     }
 
                     this.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
-                    this.isBossActive = false;
+                    this.isBossActive = false; if (this.arena.duration === Infinity) { this.postBossGraceUntil = this.time + 5; this.addDamageText(this.player.x, this.player.y - 80, `5s — COLLECT DROPS!`, '#22d3ee'); }
                 } else {
                     const baseGoldChance = this.arena.duration === Infinity ? 0.20 : 0.35;
                     if (Math.random() < baseGoldChance + (this.player.luck * 0.02)) {
