@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -6,22 +6,23 @@ import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import SlideErrorBoundary from '../components/SlideErrorBoundary';
 
-// Lazy-load each carousel slide. Only the active slide + its immediate
-// neighbors are mounted at any time — this keeps initial bundle small
-// and prevents 13 pages from firing entity API calls simultaneously.
-const MainMenu = React.lazy(() => import('./MainMenu'));
-const Hub = React.lazy(() => import('./Hub'));
-const Dailys = React.lazy(() => import('./Dailys'));
-const Upgrades = React.lazy(() => import('./Upgrades'));
-const LeaderboardPage = React.lazy(() => import('./LeaderboardPage'));
-const Squads = React.lazy(() => import('./Squads'));
-const Bestiary = React.lazy(() => import('./Bestiary'));
-const SynergyCodex = React.lazy(() => import('./SynergyCodex'));
-const Mastery = React.lazy(() => import('./Mastery'));
-const LeviathanTrials = React.lazy(() => import('./LeviathanTrials'));
-const GlobalRaid = React.lazy(() => import('./GlobalRaid'));
-const NFTDashboard = React.lazy(() => import('./NFTDashboard'));
-const Profile = React.lazy(() => import('./Profile'));
+// Direct imports — lazy-loading caused stale-chunk fetch errors in the Vite
+// preview sandbox (modules requested at an old ?t=... timestamp that no longer
+// exists after HMR). The shouldMount gating below still prevents off-screen
+// slides from running their effects / API calls.
+import MainMenu from './MainMenu';
+import Hub from './Hub';
+import Dailys from './Dailys';
+import Upgrades from './Upgrades';
+import LeaderboardPage from './LeaderboardPage';
+import Squads from './Squads';
+import Bestiary from './Bestiary';
+import SynergyCodex from './SynergyCodex';
+import Mastery from './Mastery';
+import LeviathanTrials from './LeviathanTrials';
+import GlobalRaid from './GlobalRaid';
+import NFTDashboard from './NFTDashboard';
+import Profile from './Profile';
 
 const SLIDE_LABELS = [
     { name: 'Main Menu', color: 'text-white' },
@@ -39,12 +40,6 @@ const SLIDE_LABELS = [
     { name: 'Pilot Profile', color: 'text-violet-300' },
 ];
 
-const SlideFallback = () => (
-    <div className="w-full h-full flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-);
-
 // Renders a slide ONLY when it's active or adjacent. Off-screen slides stay
 // as empty divs (carousel layout preserved) until the user navigates near them.
 function LazySlide({ children, shouldMount }) {
@@ -58,9 +53,7 @@ function LazySlide({ children, shouldMount }) {
     return (
         <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
             {hasMounted ? (
-                <SlideErrorBoundary>
-                    <Suspense fallback={<SlideFallback />}>{children}</Suspense>
-                </SlideErrorBoundary>
+                <SlideErrorBoundary>{children}</SlideErrorBoundary>
             ) : null}
         </div>
     );
