@@ -107,15 +107,40 @@ export default function Upgrades({ isCarousel }) {
         return () => clearInterval(interval);
     }, [activeCategory]);
 
+    const friendlyError = (errMsg) => {
+        const m = (errMsg || '').toLowerCase();
+        if (m.includes('429') || m.includes('rate')) return 'Server is busy. Please try again in a moment.';
+        if (m.includes('502') || m.includes('503') || m.includes('504') || m.includes('gateway') || m.includes('timeout') || m.includes('network')) return 'OMENX network is busy. Please try again in a moment.';
+        if (m.includes('not enough gold')) return "You don't have enough Gold for this.";
+        if (m.includes('not enough star fragments')) return "You don't have enough Star Fragments for this.";
+        if (m.includes('not enough') || m.includes('insufficient')) return "You don't have enough to buy this.";
+        if (m.includes('already unlocked') || m.includes('already owned')) return 'You already own this upgrade.';
+        if (m.includes('prerequisite') || m.includes('path conflict')) return 'You need to unlock the previous tier first.';
+        if (m.includes('character not unlocked')) return 'You need to unlock this character first.';
+        if (m.includes('level mismatch')) return 'Your save is out of sync — please reload the page and try again.';
+        if (m.includes('playersave not found')) return 'Save not loaded yet — please wait a moment and try again.';
+        if (m.includes('unauthorized') || m.includes('401')) return 'Please sign in again to continue.';
+        if (m.includes('daily cap')) return "You've hit today's limit for this action.";
+        return 'Something went wrong. Please try again.';
+    };
+
     const spendGold = async (grantInfo) => {
         setPurchaseError(null);
         setPurchasing(true);
         try {
-            const res = await base44.functions.invoke('spendGold', { grantInfo });
+            let res;
+            try {
+                res = await base44.functions.invoke('spendGold', { grantInfo });
+            } catch (e) {
+                const status = e?.response?.status;
+                const serverMsg = e?.response?.data?.error || e?.message || '';
+                setPurchaseError(friendlyError(`${status || ''} ${serverMsg}`));
+                throw e;
+            }
             const data = res.data;
             if (!data?.success) {
                 const errMsg = data?.error || 'Unknown error';
-                setPurchaseError(`Purchase failed: ${errMsg}`);
+                setPurchaseError(friendlyError(errMsg));
                 throw new Error(errMsg);
             }
             // Server returns full updated save_data — apply server-owned fields locally
@@ -144,14 +169,22 @@ export default function Upgrades({ isCarousel }) {
         setPurchaseError(null);
         setPurchasing(true);
         console.log('[Upgrades purchaseSku] CALLED with skuId:', skuId, 'grant:', grantInfo?.type);
-        if (!skuId) { setPurchaseError('No SKU mapping found for this item'); throw new Error('No SKU mapping'); }
+        if (!skuId) { setPurchaseError('Something went wrong. Please try again.'); throw new Error('No SKU mapping'); }
         const playerName = save.pilotName || 'Pilot';
-        const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName, grantInfo });
+        let res;
+        try {
+            res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName, grantInfo });
+        } catch (e) {
+            // Network / 5xx errors come through as thrown axios errors
+            const status = e?.response?.status;
+            const serverMsg = e?.response?.data?.error || e?.message || '';
+            setPurchaseError(friendlyError(`${status || ''} ${serverMsg}`));
+            throw e;
+        }
         const data = res.data;
         if (!data?.success) {
             const errMsg = data?.error || 'Unknown error';
-            const isThrottle = errMsg.includes('429') || errMsg.toLowerCase().includes('rate');
-            setPurchaseError(isThrottle ? 'Server is busy. Please try again in a moment.' : `Purchase failed: ${errMsg}`);
+            setPurchaseError(friendlyError(errMsg));
             throw new Error(errMsg);
         }
         // If server applied a grant, replace the relevant local save fields with server truth
@@ -294,10 +327,18 @@ export default function Upgrades({ isCarousel }) {
         setPurchaseError(null);
         setPurchasing(true);
         try {
-            const res = await base44.functions.invoke('craftRelic', { relicId: relic.id });
+            let res;
+            try {
+                res = await base44.functions.invoke('craftRelic', { relicId: relic.id });
+            } catch (e) {
+                const status = e?.response?.status;
+                const serverMsg = e?.response?.data?.error || e?.message || '';
+                setPurchaseError(friendlyError(`${status || ''} ${serverMsg}`));
+                return;
+            }
             const data = res.data;
             if (!data?.success) {
-                setPurchaseError(data?.error || 'Craft failed');
+                setPurchaseError(friendlyError(data?.error || ''));
                 return;
             }
             if (data.saveData) {
@@ -310,7 +351,7 @@ export default function Upgrades({ isCarousel }) {
             }
             SoundManager.playLevelUp();
         } catch (e) {
-            setPurchaseError(e.message || 'Craft failed');
+            setPurchaseError(friendlyError(e.message || ''));
         } finally {
             setPurchasing(false);
         }
