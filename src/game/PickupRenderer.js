@@ -1,3 +1,5 @@
+import { getGoldTier, getXpTier, drawGoldByTier, drawXpByTier } from './PickupTiers.js';
+
 export function drawPickups(ctx, pickups, time) {
     const sorted = [...pickups].sort((a, b) => {
         const order = { gold: 0, reroll: 1, xp: 2 };
@@ -8,125 +10,15 @@ export function drawPickups(ctx, pickups, time) {
         ctx.translate(p.x, p.y);
         
         if (p.type === 'xp') {
-            // Scale XP gem by its value: small (<5), medium (5-19), large (20+).
-            // Larger gems get a brighter inner color, an outer ring, and a subtle pulse.
-            const v = p.value || 1;
-            const tier = v >= 20 ? 2 : v >= 5 ? 1 : 0;
-            const sizes = [0.7, 1.0, 1.35][tier];
-            const glowR = [18, 24, 34][tier];
-            const innerColors = ['#ccffff', '#aaffff', '#ffffff'][tier];
-            const outerColors = ['#ffffff', '#ffffff', '#ffffaa'][tier];
-            const pulse = tier === 2 ? 1 + Math.sin(time * 6) * 0.08 : 1;
-            ctx.rotate(time * 2);
-            ctx.scale(sizes * pulse, sizes * pulse);
-
-            ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
-            grad.addColorStop(0, p.color);
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(0, 0, glowR, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Outer ring for big gems
-            if (tier === 2) {
-                ctx.strokeStyle = '#aaffff';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.arc(0, 0, 18, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.globalCompositeOperation = 'source-over';
-
-            ctx.fillStyle = outerColors;
-            ctx.beginPath();
-            ctx.moveTo(0, -14);
-            ctx.lineTo(7, 0);
-            ctx.lineTo(0, 14);
-            ctx.lineTo(-7, 0);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = innerColors;
-            ctx.beginPath();
-            ctx.moveTo(0, -7);
-            ctx.lineTo(3.5, 0);
-            ctx.lineTo(0, 7);
-            ctx.lineTo(-3.5, 0);
-            ctx.closePath();
-            ctx.fill();
+            // 4 tiers: shard (<5) → crystal (5-19) → cluster (20-99) → shard core (100+).
+            // Each tier is a *different shape* — not just bigger.
+            drawXpByTier(ctx, getXpTier(p.value || 1), time, p.color);
 
         } else if (p.type === 'gold') {
-            // Scale gold by value: small (<10), medium (10-49), large (50+).
-            // Big stacks get a wider glow, rotating sparkle, and slight pulse.
-            const v = p.value || 1;
-            const tier = v >= 50 ? 2 : v >= 10 ? 1 : 0;
-            const scale = [0.7, 1.0, 1.35][tier];
-            const glowR = [22, 28, 38][tier];
-            const glowAlpha = [0.45, 0.6, 0.85][tier];
-            const outerColor = ['#cc8800', '#ffaa00', '#ffd700'][tier];
-            const innerColor = ['#ffaa00', '#ffe100', '#fff685'][tier];
-            const pulse = tier === 2 ? 1 + Math.sin(time * 5) * 0.06 : 1;
-            const bounce = Math.sin(time * 6 + p.x) * 4;
-            ctx.translate(0, bounce);
-            ctx.rotate(Math.sin(time * 3 + p.y) * 0.3);
-            ctx.scale(scale * pulse, scale * pulse);
-
-            ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
-            grad.addColorStop(0, `rgba(255, 215, 0, ${glowAlpha})`);
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(0, 0, glowR, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.globalCompositeOperation = 'source-over';
-
-            ctx.fillStyle = outerColor;
-            ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const a = (Math.PI / 3) * i + Math.PI/2;
-                ctx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14);
-            }
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = innerColor;
-            ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const a = (Math.PI / 3) * i + Math.PI/2;
-                ctx.lineTo(Math.cos(a) * 10.5, Math.sin(a) * 10.5);
-            }
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.beginPath();
-            ctx.moveTo(-5, -7);
-            ctx.lineTo(2, -7);
-            ctx.lineTo(-2, 7);
-            ctx.lineTo(-9, 7);
-            ctx.closePath();
-            ctx.fill();
-
-            // Rotating sparkle on large stacks
-            if (tier === 2) {
-                ctx.save();
-                ctx.rotate(time * 2);
-                ctx.fillStyle = '#ffffff';
-                for (let i = 0; i < 4; i++) {
-                    const a = (Math.PI / 2) * i;
-                    const x = Math.cos(a) * 15;
-                    const y = Math.sin(a) * 15;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.restore();
-            }
+            // 5 tiers: coin (<10) → coin stack (10-49) → money bag (50-199)
+            //          → treasure chest (200-999) → pile of gold (1000+).
+            // Each tier is a different icon — silhouette tells you the value at a glance.
+            drawGoldByTier(ctx, getGoldTier(p.value || 1), time);
             
         } else if (p.type === 'fragment') {
             const bounce = Math.sin(time * 5 + p.x) * 3;

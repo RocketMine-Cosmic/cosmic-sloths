@@ -73,37 +73,61 @@ export class SFXManagerClass {
         osc.stop(this.audioContext.currentTime + duration);
     }
 
-    // XP pickup — pitch & richness scale with gem value
-    // Small (<5): quick high blip. Medium (5-19): two-note. Large (20+): three-note ascending chord with a sub-bass thump.
+    // XP pickup — sound matches the 4 visual tiers (shard / crystal / cluster / core).
     playPickup(value = 1) {
         if (this.throttle('pickup', 50)) return;
-        if (value >= 20) {
-            this.playTone(600, 'sine', 0.12, 0.45);
-            setTimeout(() => this.playTone(900, 'sine', 0.14, 0.45), 35);
-            setTimeout(() => this.playTone(1400, 'sine', 0.18, 0.5), 80);
-            // Sub-bass for "weight"
-            this.playTone(180, 'triangle', 0.15, 0.3);
+        if (value >= 100) {
+            // Shard core — ethereal pad chord with sub-bass
+            this.playTone(180, 'triangle', 0.2, 0.35);
+            this.playTone(550, 'sine', 0.15, 0.4);
+            setTimeout(() => this.playTone(820, 'sine', 0.18, 0.45), 40);
+            setTimeout(() => this.playTone(1240, 'sine', 0.22, 0.5), 90);
+            setTimeout(() => this.playTone(1660, 'sine', 0.18, 0.35), 150);
+        } else if (value >= 20) {
+            // Cluster — three-note ascending
+            this.playTone(700, 'sine', 0.1, 0.4);
+            setTimeout(() => this.playTone(1050, 'sine', 0.12, 0.4), 35);
+            setTimeout(() => this.playTone(1500, 'sine', 0.16, 0.45), 80);
         } else if (value >= 5) {
+            // Crystal — two-note
             this.playTone(800, 'sine', 0.1, 0.4);
             setTimeout(() => this.playTone(1200, 'sine', 0.15, 0.4), 30);
         } else {
+            // Shard — quick high blip
             this.playTone(1100, 'sine', 0.06, 0.3);
         }
     }
 
-    // Gold pickup — coin chime that gets richer with value.
-    // Small (<10): single short coin. Medium (10-49): two-note. Large (50+): cascading three-note with sparkle.
+    // Gold pickup — sound matches the 5 visual tiers (coin / stack / bag / chest / pile).
     playGoldPickup(value = 1) {
         if (this.throttle('gold', 100)) return;
-        if (value >= 50) {
+        if (value >= 1000) {
+            // Pile — huge cascading shimmer + bass thump
+            this.playTone(220, 'triangle', 0.2, 0.4);
+            this.playTone(800, 'square', 0.08, 0.35);
+            setTimeout(() => this.playTone(1200, 'square', 0.1, 0.35), 40);
+            setTimeout(() => this.playTone(1700, 'square', 0.12, 0.4), 90);
+            setTimeout(() => this.playTone(2200, 'square', 0.15, 0.4), 140);
+            setTimeout(() => this.playTone(2800, 'sine', 0.18, 0.35), 200);
+            setTimeout(() => this.playTone(3400, 'sine', 0.12, 0.25), 280);
+        } else if (value >= 200) {
+            // Chest — solid thunk + cascading coins
+            this.playTone(280, 'triangle', 0.15, 0.35);
+            this.playTone(950, 'square', 0.08, 0.35);
+            setTimeout(() => this.playTone(1400, 'square', 0.1, 0.35), 50);
+            setTimeout(() => this.playTone(1900, 'square', 0.14, 0.35), 110);
+            setTimeout(() => this.playTone(2500, 'sine', 0.14, 0.3), 170);
+        } else if (value >= 50) {
+            // Bag — muffled jingle, 3 notes
             this.playTone(900, 'square', 0.08, 0.35);
             setTimeout(() => this.playTone(1300, 'square', 0.1, 0.35), 40);
             setTimeout(() => this.playTone(1800, 'square', 0.18, 0.4), 90);
-            setTimeout(() => this.playTone(2400, 'sine', 0.12, 0.3), 140);
         } else if (value >= 10) {
+            // Coin stack — two-note clink
             this.playTone(1200, 'square', 0.1, 0.3);
             setTimeout(() => this.playTone(1600, 'square', 0.2, 0.3), 50);
         } else {
+            // Single coin — short clink
             this.playTone(1500, 'square', 0.07, 0.25);
         }
     }
