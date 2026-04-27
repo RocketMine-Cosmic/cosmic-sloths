@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ENEMIES, getEnemyMasteryMilestones } from '../game/Constants';
-import { ENEMY_LORE } from '../game/Lore';
+import { ENEMIES, getEnemyMasteryMilestones } from '../game/Constants.js';
+import { ENEMY_LORE } from '../game/Lore.js';
 import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity, Swords, Star } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -59,7 +59,6 @@ function EnemySprite({ enemy, size = 64 }) {
 }
 
 export default function Bestiary({ isCarousel }) {
-    // touched to invalidate vite cache
     const navigate = useNavigate();
     const [selectedTier, setSelectedTier] = useState('all');
     const [save, setSave] = useState(SaveManager.load());
