@@ -59,6 +59,7 @@ function EnemySprite({ enemy, size = 64 }) {
 }
 
 export default function Bestiary({ isCarousel }) {
+    // touched to invalidate vite cache
     const navigate = useNavigate();
     const [selectedTier, setSelectedTier] = useState('all');
     const [save, setSave] = useState(SaveManager.load());
