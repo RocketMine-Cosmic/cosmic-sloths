@@ -48,7 +48,7 @@ function LazySlide({ children, shouldMount }) {
     }, [shouldMount, hasMounted]);
 
     return (
-        <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto select-none transform-gpu">
+        <div className="flex-[0_0_100%] min-w-0 min-h-0 h-full overflow-y-auto select-none transform-gpu" style={{ WebkitOverflowScrolling: 'touch' }}>
             {hasMounted ? children : null}
         </div>
     );
@@ -112,8 +112,8 @@ export default function PlayCarousel() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden" ref={emblaRef}>
-                <div className="flex h-full touch-pan-y">
+            <div className="flex-1 min-h-0 overflow-hidden" ref={emblaRef}>
+                <div className="flex h-full min-h-0 touch-pan-y">
                     <LazySlide shouldMount={isNear(0)}><MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} /></LazySlide>
                     <LazySlide shouldMount={isNear(1)}><Hub isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(2)}><Dailys isCarousel={true} /></LazySlide>
