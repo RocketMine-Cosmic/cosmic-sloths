@@ -162,11 +162,9 @@ export default function SynergyCodex({ isCarousel }) {
                             <p className="text-slate-300 text-xs md:text-base text-center mb-6">Upgrade your weapons in the <strong className="text-white">Lounge Armory</strong> to unlock their final Mastery forms.</p>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {Object.values(WEAPONS).filter(w => !w.isSynergy && !w.isEvolution).map((weapon, index) => {
+                                    // Mastery is unlocked by PERMANENT weapon upgrades only.
                                     const getWeaponUpgrade = (wId, stat) => {
-                                        const perm = save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
-                                        const week = save.weeklyWeaponUpgrades?.[wId]?.[stat] || 0;
-                                        const season = save.seasonalWeaponUpgrades?.[wId]?.[stat] || 0;
-                                        return perm + week + season;
+                                        return save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
                                     };
                                     
                                     const dmgLvl = getWeaponUpgrade(weapon.id, 'damage');
