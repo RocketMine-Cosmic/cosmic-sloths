@@ -514,7 +514,11 @@ export default function Upgrades({ isCarousel }) {
         const dmgLevel = getWeaponUpgrade(weapon.id, 'damage');
         const areaLevel = getWeaponUpgrade(weapon.id, 'area');
         const cdLevel = getWeaponUpgrade(weapon.id, 'cooldown');
-        const isMastered = dmgLevel >= 5 && areaLevel >= 5 && cdLevel >= 5;
+        // Mastery requires PERMANENT levels only (weekly/seasonal don't count).
+        const permDmg = save.permanentWeaponUpgrades?.[weapon.id]?.damage || 0;
+        const permArea = save.permanentWeaponUpgrades?.[weapon.id]?.area || 0;
+        const permCd = save.permanentWeaponUpgrades?.[weapon.id]?.cooldown || 0;
+        const isMastered = permDmg >= 5 && permArea >= 5 && permCd >= 5;
 
         const currentIndex = baseWeapons.findIndex(w => w.id === selectedWeapon);
         const handlePrevWeapon = () => {

@@ -430,7 +430,8 @@ export const getWeaponStatsAndMastery = (save, wId) => {
     if (forgeAugments.includes('cd_2')) forgeCd += 0.20;
     if (forgeAugments.includes('cd_3')) forgeCd += 0.35;
 
-    const isMastered = (dmgUpgradeLevel >= 5 && areaUpgradeLevel >= 5 && cdUpgradeLevel >= 5) || 
+    // Mastery requires PERMANENT upgrades only (weekly/seasonal don't count toward mastery).
+    const isMastered = ((perm.damage || 0) >= 5 && (perm.area || 0) >= 5 && (perm.cooldown || 0) >= 5) ||
                        (forgeAugments.includes('damage_3') && forgeAugments.includes('area_3') && forgeAugments.includes('cd_3'));
                        
     return {
