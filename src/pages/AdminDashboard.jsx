@@ -26,6 +26,7 @@ import AdminBlacklist from '../components/admin/AdminBlacklist';
 import AdminRefundOmenx from '../components/admin/AdminRefundOmenx';
 import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
 import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
+import AdminGoldAudit from '../components/admin/AdminGoldAudit';
 
 // Each tab declares what permission(s) it requires.
 // 'any' = visible to anyone with at least view_data.
@@ -51,6 +52,7 @@ const TABS = [
     { id: 'wipe',        label: '🗑️ Wipe Data', icon: AlertTriangle,perm: 'wipe_data' },
     { id: 'backfill',    label: '🔄 Backfill Wallets', icon: AlertTriangle, perm: 'owner' },
     { id: 'refund',      label: '💸 Refund OMENX', icon: AlertTriangle, perm: 'refund_omenx' },
+    { id: 'goldaudit',   label: '🪙 Gold Audit',   icon: Coins,        perm: 'edit_players' },
     { id: 'reset',       label: '🔄 FULL RESET', icon: AlertTriangle, perm: 'wipe_data' },
 ];
 
@@ -199,6 +201,7 @@ export default function AdminDashboard() {
         wipe: <AdminDataWipe walletAddress={adminWallet} />,
         backfill: <AdminTokenSpendLogBackfill />,
         refund: <AdminRefundOmenx walletAddress={adminWallet} />,
+        goldaudit: <AdminGoldAudit />,
         reset: <AdminMaintenanceReset walletAddress={adminWallet} />,
     };
 

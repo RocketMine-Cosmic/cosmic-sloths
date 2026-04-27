@@ -13,11 +13,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        if (me.role !== 'admin') return Response.json({ error: 'Forbidden: admin only' }, { status: 403 });
+        const body = await req.json();
+        const { walletAddress, adminKey } = body;
 
-        const { walletAddress } = await req.json();
+        // Auth: emergency key, OR Base44 admin with view_data/owner perms
+        if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
+            const me = await base44.auth.me();
+            if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            const callerWallet = me.wallet_address?.toLowerCase();
+            if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
+            const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
+            if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
+            const perms = records[0].permissions || [];
+            if (!perms.includes('view_data') && !perms.includes('owner')) {
+                return Response.json({ error: "Forbidden — 'view_data' permission required" }, { status: 403 });
+            }
+        }
+
         if (!walletAddress) return Response.json({ error: 'walletAddress required' }, { status: 400 });
         const walletLower = walletAddress.toLowerCase();
 
