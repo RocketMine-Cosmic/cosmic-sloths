@@ -98,10 +98,13 @@ Playing older sectors? **-10% Gold per sector below your max unlocked arena** (c
 - **Cosmic** — Maximum chaos. Best multiplier for leaderboard grinders.
 
 ### ⚔️ **Leviathan Trials**
-Activate modifiers before a run to make bosses **tougher & more rewarding**:
-- 🔴 **FURY** — Boss deals +50% damage
-- 🟠 **FRENZY** — Boss moves +50% faster
-- 🟣 **HIDE** — Boss has +100% HP
+Stack any of 6 modifiers before a run to make bosses **tougher & more rewarding**:
+- 🔴 **FURY** — Bosses deal +50% damage (+500 boss Gold drop)
+- 🟠 **FRENZY** — Bosses move +50% faster (+1 reroll token on boss kill)
+- 🟣 **THICK HIDE** — Bosses have +100% HP (+50% boss XP)
+- 🔵 **BULLET HELL** — Bosses fire 2× projectiles (+30% total score)
+- 🟢 **REGEN** — Boss heals 1% Max HP/sec (+800 boss Gold drop)
+- 🟧 **UNSTOPPABLE** — Boss ignores slow & pushback (+1,000 boss Gold drop)
 
 ---
 
@@ -128,7 +131,7 @@ Hit your squad's shared weekly kill target → every member individually claims 
 ### 🔥 **Infinite Scaling**
 - Boss reaches 0 HP? → Respawns at **next level**
 - Each level? → Boss gains **+50% max HP**
-- Your rewards? → **Scale with boss level** (1,000 Gold × Level)
+- Your rewards? → **Scale with boss level** (250 Gold × Level claimable per milestone)
 
 ---
 
@@ -189,10 +192,11 @@ Play a character repeatedly → Rank up through **5 tiers (Novice → Grandmaste
 ## 💰 OMENX — THE PREMIUM CURRENCY
 
 Earn via **leaderboard rankings**. Spend in-game to:
-- 🔄 Reroll upgrade picks
-- 🚫 Banish unwanted upgrades
-- ⚡ Activate Squad Ultimates
-- ✨ Buy cosmetics & power-ups
+- 🔄 Reroll upgrade picks (2 OMENX)
+- 🚫 Banish unwanted upgrades (1 OMENX)
+- ⚡ Activate Squad Ultimates — **Lite (5 OMENX)** capped clone power, or **Full (10 OMENX)** scales with your full upgrades
+- 💀 Emergency Revive on death (4 OMENX)
+- ✨ Buy cosmetics, stat upgrades & a +50% XP session buff (10 OMENX / 60 min)
 
 **Live balance always shown in the top bar of your screen.**
 

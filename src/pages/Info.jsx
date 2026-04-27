@@ -83,7 +83,7 @@ const TABS_CONTENT = {
                     <strong className="text-white">Full Gamepad Support:</strong> Connect an Xbox, PlayStation, or generic controller to play from the couch! Use the <strong className="text-fuchsia-400">Virtual Cursor</strong> to navigate the Hub and menus seamlessly, and the <strong className="text-cyan-400">Snap-to-Grid</strong> system for quick selections during gameplay.
                 </div>
                 <div className="bg-slate-900/40 rounded-lg p-3 border border-fuchsia-700/50 text-xs text-slate-400">
-                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, spend 4 OMENX to activate your <strong className="text-fuchsia-400">Squad Ultimate</strong> (via the button above the XP bar) to summon a clone from your unlocked roster!
+                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, summon a clone from your unlocked roster via the floating buttons (bottom right): <strong className="text-purple-300">ULT LITE</strong> (5 OMENX, capped power) or <strong className="text-fuchsia-400">ULT FULL</strong> (10 OMENX, scales with your full upgrades).
                 </div>
             </SectionCard>
 
@@ -153,7 +153,7 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-yellow-700/50 md:col-span-2 flex flex-col justify-center shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                         <div className="font-bold text-yellow-400 text-sm md:text-base mb-2 flex items-center gap-2">🔨 The Forge</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Convert excess Gold into <strong className="text-yellow-300 inline-flex items-center gap-1">Star Fragments <Star className="w-3 h-3 fill-yellow-300 text-yellow-300" /></strong> (10,000 Gold = 1 <Star className="w-3 h-3 fill-yellow-300 text-yellow-300 inline" />, up to 20/day). Use fragments to permanently enhance weapons beyond their normal cap, or unlock powerful passive augments for each character. Forge upgrades <strong className="text-white">never reset</strong>.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Convert excess Gold into <strong className="text-yellow-300 inline-flex items-center gap-1">Star Fragments <Star className="w-3 h-3 fill-yellow-300 text-yellow-300" /></strong> (10,000 Gold = 1 <Star className="w-3 h-3 fill-yellow-300 text-yellow-300 inline" />, up to 30/day). Use fragments to permanently enhance weapons beyond their normal cap, or unlock powerful passive augments for each character. Forge upgrades <strong className="text-white">never reset</strong>.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -236,7 +236,7 @@ const TABS_CONTENT = {
                     3 random bounty tasks refresh every day. Complete them to earn <strong className="text-yellow-400">Gold</strong> or <strong className="text-fuchsia-400">Relic Fragments</strong>. Progress is tracked automatically during your runs.
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-2 border border-slate-700">
-                    Examples: Kill 200 enemies, Survive 5 minutes, Collect 500 Gold in a single run...
+                    Examples: Defeat 200 enemies (total), Survive 5 mins (single run), Earn 100 Gold (single run), Reach Level 15, or Play 3 runs.
                 </div>
             </SectionCard>
 
@@ -250,19 +250,12 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
-            <SectionCard title="👥 Squad Weekly Bounty" color="orange">
-                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Join a <strong className="text-orange-400">Sloth Squad</strong> and work together to defeat <strong className="text-white">10,000 enemies</strong> in a week. All contributing members can claim:
+            <SectionCard title="👥 Squad Daily & Weekly Bounties" color="orange">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-3">
+                    Join a <strong className="text-orange-400">Sloth Squad</strong> (up to 5 players) and work together. Squads receive both a <strong className="text-cyan-400">Daily</strong> and a <strong className="text-yellow-400">Weekly</strong> kill target — both scale with your squad's level. Every contributing member can individually claim Gold + Relic Fragments.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center items-center">
-                        <Coins className="w-8 h-8 md:w-10 md:h-10 fill-yellow-500 text-yellow-500 mb-1.5" />
-                        <div className="text-sm md:text-base text-yellow-400 font-bold">2,500 Gold</div>
-                    </div>
-                    <div className="bg-slate-900/50 rounded-xl p-3 md:p-4 text-center border border-slate-700 flex-1 flex flex-col justify-center items-center">
-                        <Puzzle className="w-8 h-8 md:w-10 md:h-10 fill-fuchsia-400 text-fuchsia-400 mb-1.5" />
-                        <div className="text-sm md:text-base text-fuchsia-400 font-bold">5 Fragments</div>
-                    </div>
+                <div className="text-xs md:text-sm text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-slate-700 leading-relaxed">
+                    💡 Reward sizes scale from <strong className="text-white">Lv.1 (300 daily / 2,000 weekly kills)</strong> all the way up to <strong className="text-pink-400">Lv.7 (12,000 daily / 75,000 weekly)</strong>. See the <strong className="text-orange-300">Squads</strong> tab for the full breakdown.
                 </div>
             </SectionCard>
         </div>
@@ -292,15 +285,16 @@ const TABS_CONTENT = {
 
             <SectionCard title="📊 How Scores Work" color="green">
                 <p className="text-sm text-slate-300 leading-relaxed mb-3">
-                    Your score is calculated at the end of each run. The core formula is:
+                    Your score is calculated server-side at the end of each run:
                 </p>
-                <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-sm text-center text-green-300 mb-3">
-                    Score = Kills × Time Survived × Difficulty Multiplier
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-xs text-center text-green-300 mb-3">
+                    Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-xs text-center mb-3">
-                    <div className="bg-cyan-950/40 border border-cyan-800/40 rounded-lg p-2"><div className="text-cyan-400 font-bold">Normal</div><div className="text-slate-400">×1.0</div></div>
-                    <div className="bg-pink-950/40 border border-pink-800/40 rounded-lg p-2"><div className="text-pink-400 font-bold">Hard</div><div className="text-slate-400">×1.5</div></div>
-                    <div className="bg-violet-950/40 border border-violet-800/40 rounded-lg p-2"><div className="text-violet-400 font-bold">Cosmic</div><div className="text-slate-400">×2.0</div></div>
+                <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+                    The <strong className="text-green-300">Sector Multiplier</strong> grows the further you push: ×1.0 in Sector 1, +0.2 per sector, up to ×2.0 in <strong className="text-purple-300">Endless Void</strong>. Beating the timer adds a flat <strong className="text-white">+5,000 Victory Bonus</strong>.
+                </p>
+                <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-slate-700 mb-3 leading-relaxed">
+                    <strong className="text-white">Difficulty doesn't directly multiply score</strong> — instead, harder difficulties grant more XP & Gold per run, which feed into the formula above. Hard = +100% XP/Gold, Cosmic = +200% XP/Gold.
                 </div>
                 <div className="text-xs text-slate-500 bg-slate-900/40 rounded-lg p-2 border border-slate-800">
                     💡 Only your <strong className="text-white">highest score</strong> per week counts on the leaderboard. Keep grinding and replace it with a better run!
@@ -726,35 +720,43 @@ TABS_CONTENT.combat = (
 
             <SectionCard title="👑 Boss Encounters" color="rose">
                 <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                    Bosses appear at the end of certain sectors or every 3 minutes in Endless mode. When a boss is active, normal enemy spawning stops.
+                    Bosses appear at the end of certain sectors and in <strong className="text-purple-300">Endless Void</strong> (every 3 minutes after the previous boss is defeated). When a boss is active, normal enemy spawning stops.
                 </p>
                 <p className="text-sm text-slate-300 leading-relaxed">
-                    Defeating a boss drops <strong className="text-fuchsia-400">Relic Fragments</strong> and rewards you with bonus gold. Boss difficulty scales with game time.
+                    Defeating a boss drops <strong className="text-fuchsia-400">Relic Fragments</strong> and rewards you with bonus Gold. Boss difficulty scales with game time and sector.
                 </p>
             </SectionCard>
 
             <SectionCard title="🌍 Difficulty Modes" color="green">
+                <p className="text-xs text-slate-400 mb-3 leading-relaxed">Difficulty changes enemy strength + how much XP and Gold you earn per run. Score is driven by the formula in the Compete tab.</p>
                 <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
+                        <div className="flex items-center gap-3">
+                            <span className="text-emerald-400 font-bold w-20 shrink-0">Easy</span>
+                            <span className="text-slate-400 text-xs">Forgiving start for new pilots. Slower enemies.</span>
+                        </div>
+                        <span className="text-emerald-400 font-bold text-xs font-mono shrink-0">−50% XP & Gold</span>
+                    </div>
                     <div className="flex items-center justify-between gap-3 bg-slate-900/50 rounded-lg p-3 border border-cyan-900/40">
                         <div className="flex items-center gap-3">
                             <span className="text-cyan-400 font-bold w-20 shrink-0">Normal</span>
                             <span className="text-slate-400 text-xs">Standard experience. Good for learning the ropes.</span>
                         </div>
-                        <span className="text-cyan-400 font-bold text-xs font-mono shrink-0">×1.0 score</span>
+                        <span className="text-cyan-400 font-bold text-xs font-mono shrink-0">Baseline</span>
                     </div>
                     <div className="flex items-center justify-between gap-3 bg-slate-900/50 rounded-lg p-3 border border-pink-900/40">
                         <div className="flex items-center gap-3">
                             <span className="text-pink-400 font-bold w-20 shrink-0">Hard</span>
-                            <span className="text-slate-400 text-xs">Enemies hit harder. Cosmic hazard strikes appear.</span>
+                            <span className="text-slate-400 text-xs">Tougher enemies. Occasional hazards.</span>
                         </div>
-                        <span className="text-pink-400 font-bold text-xs font-mono shrink-0">×1.5 score</span>
+                        <span className="text-pink-400 font-bold text-xs font-mono shrink-0">+100% XP & Gold</span>
                     </div>
                     <div className="flex items-center justify-between gap-3 bg-slate-900/50 rounded-lg p-3 border border-violet-900/40">
                         <div className="flex items-center gap-3">
                             <span className="text-violet-400 font-bold w-20 shrink-0">Cosmic</span>
-                            <span className="text-slate-400 text-xs">Maximum chaos. Best for leaderboard climbers.</span>
+                            <span className="text-slate-400 text-xs">Maximum chaos. Frequent hazards.</span>
                         </div>
-                        <span className="text-violet-400 font-bold text-xs font-mono shrink-0">×2.0 score</span>
+                        <span className="text-violet-400 font-bold text-xs font-mono shrink-0">+200% XP & Gold</span>
                     </div>
                 </div>
             </SectionCard>

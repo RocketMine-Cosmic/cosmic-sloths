@@ -10,11 +10,9 @@ Top-down auto-shooter. Weapons auto-fire — you move & dodge. Survive the timer
 
 **Controls:** WASD/Arrows or Virtual Joystick | ESC/P Pause | Full gamepad & mobile support
 
-**Scoring:** Kills × Time × Difficulty Multiplier
-• Normal ×1.0 | Hard ×1.5 | Cosmic ×2.0
-• Only highest score per week counts on leaderboard
+**Scoring:** Server-side formula — (Kills×10 + Level×100 + Time×5 + Gold×5 + 5,000 victory bonus) × Sector Multiplier (×1.0 → ×2.0 in Endless). Only your highest score per week counts on the leaderboard.
 
-**Difficulties:** Normal (standard) | Hard (harder, better rewards) | Cosmic (maximum chaos, best multiplier)`,
+**Difficulties:** Easy (−50% XP/Gold) | Normal (baseline) | Hard (+100% XP/Gold) | Cosmic (+200% XP/Gold). Difficulty does NOT directly multiply score — but more XP & Gold means a bigger score.`,
     },
     {
         title: 'Post 2 — Leaderboards & OMENX',
@@ -111,7 +109,9 @@ Damage · HP · Speed · Magnet · Regen · Cooldown · Luck
 
 💀 **Global Raid** (5 runs/day) — Your damage permanently cuts boss HP. Levels up every defeat. Rewards scale with level.
 
-⚔️ **Leviathan Trials** — Stack modifiers: FURY (+50% dmg) · FRENZY (+50% speed) · TITAN (+100% HP)
+⚔️ **Leviathan Trials** — Stack 6 boss modifiers: FURY (+50% dmg) · FRENZY (+50% speed) · THICK HIDE (+100% HP) · BULLET HELL (+projectiles) · REGEN (+heal) · UNSTOPPABLE (no slows). Each unlocks a bonus reward (Gold, XP, Score, Tokens).
+
+🎮 **Squad Ultimates** — Mid-run, summon a clone from your roster: ULT LITE (5 OMENX, capped power) or ULT FULL (10 OMENX, scales with your full upgrades).
 
 👑 **VIP** (14 tiers) — Each tier +1% Damage & +1% Max HP per run. Weekly OMENX allocation. Auto-detected.`,
     },
