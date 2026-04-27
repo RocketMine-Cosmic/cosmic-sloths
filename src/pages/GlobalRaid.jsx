@@ -194,7 +194,7 @@ export default function GlobalRaid({ isCarousel }) {
 
     return (
         <OmenXGate isCarousel={isCarousel}>
-        <div className={`${isCarousel ? 'h-full flex flex-col' : 'h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-24 md:p-6 font-sans overflow-hidden`}>
+        <div className={`${isCarousel ? 'min-h-full flex flex-col' : 'min-h-[100dvh] flex flex-col'} relative text-slate-200 p-2 pb-24 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
             <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-2 md:mb-6 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
