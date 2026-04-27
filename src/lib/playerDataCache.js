@@ -260,6 +260,20 @@ export function subscribePlayerData(fn) {
         // OmenXAuthContext dispatches a StorageEvent but its storageArea is null.
         // Listen on walletLinked CustomEvent instead, which fires reliably.
         window.addEventListener('walletLinked', onAuthChange);
+
+        // Auto-refresh balance when user returns to the tab — fixes stale OMENX
+        // values when users buy tokens / receive rewards in another tab.
+        // 30s minimum gap between refreshes to avoid hammering the API.
+        const FOCUS_REFRESH_MIN_GAP = 30 * 1000;
+        const onTabFocus = () => {
+            if (document.hidden) return;
+            const auth = getAuthData();
+            if (!auth?.walletAddress) return;
+            if (Date.now() - lastBalanceFetchAt < FOCUS_REFRESH_MIN_GAP) return;
+            fetchBalance(true);
+        };
+        document.addEventListener('visibilitychange', onTabFocus);
+        window.addEventListener('focus', onTabFocus);
     }
 
     return () => { listeners.delete(fn); };
