@@ -330,14 +330,14 @@ export default function Profile({ isCarousel }) {
                                     <button onClick={handleSaveName} className="p-2 bg-green-900/30 text-green-400 hover:bg-green-900/50 rounded-lg transition-colors border border-green-500/30">
                                         <Check size={20} />
                                     </button>
-                                    <button onClick={() => { setIsEditingName(false); setNewName(user?.pilotName || user?.data?.pilotName || user?.full_name || ''); }} className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-lg transition-colors border border-red-500/30">
+                                    <button onClick={() => { setIsEditingName(false); setNewName(user?.player_name || user?.data?.player_name || user?.full_name || ''); }} className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-lg transition-colors border border-red-500/30">
                                         <X size={20} />
                                     </button>
                                     </div>
                                 ) : (
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-2xl md:text-3xl font-bold text-white">{user?.pilotName || user?.data?.pilotName || user?.full_name || 'Anonymous'}</span>
+                                            <span className="text-2xl md:text-3xl font-bold text-white">{user?.player_name || user?.data?.player_name || user?.full_name || 'Anonymous'}</span>
                                             <button onClick={() => setIsEditingName(true)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-md transition-colors border border-slate-700 hover:border-slate-500">
                                                 <Pencil size={16} />
                                             </button>
