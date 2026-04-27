@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
                 const data = await res.json();
                 const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
                 const balance = parseFloat(omenxToken?.balance ?? '0');
+                console.log(`[getPlayerBalance] wallet=${walletAddress} balance=${balance}`);
                 return Response.json({ balance });
             }
             lastStatus = res.status;
