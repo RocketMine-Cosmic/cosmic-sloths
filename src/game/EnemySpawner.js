@@ -26,7 +26,11 @@ export function spawnEnemies(engine, dt) {
 
     if (engine.arena.duration === Infinity) {
         if (!engine.lastBossSpawnTime) engine.lastBossSpawnTime = 0;
-        if (engine.time > 0 && engine.time - engine.lastBossSpawnTime >= 180) {
+        // Don't spawn a new boss while one is still alive — wait until the current
+        // fight ends, then start the 180s timer fresh from that point.
+        if (engine.isBossActive) {
+            engine.lastBossSpawnTime = engine.time;
+        } else if (engine.time > 0 && engine.time - engine.lastBossSpawnTime >= 180) {
             engine.lastBossSpawnTime = engine.time;
             const boss = selectBossForArena(engine.arena.id);
             if (boss) {
