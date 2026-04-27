@@ -6,7 +6,7 @@ function OmenXIcon({ className }) {
 }
 
 // Endless-mode reward caps — must mirror functions/saveScore.js
-const ENDLESS_GOLD_CAP = 10000;
+const ENDLESS_GOLD_CAP = 5000;
 
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, onPause, onSquadUltimate }) {
     const formatTime = (s) => {
@@ -15,7 +15,8 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
         return `${m}:${sec.toString().padStart(2, '0')}`;
     };
 
-    // In endless mode, only the first 5,000 gold credits to the wallet — display the capped value
+    // In endless mode, only the first 5,000 gold credits to the wallet — display the capped value.
+    // Regular enemies don't drop gold in endless; only bosses do (see GameEngine).
     const isEndless = duration === Infinity;
     const displayGold = isEndless ? Math.min(gold, ENDLESS_GOLD_CAP) : gold;
     const goldCapped = isEndless && gold >= ENDLESS_GOLD_CAP;
