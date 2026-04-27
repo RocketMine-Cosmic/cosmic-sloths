@@ -27,7 +27,8 @@ export default function Profile({ isCarousel }) {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [newTitle, setNewTitle] = useState('');
     const [stats, setStats] = useState({
-        highestScore: 0,
+        highestScoreNormal: 0,
+        highestScoreEndless: 0,
         totalKills: 0,
         leviathanKills: 0,
         globalRaidDamage: 0,
@@ -56,22 +57,33 @@ export default function Profile({ isCarousel }) {
                 setNewTitle(omenxUser?.data?.player_title || '');
 
                 if (omenxUser && omenxUser.walletAddress) {
-                     // Fetch best score — use local cache (5 min TTL) to avoid a network round-trip on every visit
-                     const SCORE_CACHE_KEY = `profile_top_score_${omenxUser.walletAddress}`;
+                     // Fetch best scores — endless and normal — separately. 5min cache to avoid round-trips.
+                     const SCORE_CACHE_KEY = `profile_top_scores_${omenxUser.walletAddress}`;
                      const SCORE_CACHE_TTL = 5 * 60 * 1000;
-                     let maxScore = 0;
+                     let maxNormal = 0, maxEndless = 0;
+                     const fetchTopScores = async () => {
+                         const [endlessTop, allTop] = await Promise.all([
+                             base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress, arena_id: 'endless' }, '-score', 1),
+                             base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress }, '-score', 20),
+                         ]);
+                         const endless = endlessTop.length > 0 ? endlessTop[0].score : 0;
+                         const normalRow = allTop.find(r => r.arena_id !== 'endless');
+                         const normal = normalRow ? normalRow.score : 0;
+                         return { normal, endless };
+                     };
                      try {
                          const cached = JSON.parse(localStorage.getItem(SCORE_CACHE_KEY));
                          if (cached && Date.now() - cached.ts < SCORE_CACHE_TTL) {
-                             maxScore = cached.score;
+                             maxNormal = cached.normal || 0;
+                             maxEndless = cached.endless || 0;
                          } else {
-                             const topScore = await base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress }, '-score', 1);
-                             maxScore = topScore.length > 0 ? topScore[0].score : 0;
-                             localStorage.setItem(SCORE_CACHE_KEY, JSON.stringify({ score: maxScore, ts: Date.now() }));
+                             const res = await fetchTopScores();
+                             maxNormal = res.normal; maxEndless = res.endless;
+                             localStorage.setItem(SCORE_CACHE_KEY, JSON.stringify({ normal: maxNormal, endless: maxEndless, ts: Date.now() }));
                          }
                      } catch {
-                         const topScore = await base44.entities.RunScore.filter({ wallet_address: omenxUser.walletAddress }, '-score', 1);
-                         maxScore = topScore.length > 0 ? topScore[0].score : 0;
+                         const res = await fetchTopScores();
+                         maxNormal = res.normal; maxEndless = res.endless;
                      }
                      const save = SaveManager.load();
                      const enemyKills = save.enemyKills || {};
@@ -79,7 +91,8 @@ export default function Profile({ isCarousel }) {
                          .filter(id => id.startsWith('boss_') || id === 'world_boss')
                          .reduce((sum, id) => sum + (enemyKills[id] || 0), 0);
                      setStats({
-                         highestScore: maxScore,
+                         highestScoreNormal: maxNormal,
+                         highestScoreEndless: maxEndless,
                          totalKills: save.totalKills || 0,
                          leviathanKills: totalLeviathans,
                          globalRaidDamage: 0
@@ -192,8 +205,9 @@ export default function Profile({ isCarousel }) {
         // Original Profile Titles
         if (stats.totalKills >= 1000) addTitle('Vanguard', 'Vanguard');
         if (stats.totalKills >= 10000) addTitle('Void Walker', 'Void Walker');
-        if (stats.highestScore >= 50000) addTitle('Top Survivor', 'Top Survivor');
-        if (stats.highestScore >= 100000) addTitle('Cosmic Legend', 'Cosmic Legend');
+        const bestScore = Math.max(stats.highestScoreNormal || 0, stats.highestScoreEndless || 0);
+        if (bestScore >= 50000) addTitle('Top Survivor', 'Top Survivor');
+        if (bestScore >= 100000) addTitle('Cosmic Legend', 'Cosmic Legend');
         
         if (stats.leviathanKills >= 1) addTitle('Leviathan Slayer', 'Leviathan Slayer');
         if (stats.leviathanKills >= 10) addTitle('Apex Predator', 'Apex Predator');
@@ -413,8 +427,17 @@ export default function Profile({ isCarousel }) {
                                         <Trophy className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <div className="text-xs md:text-sm text-slate-400 font-bold mb-0.5 md:mb-1">Highest Score</div>
-                                        <div className="text-xl md:text-2xl font-mono font-bold text-white">{stats.highestScore.toLocaleString()}</div>
+                                        <div className="text-xs md:text-sm text-slate-400 font-bold mb-0.5 md:mb-1">Highest Score — Sectors</div>
+                                        <div className="text-xl md:text-2xl font-mono font-bold text-white">{stats.highestScoreNormal.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-slate-700/50 flex items-center gap-3 md:gap-4">
+                                    <div className="p-3 bg-fuchsia-900/30 rounded-lg text-fuchsia-400 border border-fuchsia-500/30">
+                                        <Trophy className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs md:text-sm text-slate-400 font-bold mb-0.5 md:mb-1">Highest Score — Endless</div>
+                                        <div className="text-xl md:text-2xl font-mono font-bold text-white">{stats.highestScoreEndless.toLocaleString()}</div>
                                     </div>
                                 </div>
                             </div>
