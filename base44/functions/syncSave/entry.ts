@@ -143,6 +143,22 @@ Deno.serve(async (req) => {
             ? { ...saveData, ...existingData }
             : { ...existingData, ...saveData };
 
+        // Collect anti-cheat blocks for audit logging at the end. Each entry becomes
+        // a SyncBlockLog row so admins can review and refund false-positives.
+        const blocks = [];
+        const recordBlock = (field, clientVal, cloudVal, notes) => {
+            blocks.push({
+                wallet_address: walletLower,
+                field,
+                client_value: Number(clientVal) || 0,
+                cloud_value: Number(cloudVal) || 0,
+                client_ts: clientTs,
+                cloud_ts: cloudTs,
+                client_was_stale: clientIsStale,
+                notes: notes || ''
+            });
+        };
+
         // --- 1. SERVER-OWNED unlock arrays: cloud only. Ignore client. ---
         for (const key of SERVER_OWNED_UNLOCK_ARRAYS) {
             const cloudArr = Array.isArray(existingData[key]) ? existingData[key] : [];
@@ -152,6 +168,7 @@ Deno.serve(async (req) => {
             const injected = clientArr.filter(id => !cloudArr.includes(id));
             if (injected.length > 0) {
                 console.warn(`[syncSave] BLOCKED client-side ${key} injection from ${walletLower}: ${JSON.stringify(injected)}`);
+                recordBlock(key, injected.length, cloudArr.length, `array_injection: ${injected.join(',')}`);
             }
         }
 
@@ -168,6 +185,7 @@ Deno.serve(async (req) => {
                 if (stat === 'weekId' || stat === 'seasonId') continue;
                 if (Number(clientObj[stat] || 0) > Number(cloudObj[stat] || 0)) {
                     console.warn(`[syncSave] BLOCKED ${key}.${stat} bump from ${walletLower}: client=${clientObj[stat]} cloud=${cloudObj[stat] || 0}`);
+                    recordBlock(`${key}.${stat}`, clientObj[stat], cloudObj[stat] || 0, 'upgrade_level_bump');
                 }
             }
         }
@@ -199,6 +217,7 @@ Deno.serve(async (req) => {
             const clientVal = Number(saveData[key] || 0);
             if (clientVal > merged[key]) {
                 console.warn(`[syncSave] BLOCKED ${key} bump from ${walletLower}: client=${clientVal} cloud=${merged[key]}`);
+                recordBlock(key, clientVal, merged[key], 'run_stat_bump');
             }
         }
 
@@ -207,6 +226,7 @@ Deno.serve(async (req) => {
         const clientGold = Number(saveData.gold || 0);
         if (clientGold > merged.gold) {
             console.warn(`[syncSave] BLOCKED gold bump from ${walletLower}: client=${clientGold} cloud=${merged.gold}`);
+            recordBlock('gold', clientGold, merged.gold, 'gold_bump');
         }
 
         // --- 8. SERVER-OWNED discovery arrays: cloud only ---
@@ -262,6 +282,16 @@ Deno.serve(async (req) => {
             save_data: merged,
             updated_at: newTs
         });
+
+        // Audit log: persist any blocks so admins can review/refund. Non-fatal —
+        // a logging failure must never affect the sync itself.
+        if (blocks.length > 0) {
+            try {
+                await base44.asServiceRole.entities.SyncBlockLog.bulkCreate(blocks);
+            } catch (err) {
+                console.error('[syncSave] SyncBlockLog write failed (non-fatal):', err.message);
+            }
+        }
 
         // Return merged save + new timestamp so client can adopt it and break the
         // "stale client → cloud bumps timestamp → still stale" sync loop.
