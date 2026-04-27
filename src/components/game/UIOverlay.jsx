@@ -94,7 +94,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         </div>
                         <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-amber-500/30 flex flex-col justify-center text-right">
                             <div className="text-[8px] md:text-xs font-black tracking-widest text-amber-500/80 uppercase mb-0.5 flex items-center justify-end gap-1">
-                                WEALTH {goldCapped && <span className="text-[7px] md:text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded border border-amber-500/40">MAX</span>}
+                                GOLD {goldCapped && <span className="text-[7px] md:text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded border border-amber-500/40">MAX</span>}
                             </div>
                             <div className="text-amber-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
                                 <CircleDollarSign className="w-3 h-3 md:w-4 md:h-4" /> {displayGold}
