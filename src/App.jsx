@@ -18,7 +18,7 @@ const Info = React.lazy(() => import('./pages/Info'));
 const Credits = React.lazy(() => import('./pages/Credits'));
 const Achievements = React.lazy(() => import('./pages/Achievements'));
 const Squads = React.lazy(() => import('./pages/Squads'));
-const Bestiary = React.lazy(() => import('./pages/Bestiary'));
+import Bestiary from './pages/Bestiary';
 const SynergyCodex = React.lazy(() => import('./pages/SynergyCodex'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const NFTDashboard = React.lazy(() => import('./pages/NFTDashboard'));

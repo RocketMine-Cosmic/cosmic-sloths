@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ENEMIES, getEnemyMasteryMilestones } from '../game/Constants.js';
-import { ENEMY_LORE } from '../game/Lore.js';
+import { ENEMIES, getEnemyMasteryMilestones } from '../game/Constants';
+import { ENEMY_LORE } from '../game/Lore';
 import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity, Swords, Star } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';

@@ -14,7 +14,7 @@ const Dailys = React.lazy(() => import('./Dailys'));
 const Upgrades = React.lazy(() => import('./Upgrades'));
 const LeaderboardPage = React.lazy(() => import('./LeaderboardPage'));
 const Squads = React.lazy(() => import('./Squads'));
-const Bestiary = React.lazy(() => import('./Bestiary'));
+import Bestiary from './Bestiary';
 const SynergyCodex = React.lazy(() => import('./SynergyCodex'));
 const Mastery = React.lazy(() => import('./Mastery'));
 const LeviathanTrials = React.lazy(() => import('./LeviathanTrials'));
