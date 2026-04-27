@@ -128,7 +128,14 @@ async function fetchNfts() {
     inFlightNfts = (async () => {
         try {
             const res = await base44.functions.invoke('getNFTs', {});
-            const nfts = res.data?.nfts ?? [];
+            // Backend returns nfts: null when the upstream API failed — don't wipe
+            // cached NFTs in that case, otherwise NFT-unlocked characters would
+            // momentarily disappear from the UI.
+            if (res.data?.nfts == null) {
+                console.warn('[playerDataCache] nft fetch returned null (upstream error) — keeping cache');
+                return;
+            }
+            const nfts = res.data.nfts;
             lastNftFetchAt = Date.now();
             saveJSON('omenx_nft_cache', { nfts, timestamp: lastNftFetchAt });
             saveJSON('omenx_nft_data', nfts);

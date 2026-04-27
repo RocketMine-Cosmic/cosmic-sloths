@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
         });
         if (!res.ok) {
             console.error('[getNFTs] HTTP', res.status);
-            return Response.json({ nfts: [] });
+            // Return error status so frontend doesn't wipe cached NFTs (and unlocked characters)
+            return Response.json({ error: `HTTP ${res.status}`, nfts: null }, { status: 502 });
         }
         const data = await res.json();
         const nfts = data?.nfts || [];
@@ -27,6 +28,6 @@ Deno.serve(async (req) => {
         return Response.json({ nfts });
     } catch (error) {
         console.error('[getNFTs]', error.message);
-        return Response.json({ nfts: [] });
+        return Response.json({ error: error.message, nfts: null }, { status: 502 });
     }
 });
