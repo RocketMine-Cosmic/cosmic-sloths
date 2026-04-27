@@ -8,6 +8,7 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 import { useCurrency } from '@/lib/CurrencyContext';
+import { ensureNftsFetched } from '@/lib/playerDataCache';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
@@ -46,7 +47,21 @@ const STATS = [
 export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const { omenxBalance } = useCurrency();
+    const { omenxBalance, nfts } = useCurrency();
+
+    // Make sure NFTs are loaded so NFT-unlocked characters appear in the talents tab
+    React.useEffect(() => { ensureNftsFetched(); }, []);
+
+    // NFT-unlocked characters (UI only — server is authoritative for save.unlockedCharacters)
+    const nftUnlockedChars = React.useMemo(() => {
+        return (nfts || [])
+            .map(nft => nft.metadata?.name?.toLowerCase())
+            .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
+    }, [nfts]);
+
+    const effectiveUnlockedCharacters = React.useMemo(() => {
+        return [...new Set([...(save.unlockedCharacters || ['neobyte']), ...nftUnlockedChars])];
+    }, [save.unlockedCharacters, nftUnlockedChars]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('upgrades-page');
 
     React.useEffect(() => {
@@ -614,7 +629,7 @@ export default function Upgrades({ isCarousel }) {
         if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
 
-        const unlockedChars = save.unlockedCharacters || ['neobyte'];
+        const unlockedChars = effectiveUnlockedCharacters;
         const currentCharIndex = unlockedChars.indexOf(selectedChar) !== -1 ? unlockedChars.indexOf(selectedChar) : 0;
         const currentCharData = CHARACTERS.find(c => c.id === unlockedChars[currentCharIndex]) || CHARACTERS[0];
         
@@ -934,7 +949,7 @@ export default function Upgrades({ isCarousel }) {
                 </div>
 
                 {cosmeticTab === 'skin' ? (() => {
-                    const unlockedChars = save.unlockedCharacters || ['neobyte'];
+                    const unlockedChars = effectiveUnlockedCharacters;
                     const currentChar = CHARACTERS.find(c => c.id === unlockedChars[skinCharIndex % unlockedChars.length]) || CHARACTERS[0];
                     const charSkins = SKIN_COSMETICS.filter(s => s.charId === currentChar.id);
                     const equippedSkinId = save.cosmetics?.skins?.[currentChar.id] || `${currentChar.id}_default`;
