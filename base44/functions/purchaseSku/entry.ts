@@ -26,6 +26,25 @@ function getAllUnlockedTalents(save, charId) {
     return new Set([...perm, ...week, ...season]);
 }
 
+async function ownsCharacter(save, walletAddress, charId) {
+    if (charId === 'neobyte') return true;
+    const unlocked = save.unlockedCharacters || ['neobyte'];
+    if (unlocked.includes(charId)) return true;
+    try {
+        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
+        const res = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        const nfts = data?.nfts || [];
+        return nfts.some(nft => (nft?.metadata?.name || '').toLowerCase() === charId);
+    } catch {
+        return false;
+    }
+}
+
 function validateTalentPrereqs(save, charId, talentId) {
     const prereqs = TALENT_PREREQS[charId]?.[talentId];
     if (!prereqs) return;
@@ -260,6 +279,15 @@ Deno.serve(async (req) => {
             const saveData = typeof saveRecord.save_data === 'string'
                 ? JSON.parse(saveRecord.save_data)
                 : saveRecord.save_data;
+
+            // Talents require the player to actually own the character (kill-milestone or NFT).
+            if (grantInfo.type === 'talent') {
+                const owns = await ownsCharacter(saveData, walletAddress, grantInfo.charId);
+                if (!owns) {
+                    return Response.json({ error: `Character not unlocked: ${grantInfo.charId}` }, { status: 403 });
+                }
+            }
+
             try {
                 updatedSave = applyGrant(saveData, grantInfo, skuId, periodIds);
             } catch (e) {

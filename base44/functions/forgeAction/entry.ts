@@ -41,6 +41,25 @@ function getToday() {
     return new Date().toISOString().slice(0, 10);
 }
 
+async function ownsCharacter(save, walletAddress, charId) {
+    if (charId === 'neobyte') return true;
+    const unlocked = save.unlockedCharacters || ['neobyte'];
+    if (unlocked.includes(charId)) return true;
+    try {
+        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
+        const res = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        const nfts = data?.nfts || [];
+        return nfts.some(nft => (nft?.metadata?.name || '').toLowerCase() === charId);
+    } catch {
+        return false;
+    }
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -118,6 +137,12 @@ Deno.serve(async (req) => {
             }
             const cost = CHAR_AUGMENT_COSTS[augmentId];
             if (!cost) return Response.json({ error: 'Invalid augmentId' }, { status: 400 });
+
+            // Player must own the character (kill-milestone unlock or NFT).
+            const owns = await ownsCharacter(save, wallet, charId);
+            if (!owns) {
+                return Response.json({ error: `Character not unlocked: ${charId}` }, { status: 403 });
+            }
 
             const owned = save.forgeCharAugments?.[charId] || [];
             if (owned.includes(augmentId)) {

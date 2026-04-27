@@ -29,6 +29,27 @@ function getAllUnlockedTalents(save, charId) {
     return new Set([...perm, ...week, ...season]);
 }
 
+// Default starter is always owned. Otherwise check the save's unlockedCharacters
+// list (set by milestone server-side) OR a live NFT lookup (NFT name = char id).
+async function ownsCharacter(save, walletAddress, charId) {
+    if (charId === 'neobyte') return true;
+    const unlocked = save.unlockedCharacters || ['neobyte'];
+    if (unlocked.includes(charId)) return true;
+    try {
+        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
+        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
+        const res = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        const nfts = data?.nfts || [];
+        return nfts.some(nft => (nft?.metadata?.name || '').toLowerCase() === charId);
+    } catch {
+        return false;
+    }
+}
+
 function validateTalentPrereqs(save, charId, talentId) {
     const prereqs = TALENT_PREREQS[charId]?.[talentId];
     if (!prereqs) return; // tier 1 or unknown — no prereqs
@@ -105,6 +126,7 @@ function computeCost(grantInfo) {
 
 // Validates the grant against current cloud save and returns updated save_data.
 // Throws on mismatch (already unlocked / wrong level / unknown ids).
+// NOTE: character-ownership for talents is checked separately (async) before calling this.
 function applyGrant(save, grantInfo, periodIds) {
     const s = { ...save };
     const { type } = grantInfo;
@@ -226,6 +248,15 @@ Deno.serve(async (req) => {
 
         // Apply grant
         const periodIds = getCurrentPeriodIds();
+
+        // For talent grants, verify the player actually owns the character (kill-milestone or NFT).
+        if (grantInfo.type === 'talent') {
+            const owns = await ownsCharacter(saveData, walletAddress, grantInfo.charId);
+            if (!owns) {
+                return Response.json({ error: `Character not unlocked: ${grantInfo.charId}` }, { status: 403 });
+            }
+        }
+
         let updatedSave;
         try {
             updatedSave = applyGrant(saveData, grantInfo, periodIds);
