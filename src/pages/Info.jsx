@@ -595,7 +595,7 @@ function VipTab() {
                     VIP status is earned through your activity and investment in the <strong className="text-amber-400">OmenX ecosystem</strong>. The higher your VIP level, the better your in-game bonuses every single run.
                 </p>
                 <div className="bg-slate-900/50 rounded-xl p-4 border border-amber-800/40 text-xs text-slate-400">
-                    Your VIP level is automatically detected from your OmenX wallet when you log in — no manual setup required.
+                    Your VIP level is fetched <strong className="text-white">once</strong> from your OmenX wallet when you sign in, then cached for the session — your in-game bonuses apply instantly with zero background polling. Upgraded your tier? Use the <strong className="text-amber-300">Refresh VIP</strong> button on your Profile page (24h cooldown) to pull the new value.
                 </div>
             </SectionCard>
 
@@ -652,8 +652,8 @@ function VipTab() {
                         </div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-900/40">
-                        <div className="font-bold text-purple-300 text-sm mb-1">Automatic Detection</div>
-                        <p className="text-xs text-slate-400 leading-relaxed">Log in with OmenX and your VIP tier is fetched automatically. No codes or manual setup — your in-game bonuses apply instantly every run.</p>
+                        <div className="font-bold text-purple-300 text-sm mb-1">Automatic Detection (Once Per Sign-In)</div>
+                        <p className="text-xs text-slate-400 leading-relaxed">Sign in with OmenX and your VIP tier is fetched <strong className="text-white">once</strong>, then cached — no codes, no background polling, no setup. Your in-game bonuses apply instantly every run. If you upgrade your VIP tier on OmenX, hit the <strong className="text-amber-300">Refresh VIP</strong> button on your Profile page to pull the new value (24h cooldown).</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-900/40">
                         <div className="font-bold text-amber-300 text-sm mb-1">Stacks with Everything</div>
