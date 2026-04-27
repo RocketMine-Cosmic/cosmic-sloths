@@ -12,6 +12,14 @@ export default function VictoryModal({ stats }) {
         return `${m}:${sec.toString().padStart(2, '0')}`;
     };
 
+    const totalDamage = Math.floor(stats.totalDamageDealt || 0);
+    const dps = stats.time > 0 ? Math.floor(totalDamage / stats.time) : 0;
+    const kpm = stats.time > 0 ? Math.floor((stats.kills / stats.time) * 60) : 0;
+    const topEnemies = Object.entries(stats.enemyKills || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+    const formatEnemyName = (id) => id.replace(/^boss_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
     return (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <motion.div 
@@ -33,12 +41,39 @@ export default function VictoryModal({ stats }) {
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm md:text-base text-slate-400">Enemies Defeated</span>
-                        <span className="text-white font-mono text-lg md:text-xl">{stats.kills}</span>
+                        <span className="text-white font-mono text-lg md:text-xl">{stats.kills} <span className="text-[10px] text-slate-500">({kpm}/min)</span></span>
+                    </div>
+                    {(stats.bossesKilled > 0 || stats.elitesKilled > 0) && (
+                        <div className="flex justify-between items-center text-xs md:text-sm">
+                            <span className="text-slate-500">Bosses / Elites</span>
+                            <span className="text-rose-400 font-mono">{stats.bossesKilled || 0} <span className="text-slate-600">/</span> <span className="text-amber-400">{stats.elitesKilled || 0}</span></span>
+                        </div>
+                    )}
+                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                        <span className="text-sm md:text-base text-slate-400">Total Damage</span>
+                        <span className="text-orange-400 font-mono text-lg md:text-xl">{totalDamage.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs md:text-sm">
+                        <span className="text-slate-500">Average DPS</span>
+                        <span className="text-orange-300 font-mono">{dps.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
                         <span className="text-sm md:text-base text-slate-400">Gold Earned</span>
                         <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
                     </div>
+                    {topEnemies.length > 0 && (
+                        <div className="pt-3 md:pt-4 border-t border-slate-700">
+                            <div className="text-xs text-slate-500 mb-1.5">Most Hunted</div>
+                            <div className="space-y-1">
+                                {topEnemies.map(([id, count]) => (
+                                    <div key={id} className="flex justify-between text-xs">
+                                        <span className="text-slate-400 truncate">{formatEnemyName(id)}</span>
+                                        <span className="text-cyan-300 font-mono ml-2">×{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     {(stats.endlessGoldCapped || stats.endlessKillsCapped) && (
                         <div className="text-[10px] md:text-xs text-amber-400/80 italic text-right -mt-2">
                             Endless mode caps applied to credited rewards

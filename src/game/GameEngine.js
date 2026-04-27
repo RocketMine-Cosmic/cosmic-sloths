@@ -271,6 +271,9 @@ export class GameEngine {
         this.zoom = window.innerWidth < 768 ? 0.5 : 0.8;
         this.bossModifiers = save.bossModifiers || {};
         this.worldBossDamage = 0;
+        this.totalDamageDealt = 0;
+        this.bossesKilled = 0;
+        this.elitesKilled = 0;
         
         this.characterMechanics = {
             bannerTimer: 0,
@@ -1196,6 +1199,8 @@ export class GameEngine {
             if (e.hp <= 0) {
                 SFXManager.playEnemyDeath();
                 this.kills++;
+                if (e.isBoss) this.bossesKilled++;
+                else if (e.isElite) this.elitesKilled++;
                 this.enemyKills[e.id] = (this.enemyKills[e.id] || 0) + 1;
                 // Persist enemy kills to save immediately
                 if (this.save) {
@@ -1676,6 +1681,7 @@ export class GameEngine {
         }
         
         enemy.hp -= finalDamage;
+        this.totalDamageDealt += finalDamage;
         
         if (this.player.charAugments?.includes('glt_corrupt') && Math.random() < 0.15 && !enemy.isBoss) {
             enemy.hacked = true;
@@ -1957,41 +1963,27 @@ export class GameEngine {
         }
     }
 
+    _runStats(extra = {}) {
+        return {
+            time: Math.floor(this.time), level: this.level, kills: this.kills, gold: this.gold,
+            characterId: this.characterId, arenaId: this.arena?.id,
+            encountered: Array.from(this.encounteredEnemies), enemyKills: this.enemyKills,
+            worldBossDamage: this.worldBossDamage || 0,
+            totalDamageDealt: Math.floor(this.totalDamageDealt || 0),
+            bossesKilled: this.bossesKilled || 0, elitesKilled: this.elitesKilled || 0,
+            ...extra
+        };
+    }
     gameOver() {
         this.isGameOver = true;
-        // Persist final enemy kills before ending
-        if (this.save) {
-            this.save.enemyKills = this.enemyKills;
-            SaveManager.save(this.save);
-        }
+        if (this.save) { this.save.enemyKills = this.enemyKills; SaveManager.save(this.save); }
         SFXManager.playGameOver();
-        this.callbacks.onGameOver({
-            time: Math.floor(this.time),
-            level: this.level,
-            kills: this.kills,
-            gold: this.gold,
-            characterId: this.characterId,
-            arenaId: this.arena?.id,
-            encountered: Array.from(this.encounteredEnemies),
-            enemyKills: this.enemyKills,
-            worldBossDamage: this.worldBossDamage || 0
-        });
+        this.callbacks.onGameOver(this._runStats());
     }
-
     victory() {
         this.isVictory = true;
         SFXManager.playVictory();
-        this.callbacks.onVictory({
-            time: Math.floor(this.time),
-            level: this.level,
-            kills: this.kills,
-            gold: this.gold,
-            arenaId: this.arena.id,
-            characterId: this.characterId,
-            encountered: Array.from(this.encounteredEnemies),
-            enemyKills: this.enemyKills,
-            worldBossDamage: this.worldBossDamage || 0
-        });
+        this.callbacks.onVictory(this._runStats({ arenaId: this.arena.id }));
     }
 
     draw() {

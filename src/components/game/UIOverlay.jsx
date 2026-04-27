@@ -8,7 +8,7 @@ function OmenXIcon({ className }) {
 // Endless-mode reward caps — must mirror functions/saveScore.js
 const ENDLESS_GOLD_CAP = 5000;
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, onPause, onSquadUltimate }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, onPause, onSquadUltimate }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -76,6 +76,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     </div>
                     <div className="text-[10px] md:text-sm font-black text-fuchsia-400 font-mono mt-0.5">
                         SCORE: {score.toLocaleString()}
+                    </div>
+                    <div className="text-[9px] md:text-xs font-bold text-orange-400 font-mono mt-0.5" title="Damage per second">
+                        DPS: {dps.toLocaleString()}
                     </div>
                 </div>
 

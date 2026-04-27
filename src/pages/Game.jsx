@@ -290,13 +290,16 @@ export default function Game() {
                 const baseScore = engine.kills * 10 + engine.level * 100 + engine.time * 5 + engine.gold * 5;
                 const liveScore = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
 
+                const dps = engine.time > 0 ? Math.floor((engine.totalDamageDealt || 0) / engine.time) : 0;
                 setGameState(s => ({
                     ...s,
                     xp: engine.xp,
                     xpRequired: engine.xpRequired,
                     weapons: engine.player.weapons || [],
                     passives: engine.player.passives || [],
-                    score: liveScore
+                    score: liveScore,
+                    dps,
+                    totalDamage: Math.floor(engine.totalDamageDealt || 0)
                 }));
             }
         }, 100);
