@@ -306,12 +306,14 @@ export default function Game() {
         return () => clearInterval(interval);
     }, []);
 
-    // Keep the engine's view of omenxBalance in sync with the live value
+    // Keep the engine's view of omenxBalance in sync with the live cached value.
+    // Must depend on omenxBalance so it re-syncs every time the cache updates
+    // (e.g. after refreshBalance() following a purchase).
     useEffect(() => {
         if (engineRef.current) {
             engineRef.current.save.omenxBalance = omenxBalance ?? 0;
         }
-    }, []);
+    }, [omenxBalance]);
 
     const purchaseSku = async (skuId) => {
         if (!skuId) return;
