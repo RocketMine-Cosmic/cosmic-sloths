@@ -73,16 +73,39 @@ export class SFXManagerClass {
         osc.stop(this.audioContext.currentTime + duration);
     }
 
-    playPickup() {
+    // XP pickup — pitch & richness scale with gem value
+    // Small (<5): quick high blip. Medium (5-19): two-note. Large (20+): three-note ascending chord with a sub-bass thump.
+    playPickup(value = 1) {
         if (this.throttle('pickup', 50)) return;
-        this.playTone(800, 'sine', 0.1, 0.4);
-        setTimeout(() => this.playTone(1200, 'sine', 0.15, 0.4), 30);
+        if (value >= 20) {
+            this.playTone(600, 'sine', 0.12, 0.45);
+            setTimeout(() => this.playTone(900, 'sine', 0.14, 0.45), 35);
+            setTimeout(() => this.playTone(1400, 'sine', 0.18, 0.5), 80);
+            // Sub-bass for "weight"
+            this.playTone(180, 'triangle', 0.15, 0.3);
+        } else if (value >= 5) {
+            this.playTone(800, 'sine', 0.1, 0.4);
+            setTimeout(() => this.playTone(1200, 'sine', 0.15, 0.4), 30);
+        } else {
+            this.playTone(1100, 'sine', 0.06, 0.3);
+        }
     }
 
-    playGoldPickup() {
+    // Gold pickup — coin chime that gets richer with value.
+    // Small (<10): single short coin. Medium (10-49): two-note. Large (50+): cascading three-note with sparkle.
+    playGoldPickup(value = 1) {
         if (this.throttle('gold', 100)) return;
-        this.playTone(1200, 'square', 0.1, 0.3);
-        setTimeout(() => this.playTone(1600, 'square', 0.2, 0.3), 50);
+        if (value >= 50) {
+            this.playTone(900, 'square', 0.08, 0.35);
+            setTimeout(() => this.playTone(1300, 'square', 0.1, 0.35), 40);
+            setTimeout(() => this.playTone(1800, 'square', 0.18, 0.4), 90);
+            setTimeout(() => this.playTone(2400, 'sine', 0.12, 0.3), 140);
+        } else if (value >= 10) {
+            this.playTone(1200, 'square', 0.1, 0.3);
+            setTimeout(() => this.playTone(1600, 'square', 0.2, 0.3), 50);
+        } else {
+            this.playTone(1500, 'square', 0.07, 0.25);
+        }
     }
 
     playEnemySpawn() {

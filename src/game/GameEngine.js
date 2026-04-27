@@ -1527,13 +1527,13 @@ export class GameEngine {
             if (dist < this.player.radius + 10) {
                 this.particleManager.createPickup(p.x, p.y, p.color); // Collection burst
                 if (p.type === 'xp') {
-                    SFXManager.playPickup();
+                    SFXManager.playPickup(p.value);
                     this.xp += p.value * this.player.xpMult;
                     if (this.xp >= this.xpRequired && !this.isPaused) this.levelUp();
                 } else if (p.type === 'gold') {
-                    SFXManager.playGoldPickup();
                     const nftGoldMult = this.save.nftGoldMultiplier || 1.0;
                     const finalGold = Math.floor(p.value * this.player.goldMult * nftGoldMult);
+                    SFXManager.playGoldPickup(finalGold);
                     this.gold += finalGold;
                     this.callbacks.onGoldChange(this.gold);
                     if (nftGoldMult > 1.0 && Math.random() < 0.1) {
