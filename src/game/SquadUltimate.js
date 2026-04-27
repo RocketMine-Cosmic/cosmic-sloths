@@ -26,7 +26,7 @@ export function triggerSquadUltimate(engine, tier = 'full') {
     const damageMult = isLite
         ? (charData.damageMult || 1) * 1.0
         : (charData.damageMult || 1) * engine.player.damageMult * 1.5;
-    const life = isLite ? 10 : 15;
+    const life = 20;
 
     engine.squadClones = engine.squadClones || [];
     engine.squadClones.push({
