@@ -5,6 +5,39 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 // Pricing: server-side via OmenX dev portal (cached in memory).
 // Phase 3a: also applies the grant to PlayerSave server-side after charge confirmed.
 
+// Talent prerequisite map — MUST mirror CHARACTER_TALENTS in game/Constants.js.
+const TALENT_PREREQS = {
+    neobyte: { neo_2a: { requires: 'neo_1', excludes: 'neo_2b' }, neo_2b: { requires: 'neo_1', excludes: 'neo_2a' }, neo_3a: { requires: 'neo_2a' }, neo_3b: { requires: 'neo_2b' } },
+    pandypaws: { pan_2a: { requires: 'pan_1', excludes: 'pan_2b' }, pan_2b: { requires: 'pan_1', excludes: 'pan_2a' }, pan_3a: { requires: 'pan_2a' }, pan_3b: { requires: 'pan_2b' } },
+    novabyte: { nova_2a: { requires: 'nova_1', excludes: 'nova_2b' }, nova_2b: { requires: 'nova_1', excludes: 'nova_2a' }, nova_3a: { requires: 'nova_2a' }, nova_3b: { requires: 'nova_2b' } },
+    glitch: { gli_2a: { requires: 'gli_1', excludes: 'gli_2b' }, gli_2b: { requires: 'gli_1', excludes: 'gli_2a' }, gli_3a: { requires: 'gli_2a' }, gli_3b: { requires: 'gli_2b' } },
+    holodrift: { holo_2a: { requires: 'holo_1', excludes: 'holo_2b' }, holo_2b: { requires: 'holo_1', excludes: 'holo_2a' }, holo_3a: { requires: 'holo_2a' }, holo_3b: { requires: 'holo_2b' } },
+    codebreaker: { code_2a: { requires: 'code_1', excludes: 'code_2b' }, code_2b: { requires: 'code_1', excludes: 'code_2a' }, code_3a: { requires: 'code_2a' }, code_3b: { requires: 'code_2b' } },
+    dataphantom: { data_2a: { requires: 'data_1', excludes: 'data_2b' }, data_2b: { requires: 'data_1', excludes: 'data_2a' }, data_3a: { requires: 'data_2a' }, data_3b: { requires: 'data_2b' } },
+    neonvortex: { neon_2a: { requires: 'neon_1', excludes: 'neon_2b' }, neon_2b: { requires: 'neon_1', excludes: 'neon_2a' }, neon_3a: { requires: 'neon_2a' }, neon_3b: { requires: 'neon_2b' } },
+    synthbeats: { syn_2a: { requires: 'syn_1', excludes: 'syn_2b' }, syn_2b: { requires: 'syn_1', excludes: 'syn_2a' }, syn_3a: { requires: 'syn_2a' }, syn_3b: { requires: 'syn_2b' } },
+    skybyte: { sky_2a: { requires: 'sky_1', excludes: 'sky_2b' }, sky_2b: { requires: 'sky_1', excludes: 'sky_2a' }, sky_3a: { requires: 'sky_2a' }, sky_3b: { requires: 'sky_2b' } },
+};
+
+function getAllUnlockedTalents(save, charId) {
+    const perm = save.permanentTalents?.[charId] || [];
+    const week = save.weeklyTalents?.[charId] || [];
+    const season = save.seasonalTalents?.[charId] || [];
+    return new Set([...perm, ...week, ...season]);
+}
+
+function validateTalentPrereqs(save, charId, talentId) {
+    const prereqs = TALENT_PREREQS[charId]?.[talentId];
+    if (!prereqs) return;
+    const owned = getAllUnlockedTalents(save, charId);
+    if (prereqs.requires && !owned.has(prereqs.requires)) {
+        throw new Error(`Talent prerequisite missing: ${talentId} requires ${prereqs.requires}`);
+    }
+    if (prereqs.excludes && owned.has(prereqs.excludes)) {
+        throw new Error(`Talent path conflict: ${talentId} excludes ${prereqs.excludes}`);
+    }
+}
+
 function getCurrentPeriodIds() {
     const now = new Date();
     const year = now.getUTCFullYear();
@@ -133,6 +166,8 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             if (charArr.includes(talentId)) {
                 throw new Error('Talent already unlocked');
             }
+            // Enforce tier prerequisites (tier 1 needed for tier 2, tier 2 for tier 3, exclusive paths).
+            validateTalentPrereqs(s, charId, talentId);
             charArr.push(talentId);
             obj[charId] = charArr;
             if (tier === 'weekly') obj.weekId = periodIds.week_id;
