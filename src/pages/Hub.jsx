@@ -672,23 +672,30 @@ export default function Hub({ isCarousel }) {
                                                 )}
                                             </button>
                                             
-                                            <button
-                                                onClick={() => canLaunch && checkAndLaunch('endless')}
-                                                disabled={!canLaunch}
-                                                className={`flex-1 text-white text-sm md:text-lg font-black py-4 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
-                                                    canLaunch
-                                                    ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
-                                                    : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
-                                                }`}
-                                            >
-                                                {!isCharUnlocked ? (
-                                                    <>LOCKED</>
-                                                ) : !isArenaUnlocked ? (
-                                                    <>LOCKED</>
-                                                ) : (
-                                                    <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                            <div className="flex-1 flex flex-col gap-1">
+                                                <button
+                                                    onClick={() => canLaunch && checkAndLaunch('endless')}
+                                                    disabled={!canLaunch}
+                                                    className={`w-full text-white text-sm md:text-lg font-black py-4 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                        canLaunch
+                                                        ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
+                                                        : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
+                                                    }`}
+                                                >
+                                                    {!isCharUnlocked ? (
+                                                        <>LOCKED</>
+                                                    ) : !isArenaUnlocked ? (
+                                                        <>LOCKED</>
+                                                    ) : (
+                                                        <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                                    )}
+                                                </button>
+                                                {canLaunch && (
+                                                    <div className="text-[9px] md:text-[10px] text-fuchsia-300/70 text-center tracking-wider uppercase font-bold">
+                                                        Score & Mastery — Boss Gold only (5k cap)
+                                                    </div>
                                                 )}
-                                            </button>
+                                            </div>
                                         </div>
                                         </div>
                                     );
