@@ -36,7 +36,7 @@ Three live leaderboards. Only your **highest score per period** counts. Real OME
 
 ♾️ **Endless Void** — Infinitely scaling, all-time high score. **No OMENX rewards** — purely a permanent legacy ranking. Note: regular enemies don't drop Gold, and boss Gold is **capped at 5,000 per run**.
 
-💠 **Reward Pool:** **Every OMENX spent** — anywhere in the OmenX ecosystem, not just in-game — feeds back into the prize pools. More spending across the ecosystem = bigger payouts for players.
+💠 **Reward Pool:** Every OMENX spent **in Cosmic Sloths** (rerolls, banishes, revives, ults, buffs, cosmetics, stat upgrades) feeds the prize pool — **25% of weekly spend** goes to weekly payouts, **35% of seasonal spend** goes to seasonal payouts. More activity = bigger payouts.
 
 ✅ **Just sign in with OmenX** — that's it. Payouts auto-distribute to your wallet at the end of each cycle.`,
     },
