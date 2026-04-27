@@ -6,7 +6,6 @@ import { ENEMY_LORE } from '../game/Lore';
 import { ArrowLeft, BookOpen, Skull, Shield, Zap, Activity, Swords, Star } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -113,30 +112,25 @@ export default function Bestiary({ isCarousel }) {
                 </header>
 
                 <div 
-                    className="mb-4 shrink-0 px-8"
+                    className="mb-4 shrink-0 overflow-x-auto"
                     onPointerDownCapture={e => e.stopPropagation()}
                     onTouchStartCapture={e => e.stopPropagation()}
                 >
-                    <Carousel opts={{ align: 'start', dragFree: true }}>
-                        <CarouselContent className="-ml-2">
-                            {tiers.map(tier => (
-                                <CarouselItem key={tier} className="pl-2 basis-auto">
-                                    <button
-                                        onClick={() => { SoundManager.playUIClick(); setSelectedTier(tier); }}
-                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs md:text-sm whitespace-nowrap transition-colors ${
-                                            selectedTier === tier
-                                                ? 'bg-rose-600 text-white'
-                                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                        }`}
-                                    >
-                                        {tier === 'all' ? 'All Threats' : tier === 'boss' ? '👑 Leviathans' : `Tier ${tier.split('_')[1]}`}
-                                    </button>
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        <CarouselPrevious className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700 -left-8" />
-                        <CarouselNext className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700 -right-8" />
-                    </Carousel>
+                    <div className="flex gap-2 pb-1">
+                        {tiers.map(tier => (
+                            <button
+                                key={tier}
+                                onClick={() => { SoundManager.playUIClick(); setSelectedTier(tier); }}
+                                className={`px-3 py-1.5 rounded-lg font-bold text-xs md:text-sm whitespace-nowrap transition-colors shrink-0 ${
+                                    selectedTier === tier
+                                        ? 'bg-rose-600 text-white'
+                                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                }`}
+                            >
+                                {tier === 'all' ? 'All Threats' : tier === 'boss' ? '👑 Leviathans' : `Tier ${tier.split('_')[1]}`}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-1">
