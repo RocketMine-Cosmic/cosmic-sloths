@@ -82,6 +82,50 @@ export function drawPickups(ctx, pickups, time) {
             ctx.closePath();
             ctx.fill();
             
+        } else if (p.type === 'fragment') {
+            const bounce = Math.sin(time * 5 + p.x) * 3;
+            ctx.translate(0, bounce);
+            ctx.rotate(time * 1.5);
+
+            // Outer purple glow
+            ctx.globalCompositeOperation = 'screen';
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+            grad.addColorStop(0, 'rgba(168, 85, 247, 0.7)');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Crystal shard shape (diamond)
+            ctx.fillStyle = '#a855f7';
+            ctx.beginPath();
+            ctx.moveTo(0, -14);
+            ctx.lineTo(10, -2);
+            ctx.lineTo(7, 14);
+            ctx.lineTo(-7, 14);
+            ctx.lineTo(-10, -2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Inner highlight
+            ctx.fillStyle = '#d8b4fe';
+            ctx.beginPath();
+            ctx.moveTo(0, -10);
+            ctx.lineTo(5, -1);
+            ctx.lineTo(0, 8);
+            ctx.lineTo(-5, -1);
+            ctx.closePath();
+            ctx.fill();
+
+            // Sparkle
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(-3, -6, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
         } else if (p.type === 'reroll') {
             const bounce = Math.sin(time * 6 + p.x) * 4;
             ctx.translate(0, bounce);
