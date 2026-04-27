@@ -18,25 +18,27 @@ Top-down auto-shooter. Weapons auto-fire — you move & dodge. Survive the timer
         title: 'Post 2 — Leaderboards & OMENX',
         content: `🏆 **LEADERBOARDS — EARN REAL CRYPTO**
 
-Three live leaderboards. Real OMENX rewards sent automatically to your wallet (no claiming needed).
+Three live leaderboards. Only your **highest score per period** counts. Real OMENX rewards are auto-sent to your OmenX wallet — no claiming, no clicking.
 
-📅 **Weekly** — ALL ranked players earn OMENX
+📅 **Weekly** (resets every Monday) — ALL ranked players earn OMENX
 • Ranks 1–30: Top-tier rewards
 • Ranks 31–50: Mid-tier rewards
 • Ranks 51–100: Lower rewards
 • Rank 100+: Minimal rewards
+*(Weekly stat upgrades also reset.)*
 
-🗓️ **Seasonal** — ALL ranked players earn OMENX (4-week cycles)
+🗓️ **Seasonal** (4-week cycles) — ALL ranked players earn OMENX
 • Ranks 1–40: Top-tier rewards
 • Ranks 41–60: Mid-tier rewards
 • Ranks 61–100: Lower rewards
 • Rank 100+: Minimal rewards
+*(Seasonal stat upgrades reset at end-of-season.)*
 
-♾️ **Endless Void** — All-time high score (no rewards, permanent legacy)
+♾️ **Endless Void** — Infinitely scaling, all-time high score. **No OMENX rewards** — purely a permanent legacy ranking. Note: regular enemies don't drop Gold, and boss Gold is **capped at 5,000 per run**.
 
-💠 **Reward Pool:** Every OMENX spent in-game (rerolls, banishes, power-ups) feeds back into the prize pools. More players spending = bigger rewards.
+💠 **Reward Pool:** Every OMENX spent in-game (rerolls, banishes, revives, ults, buffs) feeds back into the prize pools. More activity = bigger payouts.
 
-⚠️ Link your OmenX wallet to receive payouts. Rewards auto-distribute after each period.`,
+✅ **Just sign in with OmenX** — that's it. Payouts auto-distribute to your wallet at the end of each cycle.`,
     },
     {
         title: 'Post 3 — The 10 Pilots & NFT Unlocks',
@@ -113,7 +115,7 @@ Damage · HP · Speed · Magnet · Regen · Cooldown · Luck
 
 🎮 **Squad Ultimates** — Mid-run, summon a clone from your roster: ULT LITE (5 OMENX, capped power) or ULT FULL (10 OMENX, scales with your full upgrades).
 
-👑 **VIP** (14 tiers) — Each tier +1% Damage & +1% Max HP per run. Weekly OMENX allocation. Auto-detected.`,
+👑 **VIP** (14 tiers, Bronze 1 → Diamond 4) — Each tier grants **+1% Damage & +1% Max HP** per run, stacking with all upgrades. Weekly OMENX allocation paid to your wallet (Phase 2 + Phase 3, 10 weeks each). Your tier is fetched **once on sign-in** and cached — use the **Refresh VIP** button on your Profile (24h cooldown) to pull a new tier after upgrading.`,
     },
 ];
 
