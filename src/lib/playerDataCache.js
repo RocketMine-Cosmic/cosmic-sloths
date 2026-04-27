@@ -3,8 +3,9 @@ import { base44 } from '@/api/base44Client';
 // ─────────────────────────────────────────────────────────
 // Player data cache. Three independent data streams:
 //   • BALANCE — live OMENX balance, 15min auto-refresh + post-purchase forced refresh.
-//   • VIP     — VIP level. Rarely changes & never decreases.
-//                Manual refresh only via Profile button (24h cooldown).
+//   • VIP     — VIP level. Rarely changes & never decreases. Fetched ONCE on
+//                wallet-link, then cached indefinitely. User refreshes manually
+//                via Profile button (24h cooldown).
 //   • NFTs    — NFT inventory. Manual refresh only via NFT Dashboard
 //                button (24h cooldown).
 // VIP and NFT have SEPARATE cooldowns so users can refresh either independently.
@@ -105,6 +106,9 @@ async function fetchVip() {
             const vipLevel = res.data?.vipLevel ?? 0;
             lastVipFetchAt = Date.now();
             saveJSON('omenx_vip_cache', { vipLevel, timestamp: lastVipFetchAt });
+            // Record which wallet this VIP value belongs to, so we can detect
+            // wallet changes and re-fetch only when the wallet itself swaps.
+            saveJSON('omenx_vip_cache_wallet', auth.walletAddress.toLowerCase());
             applyData({ vipLevel });
         } catch (e) {
             console.error('[playerDataCache] vip fetch failed:', e?.message);
@@ -188,6 +192,8 @@ export function fetchPlayerData(force = false) {
 
 // Lazy fetchers — call on demand from pages that actually need this data.
 // No-ops if a cached value already exists (manual refresh buttons handle re-fetch).
+// VIP is now fetched once on wallet-link instead of on Profile mount, since it
+// rarely changes and never decreases. Kept here for backwards compat (no-op if cached).
 export function ensureVipFetched() {
     if (lastVipFetchAt === 0) fetchVip();
 }
@@ -211,21 +217,38 @@ export function subscribePlayerData(fn) {
     if (!storageListenerAttached) {
         storageListenerAttached = true;
         const onAuthChange = () => {
-            // New login — clear ALL caches and re-fetch.
+            // New login — clear balance & user caches and re-fetch.
+            // VIP cache is preserved across logins of the SAME wallet (since VIP
+            // rarely changes); it's cleared only when the wallet itself changes.
             lastBalanceFetchAt = 0;
-            lastVipFetchAt = 0;
             lastNftFetchAt = 0;
             userFetched = false;
-            cachedData = null;
+
+            // Detect wallet change → wipe VIP cache too.
+            const auth = getAuthData();
+            const newWallet = auth?.walletAddress?.toLowerCase() || null;
+            const cachedWallet = loadJSON('omenx_vip_cache_wallet');
+            if (newWallet && cachedWallet && cachedWallet !== newWallet) {
+                lastVipFetchAt = 0;
+                try { localStorage.removeItem('omenx_vip_cache'); } catch {}
+            }
+
+            const freshVip = loadJSON('omenx_vip_cache');
+            cachedData = {
+                balance: 0,
+                vipLevel: freshVip?.vipLevel ?? 0,
+                nfts: [],
+            };
             try {
                 localStorage.removeItem('omenx_balance_cache');
-                localStorage.removeItem('omenx_vip_cache');
                 localStorage.removeItem('omenx_nft_cache');
             } catch {}
             if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
             loadUserDataLocal();
             fetchBalance(true);
-            // Don't auto-fetch VIP/NFTs on login — wait for Profile/NFT Dashboard mount
+            // Auto-fetch VIP once per wallet (no-op if already cached for this wallet)
+            if (lastVipFetchAt === 0 && newWallet) fetchVip();
+            // NFTs still wait for NFT Dashboard mount
         };
         // Cross-tab login (real storage event) — has storageArea set
         window.addEventListener('storage', (e) => {
