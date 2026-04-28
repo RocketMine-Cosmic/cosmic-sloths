@@ -44,11 +44,10 @@ export default function WarpMenu({ currentIndex, onWarp }) {
 
     return (
         <>
-            {/* Floating trigger button — pinned to bottom of viewport, respects iOS safe-area */}
+            {/* Trigger button — sits in a dedicated bar below the carousel */}
             <button
                 onClick={handleToggle}
-                className="fixed left-1/2 -translate-x-1/2 z-40 group pointer-events-auto"
-                style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+                className="group pointer-events-auto"
                 title="Warp Menu"
             >
                 <div className="relative">
