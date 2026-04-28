@@ -1,0 +1,136 @@
+import React from 'react';
+
+// Shared scrollable stats box used by both GameOverModal and VictoryModal.
+// Shows headline stats + an extended stats section (scrollable).
+export default function RunStatsBox({ stats, accentClass = 'border-slate-700' }) {
+    const formatTime = (s) => {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${m}:${sec.toString().padStart(2, '0')}`;
+    };
+
+    const totalDamage = Math.floor(stats.totalDamageDealt || 0);
+    const dps = stats.time > 0 ? Math.floor(totalDamage / stats.time) : 0;
+    const kpm = stats.time > 0 ? Math.floor((stats.kills / stats.time) * 60) : 0;
+    const gpm = stats.time > 0 ? Math.floor((stats.gold / stats.time) * 60) : 0;
+    const dmgPerKill = stats.kills > 0 ? Math.floor(totalDamage / stats.kills) : 0;
+    const timePerLevel = stats.level > 0 ? Math.floor(stats.time / stats.level) : 0;
+    const uniqueEnemyTypes = (stats.encountered && stats.encountered.length) || Object.keys(stats.enemyKills || {}).length;
+
+    const allEnemies = Object.entries(stats.enemyKills || {}).sort((a, b) => b[1] - a[1]);
+    const topEnemies = allEnemies.slice(0, 3);
+    const formatEnemyName = (id) => id.replace(/^boss_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    return (
+        <div className={`mb-6 md:mb-8 text-left bg-slate-800 p-4 md:p-6 rounded-lg border ${accentClass}`}>
+            {/* Headline stats — always visible */}
+            <div className="space-y-3 md:space-y-4">
+                <div className="flex justify-between items-center">
+                    <span className="text-sm md:text-base text-slate-400">Time Survived</span>
+                    <span className="text-white font-mono text-lg md:text-xl">{formatTime(stats.time)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-sm md:text-base text-slate-400">Level Reached</span>
+                    <span className="text-cyan-400 font-mono text-lg md:text-xl">{stats.level}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-sm md:text-base text-slate-400">Enemies Defeated</span>
+                    <span className="text-white font-mono text-lg md:text-xl">{stats.kills} <span className="text-[10px] text-slate-500">({kpm}/min)</span></span>
+                </div>
+                <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                    <span className="text-sm md:text-base text-slate-400">Total Damage</span>
+                    <span className="text-orange-400 font-mono text-lg md:text-xl">{totalDamage.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                    <span className="text-sm md:text-base text-slate-400">Gold Earned</span>
+                    <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
+                </div>
+                {stats.worldBossDamage > 0 && (
+                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                        <span className="text-sm md:text-base text-slate-400">Boss Damage Dealt</span>
+                        <span className="text-red-500 font-mono text-xl md:text-2xl font-bold">{Math.floor(stats.worldBossDamage).toLocaleString()}</span>
+                    </div>
+                )}
+                {stats.score != null && (
+                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                        <span className="text-sm md:text-base text-slate-400">Score Submitted</span>
+                        <span className="text-cyan-400 font-mono text-xl md:text-2xl font-bold">{stats.score.toLocaleString()}</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Extended stats — scrollable */}
+            <div className="mt-4 pt-3 border-t border-slate-700">
+                <div className="text-[10px] md:text-xs text-slate-500 uppercase tracking-widest font-bold mb-2">Detailed Stats</div>
+                <div className="bg-slate-900/60 rounded-md border border-slate-700/50 p-3 max-h-48 overflow-y-auto space-y-2">
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Average DPS</span>
+                        <span className="text-orange-300 font-mono">{dps.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Damage / Kill</span>
+                        <span className="text-orange-300 font-mono">{dmgPerKill.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Kills / Minute</span>
+                        <span className="text-cyan-300 font-mono">{kpm}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Gold / Minute</span>
+                        <span className="text-yellow-300 font-mono">{gpm}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Avg Time / Level</span>
+                        <span className="text-cyan-300 font-mono">{formatTime(timePerLevel)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Bosses Killed</span>
+                        <span className="text-rose-400 font-mono">{stats.bossesKilled || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Elites Killed</span>
+                        <span className="text-amber-400 font-mono">{stats.elitesKilled || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">Unique Enemy Types</span>
+                        <span className="text-cyan-300 font-mono">{uniqueEnemyTypes}</span>
+                    </div>
+
+                    {topEnemies.length > 0 && (
+                        <div className="pt-2 mt-2 border-t border-slate-700/50">
+                            <div className="text-[10px] text-slate-500 mb-1.5 uppercase tracking-wider">Most Hunted</div>
+                            <div className="space-y-1">
+                                {topEnemies.map(([id, count]) => (
+                                    <div key={id} className="flex justify-between text-xs">
+                                        <span className="text-slate-400 truncate">{formatEnemyName(id)}</span>
+                                        <span className="text-cyan-300 font-mono ml-2">×{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {allEnemies.length > 3 && (
+                        <div className="pt-2 mt-2 border-t border-slate-700/50">
+                            <div className="text-[10px] text-slate-500 mb-1.5 uppercase tracking-wider">Full Kill Log ({allEnemies.length})</div>
+                            <div className="space-y-1">
+                                {allEnemies.map(([id, count]) => (
+                                    <div key={id} className="flex justify-between text-[11px]">
+                                        <span className="text-slate-500 truncate">{formatEnemyName(id)}</span>
+                                        <span className="text-slate-400 font-mono ml-2">×{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {(stats.endlessGoldCapped || stats.endlessKillsCapped) && (
+                <div className="text-[10px] md:text-xs text-amber-400/80 italic text-right mt-3">
+                    Endless mode caps applied to credited rewards
+                </div>
+            )}
+        </div>
+    );
+}
