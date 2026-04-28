@@ -1,7 +1,56 @@
 // Level-up, upgrade choices, synergies, and evolutions extracted from GameEngine.
-import { UPGRADES, WEAPONS, SYNERGIES, EVOLUTIONS } from './Constants';
+import { UPGRADES, WEAPONS, SYNERGIES, EVOLUTIONS, CHARACTER_TALENTS } from './Constants';
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
+
+// How much each level of permanent investment biases an in-run upgrade's draw chance.
+// 0.15 = +15% weight per matching permanent level (recommended).
+const PERMANENT_BIAS_PER_LEVEL = 0.15;
+
+// Compute a weight multiplier for a given upgrade based on the player's permanent investments.
+// - Passive upgrades match by `stat` against unlocked CHARACTER_TALENTS for the active character.
+// - Weapon upgrades match by `weaponId` against permanent weapon upgrade levels.
+function getUpgradeWeight(upgrade, save, characterId) {
+    let bonusLevels = 0;
+
+    if (upgrade.type === 'passive' && upgrade.stat) {
+        const unlocked = save?.unlockedTalents?.[characterId] || [];
+        if (unlocked.length > 0) {
+            const charTalents = CHARACTER_TALENTS[characterId] || [];
+            for (const tId of unlocked) {
+                const t = charTalents.find(x => x.id === tId);
+                if (t && t.stat === upgrade.stat) bonusLevels += 1;
+            }
+        }
+    } else if (upgrade.type === 'weapon' && upgrade.weaponId) {
+        const perm = save?.permanentWeaponUpgrades?.[upgrade.weaponId] || {};
+        bonusLevels = (perm.damage || 0) + (perm.area || 0) + (perm.cooldown || 0);
+    }
+
+    return 1 + (bonusLevels * PERMANENT_BIAS_PER_LEVEL);
+}
+
+// Pick + remove a random item from `pool` using `weights` (parallel array). Returns the item.
+function weightedPickAndRemove(pool, weights) {
+    let total = 0;
+    for (let i = 0; i < weights.length; i++) total += weights[i];
+    let roll = Math.random() * total;
+    for (let i = 0; i < pool.length; i++) {
+        roll -= weights[i];
+        if (roll <= 0) {
+            const item = pool[i];
+            pool.splice(i, 1);
+            weights.splice(i, 1);
+            return item;
+        }
+    }
+    // Fallback (shouldn't happen unless total is 0)
+    const idx = pool.length - 1;
+    const item = pool[idx];
+    pool.splice(idx, 1);
+    weights.splice(idx, 1);
+    return item;
+}
 
 export function levelUp(engine) {
     engine.xp -= engine.xpRequired;
@@ -66,11 +115,13 @@ export function generateChoices(engine) {
         }
         return true;
     });
+    // Weighted draw: upgrades you've permanently invested in are slightly more
+    // likely to appear (+15% weight per matching permanent level).
+    const weights = pool.map(u => getUpgradeWeight(u, engine.save, engine.characterId));
+
     for (let i = 0; i < 3; i++) {
         if (pool.length === 0) break;
-        const idx = Math.floor(Math.random() * pool.length);
-        const baseUpgrade = pool[idx];
-        pool.splice(idx, 1);
+        const baseUpgrade = weightedPickAndRemove(pool, weights);
 
         const rarity = getRarity();
         const uniqueName = `${engine.player.name}'s ${baseUpgrade.name}`;
