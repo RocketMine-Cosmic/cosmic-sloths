@@ -37,7 +37,12 @@ export default function SaveStatusIndicator() {
             } catch { return false; }
         };
 
-        const onPending = () => {
+        // Defer all setState calls to a microtask so we never update this
+        // component during another component's render phase (events can be
+        // dispatched synchronously inside SaveManager.save()).
+        const defer = (fn) => queueMicrotask(fn);
+
+        const onPending = () => defer(() => {
             // Don't show "Saving…" for anonymous users — there's no sync happening.
             if (!hasWallet()) return;
             clearHide();
@@ -46,14 +51,14 @@ export default function SaveStatusIndicator() {
             hideTimerRef.current = setTimeout(() => {
                 setStatus(s => (s === 'pending' ? 'idle' : s));
             }, 5000);
-        };
-        const onSyncing = () => { clearHide(); setStatus('syncing'); };
-        const onSaved = () => {
+        });
+        const onSyncing = () => defer(() => { clearHide(); setStatus('syncing'); });
+        const onSaved = () => defer(() => {
             clearHide();
             setStatus('saved');
             hideTimerRef.current = setTimeout(() => setStatus('idle'), 2000);
-        };
-        const onError = () => { clearHide(); setStatus('error'); };
+        });
+        const onError = () => defer(() => { clearHide(); setStatus('error'); });
 
         window.addEventListener('saveUpdated', onPending);
         window.addEventListener('saveSyncStart', onSyncing);
