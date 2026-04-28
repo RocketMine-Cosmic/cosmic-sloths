@@ -98,18 +98,21 @@ export function updateEnemies(engine, dt) {
                     engine.addDamageText(engine.player.x, engine.player.y - 80, `5s — COLLECT DROPS!`, '#22d3ee');
                 }
             } else {
-                const baseGoldChance = engine.arena.duration === Infinity ? 0.20 : 0.35;
-                if (Math.random() < baseGoldChance + (engine.player.luck * 0.02)) {
-                    const maxGoldValue = 35;
-                    const goldValue = Math.min(maxGoldValue, 2 + Math.floor(engine.time / 90) * 1);
-                    const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 1.5) : 1;
-                    const goldCount = e.isElite ? 1 : 1;
-                    for (let gi = 0; gi < goldCount; gi++) {
-                        engine.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });
+                const isEndless = engine.arena.duration === Infinity;
+                if (!isEndless) {
+                    const baseGoldChance = 0.35;
+                    if (Math.random() < baseGoldChance + (engine.player.luck * 0.02)) {
+                        const maxGoldValue = 35;
+                        const goldValue = Math.min(maxGoldValue, 2 + Math.floor(engine.time / 90) * 1);
+                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 1.5) : 1;
+                        const goldCount = e.isElite ? 1 : 1;
+                        for (let gi = 0; gi < goldCount; gi++) {
+                            engine.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });
+                        }
                     }
-                }
-                if (engine.player.charAugments?.includes('code_hack') && Math.random() < 0.05) {
-                    engine.pickups.push({ x: e.x, y: e.y, type: 'gold', value: 10, color: '#ffd700' });
+                    if (engine.player.charAugments?.includes('code_hack') && Math.random() < 0.05) {
+                        engine.pickups.push({ x: e.x, y: e.y, type: 'gold', value: 10, color: '#ffd700' });
+                    }
                 }
                 if (Math.random() < 0.01 + (engine.player.luck * 0.001)) {
                     const pickupTypes = [
