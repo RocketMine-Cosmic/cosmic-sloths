@@ -41,7 +41,16 @@ export default function Game() {
     const [victoryStats, setVictoryStats] = useState(null);
     const [isPaused, setIsPaused] = useState(false);
     const [showRevivePrompt, setShowRevivePrompt] = useState(false);
+    const [banishCount, setBanishCount] = useState(0); // resets per run (component remounts on new game)
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
+
+    // Banish tier: 3 uses at 1 OMENX, 3 uses at 2 OMENX, then 3 OMENX onwards
+    const getBanishCost = (count) => {
+        if (count < 3) return 1;
+        if (count < 6) return 2;
+        return 3;
+    };
+    const banishCost = getBanishCost(banishCount);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -385,16 +394,19 @@ export default function Game() {
     };
 
     const handleBanish = (choice) => {
-        const BANISH_COST = 1;
-        if ((omenxBalance ?? 0) >= BANISH_COST) {
-            confirmPurchase(BANISH_COST, 'Banish Upgrade', () => {
+        const cost = banishCost;
+        if ((omenxBalance ?? 0) >= cost) {
+            const tierLabel = cost === 1 ? 'Tier 1' : cost === 2 ? 'Tier 2' : 'Tier 3';
+            confirmPurchase(cost, `Banish Upgrade (${tierLabel})`, () => {
                 // Grant immediately, pay in background (fire-and-forget)
                 if (engineRef.current) {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
-                purchaseSku(IN_GAME_SKUS.banish); // no await
+                // Charge `cost` OMENX by invoking the 1-OMENX banish SKU `cost` times
+                for (let i = 0; i < cost; i++) purchaseSku(IN_GAME_SKUS.banish);
                 refreshBalance(); // no await
+                setBanishCount(c => c + 1);
             });
         }
     };
@@ -510,7 +522,7 @@ export default function Game() {
             )}
 
             {levelUpChoices && (
-                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} />
+                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} />
             )}
             
             {showRevivePrompt && (

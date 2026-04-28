@@ -6,7 +6,10 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
-export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish }) {
+export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 1, banishCount = 0 }) {
+    const banishTier = banishCost === 1 ? 1 : banishCost === 2 ? 2 : 3;
+    // Each tier has 3 charges (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
+    const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
     const [revealedIndex, setRevealedIndex] = useState(null);
     const [hasRerolled, setHasRerolled] = useState(false);
 
@@ -161,13 +164,16 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => {
-                                if ((cosmicTokens || 0) < 1) return;
+                                if ((cosmicTokens || 0) < banishCost) return;
                                 onBanish(choices[revealedIndex]);
                                 // revealedIndex resets automatically when new choices arrive
                             }}
-                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 1 ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
+                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex flex-col items-center justify-center gap-0.5 ${(cosmicTokens || 0) < banishCost ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
                         >
-                            Banish (1 OMENX)
+                            <span>Banish T{banishTier} ({banishCost} OMENX)</span>
+                            {banishUsesInTier !== null && (
+                                <span className="text-[10px] md:text-xs font-normal opacity-80">{banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left at this tier</span>
+                            )}
                         </motion.button>
                     )}
                 </div>
