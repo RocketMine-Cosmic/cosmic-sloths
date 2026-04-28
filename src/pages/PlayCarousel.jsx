@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+import WarpMenu from '../components/game/WarpMenu';
 
 // Static imports — bundled into the main entry chunk so they can't suffer
 // from stale dynamic-chunk timestamps when Vite's dev server restarts.
@@ -132,6 +133,8 @@ export default function PlayCarousel() {
                     <LazySlide shouldMount={isNear(13)}><Jukebox isCarousel={true} /></LazySlide>
                 </div>
             </div>
+
+            <WarpMenu currentIndex={selectedIndex} onWarp={(idx) => emblaApi?.scrollTo(idx)} />
         </div>
     );
 }
