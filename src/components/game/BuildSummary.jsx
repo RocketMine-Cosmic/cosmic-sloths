@@ -1,8 +1,29 @@
 import React, { useMemo } from 'react';
-import { RELICS, getCharacterMastery } from '../../game/Constants';
+import { RELICS, getCharacterMastery, CHARACTER_TALENTS } from '../../game/Constants';
 import { NFTPerkManager } from '../../game/NFTPerks';
+import { getTitleBuff } from '@/lib/playerTitles';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useOmenXUser } from '@/hooks/useOmenXUser';
+
+// Maps title-buff & talent stat keys to BuildSummary stat keys
+const STAT_KEY_MAP = {
+    damageMult: 'damageMult',
+    speedMult: 'speedMult',
+    areaMult: 'areaMult',
+    cooldownMult: 'cooldownMult',
+    hpMult: 'hpMult',
+    goldMult: 'goldMult',
+    xpMult: 'xpMult',
+    luck: 'luck',
+    regen: 'regen',
+    armor: 'armor',
+    magnetRange: 'magnet',     // titles
+    magnet: 'magnet',          // talents (alt key)
+    projSpeedMult: 'projSpeedMult',
+    maxHp: 'maxHp',            // talents (flat HP)
+    critBonus: 'critBonus',
+};
 
 // Stat metadata: label, icon, formatter, color theme
 const STAT_DEFS = {
@@ -14,18 +35,22 @@ const STAT_DEFS = {
     goldMult:   { label: 'Gold',   icon: '🪙', color: 'text-yellow-300',  border: 'border-yellow-500/40',  bg: 'bg-yellow-950/30',  fmt: (v) => `+${Math.round(v * 100)}%` },
     xpMult:     { label: 'XP',     icon: '✨', color: 'text-emerald-300', border: 'border-emerald-500/40', bg: 'bg-emerald-950/30', fmt: (v) => `+${Math.round(v * 100)}%` },
     relicFragMult: { label: 'Relic Frags', icon: '🧩', color: 'text-fuchsia-300', border: 'border-fuchsia-500/40', bg: 'bg-fuchsia-950/30', fmt: (v) => `+${Math.round(v * 100)}%` },
+    projSpeedMult: { label: 'Proj Speed', icon: '🚀', color: 'text-sky-300', border: 'border-sky-500/40',     bg: 'bg-sky-950/30',     fmt: (v) => `+${Math.round(v * 100)}%` },
+    critBonus:  { label: 'Crit',   icon: '🎯', color: 'text-orange-300',  border: 'border-orange-500/40',  bg: 'bg-orange-950/30',  fmt: (v) => `+${Math.round(v * 100)}%` },
     luck:       { label: 'Luck',   icon: '🍀', color: 'text-lime-300',    border: 'border-lime-500/40',    bg: 'bg-lime-950/30',    fmt: (v) => `+${v}` },
     regen:      { label: 'Regen',  icon: '❤️', color: 'text-pink-300',    border: 'border-pink-500/40',    bg: 'bg-pink-950/30',    fmt: (v) => `+${v.toFixed(1)}/s` },
     armor:      { label: 'Armor',  icon: '🛡️', color: 'text-slate-300',  border: 'border-slate-500/40',   bg: 'bg-slate-900/50',   fmt: (v) => `+${v}` },
     magnet:     { label: 'Magnet', icon: '🧲', color: 'text-indigo-300',  border: 'border-indigo-500/40',  bg: 'bg-indigo-950/30',  fmt: (v) => `+${v}` },
+    maxHp:      { label: 'Max HP+', icon: '💗', color: 'text-rose-300',   border: 'border-rose-500/40',    bg: 'bg-rose-950/30',    fmt: (v) => `+${v}` },
 };
 
 // Order in which to render stats (only those with non-zero totals appear)
-const STAT_ORDER = ['damageMult', 'speedMult', 'areaMult', 'cooldownMult', 'hpMult', 'goldMult', 'xpMult', 'relicFragMult', 'luck', 'regen', 'armor', 'magnet'];
+const STAT_ORDER = ['damageMult', 'speedMult', 'areaMult', 'cooldownMult', 'hpMult', 'maxHp', 'goldMult', 'xpMult', 'relicFragMult', 'projSpeedMult', 'critBonus', 'luck', 'regen', 'armor', 'magnet'];
 
 export default function BuildSummary({ save, selectedChar, currentTime }) {
     const { vip: vipLevel } = useOmenXVip();
     const { nfts } = useCurrency();
+    const { user: omenxUser } = useOmenXUser();
 
     const { totals, sourceCount, xpBuffTimeLeft } = useMemo(() => {
         const totals = {};
@@ -93,7 +118,40 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
             sourceCount++;
         }
 
-        // 6. Active session buffs (XP buff: +50%)
+        // 6. Equipped title buff
+        const titleId = omenxUser?.data?.player_title;
+        const titleBuff = getTitleBuff(titleId);
+        if (titleBuff) {
+            let titleApplied = false;
+            for (const [key, val] of Object.entries(titleBuff)) {
+                if (!val) continue;
+                const mapped = STAT_KEY_MAP[key];
+                if (!mapped) continue;
+                totals[mapped] = (totals[mapped] || 0) + val;
+                titleApplied = true;
+            }
+            if (titleApplied) sourceCount++;
+        }
+
+        // 7. Character talents (permanent + weekly + seasonal — unique union)
+        const allTalentIds = new Set([
+            ...(save.permanentTalents?.[selectedChar] || []),
+            ...(save.weeklyTalents?.[selectedChar] || []),
+            ...(save.seasonalTalents?.[selectedChar] || []),
+        ]);
+        const charTalentDefs = CHARACTER_TALENTS[selectedChar] || [];
+        if (allTalentIds.size > 0) {
+            for (const talent of charTalentDefs) {
+                if (!allTalentIds.has(talent.id)) continue;
+                if (!talent.stat || !talent.value) continue;
+                const mapped = STAT_KEY_MAP[talent.stat];
+                if (!mapped) continue;
+                totals[mapped] = (totals[mapped] || 0) + talent.value;
+            }
+            sourceCount++;
+        }
+
+        // 8. Active session buffs (XP buff: +50%)
         const xpExpiry = save.sessionBuffs?.xpExpiry || 0;
         if (xpExpiry > currentTime) {
             totals.xpMult = (totals.xpMult || 0) + 0.5;
@@ -105,7 +163,7 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
         }
 
         return { totals, sourceCount, xpBuffTimeLeft };
-    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, save.permanentUpgrades, save.weeklyUpgrades, save.seasonalUpgrades, selectedChar, currentTime, vipLevel, nfts]);
+    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, save.permanentUpgrades, save.weeklyUpgrades, save.seasonalUpgrades, save.permanentTalents, save.weeklyTalents, save.seasonalTalents, selectedChar, currentTime, vipLevel, nfts, omenxUser?.data?.player_title]);
 
     const activeStats = STAT_ORDER.filter((k) => totals[k]);
 
