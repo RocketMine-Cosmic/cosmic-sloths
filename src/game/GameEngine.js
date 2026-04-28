@@ -174,6 +174,12 @@ export class GameEngine {
         const vipDmgBonus = vipLevel * 0.01;
         const vipHpBonus = Math.floor((baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0)) * vipLevel * 0.01);
 
+        // Title buff: small permanent bonuses while a title is equipped (save.titleBuff
+        // is set by Game.jsx from the OmenX user record before constructing the engine).
+        const titleBuff = save.titleBuff || {};
+        const titleHpBase = baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0);
+        const titleHpBonus = Math.floor(titleHpBase * (titleBuff.hpMult || 0));
+
         this.player = {
             name: baseChar.name,
             image: playerImage,
@@ -182,21 +188,21 @@ export class GameEngine {
             frameTimer: 0,
             currentFrame: 0,
             x: 0, y: 0, radius: 16,
-            maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0) + vipHpBonus,
-            hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0) + vipHpBonus,
+            maxHp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0) + vipHpBonus + titleHpBonus,
+            hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0) + vipHpBonus + titleHpBonus,
             speed: baseChar.speed,
-            speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0) + augBonus.speedMult) * this.envModifiers.playerSpeed,
-            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0) + vipDmgBonus,
-            magnetRange: (baseChar.magnetRange || 60) + 30 + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0),
-            regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0) + augBonus.regen,
-            armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0) + augBonus.armor,
-            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0) + augBonus.areaMult,
-            cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0),
+            speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0) + augBonus.speedMult + (titleBuff.speedMult || 0)) * this.envModifiers.playerSpeed,
+            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0) + vipDmgBonus + (titleBuff.damageMult || 0),
+            magnetRange: (baseChar.magnetRange || 60) + 30 + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0) + (titleBuff.magnetRange || 0),
+            regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0) + augBonus.regen + (titleBuff.regen || 0),
+            armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0) + augBonus.armor + (titleBuff.armor || 0),
+            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0) + augBonus.areaMult + (titleBuff.areaMult || 0),
+            cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0) + (titleBuff.cooldownMult || 0),
             projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0) + (relicBonus.projSpeedMult || 0),
-            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult * sectorPenalty,
-            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult) * this.difficulty.xpMult,
-            luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0),
-            critBonus: augBonus.critBonus,
+            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0)) * this.difficulty.goldMult * sectorPenalty,
+            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0)) * this.difficulty.xpMult,
+            luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0) + (titleBuff.luck || 0),
+            critBonus: augBonus.critBonus + (titleBuff.critBonus || 0),
             charAugments: charAugments,
             color: baseChar.color,
             trail: save.cosmetics?.trail || 'default',
@@ -210,8 +216,8 @@ export class GameEngine {
         const hasXpBuff = sessionBuffs.xpExpiry > now;
         const xpBuffMultiplier = hasXpBuff ? 1.5 : 1.0;
 
-        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult) * this.difficulty.goldMult * sectorPenalty;
-        this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult) * this.difficulty.xpMult * xpBuffMultiplier;
+        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0)) * this.difficulty.goldMult * sectorPenalty;
+        this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0)) * this.difficulty.xpMult * xpBuffMultiplier;
 
         if (hasAug('dat_ghost')) {
             this.player.iFrames = 5.0;

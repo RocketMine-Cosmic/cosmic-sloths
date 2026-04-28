@@ -7,13 +7,13 @@ import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
-import { PLAYER_TITLES, TITLE_TIERS } from '@/lib/playerTitles';
+import { PLAYER_TITLES, TITLE_TIERS, TIER_ORDER, formatBuff } from '@/lib/playerTitles';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
 
-const TIER_ORDER = ['mythic', 'legendary', 'epic', 'rare', 'uncommon', 'common', 'starter'];
-const TIER_TABS = [
+// Status filter (separate from rarity tabs)
+const STATUS_TABS = [
     { id: 'all', label: 'All' },
     { id: 'unlocked', label: 'Unlocked' },
     { id: 'locked', label: 'Locked' },
@@ -24,7 +24,8 @@ export default function Titles() {
     const { user: omenxUser } = useOmenXUser();
     const [stats, setStats] = useState(null);
     const [equippedTitle, setEquippedTitle] = useState('');
-    const [filter, setFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [tierFilter, setTierFilter] = useState('all');
     const [saving, setSaving] = useState(false);
 
     // Fetch player stats (mirrors what Profile does for title eval)
@@ -79,12 +80,29 @@ export default function Titles() {
     }, [stats]);
 
     const filteredRows = useMemo(() => {
-        if (filter === 'unlocked') return rows.filter(r => r.unlocked);
-        if (filter === 'locked') return rows.filter(r => !r.unlocked);
-        return rows;
-    }, [rows, filter]);
+        let out = rows;
+        if (statusFilter === 'unlocked') out = out.filter(r => r.unlocked);
+        else if (statusFilter === 'locked') out = out.filter(r => !r.unlocked);
+        if (tierFilter !== 'all') out = out.filter(r => r.tier === tierFilter);
+        return out;
+    }, [rows, statusFilter, tierFilter]);
 
     const unlockedCount = rows.filter(r => r.unlocked).length;
+
+    // Per-tier counts for the rarity tabs ({ tier: { unlocked, total } })
+    const tierCounts = useMemo(() => {
+        const counts = { all: { unlocked: 0, total: 0 } };
+        TIER_ORDER.forEach(t => { counts[t] = { unlocked: 0, total: 0 }; });
+        rows.forEach(r => {
+            counts.all.total++;
+            counts[r.tier].total++;
+            if (r.unlocked) {
+                counts.all.unlocked++;
+                counts[r.tier].unlocked++;
+            }
+        });
+        return counts;
+    }, [rows]);
 
     const handleEquip = async (titleId) => {
         if (saving) return;
@@ -129,19 +147,51 @@ export default function Titles() {
                         <CurrencyHeader />
                     </header>
 
-                    {/* Filter tabs */}
-                    <div className="flex gap-2 mb-3 md:mb-4 shrink-0">
-                        {TIER_TABS.map(tab => (
+                    {/* Status filter (All / Unlocked / Locked) */}
+                    <div className="flex gap-2 mb-2 md:mb-3 shrink-0">
+                        {STATUS_TABS.map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => { SoundManager.playUIClick(); setFilter(tab.id); }}
+                                onClick={() => { SoundManager.playUIClick(); setStatusFilter(tab.id); }}
                                 className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-xs md:text-sm transition-colors ${
-                                    filter === tab.id ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                    statusFilter === tab.id ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                 }`}
                             >
                                 {tab.label}
                             </button>
                         ))}
+                    </div>
+
+                    {/* Rarity tabs */}
+                    <div className="flex gap-1.5 md:gap-2 mb-3 md:mb-4 shrink-0 overflow-x-auto pb-1">
+                        <button
+                            onClick={() => { SoundManager.playUIClick(); setTierFilter('all'); }}
+                            className={`shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 rounded-md font-bold text-[10px] md:text-xs uppercase tracking-wider transition-colors ${
+                                tierFilter === 'all'
+                                    ? 'bg-slate-200 text-slate-900'
+                                    : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 border border-slate-700'
+                            }`}
+                        >
+                            All <span className="opacity-60 ml-1">{tierCounts.all.unlocked}/{tierCounts.all.total}</span>
+                        </button>
+                        {TIER_ORDER.map(tierKey => {
+                            const t = TITLE_TIERS[tierKey];
+                            const c = tierCounts[tierKey];
+                            const active = tierFilter === tierKey;
+                            return (
+                                <button
+                                    key={tierKey}
+                                    onClick={() => { SoundManager.playUIClick(); setTierFilter(tierKey); }}
+                                    className={`shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 rounded-md font-bold text-[10px] md:text-xs uppercase tracking-wider border transition-colors ${
+                                        active
+                                            ? `${t.bg} ${t.text} ${t.border} brightness-125`
+                                            : `bg-slate-900/60 text-slate-500 border-slate-800 hover:${t.text} hover:${t.border}`
+                                    }`}
+                                >
+                                    {t.label} <span className="opacity-60 ml-1">{c.unlocked}/{c.total}</span>
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {/* Title list */}
@@ -186,6 +236,11 @@ export default function Titles() {
                                         <p className="text-[11px] md:text-xs text-slate-400 leading-snug">
                                             {row.describe(stats)}
                                         </p>
+                                        {row.buff && (
+                                            <div className="text-[10px] md:text-[11px] font-bold text-amber-300 bg-amber-950/40 border border-amber-800/40 rounded px-2 py-1 leading-snug">
+                                                ⚡ {formatBuff(row.buff)}
+                                            </div>
+                                        )}
                                         <div className="mt-auto pt-1">
                                             {isEquipped ? (
                                                 <button

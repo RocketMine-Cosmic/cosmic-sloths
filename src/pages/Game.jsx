@@ -131,6 +131,18 @@ export default function Game() {
         // Inject live OMENX balance so GameEngine can gate the revive prompt correctly
         save.omenxBalance = omenxBalance ?? 0;
 
+        // Inject equipped title buff so GameEngine can apply it as small permanent bonus
+        try {
+            const u = getOmenXUserSync();
+            const equippedTitle = u?.data?.player_title;
+            if (equippedTitle) {
+                const { getTitleBuff } = await import('@/lib/playerTitles');
+                save.titleBuff = getTitleBuff(equippedTitle);
+            }
+        } catch (e) {
+            // No buff applied — title registry unavailable
+        }
+
         // Inject NFT multipliers from playerDataCache so GameEngine can apply them
         try {
             const { fetchPlayerData } = await import('@/lib/playerDataCache');
