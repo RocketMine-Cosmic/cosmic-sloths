@@ -20,7 +20,7 @@ const SLIDES = [
     { idx: 13, name: 'Jukebox', icon: '🎵', color: 'from-fuchsia-600 to-purple-950', border: 'border-fuchsia-400/50' },
 ];
 
-export default function WarpMenu({ currentIndex, onWarp }) {
+export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
     const [open, setOpen] = useState(false);
 
     // Close on Escape
@@ -44,17 +44,20 @@ export default function WarpMenu({ currentIndex, onWarp }) {
 
     return (
         <>
-            {/* Trigger button — sits in a dedicated bar below the carousel */}
+            {/* Trigger button — shows current page name; tap to open warp grid. Swipe still works on the carousel underneath. */}
             <button
                 onClick={handleToggle}
-                className="group pointer-events-auto"
+                className="group pointer-events-auto w-full max-w-[600px]"
                 title="Warp Menu"
             >
                 <div className="relative">
-                    <div className="absolute inset-0 bg-fuchsia-500/40 blur-xl rounded-full group-hover:bg-fuchsia-400/60 transition-all" />
-                    <div className="relative bg-[#0b0416]/95 backdrop-blur-xl border-2 border-fuchsia-500/70 hover:border-fuchsia-300 px-3 py-1.5 md:px-5 md:py-2.5 rounded-full flex items-center gap-1.5 md:gap-2 shadow-[0_0_25px_rgba(217,70,239,0.4)] hover:shadow-[0_0_35px_rgba(217,70,239,0.7)] transition-all">
-                        <Compass className={`w-3.5 h-3.5 md:w-5 md:h-5 text-fuchsia-300 ${open ? 'rotate-180' : 'group-hover:rotate-90'} transition-transform duration-500`} />
-                        <span className="text-[10px] md:text-sm font-black tracking-widest uppercase text-white">Warp</span>
+                    <div className="absolute inset-0 bg-fuchsia-500/30 blur-xl rounded-full group-hover:bg-fuchsia-400/50 transition-all" />
+                    <div className="relative bg-[#0b0416]/95 backdrop-blur-xl border-2 border-fuchsia-500/60 hover:border-fuchsia-300 px-3 py-2 md:px-5 md:py-3 rounded-full flex items-center justify-center gap-2 md:gap-3 shadow-[0_0_25px_rgba(217,70,239,0.3)] hover:shadow-[0_0_35px_rgba(217,70,239,0.6)] transition-all">
+                        <Compass className={`w-4 h-4 md:w-5 md:h-5 text-fuchsia-300 shrink-0 ${open ? 'rotate-180' : 'group-hover:rotate-90'} transition-transform duration-500`} />
+                        <span className={`text-sm md:text-base font-black tracking-widest uppercase truncate drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${currentLabel?.color || 'text-white'}`}>
+                            {currentLabel?.name || 'Warp'}
+                        </span>
+                        <span className="text-[10px] md:text-xs font-bold tracking-wider uppercase text-fuchsia-400/80 shrink-0 hidden sm:inline">▾ Warp</span>
                     </div>
                 </div>
             </button>

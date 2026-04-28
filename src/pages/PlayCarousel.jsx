@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import WarpMenu from '../components/game/WarpMenu';
 
@@ -88,31 +86,15 @@ export default function PlayCarousel() {
     return (
         <div className="h-[100dvh] bg-[#0b0416] flex flex-col overflow-hidden select-none relative font-sans">
             <SpaceBackground />
-            <div className="p-3 md:p-6 flex flex-col md:flex-row justify-center items-center gap-2 z-10 relative shrink-0 pointer-events-none">
-                <div className="flex items-center justify-between w-full md:w-[600px] bg-[#0b0416]/80 backdrop-blur-xl rounded-full border border-[#D946EF]/50 p-1 md:p-2 shadow-[0_0_30px_rgba(217,70,239,0.3),inset_0_0_15px_rgba(12,167,184,0.2)] relative overflow-hidden pointer-events-auto">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D946EF]/10 to-transparent animate-pulse pointer-events-none" />
-                    <button 
-                        onClick={() => { 
-                            SoundManager.playUIClick(); 
-                            emblaApi?.scrollPrev();
-                        }}
-                        className="p-2 md:p-3 hover:bg-[#D946EF]/20 rounded-full text-[#D946EF] hover:text-white transition-colors z-10"
-                    >
-                        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                    <div className="flex-1 text-center font-black text-sm md:text-base tracking-widest uppercase select-none z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        <span className={SLIDE_LABELS[selectedIndex].color}>{SLIDE_LABELS[selectedIndex].name}</span>
-                    </div>
-                    <button 
-                        onClick={() => { 
-                            SoundManager.playUIClick(); 
-                            emblaApi?.scrollNext();
-                        }}
-                        className="p-2 md:p-3 hover:bg-[#D946EF]/20 rounded-full text-[#D946EF] hover:text-white transition-colors z-10"
-                    >
-                        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                </div>
+            <div
+                className="px-3 pt-3 md:px-6 md:pt-4 pb-2 md:pb-3 flex justify-center items-center z-20 relative shrink-0"
+                style={{ paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)' }}
+            >
+                <WarpMenu
+                    currentIndex={selectedIndex}
+                    onWarp={(idx) => emblaApi?.scrollTo(idx)}
+                    currentLabel={SLIDE_LABELS[selectedIndex]}
+                />
             </div>
 
             <div className="flex-1 min-h-0 overflow-hidden" ref={emblaRef}>
@@ -134,12 +116,6 @@ export default function PlayCarousel() {
                 </div>
             </div>
 
-            <div
-                className="shrink-0 flex justify-center items-center pt-2 md:pt-3 z-20 relative bg-[#0b0416]/90 backdrop-blur-sm border-t border-fuchsia-500/20"
-                style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 8px), 16px)' }}
-            >
-                <WarpMenu currentIndex={selectedIndex} onWarp={(idx) => emblaApi?.scrollTo(idx)} />
-            </div>
         </div>
     );
 }
