@@ -31,8 +31,31 @@ export const CurrencyProvider = ({ children }) => {
     return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
   }, []);
 
-  // Removed manual omenxUserUpdated listener — playerDataCache subscription is authoritative
-  // This prevents state inconsistency from competing updates
+  // Local profile edits (title, name, icon) are written via updateOmenXUser to
+  // localStorage/IndexedDB and emit `omenxUserUpdated`. The playerDataCache only
+  // refreshes from the API so we merge those local fields into omenxUser here
+  // so equipped titles etc. show up immediately across pages.
+  useEffect(() => {
+    const handleUserUpdated = (e) => {
+      const updates = e.detail || {};
+      setOmenxUser(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          player_name: updates.player_name ?? prev.player_name,
+          pilot_icon: updates.pilot_icon ?? prev.pilot_icon,
+          data: {
+            ...(prev.data || {}),
+            player_name: updates.player_name ?? prev.data?.player_name,
+            player_title: updates.player_title !== undefined ? updates.player_title : prev.data?.player_title,
+            pilot_icon: updates.pilot_icon ?? prev.data?.pilot_icon,
+          },
+        };
+      });
+    };
+    window.addEventListener('omenxUserUpdated', handleUserUpdated);
+    return () => window.removeEventListener('omenxUserUpdated', handleUserUpdated);
+  }, []);
 
   return (
     <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, nfts, omenxUser }}>
