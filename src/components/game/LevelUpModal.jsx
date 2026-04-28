@@ -14,6 +14,13 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
         setHasRerolled(false);
     }, [level]);
 
+    // Reset the revealed card whenever a new set of choices arrives (e.g. after a
+    // successful reroll/banish). This way we don't reset prematurely if the user
+    // cancels the OMENX confirmation — they keep seeing their original pick.
+    React.useEffect(() => {
+        setRevealedIndex(null);
+    }, [choices]);
+
     const handleSelect = (index) => {
         if (revealedIndex === null) {
             setRevealedIndex(index);
@@ -139,9 +146,9 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => {
                                 if ((cosmicTokens || 0) < 2) return;
-                                setRevealedIndex(null);
                                 setHasRerolled(true);
                                 onReroll();
+                                // revealedIndex resets automatically when new choices arrive
                             }}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 2 ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
                         >
@@ -156,7 +163,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             onClick={() => {
                                 if ((cosmicTokens || 0) < 1) return;
                                 onBanish(choices[revealedIndex]);
-                                setRevealedIndex(null);
+                                // revealedIndex resets automatically when new choices arrive
                             }}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 1 ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
                         >
