@@ -227,6 +227,14 @@ export function checkEvolutions(engine) {
             engine.player.weapons = engine.player.weapons.filter(w => w.id !== evolution.baseWeapon);
             engine.player.weapons.push({ ...WEAPONS[evolution.evolvedWeapon], level: baseWeapon.level, timer: 0 });
             engine.addDamageText(engine.player.x, engine.player.y - 40, "WEAPON EVOLVED!", '#ff4500');
+
+            // Track evolution discovery in the player's save (mirrors how synergies are recorded).
+            if (!engine.save.discoveredEvolutions) engine.save.discoveredEvolutions = [];
+            if (!engine.save.discoveredEvolutions.includes(evolution.evolvedWeapon)) {
+                engine.save.discoveredEvolutions.push(evolution.evolvedWeapon);
+                SaveManager.save(engine.save);
+            }
+
             checkEvolutions(engine);
             break;
         }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { SYNERGIES, WEAPONS } from '../game/Constants';
+import { SYNERGIES, WEAPONS, EVOLUTIONS, UPGRADES } from '../game/Constants';
 import { ArrowLeft, BookOpen, Lock, Sparkles, Crosshair, Zap, Timer, CheckCircle2 } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
@@ -33,6 +33,7 @@ export default function SynergyCodex({ isCarousel }) {
     }, []);
 
     const discovered = save.discoveredSynergies || [];
+    const discoveredEvolutions = save.discoveredEvolutions || [];
 
     return (
         <OmenXGate isCarousel={isCarousel}>
@@ -61,10 +62,13 @@ export default function SynergyCodex({ isCarousel }) {
 
                 <div className="flex justify-center gap-2 mb-4 w-full max-w-2xl shrink-0 mx-auto">
                     <button onClick={() => { SoundManager.playUIClick(); setActiveTab('synergies'); setPreviewWeapon(null); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'synergies' ? 'bg-rose-600 border-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
-                        Weapon Synergies
+                        Synergies
+                    </button>
+                    <button onClick={() => { SoundManager.playUIClick(); setActiveTab('evolutions'); setPreviewWeapon(null); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'evolutions' ? 'bg-orange-600 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+                        Evolutions
                     </button>
                     <button onClick={() => { SoundManager.playUIClick(); setActiveTab('mastery'); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'mastery' ? 'bg-amber-600 border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
-                        Weapon Mastery
+                        Mastery
                     </button>
                 </div>
 
@@ -153,6 +157,94 @@ export default function SynergyCodex({ isCarousel }) {
                                 </div>
                             );
                         })}
+                            </div>
+                        </>
+                    )}
+
+                    {activeTab === 'evolutions' && (
+                        <>
+                            <p className="text-slate-300 text-xs md:text-base text-center">Combine a base weapon with the right passive upgrade in a run to evolve it into a devastating ultimate form.</p>
+                            <div className="text-center text-xs text-orange-400 font-bold mb-4">Discovered: {discoveredEvolutions.length} / {EVOLUTIONS.length}</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                                {EVOLUTIONS.map((evolution, index) => {
+                                    const baseWeapon = WEAPONS[evolution.baseWeapon];
+                                    const evolvedWeapon = WEAPONS[evolution.evolvedWeapon];
+                                    const passiveUpgrade = UPGRADES.find(u => u.id === evolution.passive);
+                                    const isDiscovered = discoveredEvolutions.includes(evolution.evolvedWeapon);
+
+                                    return (
+                                        <div key={index} className={`p-3 md:p-4 rounded-xl border-2 transition-all flex flex-col h-full ${
+                                            isDiscovered
+                                            ? 'bg-[#0b0416]/80 backdrop-blur-xl border-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.2)]'
+                                            : 'bg-slate-900/60 border-slate-800'
+                                        }`}>
+                                            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                                                <div className={`p-2 md:p-3 rounded-lg border shrink-0 ${isDiscovered ? 'bg-orange-950/50 border-orange-500/50 text-orange-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+                                                    {isDiscovered ? <Sparkles className="w-5 h-5 md:w-6 md:h-6" /> : <Lock className="w-5 h-5 md:w-6 md:h-6" />}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h3 className={`font-black text-base md:text-lg tracking-widest uppercase truncate ${isDiscovered ? 'text-white' : 'text-slate-500'}`}>
+                                                        {isDiscovered ? evolvedWeapon.name : 'Unknown Evolution'}
+                                                    </h3>
+                                                    <p className="text-[10px] md:text-xs text-slate-400 line-clamp-2">
+                                                        {isDiscovered ? evolvedWeapon.desc.replace('EVOLVED: ', '') : 'Trigger this evolution in a run to reveal its true power.'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-auto">
+                                                <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs font-bold bg-slate-950/50 p-2 md:p-3 rounded-lg border border-slate-800">
+                                                    <div className={`flex-1 text-center truncate ${isDiscovered ? 'text-cyan-400' : 'text-slate-500'}`}>{baseWeapon.name}</div>
+                                                    <div className="text-slate-600">+</div>
+                                                    <div className={`flex-1 text-center truncate ${isDiscovered ? 'text-emerald-400' : 'text-slate-500'}`}>{passiveUpgrade?.name || evolution.passive}</div>
+                                                </div>
+
+                                                {isDiscovered && (
+                                                    <div className="mt-2 md:mt-3 grid grid-cols-3 gap-1.5 md:gap-2 text-center text-[10px] md:text-xs">
+                                                        <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                            <div className="text-slate-500 mb-0.5 md:mb-1">Base Dmg</div>
+                                                            <div className="font-mono text-orange-400">{evolvedWeapon.baseDamage}</div>
+                                                        </div>
+                                                        <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                            <div className="text-slate-500 mb-0.5 md:mb-1">Cooldown</div>
+                                                            <div className="font-mono text-cyan-400">{evolvedWeapon.baseCooldown}s</div>
+                                                        </div>
+                                                        <div className="bg-slate-950 p-1.5 md:p-2 rounded border border-slate-800">
+                                                            <div className="text-slate-500 mb-0.5 md:mb-1">Area</div>
+                                                            <div className="font-mono text-amber-400">{evolvedWeapon.baseArea}x</div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="mt-3 pt-2 border-t border-slate-800/50">
+                                                    <button
+                                                        onClick={() => {
+                                                            SoundManager.playUIClick();
+                                                            setPreviewWeapon(previewWeapon === evolvedWeapon.id ? null : evolvedWeapon.id);
+                                                        }}
+                                                        className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
+                                                            previewWeapon === evolvedWeapon.id
+                                                            ? 'bg-slate-700 text-white'
+                                                            : 'bg-orange-600 hover:bg-orange-500 text-white'
+                                                        }`}
+                                                    >
+                                                        <Crosshair className="w-4 h-4" />
+                                                        {previewWeapon === evolvedWeapon.id ? 'Close Simulation' : 'Preview Evolution'}
+                                                    </button>
+
+                                                    {previewWeapon === evolvedWeapon.id && (
+                                                        <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                            <WeaponSimulation weaponId={evolvedWeapon.id} isMastered={true} />
+                                                            <div className="text-[10px] text-slate-500 text-center mt-2 italic">
+                                                                Previewing fully evolved weapon power.
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </>
                     )}
