@@ -11,6 +11,7 @@ import { IN_GAME_SKUS } from '@/lib/skuMap';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
+import LoadoutPresets from '../components/game/LoadoutPresets';
 import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -647,7 +648,19 @@ export default function Hub({ isCarousel }) {
                                     
                                     return (
                                         <div className="flex flex-col gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
-                                            
+
+                                            <LoadoutPresets
+                                                save={save}
+                                                setSave={setSave}
+                                                selectedChar={selectedChar}
+                                                selectedArena={selectedArena}
+                                                selectedDifficulty={selectedDifficulty}
+                                                setSelectedChar={setSelectedChar}
+                                                setSelectedArena={setSelectedArena}
+                                                setSelectedDifficulty={setSelectedDifficulty}
+                                                effectiveUnlockedCharacters={effectiveUnlockedCharacters}
+                                            />
+
                                             <div className="flex flex-col sm:flex-row gap-1 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">
                                                 <div className="text-[11px] text-slate-400 font-bold mb-1 sm:mb-0 sm:w-20 shrink-0 flex items-center">BUFFS</div>
                                                 <button onClick={buyBuff} disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10} className={`flex-1 flex justify-between items-center px-2 py-1 rounded text-[11px] font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
