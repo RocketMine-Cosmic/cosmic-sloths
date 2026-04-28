@@ -11,7 +11,6 @@ import { IN_GAME_SKUS } from '@/lib/skuMap';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
-import LoadoutPresets from '../components/game/LoadoutPresets';
 import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -647,19 +646,19 @@ export default function Hub({ isCarousel }) {
                                     };
                                     
                                     return (
-                                        <div className="flex flex-col gap-2 md:gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
+                                        <div className="flex flex-col gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
 
-                                            <LoadoutPresets
-                                                save={save}
-                                                setSave={setSave}
-                                                selectedChar={selectedChar}
-                                                selectedArena={selectedArena}
-                                                selectedDifficulty={selectedDifficulty}
-                                                setSelectedChar={setSelectedChar}
-                                                setSelectedArena={setSelectedArena}
-                                                setSelectedDifficulty={setSelectedDifficulty}
-                                                effectiveUnlockedCharacters={effectiveUnlockedCharacters}
-                                            />
+                                            <button
+                                                onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}
+                                                className="flex items-center justify-between gap-2 bg-slate-900/50 hover:bg-slate-800/70 border border-slate-700/50 hover:border-cyan-500/50 rounded-lg px-3 py-2 transition-all group"
+                                                title="Save & swap full configurations"
+                                            >
+                                                <span className="flex items-center gap-2 text-[11px] md:text-xs font-bold tracking-widest uppercase text-slate-300 group-hover:text-cyan-300">
+                                                    💾 Loadout Presets
+                                                    <span className="text-[9px] md:text-[10px] text-slate-500 font-normal normal-case tracking-normal hidden sm:inline">— save & swap full configurations</span>
+                                                </span>
+                                                <span className="text-cyan-400 text-xs">→</span>
+                                            </button>
 
                                             <div className="flex flex-col sm:flex-row gap-1 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">
                                                 <div className="text-[11px] text-slate-400 font-bold mb-1 sm:mb-0 sm:w-20 shrink-0 flex items-center">BUFFS</div>
@@ -669,11 +668,11 @@ export default function Hub({ isCarousel }) {
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-row gap-2 md:gap-3">
+                                            <div className="flex flex-col gap-3 md:flex-row md:gap-3">
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('normal')}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-xs md:text-lg font-black py-2.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-lg font-black py-4 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#0CA7B8] to-cyan-400 hover:from-cyan-400 hover:to-[#0CA7B8] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(12,167,184,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -692,7 +691,7 @@ export default function Hub({ isCarousel }) {
                                                 <button
                                                     onClick={() => canLaunch && checkAndLaunch('endless')}
                                                     disabled={!canLaunch}
-                                                    className={`w-full text-white text-xs md:text-lg font-black py-2.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                    className={`w-full text-white text-sm md:text-lg font-black py-4 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                         canLaunch
                                                         ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                         : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
