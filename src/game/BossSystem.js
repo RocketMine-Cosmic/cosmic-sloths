@@ -416,7 +416,15 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
                 boss.y = player.y + Math.sin(angle) * 250;
                 addParticle(boss.x, boss.y, '#ec4899', 30, 'glow', 4);
                 addDamageText(boss.x, boss.y - boss.radius - 20, 'EMPRESS BLINK!', '#ec4899');
-                
+
+                // Reset in-progress attack timers so any "charging" telegraph
+                // doesn't fire instantly from the new position right after blinking.
+                // Min reset = 0.6s so the player gets a brief window to react.
+                if (boss.skillTimer < 0.6) boss.skillTimer = 0.6;
+                if (boss.wingTimer < 0.8) boss.wingTimer = 0.8;
+                if (boss.crownTimer < 1.2) boss.crownTimer = 1.2;
+                if (boss.starTimer < 1.5) boss.starTimer = 1.5;
+
                 // Shoot circle on blink
                 for(let i=0; i<12; i++) {
                     const a = (Math.PI * 2 / 12) * i;
