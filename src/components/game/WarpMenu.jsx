@@ -141,32 +141,32 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
                                 </button>
                             </div>
 
-                            <div className="p-3 md:p-5 max-h-[70vh] overflow-y-auto space-y-3 md:space-y-4">
+                            <div className="p-2 md:p-5 max-h-[75vh] overflow-y-auto space-y-1.5 md:space-y-4">
                                 {SLIDE_GROUPS.map((group) => (
                                     <section
                                         key={group.id}
-                                        className={`bg-slate-950/50 border ${group.border} rounded-xl p-2.5 md:p-3.5`}
+                                        className={`bg-slate-950/50 border ${group.border} rounded-lg md:rounded-xl p-1.5 md:p-3.5`}
                                     >
-                                        <div className="flex items-center gap-2 mb-2.5 md:mb-3 px-1">
-                                            <h4 className={`text-[10px] md:text-xs font-black tracking-[0.3em] uppercase ${group.accent} shrink-0`}>
+                                        <div className="flex items-center gap-2 mb-1.5 md:mb-3 px-0.5">
+                                            <h4 className={`text-[9px] md:text-xs font-black tracking-[0.25em] md:tracking-[0.3em] uppercase ${group.accent} shrink-0`}>
                                                 {group.title}
                                             </h4>
                                             <div className={`h-px flex-1 bg-current ${group.accent} opacity-30`} />
                                         </div>
-                                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
+                                        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 gap-1.5 md:gap-3">
                                             {group.slides.map((s) => {
                                                 const isCurrent = s.idx !== undefined && s.idx === currentIndex;
                                                 return (
                                                     <button
                                                         key={s.idx ?? s.route}
                                                         onClick={() => handleWarp(s)}
-                                                        className={`relative bg-gradient-to-br ${s.color} ${s.border} border rounded-xl p-2.5 md:p-3 flex flex-col items-center gap-1.5 transition-all hover:scale-105 hover:brightness-125 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] ${isCurrent ? 'ring-2 ring-fuchsia-400 ring-offset-2 ring-offset-[#0b0416]' : ''}`}
+                                                        className={`relative bg-gradient-to-br ${s.color} ${s.border} border rounded-lg md:rounded-xl p-1.5 md:p-3 flex flex-col items-center gap-0.5 md:gap-1.5 transition-all hover:scale-105 hover:brightness-125 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] ${isCurrent ? 'ring-2 ring-fuchsia-400 ring-offset-1 md:ring-offset-2 ring-offset-[#0b0416]' : ''}`}
                                                     >
                                                         {isCurrent && (
-                                                            <span className="absolute top-1 right-1 text-[8px] md:text-[9px] font-black bg-fuchsia-500 text-white px-1 py-0.5 rounded tracking-wider">HERE</span>
+                                                            <span className="absolute top-0.5 right-0.5 md:top-1 md:right-1 text-[7px] md:text-[9px] font-black bg-fuchsia-500 text-white px-1 py-0.5 rounded tracking-wider">HERE</span>
                                                         )}
-                                                        <div className="text-2xl md:text-3xl">{s.icon}</div>
-                                                        <div className="text-[10px] md:text-xs font-bold text-white text-center leading-tight">{s.name}</div>
+                                                        <div className="text-lg md:text-3xl">{s.icon}</div>
+                                                        <div className="text-[9px] md:text-xs font-bold text-white text-center leading-tight">{s.name}</div>
                                                     </button>
                                                 );
                                             })}
