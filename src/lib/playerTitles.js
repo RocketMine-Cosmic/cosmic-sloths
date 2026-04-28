@@ -124,8 +124,8 @@ export const PLAYER_TITLES = [
       describe: () => 'Reach level 35 in a single run.',
       isUnlocked: (s) => s.maxLevelReached >= 35 },
     { id: 'Raid Trooper', label: 'Raid Trooper', tier: 'rare', buff: { damageMult: 0.03 },
-      describe: () => 'Deal 50,000 damage to a Global Raid boss.',
-      isUnlocked: (s) => s.globalRaidDamage >= 50000 },
+      describe: () => 'Deal 250,000 damage to a Global Raid boss.',
+      isUnlocked: (s) => s.globalRaidDamage >= 250000 },
     { id: 'Fashionista', label: 'Fashionista', tier: 'rare', buff: { luck: 2 },
       describe: () => 'Unlock 12 cosmetic items.',
       isUnlocked: (s) => s.totalUnlockedCosmetics >= 12 },
@@ -150,8 +150,8 @@ export const PLAYER_TITLES = [
       describe: () => 'Reach level 45 in a single run.',
       isUnlocked: (s) => s.maxLevelReached >= 45 },
     { id: 'Raid Captain', label: 'Raid Captain', tier: 'epic', buff: { damageMult: 0.04 },
-      describe: () => 'Deal 250,000 damage to a Global Raid boss.',
-      isUnlocked: (s) => s.globalRaidDamage >= 250000 },
+      describe: () => 'Deal 1,000,000 damage to a Global Raid boss.',
+      isUnlocked: (s) => s.globalRaidDamage >= 1000000 },
 
     // ============ LEGENDARY ============
     { id: 'Immortal Sloth', label: 'Immortal Sloth', tier: 'legendary', buff: { hpMult: 0.07, regen: 0.5 },
@@ -181,8 +181,8 @@ export const PLAYER_TITLES = [
       describe: () => 'Unlock 50 character talents.',
       isUnlocked: (s) => s.totalUnlockedTalents >= 50 },
     { id: 'World Eater Bane', label: 'World Eater Bane', tier: 'mythic', buff: { damageMult: 0.08, hpMult: 0.05 },
-      describe: () => 'Deal 1,000,000 damage to a Global Raid boss.',
-      isUnlocked: (s) => s.globalRaidDamage >= 1000000 },
+      describe: () => 'Deal 5,000,000 damage to a Global Raid boss.',
+      isUnlocked: (s) => s.globalRaidDamage >= 5000000 },
 ];
 
 // Look up a title's tier-styling by id. Returns starter styling for unknown ids.
