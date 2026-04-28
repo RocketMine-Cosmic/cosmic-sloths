@@ -33,7 +33,9 @@ Deno.serve(async (req) => {
         const shuffled = apiKeys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
 
         let lastStatus = 0;
+        let attempts = 0;
         for (const key of shuffled) {
+            attempts++;
             const res = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
                 headers: { 'Authorization': `Bearer ${key}` },
             });
@@ -41,7 +43,7 @@ Deno.serve(async (req) => {
                 const data = await res.json();
                 const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
                 const balance = parseFloat(omenxToken?.balance ?? '0');
-                console.log(`[getPlayerBalance] wallet=${walletAddress} balance=${balance}`);
+                console.log(`[getPlayerBalance] wallet=${walletAddress} balance=${balance} attempts=${attempts}`);
                 return Response.json({ balance });
             }
             lastStatus = res.status;
