@@ -647,19 +647,17 @@ export default function Hub({ isCarousel }) {
                                     };
                                     
                                     return (
-                                        <div className="flex flex-col gap-1 md:gap-4 mt-1 md:mt-8 pt-1 md:pt-6 border-t border-slate-700/40">
-
-                                            <BuildSummary save={save} selectedChar={selectedChar} currentTime={currentTime} />
+                                        <div className="flex flex-col gap-2 md:gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
 
                                             <button
                                                 onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}
-                                                className="flex items-center justify-between gap-2 md:gap-3 bg-gradient-to-r from-cyan-950/60 via-fuchsia-950/40 to-amber-950/60 hover:from-cyan-900/70 hover:via-fuchsia-900/50 hover:to-amber-900/70 border-2 border-cyan-500/40 hover:border-cyan-400 rounded-lg md:rounded-xl px-2 md:px-4 py-1 md:py-3 transition-all group shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:scale-[1.01] active:scale-[0.99]"
+                                                className="flex items-center justify-between gap-2 md:gap-3 bg-gradient-to-r from-cyan-950/60 via-fuchsia-950/40 to-amber-950/60 hover:from-cyan-900/70 hover:via-fuchsia-900/50 hover:to-amber-900/70 border-2 border-cyan-500/40 hover:border-cyan-400 rounded-lg md:rounded-xl px-3 md:px-4 py-2.5 md:py-3 transition-all group shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:scale-[1.01] active:scale-[0.99]"
                                                 title="Save & swap full configurations"
                                             >
-                                                <span className="flex items-center gap-1.5 md:gap-3">
-                                                    <span className="text-base md:text-3xl">💾</span>
+                                                <span className="flex items-center gap-2 md:gap-3">
+                                                    <span className="text-xl md:text-3xl">💾</span>
                                                     <span className="flex flex-col items-start">
-                                                        <span className="text-[11px] md:text-base font-black tracking-widest uppercase text-white group-hover:text-cyan-200 transition-colors">
+                                                        <span className="text-xs md:text-base font-black tracking-widest uppercase text-white group-hover:text-cyan-200 transition-colors">
                                                             Loadout Presets
                                                         </span>
                                                         <span className="text-[10px] md:text-xs text-slate-400 group-hover:text-slate-300 font-normal normal-case tracking-normal hidden md:inline">
@@ -667,13 +665,15 @@ export default function Hub({ isCarousel }) {
                                                         </span>
                                                     </span>
                                                 </span>
-                                                <span className="text-cyan-300 text-base md:text-xl font-black group-hover:translate-x-1 transition-transform">→</span>
+                                                <span className="text-cyan-300 text-lg md:text-xl font-black group-hover:translate-x-1 transition-transform">→</span>
                                             </button>
+
+                                            <BuildSummary save={save} selectedChar={selectedChar} currentTime={currentTime} />
 
                                             <button
                                                 onClick={buyBuff}
                                                 disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10}
-                                                className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 border-2 transition-all group shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] hover:scale-[1.01] active:scale-[0.99] ${
+                                                className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-3 md:py-4 border-2 transition-all group shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] hover:scale-[1.01] active:scale-[0.99] ${
                                                     hasXpBuff
                                                         ? 'bg-emerald-950/60 border-emerald-500/60 cursor-default'
                                                         : (omenxBalance ?? 0) < 10 || buffPurchasing
@@ -682,20 +682,20 @@ export default function Hub({ isCarousel }) {
                                                 }`}
                                             >
                                                 <span className="flex items-center gap-2 md:gap-3">
-                                                    <span className="text-base md:text-2xl">✨</span>
+                                                    <span className="text-xl md:text-2xl">✨</span>
                                                     <span className="flex flex-col items-start">
-                                                        <span className="text-[11px] md:text-base font-black tracking-widest uppercase text-white">
+                                                        <span className="text-xs md:text-base font-black tracking-widest uppercase text-white">
                                                             {hasXpBuff ? `+50% XP Active (${timeLeft})` : '+50% XP Buff · 60 min'}
                                                         </span>
-                                                        <span className="text-[10px] md:text-xs text-slate-400 font-normal normal-case tracking-normal hidden md:inline">
+                                                        <span className="text-[10px] md:text-xs text-emerald-300/80 font-normal normal-case tracking-normal">
                                                             Boost XP gain for your next session
                                                         </span>
                                                     </span>
                                                 </span>
                                                 {!hasXpBuff && !buffPurchasing && (
-                                                    <span className="flex items-center gap-1.5 bg-purple-950/60 border border-purple-500/50 px-2.5 md:px-3 py-1 md:py-1.5 rounded-md md:rounded-lg shrink-0">
-                                                        <span className="text-purple-300 font-black text-xs md:text-sm">10</span>
-                                                        <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMENX</span>
+                                                    <span className="flex items-center gap-1.5 bg-purple-950/60 border border-purple-500/50 px-2.5 md:px-3 py-1.5 md:py-2 rounded-md md:rounded-lg shrink-0">
+                                                        <span className="text-purple-300 font-black text-sm md:text-base">10</span>
+                                                        <span className="text-purple-400 font-bold text-[10px] md:text-[11px] tracking-wider">OMENX</span>
                                                     </span>
                                                 )}
                                                 {buffPurchasing && (
