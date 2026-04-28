@@ -51,7 +51,6 @@ export class NFTPerkManager {
         const rarityPerks = RARITY_PERKS[rarity];
         perks.goldMultiplier = rarityPerks.goldMult;
         perks.relicFragmentMultiplier = rarityPerks.relicMult;
-        console.log(`[NFTPerkManager] Applying ${rarity} perks for ${characterId}`);
       }
     }
 
