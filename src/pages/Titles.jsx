@@ -165,8 +165,8 @@ export default function Titles() {
                                 return (
                                     <div
                                         key={row.id}
-                                        className={`bg-[#0b0416]/60 backdrop-blur-md border rounded-xl p-3 md:p-4 transition-all flex flex-col gap-2 ${
-                                            row.unlocked ? `${tier.border} hover:brightness-110` : 'border-slate-800 opacity-60'
+                                        className={`bg-slate-950/85 backdrop-blur-md border rounded-xl p-3 md:p-4 transition-all flex flex-col gap-2 ${
+                                            row.unlocked ? `${tier.border} hover:brightness-110` : 'border-slate-700 opacity-90'
                                         } ${isEquipped ? 'ring-2 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : ''}`}
                                     >
                                         <div className="flex items-center justify-between gap-2">
