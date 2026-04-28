@@ -18,7 +18,6 @@ import OmenXGate from '../components/game/OmenXGate';
 import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
 import { refreshVipLevel, getVipCooldownEnd, ensureVipFetched } from '@/lib/playerDataCache';
 import { getTitleStyle } from '@/lib/playerTitles';
-import TitlePicker from '../components/game/TitlePicker';
 
 
 export default function Profile({ isCarousel }) {
@@ -26,8 +25,6 @@ export default function Profile({ isCarousel }) {
     const [user, setUser] = useState(null);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState('');
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [newTitle, setNewTitle] = useState('');
     const [stats, setStats] = useState({
         highestScoreNormal: 0,
         highestScoreEndless: 0,
@@ -56,7 +53,6 @@ export default function Profile({ isCarousel }) {
                 setUser(omenxUser);
                 const displayName = omenxUser?.player_name || omenxUser?.data?.player_name || omenxUser?.full_name || 'Anonymous';
                 setNewName(displayName);
-                setNewTitle(omenxUser?.data?.player_title || '');
 
                 if (omenxUser && omenxUser.walletAddress) {
                      // Fetch best scores — endless and normal — separately. 5min cache to avoid round-trips.
@@ -169,38 +165,7 @@ export default function Profile({ isCarousel }) {
          window.dispatchEvent(new StorageEvent('storage', { key: 'omenx_auth_data' }));
      };
 
-    const handleSaveTitle = async (title) => {
-        await updateOmenXUser({ player_title: title });
-        setUser(prev => ({ ...prev, data: { ...prev?.data, player_title: title } }));
-        setNewTitle(title);
-        setIsEditingTitle(false);
-        // Sync to DB (Base44 session auth)
-        const currentName = user?.player_name || user?.data?.player_name || '';
-        if (currentName) {
-            base44.functions.invoke('syncProfileName', {
-                newName: currentName,
-                newTitle: title,
-            }).catch(e => console.error('[Profile] title sync failed', e));
-        }
-    };
 
-    // Build the stats bag the title registry needs to evaluate unlock criteria.
-    const getTitleStats = () => {
-        const currentSave = SaveManager.load();
-        return {
-            totalKills: stats.totalKills || 0,
-            leviathanKills: stats.leviathanKills || 0,
-            bestScore: Math.max(stats.highestScoreNormal || 0, stats.highestScoreEndless || 0),
-            globalRaidDamage: stats.globalRaidDamage || 0,
-            gold: currentSave.gold || 0,
-            totalGoldEarned: currentSave.totalGoldEarned || 0,
-            maxLevelReached: currentSave.maxLevelReached || 0,
-            maxTimeSurvived: currentSave.maxTimeSurvived || 0,
-            unlockedCharactersCount: currentSave.unlockedCharacters?.length || 0,
-            totalUnlockedCosmetics: currentSave.unlockedCosmetics?.length || 0,
-            totalUnlockedTalents: Object.values(currentSave.unlockedTalents || {}).reduce((acc, arr) => acc + arr.length, 0),
-        };
-    };
 
     const getVipTierName = (level) => {
         const tiers = ['Bronze 1', 'Bronze 2', 'Silver 1', 'Silver 2', 'Silver 3', 'Gold 1', 'Gold 2', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Diamond 4'];
@@ -306,29 +271,23 @@ export default function Profile({ isCarousel }) {
                                         </div>
                                     </div>
                                 )}
-                                <div className="mt-2 flex items-center gap-2">
-                                    {isEditingTitle ? (
-                                        <TitlePicker
-                                            stats={getTitleStats()}
-                                            currentTitle={newTitle}
-                                            onSelect={(id) => handleSaveTitle(id)}
-                                            onClose={() => setIsEditingTitle(false)}
-                                        />
-                                    ) : (
-                                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditingTitle(true)}>
-                                            {user?.data?.player_title ? (() => {
-                                                const st = getTitleStyle(user.data.player_title);
-                                                return (
-                                                    <span className={`text-[10px] ${st.bg} ${st.text} px-2 py-0.5 rounded border ${st.border} tracking-wider font-bold`}>
-                                                        {user.data.player_title}
-                                                    </span>
-                                                );
-                                            })() : (
-                                                <span className="text-[10px] text-slate-500 italic">No Title Equipped</span>
-                                            )}
-                                            <Pencil size={12} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
-                                        </div>
+                                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                    {user?.data?.player_title ? (() => {
+                                        const st = getTitleStyle(user.data.player_title);
+                                        return (
+                                            <span className={`text-[10px] ${st.bg} ${st.text} px-2 py-0.5 rounded border ${st.border} tracking-wider font-bold`}>
+                                                {user.data.player_title}
+                                            </span>
+                                        );
+                                    })() : (
+                                        <span className="text-[10px] text-slate-500 italic">No Title Equipped</span>
                                     )}
+                                    <button
+                                        onClick={() => { SoundManager.playUIClick(); navigate('/titles'); }}
+                                        className="flex items-center gap-1 text-[10px] bg-amber-900/30 hover:bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded border border-amber-700/50 hover:border-amber-500 tracking-wider font-bold transition-colors"
+                                    >
+                                        <Pencil size={10} /> Manage Titles
+                                    </button>
                                 </div>
                             </div>
                         </div>
