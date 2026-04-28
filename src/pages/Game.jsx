@@ -44,13 +44,15 @@ export default function Game() {
     const [banishCount, setBanishCount] = useState(0); // resets per run (component remounts on new game)
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
 
-    // Banish tier: 3 uses at 1 OMENX, 3 uses at 2 OMENX, then 3 OMENX onwards
+    // Banish tier: 3 uses at 2 OMENX, 3 uses at 4 OMENX, then 6 OMENX onwards.
+    // SKU is 2 OMENX consumable → fire `cost / 2` separate charges per banish.
     const getBanishCost = (count) => {
-        if (count < 3) return 1;
-        if (count < 6) return 2;
-        return 3;
+        if (count < 3) return 2;
+        if (count < 6) return 4;
+        return 6;
     };
     const banishCost = getBanishCost(banishCount);
+    const nextBanishCost = getBanishCost(banishCount + 1);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -403,9 +405,10 @@ export default function Game() {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
-                // SKU is consumable on dev portal — quantity isn't reliable, so fire `cost` separate
-                // 1-OMENX charges. Each call gets a unique idempotency key (crypto.randomUUID server-side).
-                for (let i = 0; i < cost; i++) purchaseSku(IN_GAME_SKUS.banish);
+                // SKU is a 2-OMENX consumable on dev portal — quantity isn't reliable, so fire
+                // `cost / 2` separate charges. Each call gets a unique idempotency key server-side.
+                const charges = Math.ceil(cost / 2);
+                for (let i = 0; i < charges; i++) purchaseSku(IN_GAME_SKUS.banish);
                 refreshBalance(); // no await
                 setBanishCount(c => c + 1);
             });
@@ -523,7 +526,7 @@ export default function Game() {
             )}
 
             {levelUpChoices && (
-                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} />
+                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} nextBanishCost={nextBanishCost} />
             )}
             
             {showRevivePrompt && (

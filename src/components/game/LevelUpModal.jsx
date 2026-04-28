@@ -6,10 +6,11 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
-export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 1, banishCount = 0 }) {
-    const banishTier = banishCost === 1 ? 1 : banishCost === 2 ? 2 : 3;
-    // Each tier has 3 charges (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
+export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null }) {
+    // Each tier has 3 uses (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
+    const banishTier = banishCount < 3 ? 1 : banishCount < 6 ? 2 : 3;
     const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
+    const showNextPrice = nextBanishCost !== null && nextBanishCost !== banishCost;
     const [revealedIndex, setRevealedIndex] = useState(null);
     const [hasRerolled, setHasRerolled] = useState(false);
 
@@ -172,7 +173,9 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                         >
                             <span>Banish T{banishTier} ({banishCost} OMENX)</span>
                             {banishUsesInTier !== null && (
-                                <span className="text-[10px] md:text-xs font-normal opacity-80">{banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left at this tier</span>
+                                <span className="text-[10px] md:text-xs font-normal opacity-80">
+                                    {banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left{showNextPrice ? ` · Next: ${nextBanishCost} OMENX` : ''}
+                                </span>
                             )}
                         </motion.button>
                     )}
