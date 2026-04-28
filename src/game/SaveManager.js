@@ -127,6 +127,33 @@ export const SaveManager = {
           const cloudSave = response.saveData;
           const localSave = localStorage.getItem('cosmic_sloth_save');
           const cloudData = typeof cloudSave === 'string' ? JSON.parse(cloudSave) : cloudSave;
+
+          // Restore profile fields (player_title / player_name / pilot_icon) from cloud save
+          // back into omenx_auth_data — these live there for fast sync access by useOmenXUser,
+          // but get wiped on a cache clear and would otherwise be lost until next edit.
+          try {
+            const auth = JSON.parse(localStorage.getItem('omenx_auth_data') || 'null');
+            if (auth) {
+              let changed = false;
+              if (cloudData.player_title !== undefined && auth.player_title !== cloudData.player_title) {
+                auth.player_title = cloudData.player_title; changed = true;
+              }
+              if (cloudData.player_name && auth.player_name !== cloudData.player_name) {
+                auth.player_name = cloudData.player_name; changed = true;
+              }
+              if (cloudData.pilot_icon && auth.pilot_icon !== cloudData.pilot_icon) {
+                auth.pilot_icon = cloudData.pilot_icon; changed = true;
+              }
+              if (changed) {
+                localStorage.setItem('omenx_auth_data', JSON.stringify(auth));
+                try {
+                  const { saveAuthToIndexedDB } = await import('@/lib/indexedDbAuth');
+                  await saveAuthToIndexedDB(auth);
+                } catch {}
+                window.dispatchEvent(new CustomEvent('omenxUserUpdated', { detail: auth }));
+              }
+            }
+          } catch (e) { console.warn('[SaveManager] Profile restore failed:', e.message); }
           
           if (localSave) {
             const localData = JSON.parse(localSave);
