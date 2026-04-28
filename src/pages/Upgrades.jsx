@@ -755,7 +755,7 @@ export default function Upgrades({ isCarousel }) {
                 <div className="space-y-2 md:space-y-4 relative">
                     <div className="absolute left-[26px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
                     
-                    {(CHARACTER_TALENTS[selectedChar || 'neobyte'] || []).map((talent, index) => {
+                    {(CHARACTER_TALENTS[selectedChar || 'neobyte'] || []).map((talent, index, arr) => {
                         const unlocked = save[saveKey]?.[selectedChar || 'neobyte'] || [];
                         const isUnlocked = unlocked.includes(talent.id);
                         
@@ -767,6 +767,8 @@ export default function Upgrades({ isCarousel }) {
                             return [...new Set([...perm, ...week, ...season])];
                         };
                         const allUnlocked = getUnlockedTalents(selectedChar || 'neobyte');
+                        // First of two mutually-exclusive paths at this tier — render a "Choose one" header above it.
+                        const isFirstBranchOfTier = talent.excludes && arr.findIndex(t => t.tier === talent.tier && t.excludes) === index;
                         
                         const canUnlock = !isUnlocked && (
                             talent.tier === 1 || 
@@ -784,7 +786,15 @@ export default function Upgrades({ isCarousel }) {
                         const isBranchB = talent.id.endsWith('b');
                         
                         return (
-                            <div key={talent.id} className={`relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700 ${isBranchA ? 'ml-0 sm:ml-8 border-l-4 border-l-blue-500' : isBranchB ? 'ml-0 sm:ml-8 border-l-4 border-l-purple-500' : ''}`}>
+                            <React.Fragment key={talent.id}>
+                            {isFirstBranchOfTier && (
+                                <div className="relative z-10 flex items-center gap-2 ml-0 sm:ml-8 -mb-1 mt-1">
+                                    <div className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-700/50 px-2 py-0.5 rounded">
+                                        ⚠ Choose ONE path — picking one locks the other across all tiers
+                                    </div>
+                                </div>
+                            )}
+                            <div className={`relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700 ${isBranchA ? 'ml-0 sm:ml-8 border-l-4 border-l-blue-500' : isBranchB ? 'ml-0 sm:ml-8 border-l-4 border-l-purple-500' : ''}`}>
                                 <div className="flex items-center gap-2 md:gap-4">
                                     <div className={`w-10 h-10 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
                                         isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
@@ -829,6 +839,7 @@ export default function Upgrades({ isCarousel }) {
                                     )}
                                 </div>
                             </div>
+                            </React.Fragment>
                         );
                     })}
                 </div>
