@@ -37,9 +37,9 @@ Deno.serve(async (req) => {
         const contrib = contribs[0];
         const claimed = Array.isArray(contrib.claimed_milestones) ? contrib.claimed_milestones : [];
 
-        // Idempotent: already claimed → return success without granting again
+        // Already claimed → reject so the client doesn't re-grant the reward
         if (claimed.includes(levelNum)) {
-            return Response.json({ status: 'success', alreadyClaimed: true, reward: { type: 'gold', id: String(levelNum * 250) } });
+            return Response.json({ status: 'error', error: 'Reward already claimed for this level' }, { status: 409 });
         }
 
         await base44.asServiceRole.entities.GlobalBossContribution.update(contrib.id, {
