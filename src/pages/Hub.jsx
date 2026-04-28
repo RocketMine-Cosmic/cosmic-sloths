@@ -297,7 +297,7 @@ export default function Hub({ isCarousel }) {
                                                         />
                                                         <div className="absolute inset-0 bg-gradient-to-r from-[#0b0416] via-[#0b0416]/90 to-transparent pointer-events-none" />
                                                         
-                                                        <div className="relative flex items-center justify-between p-1.5 md:p-4 min-h-[70px] md:min-h-[140px]">
+                                                        <div className="relative flex items-center justify-between p-2.5 md:p-4 min-h-[110px] md:min-h-[140px]">
                                                             <button 
                                                                 onClick={() => {
                                                                     const idx = CHARACTERS.findIndex(c => c.id === selectedChar);
@@ -456,7 +456,7 @@ export default function Hub({ isCarousel }) {
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
-                                            <div className="relative flex items-center justify-between p-1.5 md:p-4 min-h-[60px] md:min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-2.5 md:p-4 min-h-[90px] md:min-h-[120px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = ARENAS.findIndex(a => a.id === selectedArena);
@@ -544,7 +544,7 @@ export default function Hub({ isCarousel }) {
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
-                                            <div className="relative flex items-center justify-between p-1.5 md:p-4 min-h-[60px] md:min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-2.5 md:p-4 min-h-[90px] md:min-h-[120px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
@@ -678,7 +678,7 @@ export default function Hub({ isCarousel }) {
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-row gap-1.5 md:gap-3">
+                                            <div className="flex flex-row gap-1.5 md:gap-3 sticky bottom-2 md:static z-30 bg-[#0b0416]/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-2 md:p-0 -mx-2 md:mx-0 rounded-xl md:rounded-none border border-cyan-500/30 md:border-0 shadow-[0_-4px_20px_rgba(0,0,0,0.6)] md:shadow-none">
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('normal')}
                                                 disabled={!canLaunch}
