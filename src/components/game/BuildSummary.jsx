@@ -1,5 +1,8 @@
 import React, { useMemo } from 'react';
 import { RELICS, getCharacterMastery } from '../../game/Constants';
+import { NFTPerkManager } from '../../game/NFTPerks';
+import { useOmenXVip } from '@/hooks/useOmenXVip';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 // Stat metadata: label, icon, formatter, color theme
 const STAT_DEFS = {
@@ -7,17 +10,23 @@ const STAT_DEFS = {
     speedMult:  { label: 'Speed',  icon: '💨', color: 'text-cyan-300',    border: 'border-cyan-500/40',    bg: 'bg-cyan-950/30',    fmt: (v) => `+${Math.round(v * 100)}%` },
     areaMult:   { label: 'Area',   icon: '💥', color: 'text-amber-300',   border: 'border-amber-500/40',   bg: 'bg-amber-950/30',   fmt: (v) => `+${Math.round(v * 100)}%` },
     cooldownMult: { label: 'Cooldown', icon: '⏱️', color: 'text-blue-300', border: 'border-blue-500/40',   bg: 'bg-blue-950/30',    fmt: (v) => `${v < 0 ? '' : '+'}${Math.round(v * 100)}%` },
+    hpMult:     { label: 'Max HP', icon: '❤️‍🔥', color: 'text-rose-300', border: 'border-rose-500/40',   bg: 'bg-rose-950/30',    fmt: (v) => `+${Math.round(v * 100)}%` },
     goldMult:   { label: 'Gold',   icon: '🪙', color: 'text-yellow-300',  border: 'border-yellow-500/40',  bg: 'bg-yellow-950/30',  fmt: (v) => `+${Math.round(v * 100)}%` },
     xpMult:     { label: 'XP',     icon: '✨', color: 'text-emerald-300', border: 'border-emerald-500/40', bg: 'bg-emerald-950/30', fmt: (v) => `+${Math.round(v * 100)}%` },
+    relicFragMult: { label: 'Relic Frags', icon: '🧩', color: 'text-fuchsia-300', border: 'border-fuchsia-500/40', bg: 'bg-fuchsia-950/30', fmt: (v) => `+${Math.round(v * 100)}%` },
     luck:       { label: 'Luck',   icon: '🍀', color: 'text-lime-300',    border: 'border-lime-500/40',    bg: 'bg-lime-950/30',    fmt: (v) => `+${v}` },
     regen:      { label: 'Regen',  icon: '❤️', color: 'text-pink-300',    border: 'border-pink-500/40',    bg: 'bg-pink-950/30',    fmt: (v) => `+${v.toFixed(1)}/s` },
     armor:      { label: 'Armor',  icon: '🛡️', color: 'text-slate-300',  border: 'border-slate-500/40',   bg: 'bg-slate-900/50',   fmt: (v) => `+${v}` },
+    magnet:     { label: 'Magnet', icon: '🧲', color: 'text-indigo-300',  border: 'border-indigo-500/40',  bg: 'bg-indigo-950/30',  fmt: (v) => `+${v}` },
 };
 
 // Order in which to render stats (only those with non-zero totals appear)
-const STAT_ORDER = ['damageMult', 'speedMult', 'areaMult', 'cooldownMult', 'goldMult', 'xpMult', 'luck', 'regen', 'armor'];
+const STAT_ORDER = ['damageMult', 'speedMult', 'areaMult', 'cooldownMult', 'hpMult', 'goldMult', 'xpMult', 'relicFragMult', 'luck', 'regen', 'armor', 'magnet'];
 
 export default function BuildSummary({ save, selectedChar, currentTime }) {
+    const { vip: vipLevel } = useOmenXVip();
+    const { nfts } = useCurrency();
+
     const { totals, sourceCount, xpBuffTimeLeft } = useMemo(() => {
         const totals = {};
         let sourceCount = 0;
@@ -67,7 +76,24 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
             sourceCount++;
         }
 
-        // 4. Active session buffs (XP buff: +50%)
+        // 4. VIP bonuses — +1% damage and +1% max HP per VIP level
+        if (vipLevel && vipLevel > 0) {
+            totals.damageMult = (totals.damageMult || 0) + vipLevel * 0.01;
+            totals.hpMult = (totals.hpMult || 0) + vipLevel * 0.01;
+            sourceCount++;
+        }
+
+        // 5. NFT perks — gold + relic-fragment bonuses for the selected character (rarity-based)
+        const charPerks = NFTPerkManager.getCharacterPerks(selectedChar, nfts);
+        const nftGoldBonus = (charPerks.goldMultiplier || 1) - 1;
+        const nftRelicBonus = (charPerks.relicFragmentMultiplier || 1) - 1;
+        if (nftGoldBonus > 0 || nftRelicBonus > 0) {
+            if (nftGoldBonus > 0) totals.goldMult = (totals.goldMult || 0) + nftGoldBonus;
+            if (nftRelicBonus > 0) totals.relicFragMult = (totals.relicFragMult || 0) + nftRelicBonus;
+            sourceCount++;
+        }
+
+        // 6. Active session buffs (XP buff: +50%)
         const xpExpiry = save.sessionBuffs?.xpExpiry || 0;
         if (xpExpiry > currentTime) {
             totals.xpMult = (totals.xpMult || 0) + 0.5;
@@ -79,7 +105,7 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
         }
 
         return { totals, sourceCount, xpBuffTimeLeft };
-    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, save.permanentUpgrades, save.weeklyUpgrades, save.seasonalUpgrades, selectedChar, currentTime]);
+    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, save.permanentUpgrades, save.weeklyUpgrades, save.seasonalUpgrades, selectedChar, currentTime, vipLevel, nfts]);
 
     const activeStats = STAT_ORDER.filter((k) => totals[k]);
 
