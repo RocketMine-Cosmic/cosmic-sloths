@@ -261,6 +261,7 @@ export default function Game() {
         });
         
         SoundManager.init();
+        SoundManager.setContext('game');
         SoundManager.playBGM();
         
         // Preload all character sprites in background (non-blocking)
@@ -276,6 +277,7 @@ export default function Game() {
                 engineRef.current.cleanup();
             }
             SoundManager.stopBGM();
+            SoundManager.setContext('menu');
         };
     }, [location.state]);
 

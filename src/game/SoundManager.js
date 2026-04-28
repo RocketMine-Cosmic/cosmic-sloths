@@ -1,45 +1,180 @@
 import { SFXManager } from './SFXManager';
+import { MUSIC_TRACKS } from './MusicTracks';
+
+const SETTINGS_KEY = 'cosmic_sloth_settings';
+const JUKEBOX_KEY = 'cosmic_sloth_jukebox';
+
+// Default: all tracks enabled in both contexts.
+const defaultEnabledIds = MUSIC_TRACKS.map(t => t.id);
+
+function loadJukebox() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(JUKEBOX_KEY) || '{}');
+        return {
+            menu: Array.isArray(raw.menu) ? raw.menu : [...defaultEnabledIds],
+            game: Array.isArray(raw.game) ? raw.game : [...defaultEnabledIds],
+        };
+    } catch {
+        return { menu: [...defaultEnabledIds], game: [...defaultEnabledIds] };
+    }
+}
+
+function saveJukebox(state) {
+    try { localStorage.setItem(JUKEBOX_KEY, JSON.stringify(state)); } catch {}
+}
 
 class SoundManagerClass {
     constructor() {
         this.bgm = new Audio();
-        this.bgmTracks = [
-            'https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3',
-            'https://cdn.pixabay.com/audio/2025/07/28/audio_29231d4e9b.mp3',
-            'https://cdn.pixabay.com/audio/2025/08/04/audio_749c34be55.mp3',
-            'https://cdn.pixabay.com/audio/2025/07/28/audio_5a182bdc96.mp3',
-            'https://cdn.pixabay.com/audio/2025/08/04/audio_94c12a9e7f.mp3',
-            'https://cdn.pixabay.com/audio/2025/08/04/audio_124a05d23a.mp3',
-            'https://cdn.pixabay.com/audio/2025/08/04/audio_6304a0f398.mp3',
-        ];
-        this.currentTrackIndex = Math.floor(Math.random() * this.bgmTracks.length);
-        this.bgm.src = this.bgmTracks[this.currentTrackIndex];
+        this.context = 'menu'; // 'menu' or 'game' — determines which playlist is active
+        this.jukebox = loadJukebox();
+        this.currentTrackId = null;
+        this.listeners = new Set();
+
         this.bgm.loop = false;
-        
-        this.bgm.addEventListener('ended', () => {
-            this.currentTrackIndex = (this.currentTrackIndex + 1) % this.bgmTracks.length;
-            this.bgm.src = this.bgmTracks[this.currentTrackIndex];
-            if (this.enabled) {
-                this.bgm.play().catch(e => console.log("Audio play failed:", e));
-            }
-        });
-        
+        this.bgm.addEventListener('ended', () => this.playNext());
+
         let savedSettings = {};
         try {
-            savedSettings = JSON.parse(localStorage.getItem('cosmic_sloth_settings') || '{}');
-        } catch (e) {}
+            savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        } catch {}
 
         this.bgm.volume = savedSettings.bgmVolume !== undefined ? savedSettings.bgmVolume : 0.25;
         this.enabled = savedSettings.enabled !== undefined ? savedSettings.enabled : true;
+
+        // Pick a starting track from the menu playlist
+        this._loadRandomFromActivePlaylist();
     }
 
     init() {
         SFXManager.init();
     }
 
+    // --- Playlist helpers ---
+
+    getActivePlaylistIds() {
+        const ids = this.jukebox[this.context] || [];
+        // If user disabled everything, fall back to the full catalog so music still plays.
+        return ids.length > 0 ? ids : MUSIC_TRACKS.map(t => t.id);
+    }
+
+    getActivePlaylistTracks() {
+        const ids = this.getActivePlaylistIds();
+        return MUSIC_TRACKS.filter(t => ids.includes(t.id));
+    }
+
+    _trackById(id) {
+        return MUSIC_TRACKS.find(t => t.id === id);
+    }
+
+    _loadRandomFromActivePlaylist() {
+        const tracks = this.getActivePlaylistTracks();
+        if (tracks.length === 0) return;
+        const next = tracks[Math.floor(Math.random() * tracks.length)];
+        this._loadTrack(next.id);
+    }
+
+    _loadTrack(id) {
+        const track = this._trackById(id);
+        if (!track) return;
+        this.currentTrackId = id;
+        this.bgm.src = track.url;
+        this._notify();
+    }
+
+    playNext() {
+        const tracks = this.getActivePlaylistTracks();
+        if (tracks.length === 0) return;
+        const currentIdx = tracks.findIndex(t => t.id === this.currentTrackId);
+        const nextIdx = (currentIdx + 1) % tracks.length;
+        this._loadTrack(tracks[nextIdx].id);
+        if (this.enabled) {
+            this.bgm.play().catch(e => console.log('Audio play failed:', e));
+        }
+    }
+
+    playPrev() {
+        const tracks = this.getActivePlaylistTracks();
+        if (tracks.length === 0) return;
+        const currentIdx = tracks.findIndex(t => t.id === this.currentTrackId);
+        const prevIdx = (currentIdx - 1 + tracks.length) % tracks.length;
+        this._loadTrack(tracks[prevIdx].id);
+        if (this.enabled) {
+            this.bgm.play().catch(e => console.log('Audio play failed:', e));
+        }
+    }
+
+    playTrack(id) {
+        if (!this._trackById(id)) return;
+        this._loadTrack(id);
+        if (this.enabled) {
+            this.bgm.play().catch(e => console.log('Audio play failed:', e));
+        }
+    }
+
+    // --- Context (menu vs in-game) ---
+
+    setContext(ctx) {
+        if (ctx !== 'menu' && ctx !== 'game') return;
+        if (this.context === ctx) return;
+        this.context = ctx;
+        // If the currently-playing track is not in the new context's playlist, swap it out.
+        const activeIds = this.getActivePlaylistIds();
+        if (!activeIds.includes(this.currentTrackId)) {
+            this._loadRandomFromActivePlaylist();
+            if (this.enabled) {
+                this.bgm.play().catch(e => console.log('Audio play failed:', e));
+            }
+        }
+        this._notify();
+    }
+
+    // --- Jukebox preferences ---
+
+    isTrackEnabled(id, context = this.context) {
+        return (this.jukebox[context] || []).includes(id);
+    }
+
+    setTrackEnabled(id, context, enabled) {
+        const list = new Set(this.jukebox[context] || []);
+        if (enabled) list.add(id); else list.delete(id);
+        this.jukebox[context] = Array.from(list);
+        saveJukebox(this.jukebox);
+        this._notify();
+    }
+
+    enableAll(context) {
+        this.jukebox[context] = MUSIC_TRACKS.map(t => t.id);
+        saveJukebox(this.jukebox);
+        this._notify();
+    }
+
+    disableAll(context) {
+        this.jukebox[context] = [];
+        saveJukebox(this.jukebox);
+        this._notify();
+    }
+
+    // --- Subscriptions for the Jukebox UI ---
+
+    subscribe(fn) {
+        this.listeners.add(fn);
+        return () => this.listeners.delete(fn);
+    }
+
+    _notify() {
+        this.listeners.forEach(fn => { try { fn(); } catch {} });
+    }
+
+    getCurrentTrack() {
+        return this._trackById(this.currentTrackId);
+    }
+
+    // --- Original API (unchanged behavior) ---
+
     playBGM() {
         if (!this.enabled) return;
-        this.bgm.play().catch(e => console.log("Audio play failed (interaction required):", e));
+        this.bgm.play().catch(e => console.log('Audio play failed (interaction required):', e));
     }
 
     stopBGM() {
@@ -49,11 +184,11 @@ class SoundManagerClass {
 
     saveSettings() {
         try {
-            const saved = JSON.parse(localStorage.getItem('cosmic_sloth_settings') || '{}');
+            const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
             saved.bgmVolume = this.bgm.volume;
             saved.enabled = this.enabled;
-            localStorage.setItem('cosmic_sloth_settings', JSON.stringify(saved));
-        } catch (e) {}
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(saved));
+        } catch {}
     }
 
     setBgmVolume(vol) {
@@ -66,7 +201,7 @@ class SoundManagerClass {
         if (!this.enabled) {
             this.bgm.pause();
         } else {
-            this.bgm.play().catch(e => console.log("Audio play failed:", e));
+            this.bgm.play().catch(e => console.log('Audio play failed:', e));
         }
         this.saveSettings();
         SFXManager.toggleMute(this.enabled);
@@ -80,7 +215,7 @@ class SoundManagerClass {
     // Facade for SFXManager to avoid breaking all UI components
     setSfxVolume(vol) { SFXManager.setSfxVolume(vol); }
     get sfxVolume() { return SFXManager.sfxVolume; }
-    
+
     playPickup() { SFXManager.playPickup(); }
     playGoldPickup() { SFXManager.playGoldPickup(); }
     playEnemySpawn() { SFXManager.playEnemySpawn(); }

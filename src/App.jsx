@@ -28,6 +28,7 @@ const GlobalRaid = React.lazy(() => import('./pages/GlobalRaid'));
 const Mastery = React.lazy(() => import('./pages/Mastery'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
+const Jukebox = React.lazy(() => import('./pages/Jukebox'));
 import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import GamepadManager from './components/GamepadManager';
@@ -78,6 +79,7 @@ const MainApp = () => {
           <Route path="/mastery" element={<Mastery />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/sku-editor" element={<SkuEditor />} />
+          <Route path="/jukebox" element={<Jukebox />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </React.Suspense>
@@ -116,6 +118,7 @@ const MainApp = () => {
       <Route path="/mastery" element={<Mastery />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/sku-editor" element={<SkuEditor />} />
+      <Route path="/jukebox" element={<Jukebox />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </>
