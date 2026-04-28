@@ -365,11 +365,11 @@ export default function Game() {
         }
     }, [omenxBalance]);
 
-    const purchaseSku = async (skuId) => {
+    const purchaseSku = async (skuId, quantity = 1) => {
         if (!skuId) return;
         const user = getOmenXUserSync();
         const playerName = user?.player_name || user?.full_name || 'Pilot';
-        return base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName })
+        return base44.functions.invoke('purchaseSku', { skuId, quantity, playerName })
             .then(r => r.data)
             .catch(e => console.error('[Game purchaseSku] failed:', e?.message));
     };
@@ -403,8 +403,8 @@ export default function Game() {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
-                // Charge `cost` OMENX by invoking the 1-OMENX banish SKU `cost` times
-                for (let i = 0; i < cost; i++) purchaseSku(IN_GAME_SKUS.banish);
+                // Charge `cost` OMENX in one transaction (quantity scales price server-side)
+                purchaseSku(IN_GAME_SKUS.banish, cost);
                 refreshBalance(); // no await
                 setBanishCount(c => c + 1);
             });
