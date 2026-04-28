@@ -647,19 +647,19 @@ export default function Hub({ isCarousel }) {
                                     };
                                     
                                     return (
-                                        <div className="flex flex-col gap-1.5 md:gap-4 mt-1.5 md:mt-8 pt-1.5 md:pt-6 border-t border-slate-700/40">
+                                        <div className="flex flex-col gap-1 md:gap-4 mt-1 md:mt-8 pt-1 md:pt-6 border-t border-slate-700/40">
 
                                             <BuildSummary save={save} selectedChar={selectedChar} currentTime={currentTime} />
 
                                             <button
                                                 onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}
-                                                className="flex items-center justify-between gap-2 md:gap-3 bg-gradient-to-r from-cyan-950/60 via-fuchsia-950/40 to-amber-950/60 hover:from-cyan-900/70 hover:via-fuchsia-900/50 hover:to-amber-900/70 border-2 border-cyan-500/40 hover:border-cyan-400 rounded-lg md:rounded-xl px-2.5 md:px-4 py-1.5 md:py-3 transition-all group shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:scale-[1.01] active:scale-[0.99]"
+                                                className="flex items-center justify-between gap-2 md:gap-3 bg-gradient-to-r from-cyan-950/60 via-fuchsia-950/40 to-amber-950/60 hover:from-cyan-900/70 hover:via-fuchsia-900/50 hover:to-amber-900/70 border-2 border-cyan-500/40 hover:border-cyan-400 rounded-lg md:rounded-xl px-2 md:px-4 py-1 md:py-3 transition-all group shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:scale-[1.01] active:scale-[0.99]"
                                                 title="Save & swap full configurations"
                                             >
-                                                <span className="flex items-center gap-2 md:gap-3">
-                                                    <span className="text-lg md:text-3xl">💾</span>
+                                                <span className="flex items-center gap-1.5 md:gap-3">
+                                                    <span className="text-base md:text-3xl">💾</span>
                                                     <span className="flex flex-col items-start">
-                                                        <span className="text-xs md:text-base font-black tracking-widest uppercase text-white group-hover:text-cyan-200 transition-colors">
+                                                        <span className="text-[11px] md:text-base font-black tracking-widest uppercase text-white group-hover:text-cyan-200 transition-colors">
                                                             Loadout Presets
                                                         </span>
                                                         <span className="text-[10px] md:text-xs text-slate-400 group-hover:text-slate-300 font-normal normal-case tracking-normal hidden md:inline">
@@ -670,19 +670,19 @@ export default function Hub({ isCarousel }) {
                                                 <span className="text-cyan-300 text-base md:text-xl font-black group-hover:translate-x-1 transition-transform">→</span>
                                             </button>
 
-                                            <div className="flex flex-row gap-1 bg-slate-900/50 p-1.5 md:p-2 rounded-lg border border-slate-700/50">
+                                            <div className="flex flex-row gap-1 bg-slate-900/50 p-1 md:p-2 rounded-lg border border-slate-700/50">
                                                 <div className="text-[10px] md:text-[11px] text-slate-400 font-bold sm:w-20 shrink-0 flex items-center">BUFFS</div>
-                                                <button onClick={buyBuff} disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10} className={`flex-1 flex justify-between items-center px-2 py-1 rounded text-[10px] md:text-[11px] font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
+                                                <button onClick={buyBuff} disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10} className={`flex-1 flex justify-between items-center px-2 py-0.5 md:py-1 rounded text-[10px] md:text-[11px] font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
                                                     <span className="flex items-center gap-1">✨ +50% XP {hasXpBuff ? `(${timeLeft})` : buffPurchasing ? '(...)' : ''}</span>
                                                     {!hasXpBuff && !buffPurchasing && <span className="text-purple-400 font-bold">10 OMENX</span>}
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-col gap-1.5 md:flex-row md:gap-3">
+                                            <div className="flex flex-row gap-1.5 md:gap-3">
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('normal')}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-sm md:text-lg font-black py-2.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-xs md:text-lg font-black py-2 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#0CA7B8] to-cyan-400 hover:from-cyan-400 hover:to-[#0CA7B8] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(12,167,184,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -697,11 +697,11 @@ export default function Hub({ isCarousel }) {
                                                 )}
                                             </button>
                                             
-                                            <div className="flex-1 flex flex-col gap-1">
+                                            <div className="flex-1 flex flex-col gap-0.5">
                                                 <button
                                                     onClick={() => canLaunch && checkAndLaunch('endless')}
                                                     disabled={!canLaunch}
-                                                    className={`w-full text-white text-sm md:text-lg font-black py-2.5 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                    className={`w-full text-white text-xs md:text-lg font-black py-2 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                         canLaunch
                                                         ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                         : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -716,7 +716,7 @@ export default function Hub({ isCarousel }) {
                                                     )}
                                                 </button>
                                                 {canLaunch && (
-                                                    <div className="text-[9px] md:text-[10px] text-fuchsia-300/70 text-center tracking-wider uppercase font-bold">
+                                                    <div className="text-[8px] md:text-[10px] text-fuchsia-300/70 text-center tracking-wider uppercase font-bold leading-tight hidden md:block">
                                                         Score & Mastery — Boss Gold only (5k cap)
                                                     </div>
                                                 )}
