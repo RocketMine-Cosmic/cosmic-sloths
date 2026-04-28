@@ -810,11 +810,11 @@ export default function Upgrades({ isCarousel }) {
                                         <p className="text-slate-400 text-[10px] md:text-sm leading-tight">{talent.desc}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 w-full sm:w-auto pl-[60px] sm:pl-0">
+                                <div className="flex flex-col items-stretch gap-1 w-full sm:w-auto sm:min-w-[180px] pl-[60px] sm:pl-0">
                                     <button
                                         onClick={() => handleBuyTalent(talent, 'gold')}
                                         disabled={isUnlocked || !canUnlock || !canAffordGold || purchasing}
-                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
+                                        className={`w-full px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                             isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
                                             canUnlock && canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                             'bg-slate-800 text-slate-600 border border-slate-700'
@@ -823,13 +823,17 @@ export default function Upgrades({ isCarousel }) {
                                         {isUnlocked ? 'UNLOCKED' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
                                     </button>
                                     {!isUnlocked && (
-                                        <div className="flex items-center justify-center text-slate-500 text-xs font-bold sm:hidden md:flex">OR</div>
+                                        <div className="flex items-center justify-center gap-2 my-0.5">
+                                            <div className="flex-1 h-px bg-slate-700/60"></div>
+                                            <span className="text-slate-500 text-[10px] font-bold tracking-widest">OR</span>
+                                            <div className="flex-1 h-px bg-slate-700/60"></div>
+                                        </div>
                                     )}
                                     {!isUnlocked && (
                                         <button
                                             onClick={() => !purchasing && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
                                             disabled={!canUnlock || !canAffordToken || purchasing}
-                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
+                                            className={`w-full px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                 canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
