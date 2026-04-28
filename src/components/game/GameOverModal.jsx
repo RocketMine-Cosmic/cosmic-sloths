@@ -8,11 +8,17 @@ export default function GameOverModal({ stats }) {
     const location = useLocation();
 
     return (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <motion.div 
+        <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
+            style={{
+                paddingTop: 'max(env(safe-area-inset-top, 0px), 0.5rem)',
+                paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0.5rem)',
+            }}
+        >
+            <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="bg-slate-900 border-2 border-red-500 p-6 md:p-8 rounded-xl max-w-md w-full text-center max-h-[90vh] overflow-y-auto"
+                className="bg-slate-900 border-2 border-red-500 p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full text-center my-auto"
             >
                 <h2 className="text-3xl md:text-4xl font-bold text-red-500 mb-2 font-mono">SLOTH DOWN</h2>
                 <p className="text-sm md:text-base text-slate-400 mb-6 md:mb-8">Even sloths need a break...</p>

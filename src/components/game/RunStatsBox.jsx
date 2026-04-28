@@ -77,7 +77,7 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700' })
             {/* Extended stats — scrollable */}
             <div className="mt-4 pt-3 border-t border-slate-700">
                 <div className="text-[10px] md:text-xs text-slate-500 uppercase tracking-widest font-bold mb-2">Detailed Stats</div>
-                <div className="bg-slate-900/60 rounded-md border border-slate-700/50 p-3 max-h-48 overflow-y-auto space-y-2">
+                <div className="bg-slate-900/60 rounded-md border border-slate-700/50 p-3 space-y-2">
                     <div className="flex justify-between text-xs">
                         <span className="text-slate-400">Average DPS</span>
                         <span className="text-orange-300 font-mono">{dps.toLocaleString()}</span>
