@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Compass, X } from 'lucide-react';
 import { SoundManager } from '../../game/SoundManager';
@@ -18,9 +19,12 @@ const SLIDES = [
     { idx: 11, name: 'NFT Collection', icon: '💎', color: 'from-purple-700 to-purple-950', border: 'border-purple-400/50' },
     { idx: 12, name: 'Pilot Profile', icon: '🪪', color: 'from-violet-700 to-violet-950', border: 'border-violet-400/50' },
     { idx: 13, name: 'Jukebox', icon: '🎵', color: 'from-fuchsia-600 to-purple-950', border: 'border-fuchsia-400/50' },
+    // External routes (not part of the carousel) — navigated to via React Router.
+    { route: '/titles', name: 'Titles', icon: '🏅', color: 'from-amber-700 to-rose-950', border: 'border-amber-400/50' },
 ];
 
 export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
+    const navigate = useNavigate();
     const [open, setOpen] = useState(false);
 
     // Close on Escape
@@ -31,9 +35,13 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
         return () => window.removeEventListener('keydown', onKey);
     }, [open]);
 
-    const handleWarp = (idx) => {
+    const handleWarp = (slide) => {
         SoundManager.playUIClick();
-        onWarp(idx);
+        if (slide.route) {
+            navigate(slide.route);
+        } else {
+            onWarp(slide.idx);
+        }
         setOpen(false);
     };
 
@@ -96,11 +104,11 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
                             <div className="p-3 md:p-5 max-h-[70vh] overflow-y-auto">
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
                                     {SLIDES.map((s) => {
-                                        const isCurrent = s.idx === currentIndex;
+                                        const isCurrent = s.idx !== undefined && s.idx === currentIndex;
                                         return (
                                             <button
-                                                key={s.idx}
-                                                onClick={() => handleWarp(s.idx)}
+                                                key={s.idx ?? s.route}
+                                                onClick={() => handleWarp(s)}
                                                 className={`relative bg-gradient-to-br ${s.color} ${s.border} border rounded-xl p-2.5 md:p-3 flex flex-col items-center gap-1.5 transition-all hover:scale-105 hover:brightness-125 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] ${isCurrent ? 'ring-2 ring-fuchsia-400 ring-offset-2 ring-offset-[#0b0416]' : ''}`}
                                             >
                                                 {isCurrent && (
