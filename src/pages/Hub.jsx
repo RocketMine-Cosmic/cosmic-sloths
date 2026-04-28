@@ -11,6 +11,7 @@ import { IN_GAME_SKUS } from '@/lib/skuMap';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
+import BuildSummary from '../components/game/BuildSummary';
 import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -647,6 +648,8 @@ export default function Hub({ isCarousel }) {
                                     
                                     return (
                                         <div className="flex flex-col gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
+
+                                            <BuildSummary save={save} selectedChar={selectedChar} currentTime={currentTime} />
 
                                             <button
                                                 onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}
