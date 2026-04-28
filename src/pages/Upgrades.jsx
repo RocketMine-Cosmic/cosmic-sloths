@@ -826,11 +826,11 @@ export default function Upgrades({ isCarousel }) {
                                             <p className="text-slate-400 text-[9px] md:text-sm leading-tight">{talent.desc}</p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-stretch gap-0.5 md:gap-1 w-full">
+                                    <div className="flex flex-col items-stretch gap-0.5 w-full">
                                         <button
                                             onClick={() => handleBuyTalent(talent, 'gold')}
                                             disabled={isUnlocked || !canUnlock || !canAffordGold || purchasing}
-                                            className={`w-full px-2 py-1.5 md:py-2 rounded md:rounded-lg font-bold transition-colors text-[11px] md:text-sm flex items-center justify-center gap-1 ${
+                                            className={`w-full px-2 py-1 md:py-1.5 rounded md:rounded-md font-bold transition-colors text-[11px] md:text-xs flex items-center justify-center gap-1 ${
                                                 isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
                                                 canUnlock && canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
@@ -849,7 +849,7 @@ export default function Upgrades({ isCarousel }) {
                                             <button
                                                 onClick={() => !purchasing && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
                                                 disabled={!canUnlock || !canAffordToken || purchasing}
-                                                className={`w-full px-2 py-1.5 md:py-2 rounded md:rounded-lg font-bold transition-colors text-[11px] md:text-sm flex items-center justify-center gap-1 ${
+                                                className={`w-full px-2 py-1 md:py-1.5 rounded md:rounded-md font-bold transition-colors text-[11px] md:text-xs flex items-center justify-center gap-1 ${
                                                     canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-600 border border-slate-700'
                                                 }`}
