@@ -400,7 +400,10 @@ export const SaveManager = {
         if (!parsed.unlockedRelics) parsed.unlockedRelics = [];
         if (!parsed.equippedRelics) parsed.equippedRelics = [];
         
-        const today = moment().format('YYYY-MM-DD');
+        // Use UTC to match server (claimDailyLogin uses UTC) — otherwise daily
+        // login can flip to a new day before bounties/missions rotate locally,
+        // causing "day 2 streak claimable but day 2 bounties not".
+        const today = moment.utc().format('YYYY-MM-DD');
         if (parsed.bounties.date !== today) {
             try {
                 const shuffled = [...BOUNTIES_POOL].sort(() => 0.5 - Math.random());
