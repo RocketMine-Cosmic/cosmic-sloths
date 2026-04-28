@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import WarpMenu from '../components/game/WarpMenu';
@@ -61,8 +61,19 @@ function LazySlide({ children, shouldMount }) {
 
 export default function PlayCarousel() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
-    const [selectedIndex, setSelectedIndex] = useState(0);
+
+    // Initialize from ?slide= so deep-links and the back button restore the right page.
+    const initialSlide = (() => {
+        const raw = parseInt(searchParams.get('slide') || '0', 10);
+        return Number.isFinite(raw) && raw >= 0 && raw < 15 ? raw : 0;
+    })();
+    const [selectedIndex, setSelectedIndex] = useState(initialSlide);
+    // Tracks whether a slide change came from the URL (popstate / back button)
+    // so we don't push a redundant history entry in response.
+    const syncingFromUrlRef = useRef(false);
 
     const scrollPrev = useCallback(() => { SoundManager.playUIClick(); emblaApi?.scrollPrev(); }, [emblaApi]);
     const scrollNext = useCallback(() => { SoundManager.playUIClick(); emblaApi?.scrollNext(); }, [emblaApi]);
@@ -87,14 +98,40 @@ export default function PlayCarousel() {
         }
     }, [emblaApi, location.state]);
 
+    // Snap to the slide indicated by the URL (e.g. when the user hits the
+    // browser/hardware back button, the URL changes and we follow it).
+    useEffect(() => {
+        if (!emblaApi) return;
+        const raw = parseInt(searchParams.get('slide') || '0', 10);
+        const target = Number.isFinite(raw) && raw >= 0 && raw < 15 ? raw : 0;
+        if (target !== emblaApi.selectedScrollSnap()) {
+            syncingFromUrlRef.current = true;
+            emblaApi.scrollTo(target, true);
+        }
+    }, [emblaApi, searchParams]);
+
     useEffect(() => {
         if (!emblaApi) return;
         const onSelect = () => {
-            setSelectedIndex(emblaApi.selectedScrollSnap());
+            const idx = emblaApi.selectedScrollSnap();
+            setSelectedIndex(idx);
+
+            // Mirror the active slide into the URL. Use replace for the initial
+            // slide (0) so we don't pollute history, and push for navigations
+            // away from it so the back button works.
+            if (syncingFromUrlRef.current) {
+                syncingFromUrlRef.current = false;
+                return;
+            }
+            const currentParam = parseInt(searchParams.get('slide') || '0', 10);
+            if (currentParam === idx) return;
+            const newSearch = idx === 0 ? '' : `?slide=${idx}`;
+            navigate(`/${newSearch}`, { replace: false });
         };
         emblaApi.on('select', onSelect);
         onSelect();
-    }, [emblaApi]);
+        return () => { emblaApi.off('select', onSelect); };
+    }, [emblaApi, navigate, searchParams]);
 
     // A slide should mount if it's the current one or one adjacent (handles
     // wrap-around at start/end since the carousel is loop:true).
