@@ -107,16 +107,6 @@ export default function PlayCarousel() {
     return (
         <div className="h-[100dvh] bg-[#0b0416] flex flex-col overflow-hidden select-none relative font-sans">
             <SpaceBackground />
-            <div
-                className="px-3 pt-3 md:px-6 md:pt-4 pb-2 md:pb-3 flex justify-center items-center z-20 relative shrink-0"
-                style={{ paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)' }}
-            >
-                <WarpMenu
-                    currentIndex={selectedIndex}
-                    onWarp={(idx) => emblaApi?.scrollTo(idx)}
-                    currentLabel={SLIDE_LABELS[selectedIndex]}
-                />
-            </div>
 
             {/* Desktop navigation arrows — hidden on mobile (where swipe works). */}
             <button
@@ -134,7 +124,11 @@ export default function PlayCarousel() {
                 <ChevronRight className="w-6 h-6" />
             </button>
 
-            <div className="flex-1 min-h-0 overflow-hidden" ref={emblaRef}>
+            <div
+                className="flex-1 min-h-0 overflow-hidden"
+                ref={emblaRef}
+                style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+            >
                 <div className="flex h-full min-h-0 touch-pan-y">
                     <LazySlide shouldMount={isNear(0)}><MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} /></LazySlide>
                     <LazySlide shouldMount={isNear(1)}><Hub isCarousel={true} /></LazySlide>
@@ -154,6 +148,17 @@ export default function PlayCarousel() {
                 </div>
             </div>
 
+            {/* Warp button anchored to bottom — better thumb reach on mobile + leaves room for top status bars when published as iOS/Android app. */}
+            <div
+                className="px-3 pb-3 pt-2 md:px-6 md:pb-4 md:pt-3 flex justify-center items-center z-20 relative shrink-0"
+                style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 8px), 12px)' }}
+            >
+                <WarpMenu
+                    currentIndex={selectedIndex}
+                    onWarp={(idx) => emblaApi?.scrollTo(idx)}
+                    currentLabel={SLIDE_LABELS[selectedIndex]}
+                />
+            </div>
         </div>
     );
 }
