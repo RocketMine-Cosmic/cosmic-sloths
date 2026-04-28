@@ -178,31 +178,31 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
     }
 
     return (
-        <div className="bg-gradient-to-br from-[#0b0416]/80 to-slate-950/80 backdrop-blur-xl border border-purple-500/30 rounded-lg p-2.5 md:p-3 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-            <div className="flex items-center justify-between mb-2">
+        <div className="bg-gradient-to-br from-[#0b0416]/80 to-slate-950/80 backdrop-blur-xl border border-purple-500/30 rounded-lg p-1.5 md:p-3 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+            <div className="flex items-center justify-between mb-1.5 md:mb-2">
                 <span className="text-[10px] md:text-xs font-black tracking-widest uppercase text-purple-300 flex items-center gap-1.5">
-                    📊 Total Build Bonuses
+                    📊 Build Bonuses
                 </span>
                 <span className="text-[9px] md:text-[10px] text-slate-500 font-bold tracking-wider uppercase">
-                    {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
+                    {sourceCount} {sourceCount === 1 ? 'src' : 'srcs'}
                     {xpBuffTimeLeft && <span className="text-emerald-400 ml-1.5">· XP {xpBuffTimeLeft}</span>}
                 </span>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1 md:gap-1.5">
                 {activeStats.map((statKey) => {
                     const def = STAT_DEFS[statKey];
                     if (!def) return null;
                     return (
                         <div
                             key={statKey}
-                            className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${def.border} ${def.bg}`}
+                            className={`flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 md:py-1 rounded-md border ${def.border} ${def.bg}`}
                         >
-                            <span className="text-xs">{def.icon}</span>
-                            <span className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                            <span className="text-[10px] md:text-xs">{def.icon}</span>
+                            <span className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-slate-400 hidden sm:inline">
                                 {def.label}
                             </span>
-                            <span className={`text-xs md:text-sm font-black font-mono ${def.color}`}>
+                            <span className={`text-[10px] md:text-sm font-black font-mono ${def.color}`}>
                                 {def.fmt(totals[statKey])}
                             </span>
                         </div>
