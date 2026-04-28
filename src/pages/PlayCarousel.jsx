@@ -161,10 +161,21 @@ export default function PlayCarousel() {
                 <ChevronRight className="w-6 h-6" />
             </button>
 
+            {/* Warp button at top — anchored under the status bar with safe-area padding. */}
+            <div
+                className="px-3 pt-2 pb-2 md:px-6 md:pt-3 md:pb-3 flex justify-center items-center z-20 relative shrink-0"
+                style={{ paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)' }}
+            >
+                <WarpMenu
+                    currentIndex={selectedIndex}
+                    onWarp={(idx) => emblaApi?.scrollTo(idx)}
+                    currentLabel={SLIDE_LABELS[selectedIndex]}
+                />
+            </div>
+
             <div
                 className="flex-1 min-h-0 overflow-hidden"
                 ref={emblaRef}
-                style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
             >
                 <div className="flex h-full min-h-0 touch-pan-y">
                     <LazySlide shouldMount={isNear(0)}><MainMenu isCarousel={true} onNavigateToPlay={() => emblaApi?.scrollTo(1)} /></LazySlide>
@@ -185,17 +196,6 @@ export default function PlayCarousel() {
                 </div>
             </div>
 
-            {/* Warp button anchored to bottom — better thumb reach on mobile + leaves room for top status bars when published as iOS/Android app. */}
-            <div
-                className="px-3 pb-3 pt-2 md:px-6 md:pb-4 md:pt-3 flex justify-center items-center z-20 relative shrink-0"
-                style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 8px), 12px)' }}
-            >
-                <WarpMenu
-                    currentIndex={selectedIndex}
-                    onWarp={(idx) => emblaApi?.scrollTo(idx)}
-                    currentLabel={SLIDE_LABELS[selectedIndex]}
-                />
-            </div>
         </div>
     );
 }
