@@ -403,8 +403,9 @@ export default function Game() {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
-                // Charge `cost` OMENX in one transaction (quantity scales price server-side)
-                purchaseSku(IN_GAME_SKUS.banish, cost);
+                // SKU is consumable on dev portal — quantity isn't reliable, so fire `cost` separate
+                // 1-OMENX charges. Each call gets a unique idempotency key (crypto.randomUUID server-side).
+                for (let i = 0; i < cost; i++) purchaseSku(IN_GAME_SKUS.banish);
                 refreshBalance(); // no await
                 setBanishCount(c => c + 1);
             });
