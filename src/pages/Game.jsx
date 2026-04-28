@@ -291,6 +291,14 @@ export default function Game() {
                 const liveScore = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
 
                 const dps = engine.time > 0 ? Math.floor((engine.totalDamageDealt || 0) / engine.time) : 0;
+
+                // Find active boss for off-screen HP bar
+                let boss = null;
+                if (engine.isBossActive && engine.enemies) {
+                    const b = engine.enemies.find(e => e && e.isBoss && e.hp > 0);
+                    if (b) boss = { name: b.name, hp: b.hp, maxHp: b.maxHp };
+                }
+
                 setGameState(s => ({
                     ...s,
                     xp: engine.xp,
@@ -299,6 +307,7 @@ export default function Game() {
                     passives: engine.player.passives || [],
                     score: liveScore,
                     dps,
+                    boss,
                     totalDamage: Math.floor(engine.totalDamageDealt || 0)
                 }));
             }

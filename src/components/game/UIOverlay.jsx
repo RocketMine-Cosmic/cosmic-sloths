@@ -8,7 +8,7 @@ function OmenXIcon({ className }) {
 // Endless-mode reward caps — must mirror functions/saveScore.js
 const ENDLESS_GOLD_CAP = 5000;
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, onPause, onSquadUltimate }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, boss = null, onPause, onSquadUltimate }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -80,6 +80,25 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     <div className="text-[9px] md:text-xs font-bold text-orange-400 font-mono mt-0.5" title="Damage per second">
                         DPS: {dps.toLocaleString()}
                     </div>
+
+                    {boss && boss.maxHp > 0 && (
+                        <div className="mt-1 md:mt-2 pt-1 md:pt-2 border-t border-red-500/30">
+                            <div className="flex justify-between items-center mb-0.5 md:mb-1 gap-2">
+                                <span className="text-[8px] md:text-[10px] font-black tracking-widest text-red-400 uppercase truncate" title={boss.name}>
+                                    ⚠ {boss.name}
+                                </span>
+                                <span className="text-[8px] md:text-[10px] font-mono text-red-300 shrink-0">
+                                    {Math.ceil((boss.hp / boss.maxHp) * 100)}%
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-950 h-1.5 md:h-2 rounded-full overflow-hidden border border-red-900/60">
+                                <div
+                                    className="h-full transition-all duration-200 bg-gradient-to-r from-red-700 via-red-500 to-orange-400"
+                                    style={{ width: `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Top Right: Gold & Controls & ULT */}
