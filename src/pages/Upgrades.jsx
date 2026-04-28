@@ -1257,9 +1257,11 @@ export default function Upgrades({ isCarousel }) {
                     </div>
                 )}
 
-                <div className="mb-3 text-[11px] md:text-xs text-emerald-300/90 bg-emerald-950/30 border border-emerald-700/40 rounded-lg px-3 py-2">
-                    💡 <strong className="text-emerald-400">Bias bonus:</strong> Stats, talents and weapon upgrades you invest in here appear <strong className="text-white">+15% more often per level</strong> in your in-run level-up choices.
-                </div>
+                {activeCategory === 'permanent' && (
+                    <div className="mb-3 text-[11px] md:text-xs text-emerald-300/90 bg-emerald-950/30 border border-emerald-700/40 rounded-lg px-3 py-2">
+                        💡 <strong className="text-emerald-400">Bias bonus:</strong> Permanent stats, talents and weapon upgrades appear <strong className="text-white">+15% more often per level</strong> in your in-run level-up choices. <span className="text-slate-500">(Only permanent upgrades count toward this bias.)</span>
+                    </div>
+                )}
 
                 <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-2 md:p-6 border border-[#8B5CF6]/30 shadow-[0_0_50px_rgba(139,92,246,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] min-h-[400px] md:min-h-[600px]">
                     {activeCategory === 'forge' ? (

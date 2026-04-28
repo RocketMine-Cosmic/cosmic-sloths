@@ -704,7 +704,7 @@ TABS_CONTENT.combat = (
                     Every time you level up mid-run, you pick 1 of 3 random upgrades. Each can be one of 4 rarities:
                 </p>
                 <div className="bg-slate-900/40 rounded-lg p-3 border border-emerald-700/50 text-xs text-slate-400 mb-4">
-                    <strong className="text-emerald-400">💡 Permanent Upgrades Bias:</strong> The upgrades you've invested in via the <strong className="text-white">Upgrade Lounge</strong> (permanent stat upgrades, talents, and weapon upgrades) appear <strong className="text-white">+15% more often per level invested</strong> in your in-run level-up choices. <span className="text-slate-500">Build toward your favorite playstyle and the game will offer it to you more reliably.</span>
+                    <strong className="text-emerald-400">💡 Permanent Upgrades Bias:</strong> Only <strong className="text-white">permanent</strong> stat upgrades, talents and weapon upgrades from the <strong className="text-white">Upgrade Lounge</strong> appear <strong className="text-white">+15% more often per level invested</strong> in your in-run level-up choices. <span className="text-slate-500">Weekly and seasonal upgrades don't affect the bias.</span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm text-center">
                     <div className="rounded-xl p-3 md:p-4 border border-slate-600 bg-slate-800/50 flex flex-col justify-center">
