@@ -103,8 +103,26 @@ export default function GlobalRaid({ isCarousel }) {
                         const contribs = await base44.entities.GlobalBossContribution.filter({ week_id, user_id: authData.walletAddress });
                         if (contribs.length > 0) setWorldBossContribution(contribs[0]);
                     }
-                    const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 10);
-                    setTopContributors(allContribs);
+                    // Fetch more rows so we can aggregate per-player totals before showing top 10.
+                    const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 500);
+                    const totalsByPlayer = new Map();
+                    for (const c of allContribs) {
+                        const key = c.user_id || c.player_name;
+                        const prev = totalsByPlayer.get(key);
+                        if (prev) {
+                            prev.damage += c.damage || 0;
+                        } else {
+                            totalsByPlayer.set(key, {
+                                id: key,
+                                player_name: c.player_name,
+                                damage: c.damage || 0,
+                            });
+                        }
+                    }
+                    const aggregated = Array.from(totalsByPlayer.values())
+                        .sort((a, b) => b.damage - a.damage)
+                        .slice(0, 10);
+                    setTopContributors(aggregated);
                     const events = await base44.entities.GlobalBossEvent.filter({ week_id }, '-created_date', 15);
                     setRecentEvents(events);
                 }
