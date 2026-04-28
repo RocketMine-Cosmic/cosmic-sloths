@@ -6,6 +6,7 @@ import { CHARACTERS, ARENAS } from '../../game/Constants';
 import { getSquadLevel } from '../../game/SquadLevels';
 import { getCurrentPeriodIds } from '../../lib/periodIds';
 import { useIsIdle } from '@/hooks/useIsIdle';
+import { getTitleStyle } from '@/lib/playerTitles';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -411,11 +412,14 @@ export default function Leaderboard() {
                                                 <div className="font-bold text-white text-lg md:text-xl truncate">
                                                     {score.player_name}
                                                 </div>
-                                                    {score.player_title && (
-                                                        <span className="text-[10px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider font-bold truncate">
-                                                            {score.player_title}
-                                                        </span>
-                                                    )}
+                                                    {score.player_title && (() => {
+                                                        const st = getTitleStyle(score.player_title);
+                                                        return (
+                                                            <span className={`text-[10px] ${st.bg} ${st.text} px-1.5 py-0.5 rounded border ${st.border} tracking-wider font-bold truncate`}>
+                                                                {score.player_title}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5 flex items-center gap-2 flex-wrap">
                                                     {char && (

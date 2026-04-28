@@ -17,6 +17,8 @@ import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
 import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
 import { refreshVipLevel, getVipCooldownEnd, ensureVipFetched } from '@/lib/playerDataCache';
+import { getTitleStyle } from '@/lib/playerTitles';
+import TitlePicker from '../components/game/TitlePicker';
 
 
 export default function Profile({ isCarousel }) {
@@ -182,79 +184,22 @@ export default function Profile({ isCarousel }) {
         }
     };
 
-    const getAvailableTitles = () => {
-        const t = [{ id: '', label: 'No Title' }];
-        
-        const addTitle = (id, label) => {
-            if (!t.some(existing => existing.id === id)) {
-                t.push({ id, label });
-            }
-        };
-
-        addTitle('Novice Pilot', 'Novice Pilot');
-        
+    // Build the stats bag the title registry needs to evaluate unlock criteria.
+    const getTitleStats = () => {
         const currentSave = SaveManager.load();
-        const totalKills = currentSave.totalKills || 0;
-        const maxTimeSurvived = currentSave.maxTimeSurvived || 0;
-        const totalGoldEarned = currentSave.totalGoldEarned || 0;
-        const maxLevelReached = currentSave.maxLevelReached || 0;
-        const unlockedCharactersCount = currentSave.unlockedCharacters?.length || 0;
-        const totalUnlockedCosmetics = currentSave.unlockedCosmetics?.length || 0;
-        const totalUnlockedTalents = Object.values(currentSave.unlockedTalents || {}).reduce((acc, arr) => acc + arr.length, 0);
-
-        // Original Profile Titles
-        if (stats.totalKills >= 1000) addTitle('Vanguard', 'Vanguard');
-        if (stats.totalKills >= 10000) addTitle('Void Walker', 'Void Walker');
-        const bestScore = Math.max(stats.highestScoreNormal || 0, stats.highestScoreEndless || 0);
-        if (bestScore >= 50000) addTitle('Top Survivor', 'Top Survivor');
-        if (bestScore >= 100000) addTitle('Cosmic Legend', 'Cosmic Legend');
-        
-        if (stats.leviathanKills >= 1) addTitle('Leviathan Slayer', 'Leviathan Slayer');
-        if (stats.leviathanKills >= 10) addTitle('Apex Predator', 'Apex Predator');
-        if (stats.globalRaidDamage >= 10000) addTitle('Raid Trooper', 'Raid Trooper');
-        if (stats.globalRaidDamage >= 500000) addTitle('World Eater Bane', 'World Eater Bane');
-        
-        if (currentSave.gold >= 10000 || totalGoldEarned >= 100000) addTitle('Gold Hoarder', 'Gold Hoarder');
-        if (maxLevelReached >= 20) addTitle('Ascendant', 'Ascendant');
-        if (unlockedCharactersCount >= 5) addTitle('Commander', 'Commander');
-
-        // Achievement Titles - Survival
-        if (maxTimeSurvived >= 180) addTitle('Survivor', 'Survivor');
-        if (maxTimeSurvived >= 240) addTitle('Veteran', 'Veteran');
-        if (maxTimeSurvived >= 300) addTitle('Master', 'Master');
-        if (maxTimeSurvived >= 360) addTitle('Cosmic Legend', 'Cosmic Legend'); // Note: Duplicate protected by addTitle logic
-        if (maxTimeSurvived >= 420) addTitle('Time Lord', 'Time Lord');
-        if (maxTimeSurvived >= 480) addTitle('Eternal', 'Eternal');
-        if (maxTimeSurvived >= 600) addTitle('Immortal Sloth', 'Immortal Sloth');
-
-        // Achievement Titles - Combat
-        if (totalKills >= 100) addTitle('First Blood', 'First Blood');
-        if (totalKills >= 1000) addTitle('Exterminator', 'Exterminator');
-        if (totalKills >= 10000) addTitle('Cosmic Destroyer', 'Cosmic Destroyer');
-        if (totalKills >= 50000) addTitle('Genocidal Sloth', 'Genocidal Sloth');
-        if (totalKills >= 100000) addTitle('Sloth God', 'Sloth God');
-        if (totalKills >= 250000) addTitle('Bringer of Extinction', 'Bringer of Extinction');
-
-        // Achievement Titles - Wealth
-        if (totalGoldEarned >= 10000) addTitle('Pocket Change', 'Pocket Change');
-        if (totalGoldEarned >= 100000) addTitle('Filthy Rich', 'Filthy Rich');
-        if (totalGoldEarned >= 1000000) addTitle('Billionaire', 'Billionaire');
-        if (totalGoldEarned >= 5000000) addTitle('Sloth of Wall Street', 'Sloth of Wall Street');
-
-        // Achievement Titles - Progression
-        if (maxLevelReached >= 10) addTitle('Power Up', 'Power Up');
-        if (maxLevelReached >= 20) addTitle('Ascended', 'Ascended'); // Duplicate protected
-        if (maxLevelReached >= 30) addTitle('Beyond Limits', 'Beyond Limits');
-        if (maxLevelReached >= 40) addTitle('God Tier', 'God Tier');
-        if (maxLevelReached >= 50) addTitle('Maximum Overdrive', 'Maximum Overdrive');
-        
-        if (unlockedCharactersCount >= 5) addTitle('Growing Crew', 'Growing Crew');
-        if (unlockedCharactersCount >= 10) addTitle('Completionist', 'Completionist');
-        if (totalUnlockedCosmetics >= 6) addTitle('Fashionista', 'Fashionista');
-        if (totalUnlockedTalents >= 15) addTitle('Skillful', 'Skillful');
-        if (totalUnlockedTalents >= 30) addTitle('Omniscient', 'Omniscient');
-
-        return t;
+        return {
+            totalKills: stats.totalKills || 0,
+            leviathanKills: stats.leviathanKills || 0,
+            bestScore: Math.max(stats.highestScoreNormal || 0, stats.highestScoreEndless || 0),
+            globalRaidDamage: stats.globalRaidDamage || 0,
+            gold: currentSave.gold || 0,
+            totalGoldEarned: currentSave.totalGoldEarned || 0,
+            maxLevelReached: currentSave.maxLevelReached || 0,
+            maxTimeSurvived: currentSave.maxTimeSurvived || 0,
+            unlockedCharactersCount: currentSave.unlockedCharacters?.length || 0,
+            totalUnlockedCosmetics: currentSave.unlockedCosmetics?.length || 0,
+            totalUnlockedTalents: Object.values(currentSave.unlockedTalents || {}).reduce((acc, arr) => acc + arr.length, 0),
+        };
     };
 
     const getVipTierName = (level) => {
@@ -363,27 +308,22 @@ export default function Profile({ isCarousel }) {
                                 )}
                                 <div className="mt-2 flex items-center gap-2">
                                     {isEditingTitle ? (
-                                        <div className="flex items-center gap-2">
-                                            <select 
-                                                value={newTitle}
-                                                onChange={(e) => handleSaveTitle(e.target.value)}
-                                                className="bg-slate-900 border border-amber-500/50 text-amber-300 rounded px-2 py-1 text-xs outline-none focus:border-amber-400"
-                                            >
-                                                {getAvailableTitles().map(t => (
-                                                    <option key={t.id} value={t.id}>{t.label}</option>
-                                                ))}
-                                            </select>
-                                            <button onClick={() => setIsEditingTitle(false)} className="text-slate-400 hover:text-white p-1">
-                                                <X size={14} />
-                                            </button>
-                                        </div>
+                                        <TitlePicker
+                                            stats={getTitleStats()}
+                                            currentTitle={newTitle}
+                                            onSelect={(id) => handleSaveTitle(id)}
+                                            onClose={() => setIsEditingTitle(false)}
+                                        />
                                     ) : (
                                         <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditingTitle(true)}>
-                                            {user?.data?.player_title ? (
-                                                <span className="text-[10px] bg-slate-900/80 text-amber-300 px-2 py-0.5 rounded border border-amber-900/50 tracking-wider font-bold">
-                                                    {user.data.player_title}
-                                                </span>
-                                            ) : (
+                                            {user?.data?.player_title ? (() => {
+                                                const st = getTitleStyle(user.data.player_title);
+                                                return (
+                                                    <span className={`text-[10px] ${st.bg} ${st.text} px-2 py-0.5 rounded border ${st.border} tracking-wider font-bold`}>
+                                                        {user.data.player_title}
+                                                    </span>
+                                                );
+                                            })() : (
                                                 <span className="text-[10px] text-slate-500 italic">No Title Equipped</span>
                                             )}
                                             <Pencil size={12} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
