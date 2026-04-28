@@ -755,11 +755,8 @@ export default function Upgrades({ isCarousel }) {
                 <div className="space-y-2 md:space-y-4 relative">
                     <div className="absolute left-[26px] md:left-[46px] top-8 bottom-8 w-1 bg-slate-800 z-0"></div>
                     
-                    {(CHARACTER_TALENTS[selectedChar || 'neobyte'] || []).map((talent, index, arr) => {
-                        const unlocked = save[saveKey]?.[selectedChar || 'neobyte'] || [];
-                        const isUnlocked = unlocked.includes(talent.id);
-                        
-                        // To unlock tier 2, you need tier 1 from ANY category (perm, week, season)
+                    {(() => {
+                        const allTalents = CHARACTER_TALENTS[selectedChar || 'neobyte'] || [];
                         const getUnlockedTalents = (char) => {
                             const perm = save.permanentTalents?.[char] || [];
                             const week = save.weeklyTalents?.[char] || [];
@@ -767,85 +764,113 @@ export default function Upgrades({ isCarousel }) {
                             return [...new Set([...perm, ...week, ...season])];
                         };
                         const allUnlocked = getUnlockedTalents(selectedChar || 'neobyte');
-                        // First of two mutually-exclusive paths at this tier — render a "Choose one" header above it.
-                        const isFirstBranchOfTier = talent.excludes && arr.findIndex(t => t.tier === talent.tier && t.excludes) === index;
-                        
-                        const canUnlock = !isUnlocked && (
-                            talent.tier === 1 || 
-                            (talent.requires && allUnlocked.includes(talent.requires) && (!talent.excludes || !allUnlocked.includes(talent.excludes)))
-                        );
-                        
-                        const costTier = Math.min((talent.tier - 1) * 2, typeConfig.goldCosts.length - 1);
-                        const goldCost = typeConfig.goldCosts[costTier] || 0;
-                        const tokenCost = typeConfig.tokenCosts[costTier] || 0;
-                        const canAffordGold = save.gold >= goldCost;
-                        const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
-                        
-                        // Determine branch visual
-                        const isBranchA = talent.id.endsWith('a');
-                        const isBranchB = talent.id.endsWith('b');
-                        
-                        return (
-                            <React.Fragment key={talent.id}>
-                            {isFirstBranchOfTier && (
-                                <div className="relative z-10 flex items-center gap-2 ml-0 sm:ml-8 -mb-1 mt-1">
-                                    <div className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-700/50 px-2 py-0.5 rounded">
-                                        ⚠ Choose ONE path — picking one locks the other across all tiers
-                                    </div>
-                                </div>
-                            )}
-                            <div className={`relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-4 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700 ${isBranchA ? 'ml-0 sm:ml-8 border-l-4 border-l-blue-500' : isBranchB ? 'ml-0 sm:ml-8 border-l-4 border-l-purple-500' : ''}`}>
-                                <div className="flex items-center gap-2 md:gap-4">
-                                    <div className={`w-10 h-10 md:w-16 md:h-16 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
-                                        isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
-                                        canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
-                                        'bg-slate-800 border-slate-700 text-slate-600'
-                                    }`}>
-                                        {talent.tier}
-                                    </div>
-                                    <div>
-                                        <h3 className={`font-bold text-sm md:text-lg ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>
-                                            {talent.name} {isBranchA ? '(Path A)' : isBranchB ? '(Path B)' : ''}
-                                        </h3>
-                                        <p className="text-slate-400 text-[10px] md:text-sm leading-tight">{talent.desc}</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-stretch gap-1 w-full sm:w-auto sm:min-w-[180px] pl-[60px] sm:pl-0">
-                                    <button
-                                        onClick={() => handleBuyTalent(talent, 'gold')}
-                                        disabled={isUnlocked || !canUnlock || !canAffordGold || purchasing}
-                                        className={`w-full px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
-                                            isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
-                                            canUnlock && canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
-                                            'bg-slate-800 text-slate-600 border border-slate-700'
-                                        }`}
-                                    >
-                                        {isUnlocked ? 'UNLOCKED' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
-                                    </button>
-                                    {!isUnlocked && (
-                                        <div className="flex items-center justify-center gap-2 my-0.5">
-                                            <div className="flex-1 h-px bg-slate-700/60"></div>
-                                            <span className="text-slate-500 text-[10px] font-bold tracking-widest">OR</span>
-                                            <div className="flex-1 h-px bg-slate-700/60"></div>
+                        const unlocked = save[saveKey]?.[selectedChar || 'neobyte'] || [];
+
+                        // Group talents: pairs of (Path A, Path B) at same tier render side-by-side; standalone talents render full-width.
+                        const groups = [];
+                        const consumed = new Set();
+                        allTalents.forEach((t, i) => {
+                            if (consumed.has(i)) return;
+                            if (t.excludes) {
+                                const partnerIdx = allTalents.findIndex((p, pi) => pi !== i && p.tier === t.tier && p.excludes && !consumed.has(pi));
+                                if (partnerIdx !== -1) {
+                                    const a = t.id.endsWith('a') ? t : allTalents[partnerIdx];
+                                    const b = t.id.endsWith('b') ? t : allTalents[partnerIdx];
+                                    groups.push({ type: 'pair', a, b });
+                                    consumed.add(i); consumed.add(partnerIdx);
+                                    return;
+                                }
+                            }
+                            groups.push({ type: 'single', talent: t });
+                            consumed.add(i);
+                        });
+
+                        const renderTalentCard = (talent, sideClass = '') => {
+                            const isUnlocked = unlocked.includes(talent.id);
+                            const canUnlock = !isUnlocked && (
+                                talent.tier === 1 ||
+                                (talent.requires && allUnlocked.includes(talent.requires) && (!talent.excludes || !allUnlocked.includes(talent.excludes)))
+                            );
+                            const costTier = Math.min((talent.tier - 1) * 2, typeConfig.goldCosts.length - 1);
+                            const goldCost = typeConfig.goldCosts[costTier] || 0;
+                            const tokenCost = typeConfig.tokenCosts[costTier] || 0;
+                            const canAffordGold = save.gold >= goldCost;
+                            const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
+                            const isBranchA = talent.id.endsWith('a');
+                            const isBranchB = talent.id.endsWith('b');
+
+                            return (
+                                <div className={`relative z-10 flex flex-col gap-2 md:gap-3 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700 ${sideClass} ${isBranchA ? 'border-l-4 border-l-blue-500' : isBranchB ? 'border-l-4 border-l-purple-500' : ''}`}>
+                                    <div className="flex items-center gap-2 md:gap-4">
+                                        <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
+                                            isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
+                                            canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
+                                            'bg-slate-800 border-slate-700 text-slate-600'
+                                        }`}>
+                                            {talent.tier}
                                         </div>
-                                    )}
-                                    {!isUnlocked && (
+                                        <div className="min-w-0">
+                                            <h3 className={`font-bold text-sm md:text-base truncate ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>
+                                                {talent.name} {isBranchA ? <span className="text-blue-400 text-xs">(Path A)</span> : isBranchB ? <span className="text-purple-400 text-xs">(Path B)</span> : ''}
+                                            </h3>
+                                            <p className="text-slate-400 text-[10px] md:text-sm leading-tight">{talent.desc}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-stretch gap-1 w-full">
                                         <button
-                                            onClick={() => !purchasing && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
-                                            disabled={!canUnlock || !canAffordToken || purchasing}
-                                            className={`w-full px-4 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
-                                                canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                            onClick={() => handleBuyTalent(talent, 'gold')}
+                                            disabled={isUnlocked || !canUnlock || !canAffordGold || purchasing}
+                                            className={`w-full px-3 py-2 rounded-lg font-bold transition-colors text-xs md:text-sm flex items-center justify-center gap-1.5 ${
+                                                isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
+                                                canUnlock && canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
                                         >
-                                            {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                            {isUnlocked ? 'UNLOCKED' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
                                         </button>
-                                    )}
+                                        {!isUnlocked && (
+                                            <div className="flex items-center justify-center gap-2 my-0.5">
+                                                <div className="flex-1 h-px bg-slate-700/60"></div>
+                                                <span className="text-slate-500 text-[10px] font-bold tracking-widest">OR</span>
+                                                <div className="flex-1 h-px bg-slate-700/60"></div>
+                                            </div>
+                                        )}
+                                        {!isUnlocked && (
+                                            <button
+                                                onClick={() => !purchasing && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
+                                                disabled={!canUnlock || !canAffordToken || purchasing}
+                                                className={`w-full px-3 py-2 rounded-lg font-bold transition-colors text-xs md:text-sm flex items-center justify-center gap-1.5 ${
+                                                    canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
+                                                    'bg-slate-800 text-slate-600 border border-slate-700'
+                                                }`}
+                                            >
+                                                {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                            </React.Fragment>
-                        );
-                    })}
+                            );
+                        };
+
+                        return groups.map((g, gi) => {
+                            if (g.type === 'single') {
+                                return <React.Fragment key={`s-${gi}`}>{renderTalentCard(g.talent)}</React.Fragment>;
+                            }
+                            return (
+                                <React.Fragment key={`p-${gi}`}>
+                                    <div className="relative z-10 flex items-center gap-2 ml-0 sm:ml-8 -mb-1 mt-1">
+                                        <div className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-700/50 px-2 py-0.5 rounded">
+                                            ⚠ Tier {g.a.tier} — Choose ONE path (locks the other across all tiers)
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 ml-0 sm:ml-8">
+                                        {renderTalentCard(g.a)}
+                                        {renderTalentCard(g.b)}
+                                    </div>
+                                </React.Fragment>
+                            );
+                        });
+                    })()}
                 </div>
             </div>
         );
