@@ -167,6 +167,15 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
+            <SectionCard title="✨ Weapon Evolutions" color="orange">
+                <p className="text-sm text-slate-300 leading-relaxed mb-2">
+                    Pair a base weapon with the right <strong className="text-emerald-400">passive upgrade</strong> in a single run to evolve it into a devastating ultimate form — even more powerful than synergies.
+                </p>
+                <div className="bg-slate-900/60 rounded-lg p-3 text-xs text-slate-400 italic border border-slate-700/50">
+                    💡 Hint: Try <strong className="text-white">Cosmic Nap Beam + Spatial Expander</strong>, or <strong className="text-white">Nova Pulse + Quantum Accelerator</strong>... Track every discovered evolution in the <strong className="text-orange-300">Codex</strong>.
+                </div>
+            </SectionCard>
+
             <SectionCard title="📖 Bestiary & Synergy Codex" color="purple">
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-3 border border-purple-800/40">
@@ -174,8 +183,8 @@ const TABS_CONTENT = {
                         <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Every enemy you encounter is logged here. View lore and stats! Kill enough of a specific enemy to achieve <strong className="text-fuchsia-400">Mastery</strong> — granting a permanent <strong className="text-white">+2% to +10% damage bonus</strong> against that enemy type forever.</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-3 border border-pink-800/40">
-                        <div className="font-bold text-pink-300 text-sm mb-1">🔥 Synergy Codex</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Tracks all your discovered <strong className="text-white">Weapon Synergies</strong>. Finding the right combinations is crucial to dominating higher difficulties and surviving Endless Mode.</p>
+                        <div className="font-bold text-pink-300 text-sm mb-1">🔥 The Codex</div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Tracks every discovered <strong className="text-white">Synergy</strong>, <strong className="text-orange-300">Evolution</strong>, and <strong className="text-amber-300">weapon Mastery</strong>. Finding the right combinations is crucial to dominating higher difficulties and surviving Endless Mode.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -694,6 +703,9 @@ TABS_CONTENT.combat = (
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Every time you level up mid-run, you pick 1 of 3 random upgrades. Each can be one of 4 rarities:
                 </p>
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-emerald-700/50 text-xs text-slate-400 mb-4">
+                    <strong className="text-emerald-400">💡 Permanent Upgrades Bias:</strong> The upgrades you've invested in via the <strong className="text-white">Upgrade Lounge</strong> (permanent stat upgrades, talents, and weapon upgrades) appear <strong className="text-white">+15% more often per level invested</strong> in your in-run level-up choices. <span className="text-slate-500">Build toward your favorite playstyle and the game will offer it to you more reliably.</span>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm text-center">
                     <div className="rounded-xl p-3 md:p-4 border border-slate-600 bg-slate-800/50 flex flex-col justify-center">
                         <div className="text-slate-300 font-bold mb-1">Common</div>

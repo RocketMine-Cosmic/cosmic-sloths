@@ -54,7 +54,7 @@ export default function SynergyCodex({ isCarousel }) {
                             <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-rose-500" /> THE CODEX
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">
-                            Archive of Cosmic Weaponry
+                            Synergies · Evolutions · Mastery
                         </p>
                     </div>
                     <CurrencyHeader />
