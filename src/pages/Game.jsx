@@ -405,10 +405,11 @@ export default function Game() {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
-                // SKU is a 2-OMENX consumable on dev portal — quantity isn't reliable, so fire
-                // `cost / 2` separate charges. Each call gets a unique idempotency key server-side.
-                const charges = Math.ceil(cost / 2);
-                for (let i = 0; i < charges; i++) purchaseSku(IN_GAME_SKUS.banish);
+                // Pick the right tiered SKU — T1 (2), T2 (4), or T3 (6 OMENX). Single charge per banish.
+                const banishSku = cost === 2 ? IN_GAME_SKUS.banish
+                                : cost === 4 ? IN_GAME_SKUS.banishT2
+                                : IN_GAME_SKUS.banishT3;
+                purchaseSku(banishSku);
                 refreshBalance(); // no await
                 setBanishCount(c => c + 1);
             });

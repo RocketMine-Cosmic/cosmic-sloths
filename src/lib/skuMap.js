@@ -5,7 +5,9 @@
 
 // In-game consumable SKUs
 export const IN_GAME_SKUS = {
-    banish:        'ingame-banish',
+    banish:        'ingame-banish',    // T1 — 2 OMENX
+    banishT2:      'ingame-banish-2',  // T2 — 4 OMENX
+    banishT3:      'ingame-banish-3',  // T3 — 6 OMENX
     reroll:        'ingame-reroll',
     // Squad Ultimate now has two tiers — lite (capped clone power) and full (scales with player upgrades).
     // Reuses existing stat-upgrade SKUs that are already priced at 5 and 10 OMENX.
