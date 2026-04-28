@@ -106,16 +106,16 @@ export default function LoadoutPresets({
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-2 md:p-3">
-            <div className="flex items-center justify-between mb-2">
-                <div className="text-[11px] md:text-xs font-bold tracking-widest uppercase text-slate-300 flex items-center gap-1.5">
+        <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-1.5 md:p-3">
+            <div className="flex items-center justify-between mb-1 md:mb-2">
+                <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase text-slate-300 flex items-center gap-1.5">
                     <Save className="w-3 h-3 md:w-3.5 md:h-3.5 text-cyan-400" /> Loadout Presets
                 </div>
                 <div className="text-[9px] md:text-[10px] text-slate-500 italic hidden sm:block">
                     Saves char · sector · difficulty · skin · trail · relics
                 </div>
             </div>
-            <div className="grid grid-cols-3 gap-1.5 md:gap-2">
+            <div className="grid grid-cols-3 gap-1 md:gap-2">
                 {Array.from({ length: SLOT_COUNT }).map((_, i) => {
                     const preset = presets[i];
                     const theme = SLOT_THEMES[i];
@@ -127,47 +127,47 @@ export default function LoadoutPresets({
                     const isConfirming = confirmDelete === i;
 
                     return (
-                        <div key={i} className={`rounded-lg border p-1.5 md:p-2 flex flex-col gap-1.5 ${isEmpty ? 'bg-slate-950/40 border-slate-800' : `${theme.bg} ${theme.border} ${theme.glow}`}`}>
+                        <div key={i} className={`rounded-lg border p-1 md:p-2 flex flex-col gap-1 md:gap-1.5 ${isEmpty ? 'bg-slate-950/40 border-slate-800' : `${theme.bg} ${theme.border} ${theme.glow}`}`}>
                             <div className="flex items-center justify-between">
-                                <span className={`text-[10px] md:text-[11px] font-black tracking-widest uppercase ${isEmpty ? 'text-slate-500' : theme.accent}`}>
+                                <span className={`text-[9px] md:text-[11px] font-black tracking-widest uppercase ${isEmpty ? 'text-slate-500' : theme.accent}`}>
                                     Slot {i + 1}
                                 </span>
                                 {!isEmpty && (
                                     <button
                                         onClick={() => isConfirming ? handleDelete(i) : setConfirmDelete(i)}
                                         title={isConfirming ? 'Confirm delete' : 'Delete preset'}
-                                        className={`p-1 rounded transition-colors ${isConfirming ? 'bg-red-600 text-white' : 'text-slate-500 hover:text-red-400 hover:bg-red-950/40'}`}
+                                        className={`p-0.5 md:p-1 rounded transition-colors ${isConfirming ? 'bg-red-600 text-white' : 'text-slate-500 hover:text-red-400 hover:bg-red-950/40'}`}
                                     >
-                                        {isConfirming ? <Check className="w-3 h-3" /> : <Trash2 className="w-3 h-3" />}
+                                        {isConfirming ? <Check className="w-2.5 h-2.5 md:w-3 md:h-3" /> : <Trash2 className="w-2.5 h-2.5 md:w-3 md:h-3" />}
                                     </button>
                                 )}
                             </div>
 
                             {isEmpty ? (
-                                <div className="text-[10px] text-slate-600 italic min-h-[44px] md:min-h-[56px] flex items-center justify-center text-center">
+                                <div className="text-[9px] md:text-[10px] text-slate-600 italic min-h-[28px] md:min-h-[56px] flex items-center justify-center text-center">
                                     Empty
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-1.5 min-h-[44px] md:min-h-[56px]">
-                                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: char?.color || '#888' }}>
+                                <div className="flex items-center gap-1 md:gap-1.5 min-h-[28px] md:min-h-[56px]">
+                                    <div className="w-6 h-6 md:w-9 md:h-9 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: char?.color || '#888' }}>
                                         {char?.image ? <img src={char.image} alt={char.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800" />}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <div className={`text-[10px] md:text-xs font-bold truncate ${theme.accent}`}>{char?.name || preset.charId}</div>
-                                        <div className="text-[9px] md:text-[10px] text-slate-400 truncate">{arena?.name || preset.arenaId}</div>
-                                        <div className="text-[9px] md:text-[10px] text-slate-500 flex items-center gap-1">
-                                            <span className="capitalize">{difficulty?.name || preset.difficultyId}</span>
-                                            {relicCount > 0 && <span className="text-fuchsia-400">· 💎{relicCount}</span>}
+                                        <div className={`text-[9px] md:text-xs font-bold truncate ${theme.accent}`}>{char?.name || preset.charId}</div>
+                                        <div className="text-[8px] md:text-[10px] text-slate-400 truncate hidden md:block">{arena?.name || preset.arenaId}</div>
+                                        <div className="text-[8px] md:text-[10px] text-slate-500 flex items-center gap-1 truncate">
+                                            <span className="capitalize truncate">{difficulty?.name || preset.difficultyId}</span>
+                                            {relicCount > 0 && <span className="text-fuchsia-400 shrink-0">·💎{relicCount}</span>}
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="flex gap-1">
+                            <div className="flex gap-0.5 md:gap-1">
                                 {!isEmpty && (
                                     <button
                                         onClick={() => handleApply(i)}
-                                        className={`flex-1 py-1 rounded font-black text-[9px] md:text-[10px] tracking-widest uppercase transition-all hover:scale-[1.03] active:scale-95 ${theme.bg} border ${theme.border} ${theme.accent} hover:brightness-125`}
+                                        className={`flex-1 py-0.5 md:py-1 rounded font-black text-[9px] md:text-[10px] tracking-widest uppercase transition-all hover:scale-[1.03] active:scale-95 ${theme.bg} border ${theme.border} ${theme.accent} hover:brightness-125`}
                                     >
                                         Apply
                                     </button>
@@ -175,7 +175,7 @@ export default function LoadoutPresets({
                                 <button
                                     onClick={() => handleSave(i)}
                                     title={isEmpty ? 'Save current loadout' : 'Overwrite with current loadout'}
-                                    className={`flex-1 py-1 rounded font-black text-[9px] md:text-[10px] tracking-widest uppercase transition-all hover:scale-[1.03] active:scale-95 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white`}
+                                    className={`flex-1 py-0.5 md:py-1 rounded font-black text-[9px] md:text-[10px] tracking-widest uppercase transition-all hover:scale-[1.03] active:scale-95 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white`}
                                 >
                                     {isEmpty ? 'Save' : 'Overwrite'}
                                 </button>
