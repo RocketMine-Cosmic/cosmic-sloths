@@ -650,14 +650,21 @@ export default function Hub({ isCarousel }) {
 
                                             <button
                                                 onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}
-                                                className="flex items-center justify-between gap-2 bg-slate-900/50 hover:bg-slate-800/70 border border-slate-700/50 hover:border-cyan-500/50 rounded-lg px-3 py-2 transition-all group"
+                                                className="flex items-center justify-between gap-3 bg-gradient-to-r from-cyan-950/60 via-fuchsia-950/40 to-amber-950/60 hover:from-cyan-900/70 hover:via-fuchsia-900/50 hover:to-amber-900/70 border-2 border-cyan-500/40 hover:border-cyan-400 rounded-xl px-4 py-3 transition-all group shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:scale-[1.01] active:scale-[0.99]"
                                                 title="Save & swap full configurations"
                                             >
-                                                <span className="flex items-center gap-2 text-[11px] md:text-xs font-bold tracking-widest uppercase text-slate-300 group-hover:text-cyan-300">
-                                                    💾 Loadout Presets
-                                                    <span className="text-[9px] md:text-[10px] text-slate-500 font-normal normal-case tracking-normal hidden sm:inline">— save & swap full configurations</span>
+                                                <span className="flex items-center gap-3">
+                                                    <span className="text-2xl md:text-3xl">💾</span>
+                                                    <span className="flex flex-col items-start">
+                                                        <span className="text-sm md:text-base font-black tracking-widest uppercase text-white group-hover:text-cyan-200 transition-colors">
+                                                            Loadout Presets
+                                                        </span>
+                                                        <span className="text-[10px] md:text-xs text-slate-400 group-hover:text-slate-300 font-normal normal-case tracking-normal">
+                                                            Save & swap full configurations in one tap
+                                                        </span>
+                                                    </span>
                                                 </span>
-                                                <span className="text-cyan-400 text-xs">→</span>
+                                                <span className="text-cyan-300 text-lg md:text-xl font-black group-hover:translate-x-1 transition-transform">→</span>
                                             </button>
 
                                             <div className="flex flex-col sm:flex-row gap-1 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">
