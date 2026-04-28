@@ -670,13 +670,38 @@ export default function Hub({ isCarousel }) {
                                                 <span className="text-cyan-300 text-base md:text-xl font-black group-hover:translate-x-1 transition-transform">→</span>
                                             </button>
 
-                                            <div className="flex flex-row gap-1 bg-slate-900/50 p-1 md:p-2 rounded-lg border border-slate-700/50">
-                                                <div className="text-[10px] md:text-[11px] text-slate-400 font-bold sm:w-20 shrink-0 flex items-center">BUFFS</div>
-                                                <button onClick={buyBuff} disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10} className={`flex-1 flex justify-between items-center px-2 py-0.5 md:py-1 rounded text-[10px] md:text-[11px] font-bold border transition-all ${hasXpBuff ? 'bg-cyan-900/40 border-cyan-500/50 text-cyan-400' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed'}`}>
-                                                    <span className="flex items-center gap-1">✨ +50% XP {hasXpBuff ? `(${timeLeft})` : buffPurchasing ? '(...)' : ''}</span>
-                                                    {!hasXpBuff && !buffPurchasing && <span className="text-purple-400 font-bold">10 OMENX</span>}
-                                                </button>
-                                            </div>
+                                            <button
+                                                onClick={buyBuff}
+                                                disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10}
+                                                className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 border-2 transition-all group shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] hover:scale-[1.01] active:scale-[0.99] ${
+                                                    hasXpBuff
+                                                        ? 'bg-emerald-950/60 border-emerald-500/60 cursor-default'
+                                                        : (omenxBalance ?? 0) < 10 || buffPurchasing
+                                                            ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
+                                                            : 'bg-gradient-to-r from-emerald-950/60 via-cyan-950/40 to-purple-950/60 hover:from-emerald-900/70 hover:via-cyan-900/50 hover:to-purple-900/70 border-emerald-500/40 hover:border-emerald-400'
+                                                }`}
+                                            >
+                                                <span className="flex items-center gap-2 md:gap-3">
+                                                    <span className="text-base md:text-2xl">✨</span>
+                                                    <span className="flex flex-col items-start">
+                                                        <span className="text-[11px] md:text-base font-black tracking-widest uppercase text-white">
+                                                            {hasXpBuff ? `+50% XP Active (${timeLeft})` : '+50% XP Buff · 60 min'}
+                                                        </span>
+                                                        <span className="text-[10px] md:text-xs text-slate-400 font-normal normal-case tracking-normal hidden md:inline">
+                                                            Boost XP gain for your next session
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                                {!hasXpBuff && !buffPurchasing && (
+                                                    <span className="flex items-center gap-1.5 bg-purple-950/60 border border-purple-500/50 px-2.5 md:px-3 py-1 md:py-1.5 rounded-md md:rounded-lg shrink-0">
+                                                        <span className="text-purple-300 font-black text-xs md:text-sm">10</span>
+                                                        <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMENX</span>
+                                                    </span>
+                                                )}
+                                                {buffPurchasing && (
+                                                    <span className="text-slate-400 text-xs md:text-sm font-bold">Processing…</span>
+                                                )}
+                                            </button>
 
                                             <div className="flex flex-row gap-1.5 md:gap-3 sticky bottom-2 md:static z-30 bg-[#0b0416]/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-2 md:p-0 -mx-2 md:mx-0 rounded-xl md:rounded-none border border-cyan-500/30 md:border-0 shadow-[0_-4px_20px_rgba(0,0,0,0.6)] md:shadow-none">
                                             <button
