@@ -26,7 +26,9 @@ Deno.serve(async (req) => {
 
         const week_id = getCurrentWeekId();
 
-        // Find this player's contribution record for the current week
+        // Find ALL of this player's contribution rows for the week.
+        // submitBossDamage creates a new row per run, so a player can have many.
+        // We must check claimed_milestones across ALL of them to prevent re-claiming.
         const contribs = await base44.asServiceRole.entities.GlobalBossContribution.filter({
             week_id,
             user_id: walletAddress,
@@ -34,16 +36,20 @@ Deno.serve(async (req) => {
         if (!contribs || contribs.length === 0) {
             return Response.json({ error: 'No contribution found for this week' }, { status: 404 });
         }
-        const contrib = contribs[0];
-        const claimed = Array.isArray(contrib.claimed_milestones) ? contrib.claimed_milestones : [];
 
-        // Already claimed → reject so the client doesn't re-grant the reward
-        if (claimed.includes(levelNum)) {
+        // Already claimed on ANY row → reject
+        const alreadyClaimed = contribs.some(c =>
+            Array.isArray(c.claimed_milestones) && c.claimed_milestones.includes(levelNum)
+        );
+        if (alreadyClaimed) {
             return Response.json({ status: 'error', error: 'Reward already claimed for this level' }, { status: 409 });
         }
 
-        await base44.asServiceRole.entities.GlobalBossContribution.update(contrib.id, {
-            claimed_milestones: [...claimed, levelNum],
+        // Mark claimed on the first row (sufficient for the check above to catch future attempts)
+        const target = contribs[0];
+        const targetClaimed = Array.isArray(target.claimed_milestones) ? target.claimed_milestones : [];
+        await base44.asServiceRole.entities.GlobalBossContribution.update(target.id, {
+            claimed_milestones: [...targetClaimed, levelNum],
         });
 
         const goldReward = levelNum * 250;
