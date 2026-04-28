@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { RELICS, RELIC_RARITIES, getCharacterMastery, CHARACTERS } from '../../game/Constants';
+import { RELICS, getCharacterMastery } from '../../game/Constants';
 
 // Stat metadata: label, icon, formatter, color theme
 const STAT_DEFS = {
@@ -18,9 +18,10 @@ const STAT_DEFS = {
 const STAT_ORDER = ['damageMult', 'speedMult', 'areaMult', 'cooldownMult', 'goldMult', 'xpMult', 'luck', 'regen', 'armor'];
 
 export default function BuildSummary({ save, selectedChar, currentTime }) {
-    const summary = useMemo(() => {
+    const { totals, sourceCount, xpBuffTimeLeft } = useMemo(() => {
         const totals = {};
-        const sources = []; // { label, icon, color, stats: { statKey: value } }
+        let sourceCount = 0;
+        let xpBuffTimeLeft = null;
 
         // 1. Equipped relics
         const equipped = save.equippedRelics || [];
@@ -31,51 +32,58 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
             const level = relicLevels[relicId] || 1;
             const value = relic.values[level - 1] || 0;
             totals[relic.stat] = (totals[relic.stat] || 0) + value;
-            const rarity = RELIC_RARITIES[level - 1];
-            sources.push({
-                label: relic.name,
-                icon: relic.icon,
-                color: rarity.color,
-                stats: { [relic.stat]: value },
-            });
+            sourceCount++;
         });
 
-        // 2. Character mastery bonus
+        // 2. Permanent stat upgrades (each level translates to a flat bonus)
+        const sumLevels = (key) =>
+            (save.permanentUpgrades?.[key] || 0) +
+            (save.weeklyUpgrades?.[key] || 0) +
+            (save.seasonalUpgrades?.[key] || 0);
+
+        const dmgLvl = sumLevels('damage');
+        const spdLvl = sumLevels('speed');
+        const cdLvl = sumLevels('cooldown');
+        const luckLvl = sumLevels('luck');
+        const regenLvl = sumLevels('regen');
+        const armorLvl = sumLevels('armor');
+        const magnetLvl = sumLevels('magnet');
+
+        // Permanent upgrades use roughly 2%/lvl (perm) + 5%/lvl (week) + 10%/lvl (season).
+        // For a simple summary we approximate as the linear sum with the "permanent" rate as base.
+        if (dmgLvl) { totals.damageMult = (totals.damageMult || 0) + dmgLvl * 0.02; sourceCount++; }
+        if (spdLvl) { totals.speedMult  = (totals.speedMult  || 0) + spdLvl * 0.02; sourceCount++; }
+        if (cdLvl)  { totals.cooldownMult = (totals.cooldownMult || 0) + cdLvl * -0.02; sourceCount++; }
+        if (luckLvl) { totals.luck = (totals.luck || 0) + luckLvl; sourceCount++; }
+        if (regenLvl) { totals.regen = (totals.regen || 0) + regenLvl * 0.1; sourceCount++; }
+        if (armorLvl) { totals.armor = (totals.armor || 0) + armorLvl; sourceCount++; }
+        if (magnetLvl) { totals.magnet = (totals.magnet || 0) + magnetLvl * 5; sourceCount++; }
+
+        // 3. Character mastery bonus
         const charKills = save.characterKills?.[selectedChar] || 0;
         const mastery = getCharacterMastery(charKills);
         if (mastery.current.stat && mastery.current.value) {
             totals[mastery.current.stat] = (totals[mastery.current.stat] || 0) + mastery.current.value;
-            const charData = CHARACTERS.find((c) => c.id === selectedChar);
-            sources.push({
-                label: `${charData?.name || selectedChar} ${mastery.current.title}`,
-                icon: mastery.current.badge,
-                color: 'text-amber-300',
-                stats: { [mastery.current.stat]: mastery.current.value },
-            });
+            sourceCount++;
         }
 
-        // 3. Active session buffs (XP buff: +50%)
+        // 4. Active session buffs (XP buff: +50%)
         const xpExpiry = save.sessionBuffs?.xpExpiry || 0;
-        const hasXpBuff = xpExpiry > currentTime;
-        if (hasXpBuff) {
+        if (xpExpiry > currentTime) {
             totals.xpMult = (totals.xpMult || 0) + 0.5;
+            sourceCount++;
             const msLeft = xpExpiry - currentTime;
             const mins = Math.floor(msLeft / 60000);
             const secs = Math.floor((msLeft % 60000) / 1000);
-            sources.push({
-                label: `XP Buff (${mins}:${secs.toString().padStart(2, '0')})`,
-                icon: '✨',
-                color: 'text-emerald-300',
-                stats: { xpMult: 0.5 },
-            });
+            xpBuffTimeLeft = `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        return { totals, sources };
-    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, selectedChar, currentTime]);
+        return { totals, sourceCount, xpBuffTimeLeft };
+    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, save.permanentUpgrades, save.weeklyUpgrades, save.seasonalUpgrades, selectedChar, currentTime]);
 
-    const activeStats = STAT_ORDER.filter((k) => summary.totals[k]);
+    const activeStats = STAT_ORDER.filter((k) => totals[k]);
 
-    if (activeStats.length === 0 && summary.sources.length === 0) {
+    if (activeStats.length === 0) {
         return (
             <div className="bg-slate-900/40 border border-slate-700/50 rounded-lg px-3 py-2 text-center">
                 <span className="text-[10px] md:text-xs text-slate-500 font-bold tracking-widest uppercase">
@@ -89,58 +97,33 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
         <div className="bg-gradient-to-br from-[#0b0416]/80 to-slate-950/80 backdrop-blur-xl border border-purple-500/30 rounded-lg p-2.5 md:p-3 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] md:text-xs font-black tracking-widest uppercase text-purple-300 flex items-center gap-1.5">
-                    📊 Build Summary
+                    📊 Total Build Bonuses
                 </span>
                 <span className="text-[9px] md:text-[10px] text-slate-500 font-bold tracking-wider uppercase">
-                    {summary.sources.length} {summary.sources.length === 1 ? 'source' : 'sources'} active
+                    {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
+                    {xpBuffTimeLeft && <span className="text-emerald-400 ml-1.5">· XP {xpBuffTimeLeft}</span>}
                 </span>
             </div>
 
-            {/* Stat totals row */}
-            {activeStats.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    {activeStats.map((statKey) => {
-                        const def = STAT_DEFS[statKey];
-                        if (!def) return null;
-                        return (
-                            <div
-                                key={statKey}
-                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${def.border} ${def.bg}`}
-                            >
-                                <span className="text-xs">{def.icon}</span>
-                                <span className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                                    {def.label}
-                                </span>
-                                <span className={`text-xs md:text-sm font-black font-mono ${def.color}`}>
-                                    {def.fmt(summary.totals[statKey])}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Source list */}
-            <div className="border-t border-slate-800/60 pt-1.5 space-y-0.5">
-                {summary.sources.map((src, i) => (
-                    <div key={i} className="flex items-center justify-between gap-2 text-[10px] md:text-[11px]">
-                        <span className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs shrink-0">{src.icon}</span>
-                            <span className={`font-bold truncate ${src.color}`}>{src.label}</span>
-                        </span>
-                        <span className="flex gap-1.5 shrink-0">
-                            {Object.entries(src.stats).map(([k, v]) => {
-                                const def = STAT_DEFS[k];
-                                if (!def) return null;
-                                return (
-                                    <span key={k} className={`font-mono font-bold ${def.color}`}>
-                                        {def.fmt(v)} {def.label}
-                                    </span>
-                                );
-                            })}
-                        </span>
-                    </div>
-                ))}
+            <div className="flex flex-wrap gap-1.5">
+                {activeStats.map((statKey) => {
+                    const def = STAT_DEFS[statKey];
+                    if (!def) return null;
+                    return (
+                        <div
+                            key={statKey}
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${def.border} ${def.bg}`}
+                        >
+                            <span className="text-xs">{def.icon}</span>
+                            <span className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                                {def.label}
+                            </span>
+                            <span className={`text-xs md:text-sm font-black font-mono ${def.color}`}>
+                                {def.fmt(totals[statKey])}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
