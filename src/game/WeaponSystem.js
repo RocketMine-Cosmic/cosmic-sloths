@@ -111,7 +111,7 @@ export function fireWeaponLogic(engine, w) {
 
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 100 * area) {
-                engine.damageEnemy(e, dmg);
+                engine.damageEnemy(e, dmg, { weaponId: w.id });
                 engine.addParticle(e.x, e.y, color1, 10, 'spark', 1.5);
                 engine.addParticle(e.x, e.y, color2, 5, 'spark', 1);
                 if (engine.player.charAugments?.includes('pan_stomp')) e.slowTimer = 2.0;
@@ -130,7 +130,7 @@ export function fireWeaponLogic(engine, w) {
             const py = engine.player.y + Math.sin(angle) * (60 * area);
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 20) {
-                    engine.damageEnemy(e, dmg * 0.2);
+                    engine.damageEnemy(e, dmg * 0.2, { weaponId: w.id });
                     engine.addParticle(e.x, e.y, isMastered ? '#FF0000' : '#8B4513', 2);
                 }
             });
@@ -300,7 +300,7 @@ export function fireWeaponLogic(engine, w) {
             
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 30) {
-                    engine.damageEnemy(e, dmg * 0.3);
+                    engine.damageEnemy(e, dmg * 0.3, { weaponId: w.id });
                     engine.addParticle(e.x, e.y, '#228B22', 5);
                 }
             });
@@ -308,7 +308,7 @@ export function fireWeaponLogic(engine, w) {
             if (Math.random() < 0.3) {
                 engine.enemies.forEach(e => {
                     if (Math.hypot(e.x - px, e.y - py) < 120 * area) {
-                        engine.damageEnemy(e, dmg);
+                        engine.damageEnemy(e, dmg, { weaponId: w.id });
                         engine.addParticle(e.x, e.y, '#32CD32', 10);
                     }
                 });
@@ -324,7 +324,7 @@ export function fireWeaponLogic(engine, w) {
             
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 25) {
-                    engine.damageEnemy(e, dmg * 0.5);
+                    engine.damageEnemy(e, dmg * 0.5, { weaponId: w.id });
                     engine.addParticle(e.x, e.y, '#00ffff', 3);
                 }
             });
@@ -365,7 +365,7 @@ export function fireWeaponLogic(engine, w) {
         
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
-                engine.damageEnemy(e, dmg);
+                engine.damageEnemy(e, dmg, { weaponId: w.id });
                 if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 4, 'spark', 1.5);
                 hitAny = true;
                 hitX = e.x;
@@ -397,7 +397,7 @@ export function fireWeaponLogic(engine, w) {
         });
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
-                engine.damageEnemy(e, dmg);
+                engine.damageEnemy(e, dmg, { weaponId: w.id });
                 if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff4500', 4, 'spark', 1.5);
                 
                 engine.projectiles.push({
@@ -459,7 +459,7 @@ export function fireWeaponLogic(engine, w) {
         let totalHeal = 0;
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 180 * area) {
-                engine.damageEnemy(e, dmg);
+                engine.damageEnemy(e, dmg, { weaponId: w.id });
                 if (Math.random() < 0.2) engine.addParticle(e.x, e.y, '#ff0000', 4, 'spark', 1.5);
                 totalHeal += dmg * 0.01;
             }
@@ -479,7 +479,7 @@ export function fireWeaponLogic(engine, w) {
             
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 30) {
-                    engine.damageEnemy(e, dmg * 0.5);
+                    engine.damageEnemy(e, dmg * 0.5, { weaponId: w.id });
                     engine.addParticle(e.x, e.y, '#ff00ff', 3);
                 }
             });
@@ -627,7 +627,7 @@ export function fireWeaponLogic(engine, w) {
         });
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
-                engine.damageEnemy(e, dmg);
+                engine.damageEnemy(e, dmg, { weaponId: w.id });
                 e.slowTimer = 2.0;
                 if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#00ff88', 4, 'spark', 1.5);
                 
@@ -646,9 +646,10 @@ export function fireWeaponLogic(engine, w) {
         });
     }
 
-    // Apply Augments to newly created projectiles
+    // Apply Augments to newly created projectiles + tag with weaponId for stat tracking.
     for (let i = startIndex; i < engine.projectiles.length; i++) {
         let p = engine.projectiles[i];
+        if (!p.weaponId) p.weaponId = w.id;
         if (engine.player.charAugments?.includes('neo_range')) p.life *= 1.2;
         if (engine.player.charAugments?.includes('neo_pierce') && p.pierce !== undefined) p.pierce += 1;
         if (isBeatPush && !p.isAoe) p.pushback = (p.pushback || 0) + 150;

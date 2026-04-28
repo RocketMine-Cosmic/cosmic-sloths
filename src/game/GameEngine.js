@@ -281,6 +281,9 @@ export class GameEngine {
         this.totalDamageDealt = 0;
         this.bossesKilled = 0;
         this.elitesKilled = 0;
+        // Per-weapon stat tracking — credit damage on every hit, credit kill on the killing blow.
+        this.weaponDamage = {};
+        this.weaponKills = {};
         
         this.characterMechanics = {
             bannerTimer: 0,
@@ -799,6 +802,13 @@ export class GameEngine {
         enemy.hp -= finalDamage;
         this.totalDamageDealt += finalDamage;
 
+        // Credit damage to source weapon (if any) and remember last hitter for kill credit.
+        const sourceId = projectile?.weaponId || null;
+        if (sourceId) {
+            this.weaponDamage[sourceId] = (this.weaponDamage[sourceId] || 0) + finalDamage;
+            enemy._lastWeaponId = sourceId;
+        }
+
         // Don't let local damage "kill" the world boss — the server handles
         // boss level-ups when this run's total damage is submitted. Clamp at 1 HP
         // so the visual bar can drain to nearly empty without ending the run early.
@@ -892,6 +902,8 @@ export class GameEngine {
             worldBossDamage: this.worldBossDamage || 0,
             totalDamageDealt: Math.floor(this.totalDamageDealt || 0),
             bossesKilled: this.bossesKilled || 0, elitesKilled: this.elitesKilled || 0,
+            weaponDamage: this.weaponDamage || {},
+            weaponKills: this.weaponKills || {},
             ...extra
         };
     }

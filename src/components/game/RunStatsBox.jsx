@@ -1,4 +1,7 @@
 import React from 'react';
+import { WEAPONS } from '../../game/Constants';
+
+const formatWeaponName = (id) => WEAPONS[id]?.name || id.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).trim();
 
 // Shared scrollable stats box used by both GameOverModal and VictoryModal.
 // Shows headline stats + an extended stats section (scrollable).
@@ -20,6 +23,18 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700' })
     const allEnemies = Object.entries(stats.enemyKills || {}).sort((a, b) => b[1] - a[1]);
     const topEnemies = allEnemies.slice(0, 3);
     const formatEnemyName = (id) => id.replace(/^boss_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    // Per-weapon stats — combine damage + kills for the equipped weapons (sorted by damage).
+    const weaponDamage = stats.weaponDamage || {};
+    const weaponKills = stats.weaponKills || {};
+    const weaponIds = new Set([...Object.keys(weaponDamage), ...Object.keys(weaponKills)]);
+    const weaponBreakdown = Array.from(weaponIds).map(id => ({
+        id,
+        damage: Math.floor(weaponDamage[id] || 0),
+        kills: weaponKills[id] || 0,
+        share: totalDamage > 0 ? ((weaponDamage[id] || 0) / totalDamage) * 100 : 0,
+    })).sort((a, b) => b.damage - a.damage);
+    const mvpWeapon = weaponBreakdown[0];
 
     return (
         <div className={`mb-6 md:mb-8 text-left bg-slate-800 p-4 md:p-6 rounded-lg border ${accentClass}`}>
@@ -95,6 +110,36 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700' })
                         <span className="text-slate-400">Unique Enemy Types</span>
                         <span className="text-cyan-300 font-mono">{uniqueEnemyTypes}</span>
                     </div>
+
+                    {weaponBreakdown.length > 0 && (
+                        <div className="pt-2 mt-2 border-t border-slate-700/50">
+                            <div className="flex items-center justify-between mb-1.5">
+                                <div className="text-[10px] text-slate-500 uppercase tracking-wider">Weapon Performance</div>
+                                {mvpWeapon && mvpWeapon.damage > 0 && (
+                                    <div className="text-[9px] text-amber-400 font-bold uppercase tracking-wider">
+                                        MVP: {formatWeaponName(mvpWeapon.id)}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="space-y-1.5">
+                                {weaponBreakdown.map(w => (
+                                    <div key={w.id} className="bg-slate-800/40 rounded px-2 py-1.5 border border-slate-700/40">
+                                        <div className="flex justify-between items-center text-xs mb-0.5">
+                                            <span className="text-cyan-300 font-bold truncate">{formatWeaponName(w.id)}</span>
+                                            <span className="text-slate-400 font-mono ml-2 text-[10px]">{w.share.toFixed(0)}%</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                                            <span>DMG: <span className="text-orange-300">{w.damage.toLocaleString()}</span></span>
+                                            <span>KILLS: <span className="text-rose-300">{w.kills}</span></span>
+                                        </div>
+                                        <div className="w-full bg-slate-900 h-1 rounded mt-1 overflow-hidden">
+                                            <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400" style={{ width: `${Math.min(100, w.share)}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {topEnemies.length > 0 && (
                         <div className="pt-2 mt-2 border-t border-slate-700/50">

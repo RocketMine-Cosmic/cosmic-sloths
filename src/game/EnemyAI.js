@@ -13,6 +13,10 @@ export function updateEnemies(engine, dt) {
             if (e.isBoss) engine.bossesKilled++;
             else if (e.isElite) engine.elitesKilled++;
             engine.enemyKills[e.id] = (engine.enemyKills[e.id] || 0) + 1;
+            // Credit the kill to whichever weapon dealt the killing blow.
+            if (e._lastWeaponId) {
+                engine.weaponKills[e._lastWeaponId] = (engine.weaponKills[e._lastWeaponId] || 0) + 1;
+            }
             if (engine.save) {
                 engine.save.enemyKills = engine.enemyKills;
                 SaveManager.save(engine.save);
