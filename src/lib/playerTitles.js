@@ -63,6 +63,12 @@ export const PLAYER_TITLES = [
     { id: 'Dabbler', label: 'Dabbler', tier: 'starter', buff: null,
       describe: () => 'Reach level 5 in a single run.',
       isUnlocked: (s) => s.maxLevelReached >= 5 },
+    { id: 'Cadet', label: 'Cadet', tier: 'starter', buff: null,
+      describe: () => 'Survive 2 minutes in a single run.',
+      isUnlocked: (s) => s.maxTimeSurvived >= 120 },
+    { id: 'Apprentice', label: 'Apprentice', tier: 'starter', buff: null,
+      describe: () => 'Unlock your first talent.',
+      isUnlocked: (s) => s.totalUnlockedTalents >= 1 },
 
     // ============ COMMON ============
     { id: 'Survivor', label: 'Survivor', tier: 'common', buff: { hpMult: 0.01 },
@@ -83,6 +89,15 @@ export const PLAYER_TITLES = [
     { id: 'Leviathan Slayer', label: 'Leviathan Slayer', tier: 'common', buff: { damageMult: 0.02 },
       describe: () => 'Defeat your first Leviathan boss.',
       isUnlocked: (s) => s.leviathanKills >= 1 },
+    { id: 'Trendsetter', label: 'Trendsetter', tier: 'common', buff: null,
+      describe: () => 'Unlock 3 cosmetic items.',
+      isUnlocked: (s) => s.totalUnlockedCosmetics >= 3 },
+    { id: 'Magnetised', label: 'Magnetised', tier: 'common', buff: { magnetRange: 10 },
+      describe: () => 'Earn 100,000 gold (lifetime).',
+      isUnlocked: (s) => s.totalGoldEarned >= 100000 },
+    { id: 'Quick Study', label: 'Quick Study', tier: 'common', buff: { cooldownMult: -0.01 },
+      describe: () => 'Unlock 5 character talents.',
+      isUnlocked: (s) => s.totalUnlockedTalents >= 5 },
 
     // ============ UNCOMMON ============
     { id: 'Veteran', label: 'Veteran', tier: 'uncommon', buff: { hpMult: 0.02 },
@@ -103,6 +118,18 @@ export const PLAYER_TITLES = [
     { id: 'Lucky Sloth', label: 'Lucky Sloth', tier: 'uncommon', buff: { luck: 1 },
       describe: () => 'Defeat 5 Leviathan bosses.',
       isUnlocked: (s) => s.leviathanKills >= 5 },
+    { id: 'Ironclad', label: 'Ironclad', tier: 'uncommon', buff: { armor: 1 },
+      describe: () => 'Reach 50,000 score in a single run.',
+      isUnlocked: (s) => s.bestScore >= 50000 },
+    { id: 'Swift Foot', label: 'Swift Foot', tier: 'uncommon', buff: { speedMult: 0.02 },
+      describe: () => 'Survive 6 minutes in a single run.',
+      isUnlocked: (s) => s.maxTimeSurvived >= 360 },
+    { id: 'Tactician', label: 'Tactician', tier: 'uncommon', buff: { areaMult: 0.02 },
+      describe: () => 'Unlock 10 character talents.',
+      isUnlocked: (s) => s.totalUnlockedTalents >= 10 },
+    { id: 'Raid Recruit', label: 'Raid Recruit', tier: 'uncommon', buff: { damageMult: 0.02 },
+      describe: () => 'Deal 50,000 damage to a Global Raid boss.',
+      isUnlocked: (s) => s.globalRaidDamage >= 50000 },
 
     // ============ RARE ============
     { id: 'Time Lord', label: 'Time Lord', tier: 'rare', buff: { hpMult: 0.04, regen: 0.2 },
@@ -132,6 +159,15 @@ export const PLAYER_TITLES = [
     { id: 'Skillful', label: 'Skillful', tier: 'rare', buff: { cooldownMult: -0.02 },
       describe: () => 'Unlock 25 character talents.',
       isUnlocked: (s) => s.totalUnlockedTalents >= 25 },
+    { id: 'Boss Hunter', label: 'Boss Hunter', tier: 'rare', buff: { damageMult: 0.04 },
+      describe: () => 'Defeat 15 Leviathan bosses.',
+      isUnlocked: (s) => s.leviathanKills >= 15 },
+    { id: 'Aegis Bearer', label: 'Aegis Bearer', tier: 'rare', buff: { armor: 2, hpMult: 0.02 },
+      describe: () => 'Survive 12 minutes in a single Endless run.',
+      isUnlocked: (s) => s.maxTimeSurvived >= 720 },
+    { id: 'Quartermaster', label: 'Quartermaster', tier: 'rare', buff: null,
+      describe: () => 'Unlock 7 different characters.',
+      isUnlocked: (s) => s.unlockedCharactersCount >= 7 },
 
     // ============ EPIC ============
     { id: 'Eternal', label: 'Eternal', tier: 'epic', buff: { hpMult: 0.05, regen: 0.3 },
@@ -152,6 +188,15 @@ export const PLAYER_TITLES = [
     { id: 'Raid Captain', label: 'Raid Captain', tier: 'epic', buff: { damageMult: 0.04 },
       describe: () => 'Deal 1,000,000 damage to a Global Raid boss.',
       isUnlocked: (s) => s.globalRaidDamage >= 1000000 },
+    { id: 'Score Tyrant', label: 'Score Tyrant', tier: 'epic', buff: { damageMult: 0.04, xpMult: 0.03 },
+      describe: () => 'Reach 300,000 score in a single run.',
+      isUnlocked: (s) => s.bestScore >= 300000 },
+    { id: 'Stylist', label: 'Stylist', tier: 'epic', buff: { luck: 2, goldMult: 0.03 },
+      describe: () => 'Unlock 20 cosmetic items.',
+      isUnlocked: (s) => s.totalUnlockedCosmetics >= 20 },
+    { id: 'Talent Sage', label: 'Talent Sage', tier: 'epic', buff: { cooldownMult: -0.03, xpMult: 0.03 },
+      describe: () => 'Unlock 35 character talents.',
+      isUnlocked: (s) => s.totalUnlockedTalents >= 35 },
 
     // ============ LEGENDARY ============
     { id: 'Immortal Sloth', label: 'Immortal Sloth', tier: 'legendary', buff: { hpMult: 0.07, regen: 0.5 },
@@ -169,6 +214,12 @@ export const PLAYER_TITLES = [
     { id: 'Maximum Overdrive', label: 'Maximum Overdrive', tier: 'legendary', buff: { damageMult: 0.05, xpMult: 0.05, hpMult: 0.05 },
       describe: () => 'Reach level 55 in a single run.',
       isUnlocked: (s) => s.maxLevelReached >= 55 },
+    { id: 'Leviathan Warden', label: 'Leviathan Warden', tier: 'legendary', buff: { damageMult: 0.06, armor: 2 },
+      describe: () => 'Defeat 75 Leviathan bosses.',
+      isUnlocked: (s) => s.leviathanKills >= 75 },
+    { id: 'Raid Vanquisher', label: 'Raid Vanquisher', tier: 'legendary', buff: { damageMult: 0.06, hpMult: 0.04 },
+      describe: () => 'Deal 2,500,000 damage to a Global Raid boss.',
+      isUnlocked: (s) => s.globalRaidDamage >= 2500000 },
 
     // ============ MYTHIC ============
     { id: 'Completionist', label: 'Completionist', tier: 'mythic', buff: { luck: 3, damageMult: 0.03 },
@@ -183,6 +234,15 @@ export const PLAYER_TITLES = [
     { id: 'World Eater Bane', label: 'World Eater Bane', tier: 'mythic', buff: { damageMult: 0.08, hpMult: 0.05 },
       describe: () => 'Deal 5,000,000 damage to a Global Raid boss.',
       isUnlocked: (s) => s.globalRaidDamage >= 5000000 },
+    { id: 'Eternal Sovereign', label: 'Eternal Sovereign', tier: 'mythic', buff: { hpMult: 0.08, regen: 0.6, armor: 2 },
+      describe: () => 'Survive 30 minutes in a single Endless run.',
+      isUnlocked: (s) => s.maxTimeSurvived >= 1800 },
+    { id: 'Wealth Incarnate', label: 'Wealth Incarnate', tier: 'mythic', buff: { goldMult: 0.15, luck: 2 },
+      describe: () => 'Earn 25,000,000 gold (lifetime).',
+      isUnlocked: (s) => s.totalGoldEarned >= 25000000 },
+    { id: 'Ascended', label: 'Ascended', tier: 'mythic', buff: { damageMult: 0.06, xpMult: 0.06, hpMult: 0.06 },
+      describe: () => 'Reach level 70 in a single run.',
+      isUnlocked: (s) => s.maxLevelReached >= 70 },
 ];
 
 // Look up a title's tier-styling by id. Returns starter styling for unknown ids.
