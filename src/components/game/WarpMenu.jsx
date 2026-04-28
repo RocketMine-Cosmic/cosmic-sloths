@@ -69,7 +69,7 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end md:items-center justify-center p-3 md:p-6"
+                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6"
                         onClick={() => setOpen(false)}
                     >
                         <motion.div
