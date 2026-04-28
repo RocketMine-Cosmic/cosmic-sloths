@@ -767,15 +767,25 @@ export default function Upgrades({ isCarousel }) {
                         const unlocked = save[saveKey]?.[selectedChar || 'neobyte'] || [];
 
                         // Group talents: pairs of (Path A, Path B) at same tier render side-by-side; standalone talents render full-width.
+                        // Pairs are detected either by the `excludes` property OR by matching `_a`/`_b` id suffixes at the same tier.
                         const groups = [];
                         const consumed = new Set();
                         allTalents.forEach((t, i) => {
                             if (consumed.has(i)) return;
-                            if (t.excludes) {
-                                const partnerIdx = allTalents.findIndex((p, pi) => pi !== i && p.tier === t.tier && p.excludes && !consumed.has(pi));
+                            const isPathA = t.id.endsWith('a');
+                            const isPathB = t.id.endsWith('b');
+                            if (t.excludes || isPathA || isPathB) {
+                                const partnerIdx = allTalents.findIndex((p, pi) => {
+                                    if (pi === i || consumed.has(pi) || p.tier !== t.tier) return false;
+                                    if (t.excludes && p.excludes) return true;
+                                    if (isPathA && p.id.endsWith('b')) return true;
+                                    if (isPathB && p.id.endsWith('a')) return true;
+                                    return false;
+                                });
                                 if (partnerIdx !== -1) {
-                                    const a = t.id.endsWith('a') ? t : allTalents[partnerIdx];
-                                    const b = t.id.endsWith('b') ? t : allTalents[partnerIdx];
+                                    const partner = allTalents[partnerIdx];
+                                    const a = t.id.endsWith('a') ? t : partner;
+                                    const b = t.id.endsWith('b') ? t : partner;
                                     groups.push({ type: 'pair', a, b });
                                     consumed.add(i); consumed.add(partnerIdx);
                                     return;
