@@ -32,6 +32,7 @@ const Jukebox = React.lazy(() => import('./pages/Jukebox'));
 const Titles = React.lazy(() => import('./pages/Titles'));
 import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
+import { SoundManager } from './game/SoundManager';
 import GamepadManager from './components/GamepadManager';
 import Base44AuthLinker from './components/Base44AuthLinker';
 import SyncStatusBanner from './components/SyncStatusBanner';
@@ -150,7 +151,25 @@ function App() {
       }
     };
     window.addEventListener('message', onParentMessage);
-    return () => window.removeEventListener('message', onParentMessage);
+
+    // Browsers block autoplay until the user interacts with the page.
+    // Kick off menu BGM on the first click/tap/keypress, then remove the listeners.
+    const startBgmOnce = () => {
+      SoundManager.playBGM();
+      window.removeEventListener('pointerdown', startBgmOnce);
+      window.removeEventListener('keydown', startBgmOnce);
+      window.removeEventListener('touchstart', startBgmOnce);
+    };
+    window.addEventListener('pointerdown', startBgmOnce);
+    window.addEventListener('keydown', startBgmOnce);
+    window.addEventListener('touchstart', startBgmOnce);
+
+    return () => {
+      window.removeEventListener('message', onParentMessage);
+      window.removeEventListener('pointerdown', startBgmOnce);
+      window.removeEventListener('keydown', startBgmOnce);
+      window.removeEventListener('touchstart', startBgmOnce);
+    };
   }, []);
 
   return (
