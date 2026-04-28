@@ -208,7 +208,10 @@ export class GameEngine {
             trail: save.cosmetics?.trail || 'default',
             weapons: [{ ...WEAPONS[initialWeaponId], level: 1, timer: 0 }],
             passives: [],
-            passiveLevels: {}
+            passiveLevels: {},
+            // Stored for the buff-aura renderer (purely visual; stat math above
+            // already mixed these values into the relevant player fields).
+            titleBuff: titleBuff && Object.keys(titleBuff).length ? titleBuff : null
         };
         
         const sessionBuffs = save.sessionBuffs || {};

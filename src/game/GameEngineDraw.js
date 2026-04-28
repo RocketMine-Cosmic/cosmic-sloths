@@ -3,6 +3,7 @@ import { drawUI } from './UIRenderer';
 import { drawPickups } from './PickupRenderer';
 import { drawProjectiles } from './ProjectileRenderer';
 import { getWeaponStatsAndMastery } from './Constants';
+import { drawBuffAuras } from './BuffAuraRenderer';
 
 export function renderGame() {
     // Reset composite operation to prevent stuck states from previous frames
@@ -513,6 +514,11 @@ export function renderGame() {
     const spriteSheet = this.player.isMoving
         ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
         : (this.player.idleImage && this.player.idleImage.complete ? this.player.idleImage : null);
+
+    // Buff visual indicators — speed glow, area radius, regen pulse, armor ring.
+    // Reads from the title buff applied to the player at run-start so it reflects
+    // whichever title is equipped (and any other source that boosts these stats).
+    drawBuffAuras(this.ctx, this.player, this.time);
 
     if (this.player.iFrames > 0 && Math.floor(this.time * 15) % 2 === 0) {
         this.ctx.globalAlpha = 0.5;
