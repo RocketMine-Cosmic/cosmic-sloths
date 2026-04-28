@@ -39,7 +39,7 @@ export function updatePickups(engine, dt) {
                 engine.addDamageText(engine.player.x, engine.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
                 engine.shake(1.0);
             } else if (p.type === 'magnet_power') {
-                SFXManager.playLevelUp();
+                SFXManager.playMagnetPickup();
                 engine.pickups.forEach(otherP => {
                     if (otherP.type === 'xp' || otherP.type === 'gold') {
                         otherP.x = engine.player.x;

@@ -165,6 +165,15 @@ export class SFXManagerClass {
         });
     }
 
+    // Magnet power-up — fast whoosh sweep that suggests pulling things in.
+    playMagnetPickup() {
+        if (this.throttle('magnet', 200)) return;
+        this.playTone(300, 'sine', 0.15, 0.35);
+        setTimeout(() => this.playTone(600, 'sine', 0.12, 0.4), 40);
+        setTimeout(() => this.playTone(1100, 'sine', 0.1, 0.4), 80);
+        setTimeout(() => this.playTone(1700, 'triangle', 0.15, 0.3), 120);
+    }
+
     playUIClick() {
         this.playTone(600, 'sine', 0.1, 0.5);
     }
