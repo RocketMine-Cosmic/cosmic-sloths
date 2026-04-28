@@ -39,16 +39,25 @@ export const CurrencyProvider = ({ children }) => {
     const handleUserUpdated = (e) => {
       const updates = e.detail || {};
       setOmenxUser(prev => {
-        if (!prev) return prev;
+        // If omenxUser hasn't loaded yet, build a minimal record from the
+        // update payload so the title (or whatever changed) isn't lost.
+        const base = prev || {
+          walletAddress: updates.walletAddress,
+          username: updates.username || '',
+          full_name: updates.player_name || updates.username || 'Player',
+          player_name: updates.player_name || updates.username || 'Player',
+          pilot_icon: updates.pilot_icon || '🦥',
+          data: {},
+        };
         return {
-          ...prev,
-          player_name: updates.player_name ?? prev.player_name,
-          pilot_icon: updates.pilot_icon ?? prev.pilot_icon,
+          ...base,
+          player_name: updates.player_name ?? base.player_name,
+          pilot_icon: updates.pilot_icon ?? base.pilot_icon,
           data: {
-            ...(prev.data || {}),
-            player_name: updates.player_name ?? prev.data?.player_name,
-            player_title: updates.player_title !== undefined ? updates.player_title : prev.data?.player_title,
-            pilot_icon: updates.pilot_icon ?? prev.data?.pilot_icon,
+            ...(base.data || {}),
+            player_name: updates.player_name ?? base.data?.player_name,
+            player_title: updates.player_title !== undefined ? updates.player_title : base.data?.player_title,
+            pilot_icon: updates.pilot_icon ?? base.data?.pilot_icon,
           },
         };
       });
