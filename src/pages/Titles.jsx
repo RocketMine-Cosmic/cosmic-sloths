@@ -19,7 +19,7 @@ const STATUS_TABS = [
     { id: 'locked', label: 'Locked' },
 ];
 
-export default function Titles() {
+export default function Titles({ isCarousel }) {
     const navigate = useNavigate();
     const { user: omenxUser } = useOmenXUser();
     const [stats, setStats] = useState(null);
@@ -124,18 +124,20 @@ export default function Titles() {
     };
 
     return (
-        <OmenXGate>
-            <div className="h-[100dvh] flex flex-col relative text-slate-200 p-3 md:p-6 font-sans overflow-hidden">
-                <SpaceBackground />
+        <OmenXGate isCarousel={isCarousel}>
+            <div className={`${isCarousel ? 'min-h-full' : 'h-[100dvh]'} flex flex-col relative text-slate-200 p-3 md:p-6 font-sans ${isCarousel ? '' : 'overflow-hidden'}`}>
+                {!isCarousel && <SpaceBackground />}
                 <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0 relative z-10">
                     <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 mb-4 md:mb-6 border-b border-slate-800 pb-3 md:pb-4 shrink-0">
                         <div>
-                            <button
-                                onClick={() => { SoundManager.playUIClick(); navigate(-1); }}
-                                className="mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
-                            >
-                                <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Back
-                            </button>
+                            {!isCarousel && (
+                                <button
+                                    onClick={() => { SoundManager.playUIClick(); navigate(-1); }}
+                                    className="mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-white transition-colors font-bold text-xs md:text-sm bg-slate-900 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-slate-700 w-fit"
+                                >
+                                    <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> Back
+                                </button>
+                            )}
                             <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-3"
                                 style={{ background: 'linear-gradient(90deg, #f59e0b, #f43f5e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(245,158,11,0.5))' }}>
                                 <Award className="w-6 h-6 md:w-8 md:h-8 text-amber-400" /> Titles

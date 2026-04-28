@@ -20,6 +20,7 @@ import GlobalRaid from './GlobalRaid';
 import NFTDashboard from './NFTDashboard';
 import Profile from './Profile';
 import Jukebox from './Jukebox';
+import Titles from './Titles';
 
 const SLIDE_LABELS = [
     { name: 'Main Menu', color: 'text-white' },
@@ -36,6 +37,7 @@ const SLIDE_LABELS = [
     { name: 'NFT Collection', color: 'text-purple-300' },
     { name: 'Pilot Profile', color: 'text-violet-300' },
     { name: 'Space Jukebox', color: 'text-fuchsia-300' },
+    { name: 'Titles', color: 'text-amber-300' },
 ];
 
 // Renders a slide ONLY when it's active or adjacent. Off-screen slides stay
@@ -113,6 +115,7 @@ export default function PlayCarousel() {
                     <LazySlide shouldMount={isNear(11)}><NFTDashboard isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(12)}><Profile isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(13)}><Jukebox isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(14)}><Titles isCarousel={true} /></LazySlide>
                 </div>
             </div>
 

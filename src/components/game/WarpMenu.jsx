@@ -19,8 +19,7 @@ const SLIDES = [
     { idx: 11, name: 'NFT Collection', icon: '💎', color: 'from-purple-700 to-purple-950', border: 'border-purple-400/50' },
     { idx: 12, name: 'Pilot Profile', icon: '🪪', color: 'from-violet-700 to-violet-950', border: 'border-violet-400/50' },
     { idx: 13, name: 'Jukebox', icon: '🎵', color: 'from-fuchsia-600 to-purple-950', border: 'border-fuchsia-400/50' },
-    // External routes (not part of the carousel) — navigated to via React Router.
-    { route: '/titles', name: 'Titles', icon: '🏅', color: 'from-amber-700 to-rose-950', border: 'border-amber-400/50' },
+    { idx: 14, name: 'Titles', icon: '🏅', color: 'from-amber-700 to-rose-950', border: 'border-amber-400/50' },
 ];
 
 export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
