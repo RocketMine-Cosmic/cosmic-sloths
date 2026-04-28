@@ -283,7 +283,7 @@ export default function Profile({ isCarousel }) {
                                         <span className="text-[10px] text-slate-500 italic">No Title Equipped</span>
                                     )}
                                     <button
-                                        onClick={() => { SoundManager.playUIClick(); navigate('/', { state: { slide: 14 } }); }}
+                                        onClick={() => { SoundManager.playUIClick(); navigate('/?slide=14'); }}
                                         className="flex items-center gap-1 text-[10px] bg-amber-900/30 hover:bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded border border-amber-700/50 hover:border-amber-500 tracking-wider font-bold transition-colors"
                                     >
                                         <Pencil size={10} /> Manage Titles
@@ -358,7 +358,7 @@ export default function Profile({ isCarousel }) {
                                     </div>
                                     <p className="text-slate-400 text-xs md:text-sm mb-3 md:mb-4">{squad.description}</p>
                                     <button 
-                                        onClick={() => { SoundManager.playUIClick(); navigate('/', { state: { slide: 5 } }); }}
+                                        onClick={() => { SoundManager.playUIClick(); navigate('/?slide=5'); }}
                                         className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors w-full"
                                     >
                                         View Squad
@@ -369,7 +369,7 @@ export default function Profile({ isCarousel }) {
                                     <Users className="w-10 h-10 md:w-12 md:h-12 text-slate-600 mb-2 md:mb-3" />
                                     <div className="text-xs md:text-sm text-slate-400 mb-3 md:mb-4">You are not currently in a squad.</div>
                                     <button 
-                                        onClick={() => { SoundManager.playUIClick(); navigate('/', { state: { slide: 5 } }); }}
+                                        onClick={() => { SoundManager.playUIClick(); navigate('/?slide=5'); }}
                                         className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
                                     >
                                         Find a Squad
