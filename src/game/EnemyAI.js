@@ -85,6 +85,14 @@ export function updateEnemies(engine, dt) {
 
                 engine.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                 engine.isBossActive = false;
+
+                // Clear any in-flight enemy projectiles + the boss's own telegraph
+                // warnings so attacks don't continue after death.
+                if (engine.enemyProjectiles) engine.enemyProjectiles.length = 0;
+                e._bombWarning = null;
+                e._novaWarning = null;
+                e._meteorWarning = null;
+                e.chargeDash = null;
                 if (engine.arena.duration === Infinity) {
                     engine.postBossGraceUntil = engine.time + 5;
                     engine.addDamageText(engine.player.x, engine.player.y - 80, `5s — COLLECT DROPS!`, '#22d3ee');
