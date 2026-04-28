@@ -135,8 +135,8 @@ export default function PlayCarousel() {
             </div>
 
             <div
-                className="shrink-0 flex justify-center items-center py-2 md:py-3 z-20 relative pointer-events-none"
-                style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+                className="shrink-0 flex justify-center items-center py-3 md:py-4 z-20 relative bg-[#0b0416]/90 backdrop-blur-sm border-t border-fuchsia-500/20"
+                style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
             >
                 <WarpMenu currentIndex={selectedIndex} onWarp={(idx) => emblaApi?.scrollTo(idx)} />
             </div>
