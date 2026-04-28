@@ -44,17 +44,18 @@ export default function WarpMenu({ currentIndex, onWarp }) {
 
     return (
         <>
-            {/* Floating trigger button — bottom center */}
+            {/* Floating trigger button — pinned to bottom of viewport, respects iOS safe-area */}
             <button
                 onClick={handleToggle}
-                className="fixed bottom-3 md:bottom-5 left-1/2 -translate-x-1/2 z-40 group pointer-events-auto"
+                className="fixed left-1/2 -translate-x-1/2 z-40 group pointer-events-auto"
+                style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
                 title="Warp Menu"
             >
                 <div className="relative">
                     <div className="absolute inset-0 bg-fuchsia-500/40 blur-xl rounded-full group-hover:bg-fuchsia-400/60 transition-all" />
-                    <div className="relative bg-[#0b0416]/95 backdrop-blur-xl border-2 border-fuchsia-500/70 hover:border-fuchsia-300 px-4 py-2 md:px-5 md:py-2.5 rounded-full flex items-center gap-2 shadow-[0_0_25px_rgba(217,70,239,0.4)] hover:shadow-[0_0_35px_rgba(217,70,239,0.7)] transition-all">
-                        <Compass className={`w-4 h-4 md:w-5 md:h-5 text-fuchsia-300 ${open ? 'rotate-180' : 'group-hover:rotate-90'} transition-transform duration-500`} />
-                        <span className="text-xs md:text-sm font-black tracking-widest uppercase text-white">Warp</span>
+                    <div className="relative bg-[#0b0416]/95 backdrop-blur-xl border-2 border-fuchsia-500/70 hover:border-fuchsia-300 px-3 py-1.5 md:px-5 md:py-2.5 rounded-full flex items-center gap-1.5 md:gap-2 shadow-[0_0_25px_rgba(217,70,239,0.4)] hover:shadow-[0_0_35px_rgba(217,70,239,0.7)] transition-all">
+                        <Compass className={`w-3.5 h-3.5 md:w-5 md:h-5 text-fuchsia-300 ${open ? 'rotate-180' : 'group-hover:rotate-90'} transition-transform duration-500`} />
+                        <span className="text-[10px] md:text-sm font-black tracking-widest uppercase text-white">Warp</span>
                     </div>
                 </div>
             </button>
