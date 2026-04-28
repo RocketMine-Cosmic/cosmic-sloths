@@ -283,7 +283,7 @@ export default function Profile({ isCarousel }) {
                                         <span className="text-[10px] text-slate-500 italic">No Title Equipped</span>
                                     )}
                                     <button
-                                        onClick={() => { SoundManager.playUIClick(); navigate('/titles'); }}
+                                        onClick={() => { SoundManager.playUIClick(); navigate('/', { state: { slide: 14 } }); }}
                                         className="flex items-center gap-1 text-[10px] bg-amber-900/30 hover:bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded border border-amber-700/50 hover:border-amber-500 tracking-wider font-bold transition-colors"
                                     >
                                         <Pencil size={10} /> Manage Titles
