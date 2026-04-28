@@ -810,9 +810,9 @@ export default function Upgrades({ isCarousel }) {
                             const isBranchB = talent.id.endsWith('b');
 
                             return (
-                                <div className={`relative z-10 flex flex-col gap-2 md:gap-3 bg-slate-900 p-2 md:p-4 rounded-lg md:rounded-xl border border-slate-700 ${sideClass} ${isBranchA ? 'border-l-4 border-l-blue-500' : isBranchB ? 'border-l-4 border-l-purple-500' : ''}`}>
-                                    <div className="flex items-center gap-2 md:gap-4">
-                                        <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 ${
+                                <div className={`relative z-10 flex flex-col gap-1.5 md:gap-3 bg-slate-900 p-1.5 md:p-4 rounded-lg md:rounded-xl border border-slate-700 ${sideClass} ${isBranchA ? 'border-l-4 border-l-blue-500' : isBranchB ? 'border-l-4 border-l-purple-500' : ''}`}>
+                                    <div className="flex items-center gap-1.5 md:gap-3">
+                                        <div className={`w-7 h-7 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 border-2 md:border-4 text-xs md:text-base font-bold ${
                                             isUnlocked ? 'bg-pink-900 border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.5)]' :
                                             canUnlock ? 'bg-slate-800 border-yellow-500 text-yellow-500' :
                                             'bg-slate-800 border-slate-700 text-slate-600'
@@ -820,28 +820,28 @@ export default function Upgrades({ isCarousel }) {
                                             {talent.tier}
                                         </div>
                                         <div className="min-w-0">
-                                            <h3 className={`font-bold text-sm md:text-base truncate ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>
-                                                {talent.name} {isBranchA ? <span className="text-blue-400 text-xs">(Path A)</span> : isBranchB ? <span className="text-purple-400 text-xs">(Path B)</span> : ''}
+                                            <h3 className={`font-bold text-xs md:text-base leading-tight ${isUnlocked ? 'text-pink-400' : canUnlock ? 'text-white' : 'text-slate-500'}`}>
+                                                {talent.name} {isBranchA ? <span className="text-blue-400 text-[9px] md:text-xs">(A)</span> : isBranchB ? <span className="text-purple-400 text-[9px] md:text-xs">(B)</span> : ''}
                                             </h3>
-                                            <p className="text-slate-400 text-[10px] md:text-sm leading-tight">{talent.desc}</p>
+                                            <p className="text-slate-400 text-[9px] md:text-sm leading-tight">{talent.desc}</p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-stretch gap-1 w-full">
+                                    <div className="flex flex-col items-stretch gap-0.5 md:gap-1 w-full">
                                         <button
                                             onClick={() => handleBuyTalent(talent, 'gold')}
                                             disabled={isUnlocked || !canUnlock || !canAffordGold || purchasing}
-                                            className={`w-full px-3 py-2 rounded-lg font-bold transition-colors text-xs md:text-sm flex items-center justify-center gap-1.5 ${
+                                            className={`w-full px-2 py-1.5 md:py-2 rounded md:rounded-lg font-bold transition-colors text-[11px] md:text-sm flex items-center justify-center gap-1 ${
                                                 isUnlocked ? 'bg-pink-900/50 text-pink-500 border border-pink-800' :
                                                 canUnlock && canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' :
                                                 'bg-slate-800 text-slate-600 border border-slate-700'
                                             }`}
                                         >
-                                            {isUnlocked ? 'UNLOCKED' : <><Coins className="w-4 h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
+                                            {isUnlocked ? 'UNLOCKED' : <><Coins className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {goldCost.toLocaleString()} Gold</>}
                                         </button>
                                         {!isUnlocked && (
-                                            <div className="flex items-center justify-center gap-2 my-0.5">
+                                            <div className="flex items-center justify-center gap-1.5">
                                                 <div className="flex-1 h-px bg-slate-700/60"></div>
-                                                <span className="text-slate-500 text-[10px] font-bold tracking-widest">OR</span>
+                                                <span className="text-slate-500 text-[9px] md:text-[10px] font-bold tracking-widest">OR</span>
                                                 <div className="flex-1 h-px bg-slate-700/60"></div>
                                             </div>
                                         )}
@@ -849,12 +849,12 @@ export default function Upgrades({ isCarousel }) {
                                             <button
                                                 onClick={() => !purchasing && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
                                                 disabled={!canUnlock || !canAffordToken || purchasing}
-                                                className={`w-full px-3 py-2 rounded-lg font-bold transition-colors text-xs md:text-sm flex items-center justify-center gap-1.5 ${
+                                                className={`w-full px-2 py-1.5 md:py-2 rounded md:rounded-lg font-bold transition-colors text-[11px] md:text-sm flex items-center justify-center gap-1 ${
                                                     canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-600 border border-slate-700'
                                                 }`}
                                             >
-                                                {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                {purchasing ? '…' : <><OmenXIcon className="w-3.5 h-3.5 md:w-5 md:h-5" /> {tokenCost.toLocaleString()} OMENX</>}
                                             </button>
                                         )}
                                     </div>
@@ -862,20 +862,28 @@ export default function Upgrades({ isCarousel }) {
                             );
                         };
 
+                        // Show the "Choose ONE path" warning only above the first pair (since selecting a path locks all subsequent tiers).
+                        const firstPairIndex = groups.findIndex(g => g.type === 'pair');
+
                         return groups.map((g, gi) => {
                             if (g.type === 'single') {
                                 return <React.Fragment key={`s-${gi}`}>{renderTalentCard(g.talent)}</React.Fragment>;
                             }
                             return (
                                 <React.Fragment key={`p-${gi}`}>
-                                    <div className="relative z-10 flex items-center gap-2 ml-0 sm:ml-8 -mb-1 mt-1">
-                                        <div className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-700/50 px-2 py-0.5 rounded">
-                                            ⚠ Tier {g.a.tier} — Choose ONE path (locks the other across all tiers)
+                                    {gi === firstPairIndex && (
+                                        <div className="relative z-10 flex items-center gap-2 ml-0 sm:ml-8 -mb-1 mt-1">
+                                            <div className="text-[9px] md:text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-700/50 px-2 py-0.5 rounded">
+                                                ⚠ Choose ONE path — picking one locks the other across all tiers
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 ml-0 sm:ml-8">
+                                    )}
+                                    <div className="grid grid-cols-2 gap-1.5 md:gap-3 ml-0 sm:ml-8 items-stretch relative">
                                         {renderTalentCard(g.a)}
                                         {renderTalentCard(g.b)}
+                                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                                            <span className="text-slate-400 text-[9px] md:text-xs font-bold tracking-widest bg-slate-950 border border-slate-700 rounded-full px-1.5 py-0.5 md:px-2 md:py-1 shadow-lg">OR</span>
+                                        </div>
                                     </div>
                                 </React.Fragment>
                             );
