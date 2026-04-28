@@ -76,7 +76,7 @@ export default function Upgrades({ isCarousel }) {
     const [activeCategory, setActiveCategory] = useState('permanent');
     const [subCategory, setSubCategory] = useState('stats');
     const [selectedChar, setSelectedChar] = useState((save.unlockedCharacters && save.unlockedCharacters.length > 0) ? save.unlockedCharacters[0] : 'neobyte');
-    const [selectedWeapon, setSelectedWeapon] = useState('napBeam');
+    const [selectedWeapon, setSelectedWeapon] = useState('neoBlaster');
     const [timeLeft, setTimeLeft] = useState('');
     const [purchasing, setPurchasing] = useState(false);
     const [purchaseError, setPurchaseError] = useState(null);
