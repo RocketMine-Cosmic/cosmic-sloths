@@ -16,6 +16,7 @@ function getCurrentPeriodIds() {
 }
 
 const MAX_DAMAGE_PER_SUBMISSION = 1_000_000;
+const BOSS_BASE_HP = 50000;
 
 Deno.serve(async (req) => {
     try {
@@ -35,7 +36,7 @@ Deno.serve(async (req) => {
         const { week_id } = getCurrentPeriodIds();
         const displayName = playerName || me.full_name || walletAddress;
 
-        // Create GlobalBossEvent
+        // Create GlobalBossEvent (live activity feed)
         try {
             await base44.asServiceRole.entities.GlobalBossEvent.create({
                 week_id,
@@ -48,7 +49,7 @@ Deno.serve(async (req) => {
             console.error('[submitBossDamage] Event creation failed:', e.message);
         }
 
-        // Create GlobalBossContribution
+        // Create GlobalBossContribution (per-run contribution log used for reward claims)
         try {
             await base44.asServiceRole.entities.GlobalBossContribution.create({
                 week_id,
@@ -61,8 +62,56 @@ Deno.serve(async (req) => {
             console.error('[submitBossDamage] Contribution failed:', e.message);
         }
 
+        // Update the boss HP. If the boss reaches 0 HP, level it up and refill HP
+        // (HP scales with level so each tier is harder than the last).
+        let bossUpdate = null;
+        try {
+            const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
+            if (bossRecords.length > 0) {
+                const boss = bossRecords[0];
+                let newHp = (boss.current_hp || 0) - clampedDamage;
+                let newLevel = boss.level || 1;
+                let newMaxHp = boss.max_hp || BOSS_BASE_HP;
+                let leveledUp = false;
+
+                if (newHp <= 0) {
+                    // Boss defeated — level up, scale HP, refill.
+                    leveledUp = true;
+                    newLevel += 1;
+                    newMaxHp = Math.floor(BOSS_BASE_HP * Math.pow(1.5, newLevel - 1));
+                    newHp = newMaxHp;
+
+                    // Log a kill event
+                    try {
+                        await base44.asServiceRole.entities.GlobalBossEvent.create({
+                            week_id,
+                            player_name: displayName,
+                            event_type: 'kill',
+                            damage: clampedDamage,
+                            level: newLevel - 1,
+                            message: `${displayName} dealt the killing blow! Boss reached Lv.${newLevel}!`
+                        });
+                    } catch (e) {
+                        console.error('[submitBossDamage] Kill event failed:', e.message);
+                    }
+                }
+
+                bossUpdate = await base44.asServiceRole.entities.GlobalBoss.update(boss.id, {
+                    current_hp: newHp,
+                    max_hp: newMaxHp,
+                    level: newLevel,
+                });
+
+                if (leveledUp) {
+                    console.log('[submitBossDamage] Boss leveled up to', newLevel, 'new HP:', newMaxHp);
+                }
+            }
+        } catch (e) {
+            console.error('[submitBossDamage] Boss HP update failed:', e.message);
+        }
+
         console.log('[submitBossDamage] Recorded damage:', clampedDamage, 'for wallet:', walletAddress);
-        return Response.json({ success: true, damage: clampedDamage });
+        return Response.json({ success: true, damage: clampedDamage, boss: bossUpdate });
     } catch (error) {
         console.error('[submitBossDamage]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
