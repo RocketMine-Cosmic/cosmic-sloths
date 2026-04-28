@@ -131,6 +131,24 @@ export default function Game() {
         // Inject live OMENX balance so GameEngine can gate the revive prompt correctly
         save.omenxBalance = omenxBalance ?? 0;
 
+        // For Global Raid runs: fetch the cloud boss's current HP/max HP so the
+        // in-game HP bar reflects the current global state (not a hardcoded value).
+        // Other players' damage will be polled in via the live sync below.
+        if (arenaId === 'world_boss_arena') {
+            try {
+                const { getCurrentPeriodIds } = await import('@/lib/periodIds');
+                const { week_id } = getCurrentPeriodIds();
+                const bosses = await base44.entities.GlobalBoss.filter({ week_id });
+                if (bosses.length > 0) {
+                    save.worldBossCloudMaxHp = bosses[0].max_hp;
+                    save.worldBossCloudCurrentHp = bosses[0].current_hp;
+                    save.worldBossCloudLevel = bosses[0].level || 1;
+                }
+            } catch (e) {
+                console.warn('[Game] Failed to fetch global boss state:', e);
+            }
+        }
+
         // Inject equipped title buff so GameEngine can apply it as small permanent bonus
         try {
             const u = getOmenXUserSync();

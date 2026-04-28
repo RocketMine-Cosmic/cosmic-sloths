@@ -9,8 +9,14 @@ export function spawnEnemies(engine, dt) {
             engine.worldBossSpawned = true;
             const baseMap = {'world_boss_0': 'boss_nebula_devourer', 'world_boss_1': 'boss_plasma_kraken', 'world_boss_2': 'boss_stellar_colossus', 'world_boss_3': 'boss_cosmic_wyrm'};
             const baseBossTemplate = ENEMIES.find(e => e.id === (baseMap[engine.worldBossId] || 'boss_nebula_devourer'));
+            // Use cloud HP if provided so the in-game bar reflects the global boss level.
+            // Falls back to the legacy hardcoded value when not in raid context.
+            const cloudMax = engine.save?.worldBossCloudMaxHp;
+            const cloudCur = engine.save?.worldBossCloudCurrentHp;
+            const maxHp = (typeof cloudMax === 'number' && cloudMax > 0) ? cloudMax : 50000000;
+            const curHp = (typeof cloudCur === 'number' && cloudCur > 0) ? cloudCur : maxHp;
             const boss = {
-                ...baseBossTemplate, id: 'world_boss', name: engine.worldBossName, hp: 50000000, maxHp: 50000000, damage: 50 * engine.difficulty.enemyDmgMult, isBoss: true, isWorldBoss: true, originalBossId: baseBossTemplate.id
+                ...baseBossTemplate, id: 'world_boss', name: engine.worldBossName, hp: curHp, maxHp: maxHp, damage: 50 * engine.difficulty.enemyDmgMult, isBoss: true, isWorldBoss: true, originalBossId: baseBossTemplate.id
             };
             const angle = Math.random() * Math.PI * 2;
             const dist = 600;

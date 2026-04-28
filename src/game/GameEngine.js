@@ -798,6 +798,11 @@ export class GameEngine {
         
         enemy.hp -= finalDamage;
         this.totalDamageDealt += finalDamage;
+
+        // Don't let local damage "kill" the world boss — the server handles
+        // boss level-ups when this run's total damage is submitted. Clamp at 1 HP
+        // so the visual bar can drain to nearly empty without ending the run early.
+        if (enemy.isWorldBoss && enemy.hp < 1) enemy.hp = 1;
         
         if (this.player.charAugments?.includes('glt_corrupt') && Math.random() < 0.15 && !enemy.isBoss) {
             enemy.hacked = true;
