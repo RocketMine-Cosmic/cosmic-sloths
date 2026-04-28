@@ -82,6 +82,27 @@ export default function Mastery({ isCarousel }) {
                                                     Skill: {char.skillDesc}
                                                 </div>
                                             )}
+                                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 mb-2 text-[10px]">
+                                                {[
+                                                    { label: 'HP', value: char.hp, base: CHARACTERS[0].hp, higherBetter: true },
+                                                    { label: 'SPD', value: char.speed, base: CHARACTERS[0].speed, higherBetter: true },
+                                                    { label: 'ARM', value: char.armor, base: CHARACTERS[0].armor, higherBetter: true },
+                                                    { label: 'DMG', value: `${Math.round(char.damageMult * 100)}%`, raw: char.damageMult, base: CHARACTERS[0].damageMult, higherBetter: true },
+                                                    { label: 'CD', value: `${Math.round(char.cooldownMult * 100)}%`, raw: char.cooldownMult, base: CHARACTERS[0].cooldownMult, higherBetter: false },
+                                                    { label: 'AOE', value: `${Math.round(char.areaMult * 100)}%`, raw: char.areaMult, base: CHARACTERS[0].areaMult, higherBetter: true },
+                                                ].map(s => {
+                                                    const cmp = s.raw !== undefined ? s.raw : s.value;
+                                                    const isUp = s.higherBetter ? cmp > s.base : cmp < s.base;
+                                                    const isDown = s.higherBetter ? cmp < s.base : cmp > s.base;
+                                                    const cls = isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-slate-300';
+                                                    return (
+                                                        <div key={s.label} className="bg-slate-950/60 border border-slate-800 rounded px-1.5 py-1 text-center">
+                                                            <div className="text-slate-500 font-bold">{s.label}</div>
+                                                            <div className={`font-mono font-bold ${cls}`}>{s.value}{isUp ? '↑' : isDown ? '↓' : ''}</div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                             <div className="flex items-center gap-2 text-sm text-slate-400">
                                                 <span className="font-bold text-white">{kills.toLocaleString()}</span> Total Kills
                                             </div>
