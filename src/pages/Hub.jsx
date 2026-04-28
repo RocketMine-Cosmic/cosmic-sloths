@@ -456,7 +456,7 @@ export default function Hub({ isCarousel }) {
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
-                                            <div className="relative flex items-center justify-between p-2.5 md:p-4 min-h-[90px] md:min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-2 md:p-3 min-h-[72px] md:min-h-[96px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = ARENAS.findIndex(a => a.id === selectedArena);
@@ -544,7 +544,7 @@ export default function Hub({ isCarousel }) {
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
-                                            <div className="relative flex items-center justify-between p-2.5 md:p-4 min-h-[90px] md:min-h-[120px]">
+                                            <div className="relative flex items-center justify-between p-2 md:p-3 min-h-[72px] md:min-h-[96px]">
                                                 <button 
                                                     onClick={() => {
                                                         const idx = DIFFICULTIES.findIndex(d => d.id === selectedDifficulty);
@@ -647,55 +647,57 @@ export default function Hub({ isCarousel }) {
                                     };
                                     
                                     return (
-                                        <div className="flex flex-col gap-2 md:gap-4 mt-2 md:mt-8 pt-2 md:pt-6 border-t border-slate-700/40">
-
-                                            <button
-                                                onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}
-                                                className="flex items-center justify-between gap-2 md:gap-3 bg-gradient-to-r from-cyan-950/60 via-fuchsia-950/40 to-amber-950/60 hover:from-cyan-900/70 hover:via-fuchsia-900/50 hover:to-amber-900/70 border-2 border-cyan-500/40 hover:border-cyan-400 rounded-lg md:rounded-xl px-3 md:px-4 py-2.5 md:py-3 transition-all group shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:scale-[1.01] active:scale-[0.99]"
-                                                title="Save & swap full configurations"
-                                            >
-                                                <span className="flex items-center gap-2 md:gap-3">
-                                                    <span className="text-xl md:text-3xl">💾</span>
-                                                    <span className="flex flex-col items-start">
-                                                        <span className="text-xs md:text-base font-black tracking-widest uppercase text-white group-hover:text-cyan-200 transition-colors">
-                                                            Loadout Presets
-                                                        </span>
-                                                        <span className="text-[10px] md:text-xs text-slate-400 group-hover:text-slate-300 font-normal normal-case tracking-normal hidden md:inline">
-                                                            Save & swap full configurations in one tap
-                                                        </span>
-                                                    </span>
-                                                </span>
-                                                <span className="text-cyan-300 text-lg md:text-xl font-black group-hover:translate-x-1 transition-transform">→</span>
-                                            </button>
+                                        <div className="flex flex-col gap-2 md:gap-3 mt-2 md:mt-6 pt-2 md:pt-4 border-t border-slate-700/40">
 
                                             <BuildSummary save={save} selectedChar={selectedChar} currentTime={currentTime} />
 
                                             <button
+                                                onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}
+                                                className="relative bg-[#0b0416]/80 backdrop-blur-xl rounded-lg md:rounded-xl border border-cyan-500/50 hover:border-cyan-400 overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all group"
+                                                title="Save & swap full configurations"
+                                            >
+                                                <div className="relative flex items-center justify-between p-2 md:p-3 min-h-[72px] md:min-h-[96px]">
+                                                    <span className="flex items-center gap-2 md:gap-3 z-10">
+                                                        <span className="text-xl md:text-2xl">💾</span>
+                                                        <span className="flex flex-col items-start">
+                                                            <span className="text-sm md:text-lg font-black tracking-widest uppercase text-white group-hover:text-cyan-200 transition-colors">
+                                                                Loadout Presets
+                                                            </span>
+                                                            <span className="text-[10px] md:text-xs text-slate-400 group-hover:text-slate-300 font-normal normal-case tracking-normal">
+                                                                Save & swap full configurations
+                                                            </span>
+                                                        </span>
+                                                    </span>
+                                                    <span className="text-cyan-300 text-lg md:text-xl font-black group-hover:translate-x-1 transition-transform z-10">→</span>
+                                                </div>
+                                            </button>
+
+                                            <button
                                                 onClick={buyBuff}
                                                 disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10}
-                                                className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-3 md:py-4 border-2 transition-all group shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] hover:scale-[1.01] active:scale-[0.99] ${
+                                                className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-2.5 border transition-all group ${
                                                     hasXpBuff
                                                         ? 'bg-emerald-950/60 border-emerald-500/60 cursor-default'
                                                         : (omenxBalance ?? 0) < 10 || buffPurchasing
                                                             ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
-                                                            : 'bg-gradient-to-r from-emerald-950/60 via-cyan-950/40 to-purple-950/60 hover:from-emerald-900/70 hover:via-cyan-900/50 hover:to-purple-900/70 border-emerald-500/40 hover:border-emerald-400'
+                                                            : 'bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-purple-950/40 hover:from-emerald-900/60 hover:via-cyan-900/40 hover:to-purple-900/60 border-emerald-500/40 hover:border-emerald-400'
                                                 }`}
                                             >
                                                 <span className="flex items-center gap-2 md:gap-3">
-                                                    <span className="text-xl md:text-2xl">✨</span>
+                                                    <span className="text-base md:text-lg">✨</span>
                                                     <span className="flex flex-col items-start">
-                                                        <span className="text-xs md:text-base font-black tracking-widest uppercase text-white">
+                                                        <span className="text-[11px] md:text-sm font-black tracking-widest uppercase text-white">
                                                             {hasXpBuff ? `+50% XP Active (${timeLeft})` : '+50% XP Buff · 60 min'}
                                                         </span>
-                                                        <span className="text-[10px] md:text-xs text-emerald-300/80 font-normal normal-case tracking-normal">
+                                                        <span className="text-[9px] md:text-[11px] text-emerald-300/70 font-normal normal-case tracking-normal hidden sm:inline">
                                                             Boost XP gain for your next session
                                                         </span>
                                                     </span>
                                                 </span>
                                                 {!hasXpBuff && !buffPurchasing && (
-                                                    <span className="flex items-center gap-1.5 bg-purple-950/60 border border-purple-500/50 px-2.5 md:px-3 py-1.5 md:py-2 rounded-md md:rounded-lg shrink-0">
-                                                        <span className="text-purple-300 font-black text-sm md:text-base">10</span>
-                                                        <span className="text-purple-400 font-bold text-[10px] md:text-[11px] tracking-wider">OMENX</span>
+                                                    <span className="flex items-center gap-1 bg-purple-950/60 border border-purple-500/50 px-2 md:px-2.5 py-1 md:py-1.5 rounded shrink-0">
+                                                        <span className="text-purple-300 font-black text-xs md:text-sm">10</span>
+                                                        <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMENX</span>
                                                     </span>
                                                 )}
                                                 {buffPurchasing && (
@@ -707,7 +709,7 @@ export default function Hub({ isCarousel }) {
                                             <button
                                                 onClick={() => canLaunch && checkAndLaunch('normal')}
                                                 disabled={!canLaunch}
-                                                className={`flex-1 text-white text-xs md:text-lg font-black py-2 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                className={`flex-1 text-white text-sm md:text-xl font-black py-3.5 md:py-5 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                     canLaunch
                                                     ? 'bg-gradient-to-r from-[#0CA7B8] to-cyan-400 hover:from-cyan-400 hover:to-[#0CA7B8] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(12,167,184,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                     : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -718,7 +720,7 @@ export default function Hub({ isCarousel }) {
                                                 ) : !isArenaUnlocked ? (
                                                     <>LOCKED</>
                                                 ) : (
-                                                    <>LAUNCH <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                                    <>LAUNCH <ArrowRight className="w-5 h-5 md:w-5 md:h-5" /></>
                                                 )}
                                             </button>
                                             
@@ -726,7 +728,7 @@ export default function Hub({ isCarousel }) {
                                                 <button
                                                     onClick={() => canLaunch && checkAndLaunch('endless')}
                                                     disabled={!canLaunch}
-                                                    className={`w-full text-white text-xs md:text-lg font-black py-2 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
+                                                    className={`w-full text-white text-sm md:text-xl font-black py-3.5 md:py-5 rounded-lg md:rounded-xl flex items-center justify-center gap-2 transition-all transform tracking-widest uppercase ${
                                                         canLaunch
                                                         ? 'bg-gradient-to-r from-[#D946EF] to-fuchsia-400 hover:from-fuchsia-400 hover:to-[#D946EF] hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(217,70,239,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]'
                                                         : 'bg-slate-800/60 text-slate-600 cursor-not-allowed border border-slate-700/50'
@@ -737,7 +739,7 @@ export default function Hub({ isCarousel }) {
                                                     ) : !isArenaUnlocked ? (
                                                         <>LOCKED</>
                                                     ) : (
-                                                        <>ENDLESS <ArrowRight className="w-4 h-4 md:w-4 md:h-4" /></>
+                                                        <>ENDLESS <ArrowRight className="w-5 h-5 md:w-5 md:h-5" /></>
                                                     )}
                                                 </button>
                                                 {canLaunch && (
