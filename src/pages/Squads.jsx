@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle } from 'lucide-react';
@@ -54,16 +54,12 @@ function getDailyBountyTier(level) {
 
 export default function Squads({ isCarousel }) {
     const navigate = useNavigate();
-    const location = useLocation();
     const { toast } = useToast();
     const { user: omenxUser } = useOmenXUser();
     const [user, setUser] = useState(null);
     const [myMemberRecord, setMyMemberRecord] = useState(null);
     const [mySquad, setMySquad] = useState(null);
     const walletAddr = user ? (user?.walletAddress || user?.wallet_address || user?.data?.wallet_address || '').trim() : '';
-    
-    // Detect if navigated from Profile page
-    const fromProfile = location.state?.from === 'profile';
     
     // States for No Squad
     const [allSquads, setAllSquads] = useState([]);
@@ -530,12 +526,7 @@ export default function Squads({ isCarousel }) {
                                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                     <Search className="w-5 h-5 text-cyan-400" /> Find a Squad
                                 </h2>
-                                <button 
-                                    onClick={() => { SoundManager.playUIClick(); navigate(fromProfile ? '/profile' : '/'); }}
-                                    className="text-xs text-slate-400 hover:text-white bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors flex items-center gap-1"
-                                >
-                                    <ArrowLeft className="w-3 h-3" /> Back
-                                </button>
+
                                 <button 
                                     onClick={() => setIsCreating(!isCreating)}
                                     className="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 transition-colors"
