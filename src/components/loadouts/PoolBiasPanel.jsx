@@ -68,17 +68,34 @@ export default function PoolBiasPanel({ save, setSave }) {
         setSave(newSave);
     };
 
-    const respecWithGold = () => {
-        if (!canRespecGold) return;
+    const respecWithGold = async () => {
+        if (!canRespecGold || respecBusy) return;
+        setRespecBusy(true);
+        setRespecError(null);
         SoundManager.playUIClick();
-        const newSave = {
-            ...save,
-            gold: gold - goldRespecCost,
-            poolBiasGoldRespecCount: Number(save.poolBiasGoldRespecCount || 0) + 1,
-            poolBiasAllocations: {},
-        };
-        SaveManager.save(newSave);
-        setSave(newSave);
+        try {
+            // Server-authoritative: deducts gold + clears allocations + bumps respec count atomically.
+            const res = await base44.functions.invoke('spendGold', {
+                grantInfo: { type: 'pool_respec' },
+            });
+            if (!res?.data?.success) {
+                throw new Error(res?.data?.error || 'Respec failed');
+            }
+            // Adopt server truth for the fields it just changed.
+            const sd = res.data.saveData || {};
+            const newSave = {
+                ...save,
+                gold: Number(sd.gold ?? gold - goldRespecCost),
+                poolBiasGoldRespecCount: Number(sd.poolBiasGoldRespecCount ?? (save.poolBiasGoldRespecCount || 0) + 1),
+                poolBiasAllocations: sd.poolBiasAllocations || {},
+            };
+            SaveManager.save(newSave);
+            setSave(newSave);
+        } catch (e) {
+            setRespecError(e?.message || 'Respec failed');
+        } finally {
+            setRespecBusy(false);
+        }
     };
 
     const respecWithOmenx = async () => {
@@ -100,6 +117,9 @@ export default function PoolBiasPanel({ save, setSave }) {
             const newSave = { ...save, poolBiasAllocations: {} };
             SaveManager.save(newSave);
             setSave(newSave);
+            // Force immediate cloud sync so the cleared allocations don't get lost
+            // if the user closes the tab before the debounce fires.
+            SaveManager.syncToBackendImmediate();
             refreshBalance();
         } catch (e) {
             setRespecError(e?.message || 'Respec failed');

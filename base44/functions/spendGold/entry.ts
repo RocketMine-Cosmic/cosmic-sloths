@@ -94,9 +94,19 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
+// Pool-bias respec: gold cost escalates each use (mirrors lib/poolBias.js).
+const POOL_RESPEC_GOLD_TIERS = [2000, 4000, 8000, 16000];
+function getPoolRespecCost(save) {
+    const count = Number(save?.poolBiasGoldRespecCount || 0);
+    return POOL_RESPEC_GOLD_TIERS[Math.min(count, POOL_RESPEC_GOLD_TIERS.length - 1)];
+}
+
 // Compute server-authoritative gold cost for the requested grant.
-function computeCost(grantInfo) {
+function computeCost(grantInfo, save) {
     const { type } = grantInfo || {};
+    if (type === 'pool_respec') {
+        return getPoolRespecCost(save);
+    }
     if (type === 'stat') {
         const { tier, level } = grantInfo;
         const costs = GOLD_COSTS.stat[tier];
@@ -132,6 +142,12 @@ function applyGrant(save, grantInfo, periodIds) {
     const { type } = grantInfo;
 
     switch (type) {
+        case 'pool_respec': {
+            // Clear allocations and bump the respec counter (drives next cost tier).
+            s.poolBiasAllocations = {};
+            s.poolBiasGoldRespecCount = Number(s.poolBiasGoldRespecCount || 0) + 1;
+            break;
+        }
         case 'stat': {
             const { tier, stat, level } = grantInfo;
             const key = tier === 'permanent' ? 'permanentUpgrades'
@@ -222,15 +238,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'grantInfo required' }, { status: 400 });
         }
 
-        // Compute cost server-side
-        let cost;
-        try {
-            cost = computeCost(grantInfo);
-        } catch (e) {
-            return Response.json({ error: `Cost computation failed: ${e.message}` }, { status: 400 });
-        }
-
-        // Load current save
+        // Load current save (needed before computing cost for pool_respec).
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
         if (records.length === 0) {
             return Response.json({ error: 'PlayerSave not found — sync your save first' }, { status: 400 });
@@ -239,6 +247,14 @@ Deno.serve(async (req) => {
         const saveData = typeof saveRecord.save_data === 'string'
             ? JSON.parse(saveRecord.save_data)
             : saveRecord.save_data;
+
+        // Compute cost server-side
+        let cost;
+        try {
+            cost = computeCost(grantInfo, saveData);
+        } catch (e) {
+            return Response.json({ error: `Cost computation failed: ${e.message}` }, { status: 400 });
+        }
 
         // Verify funds
         const currentGold = Number(saveData.gold || 0);
