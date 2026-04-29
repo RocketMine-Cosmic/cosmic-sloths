@@ -33,6 +33,7 @@ import AdminGrantPanel from '../components/admin/AdminGrantPanel';
 import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
 import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
 import AdminStaffPayouts from '../components/admin/AdminStaffPayouts';
+import MyStaffIncomeCard from '../components/admin/MyStaffIncomeCard';
 
 // Tabs are organised into logical groups by responsibility.
 // Each tab declares the permission required to see it.
@@ -300,16 +301,19 @@ export default function AdminDashboard() {
                         </h1>
                         <span className="text-[10px] md:text-xs font-mono text-slate-500 hidden md:inline">{callerLabel}</span>
                     </div>
-                    <button
-                        onClick={() => {
-                            sessionStorage.removeItem('admin_wallet');
-                            sessionStorage.removeItem('admin_key');
-                            setAdminWallet('');
-                        }}
-                        className="text-xs text-red-400 hover:text-red-300 border border-red-900/50 px-2 py-1 rounded transition-colors"
-                    >
-                        Logout
-                    </button>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <MyStaffIncomeCard walletAddress={adminWallet} isEmergencyKey={isEmergencyKey} />
+                        <button
+                            onClick={() => {
+                                sessionStorage.removeItem('admin_wallet');
+                                sessionStorage.removeItem('admin_key');
+                                setAdminWallet('');
+                            }}
+                            className="text-xs text-red-400 hover:text-red-300 border border-red-900/50 px-2 py-1 rounded transition-colors"
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
                 {/* Grouped Tab Nav */}
