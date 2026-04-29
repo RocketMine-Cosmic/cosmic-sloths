@@ -315,6 +315,13 @@ export class GameEngine {
         // Per-weapon stat tracking — credit damage on every hit, credit kill on the killing blow.
         this.weaponDamage = {};
         this.weaponKills = {};
+
+        // Rolling 10-second damage window. Each entry is { t, dmg }; we sum entries
+        // whose timestamp is within the last DPS_WINDOW seconds. Lets the HUD's DPS
+        // value reflect *recent* output so post-boss buffs / new evolutions show up
+        // in real time instead of being averaged-out across the whole run.
+        this.dpsWindow = [];
+        this.DPS_WINDOW = 10;
         
         this.characterMechanics = {
             bannerTimer: 0,
@@ -552,6 +559,14 @@ export class GameEngine {
         if (this.player.regen > 0 && this.frameCount % 60 === 0) {
             this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.regen);
             this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+        }
+
+        // Endless XP trickle — after 5 minutes, gain a small passive XP stream so
+        // levelling isn't entirely boss-gated. Scales with the current XP requirement
+        // (~one level every ~3 minutes of pure idling, faster with kills).
+        if (this.arena.duration === Infinity && this.time > 300) {
+            const trickle = (this.xpRequired / 180) * dt * this.player.xpMult;
+            this.xp += trickle;
         }
 
         // Movement input
@@ -868,6 +883,11 @@ export class GameEngine {
         enemy.hp -= finalDamage;
         this.totalDamageDealt += finalDamage;
 
+        // Push into rolling DPS window (used by HUD).
+        if (this.dpsWindow) {
+            this.dpsWindow.push({ t: this.time, dmg: finalDamage });
+        }
+
         // Credit damage to source weapon (if any) and remember last hitter for kill credit.
         const sourceId = projectile?.weaponId || null;
         if (sourceId) {
@@ -943,6 +963,24 @@ export class GameEngine {
 
     shake(amount) {
         this.shakeTimer = Math.max(this.shakeTimer, amount);
+    }
+
+    // Rolling 10s DPS — averages only the most recent damage so the HUD reflects
+    // upgrades immediately (vs. dividing total run damage by total run time, which
+    // makes late-run buffs invisible).
+    getRollingDps() {
+        if (!this.dpsWindow || this.dpsWindow.length === 0) return 0;
+        const cutoff = this.time - this.DPS_WINDOW;
+        // Drop expired entries (cheap — array stays bounded by recent damage rate).
+        while (this.dpsWindow.length && this.dpsWindow[0].t < cutoff) {
+            this.dpsWindow.shift();
+        }
+        if (this.dpsWindow.length === 0) return 0;
+        let sum = 0;
+        for (let i = 0; i < this.dpsWindow.length; i++) sum += this.dpsWindow[i].dmg;
+        // Use elapsed window length (clamped to actual observed span) to keep early-run DPS sane.
+        const span = Math.max(1, Math.min(this.DPS_WINDOW, this.time));
+        return sum / span;
     }
 
     addParticle(x, y, color, count, type = 'spark', sizeMult = 1) {

@@ -147,27 +147,17 @@ export function applyUpgrade(engine, upgrade) {
     } else if (upgrade.type === 'weapon') {
         const levelIncrement = upgrade.value || 1;
 
-        let appliedToSynergy = false;
-        for (const synergy of SYNERGIES) {
-            if (synergy.weapon1 === upgrade.weaponId || synergy.weapon2 === upgrade.weaponId) {
-                const activeSynergy = engine.player.weapons.find(w => w.id === synergy.result);
-                if (activeSynergy) {
-                    activeSynergy.level += levelIncrement;
-                    appliedToSynergy = true;
-                    break;
-                }
-            }
+        // If the player already owns this raw weapon, level it (and re-check synergies).
+        // If not, add it as a fresh slot — even if it's a component of an active synergy
+        // already, so the player can combine it with another weapon to form a NEW synergy
+        // (e.g. having Flaming Lash shouldn't lock napalm out of Burning Barrier).
+        const existing = engine.player.weapons.find(w => w.id === upgrade.weaponId);
+        if (existing) {
+            existing.level = Math.min(20, existing.level + levelIncrement);
+        } else {
+            engine.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: Math.min(20, levelIncrement), timer: 0 });
         }
-
-        if (!appliedToSynergy) {
-            const existing = engine.player.weapons.find(w => w.id === upgrade.weaponId);
-            if (existing) {
-                existing.level = Math.min(20, existing.level + levelIncrement);
-            } else {
-                engine.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: Math.min(20, levelIncrement), timer: 0 });
-            }
-            checkSynergies(engine);
-        }
+        checkSynergies(engine);
     }
     engine.isPaused = false;
 }
