@@ -3,6 +3,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import moment from 'moment';
+import ConfirmDialog from './ConfirmDialog';
+
+async function autoSnapshot(notes) {
+    try {
+        await base44.functions.invoke('backupData', {
+            adminKey: sessionStorage.getItem('admin_key') || undefined,
+            backup_notes: `[auto] ${notes}`,
+        });
+    } catch (e) { console.warn('[autoSnapshot]', e.message); }
+}
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -18,6 +28,8 @@ export default function AdminDuplicateScores({ walletAddress }) {
     const [period, setPeriod] = useState(getCurrentWeekId());
     const [deleting, setDeleting] = useState({});
     const [msg, setMsg] = useState('');
+    const [confirmState, setConfirmState] = useState(null); // { kind: 'one'|'group', score?, group? }
+    const [busyConfirm, setBusyConfirm] = useState(false);
     const qc = useQueryClient();
 
     const { data: scores, isLoading } = useQuery({
@@ -56,10 +68,25 @@ export default function AdminDuplicateScores({ walletAddress }) {
         setDeleting(d => ({ ...d, [scoreId]: false }));
     };
 
-    const keepBestDeleteRest = async (group) => {
+    const performGroupDelete = async (group) => {
         const sorted = [...group].sort((a, b) => b.score - a.score);
         const toDelete = sorted.slice(1);
+        await autoSnapshot(`pre-dup-cleanup ${group[0].player_name} ${group[0].week_id}`);
         for (const s of toDelete) await deleteScore(s.id);
+    };
+
+    const handleConfirm = async () => {
+        if (!confirmState) return;
+        setBusyConfirm(true);
+        try {
+            if (confirmState.kind === 'one') {
+                await autoSnapshot(`pre-score-delete ${confirmState.score.player_name} ${confirmState.score.id}`);
+                await deleteScore(confirmState.score.id);
+            } else if (confirmState.kind === 'group') {
+                await performGroupDelete(confirmState.group);
+            }
+            setConfirmState(null);
+        } finally { setBusyConfirm(false); }
     };
 
     return (
@@ -100,7 +127,7 @@ export default function AdminDuplicateScores({ walletAddress }) {
                                     </span>
                                     <span className="text-[10px] bg-yellow-900/50 text-yellow-400 px-1.5 py-0.5 rounded font-bold">{group.length} scores</span>
                                 </div>
-                                <button onClick={() => keepBestDeleteRest(group)}
+                                <button onClick={() => setConfirmState({ kind: 'group', group })}
                                     className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1 rounded font-bold transition-colors">
                                     Keep Best, Delete Rest
                                 </button>
@@ -115,7 +142,7 @@ export default function AdminDuplicateScores({ walletAddress }) {
                                             <span className="text-[10px] text-slate-500">{moment(s.created_date).format('MMM D HH:mm')}</span>
                                         </div>
                                         {i > 0 && (
-                                            <button onClick={() => deleteScore(s.id)} disabled={deleting[s.id]}
+                                            <button onClick={() => setConfirmState({ kind: 'one', score: s })} disabled={deleting[s.id]}
                                                 className="text-xs bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white px-2 py-0.5 rounded font-bold flex items-center gap-1 transition-colors">
                                                 <Trash2 size={10} /> {deleting[s.id] ? '...' : 'Delete'}
                                             </button>
@@ -128,6 +155,24 @@ export default function AdminDuplicateScores({ walletAddress }) {
                     })}
                 </div>
             )}
+
+            <ConfirmDialog
+                open={!!confirmState}
+                onClose={() => setConfirmState(null)}
+                onConfirm={handleConfirm}
+                busy={busyConfirm}
+                title={confirmState?.kind === 'group' ? 'Delete duplicate scores' : 'Delete score'}
+                description={confirmState?.kind === 'group'
+                    ? `Will keep the highest score and delete ${(confirmState.group?.length || 1) - 1} other(s) for ${confirmState.group?.[0]?.player_name}. A snapshot will be taken first.`
+                    : `Permanently delete this score for ${confirmState?.score?.player_name}? A snapshot will be taken first.`}
+                items={confirmState?.kind === 'group'
+                    ? [...(confirmState.group || [])].sort((a, b) => b.score - a.score).slice(1)
+                        .map(s => `${s.score.toLocaleString()} pts · ${s.arena_id || '—'} · ${moment(s.created_date).format('MMM D HH:mm')}`)
+                    : confirmState?.score
+                        ? [`${confirmState.score.score.toLocaleString()} pts · ${confirmState.score.arena_id || '—'} · ${confirmState.score.week_id}`]
+                        : []}
+                confirmLabel="Delete"
+            />
         </div>
     );
 }
