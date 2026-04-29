@@ -22,6 +22,7 @@ import { getAuthData } from '@/lib/getAuthData';
 import { SpritePreloader } from '../game/SpritePreloader';
 import { refreshBalance } from '@/lib/playerDataCache';
 import CharacterAbilityMeter from '../components/game/CharacterAbilityMeter';
+import GameLoadingScreen from '../components/game/GameLoadingScreen';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -43,6 +44,7 @@ export default function Game() {
     const [isPaused, setIsPaused] = useState(false);
     const [showRevivePrompt, setShowRevivePrompt] = useState(false);
     const [banishCount, setBanishCount] = useState(0); // resets per run (component remounts on new game)
+    const [isInitializing, setIsInitializing] = useState(true);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
 
     // Banish tier: 3 uses at 2 OMENX, 3 uses at 4 OMENX, then 6 OMENX onwards.
@@ -335,6 +337,8 @@ export default function Game() {
         
         // Preload all character sprites in background (non-blocking)
         SpritePreloader.preload();
+
+        setIsInitializing(false);
         };
         
         initGame();
@@ -620,6 +624,8 @@ export default function Game() {
                     pageId="game-run"
                 />
             )}
+
+            {isInitializing && <GameLoadingScreen />}
         </div>
     );
 }
