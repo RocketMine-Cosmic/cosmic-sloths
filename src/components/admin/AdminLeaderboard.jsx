@@ -61,7 +61,10 @@ export default function AdminLeaderboard({ walletAddress }) {
                             {filtered.map((s, i) => (
                                 <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
                                     <td className="p-2 text-center font-mono text-slate-300">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td>
-                                    <td className="p-2 font-bold text-white whitespace-nowrap">{s.pilot_icon} {s.player_name}</td>
+                                    <td className="p-2 font-bold text-white max-w-[180px] truncate" title={`${s.pilot_icon || ''} ${s.player_name || ''}`}>
+                                        {s.pilot_icon && s.pilot_icon.length <= 4 && !s.pilot_icon.startsWith('http') ? `${s.pilot_icon} ` : ''}
+                                        {s.player_name && s.player_name.startsWith('http') ? '(unnamed)' : (s.player_name || '-')}
+                                    </td>
                                     <td className="p-2 text-slate-500 font-mono" title={s.wallet_address}>
                                         {s.wallet_address ? `${s.wallet_address.slice(0, 6)}...${s.wallet_address.slice(-4)}` : '-'}
                                     </td>
