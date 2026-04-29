@@ -1,4 +1,4 @@
-export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPickup, camera, zoom) {
+export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPickup, camera, zoom, pickups) {
     // --- Off-screen Indicators ---
     enemies.forEach(e => {
         if (e.isBoss || e.isElite) {
@@ -60,5 +60,81 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
         }
     });
 
+    // --- Off-screen Boss Drop Indicators ---
+    // After a boss dies its relic fragment / nuke / big gold drops can land
+    // far off-screen. Show small directional markers so the player can find them.
+    if (pickups && pickups.length) {
+        const vWidth = canvas.width / zoom;
+        const vHeight = canvas.height / zoom;
+        const minX = camera.x;
+        const maxX = camera.x + vWidth;
+        const minY = camera.y;
+        const maxY = camera.y + vHeight;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const edgePadding = 60;
 
+        const DROP_STYLE = {
+            fragment: { color: 'rgba(168, 85, 247, 0.9)', icon: '💎' },
+            nuke:     { color: 'rgba(255, 50, 50, 0.9)',  icon: '☢️' },
+        };
+        // Big gold piles (boss reward) — small piles aren't worth indicating.
+        const BOSS_GOLD_THRESHOLD = 500;
+
+        // Pulse so it stands out among other UI.
+        const pulse = 0.7 + Math.sin(time * 4) * 0.3;
+
+        pickups.forEach(p => {
+            let style = DROP_STYLE[p.type];
+            if (!style && p.type === 'gold' && (p.value || 0) >= BOSS_GOLD_THRESHOLD) {
+                style = { color: 'rgba(255, 215, 0, 0.9)', icon: '💰' };
+            }
+            if (!style) return;
+            // Only show when off-screen.
+            if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) return;
+
+            const screenX = (p.x - camera.x) * zoom;
+            const screenY = (p.y - camera.y) * zoom;
+            const angle = Math.atan2(screenY - centerY, screenX - centerX);
+
+            const tan = Math.tan(angle);
+            const rectWidth = Math.max(1, centerX - edgePadding);
+            const rectHeight = Math.max(1, centerY - edgePadding);
+
+            let indX, indY;
+            if (Math.abs(tan) < rectHeight / rectWidth) {
+                indX = centerX + Math.sign(Math.cos(angle)) * rectWidth;
+                indY = centerY + (indX - centerX) * tan;
+            } else {
+                indY = centerY + Math.sign(Math.sin(angle)) * rectHeight;
+                indX = centerX + (indY - centerY) / tan;
+            }
+            if (!Number.isFinite(indX) || !Number.isFinite(indY)) return;
+
+            ctx.save();
+            ctx.globalAlpha = pulse;
+            ctx.translate(indX, indY);
+            ctx.rotate(angle);
+
+            // Small arrow pointing toward the drop
+            ctx.fillStyle = style.color;
+            ctx.beginPath();
+            ctx.moveTo(14, 0);
+            ctx.lineTo(-10, 9);
+            ctx.lineTo(-10, -9);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Icon (un-rotate so it stays upright)
+            ctx.rotate(-angle);
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(style.icon, 0, 0);
+            ctx.restore();
+        });
+        ctx.globalAlpha = 1;
+    }
 }

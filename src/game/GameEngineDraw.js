@@ -686,5 +686,5 @@ export function renderGame() {
 
     this.ctx.restore();
 
-    drawUI(this.ctx, this.canvas, this.time, this.player, this.hazards, this.enemies, this.characterPickup, this.camera, this.zoom);
+    drawUI(this.ctx, this.canvas, this.time, this.player, this.hazards, this.enemies, this.characterPickup, this.camera, this.zoom, this.pickups);
 }
