@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SettingsModal from './SettingsModal';
 
-export default function PauseModal({ onResume, onQuit, onRestart }) {
+export default function PauseModal({ onResume, onQuit, onRestart, onHideHud }) {
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
 
@@ -29,6 +29,15 @@ export default function PauseModal({ onResume, onQuit, onRestart }) {
                     >
                         Settings
                     </button>
+                    {onHideHud && (
+                        <button
+                            onClick={onHideHud}
+                            className="w-full bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-lg font-bold text-base md:text-lg transition-colors border border-slate-600"
+                            title="Hide all UI for clean screenshots"
+                        >
+                            📸 Hide HUD (Screenshot)
+                        </button>
+                    )}
                     {onRestart && (
                         confirmRestart ? (
                             <div className="flex flex-col gap-2 bg-orange-950/40 border border-orange-500/40 rounded-lg p-3">

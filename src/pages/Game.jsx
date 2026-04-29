@@ -23,6 +23,7 @@ import { SpritePreloader } from '../game/SpritePreloader';
 import { refreshBalance } from '@/lib/playerDataCache';
 import CharacterAbilityMeter from '../components/game/CharacterAbilityMeter';
 import GameLoadingScreen from '../components/game/GameLoadingScreen';
+import HideHudButton from '../components/game/HideHudButton';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -45,6 +46,7 @@ export default function Game() {
     const [showRevivePrompt, setShowRevivePrompt] = useState(false);
     const [banishCount, setBanishCount] = useState(0); // resets per run (component remounts on new game)
     const [isInitializing, setIsInitializing] = useState(true);
+    const [hudHidden, setHudHidden] = useState(false);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
 
     // Banish tier: 3 uses at 2 OMENX, 3 uses at 4 OMENX, then 6 OMENX onwards.
@@ -580,13 +582,22 @@ export default function Game() {
                 className="absolute inset-0"
             />
             
-            <VirtualJoystick onChange={handleJoystickChange} />
+            {!hudHidden && <VirtualJoystick onChange={handleJoystickChange} />}
             
-            <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />
-            <CharacterAbilityMeter engineRef={engineRef} />
-            
+            {!hudHidden && <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />}
+            {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
+
+            {hudHidden && (
+                <HideHudButton onShow={() => setHudHidden(false)} />
+            )}
+
             {isPaused && (
-                <PauseModal onResume={handleResume} onQuit={handleQuit} onRestart={handleRestart} />
+                <PauseModal
+                    onResume={handleResume}
+                    onQuit={handleQuit}
+                    onRestart={handleRestart}
+                    onHideHud={() => { setHudHidden(true); handleResume(); }}
+                />
             )}
 
             {levelUpChoices && (
