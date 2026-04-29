@@ -29,12 +29,15 @@ export default function SpendLogDescription({ log }) {
         return <span className="text-slate-600 italic text-[10px]">unknown</span>;
     }
 
+    // Prefer grant details (specific). Only fall back to the SKU id if we have no grant
+    // (legacy rows or grant-less purchases) — the SKU is too generic on its own (e.g.
+    // every Lv1 stat upgrade shares the same SKU).
     return (
-        <div className="flex flex-col gap-0.5 max-w-[260px]">
-            {fromGrant && <span className="text-slate-200 text-[11px] leading-tight">{fromGrant}</span>}
-            {fromSku && (
-                <span className="text-slate-500 font-mono text-[9px] truncate" title={fromSku}>{fromSku}</span>
-            )}
+        <div className="max-w-[260px]">
+            {fromGrant
+                ? <span className="text-slate-200 text-[11px] leading-tight">{fromGrant}</span>
+                : <span className="text-slate-500 font-mono text-[10px] truncate block" title={fromSku}>{fromSku}</span>
+            }
         </div>
     );
 }
