@@ -98,11 +98,27 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         // "Ravenous maw" — pulls player closer
         if (!boss.pullTimer) boss.pullTimer = 8;
         boss.pullTimer -= dt;
-        if (boss.pullTimer <= 1.5 && boss.pullTimer + dt > 1.5) {
+        // Longer telegraph (2.5s) so the player has time to react and reposition.
+        if (boss.pullTimer <= 2.5 && boss.pullTimer + dt > 2.5) {
             addDamageText(boss.x, boss.y - boss.radius - 30, '⚠ INCOMING DEVOUR!', '#a855f7');
         }
+        // While the Devour is charging, draw a beam of glow particles from the boss
+        // toward the player so the pull direction is visually obvious.
+        if (boss.pullTimer > 0 && boss.pullTimer <= 2.5) {
+            const dx = player.x - boss.x;
+            const dy = player.y - boss.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 0) {
+                const steps = 6;
+                for (let i = 1; i <= steps; i++) {
+                    const t = i / (steps + 1);
+                    addParticle(boss.x + dx * t, boss.y + dy * t, '#a855f7', 1, 'glow', 1.2);
+                }
+            }
+        }
         if (boss.pullTimer <= 0) {
-            boss.pullTimer = phase3 ? 3 : (phase2 ? 5 : 8);
+            // Phase 3 cooldown bumped 3s → 4s so it can't double-tap as quickly.
+            boss.pullTimer = phase3 ? 4 : (phase2 ? 5 : 8);
             const dx = boss.x - player.x;
             const dy = boss.y - player.y;
             const dist = Math.hypot(dx, dy);
