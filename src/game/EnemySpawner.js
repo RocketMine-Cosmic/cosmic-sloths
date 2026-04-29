@@ -98,13 +98,15 @@ export function spawnEnemies(engine, dt) {
         const ex = engine.player.x + Math.cos(angle) * dist;
         const ey = engine.player.y + Math.sin(angle) * dist;
 
-        const arenaIndex = engine.arena.duration === Infinity ? Math.min(9, Math.floor(progress * 5)) : ARENAS.findIndex(a => a.id === engine.arena.id);
-        let minTier = Math.max(1, arenaIndex);
-        let maxTier = arenaIndex + 1;
+        const isEndless = engine.arena.duration === Infinity;
+        // Endless: smoother continuous tier growth instead of stair-step jumps every 60s.
+        const arenaIndex = isEndless ? Math.min(9, progress * 4) : ARENAS.findIndex(a => a.id === engine.arena.id);
+        let minTier = Math.max(1, Math.floor(arenaIndex));
+        let maxTier = Math.floor(arenaIndex) + 1;
 
         if (effectiveProgress > 0.33) maxTier += 1;
         if (effectiveProgress > 0.66) maxTier += 1;
-        if (engine.arena.duration === Infinity) maxTier += Math.floor(progress * 2);
+        if (isEndless) maxTier += Math.floor(progress * 2);
 
         maxTier = Math.min(10, maxTier);
 
@@ -119,7 +121,10 @@ export function spawnEnemies(engine, dt) {
 
         const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
 
-        const sectorDifficultyScale = Math.pow(1.2, arenaIndex);
+        // Endless uses a gentler sector scale (1.12) to avoid the huge jump after the first boss.
+        // Normal arenas keep the original 1.2 curve.
+        const sectorBase = isEndless ? 1.12 : 1.2;
+        const sectorDifficultyScale = Math.pow(sectorBase, arenaIndex);
 
         const hpMult = (1.0 + (2.1 * Math.pow(progress, 1.6))) * engine.difficulty.enemyHpMult * sectorDifficultyScale;
         const dmgMult = (1.0 + (1.6 * Math.pow(progress, 1.4))) * engine.difficulty.enemyDmgMult * sectorDifficultyScale;
