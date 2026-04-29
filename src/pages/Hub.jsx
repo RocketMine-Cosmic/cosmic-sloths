@@ -68,25 +68,27 @@ export default function Hub({ isCarousel }) {
     const { vip: vipLevel } = useOmenXVip();
     const { nfts } = useCurrency();
 
+    // Track timestamps of saves WE wrote, so we can ignore the saveUpdated echo
+    // they trigger (otherwise every character cycle causes a re-render flicker).
+    const ownSaveTimestamps = React.useRef(new Set());
+
     React.useEffect(() => {
-        // Sync saves to state but don't overwrite initialization data.
-        // Skip echoes of saves triggered by THIS component (saveUpdated fires for
-        // every SaveManager.save call, including our own selection writes). Without
-        // this guard, picking a character would immediately revert.
         const handleSaveUpdated = (e) => {
             if (!syncReady) return;
             const incoming = e.detail || {};
-            setSave(prev => {
-                // Preserve the user's live selection — those fields are owned by
-                // local component state, not by the saveUpdated event.
-                return {
-                    ...incoming,
-                    lastSelectedChar: prev.lastSelectedChar,
-                    lastSelectedArena: prev.lastSelectedArena,
-                    lastSelectedDifficulty: prev.lastSelectedDifficulty,
-                    lastSelectedWeapon: prev.lastSelectedWeapon,
-                };
-            });
+            // Ignore our own saves echoing back through the event bus.
+            if (incoming.updated_at && ownSaveTimestamps.current.has(incoming.updated_at)) {
+                ownSaveTimestamps.current.delete(incoming.updated_at);
+                return;
+            }
+            setSave(prev => ({
+                ...incoming,
+                // Preserve the user's live selection — owned by local state.
+                lastSelectedChar: prev.lastSelectedChar,
+                lastSelectedArena: prev.lastSelectedArena,
+                lastSelectedDifficulty: prev.lastSelectedDifficulty,
+                lastSelectedWeapon: prev.lastSelectedWeapon,
+            }));
         };
         window.addEventListener('saveUpdated', handleSaveUpdated);
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
@@ -202,11 +204,26 @@ export default function Hub({ isCarousel }) {
     }, [syncReady, save.lastSelectedChar, save.lastSelectedArena, save.lastSelectedDifficulty, save.lastSelectedWeapon]);
 
     React.useEffect(() => {
-        // Don't write back to save until cloud sync has completed — otherwise
-        // we overwrite the cloud value with the local default.
+        // Persist selection to save (debounced — avoids hammering localStorage and
+        // dispatching saveUpdated on every rapid arrow-cycle, which used to cause
+        // BuildSummary/cosmetic-preview to flicker as state churned).
         if (!syncReady) return;
-        const newSave = { ...save, lastSelectedChar: selectedChar, lastSelectedArena: selectedArena, lastSelectedDifficulty: selectedDifficulty, lastSelectedWeapon: selectedWeapon };
-        SaveManager.save(newSave);
+        const t = setTimeout(() => {
+            const current = SaveManager.load();
+            const newSave = {
+                ...current,
+                lastSelectedChar: selectedChar,
+                lastSelectedArena: selectedArena,
+                lastSelectedDifficulty: selectedDifficulty,
+                lastSelectedWeapon: selectedWeapon,
+            };
+            // Mark this timestamp so the saveUpdated listener can ignore the echo.
+            const ts = Date.now();
+            newSave.updated_at = ts;
+            ownSaveTimestamps.current.add(ts);
+            SaveManager.save(newSave);
+        }, 250);
+        return () => clearTimeout(t);
     }, [syncReady, selectedChar, selectedArena, selectedDifficulty, selectedWeapon]);
 
     // OmenX-only mode: skip Base44 reward claims
