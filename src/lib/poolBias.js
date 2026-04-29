@@ -1,98 +1,113 @@
-// Pool Bias system — players earn 1 point per permanent upgrade level (across
-// stats AND weapon upgrades) and spend them to bias the level-up upgrade pool
-// toward weapons / passives / stats / evolution categories.
+// Pool Bias system — players earn points from permanent upgrades and spend
+// them to bias the level-up upgrade pool toward SPECIFIC weapons or stats
+// (not broad categories). Each point = +10% draw weight on that exact upgrade.
 //
-// Each category's weight multiplier = 1 + (allocatedPoints * BIAS_PER_POINT).
-// Respec is refundable but costs gold OR OMENX.
+// Allocations are stored as a flat map { [targetId]: points }, where targetId
+// is either a weapon id (e.g. 'napBeam') or a stat id (e.g. 'damageMult').
 
-export const BIAS_PER_POINT = 0.05; // +5% draw weight per point allocated to a category
-// Gold respec cost escalates each time it's used (capped at the last tier).
-// Use count is tracked in save.poolBiasGoldRespecCount.
-export const GOLD_RESPEC_TIERS = [2000, 4000, 8000, 16000];
+import { UPGRADES, WEAPONS } from '../game/Constants';
+
+export const BIAS_PER_POINT = 0.10;             // +10% weight per point
+export const POINTS_PER_UPGRADE = 3;            // 3 points granted per permanent upgrade level
 export const RESPEC_COST_OMENX = 10;
+export const GOLD_RESPEC_TIERS = [2000, 4000, 8000, 16000];
 
 export function getGoldRespecCost(save) {
     const count = Number(save?.poolBiasGoldRespecCount || 0);
     return GOLD_RESPEC_TIERS[Math.min(count, GOLD_RESPEC_TIERS.length - 1)];
 }
 
-export const BIAS_CATEGORIES = [
-    { id: 'weapons',   label: 'Weapons',   color: 'cyan',    desc: 'Boost weapon-pickup chance' },
-    { id: 'passives',  label: 'Passives',  color: 'purple',  desc: 'Boost passive-stat upgrade chance' },
-    { id: 'stats',     label: 'Stats',     color: 'amber',   desc: 'Boost generic stat-up upgrades (HP, regen, armor, magnet, etc.)' },
-    { id: 'evolution', label: 'Evolution', color: 'rose',    desc: 'Boost upgrades that complete a weapon evolution' },
-];
+// Build a list of bias-able targets from the upgrade pool itself so this stays
+// in sync if UPGRADES/WEAPONS change.
+function buildTargets() {
+    const stats = [];
+    const seenStats = new Set();
+    const STAT_LABELS = {
+        damageMult:    { label: 'Damage',          icon: '⚔️' },
+        speedMult:     { label: 'Move Speed',      icon: '🏃' },
+        maxHp:         { label: 'Max HP',          icon: '❤️' },
+        areaMult:      { label: 'Area of Effect',  icon: '💫' },
+        cooldownMult:  { label: 'Cooldown',        icon: '⏱️' },
+        magnetRange:   { label: 'Pickup Range',    icon: '🧲' },
+        regen:         { label: 'HP Regen',        icon: '🌿' },
+        armor:         { label: 'Armor',           icon: '🛡️' },
+        goldMult:      { label: 'Gold Drops',      icon: '💰' },
+        projSpeedMult: { label: 'Projectile Speed',icon: '🚀' },
+        xpMult:        { label: 'XP Gain',         icon: '🧠' },
+    };
+    for (const u of UPGRADES) {
+        if (u.type === 'passive' && u.stat && !seenStats.has(u.stat)) {
+            seenStats.add(u.stat);
+            const meta = STAT_LABELS[u.stat] || { label: u.stat, icon: '✦' };
+            stats.push({ id: u.stat, kind: 'stat', label: meta.label, icon: meta.icon });
+        }
+    }
 
-// Total points the player has available is the sum of all permanent investment levels.
-// Mirrors what the old PERMANENT_BIAS_PER_LEVEL used to read implicitly.
+    const weapons = [];
+    const seenWpns = new Set();
+    for (const u of UPGRADES) {
+        if (u.type === 'weapon' && u.weaponId && !seenWpns.has(u.weaponId)) {
+            seenWpns.add(u.weaponId);
+            const w = WEAPONS[u.weaponId];
+            weapons.push({ id: u.weaponId, kind: 'weapon', label: w?.name || u.weaponId, icon: '🔫' });
+        }
+    }
+    return { stats, weapons };
+}
+
+let _cachedTargets = null;
+export function getBiasTargets() {
+    if (!_cachedTargets) _cachedTargets = buildTargets();
+    return _cachedTargets;
+}
+
+// Total points = (sum of permanent stat upgrade levels + permanent weapon upgrade levels + permanent talents) * POINTS_PER_UPGRADE
 export function getTotalBiasPoints(save) {
     if (!save) return 0;
-    let total = 0;
-    // Permanent stat upgrades (e.g. health, speed, damage, magnet, regen, cooldown, luck)
+    let levels = 0;
     const stats = save.permanentUpgrades || {};
-    for (const k of Object.keys(stats)) total += Number(stats[k] || 0);
-    // Permanent weapon upgrades (damage / area / cooldown per weapon)
+    for (const k of Object.keys(stats)) levels += Number(stats[k] || 0);
     const wpns = save.permanentWeaponUpgrades || {};
     for (const wId of Object.keys(wpns)) {
         const w = wpns[wId] || {};
-        total += Number(w.damage || 0) + Number(w.area || 0) + Number(w.cooldown || 0);
+        levels += Number(w.damage || 0) + Number(w.area || 0) + Number(w.cooldown || 0);
     }
-    // Permanent talents (1 per unlocked talent)
     const talents = save.permanentTalents || {};
     for (const cId of Object.keys(talents)) {
         const list = talents[cId];
-        if (Array.isArray(list)) total += list.length;
+        if (Array.isArray(list)) levels += list.length;
     }
-    return total;
+    return levels * POINTS_PER_UPGRADE;
 }
 
 export function getAllocations(save) {
-    const a = save?.poolBiasAllocations || {};
-    const out = {};
-    for (const c of BIAS_CATEGORIES) out[c.id] = Number(a[c.id] || 0);
-    return out;
+    return save?.poolBiasAllocations || {};
 }
 
 export function getSpentPoints(save) {
     const a = getAllocations(save);
-    return Object.values(a).reduce((s, v) => s + v, 0);
+    let total = 0;
+    for (const k of Object.keys(a)) total += Number(a[k] || 0);
+    return total;
 }
 
 export function getRemainingPoints(save) {
     return Math.max(0, getTotalBiasPoints(save) - getSpentPoints(save));
 }
 
-// Determine which category an upgrade falls into. `EVOLUTIONS` and `SYNERGIES`
-// are passed in so this stays pure / framework-agnostic and doesn't import
-// game/Constants.js (which would create a circular dep risk).
-export function getUpgradeCategory(upgrade, evolutions = [], playerWeapons = [], playerPassives = []) {
-    if (!upgrade) return 'stats';
-    if (upgrade.type === 'weapon') {
-        // Treat as 'evolution' if picking this upgrade would complete an evolution
-        // (player already owns the matching base weapon and the matching passive,
-        // OR already owns the passive and would gain the weapon).
-        const matchingEvo = evolutions.find(e =>
-            (e.baseWeapon === upgrade.weaponId && playerPassives?.some(p => p.id === e.passive))
-        );
-        if (matchingEvo) return 'evolution';
-        return 'weapons';
-    }
-    if (upgrade.type === 'passive') {
-        // If owning this passive would complete an evolution, treat as 'evolution'.
-        const matchingEvo = evolutions.find(e =>
-            e.passive === upgrade.id && playerWeapons?.some(w => w.id === e.baseWeapon)
-        );
-        if (matchingEvo) return 'evolution';
-        // Generic stat-ups vs character-flavoured passives: anything tagged as 'passive'
-        // counts as 'passives'. We keep 'stats' for future use (e.g. relic-flavoured stat boosts).
-        return 'passives';
-    }
-    return 'stats';
+// Resolve which target id (if any) an upgrade matches.
+export function getUpgradeTargetId(upgrade) {
+    if (!upgrade) return null;
+    if (upgrade.type === 'weapon' && upgrade.weaponId) return upgrade.weaponId;
+    if (upgrade.type === 'passive' && upgrade.stat) return upgrade.stat;
+    return null;
 }
 
 // Weight multiplier for an upgrade given the player's current allocation.
-export function getBiasMultiplier(upgrade, save, evolutions = [], playerWeapons = [], playerPassives = []) {
-    const cat = getUpgradeCategory(upgrade, evolutions, playerWeapons, playerPassives);
-    const pts = getAllocations(save)[cat] || 0;
+// Unused params kept for backwards-compatible call site signature.
+export function getBiasMultiplier(upgrade, save /*, evolutions, playerWeapons, playerPassives */) {
+    const targetId = getUpgradeTargetId(upgrade);
+    if (!targetId) return 1;
+    const pts = Number(getAllocations(save)[targetId] || 0);
     return 1 + pts * BIAS_PER_POINT;
 }
