@@ -251,7 +251,7 @@ export function updateProjectiles(engine, dt) {
             p.life -= dt;
 
             if (Math.hypot(engine.player.x - p.x, engine.player.y - p.y) < engine.player.radius + p.radius) {
-                engine.takeDamage(p.damage);
+                engine.takeDamage(p.damage, p.ownerName || 'Enemy Projectile');
                 p.dead = true;
             }
             return p.life > 0;

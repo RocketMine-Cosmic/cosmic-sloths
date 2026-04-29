@@ -353,8 +353,10 @@ export class GameEngine {
         });
     }
 
-    takeDamage(amount) {
+    takeDamage(amount, sourceName = null) {
         if (this.player.invincibleTimer > 0 || this.player.iFrames > 0) return;
+        // Remember whatever last hurt the player so we can show "killed by X" on game over.
+        if (sourceName) this._lastDamageSource = sourceName;
 
         if (this.player.charAugments?.includes('glt_phase') && Math.random() < 0.1) {
             this.player.iFrames = 2.0;
@@ -727,7 +729,7 @@ export class GameEngine {
                 h.active = true;
                 h.timer = 0.5;
                 if (Math.hypot(this.player.x - h.x, this.player.y - h.y) < this.player.radius + h.radius) {
-                    this.takeDamage(h.damage);
+                    this.takeDamage(h.damage, 'Cosmic Hazard');
                 }
                 this.addParticle(h.x, h.y, '#ff4500', 20);
             }
@@ -943,6 +945,7 @@ export class GameEngine {
             bossesKilled: this.bossesKilled || 0, elitesKilled: this.elitesKilled || 0,
             weaponDamage: this.weaponDamage || {},
             weaponKills: this.weaponKills || {},
+            killedBy: this._lastDamageSource || null,
             ...extra
         };
     }

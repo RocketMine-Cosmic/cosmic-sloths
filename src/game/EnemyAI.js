@@ -228,7 +228,7 @@ export function updateEnemies(engine, dt) {
                 e.y = engine.player.y;
                 e.radius += dt * 2;
                 if (engine.frameCount % 30 === 0) {
-                    engine.takeDamage(2 + engine.player.armor);
+                    engine.takeDamage(2 + engine.player.armor, e.name || 'Black Hole Tick');
                 }
             }
         }
@@ -307,7 +307,7 @@ export function updateEnemies(engine, dt) {
         } else {
             if (dist < engine.player.radius + e.radius && !e.burrowed) {
                 if (!e.attackTimer || e.attackTimer <= 0) {
-                    engine.takeDamage(e.damage);
+                    engine.takeDamage(e.damage, e.name || 'Enemy');
                     e.attackTimer = 1.0;
                 }
             }
@@ -338,13 +338,21 @@ export function updateEnemies(engine, dt) {
                         radius: 6,
                         damage: e.damage * 0.5,
                         life: 3,
-                        color: e.color
+                        color: e.color,
+                        ownerName: e.name
                     });
                 }
             }
 
             if (e.isBoss) {
-                updateBossAbilities(e, dt, engine.player, engine.enemyProjectiles, engine.addParticle.bind(engine), engine.addDamageText.bind(engine), engine.takeDamage.bind(engine), engine.enemies, engine.frameCount, engine.arena.id, engine.bossModifiers);
+                const beforeLen = engine.enemyProjectiles.length;
+                const bossTakeDamage = (amt) => engine.takeDamage(amt, e.name || 'Boss');
+                updateBossAbilities(e, dt, engine.player, engine.enemyProjectiles, engine.addParticle.bind(engine), engine.addDamageText.bind(engine), bossTakeDamage, engine.enemies, engine.frameCount, engine.arena.id, engine.bossModifiers);
+                // Tag any newly-spawned boss projectiles with the boss's name for kill credit.
+                for (let pi = beforeLen; pi < engine.enemyProjectiles.length; pi++) {
+                    const proj = engine.enemyProjectiles[pi];
+                    if (proj && !proj.ownerName) proj.ownerName = e.name;
+                }
             }
         }
     }
