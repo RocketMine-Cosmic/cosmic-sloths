@@ -39,7 +39,7 @@ const STEPS = [
         title: 'Launch Your First Run',
         body: (
             <>
-                <p>Swipe right (or use the <span className="text-fuchsia-300 font-bold">Warp</span> menu at the top) to open the <span className="text-cyan-300 font-bold">Sloth Lounge</span>. Pick an operative, sector, and difficulty — then hit <span className="text-cyan-300 font-bold">LAUNCH</span> for a normal run or <span className="text-fuchsia-300 font-bold">ENDLESS</span> for the high-score mode.</p>
+                <p>Swipe right (or use the <span className="text-fuchsia-300 font-bold">Warp</span> menu at the top) to open the <span className="text-cyan-300 font-bold">Sloth Lounge</span>. Pick a sloth, sector, and difficulty — then hit <span className="text-cyan-300 font-bold">LAUNCH</span> for a normal run or <span className="text-fuchsia-300 font-bold">ENDLESS</span> for the high-score mode.</p>
                 <p className="mt-2 text-slate-400">Move with WASD or the on-screen joystick. Weapons fire automatically — focus on dodging and grabbing XP gems.</p>
             </>
         ),
@@ -52,7 +52,7 @@ const STEPS = [
         body: (
             <>
                 <p>Every run earns gold you keep. Spend it in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, grab daily quests on the <span className="text-emerald-300 font-bold">Mission Board</span>, and check your rank on the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
-                <p className="mt-2 text-slate-400">Unlock new pilots by hitting kill milestones (or owning the matching NFT). Each week, top scorers split the OMENX reward pool.</p>
+                <p className="mt-2 text-slate-400">Unlock new sloths by hitting kill milestones (or owning the matching NFT). Each week, top scorers split the OMENX reward pool.</p>
             </>
         ),
     },
