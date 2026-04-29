@@ -1,33 +1,13 @@
 // Level-up, upgrade choices, synergies, and evolutions extracted from GameEngine.
-import { UPGRADES, WEAPONS, SYNERGIES, EVOLUTIONS, CHARACTER_TALENTS } from './Constants';
+import { UPGRADES, WEAPONS, SYNERGIES, EVOLUTIONS } from './Constants';
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
+import { getBiasMultiplier } from '@/lib/poolBias';
 
-// How much each level of permanent investment biases an in-run upgrade's draw chance.
-// 0.15 = +15% weight per matching permanent level (recommended).
-const PERMANENT_BIAS_PER_LEVEL = 0.15;
-
-// Compute a weight multiplier for a given upgrade based on the player's permanent investments.
-// - Passive upgrades match by `stat` against unlocked CHARACTER_TALENTS for the active character.
-// - Weapon upgrades match by `weaponId` against permanent weapon upgrade levels.
-function getUpgradeWeight(upgrade, save, characterId) {
-    let bonusLevels = 0;
-
-    if (upgrade.type === 'passive' && upgrade.stat) {
-        const unlocked = save?.unlockedTalents?.[characterId] || [];
-        if (unlocked.length > 0) {
-            const charTalents = CHARACTER_TALENTS[characterId] || [];
-            for (const tId of unlocked) {
-                const t = charTalents.find(x => x.id === tId);
-                if (t && t.stat === upgrade.stat) bonusLevels += 1;
-            }
-        }
-    } else if (upgrade.type === 'weapon' && upgrade.weaponId) {
-        const perm = save?.permanentWeaponUpgrades?.[upgrade.weaponId] || {};
-        bonusLevels = (perm.damage || 0) + (perm.area || 0) + (perm.cooldown || 0);
-    }
-
-    return 1 + (bonusLevels * PERMANENT_BIAS_PER_LEVEL);
+// Pool weight is now driven by the player's allocated bias points (Loadouts page).
+// See lib/poolBias.js for the math + category mapping.
+function getUpgradeWeight(upgrade, save, characterId, playerWeapons, playerPassives) {
+    return getBiasMultiplier(upgrade, save, EVOLUTIONS, playerWeapons, playerPassives);
 }
 
 // Pick + remove a random item from `pool` using `weights` (parallel array). Returns the item.
@@ -115,9 +95,9 @@ export function generateChoices(engine) {
         }
         return true;
     });
-    // Weighted draw: upgrades you've permanently invested in are slightly more
-    // likely to appear (+15% weight per matching permanent level).
-    const weights = pool.map(u => getUpgradeWeight(u, engine.save, engine.characterId));
+    // Weighted draw: each upgrade's category (weapons / passives / stats / evolution)
+    // is biased by the points the player allocated on the Loadouts page.
+    const weights = pool.map(u => getUpgradeWeight(u, engine.save, engine.characterId, engine.player.weapons, engine.player.passives));
 
     for (let i = 0; i < 3; i++) {
         if (pool.length === 0) break;

@@ -7,6 +7,7 @@ import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import PoolBiasPanel from '../components/loadouts/PoolBiasPanel';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { ensureNftsFetched } from '@/lib/playerDataCache';
 
@@ -140,6 +141,8 @@ export default function Loadouts({ isCarousel }) {
                         </div>
                         <CurrencyHeader />
                     </header>
+
+                    <PoolBiasPanel save={save} setSave={setSave} />
 
                     <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-3 md:p-5 mb-4 text-xs md:text-sm text-slate-300 leading-relaxed">
                         <span className="font-bold text-cyan-300">How it works:</span> A preset captures your current
