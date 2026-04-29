@@ -93,13 +93,30 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
         if (armorLvl) { totals.armor = (totals.armor || 0) + armorLvl; sourceCount++; }
         if (magnetLvl) { totals.magnet = (totals.magnet || 0) + magnetLvl * 5; sourceCount++; }
 
-        // 3. Character mastery bonus
+        // 3. Character mastery bonuses (all unlocked tiers stack — including character-specific T6/T7)
         const charKills = save.characterKills?.[selectedChar] || 0;
-        const mastery = getCharacterMastery(charKills);
-        if (mastery.current.stat && mastery.current.value) {
-            totals[mastery.current.stat] = (totals[mastery.current.stat] || 0) + mastery.current.value;
-            sourceCount++;
-        }
+        const mastery = getCharacterMastery(charKills, selectedChar);
+        let masteryApplied = false;
+        (mastery.unlockedTiers || []).forEach(tier => {
+            if (tier.stat && tier.value && tier.stat !== 'allStats') {
+                totals[tier.stat] = (totals[tier.stat] || 0) + tier.value;
+                masteryApplied = true;
+            }
+            if (tier.multiStat) {
+                for (const [k, v] of Object.entries(tier.multiStat)) {
+                    totals[k] = (totals[k] || 0) + v;
+                    masteryApplied = true;
+                }
+            }
+            if (tier.stat === 'allStats' && tier.value) {
+                ['speedMult','damageMult','areaMult','xpMult','goldMult'].forEach(k => {
+                    totals[k] = (totals[k] || 0) + tier.value;
+                });
+                totals.cooldownMult = (totals.cooldownMult || 0) - tier.value;
+                masteryApplied = true;
+            }
+        });
+        if (masteryApplied) sourceCount++;
 
         // 4. VIP bonuses — +1% damage and +1% max HP per VIP level
         if (vipLevel && vipLevel > 0) {

@@ -69,10 +69,36 @@ export class GameEngine {
         });
 
         const charKills = save.characterKills?.[characterId] || 0;
-        const mastery = getCharacterMastery(charKills);
-        if (mastery.current && mastery.current.stat) {
-            talentBonus[mastery.current.stat] = (talentBonus[mastery.current.stat] || 0) + mastery.current.value;
-        }
+        const mastery = getCharacterMastery(charKills, characterId);
+        // Apply ALL unlocked tiers (not just the highest) so they stack as a long-term grind reward.
+        // - `stat` + `value`: single-stat bump (legacy tiers 1–5)
+        // - `multiStat`: object of {stat: value} pairs (tier 6 character-flavoured stat package)
+        // - `allStats`: applies the value to a curated set of core stat multipliers (NeoByte tier 6)
+        // - `abilityBoost`: read elsewhere by CharacterMechanics / GameEngine to tweak active skills
+        // Note: tier 7 ability boosts are stored on `this.masteryAbilityBoost` for runtime use.
+        this.masteryAbilityBoost = {};
+        const allStatsKeys = ['speedMult', 'damageMult', 'areaMult', 'cooldownMult', 'magnetRange', 'xpMult', 'goldMult'];
+        (mastery.unlockedTiers || [mastery.current]).forEach(tier => {
+            if (!tier) return;
+            if (tier.stat && tier.value) {
+                talentBonus[tier.stat] = (talentBonus[tier.stat] || 0) + tier.value;
+            }
+            if (tier.multiStat) {
+                for (const [k, v] of Object.entries(tier.multiStat)) {
+                    talentBonus[k] = (talentBonus[k] || 0) + v;
+                }
+            }
+            if (tier.stat === 'allStats' && tier.value) {
+                allStatsKeys.forEach(k => {
+                    // magnetRange is a flat-add stat (default 60-72) so apply value as %.
+                    if (k === 'magnetRange') talentBonus[k] = (talentBonus[k] || 0) + Math.round(60 * tier.value);
+                    // cooldownMult is a "lower is better" stat — invert.
+                    else if (k === 'cooldownMult') talentBonus[k] = (talentBonus[k] || 0) - tier.value;
+                    else talentBonus[k] = (talentBonus[k] || 0) + tier.value;
+                });
+            }
+            if (tier.abilityBoost) Object.assign(this.masteryAbilityBoost, tier.abilityBoost);
+        });
 
         const equippedRelics = save.equippedRelics || [];
         const relicBonus = {
@@ -347,8 +373,9 @@ export class GameEngine {
             actualDmg = Math.max(1, Math.floor(actualDmg * 0.85));
         }
 
-        if (this.characterId === 'synthbeats' && this.gold >= 5) {
-            this.gold -= 5;
+        const bribeCost = this.masteryAbilityBoost?.bribeCost ?? 5;
+        if (this.characterId === 'synthbeats' && this.gold >= bribeCost) {
+            this.gold -= bribeCost;
             if (this.callbacks.onGoldChange) this.callbacks.onGoldChange(this.gold);
             this.addDamageText(this.player.x, this.player.y - 20, "BRIBED!", '#FFD700');
             this.particleManager.createExplosion(this.player.x, this.player.y, '#FFD700', 1.0, 'default');
@@ -356,7 +383,8 @@ export class GameEngine {
             return;
         }
 
-        if (this.characterId === 'glitch' && Math.random() < 0.15) {
+        const phaseShiftChance = this.masteryAbilityBoost?.phaseShiftChance ?? 0.15;
+        if (this.characterId === 'glitch' && Math.random() < phaseShiftChance) {
             this.player.iFrames = 2.0;
             this.player.invincibleTimer = 2.0;
             this.addDamageText(this.player.x, this.player.y - 20, "PHASE SHIFT!", '#FF00FF');
@@ -708,7 +736,10 @@ export class GameEngine {
     }
 
     updateWeapons(dt) {
-        const timeMultiplier = (this.characterId === 'neobyte' && this.player.bannerBuff) ? 1.3 : 1.0;
+        // Tier-7 NeoByte mastery: banner buff +50% stronger (1.3x → 1.45x cooldown speed)
+        const bannerBuffMult = this.masteryAbilityBoost?.banner?.buffMult || 1.0;
+        const bannerCdBoost = 1.0 + (0.3 * bannerBuffMult);
+        const timeMultiplier = (this.characterId === 'neobyte' && this.player.bannerBuff) ? bannerCdBoost : 1.0;
         this.player.weapons.forEach(w => {
             w.timer -= dt * timeMultiplier;
             if (w.timer <= 0) {
@@ -731,7 +762,9 @@ export class GameEngine {
         let isFullyMastered = false;
 
         if (this.characterId === 'neobyte' && this.player.bannerBuff) {
-            damageMult *= 1.3;
+            // Tier-7 NeoByte mastery: banner damage buff +50% stronger (1.3x → 1.45x)
+            const bannerBuffMult = this.masteryAbilityBoost?.banner?.buffMult || 1.0;
+            damageMult *= 1.0 + (0.3 * bannerBuffMult);
         }
         if (this.player.charAugments?.includes('neo_surge') && this.time <= 30) {
             damageMult *= 1.25;
@@ -824,7 +857,8 @@ export class GameEngine {
             enemy.color = '#39FF14';
         }
 
-        if (this.characterId === 'neonvortex' && !enemy.isBoss && enemy.hp > 0 && enemy.hp <= enemy.maxHp * 0.2) {
+        const executeThreshold = this.masteryAbilityBoost?.executeThreshold ?? 0.2;
+        if (this.characterId === 'neonvortex' && !enemy.isBoss && enemy.hp > 0 && enemy.hp <= enemy.maxHp * executeThreshold) {
             enemy.hp = 0;
             this.addDamageText(enemy.x, enemy.y - 20, "EXECUTED", '#7A00FF');
             for(let i=0; i<3; i++) {

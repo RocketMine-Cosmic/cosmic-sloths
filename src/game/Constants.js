@@ -384,6 +384,7 @@ export const getEnemyMasteryMilestones = (enemy) => {
     }
 };
 
+// Shared mastery tiers 1–5 — apply identically to every character.
 export const CHARACTER_MASTERY_LEVELS = [
     { level: 1, killsRequired: 0, title: 'Novice', bonusDesc: 'None', stat: null, value: 0, badge: '🟢' },
     { level: 2, killsRequired: 2000, title: 'Adept', bonusDesc: '+5% Speed', stat: 'speedMult', value: 0.05, badge: '🔵' },
@@ -392,16 +393,77 @@ export const CHARACTER_MASTERY_LEVELS = [
     { level: 5, killsRequired: 25000, title: 'Grandmaster', bonusDesc: '-10% Cooldown', stat: 'cooldownMult', value: -0.1, badge: '👑' },
 ];
 
-export const getCharacterMastery = (kills) => {
-    let current = CHARACTER_MASTERY_LEVELS[0];
-    let next = CHARACTER_MASTERY_LEVELS[1];
-    for (let i = 0; i < CHARACTER_MASTERY_LEVELS.length; i++) {
-        if (kills >= CHARACTER_MASTERY_LEVELS[i].killsRequired) {
-            current = CHARACTER_MASTERY_LEVELS[i];
-            next = CHARACTER_MASTERY_LEVELS[i+1] || null;
+// Per-character signature bonuses unlocked at the highest two mastery tiers.
+// Tier 6 (50K kills) — a stat boost that matches each character's identity.
+// Tier 7 (100K kills) — boosts that character's signature active ability or core trait.
+//   - `abilityBoost` is read by CharacterMechanics.js / GameEngine to tweak active skills.
+//   - When `stat` is set, it stacks with the shared tiers as a passive bonus.
+export const CHARACTER_MASTERY_SIGNATURE = {
+    neobyte: {
+        tier6:  { title: 'Fleet Admiral',     bonusDesc: '+10% to all stats',          badge: '🌟', stat: 'allStats',     value: 0.10 },
+        tier7:  { title: 'Galactic Sovereign',bonusDesc: 'Banner buff +50% stronger & 33% larger', badge: '💎', abilityBoost: { banner: { buffMult: 1.5, radiusMult: 1.33 } } },
+    },
+    pandypaws: {
+        tier6:  { title: 'Iron Wall',         bonusDesc: '+50 Max HP & +3 Armor',      badge: '🌟', multiStat: { maxHp: 50, armor: 3 } },
+        tier7:  { title: 'Unbreakable',       bonusDesc: 'Scrap drop chance doubled (5% → 10%)', badge: '💎', abilityBoost: { scrapDropMult: 2.0 } },
+    },
+    novabyte: {
+        tier6:  { title: 'Demolitions Ace',   bonusDesc: '+15% Damage & +15% Area',    badge: '🌟', multiStat: { damageMult: 0.15, areaMult: 0.15 } },
+        tier7:  { title: 'Annihilator',       bonusDesc: 'Chain explosion chance doubled (10% → 20%)', badge: '💎', abilityBoost: { chainExplosionMult: 2.0 } },
+    },
+    glitch: {
+        tier6:  { title: 'Spectral Edge',     bonusDesc: '+15% Speed & +20% Damage',   badge: '🌟', multiStat: { speedMult: 0.15, damageMult: 0.20 } },
+        tier7:  { title: 'Untouchable',       bonusDesc: 'Phase shift chance 15% → 25%', badge: '💎', abilityBoost: { phaseShiftChance: 0.25 } },
+    },
+    holodrift: {
+        tier6:  { title: 'Quantum Engineer',  bonusDesc: '+50 Magnet & +20% XP',       badge: '🌟', multiStat: { magnetRange: 50, xpMult: 0.20 } },
+        tier7:  { title: 'Mirage Master',     bonusDesc: 'Decoy cooldown 20s → 14s',   badge: '💎', abilityBoost: { decoyCooldownMult: 0.7 } },
+    },
+    codebreaker: {
+        tier6:  { title: 'Cyber Tactician',   bonusDesc: '-10% Cooldown & +2 Luck',    badge: '🌟', multiStat: { cooldownMult: -0.10, luck: 2 } },
+        tier7:  { title: 'Master Hacker',     bonusDesc: 'Hack cooldown 10s → 7s',     badge: '💎', abilityBoost: { hackCooldownMult: 0.7 } },
+    },
+    dataphantom: {
+        tier6:  { title: 'Phantom Lord',      bonusDesc: '+30% Proj Speed & +3 Armor', badge: '🌟', multiStat: { projSpeedMult: 0.30, armor: 3 } },
+        tier7:  { title: 'Wraith',            bonusDesc: 'Phantom boost duration 2s → 3.5s', badge: '💎', abilityBoost: { phantomBoostDuration: 3.5 } },
+    },
+    neonvortex: {
+        tier6:  { title: 'Apex Marksman',     bonusDesc: '+25% Damage & +25% Proj Speed', badge: '🌟', multiStat: { damageMult: 0.25, projSpeedMult: 0.25 } },
+        tier7:  { title: 'Executioner',       bonusDesc: 'Execute threshold 20% → 30% HP', badge: '💎', abilityBoost: { executeThreshold: 0.30 } },
+    },
+    synthbeats: {
+        tier6:  { title: 'Cosmic Tycoon',     bonusDesc: '+30% Gold & +2 Luck',        badge: '🌟', multiStat: { goldMult: 0.30, luck: 2 } },
+        tier7:  { title: 'Death\'s Dealer',   bonusDesc: 'Bribe cost 5g → 3g',         badge: '💎', abilityBoost: { bribeCost: 3 } },
+    },
+    skybyte: {
+        tier6:  { title: 'Sky Captain',       bonusDesc: '+15% Speed & +15% Area',     badge: '🌟', multiStat: { speedMult: 0.15, areaMult: 0.15 } },
+        tier7:  { title: 'Sonic Legend',      bonusDesc: 'Sonic boom charges 33% faster', badge: '💎', abilityBoost: { sonicChargeMult: 1.33 } },
+    },
+};
+
+export const getCharacterMastery = (kills, characterId = null) => {
+    // Build a virtual list including character-specific tier 6 + 7 if a charId is supplied.
+    const sig = characterId ? CHARACTER_MASTERY_SIGNATURE[characterId] : null;
+    const allTiers = [...CHARACTER_MASTERY_LEVELS];
+    if (sig) {
+        if (sig.tier6) allTiers.push({ level: 6, killsRequired: 50000,  ...sig.tier6 });
+        if (sig.tier7) allTiers.push({ level: 7, killsRequired: 100000, ...sig.tier7 });
+    }
+
+    let current = allTiers[0];
+    let next = allTiers[1] || null;
+    let unlockedTiers = [allTiers[0]];
+    for (let i = 1; i < allTiers.length; i++) {
+        if (kills >= allTiers[i].killsRequired) {
+            current = allTiers[i];
+            next = allTiers[i+1] || null;
+            unlockedTiers.push(allTiers[i]);
+        } else {
+            next = allTiers[i];
+            break;
         }
     }
-    return { current, next };
+    return { current, next, unlockedTiers };
 };
 
 export const getWeaponStatsAndMastery = (save, wId) => {

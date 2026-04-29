@@ -40,7 +40,7 @@ export function updateEnemies(engine, dt) {
                 });
             }
 
-            if (engine.characterId === 'novabyte' && Math.random() < 0.10 && !e.isBoss) {
+            if (engine.characterId === 'novabyte' && Math.random() < 0.10 * (engine.masteryAbilityBoost?.chainExplosionMult || 1.0) && !e.isBoss) {
                 engine.particleManager.createExplosion(e.x, e.y, '#FF007F', 1.5 * engine.player.areaMult, 'default');
                 engine.enemies.forEach(other => {
                     if (other !== e && Math.hypot(other.x - e.x, other.y - e.y) < 100 * engine.player.areaMult) {
@@ -49,7 +49,7 @@ export function updateEnemies(engine, dt) {
                 });
             }
 
-            if (engine.characterId === 'pandypaws' && Math.random() < 0.05 && !e.isBoss) {
+            if (engine.characterId === 'pandypaws' && Math.random() < 0.05 * (engine.masteryAbilityBoost?.scrapDropMult || 1.0) && !e.isBoss) {
                 engine.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'scrap', color: '#aaaaaa', icon: '⚙️' });
             }
 
@@ -291,7 +291,7 @@ export function updateEnemies(engine, dt) {
         if (engine.characterId === 'dataphantom' && dist < 150 && !e.burrowed && !e.dataLeeched) {
             e.dataLeeched = true;
             e.speedMult = (e.speedMult || 1) * 0.7;
-            engine.player.phantomBoostTimer = 2.0;
+            engine.player.phantomBoostTimer = engine.masteryAbilityBoost?.phantomBoostDuration || 2.0;
             engine.addParticle(e.x, e.y, '#98FF98', 10, 'spark');
             engine.addParticle(e.x, e.y, '#98FF98', 5, 'implode', 1.5, { targetX: engine.player.x, targetY: engine.player.y });
             engine.addDamageText(e.x, e.y - 20, "LEECHED", '#98FF98');

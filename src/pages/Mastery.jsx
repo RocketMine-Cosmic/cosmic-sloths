@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, CHARACTER_MASTERY_LEVELS, getCharacterMastery } from '../game/Constants';
+import { CHARACTERS, CHARACTER_MASTERY_LEVELS, CHARACTER_MASTERY_SIGNATURE, getCharacterMastery } from '../game/Constants';
 import { ArrowLeft, Award, Lock, CheckCircle2 } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
@@ -60,9 +60,14 @@ export default function Mastery({ isCarousel }) {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {CHARACTERS.map((char) => {
                             const kills = characterKills[char.id] || 0;
-                            const mastery = getCharacterMastery(kills);
+                            const mastery = getCharacterMastery(kills, char.id);
                             const next = mastery.next;
                             const progressPercent = next ? Math.min(100, Math.max(0, (kills / next.killsRequired) * 100)) : 100;
+                            // Build the visible bonus list: shared tiers 2-5 + character-specific tiers 6-7
+                            const sig = CHARACTER_MASTERY_SIGNATURE[char.id];
+                            const allTiersForChar = [...CHARACTER_MASTERY_LEVELS.slice(1)];
+                            if (sig?.tier6) allTiersForChar.push({ level: 6, killsRequired: 50000, ...sig.tier6 });
+                            if (sig?.tier7) allTiersForChar.push({ level: 7, killsRequired: 100000, ...sig.tier7 });
                             
                             return (
                                 <div key={char.id} className="bg-slate-900/60 border-slate-800 rounded-xl border-2 p-4 flex flex-col gap-4 transition-all hover:bg-slate-900/80">
@@ -137,7 +142,7 @@ export default function Mastery({ isCarousel }) {
 
                                     <div className="space-y-1.5 mt-1">
                                         <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2 border-b border-slate-800/50 pb-1">Mastery Bonuses</div>
-                                        {CHARACTER_MASTERY_LEVELS.slice(1).map((lvl) => {
+                                        {allTiersForChar.map((lvl) => {
                                             const isUnlocked = kills >= lvl.killsRequired;
                                             return (
                                                 <div key={lvl.level} className={`flex justify-between items-center p-2.5 rounded-lg text-xs transition-colors ${isUnlocked ? 'bg-amber-950/30 border border-amber-500/30 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.1)]' : 'bg-slate-950/50 border border-slate-800 text-slate-500'}`}>

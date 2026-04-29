@@ -6,7 +6,9 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
         engine.characterMechanics.bannerTimer += dt;
         if (engine.characterMechanics.bannerTimer >= 15) {
             engine.characterMechanics.bannerTimer = 0;
-            engine.characterMechanics.banners.push({ x: engine.player.x, y: engine.player.y, life: 10, radius: 150 });
+            // Tier-7 mastery: +33% banner radius
+            const radiusMult = engine.masteryAbilityBoost?.banner?.radiusMult || 1.0;
+            engine.characterMechanics.banners.push({ x: engine.player.x, y: engine.player.y, life: 10, radius: 150 * radiusMult });
         }
         let nearBanner = false;
         engine.characterMechanics.banners = engine.characterMechanics.banners.filter(b => {
@@ -22,7 +24,9 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
 
     if (engine.characterId === 'holodrift' || engine.player.charAugments?.includes('glt_copy')) {
         engine.characterMechanics.decoyTimer += dt;
-        const threshold = engine.characterId === 'holodrift' ? 20 : 60;
+        // Tier-7 mastery (Holodrift only): decoy cooldown 20s → 14s
+        const decoyCdMult = (engine.characterId === 'holodrift' ? engine.masteryAbilityBoost?.decoyCooldownMult : null) || 1.0;
+        const threshold = engine.characterId === 'holodrift' ? 20 * decoyCdMult : 60;
         if (engine.characterMechanics.decoyTimer >= threshold) {
             engine.characterMechanics.decoyTimer = 0;
             engine.characterMechanics.decoys.push({ x: engine.player.x, y: engine.player.y, hp: 100, maxHp: 100, life: 15 });
@@ -37,7 +41,9 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
 
     if (engine.characterId === 'codebreaker') {
         engine.characterMechanics.hackTimer += dt;
-        if (engine.characterMechanics.hackTimer >= 10) {
+        // Tier-7 mastery: hack cooldown 10s → 7s
+        const hackCdMult = engine.masteryAbilityBoost?.hackCooldownMult || 1.0;
+        if (engine.characterMechanics.hackTimer >= 10 * hackCdMult) {
             engine.characterMechanics.hackTimer = 0;
             const targets = engine.enemies.filter(e => !e.isBoss && !e.hacked && Math.hypot(engine.player.x - e.x, engine.player.y - e.y) < 400);
             if (targets.length > 0) {
@@ -53,8 +59,10 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
     }
 
     if (engine.characterId === 'skybyte') {
+        // Tier-7 mastery: sonic boom charges 33% faster
+        const chargeMult = engine.masteryAbilityBoost?.sonicChargeMult || 1.0;
         if (engine.player.isMoving) {
-            engine.characterMechanics.sonicCharge = Math.min(100, (engine.characterMechanics.sonicCharge || 0) + dt * 20);
+            engine.characterMechanics.sonicCharge = Math.min(100, (engine.characterMechanics.sonicCharge || 0) + dt * 20 * chargeMult);
             const moveDot = dx * engine.characterMechanics.lastMoveDir.x + dy * engine.characterMechanics.lastMoveDir.y;
             if (moveDot < 0.5 && engine.characterMechanics.sonicCharge >= 100) {
                 engine.triggerSonicBoom();
