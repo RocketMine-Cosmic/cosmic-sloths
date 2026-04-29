@@ -26,7 +26,14 @@ function Visualizer({ active }) {
     );
 }
 
-export default function JukeboxTrackRow({ track, index, isPlaying, isPaused, menuEnabled, gameEnabled, onPlay, onToggleMenu, onToggleGame }) {
+function formatDuration(seconds) {
+    if (!seconds || !isFinite(seconds)) return '';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+export default function JukeboxTrackRow({ track, index, duration, isPlaying, isPaused, menuEnabled, gameEnabled, onPlay, onToggleMenu, onToggleGame }) {
     return (
         <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
             isPlaying
@@ -51,6 +58,11 @@ export default function JukeboxTrackRow({ track, index, isPlaying, isPaused, men
                     <span className={`font-bold truncate ${isPlaying ? 'text-cyan-300' : 'text-slate-200'}`}>
                         {track.name}
                     </span>
+                    {duration > 0 && (
+                        <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                            {formatDuration(duration)}
+                        </span>
+                    )}
                 </div>
             </div>
 

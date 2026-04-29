@@ -10,6 +10,26 @@ export default function JukeboxPanel() {
     const [bgmVol, setBgmVol] = useState(SoundManager.bgm.volume);
     const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
     const [isPaused, setIsPaused] = useState(SoundManager.bgm.paused);
+    const [durations, setDurations] = useState({});
+
+    // Load each track's duration once via a metadata-only fetch (no playback).
+    useEffect(() => {
+        const audios = [];
+        MUSIC_TRACKS.forEach(track => {
+            const a = new Audio();
+            a.preload = 'metadata';
+            a.src = track.url;
+            const onLoaded = () => {
+                setDurations(d => ({ ...d, [track.id]: a.duration }));
+            };
+            a.addEventListener('loadedmetadata', onLoaded);
+            audios.push({ a, onLoaded });
+        });
+        return () => audios.forEach(({ a, onLoaded }) => {
+            a.removeEventListener('loadedmetadata', onLoaded);
+            a.src = '';
+        });
+    }, []);
 
     // Force re-render on jukebox state changes (track changed, toggles flipped, etc.)
     useEffect(() => {
@@ -145,6 +165,7 @@ export default function JukeboxPanel() {
                         key={track.id}
                         track={track}
                         index={idx}
+                        duration={durations[track.id]}
                         isPlaying={currentId === track.id}
                         isPaused={isPaused}
                         menuEnabled={SoundManager.isTrackEnabled(track.id, 'menu')}
