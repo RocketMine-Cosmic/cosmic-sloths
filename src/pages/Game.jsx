@@ -520,6 +520,25 @@ export default function Game() {
         return () => document.removeEventListener('touchmove', preventPullToRefresh);
     }, []);
 
+    // Keyboard pause hotkeys: Escape or P toggles pause/resume.
+    React.useEffect(() => {
+        const onKeyDown = (e) => {
+            const key = e.key.toLowerCase();
+            if (key !== 'escape' && key !== 'p') return;
+            const engine = engineRef.current;
+            if (!engine || engine.isGameOver || engine.isVictory) return;
+            // Don't toggle while a level-up or revive prompt is open.
+            if (levelUpChoices || showRevivePrompt) return;
+            if (engine.isPaused) {
+                handleResume();
+            } else {
+                handlePause();
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [levelUpChoices, showRevivePrompt]);
+
     return (
         <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none" style={{ overscrollBehavior: 'none' }}>
             <canvas 

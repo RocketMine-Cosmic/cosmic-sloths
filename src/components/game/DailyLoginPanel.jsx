@@ -52,7 +52,11 @@ export default function DailyLoginPanel({ save, setSave }) {
                 return;
             }
 
-            // Apply server-authoritative reward to local save
+            // Apply server-authoritative reward to local save.
+            // Note: SaveManager.load() runs the daily-bounties rotation, so the
+            // freshly-loaded `s` already has today's bounties. We then push it
+            // back to the cloud so the server-side claim doesn't overwrite our
+            // bounty state on next sync (was reverting bounties to yesterday's).
             const s = SaveManager.load();
             if (data.saveData.gold !== undefined) s.gold = data.saveData.gold;
             if (data.saveData.cosmicTokens !== undefined) s.cosmicTokens = data.saveData.cosmicTokens;
@@ -60,6 +64,8 @@ export default function DailyLoginPanel({ save, setSave }) {
             s.dailyLogin = data.saveData.dailyLogin;
             SaveManager.save(s);
             setSave(s);
+            // Push immediately so today's bounty rotation is persisted to cloud.
+            SaveManager.syncToBackendImmediate?.();
             SoundManager.playGoldPickup();
 
             toast({

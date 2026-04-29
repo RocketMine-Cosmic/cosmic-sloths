@@ -540,14 +540,19 @@ export function renderGame() {
         // So if we are facing right (!facingLeft), we need to mirror them.
         if (!this.player.facingLeft) this.ctx.scale(-1, 1);
         
+        // Soft circular glow under the sprite (replaces shadowBlur which
+        // produced boxy edges along the sprite frame's bounding box).
         if (this.player.color && this.player.color !== '#ffffff') {
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 15;
-            // Draw once to create the neon glow
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-            // Draw again to intensify the glow
-            this.ctx.drawImage(spriteSheet, sx, sy, frameWidth, frameHeight, -size/2, -size/2, size, size);
-            this.ctx.shadowBlur = 0;
+            this.ctx.globalCompositeOperation = 'lighter';
+            if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
+                const glow = this.particleManager.getGlowTexture(this.player.color, size * 0.85);
+                if (glow) {
+                    this.ctx.globalAlpha = 0.55;
+                    this.ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
+                }
+            }
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.globalCompositeOperation = 'source-over';
         }
         
         // Draw the actual sprite
@@ -564,12 +569,18 @@ export function renderGame() {
             this.ctx.scale(-1, 1);
         }
         
+        // Soft circular glow under the sprite (replaces shadowBlur).
         if (this.player.color && this.player.color !== '#ffffff') {
-            this.ctx.shadowColor = this.player.color;
-            this.ctx.shadowBlur = 15;
-            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
-            this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
-            this.ctx.shadowBlur = 0;
+            this.ctx.globalCompositeOperation = 'lighter';
+            if (this.particleManager && typeof this.particleManager.getGlowTexture === 'function') {
+                const glow = this.particleManager.getGlowTexture(this.player.color, size * 0.85);
+                if (glow) {
+                    this.ctx.globalAlpha = 0.55;
+                    this.ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
+                }
+            }
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.globalCompositeOperation = 'source-over';
         }
         
         this.ctx.drawImage(this.player.image, -size/2, -size/2, size, size);
