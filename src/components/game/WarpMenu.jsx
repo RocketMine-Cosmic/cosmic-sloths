@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Compass, X } from 'lucide-react';
 import { SoundManager } from '../../game/SoundManager';
+import { base44 } from '@/api/base44Client';
 
 // Pages grouped into themed sections for easier discovery in the warp menu.
 const SLIDE_GROUPS = [
@@ -66,6 +67,7 @@ const SLIDE_GROUPS = [
 export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // Close on Escape
     useEffect(() => {
@@ -74,6 +76,15 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, [open]);
+
+    // Check admin status once on mount — silently fails for non-admins (403).
+    useEffect(() => {
+        let cancelled = false;
+        base44.functions.invoke('getAdminData', { type: 'pools' })
+            .then(res => { if (!cancelled && !res.data?.error) setIsAdmin(true); })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
 
     const handleWarp = (slide) => {
         SoundManager.playUIClick();
@@ -142,7 +153,18 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
                             </div>
 
                             <div className="p-2 md:p-5 max-h-[78vh] overflow-y-auto space-y-2 md:space-y-4">
-                                {SLIDE_GROUPS.map((group) => (
+                                {[
+                                    ...SLIDE_GROUPS,
+                                    ...(isAdmin ? [{
+                                        id: 'admin',
+                                        title: 'Staff',
+                                        accent: 'text-red-300',
+                                        border: 'border-red-500/40',
+                                        slides: [
+                                            { route: '/admin', name: 'Admin Dashboard', icon: '🛡️', color: 'from-red-800 to-red-950', border: 'border-red-400/60' },
+                                        ],
+                                    }] : []),
+                                ].map((group) => (
                                     <section
                                         key={group.id}
                                         className={`bg-slate-950/50 border ${group.border} rounded-lg md:rounded-xl p-2 md:p-3.5`}
