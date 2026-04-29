@@ -32,11 +32,28 @@ export function updateProjectiles(engine, dt) {
                 const cellSize = 100;
                 const cx = Math.floor(p.x / cellSize);
                 const cy = Math.floor(p.y / cellSize);
+                // Bosses have huge radii (110-160px) that span multiple spatial-hash cells.
+                // The 3×3 cell window below can miss them when the boss center sits 2+ cells
+                // away from the projectile but the boss radius still overlaps. Check all bosses
+                // explicitly so projectiles never "phase through" them — produced the
+                // "DPS stalls 20-30s while boss HP doesn't move" symptom.
+                const bosses = engine.enemies.filter(e => e.isBoss && e.hp > 0);
+                const candidates = [];
+                bosses.forEach(b => candidates.push(b));
                 for (let x = cx - 1; x <= cx + 1; x++) {
                     for (let y = cy - 1; y <= cy + 1; y++) {
                         const cellEnemies = engine.spatialHash?.get(`${x},${y}`);
                         if (cellEnemies) {
                             cellEnemies.forEach(e => {
+                                if (!e.isBoss) candidates.push(e);
+                            });
+                        }
+                    }
+                }
+                {
+                    {
+                        {
+                            candidates.forEach(e => {
                                 if (p.pierce <= 0) return;
                                 if (Math.abs(e.x - p.x) > e.radius + (p.radius || 5) || Math.abs(e.y - p.y) > e.radius + (p.radius || 5)) return;
                                 if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + (p.radius || 5)) {
@@ -160,10 +177,23 @@ export function updateProjectiles(engine, dt) {
                 const maxX = Math.floor((p.x + r + 50) / cellSize);
                 const minY = Math.floor((p.y - r - 50) / cellSize);
                 const maxY = Math.floor((p.y + r + 50) / cellSize);
+                const seen = new Set();
+                // Always include active bosses — their large radii can miss the cell window.
+                engine.enemies.forEach(e => {
+                    if (e.isBoss && e.hp > 0 && !seen.has(e)) {
+                        seen.add(e);
+                        callback(e);
+                    }
+                });
                 for (let x = minX; x <= maxX; x++) {
                     for (let y = minY; y <= maxY; y++) {
                         const cellEnemies = engine.spatialHash?.get(`${x},${y}`);
-                        if (cellEnemies) cellEnemies.forEach(callback);
+                        if (cellEnemies) cellEnemies.forEach(e => {
+                            if (!seen.has(e)) {
+                                seen.add(e);
+                                callback(e);
+                            }
+                        });
                     }
                 }
             };

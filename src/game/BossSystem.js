@@ -99,20 +99,34 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
         if (!boss.pullTimer) boss.pullTimer = 8;
         boss.pullTimer -= dt;
         // Longer telegraph (2.5s) so the player has time to react and reposition.
+        // Re-emit the warning each second so the player sees it even if they
+        // were looking elsewhere when it first fired.
         if (boss.pullTimer <= 2.5 && boss.pullTimer + dt > 2.5) {
-            addDamageText(boss.x, boss.y - boss.radius - 30, '⚠ INCOMING DEVOUR!', '#a855f7');
+            addDamageText(boss.x, boss.y - boss.radius - 30, '⚠ DEVOUR INCOMING — RUN!', '#ff00ff');
+            addParticle(boss.x, boss.y, '#ff00ff', 30, 'glow', 4);
         }
-        // While the Devour is charging, draw a beam of glow particles from the boss
-        // toward the player so the pull direction is visually obvious.
+        if (boss.pullTimer <= 1.5 && boss.pullTimer + dt > 1.5) {
+            addDamageText(boss.x, boss.y - boss.radius - 30, '⚠ DEVOUR — 1.5s', '#ff00ff');
+        }
+        if (boss.pullTimer <= 0.5 && boss.pullTimer + dt > 0.5) {
+            addDamageText(player.x, player.y - 60, '⚠ PULL!', '#ff00ff');
+        }
+        // While Devour is charging, draw a thick beam from boss to player + a pulsing
+        // ring around the player so the pull is unmistakable even off-screen.
         if (boss.pullTimer > 0 && boss.pullTimer <= 2.5) {
             const dx = player.x - boss.x;
             const dy = player.y - boss.y;
             const dist = Math.hypot(dx, dy);
             if (dist > 0) {
-                const steps = 6;
+                // Thick beam — 3 strands of denser particles for visibility.
+                const steps = 12;
                 for (let i = 1; i <= steps; i++) {
                     const t = i / (steps + 1);
-                    addParticle(boss.x + dx * t, boss.y + dy * t, '#a855f7', 1, 'glow', 1.2);
+                    addParticle(boss.x + dx * t, boss.y + dy * t, '#ff00ff', 2, 'glow', 2.0);
+                }
+                // Pulsing warning ring on the player.
+                if (Math.random() < 0.6) {
+                    addParticle(player.x, player.y, '#ff00ff', 1, 'shockwave', 2.5, { growthRate: 200, lineWidth: 4 });
                 }
             }
         }
