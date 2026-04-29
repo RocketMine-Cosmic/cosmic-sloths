@@ -444,13 +444,29 @@ export class GameEngine {
     bindEvents() {
         this.handleKeyDown = (e) => { this.keys[e.key.toLowerCase()] = true; };
         this.handleKeyUp = (e) => { this.keys[e.key.toLowerCase()] = false; };
+        // Auto-pause when the browser throttles the tab. Without this, requestAnimationFrame
+        // fires at ~1Hz in the background — clamped dt makes the game limp along while
+        // real time races ahead, which players perceive as "boss HP stuck" or weapons
+        // not firing. We just freeze the loop entirely while the tab is hidden.
+        this.handleVisibilityChange = () => {
+            if (document.hidden) {
+                this._wasAutoPaused = !this.isPaused;
+                this.isPaused = true;
+            } else if (this._wasAutoPaused) {
+                this._wasAutoPaused = false;
+                this.lastTime = performance.now(); // prevent dt spike on resume
+                this.isPaused = false;
+            }
+        };
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
+        document.addEventListener('visibilitychange', this.handleVisibilityChange);
     }
 
     cleanup() {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange);
         cancelAnimationFrame(this.animationId);
     }
 

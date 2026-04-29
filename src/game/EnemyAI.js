@@ -72,7 +72,18 @@ export function updateEnemies(engine, dt) {
 
             if (e.isBoss) {
                 const fragmentReward = 1 + (engine.bossModifiers.frenzy ? 1 : 0);
-                engine.pickups.push({ x: e.x, y: e.y, type: 'fragment', value: fragmentReward, color: '#a855f7' });
+                // Auto-credit fragments directly to the save instead of dropping a pickup the
+                // player might miss (especially in endless mode where the boss can die far away,
+                // or when quitting/dying during the post-boss grace window).
+                if (engine.callbacks.onFragmentFound) {
+                    const nftRelicMult = engine.save?.nftRelicMultiplier || 1.0;
+                    const finalFrags = (nftRelicMult > 1.0 && Math.random() < (nftRelicMult - 1.0))
+                        ? fragmentReward + 1
+                        : fragmentReward;
+                    engine.callbacks.onFragmentFound(finalFrags);
+                    engine.addDamageText(e.x, e.y - 40, `+${finalFrags} Relic Fragment!`, '#a855f7');
+                    engine.addParticle(e.x, e.y, '#a855f7', 20, 'glow', 2);
+                }
 
                 if (engine.player.charAugments?.includes('nova_nuke')) {
                     engine.pickups.push({ x: e.x - 20, y: e.y + 20, type: 'nuke', color: '#ff0000', icon: '☢️' });
