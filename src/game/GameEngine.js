@@ -906,7 +906,9 @@ export class GameEngine {
         }
 
         const executeThreshold = this.masteryAbilityBoost?.executeThreshold ?? 0.2;
-        if (this.characterId === 'neonvortex' && !enemy.isBoss && enemy.hp > 0 && enemy.hp <= enemy.maxHp * executeThreshold) {
+        // Execute exempts bosses + elites — elites have inflated HP in endless and
+        // were causing NeonVortex to snowball uncontrollably as runs progressed.
+        if (this.characterId === 'neonvortex' && !enemy.isBoss && !enemy.isElite && enemy.hp > 0 && enemy.hp <= enemy.maxHp * executeThreshold) {
             enemy.hp = 0;
             this.addDamageText(enemy.x, enemy.y - 20, "EXECUTED", '#7A00FF');
             for(let i=0; i<3; i++) {

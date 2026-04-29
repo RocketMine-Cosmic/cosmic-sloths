@@ -128,6 +128,12 @@ export function updateEnemies(engine, dt) {
                     if (engine.player.charAugments?.includes('code_hack') && Math.random() < 0.05) {
                         engine.pickups.push({ x: e.x, y: e.y, type: 'gold', value: 10, color: '#ffd700' });
                     }
+                } else if (engine.characterId === 'synthbeats' && Math.random() < 0.10) {
+                    // Endless: regular enemies don't drop gold for anyone EXCEPT SynthBeats —
+                    // her bribe-death mechanic is gold-gated, so the kit needs a self-funding
+                    // trickle to remain viable in endless. ~10% drop rate of 5 gold = enough
+                    // to fund roughly one bribe per ~50 kills.
+                    engine.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: 5, color: '#ffd700' });
                 }
                 if (Math.random() < 0.01 + (engine.player.luck * 0.001)) {
                     const pickupTypes = [

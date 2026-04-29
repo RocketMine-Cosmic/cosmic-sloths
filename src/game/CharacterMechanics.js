@@ -45,9 +45,13 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
         const hackCdMult = engine.masteryAbilityBoost?.hackCooldownMult || 1.0;
         if (engine.characterMechanics.hackTimer >= 10 * hackCdMult) {
             engine.characterMechanics.hackTimer = 0;
-            const targets = engine.enemies.filter(e => !e.isBoss && !e.hacked && Math.hypot(engine.player.x - e.x, engine.player.y - e.y) < 400);
-            if (targets.length > 0) {
-                const target = targets[Math.floor(Math.random() * targets.length)];
+            // Hack up to 3 enemies in radius — single-target hack was useless against
+            // hordes. Now creates a small "infected pack" that fights for you.
+            const candidates = engine.enemies.filter(e => !e.isBoss && !e.hacked && Math.hypot(engine.player.x - e.x, engine.player.y - e.y) < 400);
+            const numToHack = Math.min(3, candidates.length);
+            for (let i = 0; i < numToHack; i++) {
+                const idx = Math.floor(Math.random() * candidates.length);
+                const target = candidates.splice(idx, 1)[0];
                 target.hacked = true;
                 target.color = '#39FF14';
                 engine.characterMechanics.hackedEnemies.push(target);
