@@ -366,6 +366,8 @@ Deno.serve(async (req) => {
                 player_name: playerNameParam || me.full_name || walletAddress,
                 wallet_address: walletAddress,
                 amount: totalAmount,
+                sku_id: skuId,
+                grant_info: grantInfo || null,
                 week_id,
                 season_id
             });

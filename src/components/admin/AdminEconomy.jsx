@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Coins, Clock } from 'lucide-react';
 import moment from 'moment';
+import SpendLogDescription from './SpendLogDescription';
 
 export default function AdminEconomy({ walletAddress }) {
     const [preset, setPreset] = useState('this_week');
@@ -103,6 +104,7 @@ export default function AdminEconomy({ walletAddress }) {
                                 <th className="p-2">Timestamp</th>
                                 <th className="p-2">Player</th>
                                 <th className="p-2">Wallet</th>
+                                <th className="p-2">Purchased</th>
                                 <th className="p-2 text-right">Amount</th>
                                 <th className="p-2">Week</th>
                                 <th className="p-2">Season</th>
@@ -114,13 +116,14 @@ export default function AdminEconomy({ walletAddress }) {
                                     <td className="p-2 text-slate-400 font-mono text-[10px] whitespace-nowrap">{moment(log.created_date).format('MMM D, YYYY HH:mm:ss')}</td>
                                     <td className="p-2 font-bold text-white whitespace-nowrap">{log.player_name}</td>
                                     <td className="p-2 text-slate-500 font-mono text-[10px]" title={log.wallet_address}>{log.wallet_address ? `${log.wallet_address.slice(0,6)}...${log.wallet_address.slice(-4)}` : '-'}</td>
+                                    <td className="p-2"><SpendLogDescription log={log} /></td>
                                     <td className="p-2 text-right font-mono font-bold text-cyan-400">{log.amount} OMENX</td>
                                     <td className="p-2 text-slate-500 font-mono text-[10px]">{log.week_id || '-'}</td>
                                     <td className="p-2 text-slate-500 font-mono text-[10px]">{log.season_id || '-'}</td>
                                 </tr>
                             ))}
-                            {logsLoading && <tr><td colSpan="6" className="p-4 text-center text-slate-500">Loading...</td></tr>}
-                            {!logsLoading && !filteredLogs.length && <tr><td colSpan="6" className="p-6 text-center text-slate-500">No spend logs found.</td></tr>}
+                            {logsLoading && <tr><td colSpan="7" className="p-4 text-center text-slate-500">Loading...</td></tr>}
+                            {!logsLoading && !filteredLogs.length && <tr><td colSpan="7" className="p-6 text-center text-slate-500">No spend logs found.</td></tr>}
                         </tbody>
                     </table>
                 </div>
