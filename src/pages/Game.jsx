@@ -482,6 +482,16 @@ export default function Game() {
         }
     };
 
+    const handleRestart = () => {
+        const engine = engineRef.current;
+        if (!engine) return;
+        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, isNGPlus } = location.state || {};
+        navigate('/game', {
+            state: { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, isNGPlus, _retry: Date.now() },
+            replace: true,
+        });
+    };
+
     const handleQuit = () => {
         const engine = engineRef.current;
         const isRaid = engine?.arena?.id === 'world_boss_arena';
@@ -576,7 +586,7 @@ export default function Game() {
             <CharacterAbilityMeter engineRef={engineRef} />
             
             {isPaused && (
-                <PauseModal onResume={handleResume} onQuit={handleQuit} />
+                <PauseModal onResume={handleResume} onQuit={handleQuit} onRestart={handleRestart} />
             )}
 
             {levelUpChoices && (
