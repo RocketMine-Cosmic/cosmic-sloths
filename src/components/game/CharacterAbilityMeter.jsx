@@ -82,7 +82,7 @@ export default function CharacterAbilityMeter({ engineRef }) {
     const pct = Math.round(state.progress * 100);
 
     return (
-        <div className={`fixed left-1/2 -translate-x-1/2 bottom-[4.75rem] md:bottom-[5.5rem] z-30 pointer-events-none w-[calc(100%-1rem)] md:w-[calc(100%-2rem)] max-w-lg bg-[#0b0416]/85 backdrop-blur-sm border ${theme.border} ${state.ready ? theme.ready : ''} rounded-lg px-2 py-1 md:px-3 md:py-1.5`}>
+        <div className={`fixed left-2 md:left-4 right-20 md:right-32 bottom-[4.75rem] md:bottom-[5.5rem] z-30 pointer-events-none max-w-2xl bg-[#0b0416]/85 backdrop-blur-sm border ${theme.border} ${state.ready ? theme.ready : ''} rounded-lg px-2 py-1 md:px-3 md:py-1.5`}>
             <div className="flex items-center justify-between mb-1">
                 <span className={`text-[9px] md:text-[10px] font-black tracking-widest ${theme.text} uppercase flex items-center gap-1`}>
                     <span>{state.icon}</span> {state.label}
