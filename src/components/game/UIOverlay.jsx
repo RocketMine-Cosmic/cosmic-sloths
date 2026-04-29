@@ -162,9 +162,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 </button>
             </div>
 
-            {/* Bottom: XP Bar — anchored left like the top HUD, leaving room for the floating ULT buttons on the right */}
-            <div className="mt-auto pointer-events-auto w-full mb-2 md:mb-4 flex justify-start pr-20 md:pr-32">
-                <div className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-cyan-500/30 flex-1 max-w-2xl">
+            {/* Bottom: XP Bar — centered, leaving room for the floating ULT buttons on the right */}
+            <div className="mt-auto pointer-events-auto w-full mb-2 md:mb-4 flex justify-center px-2 md:px-0">
+                <div className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-cyan-500/30 w-full max-w-2xl">
                     <div className="flex justify-between items-end mb-1">
                         <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider">LVL {level}</span>
                         <span className="text-[10px] md:text-xs font-bold text-cyan-200/50 font-mono">{Math.floor(xp)} <span className="text-slate-600">/ {xpRequired} XP</span></span>
