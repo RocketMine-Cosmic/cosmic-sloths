@@ -60,15 +60,33 @@ export default function Hub({ isCarousel }) {
     const [omenxAuth, setOmenxAuth] = useState(null);
     const [pendingLaunch, setPendingLaunch] = useState(null); // 'normal' | 'endless'
     const [syncReady, setSyncReady] = useState(false);
+    // Once we've applied the cloud-saved character/arena/difficulty/weapon to local
+    // state ONCE, we never re-sync those fields from external save updates again —
+    // otherwise every background save (including the user's own picks being written
+    // back) would clobber the active selection.
+    const initialSelectionApplied = React.useRef(false);
     const { vip: vipLevel } = useOmenXVip();
     const { nfts } = useCurrency();
 
     React.useEffect(() => {
-        // Sync saves to state but don't overwrite initialization data
+        // Sync saves to state but don't overwrite initialization data.
+        // Skip echoes of saves triggered by THIS component (saveUpdated fires for
+        // every SaveManager.save call, including our own selection writes). Without
+        // this guard, picking a character would immediately revert.
         const handleSaveUpdated = (e) => {
-            if (syncReady) {
-                setSave(e.detail);
-            }
+            if (!syncReady) return;
+            const incoming = e.detail || {};
+            setSave(prev => {
+                // Preserve the user's live selection — those fields are owned by
+                // local component state, not by the saveUpdated event.
+                return {
+                    ...incoming,
+                    lastSelectedChar: prev.lastSelectedChar,
+                    lastSelectedArena: prev.lastSelectedArena,
+                    lastSelectedDifficulty: prev.lastSelectedDifficulty,
+                    lastSelectedWeapon: prev.lastSelectedWeapon,
+                };
+            });
         };
         window.addEventListener('saveUpdated', handleSaveUpdated);
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
@@ -171,15 +189,15 @@ export default function Hub({ isCarousel }) {
     }, [selectedChar, selectedWeapon]);
     
     // When save data arrives from cloud (after init), sync the selection state
-    // to whatever was last used. Without this, selectedChar stays at the local
-    // default ('neobyte') even if the cloud save says otherwise — and the
-    // save-back effect below would then overwrite the cloud value.
+    // to whatever was last used — but only ONCE. After that, the user's picks
+    // are owned by local state; later save events must NOT overwrite them.
     React.useEffect(() => {
-        if (!syncReady) return;
+        if (!syncReady || initialSelectionApplied.current) return;
         if (save.lastSelectedChar && save.lastSelectedChar !== selectedChar) setSelectedChar(save.lastSelectedChar);
         if (save.lastSelectedArena && save.lastSelectedArena !== selectedArena) setSelectedArena(save.lastSelectedArena);
         if (save.lastSelectedDifficulty && save.lastSelectedDifficulty !== selectedDifficulty) setSelectedDifficulty(save.lastSelectedDifficulty);
         if (save.lastSelectedWeapon && save.lastSelectedWeapon !== selectedWeapon) setSelectedWeapon(save.lastSelectedWeapon);
+        initialSelectionApplied.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [syncReady, save.lastSelectedChar, save.lastSelectedArena, save.lastSelectedDifficulty, save.lastSelectedWeapon]);
 
