@@ -22,11 +22,11 @@ const STEPS = [
         icon: Wallet,
         accent: 'text-amber-300',
         border: 'border-amber-500/40',
-        title: 'Sign In to Save Progress',
+        title: 'Link Your Wallet',
         body: (
             <>
-                <p>On the <span className="text-white font-bold">Main Menu</span>, hit the <span className="text-amber-300 font-bold">Sign In with OMENX</span> button at the bottom. It links your wallet so your gold, unlocks, and scores sync to the cloud — and you become eligible for weekly OMENX rewards.</p>
-                <p className="mt-2 text-slate-400">No wallet yet? You can create one during sign-in in under a minute. You can also play offline first and sign in later.</p>
+                <p>On the <span className="text-white font-bold">Main Menu</span>, hit the <span className="text-amber-300 font-bold">Link Wallet</span> button at the bottom to connect your OMENX wallet. This syncs your gold, unlocks, and scores to the cloud — and makes you eligible for weekly OMENX rewards.</p>
+                <p className="mt-2 text-slate-400">No OMENX wallet yet? You can create one in under a minute on omen.foundation. You can also play first and link your wallet later.</p>
             </>
         ),
     },
