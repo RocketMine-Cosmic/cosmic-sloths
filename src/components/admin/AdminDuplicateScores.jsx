@@ -28,12 +28,15 @@ export default function AdminDuplicateScores({ walletAddress }) {
         enabled: !!walletAddress,
     });
 
-    // Find duplicates — same wallet, same week, more than one score
+    // Find duplicates — same wallet, same week, SAME MODE (endless vs normal), more than one score.
+    // Normal-mode runs and endless runs are separate leaderboards, so they must NOT be grouped together.
+    // We bucket all non-endless arenas as 'normal' (the weekly/seasonal leaderboard treats them as one pool).
     const dupeGroups = (() => {
         if (!scores) return [];
         const map = {};
         scores.forEach(s => {
-            const key = `${s.wallet_address}_${s.week_id}`;
+            const mode = s.arena_id === 'endless' ? 'endless' : 'normal';
+            const key = `${s.wallet_address}_${s.week_id}_${mode}`;
             if (!map[key]) map[key] = [];
             map[key].push(s);
         });
@@ -84,13 +87,18 @@ export default function AdminDuplicateScores({ walletAddress }) {
             ) : (
                 <div className="space-y-3">
                     <div className="text-xs text-slate-400 mb-2">{dupeGroups.length} player(s) with multiple scores in <span className="text-yellow-400 font-mono">{period}</span></div>
-                    {dupeGroups.map(group => (
-                        <div key={group[0].wallet_address + group[0].week_id} className="bg-slate-900/60 border border-yellow-800/40 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                                <div>
+                    {dupeGroups.map(group => {
+                        const isEndlessGroup = group[0].arena_id === 'endless';
+                        return (
+                        <div key={group[0].wallet_address + group[0].week_id + (isEndlessGroup ? '_endless' : '_normal')} className="bg-slate-900/60 border border-yellow-800/40 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-bold text-white text-xs">{group[0].player_name}</span>
-                                    <span className="text-[10px] text-slate-500 font-mono ml-2">{group[0].wallet_address?.slice(0,8)}...</span>
-                                    <span className="ml-2 text-[10px] bg-yellow-900/50 text-yellow-400 px-1.5 py-0.5 rounded font-bold">{group.length} scores</span>
+                                    <span className="text-[10px] text-slate-500 font-mono">{group[0].wallet_address?.slice(0,8)}...</span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isEndlessGroup ? 'bg-fuchsia-900/60 text-fuchsia-300 border border-fuchsia-700/40' : 'bg-cyan-900/60 text-cyan-300 border border-cyan-700/40'}`}>
+                                        {isEndlessGroup ? '♾️ ENDLESS' : '🏆 NORMAL'}
+                                    </span>
+                                    <span className="text-[10px] bg-yellow-900/50 text-yellow-400 px-1.5 py-0.5 rounded font-bold">{group.length} scores</span>
                                 </div>
                                 <button onClick={() => keepBestDeleteRest(group)}
                                     className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1 rounded font-bold transition-colors">
@@ -100,9 +108,10 @@ export default function AdminDuplicateScores({ walletAddress }) {
                             <div className="space-y-1">
                                 {group.sort((a, b) => b.score - a.score).map((s, i) => (
                                     <div key={s.id} className="flex items-center justify-between bg-slate-800/60 rounded px-3 py-1.5">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <span className={`text-[10px] font-bold ${i === 0 ? 'text-emerald-400' : 'text-slate-500'}`}>{i === 0 ? '👑 BEST' : `#${i+1}`}</span>
                                             <span className="text-xs font-mono text-white">{s.score.toLocaleString()}</span>
+                                            <span className="text-[10px] text-slate-500 font-mono">{s.arena_id || '—'}</span>
                                             <span className="text-[10px] text-slate-500">{moment(s.created_date).format('MMM D HH:mm')}</span>
                                         </div>
                                         {i > 0 && (
@@ -115,7 +124,8 @@ export default function AdminDuplicateScores({ walletAddress }) {
                                 ))}
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>
