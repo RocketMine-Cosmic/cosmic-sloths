@@ -245,8 +245,15 @@ export default function Game() {
                 saveScore(stats, false).then((res) => {
                     if (res?.success) {
                         // Apply server-truthful save (includes gold/kills/bounty progress/etc.)
+                        // Preserve client-credited relicFragments + cosmicTokens — server doesn't track in-run drops.
                         if (res.saveData) {
-                            SaveManager.save(res.saveData);
+                            const localSave = SaveManager.load();
+                            const merged = {
+                                ...res.saveData,
+                                relicFragments: Math.max(Number(res.saveData.relicFragments || 0), Number(localSave?.relicFragments || 0)),
+                                cosmicTokens: Math.max(Number(res.saveData.cosmicTokens || 0), Number(localSave?.cosmicTokens || 0)),
+                            };
+                            SaveManager.save(merged);
                         }
                         setGameOverStats(s => ({
                             ...s,
@@ -280,8 +287,15 @@ export default function Game() {
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
                 saveScore(stats, true).then((res) => {
                     if (res?.success) {
+                        // Preserve client-credited relicFragments + cosmicTokens — server doesn't track in-run drops.
                         if (res.saveData) {
-                            SaveManager.save(res.saveData);
+                            const localSave = SaveManager.load();
+                            const merged = {
+                                ...res.saveData,
+                                relicFragments: Math.max(Number(res.saveData.relicFragments || 0), Number(localSave?.relicFragments || 0)),
+                                cosmicTokens: Math.max(Number(res.saveData.cosmicTokens || 0), Number(localSave?.cosmicTokens || 0)),
+                            };
+                            SaveManager.save(merged);
                         }
                         setVictoryStats(s => ({
                             ...s,
