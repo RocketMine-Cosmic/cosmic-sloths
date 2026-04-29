@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import WarpMenu from '../components/game/WarpMenu';
+import WelcomeModal from '../components/onboarding/WelcomeModal';
 import { SoundManager } from '../game/SoundManager';
 
 // Static imports — bundled into the main entry chunk so they can't suffer
@@ -144,6 +145,7 @@ export default function PlayCarousel() {
     return (
         <div className="h-[100dvh] bg-[#0b0416] flex flex-col overflow-hidden select-none relative font-sans">
             <SpaceBackground />
+            <WelcomeModal />
 
             {/* Desktop navigation arrows — hidden on mobile (where swipe works). */}
             <button
