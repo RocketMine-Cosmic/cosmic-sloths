@@ -55,38 +55,39 @@ export default function AdminDuplicateScores({ walletAddress }) {
         return Object.values(map).filter(g => g.length > 1).sort((a, b) => b.length - a.length);
     })();
 
-    const deleteScore = async (scoreId) => {
-        setDeleting(d => ({ ...d, [scoreId]: true }));
-        try {
-            await base44.entities.RunScore.delete(scoreId);
-            qc.invalidateQueries(['adminAllScores']);
-            setMsg('✓ Score deleted');
-            setTimeout(() => setMsg(''), 3000);
-        } catch (e) {
-            setMsg(`✗ ${e.message}`);
-        }
-        setDeleting(d => ({ ...d, [scoreId]: false }));
-    };
-
-    const performGroupDelete = async (group) => {
-        const sorted = [...group].sort((a, b) => b.score - a.score);
-        const toDelete = sorted.slice(1);
-        await autoSnapshot(`pre-dup-cleanup ${group[0].player_name} ${group[0].week_id}`);
-        for (const s of toDelete) await deleteScore(s.id);
+    const softDelete = async (scoreIds, reason) => {
+        const res = await base44.functions.invoke('softDeleteRunScore', {
+            scoreIds,
+            reason,
+            adminKey: sessionStorage.getItem('admin_key') || undefined,
+        });
+        if (res.data?.error) throw new Error(res.data.error);
+        return res.data;
     };
 
     const handleConfirm = async () => {
         if (!confirmState) return;
         setBusyConfirm(true);
+        const ids = confirmState.kind === 'one'
+            ? [confirmState.score.id]
+            : [...confirmState.group].sort((a, b) => b.score - a.score).slice(1).map(s => s.id);
+        ids.forEach(id => setDeleting(d => ({ ...d, [id]: true })));
         try {
-            if (confirmState.kind === 'one') {
-                await autoSnapshot(`pre-score-delete ${confirmState.score.player_name} ${confirmState.score.id}`);
-                await deleteScore(confirmState.score.id);
-            } else if (confirmState.kind === 'group') {
-                await performGroupDelete(confirmState.group);
-            }
+            await autoSnapshot(confirmState.kind === 'one'
+                ? `pre-score-delete ${confirmState.score.player_name} ${confirmState.score.id}`
+                : `pre-dup-cleanup ${confirmState.group[0].player_name} ${confirmState.group[0].week_id}`);
+            const res = await softDelete(ids, confirmState.kind === 'one' ? 'duplicate (manual)' : 'duplicate (keep best)');
+            qc.invalidateQueries(['adminAllScores']);
+            qc.invalidateQueries(['deletedRunScores']);
+            setMsg(`✓ Archived ${res.succeeded} score${res.succeeded === 1 ? '' : 's'} (restorable for 7 days)`);
+            setTimeout(() => setMsg(''), 4000);
             setConfirmState(null);
-        } finally { setBusyConfirm(false); }
+        } catch (e) {
+            setMsg(`✗ ${e.message}`);
+        } finally {
+            ids.forEach(id => setDeleting(d => ({ ...d, [id]: false })));
+            setBusyConfirm(false);
+        }
     };
 
     return (

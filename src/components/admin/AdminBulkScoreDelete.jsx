@@ -41,21 +41,24 @@ export default function AdminBulkScoreDelete({ walletAddress }) {
             const filter = periodType === 'week' ? { week_id: period.trim() } : { season_id: period.trim() };
             const scores = await base44.entities.RunScore.filter(filter, '-score', 500);
             const ids = scores.map(s => s.id);
-            let deleted = 0;
-            for (const s of scores) {
-                await base44.entities.RunScore.delete(s.id);
-                deleted++;
+
+            // Soft-delete in chunks (function loops internally; chunking keeps requests bounded)
+            const CHUNK = 50;
+            let succeeded = 0;
+            for (let i = 0; i < ids.length; i += CHUNK) {
+                const chunk = ids.slice(i, i + CHUNK);
+                const res = await base44.functions.invoke('softDeleteRunScore', {
+                    scoreIds: chunk,
+                    reason: `bulk delete ${period} (${periodType})`,
+                    adminKey: sessionStorage.getItem('admin_key') || undefined,
+                });
+                if (res.data?.error) throw new Error(res.data.error);
+                succeeded += res.data?.succeeded || 0;
             }
-            setMsg(`✓ Deleted ${deleted} scores for ${period}`);
+            setMsg(`✓ Archived ${succeeded} scores for ${period} (restorable for 7 days)`);
             setPreview(null);
             setShowConfirm(false);
             setPeriod('');
-            await base44.entities.AdminChangesLog.create({
-                wallet_address: walletAddress,
-                action_type: 'other',
-                description: `Bulk deleted ${deleted} scores for ${period} (${periodType})`,
-                details: { period, periodType, count: deleted, deleted_ids: ids }
-            });
         } catch (e) {
             setMsg(`✗ ${e.message}`);
         }
