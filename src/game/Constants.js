@@ -258,76 +258,99 @@ export const ENEMIES = [
   { id: 'boss_nexus_annihilator', name: 'Nexus Annihilator', hp: 18000, speed: 0.5, damage: 120, color: '#1e293b', radius: 160, xp: 1500, isBoss: true, spriteImage: loadSprite('29ea7426c_nexus_annihilator_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' }
 ];
 
+// Talent trees redesigned around two themed paths per character.
+// Path A and Path B are intentionally different playstyles tied to that
+// character's lore/role — picking one should feel like a meaningful identity choice.
+// IDs MUST stay exactly as before — server (functions/spendGold.js) validates by these.
 export const CHARACTER_TALENTS = {
+  // NeoByte — Fleet Commander. A: aggressive offence | B: resilient frontline.
   neobyte: [
-    { id: 'neo_1', name: 'Fleet Command', desc: '+10% Area', stat: 'areaMult', value: 0.1, tier: 1 },
-    { id: 'neo_2a', name: 'Rapid Ordnance', desc: '-10% Cooldown', stat: 'cooldownMult', value: -0.1, tier: 2, requires: 'neo_1', excludes: 'neo_2b' },
-    { id: 'neo_2b', name: 'Reinforced Hull', desc: '+30 Max HP', stat: 'maxHp', value: 30, tier: 2, requires: 'neo_1', excludes: 'neo_2a' },
-    { id: 'neo_3a', name: 'Orbital Bombardment', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'neo_2a' },
-    { id: 'neo_3b', name: 'Aegis Shield', desc: '+5 Armor', stat: 'armor', value: 5, tier: 3, requires: 'neo_2b' }
+    { id: 'neo_1', name: 'Tactical Doctrine', desc: '+10% Area (banner reach)', stat: 'areaMult', value: 0.1, tier: 1 },
+    { id: 'neo_2a', name: 'Offensive Maneuvers', desc: 'Path A — +15% Damage', stat: 'damageMult', value: 0.15, tier: 2, requires: 'neo_1', excludes: 'neo_2b' },
+    { id: 'neo_2b', name: 'Defensive Formation', desc: 'Path B — +40 Max HP', stat: 'maxHp', value: 40, tier: 2, requires: 'neo_1', excludes: 'neo_2a' },
+    { id: 'neo_3a', name: 'Orbital Bombardment', desc: '-12% Cooldown — fire orders rain down', stat: 'cooldownMult', value: -0.12, tier: 3, requires: 'neo_2a' },
+    { id: 'neo_3b', name: 'Aegis Bulwark', desc: '+5 Armor — hold the line', stat: 'armor', value: 5, tier: 3, requires: 'neo_2b' }
   ],
+
+  // Pandypaws — Heavy Mechanic. A: juggernaut crusher | B: immortal bulwark.
   pandypaws: [
-    { id: 'pan_1', name: 'Titanium Alloy', desc: '+3 Armor', stat: 'armor', value: 3, tier: 1 },
-    { id: 'pan_2a', name: 'Gravity Crush', desc: '+20% Area', stat: 'areaMult', value: 0.2, tier: 2, requires: 'pan_1', excludes: 'pan_2b' },
-    { id: 'pan_2b', name: 'Nanite Repair', desc: '+0.5 Regen', stat: 'regen', value: 0.5, tier: 2, requires: 'pan_1', excludes: 'pan_2a' },
-    { id: 'pan_3a', name: 'Seismic Shock', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'pan_2a' },
-    { id: 'pan_3b', name: 'Dreadnought Chassis', desc: '+50 Max HP', stat: 'maxHp', value: 50, tier: 3, requires: 'pan_2b' }
+    { id: 'pan_1', name: 'Titanium Alloy', desc: '+3 Armor — base hull plating', stat: 'armor', value: 3, tier: 1 },
+    { id: 'pan_2a', name: 'Hydraulic Hammers', desc: 'Path A — +20% Area (crushing strikes)', stat: 'areaMult', value: 0.2, tier: 2, requires: 'pan_1', excludes: 'pan_2b' },
+    { id: 'pan_2b', name: 'Nanite Forge', desc: 'Path B — +0.6 HP Regen/sec', stat: 'regen', value: 0.6, tier: 2, requires: 'pan_1', excludes: 'pan_2a' },
+    { id: 'pan_3a', name: 'Demolition Master', desc: '+25% Damage — every swing devastates', stat: 'damageMult', value: 0.25, tier: 3, requires: 'pan_2a' },
+    { id: 'pan_3b', name: 'Dreadnought Chassis', desc: '+60 Max HP — unkillable wall', stat: 'maxHp', value: 60, tier: 3, requires: 'pan_2b' }
   ],
+
+  // NovaByte — Comms & Demolitions. A: glass-cannon nuker | B: rapid-fire sapper.
   novabyte: [
-    { id: 'nova_1', name: 'Reactive Armor', desc: '+20 Max HP', stat: 'maxHp', value: 20, tier: 1 },
-    { id: 'nova_2a', name: 'Antimatter Charges', desc: '+15% Damage', stat: 'damageMult', value: 0.15, tier: 2, requires: 'nova_1', excludes: 'nova_2b' },
-    { id: 'nova_2b', name: 'Lightweight Frame', desc: '+15% Speed', stat: 'speedMult', value: 0.15, tier: 2, requires: 'nova_1', excludes: 'nova_2a' },
-    { id: 'nova_3a', name: 'Supernova Detonation', desc: '+30% Area', stat: 'areaMult', value: 0.3, tier: 3, requires: 'nova_2a' },
-    { id: 'nova_3b', name: 'Evasion Thrusters', desc: '-15% Cooldown', stat: 'cooldownMult', value: -0.15, tier: 3, requires: 'nova_2b' }
+    { id: 'nova_1', name: 'Volatile Payload', desc: '+10% Damage — every shot hits harder', stat: 'damageMult', value: 0.1, tier: 1 },
+    { id: 'nova_2a', name: 'Antimatter Warheads', desc: 'Path A — +25% Area (bigger blasts)', stat: 'areaMult', value: 0.25, tier: 2, requires: 'nova_1', excludes: 'nova_2b' },
+    { id: 'nova_2b', name: 'Quick-Fuse Rigging', desc: 'Path B — -12% Cooldown (faster detonations)', stat: 'cooldownMult', value: -0.12, tier: 2, requires: 'nova_1', excludes: 'nova_2a' },
+    { id: 'nova_3a', name: 'Supernova Core', desc: '+25% Damage — total annihilation', stat: 'damageMult', value: 0.25, tier: 3, requires: 'nova_2a' },
+    { id: 'nova_3b', name: 'Chain Reaction', desc: '+20% Projectile Speed — bombs reach further', stat: 'projSpeedMult', value: 0.2, tier: 3, requires: 'nova_2b' }
   ],
+
+  // Glitch — Stealth Assassin. A: lethal one-shot crit build | B: untouchable evasion.
   glitch: [
-    { id: 'gli_1', name: 'Neural Overclock', desc: '+10% Speed', stat: 'speedMult', value: 0.1, tier: 1 },
-    { id: 'gli_2a', name: 'Total Annihilation', desc: '+20% Damage', stat: 'damageMult', value: 0.2, tier: 2, requires: 'gli_1', excludes: 'gli_2b' },
-    { id: 'gli_2b', name: 'Quantum Probability', desc: '+1 Luck', stat: 'luck', value: 1, tier: 2, requires: 'gli_1', excludes: 'gli_2a' },
-    { id: 'gli_3a', name: 'Fatal Error', desc: '+30% Damage', stat: 'damageMult', value: 0.3, tier: 3, requires: 'gli_2a' },
-    { id: 'gli_3b', name: 'Lucky Strike', desc: '+2 Luck', stat: 'luck', value: 2, tier: 3, requires: 'gli_2b' }
+    { id: 'gli_1', name: 'Neural Overclock', desc: '+10% Speed — strike from anywhere', stat: 'speedMult', value: 0.1, tier: 1 },
+    { id: 'gli_2a', name: 'Critical Exploit', desc: 'Path A — +5% Crit chance', stat: 'critBonus', value: 0.05, tier: 2, requires: 'gli_1', excludes: 'gli_2b' },
+    { id: 'gli_2b', name: 'Phantom Footwork', desc: 'Path B — +15% Speed (slippery)', stat: 'speedMult', value: 0.15, tier: 2, requires: 'gli_1', excludes: 'gli_2a' },
+    { id: 'gli_3a', name: 'Fatal Error', desc: '+30% Damage — assassin headshot', stat: 'damageMult', value: 0.3, tier: 3, requires: 'gli_2a' },
+    { id: 'gli_3b', name: 'Lucky Glitch', desc: '+3 Luck — improbability incarnate', stat: 'luck', value: 3, tier: 3, requires: 'gli_2b' }
   ],
+
+  // HoloDrift — Engineer. A: greedy XP/loot scavenger | B: defensive decoy warden.
   holodrift: [
-    { id: 'holo_1', name: 'Salvage Drones', desc: '+10% XP', stat: 'xpMult', value: 0.1, tier: 1 },
-    { id: 'holo_2a', name: 'Magnetic Field Emitter', desc: '+30 Magnet', stat: 'magnetRange', value: 30, tier: 2, requires: 'holo_1', excludes: 'holo_2b' },
-    { id: 'holo_2b', name: 'Light-Bending Mirage', desc: '+20% Speed', stat: 'speedMult', value: 0.2, tier: 2, requires: 'holo_1', excludes: 'holo_2a' },
-    { id: 'holo_3a', name: 'Greed Protocol', desc: '+30% Gold', stat: 'goldMult', value: 0.3, tier: 3, requires: 'holo_2a' },
-    { id: 'holo_3b', name: 'Holographic Decoy', desc: '+3 Armor', stat: 'armor', value: 3, tier: 3, requires: 'holo_2b' }
+    { id: 'holo_1', name: 'Salvage Protocol', desc: '+10% XP — learn from every wreck', stat: 'xpMult', value: 0.1, tier: 1 },
+    { id: 'holo_2a', name: 'Magnetic Sweep', desc: 'Path A — +40 Magnet Range', stat: 'magnetRange', value: 40, tier: 2, requires: 'holo_1', excludes: 'holo_2b' },
+    { id: 'holo_2b', name: 'Hardlight Plating', desc: 'Path B — +3 Armor (decoys reinforce hull)', stat: 'armor', value: 3, tier: 2, requires: 'holo_1', excludes: 'holo_2a' },
+    { id: 'holo_3a', name: 'Greed Subroutine', desc: '+30% Gold — every kill is profit', stat: 'goldMult', value: 0.3, tier: 3, requires: 'holo_2a' },
+    { id: 'holo_3b', name: 'Mirror Field', desc: '+0.5 HP Regen — sustain through chaos', stat: 'regen', value: 0.5, tier: 3, requires: 'holo_2b' }
   ],
+
+  // CodeBreaker — Cyber Hacker. A: rapid-fire overclocker | B: fortune crypto miner.
   codebreaker: [
-    { id: 'code_1', name: 'Subroutine Bypass', desc: '-5% Cooldown', stat: 'cooldownMult', value: -0.05, tier: 1 },
-    { id: 'code_2a', name: 'Crypto Mining', desc: '+15% Gold', stat: 'goldMult', value: 0.15, tier: 2, requires: 'code_1', excludes: 'code_2b' },
-    { id: 'code_2b', name: 'Overclocked CPU', desc: '+15% Proj Speed', stat: 'projSpeedMult', value: 0.15, tier: 2, requires: 'code_1', excludes: 'code_2a' },
-    { id: 'code_3a', name: 'Omniscience Protocol', desc: '+2 Luck', stat: 'luck', value: 2, tier: 3, requires: 'code_2a' },
-    { id: 'code_3b', name: 'Infinite Loop', desc: '-15% Cooldown', stat: 'cooldownMult', value: -0.15, tier: 3, requires: 'code_2b' }
+    { id: 'code_1', name: 'Subroutine Bypass', desc: '-5% Cooldown — read enemy code', stat: 'cooldownMult', value: -0.05, tier: 1 },
+    { id: 'code_2a', name: 'Overclocked CPU', desc: 'Path A — -12% Cooldown (rapid hacks)', stat: 'cooldownMult', value: -0.12, tier: 2, requires: 'code_1', excludes: 'code_2b' },
+    { id: 'code_2b', name: 'Crypto Mining Rig', desc: 'Path B — +20% Gold (passive farming)', stat: 'goldMult', value: 0.2, tier: 2, requires: 'code_1', excludes: 'code_2a' },
+    { id: 'code_3a', name: 'Infinite Loop', desc: '+20% Projectile Speed — perpetual motion', stat: 'projSpeedMult', value: 0.2, tier: 3, requires: 'code_2a' },
+    { id: 'code_3b', name: 'Omniscience Protocol', desc: '+3 Luck — see all probabilities', stat: 'luck', value: 3, tier: 3, requires: 'code_2b' }
   ],
+
+  // DataPhantom — Strategic Hacker. A: long-range marksman | B: phasing wraith.
   dataphantom: [
-    { id: 'data_1', name: 'Phase Shift', desc: '+10% Speed', stat: 'speedMult', value: 0.1, tier: 1 },
-    { id: 'data_2a', name: 'Particle Accelerator', desc: '+20% Proj Speed', stat: 'projSpeedMult', value: 0.2, tier: 2, requires: 'data_1', excludes: 'data_2b' },
-    { id: 'data_2b', name: 'Energy Shielding', desc: '+2 Armor', stat: 'armor', value: 2, tier: 2, requires: 'data_1', excludes: 'data_2a' },
-    { id: 'data_3a', name: 'Data Corruption', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'data_2a' },
-    { id: 'data_3b', name: 'Ghost Protocol', desc: '+40 Max HP', stat: 'maxHp', value: 40, tier: 3, requires: 'data_2b' }
+    { id: 'data_1', name: 'Phase Calibration', desc: '+15% Projectile Speed — bullets phase through space', stat: 'projSpeedMult', value: 0.15, tier: 1 },
+    { id: 'data_2a', name: 'Spectral Optics', desc: 'Path A — +20% Damage (target locks)', stat: 'damageMult', value: 0.2, tier: 2, requires: 'data_1', excludes: 'data_2b' },
+    { id: 'data_2b', name: 'Wraith Shielding', desc: 'Path B — +3 Armor (ethereal carapace)', stat: 'armor', value: 3, tier: 2, requires: 'data_1', excludes: 'data_2a' },
+    { id: 'data_3a', name: 'Particle Accelerator', desc: '+25% Projectile Speed — instant travel', stat: 'projSpeedMult', value: 0.25, tier: 3, requires: 'data_2a' },
+    { id: 'data_3b', name: 'Ghost Protocol', desc: '+50 Max HP — phase out of death', stat: 'maxHp', value: 50, tier: 3, requires: 'data_2b' }
   ],
+
+  // NeonVortex — Elite Sniper. A: pure damage executioner | B: gravity-bender control.
   neonvortex: [
-    { id: 'neon_1', name: 'Targeting Optics', desc: '+10% Proj Speed', stat: 'projSpeedMult', value: 0.1, tier: 1 },
-    { id: 'neon_2a', name: 'Railgun Calibration', desc: '+20% Damage', stat: 'damageMult', value: 0.2, tier: 2, requires: 'neon_1', excludes: 'neon_2b' },
-    { id: 'neon_2b', name: 'Micro-Blackhole', desc: '+30% Area', stat: 'areaMult', value: 0.3, tier: 2, requires: 'neon_1', excludes: 'neon_2a' },
-    { id: 'neon_3a', name: 'Singularity Shot', desc: '+30% Damage', stat: 'damageMult', value: 0.3, tier: 3, requires: 'neon_2a' },
-    { id: 'neon_3b', name: 'Event Horizon', desc: '+50 Magnet', stat: 'magnetRange', value: 50, tier: 3, requires: 'neon_2b' }
+    { id: 'neon_1', name: 'Targeting Optics', desc: '+10% Projectile Speed — perfect aim', stat: 'projSpeedMult', value: 0.1, tier: 1 },
+    { id: 'neon_2a', name: 'Hollow-Point Rounds', desc: 'Path A — +20% Damage', stat: 'damageMult', value: 0.2, tier: 2, requires: 'neon_1', excludes: 'neon_2b' },
+    { id: 'neon_2b', name: 'Gravity Lens', desc: 'Path B — +25% Area (bend space)', stat: 'areaMult', value: 0.25, tier: 2, requires: 'neon_1', excludes: 'neon_2a' },
+    { id: 'neon_3a', name: 'Singularity Shot', desc: '+30% Damage — execution perfected', stat: 'damageMult', value: 0.3, tier: 3, requires: 'neon_2a' },
+    { id: 'neon_3b', name: 'Event Horizon', desc: '+60 Magnet — pull everything in', stat: 'magnetRange', value: 60, tier: 3, requires: 'neon_2b' }
   ],
+
+  // SynthBeats — Diplomat. A: greedy tycoon | B: rhythm maestro.
   synthbeats: [
-    { id: 'syn_1', name: 'Sonic Pacifier', desc: '+10% Area', stat: 'areaMult', value: 0.1, tier: 1 },
-    { id: 'syn_2a', name: 'Intergalactic Trade', desc: '+20% Gold', stat: 'goldMult', value: 0.2, tier: 2, requires: 'syn_1', excludes: 'syn_2b' },
-    { id: 'syn_2b', name: 'Temporal Rewind', desc: '-15% Cooldown', stat: 'cooldownMult', value: -0.15, tier: 2, requires: 'syn_1', excludes: 'syn_2a' },
-    { id: 'syn_3a', name: 'Billionaire Club', desc: '+30% Gold', stat: 'goldMult', value: 0.3, tier: 3, requires: 'syn_2a' },
-    { id: 'syn_3b', name: 'Bass Drop', desc: '+30% Area', stat: 'areaMult', value: 0.3, tier: 3, requires: 'syn_2b' }
+    { id: 'syn_1', name: 'Charm Frequency', desc: '+10% Gold — golden tongue', stat: 'goldMult', value: 0.1, tier: 1 },
+    { id: 'syn_2a', name: 'Black Market Deals', desc: 'Path A — +20% Gold (exploit every trade)', stat: 'goldMult', value: 0.2, tier: 2, requires: 'syn_1', excludes: 'syn_2b' },
+    { id: 'syn_2b', name: 'Tempo Shift', desc: 'Path B — -12% Cooldown (rhythm beats)', stat: 'cooldownMult', value: -0.12, tier: 2, requires: 'syn_1', excludes: 'syn_2a' },
+    { id: 'syn_3a', name: 'Billionaire Club', desc: '+2 Luck — fortune favours the rich', stat: 'luck', value: 2, tier: 3, requires: 'syn_2a' },
+    { id: 'syn_3b', name: 'Bass Drop', desc: '+30% Area — soundwaves shatter all', stat: 'areaMult', value: 0.3, tier: 3, requires: 'syn_2b' }
   ],
+
+  // SkyByte — Ace Pilot. A: bombing-run carpet bomber | B: agile dogfighter.
   skybyte: [
-    { id: 'sky_1', name: 'Slipstream Thrusters', desc: '+10% Speed', stat: 'speedMult', value: 0.1, tier: 1 },
-    { id: 'sky_2a', name: 'Meteor Shower', desc: '+25% Area', stat: 'areaMult', value: 0.25, tier: 2, requires: 'sky_1', excludes: 'sky_2b' },
-    { id: 'sky_2b', name: 'Barrel Roll', desc: '+2 Armor', stat: 'armor', value: 2, tier: 2, requires: 'sky_1', excludes: 'sky_2a' },
-    { id: 'sky_3a', name: 'Carpet Bombing', desc: '+25% Damage', stat: 'damageMult', value: 0.25, tier: 3, requires: 'sky_2a' },
-    { id: 'sky_3b', name: 'Evasive Maneuvers', desc: '+20% Speed', stat: 'speedMult', value: 0.2, tier: 3, requires: 'sky_2b' }
+    { id: 'sky_1', name: 'Slipstream Thrusters', desc: '+10% Speed — outrun anything', stat: 'speedMult', value: 0.1, tier: 1 },
+    { id: 'sky_2a', name: 'Carpet Bomber', desc: 'Path A — +25% Area (saturation strikes)', stat: 'areaMult', value: 0.25, tier: 2, requires: 'sky_1', excludes: 'sky_2b' },
+    { id: 'sky_2b', name: 'Evasive Pilot', desc: 'Path B — +15% Speed (impossible to hit)', stat: 'speedMult', value: 0.15, tier: 2, requires: 'sky_1', excludes: 'sky_2a' },
+    { id: 'sky_3a', name: 'Strike Squadron', desc: '+25% Damage — bombs of judgement', stat: 'damageMult', value: 0.25, tier: 3, requires: 'sky_2a' },
+    { id: 'sky_3b', name: 'Barrel Roll', desc: '+3 Armor — graceful under fire', stat: 'armor', value: 3, tier: 3, requires: 'sky_2b' }
   ]
 };
 
