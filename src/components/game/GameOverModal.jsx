@@ -37,22 +37,27 @@ export default function GameOverModal({ stats }) {
                             Saving run progress…
                         </div>
                     ) : (
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
-                            <button
-                                onClick={() => navigate('/', { state: { slide: 1 } })}
-                                className="bg-slate-800 hover:bg-slate-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors border border-slate-600 text-sm md:text-base w-full sm:w-auto"
-                            >
-                                Sloth Lounge
-                            </button>
-                            <button
-                                onClick={() => {
-                                    navigate('/game', { state: { characterId: stats.characterId, arenaId: stats.arenaId, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true });
-                                }}
-                                className="bg-red-600 hover:bg-red-500 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
-                            >
-                                Try Again
-                            </button>
-                        </div>
+                        (() => {
+                            const isRaid = stats.arenaId === 'world_boss_arena';
+                            return (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
+                                    <button
+                                        onClick={() => navigate(isRaid ? '/global-raid' : '/', isRaid ? undefined : { state: { slide: 1 } })}
+                                        className="bg-slate-800 hover:bg-slate-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors border border-slate-600 text-sm md:text-base w-full sm:w-auto"
+                                    >
+                                        {isRaid ? 'Exit to Global Raid' : 'Sloth Lounge'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            navigate('/game', { state: { characterId: stats.characterId, arenaId: stats.arenaId, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, worldBossId: stats.worldBossId, worldBossName: stats.worldBossName, _retry: Date.now() }, replace: true });
+                                        }}
+                                        className="bg-red-600 hover:bg-red-500 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                                    >
+                                        Try Again
+                                    </button>
+                                </div>
+                            );
+                        })()
                     )}
                 </div>
             </motion.div>

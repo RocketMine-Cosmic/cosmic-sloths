@@ -5,6 +5,7 @@ import moment from 'moment';
 
 export default function AdminLeaderboard({ walletAddress }) {
     const [period, setPeriod] = useState('weekly');
+    const [mode, setMode] = useState('all'); // 'all' | 'normal' | 'endless'
     const [search, setSearch] = useState('');
 
     const { data, isLoading } = useQuery({
@@ -13,9 +14,12 @@ export default function AdminLeaderboard({ walletAddress }) {
         enabled: !!walletAddress
     });
 
-    const filtered = (data || []).filter(s =>
-        !search || s.player_name?.toLowerCase().includes(search.toLowerCase()) || s.wallet_address?.includes(search)
-    );
+    const filtered = (data || []).filter(s => {
+        if (mode === 'endless' && s.arena_id !== 'endless') return false;
+        if (mode === 'normal' && s.arena_id === 'endless') return false;
+        if (search && !s.player_name?.toLowerCase().includes(search.toLowerCase()) && !s.wallet_address?.includes(search)) return false;
+        return true;
+    });
 
     return (
         <div className="bg-[#0b0416]/80 border border-yellow-900/50 rounded-xl p-4">
@@ -26,6 +30,18 @@ export default function AdminLeaderboard({ walletAddress }) {
                         <button key={p} onClick={() => setPeriod(p)}
                             className={`px-3 py-1 rounded text-xs font-bold transition-colors ${period === p ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
                             {p.charAt(0).toUpperCase() + p.slice(1)}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex gap-1">
+                    {[
+                        { id: 'all', label: 'All Modes' },
+                        { id: 'normal', label: 'Normal' },
+                        { id: 'endless', label: 'Endless' },
+                    ].map(m => (
+                        <button key={m.id} onClick={() => setMode(m.id)}
+                            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${mode === m.id ? 'bg-fuchsia-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                            {m.label}
                         </button>
                     ))}
                 </div>

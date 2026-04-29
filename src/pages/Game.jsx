@@ -236,6 +236,8 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 stats.startingWeaponId = startingWeaponId;
+                stats.worldBossId = worldBossId;
+                stats.worldBossName = worldBossName;
                 // Score is recomputed server-side; show 0 until response arrives.
                 stats.score = 0;
                 setGameOverStats(stats);
@@ -271,6 +273,8 @@ export default function Game() {
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 stats.startingWeaponId = startingWeaponId;
+                stats.worldBossId = worldBossId;
+                stats.worldBossName = worldBossName;
                 stats.score = 0;
                 setVictoryStats(stats);
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
@@ -462,6 +466,7 @@ export default function Game() {
 
     const handleQuit = () => {
         const engine = engineRef.current;
+        const isRaid = engine?.arena?.id === 'world_boss_arena';
         if (engine && !engine.isGameOver && !engine.isVictory) {
             engine.isPaused = false;
             // Manually trigger the same save logic as gameOver without showing the modal
@@ -479,7 +484,7 @@ export default function Game() {
                 _suppressModal: true,
             });
         }
-        navigate('/', { state: { slide: 1 } });
+        navigate(isRaid ? '/global-raid' : '/', isRaid ? undefined : { state: { slide: 1 } });
     };
 
     const handleRevive = () => {

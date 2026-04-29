@@ -37,24 +37,49 @@ export default function VictoryModal({ stats }) {
                             Saving run progress…
                         </div>
                     ) : (
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
-                            <button
-                                onClick={() => navigate('/', { state: { slide: 1 } })}
-                                className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
-                            >
-                                Return to Lounge
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
-                                    const nextArena = currentIndex >= 0 && currentIndex < ARENAS.length - 1 ? ARENAS[currentIndex + 1] : ARENAS[currentIndex];
-                                    navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true });
-                                }}
-                                className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
-                            >
-                                Try Next Sector
-                            </button>
-                        </div>
+                        (() => {
+                            const isRaid = stats.arenaId === 'world_boss_arena';
+                            if (isRaid) {
+                                return (
+                                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
+                                        <button
+                                            onClick={() => navigate('/global-raid')}
+                                            className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                                        >
+                                            Exit to Global Raid
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                navigate('/game', { state: { characterId: stats.characterId, arenaId: stats.arenaId, difficultyId: stats.difficultyId || 'normal', isEndless: false, startingWeaponId: stats.startingWeaponId, worldBossId: stats.worldBossId, worldBossName: stats.worldBossName, _retry: Date.now() }, replace: true });
+                                            }}
+                                            className="bg-red-600 hover:bg-red-500 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                                        >
+                                            Try Again
+                                        </button>
+                                    </div>
+                                );
+                            }
+                            return (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
+                                    <button
+                                        onClick={() => navigate('/', { state: { slide: 1 } })}
+                                        className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                                    >
+                                        Return to Lounge
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
+                                            const nextArena = currentIndex >= 0 && currentIndex < ARENAS.length - 1 ? ARENAS[currentIndex + 1] : ARENAS[currentIndex];
+                                            navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true });
+                                        }}
+                                        className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                                    >
+                                        Try Next Sector
+                                    </button>
+                                </div>
+                            );
+                        })()
                     )}
                 </div>
             </motion.div>
