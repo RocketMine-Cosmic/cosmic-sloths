@@ -49,8 +49,8 @@ const STEPS = [
         title: 'Progress & Earn',
         body: (
             <>
-                <p>You keep gold and unlocks from every run. Spend them in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, grab daily quests on the <span className="text-emerald-300 font-bold">Mission Board</span>, and check your rank on the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
-                <p className="mt-2 text-slate-400">Each week the top scorers receive an OMENX payout — the higher your rank, the bigger the share.</p>
+                <p>Every run earns gold you keep. Spend it in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, grab daily quests on the <span className="text-emerald-300 font-bold">Mission Board</span>, and check your rank on the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
+                <p className="mt-2 text-slate-400">Unlock new pilots by hitting kill milestones (or owning the matching NFT). Each week, top scorers split the OMENX reward pool.</p>
             </>
         ),
     },
