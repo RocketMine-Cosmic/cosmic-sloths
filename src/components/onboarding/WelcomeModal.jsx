@@ -27,7 +27,7 @@ const STEPS = [
             <>
                 <p>On the <span className="text-white font-bold">Main Menu</span>, tap the button at the bottom to <span className="text-cyan-300 font-bold">Sign In</span>, then <span className="text-purple-300 font-bold">Connect Wallet</span> to link your OMENX wallet.</p>
                 <p className="mt-2 text-amber-200/90 bg-amber-950/40 border border-amber-700/40 rounded px-2 py-1.5 text-xs">🔒 Currently gated to <span className="font-bold">Early Adopters NFT</span> holders on Omen. Grab one to get in.</p>
-                <p className="mt-2 text-slate-400">Connecting syncs your progress to the cloud and makes you eligible for weekly OMENX rewards.</p>
+                <p className="mt-2 text-slate-400">Connecting saves your progress to your wallet and makes you eligible for weekly OMENX rewards.</p>
             </>
         ),
     },
