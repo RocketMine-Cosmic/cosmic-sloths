@@ -16,11 +16,11 @@ function StatCard({ label, value, color = 'text-white', sub }) {
     );
 }
 
-export default function AdminOverview({ walletAddress }) {
+export default function AdminOverview({ walletAddress, canViewFinance = false }) {
     const { data: pools } = useQuery({
         queryKey: ['adminPools', walletAddress],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
-        enabled: !!walletAddress
+        enabled: !!walletAddress && canViewFinance,
     });
 
     const { data: ext } = useQuery({
@@ -47,14 +47,30 @@ export default function AdminOverview({ walletAddress }) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <StatCard label="Total Players" value={ext?.totalPlayers ?? '...'} color="text-cyan-400" />
                 <StatCard label="Total Scores" value={ext?.totalScores ?? '...'} color="text-purple-400" />
-                <StatCard label="This Week Spent" value={`${weeklySpent.toFixed(1)} OMENX`} color="text-red-400" />
-                <StatCard label="All-Time Spent" value={`${totalSpent.toFixed(1)} OMENX`} color="text-amber-400" />
+                {canViewFinance ? (
+                    <>
+                        <StatCard label="This Week Spent" value={`${weeklySpent.toFixed(1)} OMENX`} color="text-red-400" />
+                        <StatCard label="All-Time Spent" value={`${totalSpent.toFixed(1)} OMENX`} color="text-amber-400" />
+                    </>
+                ) : (
+                    <>
+                        <StatCard label="This Week Spent" value="🔒 hidden" color="text-slate-500" sub="Requires view_finance" />
+                        <StatCard label="All-Time Spent" value="🔒 hidden" color="text-slate-500" sub="Requires view_finance" />
+                    </>
+                )}
             </div>
 
             <DistributionTimer />
 
             <RecentChanges />
 
+            {!canViewFinance && (
+                <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl p-3 text-xs text-slate-400">
+                    💵 Revenue charts are hidden. Ask an owner to grant the <span className="font-mono text-slate-300">view_finance</span> permission if you need them.
+                </div>
+            )}
+
+            {canViewFinance && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-[#0b0416]/80 border border-red-900/50 rounded-xl p-4">
                     <h3 className="text-sm font-bold text-red-400 uppercase tracking-widest mb-3">Weekly Token Spend</h3>
@@ -86,8 +102,10 @@ export default function AdminOverview({ walletAddress }) {
                 </div>
             </div>
 
+            )}
+
             {/* Revenue per Week trend — last 12 weeks as a line */}
-            {weeklyData.length > 0 && (
+            {canViewFinance && weeklyData.length > 0 && (
                 <div className="bg-[#0b0416]/80 border border-emerald-900/50 rounded-xl p-4">
                     <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-1">Revenue Trend (Weekly OMENX Spend)</h3>
                     <div className="text-[10px] text-slate-500 mb-3">Last {weeklyData.length} weeks — rising line = growing engagement</div>

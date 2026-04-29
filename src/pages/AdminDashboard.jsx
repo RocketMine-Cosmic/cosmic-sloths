@@ -29,6 +29,9 @@ import AdminRefundOmenx from '../components/admin/AdminRefundOmenx';
 import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
 import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
 import AdminGoldAudit from '../components/admin/AdminGoldAudit';
+import AdminGrantPanel from '../components/admin/AdminGrantPanel';
+import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
+import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
 
 // Tabs are organised into logical groups by responsibility.
 // Each tab declares the permission required to see it.
@@ -42,7 +45,7 @@ const TAB_GROUPS = [
             { id: 'health',      label: '🩺 Health',        icon: BarChart3, perm: 'view_data' },
             { id: 'leaderboard', label: 'Leaderboard',      icon: Trophy,    perm: 'view_data' },
             { id: 'squads',      label: 'Squads',           icon: Shield,    perm: 'view_data' },
-            { id: 'economy',     label: 'Economy',          icon: Coins,     perm: 'view_data' },
+            { id: 'economy',     label: 'Economy',          icon: Coins,     perm: 'view_finance' },
             { id: 'changelog',   label: '📋 Audit Log',     icon: Database,  perm: 'view_data' },
             { id: 'discord',     label: '💬 Discord Guide', icon: Database,  perm: 'view_data' },
         ],
@@ -52,8 +55,17 @@ const TAB_GROUPS = [
         label: '👥 Player Operations',
         tabs: [
             { id: 'players',   label: 'Players',      icon: Users,         perm: 'edit_players' },
+            { id: 'grant',     label: '🎁 Grant',      icon: Gift,          perm: 'edit_players' },
             { id: 'goldaudit', label: '🪙 Gold Audit', icon: Coins,         perm: 'edit_players' },
             { id: 'blacklist', label: '🚫 Blacklist', icon: AlertTriangle, perm: 'manage_blacklist' },
+        ],
+    },
+    {
+        id: 'moderation',
+        label: '🛡️ Moderation',
+        tabs: [
+            { id: 'suspicious',  label: '🔍 Suspicious Runs', icon: AlertTriangle, perm: 'delete_scores' },
+            { id: 'chat',        label: '💬 Squad Chat',     icon: Shield,        perm: 'moderate_chat' },
         ],
     },
     {
@@ -147,7 +159,7 @@ export default function AdminDashboard() {
         try {
             // Server reads the caller from the Base44 session — wallet param ignored,
             // we only check that the logged-in user is an admin.
-            const res = await base44.functions.invoke('getAdminData', { type: 'pools' });
+            const res = await base44.functions.invoke('getAdminData', { type: 'adminWallets' });
             if (res.data?.error) throw new Error(res.data.error);
             setAdminWallet(wallet);
             sessionStorage.setItem('admin_wallet', wallet);
@@ -222,14 +234,19 @@ export default function AdminDashboard() {
         );
     }
 
+    const canViewFinance = isEmergencyKey || (callerPerms || []).includes('owner') || (callerPerms || []).includes('view_finance');
+
     const TabContent = {
-        overview: <AdminOverview walletAddress={adminWallet} />,
+        overview: <AdminOverview walletAddress={adminWallet} canViewFinance={canViewFinance} />,
         health: <AdminHealthCheck walletAddress={adminWallet} />,
         leaderboard: <AdminLeaderboard walletAddress={adminWallet} />,
         players: <AdminPlayers walletAddress={adminWallet} />,
+        grant: <AdminGrantPanel walletAddress={adminWallet} />,
         squads: <AdminSquads walletAddress={adminWallet} />,
         raid: <AdminRaid walletAddress={adminWallet} />,
         economy: <AdminEconomy walletAddress={adminWallet} />,
+        suspicious: <AdminSuspiciousRuns walletAddress={adminWallet} />,
+        chat: <AdminSquadChatModeration walletAddress={adminWallet} />,
         rewards: <AdminRewards walletAddress={adminWallet} />,
         skus: <AdminSkus walletAddress={adminWallet} />,
         content: <AdminContent />,

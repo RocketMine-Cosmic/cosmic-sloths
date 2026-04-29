@@ -13,7 +13,16 @@ Deno.serve(async (req) => {
         const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: wallet });
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
+        const perms = adminWallets[0].permissions || [];
+        const canViewFinance = perms.includes('owner') || perms.includes('view_finance');
+
         const { type } = await req.json();
+
+        // Finance-restricted types — hide revenue from regular staff
+        const FINANCE_TYPES = ['pools', 'logs', 'payouts'];
+        if (FINANCE_TYPES.includes(type) && !canViewFinance) {
+            return Response.json({ error: 'Forbidden — view_finance permission required' }, { status: 403 });
+        }
 
         if (type === 'pools') {
             const pools = await base44.asServiceRole.entities.TokenPool.list('-created_date', 100);

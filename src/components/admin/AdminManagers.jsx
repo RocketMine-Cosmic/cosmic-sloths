@@ -5,9 +5,11 @@ import { UserPlus, Trash2, Shield } from 'lucide-react';
 import moment from 'moment';
 
 const ALL_PERMISSIONS = [
-    { id: 'view_data',          label: '👁️ View Data',           desc: 'Read-only access to dashboards' },
+    { id: 'view_data',          label: '👁️ View Data',           desc: 'Read-only access to dashboards (no revenue/finance)' },
+    { id: 'view_finance',       label: '💵 View Finance',         desc: 'See OMENX revenue, token pools, spend logs' },
     { id: 'edit_players',       label: '✏️ Edit Players',         desc: 'Edit player saves, grant currency' },
     { id: 'delete_scores',      label: '🗑️ Delete Scores',         desc: 'Remove leaderboard entries' },
+    { id: 'moderate_chat',      label: '💬 Moderate Chat',         desc: 'Delete squad messages' },
     { id: 'manage_blacklist',   label: '🚫 Manage Blacklist',     desc: 'Ban / unban wallets' },
     { id: 'distribute_rewards', label: '💸 Distribute Rewards',   desc: 'Trigger weekly/seasonal payouts' },
     { id: 'manage_raid',        label: '⚔️ Manage Raid',          desc: 'Manage the global boss' },

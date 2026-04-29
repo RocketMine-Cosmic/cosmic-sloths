@@ -117,6 +117,46 @@ Deno.serve(async (req) => {
             return Response.json({ members });
         }
 
+        if (type === 'suspiciousRuns') {
+            // Heuristic anomaly detector — surfaces runs that violate basic physics.
+            // Thresholds are conservative to keep false positives low; tune as needed.
+            const scores = await base44.asServiceRole.entities.RunScore.list('-created_date', 500);
+            const flagged = [];
+            for (const s of scores) {
+                const reasons = [];
+                const t = Number(s.time_survived || 0);
+                const k = Number(s.kills || 0);
+                const lvl = Number(s.level || 0);
+                const score = Number(s.score || 0);
+
+                if (t > 0 && k / t > 50) reasons.push(`${(k/t).toFixed(1)} kills/sec (>50)`);
+                if (t > 0 && t < 60 && lvl >= 50) reasons.push(`Lvl ${lvl} in ${t}s (impossible)`);
+                if (t === 0 && score > 1000) reasons.push(`${score} pts with 0s survived`);
+                if (lvl > 200) reasons.push(`Level ${lvl} (cap exceeded)`);
+                if (score > 1000000) reasons.push(`Score ${score.toLocaleString()} (>1M)`);
+                if (k > 50000) reasons.push(`${k.toLocaleString()} kills (extreme)`);
+                if (t > 14400) reasons.push(`${t}s survived (>4h)`);
+
+                if (reasons.length > 0) flagged.push({ ...s, _reasons: reasons });
+            }
+            flagged.sort((a, b) => b._reasons.length - a._reasons.length || b.score - a.score);
+            return Response.json({ runs: flagged.slice(0, 100) });
+        }
+
+        if (type === 'squadMessages') {
+            const filter = squadId ? { squad_id: squadId } : {};
+            const messages = await base44.asServiceRole.entities.SquadMessage.filter(filter, '-created_date', 200);
+            // Attach squad name for context
+            const squadIds = [...new Set(messages.map(m => m.squad_id))];
+            const squads = squadIds.length > 0
+                ? await Promise.all(squadIds.map(id => base44.asServiceRole.entities.Squad.get(id).catch(() => null)))
+                : [];
+            const squadMap = {};
+            squads.forEach(s => { if (s) squadMap[s.id] = s.name || s.tag; });
+            const enriched = messages.map(m => ({ ...m, squad_name: squadMap[m.squad_id] || '(unknown)' }));
+            return Response.json({ messages: enriched });
+        }
+
         if (type === 'raid') {
             const now = new Date();
             const year = now.getUTCFullYear();

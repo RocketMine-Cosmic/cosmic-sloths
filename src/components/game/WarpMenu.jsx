@@ -80,7 +80,7 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
     // Check admin status once on mount — silently fails for non-admins (403).
     useEffect(() => {
         let cancelled = false;
-        base44.functions.invoke('getAdminData', { type: 'pools' })
+        base44.functions.invoke('getAdminData', { type: 'adminWallets' })
             .then(res => { if (!cancelled && !res.data?.error) setIsAdmin(true); })
             .catch(() => {});
         return () => { cancelled = true; };
