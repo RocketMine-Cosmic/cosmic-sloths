@@ -80,8 +80,9 @@ export default function PoolBiasPanel({ save, setSave }) {
         try {
             const user = getOmenXUserSync();
             const playerName = user?.player_name || user?.full_name || 'Pilot';
+            // Reuses the existing 10-OMENX xp-buff session SKU for the respec charge.
             const res = await base44.functions.invoke('purchaseSku', {
-                skuId: IN_GAME_SKUS.respecPoolBias || IN_GAME_SKUS.reroll, // fallback: reuse 2-OMENX SKU if dedicated one isn't set
+                skuId: IN_GAME_SKUS.xpSession,
                 quantity: 1,
                 playerName,
             });

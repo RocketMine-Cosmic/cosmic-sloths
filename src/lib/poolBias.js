@@ -7,7 +7,7 @@
 
 export const BIAS_PER_POINT = 0.05; // +5% draw weight per point allocated to a category
 export const RESPEC_COST_GOLD = 200;
-export const RESPEC_COST_OMENX = 1;
+export const RESPEC_COST_OMENX = 10;
 
 export const BIAS_CATEGORIES = [
     { id: 'weapons',   label: 'Weapons',   color: 'cyan',    desc: 'Boost weapon-pickup chance' },
