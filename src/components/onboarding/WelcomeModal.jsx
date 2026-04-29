@@ -13,8 +13,8 @@ const STEPS = [
         title: 'Welcome, Pilot',
         body: (
             <>
-                <p><span className="text-cyan-300 font-bold">Cosmic Sloths</span> is a quick-fire roguelike — survive waves, stack ridiculous weapon synergies, and climb a weekly leaderboard that pays out real <span className="text-amber-300 font-bold">$OMENX</span>.</p>
-                <p className="mt-2 text-slate-400">Runs are short. Progress is permanent. The top of the leaderboard earns crypto.</p>
+                <p><span className="text-cyan-300 font-bold">Cosmic Sloths</span> is a fast roguelike survival game. Pick a pilot, drop into an arena, and stack weapon upgrades to last as long as you can.</p>
+                <p className="mt-2 text-slate-400">The top of the weekly leaderboard splits a real <span className="text-amber-300 font-bold">$OMENX</span> reward pool.</p>
             </>
         ),
     },
@@ -22,11 +22,11 @@ const STEPS = [
         icon: Wallet,
         accent: 'text-amber-300',
         border: 'border-amber-500/40',
-        title: 'Link Your Wallet',
+        title: 'Sign In & Connect Wallet',
         body: (
             <>
-                <p>On the <span className="text-white font-bold">Main Menu</span>, hit the <span className="text-amber-300 font-bold">Link Wallet</span> button at the bottom to connect your OMENX wallet. This syncs your gold, unlocks, and scores to the cloud — and makes you eligible for weekly OMENX rewards.</p>
-                <p className="mt-2 text-slate-400">No OMENX wallet yet? You can create one in under a minute on omen.foundation. You can also play first and link your wallet later.</p>
+                <p>On the <span className="text-white font-bold">Main Menu</span>, tap the button at the bottom to <span className="text-cyan-300 font-bold">Sign In</span>, then <span className="text-purple-300 font-bold">Connect Wallet</span> to link your OMENX wallet.</p>
+                <p className="mt-2 text-slate-400">This is required to play — it syncs your progress to the cloud and makes you eligible for weekly OMENX rewards. Don't have a wallet yet? You can create one for free during connect.</p>
             </>
         ),
     },
@@ -34,11 +34,11 @@ const STEPS = [
         icon: Compass,
         accent: 'text-fuchsia-300',
         border: 'border-fuchsia-500/40',
-        title: 'Get to the Sloth Lounge',
+        title: 'Launch Your First Run',
         body: (
             <>
-                <p>Swipe right (or use the <span className="text-fuchsia-300 font-bold">Warp</span> button at the top) to reach the <span className="text-cyan-300 font-bold">Sloth Lounge</span> — your launch pad. Pick a character, pick an arena, then hit <span className="text-fuchsia-300 font-bold">LAUNCH</span> to start a run.</p>
-                <p className="mt-2 text-slate-400">In a run: move with WASD or the on-screen joystick, vacuum up XP gems, and pick a new upgrade every level.</p>
+                <p>Swipe right (or use the <span className="text-fuchsia-300 font-bold">Warp</span> menu at the top) to open the <span className="text-cyan-300 font-bold">Sloth Lounge</span>. Pick an operative, sector, and difficulty — then hit <span className="text-cyan-300 font-bold">LAUNCH</span> for a normal run or <span className="text-fuchsia-300 font-bold">ENDLESS</span> for the high-score mode.</p>
+                <p className="mt-2 text-slate-400">Move with WASD or the on-screen joystick. Weapons fire automatically — focus on dodging and grabbing XP gems.</p>
             </>
         ),
     },
@@ -46,11 +46,11 @@ const STEPS = [
         icon: Trophy,
         accent: 'text-emerald-300',
         border: 'border-emerald-500/40',
-        title: 'Spend, Climb, Earn',
+        title: 'Progress & Earn',
         body: (
             <>
-                <p>After your first run: spend gold in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, claim free rewards on the <span className="text-emerald-300 font-bold">Mission Board</span>, and watch your name climb the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
-                <p className="mt-2 text-slate-400">Top players split the OMENX pool every week — the higher your best score, the bigger your share.</p>
+                <p>You keep gold and unlocks from every run. Spend them in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, grab daily quests on the <span className="text-emerald-300 font-bold">Mission Board</span>, and check your rank on the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
+                <p className="mt-2 text-slate-400">Each week the top scorers receive an OMENX payout — the higher your rank, the bigger the share.</p>
             </>
         ),
     },
