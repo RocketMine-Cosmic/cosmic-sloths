@@ -8,8 +8,21 @@ export class SFXManagerClass {
 
         this.sfxVolume = savedSettings.sfxVolume !== undefined ? savedSettings.sfxVolume : 0.15;
         this.enabled = savedSettings.enabled !== undefined ? savedSettings.enabled : true;
+        // Per-category SFX toggles. All on by default.
+        const defaultCats = { weapons: true, pickups: true, enemies: true, player: true, ui: true, events: true };
+        this.categories = { ...defaultCats, ...(savedSettings.sfxCategories || {}) };
         this.initialized = false;
         this.lastPlayed = {};
+    }
+
+    setCategoryEnabled(cat, enabled) {
+        if (!(cat in this.categories)) return;
+        this.categories[cat] = !!enabled;
+        this.saveSettings();
+    }
+
+    isCategoryEnabled(cat) {
+        return this.categories[cat] !== false;
     }
 
     init() {
@@ -27,6 +40,7 @@ export class SFXManagerClass {
             const saved = JSON.parse(localStorage.getItem('cosmic_sloth_settings') || '{}');
             saved.sfxVolume = this.sfxVolume;
             saved.enabled = this.enabled;
+            saved.sfxCategories = this.categories;
             localStorage.setItem('cosmic_sloth_settings', JSON.stringify(saved));
         } catch (e) {}
     }
@@ -75,6 +89,7 @@ export class SFXManagerClass {
 
     // XP pickup — sound matches the 4 visual tiers (shard / crystal / cluster / core).
     playPickup(value = 1) {
+        if (!this.isCategoryEnabled('pickups')) return;
         if (this.throttle('pickup', 50)) return;
         if (value >= 100) {
             // Shard core — ethereal pad chord with sub-bass
@@ -100,6 +115,7 @@ export class SFXManagerClass {
 
     // Gold pickup — sound matches the 5 visual tiers (coin / stack / bag / chest / pile).
     playGoldPickup(value = 1) {
+        if (!this.isCategoryEnabled('pickups')) return;
         if (this.throttle('gold', 100)) return;
         if (value >= 1000) {
             // Pile — huge cascading shimmer + bass thump
@@ -133,33 +149,39 @@ export class SFXManagerClass {
     }
 
     playEnemySpawn() {
+        if (!this.isCategoryEnabled('enemies')) return;
         if (this.throttle('spawn', 500)) return;
         this.playTone(150, 'sawtooth', 0.3, 0.2);
     }
     
     playBossSpawn() {
+        if (!this.isCategoryEnabled('enemies')) return;
         this.playTone(100, 'sawtooth', 1.0, 0.8);
         setTimeout(() => this.playTone(80, 'sawtooth', 1.0, 0.8), 200);
         setTimeout(() => this.playTone(60, 'sawtooth', 1.5, 0.8), 400);
     }
 
     playEnemyHit() {
+        if (!this.isCategoryEnabled('enemies')) return;
         if (this.throttle('hit', 30)) return;
         this.playTone(200, 'square', 0.05, 0.1);
     }
 
     playEnemyDeath() {
+        if (!this.isCategoryEnabled('enemies')) return;
         if (this.throttle('death', 50)) return;
         this.playTone(100, 'sawtooth', 0.1, 0.15);
     }
 
     playPlayerHit() {
+        if (!this.isCategoryEnabled('player')) return;
         if (this.throttle('playerHit', 200)) return;
         this.playTone(150, 'sawtooth', 0.3, 0.8);
         setTimeout(() => this.playTone(100, 'square', 0.4, 0.8), 100);
     }
 
     playLevelUp() {
+        if (!this.isCategoryEnabled('events')) return;
         [440, 554, 659, 880].forEach((freq, i) => {
             setTimeout(() => this.playTone(freq, 'square', 0.4, 0.5), i * 120);
         });
@@ -167,6 +189,7 @@ export class SFXManagerClass {
 
     // Magnet power-up — fast whoosh sweep that suggests pulling things in.
     playMagnetPickup() {
+        if (!this.isCategoryEnabled('pickups')) return;
         if (this.throttle('magnet', 200)) return;
         this.playTone(300, 'sine', 0.15, 0.35);
         setTimeout(() => this.playTone(600, 'sine', 0.12, 0.4), 40);
@@ -175,10 +198,12 @@ export class SFXManagerClass {
     }
 
     playUIClick() {
+        if (!this.isCategoryEnabled('ui')) return;
         this.playTone(600, 'sine', 0.1, 0.5);
     }
 
     playWeaponFire(weaponId) {
+        if (!this.isCategoryEnabled('weapons')) return;
         if (this.throttle(`weapon_${weaponId}`, 100)) return;
         
         if (weaponId === 'napBeam' || weaponId === 'laserNova') {
@@ -195,12 +220,14 @@ export class SFXManagerClass {
     }
     
     playGameOver() {
+        if (!this.isCategoryEnabled('events')) return;
         [300, 250, 200, 150].forEach((freq, i) => {
             setTimeout(() => this.playTone(freq, 'sawtooth', 0.5, 0.6), i * 300);
         });
     }
     
     playVictory() {
+        if (!this.isCategoryEnabled('events')) return;
         [440, 554, 659, 880, 1108].forEach((freq, i) => {
             setTimeout(() => this.playTone(freq, 'square', 0.3, 0.6), i * 150);
         });

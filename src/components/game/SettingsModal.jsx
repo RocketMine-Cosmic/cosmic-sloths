@@ -10,6 +10,23 @@ export default function SettingsModal({ onClose }) {
     const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
     const [currentTrack, setCurrentTrack] = useState(SoundManager.getCurrentTrack());
     const [isPlaying, setIsPlaying] = useState(!SoundManager.bgm.paused);
+    const [sfxCats, setSfxCats] = useState({ ...SFXManager.categories });
+
+    const toggleCat = (cat) => {
+        const next = !sfxCats[cat];
+        SFXManager.setCategoryEnabled(cat, next);
+        setSfxCats({ ...SFXManager.categories });
+        if (next) SFXManager.playUIClick();
+    };
+
+    const SFX_CATEGORIES = [
+        { id: 'weapons', label: 'Weapons' },
+        { id: 'pickups', label: 'Pickups' },
+        { id: 'enemies', label: 'Enemies' },
+        { id: 'player', label: 'Player Hits' },
+        { id: 'ui', label: 'UI Clicks' },
+        { id: 'events', label: 'Events' },
+    ];
 
     useEffect(() => {
         const unsub = SoundManager.subscribe(() => {
@@ -152,6 +169,25 @@ export default function SettingsModal({ onClose }) {
                             disabled={isMuted}
                             className="w-full accent-cyan-500"
                         />
+
+                        {/* Per-category SFX toggles */}
+                        <div className="mt-3 bg-slate-800/60 border border-slate-700 rounded-lg p-2.5">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">SFX Categories</div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                                {SFX_CATEGORIES.map(cat => {
+                                    const on = sfxCats[cat.id] !== false;
+                                    return (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => toggleCat(cat.id)}
+                                            className={`text-xs font-bold px-2 py-1.5 rounded border transition-colors ${on ? 'bg-cyan-900/40 border-cyan-500/60 text-cyan-200 hover:bg-cyan-900/60' : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'}`}
+                                        >
+                                            {on ? '✓ ' : '✕ '}{cat.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
