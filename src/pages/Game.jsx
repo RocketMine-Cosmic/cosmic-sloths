@@ -21,6 +21,7 @@ import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import { getAuthData } from '@/lib/getAuthData';
 import { SpritePreloader } from '../game/SpritePreloader';
 import { refreshBalance } from '@/lib/playerDataCache';
+import CharacterAbilityMeter from '../components/game/CharacterAbilityMeter';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -549,6 +550,7 @@ export default function Game() {
             <VirtualJoystick onChange={handleJoystickChange} />
             
             <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />
+            <CharacterAbilityMeter engineRef={engineRef} />
             
             {isPaused && (
                 <PauseModal onResume={handleResume} onQuit={handleQuit} />
