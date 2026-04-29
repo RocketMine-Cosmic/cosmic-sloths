@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
                     // Boss defeated — level up, scale HP, refill.
                     leveledUp = true;
                     newLevel += 1;
-                    newMaxHp = Math.floor(BOSS_BASE_HP * Math.pow(1.5, newLevel - 1));
+                    newMaxHp = Math.floor(BOSS_BASE_HP * Math.pow(2, newLevel - 1));
                     newHp = newMaxHp;
 
                     // Log a kill event
