@@ -16,6 +16,7 @@ import AdminContent from '../components/admin/AdminContent';
 import AdminHealthCheck from '../components/admin/AdminHealthCheck';
 import AdminDuplicateScores from '../components/admin/AdminDuplicateScores';
 import AdminBulkScoreDelete from '../components/admin/AdminBulkScoreDelete';
+import AdminRestoreScore from '../components/admin/AdminRestoreScore';
 import AdminChangesLogViewer from '../components/admin/AdminChangesLogViewer';
 import AdminManagers from '../components/admin/AdminManagers';
 import AdminOrphanedData from '../components/admin/AdminOrphanedData';
@@ -233,6 +234,7 @@ export default function AdminDashboard() {
         content: <AdminContent />,
         duplicates: (
             <div className="space-y-4">
+                <AdminRestoreScore walletAddress={adminWallet} />
                 <AdminDuplicateScores walletAddress={adminWallet} />
                 <AdminBulkScoreDelete walletAddress={adminWallet} />
             </div>
