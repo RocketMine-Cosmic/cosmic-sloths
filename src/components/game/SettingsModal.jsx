@@ -1,13 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { SoundManager } from '../../game/SoundManager';
 import { SFXManager } from '../../game/SFXManager';
-import { X, Volume2, VolumeX } from 'lucide-react';
+import { X, Volume2, VolumeX, SkipBack, SkipForward, Play, Pause, Music } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
     const [bgmVol, setBgmVol] = useState(SoundManager.bgm.volume);
     const [sfxVol, setSfxVol] = useState(SFXManager.sfxVolume);
     const [isMuted, setIsMuted] = useState(SoundManager.isMuted());
+    const [currentTrack, setCurrentTrack] = useState(SoundManager.getCurrentTrack());
+    const [isPlaying, setIsPlaying] = useState(!SoundManager.bgm.paused);
+
+    useEffect(() => {
+        const unsub = SoundManager.subscribe(() => {
+            setCurrentTrack(SoundManager.getCurrentTrack());
+            setIsPlaying(!SoundManager.bgm.paused);
+        });
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+        SoundManager.bgm.addEventListener('play', onPlay);
+        SoundManager.bgm.addEventListener('pause', onPause);
+        return () => {
+            unsub();
+            SoundManager.bgm.removeEventListener('play', onPlay);
+            SoundManager.bgm.removeEventListener('pause', onPause);
+        };
+    }, []);
 
     const handleBgmChange = (e) => {
         const val = parseFloat(e.target.value);
@@ -31,6 +49,18 @@ export default function SettingsModal({ onClose }) {
         SFXManager.toggleMute(!isNowMuted);
         setIsMuted(isNowMuted);
     };
+
+    const handlePrev = () => { SFXManager.playUIClick(); SoundManager.playPrev(); };
+    const handleNext = () => { SFXManager.playUIClick(); SoundManager.playNext(); };
+    const handlePlayPause = () => {
+        SFXManager.playUIClick();
+        if (SoundManager.bgm.paused) {
+            SoundManager.playBGM();
+        } else {
+            SoundManager.bgm.pause();
+        }
+    };
+    const handleTestSfx = () => SFXManager.playLevelUp();
 
     return (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[60] p-4">
@@ -74,12 +104,43 @@ export default function SettingsModal({ onClose }) {
                             disabled={isMuted}
                             className="w-full accent-cyan-500"
                         />
+
+                        {/* Now Playing + transport */}
+                        <div className="mt-3 bg-slate-800/60 border border-slate-700 rounded-lg p-2.5">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Music size={14} className="text-cyan-400 shrink-0" />
+                                <div className="text-[10px] uppercase tracking-widest text-slate-500">Now Playing</div>
+                            </div>
+                            <div className="text-sm text-white truncate mb-2.5" title={currentTrack?.name}>
+                                {currentTrack?.name || '—'}
+                            </div>
+                            <div className="flex items-center justify-center gap-2">
+                                <button onClick={handlePrev} disabled={isMuted} className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white p-2 rounded-lg transition-colors">
+                                    <SkipBack size={16} />
+                                </button>
+                                <button onClick={handlePlayPause} disabled={isMuted} className="bg-cyan-700 hover:bg-cyan-600 disabled:opacity-50 text-white p-2.5 rounded-lg transition-colors">
+                                    {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+                                </button>
+                                <button onClick={handleNext} disabled={isMuted} className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white p-2 rounded-lg transition-colors">
+                                    <SkipForward size={16} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div className={isMuted ? 'opacity-50 pointer-events-none' : ''}>
-                        <div className="flex justify-between mb-2">
+                        <div className="flex justify-between mb-2 items-center">
                             <label className="font-bold text-slate-300">SFX Volume</label>
-                            <span className="text-cyan-400">{Math.round(sfxVol * 100)}%</span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleTestSfx}
+                                    disabled={isMuted}
+                                    className="text-[10px] uppercase tracking-widest bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-cyan-300 border border-slate-700 px-2 py-1 rounded transition-colors"
+                                >
+                                    Test
+                                </button>
+                                <span className="text-cyan-400">{Math.round(sfxVol * 100)}%</span>
+                            </div>
                         </div>
                         <input 
                             type="range" 
