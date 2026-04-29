@@ -5,8 +5,8 @@ import { SoundManager } from '../../game/SoundManager';
 import {
     BIAS_CATEGORIES,
     BIAS_PER_POINT,
-    RESPEC_COST_GOLD,
     RESPEC_COST_OMENX,
+    getGoldRespecCost,
     getTotalBiasPoints,
     getAllocations,
     getSpentPoints,
@@ -42,7 +42,8 @@ export default function PoolBiasPanel({ save, setSave }) {
     const remaining = getRemainingPoints(save);
     const allocations = getAllocations(save);
     const gold = save.gold || 0;
-    const canRespecGold = spent > 0 && gold >= RESPEC_COST_GOLD;
+    const goldRespecCost = getGoldRespecCost(save);
+    const canRespecGold = spent > 0 && gold >= goldRespecCost;
     const canRespecOmenx = spent > 0 && (omenxBalance ?? 0) >= RESPEC_COST_OMENX;
 
     const persist = (newAllocations) => {
@@ -65,7 +66,8 @@ export default function PoolBiasPanel({ save, setSave }) {
         SoundManager.playUIClick();
         const newSave = {
             ...save,
-            gold: gold - RESPEC_COST_GOLD,
+            gold: gold - goldRespecCost,
+            poolBiasGoldRespecCount: Number(save.poolBiasGoldRespecCount || 0) + 1,
             poolBiasAllocations: BIAS_CATEGORIES.reduce((acc, c) => { acc[c.id] = 0; return acc; }, {}),
         };
         SaveManager.save(newSave);
@@ -179,9 +181,9 @@ export default function PoolBiasPanel({ save, setSave }) {
                         onClick={respecWithGold}
                         disabled={!canRespecGold}
                         className="px-3 py-1.5 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-                        title={spent === 0 ? 'Nothing to respec' : `Costs ${RESPEC_COST_GOLD} gold (you have ${gold})`}
+                        title={spent === 0 ? 'Nothing to respec' : `Costs ${goldRespecCost.toLocaleString()} gold (you have ${gold.toLocaleString()}). Cost increases each respec.`}
                     >
-                        Respec — {RESPEC_COST_GOLD} Gold
+                        Respec — {goldRespecCost.toLocaleString()} Gold
                     </button>
                     <button
                         onClick={respecWithOmenx}

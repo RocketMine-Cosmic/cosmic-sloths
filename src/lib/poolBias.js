@@ -6,8 +6,15 @@
 // Respec is refundable but costs gold OR OMENX.
 
 export const BIAS_PER_POINT = 0.05; // +5% draw weight per point allocated to a category
-export const RESPEC_COST_GOLD = 200;
+// Gold respec cost escalates each time it's used (capped at the last tier).
+// Use count is tracked in save.poolBiasGoldRespecCount.
+export const GOLD_RESPEC_TIERS = [2000, 4000, 8000, 16000];
 export const RESPEC_COST_OMENX = 10;
+
+export function getGoldRespecCost(save) {
+    const count = Number(save?.poolBiasGoldRespecCount || 0);
+    return GOLD_RESPEC_TIERS[Math.min(count, GOLD_RESPEC_TIERS.length - 1)];
+}
 
 export const BIAS_CATEGORIES = [
     { id: 'weapons',   label: 'Weapons',   color: 'cyan',    desc: 'Boost weapon-pickup chance' },
