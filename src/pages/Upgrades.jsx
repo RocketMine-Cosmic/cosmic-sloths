@@ -1306,7 +1306,7 @@ export default function Upgrades({ isCarousel }) {
 
                 {activeCategory === 'permanent' && (
                     <div className="mb-3 text-[11px] md:text-xs text-emerald-300/90 bg-emerald-950/30 border border-emerald-700/40 rounded-lg px-3 py-2">
-                        💡 <strong className="text-emerald-400">Bias bonus:</strong> Permanent stats, talents and weapon upgrades appear <strong className="text-white">+15% more often per level</strong> in your in-run level-up choices. <span className="text-slate-500">(Only permanent upgrades count toward this bias.)</span>
+                        💡 <strong className="text-emerald-400">Pool Bias points:</strong> Every permanent stat, talent and weapon level you buy here grants you Pool Bias points. Spend them on the <strong className="text-white">Loadouts page</strong> to make specific weapons or stats appear <strong className="text-white">+10% more often per point</strong> in your in-run level-up choices. <span className="text-slate-500">(First 10 levels = 1pt each, then 1pt per 2 levels.)</span>
                     </div>
                 )}
 

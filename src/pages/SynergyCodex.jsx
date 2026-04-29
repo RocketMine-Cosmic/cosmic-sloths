@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { SYNERGIES, WEAPONS, EVOLUTIONS, UPGRADES } from '../game/Constants';
-import { ArrowLeft, BookOpen, Lock, Sparkles, Crosshair, Zap, Timer, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, Lock, Sparkles, Crosshair } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -12,7 +12,7 @@ import WeaponSimulation from '../components/game/WeaponSimulation';
 export default function SynergyCodex({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const [activeTab, setActiveTab] = useState('synergies'); // 'synergies' or 'mastery'
+    const [activeTab, setActiveTab] = useState('synergies'); // 'synergies' or 'evolutions'
     const [previewWeapon, setPreviewWeapon] = useState(null);
 
     useEffect(() => {
@@ -54,7 +54,7 @@ export default function SynergyCodex({ isCarousel }) {
                             <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-rose-500" /> THE CODEX
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">
-                            Synergies · Evolutions · Mastery
+                            Synergies · Evolutions
                         </p>
                     </div>
                     <CurrencyHeader />
@@ -66,9 +66,6 @@ export default function SynergyCodex({ isCarousel }) {
                     </button>
                     <button onClick={() => { SoundManager.playUIClick(); setActiveTab('evolutions'); setPreviewWeapon(null); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'evolutions' ? 'bg-orange-600 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                         Evolutions
-                    </button>
-                    <button onClick={() => { SoundManager.playUIClick(); setActiveTab('mastery'); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'mastery' ? 'bg-amber-600 border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
-                        Mastery
                     </button>
                 </div>
 
@@ -249,103 +246,6 @@ export default function SynergyCodex({ isCarousel }) {
                         </>
                     )}
 
-                    {activeTab === 'mastery' && (
-                        <>
-                            <p className="text-slate-300 text-xs md:text-base text-center mb-6">Upgrade your weapons in the <strong className="text-white">Lounge Armory</strong> to unlock their final Mastery forms.</p>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {Object.values(WEAPONS).filter(w => !w.isSynergy && !w.isEvolution).map((weapon, index) => {
-                                    // Mastery is unlocked by PERMANENT weapon upgrades only.
-                                    const getWeaponUpgrade = (wId, stat) => {
-                                        return save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
-                                    };
-                                    
-                                    const dmgLvl = getWeaponUpgrade(weapon.id, 'damage');
-                                    const areaLvl = getWeaponUpgrade(weapon.id, 'area');
-                                    const cdLvl = getWeaponUpgrade(weapon.id, 'cooldown');
-                                    
-                                    const isMastered = dmgLvl >= 5 && areaLvl >= 5 && cdLvl >= 5;
-                                    const isPreviewing = previewWeapon === weapon.id;
-                                    
-                                    return (
-                                        <div key={index} className={`p-4 rounded-xl border-2 transition-all flex flex-col h-full ${
-                                            isMastered 
-                                            ? 'bg-amber-950/20 border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
-                                            : 'bg-slate-900/60 border-slate-800'
-                                        }`}>
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h3 className={`font-black text-xl tracking-widest uppercase flex items-center gap-2 ${isMastered ? 'text-amber-400' : 'text-slate-300'}`}>
-                                                        {weapon.name} {isMastered && <CheckCircle2 className="w-5 h-5 text-amber-500" />}
-                                                    </h3>
-                                                    <p className="text-xs text-slate-400">{weapon.desc}</p>
-                                                </div>
-                                                {isMastered && (
-                                                    <span className="text-[10px] font-bold text-amber-900 bg-amber-500 px-2 py-1 rounded">MASTERED</span>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center justify-between gap-2 mb-4 bg-slate-950/50 p-3 rounded-lg border border-slate-800">
-                                                <div className="flex flex-col items-center">
-                                                    <Zap className={`w-4 h-4 mb-1 ${dmgLvl >= 5 ? 'text-amber-400' : 'text-slate-500'}`} />
-                                                    <div className="text-[10px] text-slate-500 uppercase font-bold">Damage</div>
-                                                    <div className="text-xs font-mono text-white">{dmgLvl}/5</div>
-                                                </div>
-                                                <div className="flex flex-col items-center">
-                                                    <Sparkles className={`w-4 h-4 mb-1 ${areaLvl >= 5 ? 'text-amber-400' : 'text-slate-500'}`} />
-                                                    <div className="text-[10px] text-slate-500 uppercase font-bold">Area</div>
-                                                    <div className="text-xs font-mono text-white">{areaLvl}/5</div>
-                                                </div>
-                                                <div className="flex flex-col items-center">
-                                                    <Timer className={`w-4 h-4 mb-1 ${cdLvl >= 5 ? 'text-amber-400' : 'text-slate-500'}`} />
-                                                    <div className="text-[10px] text-slate-500 uppercase font-bold">Cooldown</div>
-                                                    <div className="text-xs font-mono text-white">{cdLvl}/5</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="mb-4">
-                                                <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Mastery Effect</div>
-                                                {isMastered ? (
-                                                    <div className="text-sm font-bold text-amber-300 bg-amber-900/30 p-2 rounded border border-amber-500/30">
-                                                        ✨ {weapon.masteryDesc?.replace('MASTERY: ', '') || 'Unlocks devastating potential.'}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-sm font-bold text-slate-600 bg-slate-950 p-2 rounded border border-slate-800 select-none blur-sm pointer-events-none opacity-50">
-                                                        ✨ {weapon.masteryDesc?.replace('MASTERY: ', '') || 'Unlocks devastating potential.'}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="mt-auto pt-2 border-t border-slate-800/50">
-                                                <button 
-                                                    onClick={() => {
-                                                        SoundManager.playUIClick();
-                                                        setPreviewWeapon(isPreviewing ? null : weapon.id);
-                                                    }}
-                                                    className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
-                                                        isPreviewing 
-                                                        ? 'bg-slate-700 text-white' 
-                                                        : 'bg-amber-600 hover:bg-amber-500 text-white'
-                                                    }`}
-                                                >
-                                                    <Crosshair className="w-4 h-4" /> 
-                                                    {isPreviewing ? 'Close Simulation' : 'Preview Mastery Form'}
-                                                </button>
-                                                
-                                                {isPreviewing && (
-                                                    <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                        <WeaponSimulation weaponId={weapon.id} isMastered={true} />
-                                                        <div className="text-[10px] text-slate-500 text-center mt-2 italic">
-                                                            Previewing fully mastered potential.
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
                 </div>
             </div>
         </div>
