@@ -26,14 +26,6 @@ export default function AdminLeaderboard({ walletAddress }) {
             <div className="flex flex-wrap items-center gap-3 mb-4">
                 <h2 className="text-base font-bold text-yellow-400 uppercase tracking-widest">🏆 Leaderboard Scores</h2>
                 <div className="flex gap-1 ml-auto">
-                    {['weekly', 'seasonal', 'all'].map(p => (
-                        <button key={p} onClick={() => setPeriod(p)}
-                            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${period === p ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                            {p.charAt(0).toUpperCase() + p.slice(1)}
-                        </button>
-                    ))}
-                </div>
-                <div className="flex gap-1">
                     {[
                         { id: 'all', label: 'All Modes' },
                         { id: 'normal', label: 'Normal' },
@@ -42,6 +34,14 @@ export default function AdminLeaderboard({ walletAddress }) {
                         <button key={m.id} onClick={() => setMode(m.id)}
                             className={`px-3 py-1 rounded text-xs font-bold transition-colors ${mode === m.id ? 'bg-fuchsia-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
                             {m.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex gap-1">
+                    {['weekly', 'seasonal', 'all'].map(p => (
+                        <button key={p} onClick={() => setPeriod(p)}
+                            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${period === p ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                            {p.charAt(0).toUpperCase() + p.slice(1)}
                         </button>
                     ))}
                 </div>
