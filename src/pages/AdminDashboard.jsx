@@ -32,6 +32,7 @@ import AdminGoldAudit from '../components/admin/AdminGoldAudit';
 import AdminGrantPanel from '../components/admin/AdminGrantPanel';
 import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
 import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
+import AdminStaffPayouts from '../components/admin/AdminStaffPayouts';
 
 // Tabs are organised into logical groups by responsibility.
 // Each tab declares the permission required to see it.
@@ -260,7 +261,12 @@ export default function AdminDashboard() {
         ),
         cleanup: <AdminOrphanedData walletAddress={adminWallet} />,
         changelog: <AdminChangesLogViewer />,
-        managers: <AdminManagers walletAddress={adminWallet} />,
+        managers: (
+            <div className="space-y-4">
+                <AdminStaffPayouts canViewFinance={canViewFinance} />
+                <AdminManagers walletAddress={adminWallet} />
+            </div>
+        ),
         discord: <AdminDiscordGuide />,
         backups: <AdminDataBackup walletAddress={adminWallet} />,
         blacklist: <AdminBlacklist />,
