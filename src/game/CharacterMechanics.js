@@ -69,6 +69,9 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
             }
         } else if (engine.characterMechanics.sonicCharge >= 100) {
             engine.triggerSonicBoom();
+        } else {
+            // Decay charge while standing still — lose 15/sec (about 6.7s to fully drain).
+            engine.characterMechanics.sonicCharge = Math.max(0, (engine.characterMechanics.sonicCharge || 0) - dt * 15);
         }
         if (dx !== 0 || dy !== 0) {
             engine.characterMechanics.lastMoveDir = { x: dx, y: dy };
