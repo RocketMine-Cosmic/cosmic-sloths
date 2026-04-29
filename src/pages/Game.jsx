@@ -172,6 +172,15 @@ export default function Game() {
             // No buff applied — title registry unavailable
         }
 
+        // Tiny perk for staff/admins — +2% to base stats. Client-side, cached per session.
+        try {
+            const { getAdminBuff } = await import('@/lib/adminBuff');
+            const adminBuff = await getAdminBuff();
+            if (adminBuff) save.adminBuff = adminBuff;
+        } catch (e) {
+            // Not an admin or check failed — no buff applied
+        }
+
         // Inject NFT multipliers from playerDataCache so GameEngine can apply them
         try {
             const { fetchPlayerData } = await import('@/lib/playerDataCache');
