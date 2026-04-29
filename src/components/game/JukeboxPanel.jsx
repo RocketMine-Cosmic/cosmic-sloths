@@ -4,6 +4,7 @@ import { SkipBack, SkipForward, Volume2, VolumeX, CheckSquare, Square, Music } f
 import { SoundManager } from '../../game/SoundManager';
 import { MUSIC_TRACKS } from '../../game/MusicTracks';
 import JukeboxTrackRow from './JukeboxTrackRow';
+import SfxCategoryToggles from './SfxCategoryToggles';
 
 export default function JukeboxPanel() {
     const [, setTick] = useState(0);
@@ -139,6 +140,9 @@ export default function JukeboxPanel() {
                     </div>
                 </div>
             </div>
+
+            {/* SFX category toggles */}
+            <SfxCategoryToggles />
 
             {/* Bulk-toggle helper buttons */}
             <div className="flex flex-wrap gap-2 mb-4 text-xs">
