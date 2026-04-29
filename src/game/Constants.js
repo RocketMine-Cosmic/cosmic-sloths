@@ -437,7 +437,7 @@ export const CHARACTER_MASTERY_SIGNATURE = {
     },
     skybyte: {
         tier6:  { title: 'Sky Captain',       bonusDesc: '+15% Speed & +15% Area',     badge: '🌟', multiStat: { speedMult: 0.15, areaMult: 0.15 } },
-        tier7:  { title: 'Sonic Legend',      bonusDesc: 'Sonic boom charges 33% faster', badge: '💎', abilityBoost: { sonicChargeMult: 1.33 } },
+        tier7:  { title: 'Sonic Legend',      bonusDesc: 'Charges 33% faster + unlocks HYPER BOOM (charge past 100% for 2.5× dmg & 1.6× radius)', badge: '💎', abilityBoost: { sonicChargeMult: 1.33 } },
     },
 };
 

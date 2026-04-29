@@ -46,6 +46,20 @@ function getMeterState(engine) {
 
     if (charId === 'skybyte') {
         const charge = cm?.sonicCharge || 0;
+        // Tier-7 mastery unlocks supercharge tier — meter goes 0→100 (Sonic Boom),
+        // then 100→200 (Hyper Boom). Use the upper portion as a second visual tier.
+        const hasSupercharge = !!engine.masteryAbilityBoost?.sonicChargeMult;
+        if (hasSupercharge) {
+            const isSuper = charge >= 200;
+            const label = charge >= 100 ? (isSuper ? 'HYPER BOOM' : 'CHARGING…') : 'SONIC BOOM';
+            return {
+                ...cfg,
+                label,
+                color: isSuper ? 'lime' : 'cyan',
+                progress: Math.min(1, charge / 200),
+                ready: isSuper,
+            };
+        }
         return { ...cfg, progress: Math.min(1, charge / 100), ready: charge >= 100 };
     }
     if (charId === 'holodrift') {

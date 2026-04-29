@@ -59,12 +59,22 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
     }
 
     if (engine.characterId === 'skybyte') {
-        // Tier-7 mastery: sonic boom charges 33% faster
+        // Tier-7 mastery: sonic boom charges 33% faster + unlocks a SUPERCHARGE tier
+        // (charge keeps building past 100 → up to 200, releasing at supercharge does
+        // bigger damage in a wider radius). Players who keep moving are rewarded
+        // for not breaking momentum.
         const chargeMult = engine.masteryAbilityBoost?.sonicChargeMult || 1.0;
+        const hasSupercharge = !!engine.masteryAbilityBoost?.sonicChargeMult; // tier-7 unlocked
+        const maxCharge = hasSupercharge ? 200 : 100;
         if (engine.player.isMoving) {
-            engine.characterMechanics.sonicCharge = Math.min(100, (engine.characterMechanics.sonicCharge || 0) + dt * 20 * chargeMult);
+            // Past 100, charge accumulates at half speed to make supercharge feel earned.
+            const cur = engine.characterMechanics.sonicCharge || 0;
+            const rate = (cur >= 100 ? 10 : 20) * chargeMult;
+            engine.characterMechanics.sonicCharge = Math.min(maxCharge, cur + dt * rate);
             const moveDot = dx * engine.characterMechanics.lastMoveDir.x + dy * engine.characterMechanics.lastMoveDir.y;
-            if (moveDot < 0.5 && engine.characterMechanics.sonicCharge >= 100) {
+            // Only release on direction-change/stop if charge is at FULL (>=maxCharge),
+            // so tier-7 owners can keep building past 100 without accidental early release.
+            if (moveDot < 0.5 && engine.characterMechanics.sonicCharge >= maxCharge) {
                 engine.triggerSonicBoom();
             }
         } else if (engine.characterMechanics.sonicCharge >= 100) {
@@ -77,7 +87,9 @@ export function updateCharacterMechanics(engine, dt, dx, dy) {
             engine.characterMechanics.lastMoveDir = { x: dx, y: dy };
         }
         if (engine.characterMechanics.sonicCharge >= 100 && engine.frameCount % 5 === 0) {
-            engine.addParticle(engine.player.x, engine.player.y, '#00D4FF', 1, 'spark', 1.5);
+            // Brighter, bigger glow at supercharge.
+            const isSuper = engine.characterMechanics.sonicCharge >= 200;
+            engine.addParticle(engine.player.x, engine.player.y, isSuper ? '#FFFFFF' : '#00D4FF', isSuper ? 2 : 1, 'spark', isSuper ? 2.5 : 1.5);
         }
     }
 

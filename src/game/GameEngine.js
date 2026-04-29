@@ -338,17 +338,27 @@ export class GameEngine {
     }
 
     triggerSonicBoom() {
+        // Tier-7 mastery: charge can build past 100 → 200 ("supercharge"). Released
+        // at supercharge it does 2.5× damage in a 1.6× radius and shakes the screen harder.
+        const isSuper = (this.characterMechanics.sonicCharge || 0) >= 200;
         this.characterMechanics.sonicCharge = 0;
-        this.addDamageText(this.player.x, this.player.y - 40, "SONIC BOOM!", '#00D4FF');
-        this.particleManager.createExplosion(this.player.x, this.player.y, '#00D4FF', 2.0, 'default');
-        this.addParticle(this.player.x, this.player.y, '#00D4FF', 1, 'shockwave', 3.0, { growthRate: 800, lineWidth: 8 });
-        this.shake(0.5);
+        const label = isSuper ? "HYPER BOOM!" : "SONIC BOOM!";
+        const color = isSuper ? '#FFFFFF' : '#00D4FF';
+        const radius = isSuper ? 480 : 300;
+        const dmg = isSuper ? 125 : 50;
+        const visualScale = isSuper ? 3.5 : 2.0;
+        const shockGrowth = isSuper ? 1300 : 800;
+        const shockWidth = isSuper ? 14 : 8;
+        this.addDamageText(this.player.x, this.player.y - 40, label, color);
+        this.particleManager.createExplosion(this.player.x, this.player.y, color, visualScale, 'default');
+        this.addParticle(this.player.x, this.player.y, color, 1, 'shockwave', isSuper ? 4.5 : 3.0, { growthRate: shockGrowth, lineWidth: shockWidth });
+        this.shake(isSuper ? 1.0 : 0.5);
         this.enemies.forEach(e => {
-            if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < 300) {
-                this.damageEnemy(e, 50 * this.player.damageMult);
+            if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < radius) {
+                this.damageEnemy(e, dmg * this.player.damageMult);
                 const angle = Math.atan2(e.y - this.player.y, e.x - this.player.x);
-                e.x += Math.cos(angle) * 100;
-                e.y += Math.sin(angle) * 100;
+                e.x += Math.cos(angle) * (isSuper ? 180 : 100);
+                e.y += Math.sin(angle) * (isSuper ? 180 : 100);
             }
         });
     }
