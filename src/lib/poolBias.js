@@ -8,7 +8,10 @@
 import { UPGRADES, WEAPONS } from '../game/Constants';
 
 export const BIAS_PER_POINT = 0.10;             // +10% weight per point
-export const POINTS_PER_UPGRADE = 3;            // 3 points granted per permanent upgrade level
+// Tiered point grant — anti-whale: first N levels are worth more, then taper.
+export const POINTS_TIER_BREAKPOINT = 10;
+export const POINTS_PER_LEVEL_EARLY = 2;        // levels 1..10 → 2 pts each
+export const POINTS_PER_LEVEL_LATE  = 1;        // levels 11+ → 1 pt each
 export const RESPEC_COST_OMENX = 10;
 export const GOLD_RESPEC_TIERS = [2000, 4000, 8000, 16000];
 
@@ -61,7 +64,9 @@ export function getBiasTargets() {
     return _cachedTargets;
 }
 
-// Total points = (sum of permanent stat upgrade levels + permanent weapon upgrade levels + permanent talents) * POINTS_PER_UPGRADE
+// Total bias points granted from the player's permanent investments.
+// Tiered: first POINTS_TIER_BREAKPOINT levels are worth POINTS_PER_LEVEL_EARLY,
+// every level after is worth POINTS_PER_LEVEL_LATE (anti-whale curve).
 export function getTotalBiasPoints(save) {
     if (!save) return 0;
     let levels = 0;
@@ -77,7 +82,9 @@ export function getTotalBiasPoints(save) {
         const list = talents[cId];
         if (Array.isArray(list)) levels += list.length;
     }
-    return levels * POINTS_PER_UPGRADE;
+    const earlyLevels = Math.min(levels, POINTS_TIER_BREAKPOINT);
+    const lateLevels = Math.max(0, levels - POINTS_TIER_BREAKPOINT);
+    return earlyLevels * POINTS_PER_LEVEL_EARLY + lateLevels * POINTS_PER_LEVEL_LATE;
 }
 
 export function getAllocations(save) {

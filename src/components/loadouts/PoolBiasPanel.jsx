@@ -4,7 +4,9 @@ import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import {
     BIAS_PER_POINT,
-    POINTS_PER_UPGRADE,
+    POINTS_TIER_BREAKPOINT,
+    POINTS_PER_LEVEL_EARLY,
+    POINTS_PER_LEVEL_LATE,
     RESPEC_COST_OMENX,
     getBiasTargets,
     getGoldRespecCost,
@@ -118,8 +120,8 @@ export default function PoolBiasPanel({ save, setSave }) {
                         <Sparkles className="w-5 h-5" /> Pool Bias
                     </h2>
                     <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">
-                        Earn <span className="text-cyan-300 font-bold">{POINTS_PER_UPGRADE} points</span> per permanent upgrade level. Spend them on specific weapons or stats —
-                        each point = <span className="text-cyan-300 font-bold">+{Math.round(BIAS_PER_POINT * 100)}%</span> draw weight for that exact upgrade.
+                        Earn <span className="text-cyan-300 font-bold">{POINTS_PER_LEVEL_EARLY} pts</span> per permanent upgrade for your first {POINTS_TIER_BREAKPOINT} levels,
+                        then <span className="text-cyan-300 font-bold">{POINTS_PER_LEVEL_LATE} pt</span> each. Each point = <span className="text-cyan-300 font-bold">+{Math.round(BIAS_PER_POINT * 100)}%</span> draw weight on that specific weapon or stat.
                     </p>
                 </div>
                 <div className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs shrink-0">
