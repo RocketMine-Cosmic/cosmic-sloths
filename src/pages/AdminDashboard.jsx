@@ -28,33 +28,78 @@ import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
 import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
 import AdminGoldAudit from '../components/admin/AdminGoldAudit';
 
-// Each tab declares what permission(s) it requires.
-// 'any' = visible to anyone with at least view_data.
-// 'emergency' = only visible when the user authenticated via the AdminDash master key.
-const TABS = [
-    { id: 'overview',    label: 'Overview',     icon: BarChart3,    perm: 'view_data' },
-    { id: 'health',      label: '🩺 Health',    icon: BarChart3,    perm: 'view_data' },
-    { id: 'leaderboard', label: 'Leaderboard',  icon: Trophy,       perm: 'view_data' },
-    { id: 'players',     label: 'Players',      icon: Users,        perm: 'view_data' },
-    { id: 'squads',      label: 'Squads',       icon: Shield,       perm: 'view_data' },
-    { id: 'raid',        label: 'Global Raid',  icon: Skull,        perm: 'manage_raid' },
-    { id: 'economy',     label: 'Economy',      icon: Coins,        perm: 'view_data' },
-    { id: 'rewards',     label: 'Rewards',      icon: Gift,         perm: 'distribute_rewards' },
-    { id: 'skus',        label: 'SKUs',         icon: Gift,         perm: 'view_data' },
-    { id: 'content',     label: 'Content',      icon: Database,     perm: 'view_data' },
-    { id: 'duplicates',  label: '⚠️ Duplicates',icon: AlertTriangle,perm: 'delete_scores' },
-    { id: 'cleanup',     label: '🧹 Cleanup',   icon: Database,     perm: 'edit_players' },
-    { id: 'changelog',   label: '📋 Audit Log', icon: Database,     perm: 'view_data' },
-    { id: 'managers',    label: '👥 Managers',  icon: Users,        perm: 'manage_admins' },
-    { id: 'discord',     label: '💬 Discord Guide', icon: Database, perm: 'view_data' },
-    { id: 'backups',     label: '💾 Backups',   icon: Database,     perm: 'manage_backups' },
-    { id: 'blacklist',   label: '🚫 Blacklist', icon: AlertTriangle,perm: 'manage_blacklist' },
-    { id: 'wipe',        label: '🗑️ Wipe Data', icon: AlertTriangle,perm: 'wipe_data' },
-    { id: 'backfill',    label: '🔄 Backfill Wallets', icon: AlertTriangle, perm: 'owner' },
-    { id: 'refund',      label: '💸 Refund OMENX', icon: AlertTriangle, perm: 'refund_omenx' },
-    { id: 'goldaudit',   label: '🪙 Gold Audit',   icon: Coins,        perm: 'edit_players' },
-    { id: 'reset',       label: '🔄 FULL RESET', icon: AlertTriangle, perm: 'wipe_data' },
+// Tabs are organised into logical groups by responsibility.
+// Each tab declares the permission required to see it.
+// `owner` always sees every tab; emergency master key bypasses all checks.
+const TAB_GROUPS = [
+    {
+        id: 'insights',
+        label: '📊 Insights',
+        tabs: [
+            { id: 'overview',    label: 'Overview',         icon: BarChart3, perm: 'view_data' },
+            { id: 'health',      label: '🩺 Health',        icon: BarChart3, perm: 'view_data' },
+            { id: 'leaderboard', label: 'Leaderboard',      icon: Trophy,    perm: 'view_data' },
+            { id: 'squads',      label: 'Squads',           icon: Shield,    perm: 'view_data' },
+            { id: 'economy',     label: 'Economy',          icon: Coins,     perm: 'view_data' },
+            { id: 'changelog',   label: '📋 Audit Log',     icon: Database,  perm: 'view_data' },
+            { id: 'discord',     label: '💬 Discord Guide', icon: Database,  perm: 'view_data' },
+        ],
+    },
+    {
+        id: 'players',
+        label: '👥 Player Operations',
+        tabs: [
+            { id: 'players',   label: 'Players',      icon: Users,         perm: 'edit_players' },
+            { id: 'goldaudit', label: '🪙 Gold Audit', icon: Coins,         perm: 'edit_players' },
+            { id: 'blacklist', label: '🚫 Blacklist', icon: AlertTriangle, perm: 'manage_blacklist' },
+        ],
+    },
+    {
+        id: 'liveops',
+        label: '🏆 Live Ops',
+        tabs: [
+            { id: 'raid',    label: 'Global Raid', icon: Skull, perm: 'manage_raid' },
+            { id: 'rewards', label: 'Rewards',     icon: Gift,  perm: 'distribute_rewards' },
+            { id: 'skus',    label: 'SKUs',        icon: Gift,  perm: 'view_data' },
+            { id: 'content', label: 'Content',     icon: Database, perm: 'view_data' },
+        ],
+    },
+    {
+        id: 'hygiene',
+        label: '🧹 Data Hygiene',
+        tabs: [
+            { id: 'duplicates', label: '⚠️ Duplicates', icon: AlertTriangle, perm: 'delete_scores' },
+            { id: 'cleanup',    label: '🧹 Cleanup',    icon: Database,      perm: 'delete_scores' },
+        ],
+    },
+    {
+        id: 'finance',
+        label: '💸 Finance',
+        tabs: [
+            { id: 'refund', label: '💸 Refund OMENX', icon: AlertTriangle, perm: 'refund_omenx' },
+        ],
+    },
+    {
+        id: 'admin',
+        label: '🛡️ Admin',
+        tabs: [
+            { id: 'managers', label: '👥 Managers', icon: Users, perm: 'manage_admins' },
+        ],
+    },
+    {
+        id: 'danger',
+        label: '⚠️ Danger Zone',
+        tabs: [
+            { id: 'backups',  label: '💾 Backups',          icon: Database,      perm: 'manage_backups' },
+            { id: 'backfill', label: '🔄 Backfill Wallets', icon: AlertTriangle, perm: 'owner' },
+            { id: 'wipe',     label: '🗑️ Wipe Data',         icon: AlertTriangle, perm: 'wipe_data' },
+            { id: 'reset',    label: '🔄 FULL RESET',       icon: AlertTriangle, perm: 'wipe_data' },
+        ],
+    },
 ];
+
+// Flat list for lookups
+const TABS = TAB_GROUPS.flatMap(g => g.tabs);
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -240,22 +285,41 @@ export default function AdminDashboard() {
                     </button>
                 </header>
 
-                {/* Tab Nav */}
-                <div className="flex gap-1.5 flex-wrap mb-5">
-                    {visibleTabs.map(tab => {
-                        const Icon = tab.icon;
+                {/* Grouped Tab Nav */}
+                <div className="flex flex-col gap-2 mb-5">
+                    {TAB_GROUPS.map(group => {
+                        const groupTabs = group.tabs.filter(canSeeTab);
+                        if (groupTabs.length === 0) return null;
+                        const isDanger = group.id === 'danger';
                         return (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
-                                    activeTab === tab.id
-                                        ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.4)]'
-                                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
-                                }`}
-                            >
-                                <Icon size={13} /> {tab.label}
-                            </button>
+                            <div key={group.id} className={`flex items-center gap-2 flex-wrap ${isDanger ? 'mt-2 pt-2 border-t border-red-900/40' : ''}`}>
+                                <span className={`text-[10px] font-black uppercase tracking-widest shrink-0 w-32 ${isDanger ? 'text-red-400' : 'text-slate-500'}`}>
+                                    {group.label}
+                                </span>
+                                <div className="flex gap-1.5 flex-wrap flex-1">
+                                    {groupTabs.map(tab => {
+                                        const Icon = tab.icon;
+                                        const isActive = activeTab === tab.id;
+                                        return (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => setActiveTab(tab.id)}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
+                                                    isActive
+                                                        ? (isDanger
+                                                            ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                                                            : 'bg-cyan-600 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]')
+                                                        : (isDanger
+                                                            ? 'bg-red-950/60 text-red-300 hover:bg-red-900/60 border border-red-900/50'
+                                                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white')
+                                                }`}
+                                            >
+                                                <Icon size={13} /> {tab.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         );
                     })}
                 </div>
