@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Crown, Eye, Send, AlertTriangle } from 'lucide-react';
 
@@ -6,9 +7,20 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
+function getCurrentSeasonId() {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const startOfWeek = new Date(startOfYear);
+    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+    return `${year}-S${seasonNum}`;
+}
+
 // Admin panel: preview & distribute the Squad Wars Champions Pool for a given season.
 // Wraps the `distributeSquadChampions` backend function.
-export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
+export default function AdminSquadChampions({ walletAddress }) {
     const [periodId, setPeriodId] = useState(''); // blank = previous season auto-detected
     const [previewing, setPreviewing] = useState(false);
     const [previewData, setPreviewData] = useState(null);
@@ -16,6 +28,23 @@ export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
     const [executing, setExecuting] = useState(false);
     const [executeMsg, setExecuteMsg] = useState('');
     const [confirmExecute, setConfirmExecute] = useState(false);
+
+    // Load all pools to populate the season dropdown (mirrors AdminRewards UX).
+    const { data: allPools = [] } = useQuery({
+        queryKey: ['allPools', walletAddress],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
+        enabled: !!walletAddress
+    });
+
+    const currentSeasonId = getCurrentSeasonId();
+    const seasonOptions = [
+        { id: '', label: '— previous season (auto) —', distributed: false },
+        { id: currentSeasonId, label: `${currentSeasonId} (current)`, distributed: false },
+        ...allPools
+            .filter(p => p.period_type === 'seasonal' && p.period_id !== currentSeasonId)
+            .sort((a, b) => b.period_id.localeCompare(a.period_id))
+            .map(p => ({ id: p.period_id, label: `${p.period_id}${p.distributed ? ' ✓ distributed' : ' — pending'}`, distributed: p.distributed }))
+    ];
 
     const handlePreview = async () => {
         setPreviewing(true);
@@ -87,14 +116,17 @@ export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
                 </h3>
                 <div className="flex flex-wrap gap-2 items-end">
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] text-slate-500 uppercase">Season ID (blank = previous season)</label>
-                        <input
-                            type="text"
+                        <label className="text-[10px] text-slate-500 uppercase">Season</label>
+                        <select
                             value={periodId}
-                            onChange={e => setPeriodId(e.target.value.trim())}
-                            placeholder="e.g. 2026-S4"
-                            className="bg-slate-900 border border-sky-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 w-44 font-mono"
-                        />
+                            onChange={e => setPeriodId(e.target.value)}
+                            style={{ colorScheme: 'dark' }}
+                            className="bg-slate-900 border border-sky-800 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 w-64 font-mono"
+                        >
+                            {seasonOptions.map(o => (
+                                <option key={o.id || 'auto'} value={o.id}>{o.label}</option>
+                            ))}
+                        </select>
                     </div>
                     <button
                         onClick={handlePreview}
