@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { AlertTriangle, Skull } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function AdminDataWipe({ walletAddress }) {
     const { toast } = useToast();
-    const [adminKey, setAdminKey] = useState('');
+    // Single source of truth — same key the rest of the dashboard uses
+    const adminKey = sessionStorage.getItem('admin_key') || '';
 
     // Standard wipe state
     const [confirm, setConfirm] = useState('');
@@ -16,6 +18,7 @@ export default function AdminDataWipe({ walletAddress }) {
     const [nukeConfirm, setNukeConfirm] = useState('');
     const [nukeLoading, setNukeLoading] = useState(false);
     const [nukeResults, setNukeResults] = useState(null);
+    const [nukeDialogOpen, setNukeDialogOpen] = useState(false);
 
     const handleWipe = async (e) => {
         e.preventDefault();
@@ -36,13 +39,16 @@ export default function AdminDataWipe({ walletAddress }) {
         setLoading(false);
     };
 
-    const handleFullNuke = async (e) => {
+    const startNuke = (e) => {
         e.preventDefault();
         if (nukeConfirm !== 'NUKE_EVERYTHING_INCLUDING_USERS') {
             toast({ title: 'Wrong confirmation', description: 'Type exactly: NUKE_EVERYTHING_INCLUDING_USERS', variant: 'destructive' });
             return;
         }
-        if (!window.confirm('⚠️ FINAL WARNING: this will delete every Base44 user account except admins. They will need to re-register. Continue?')) return;
+        setNukeDialogOpen(true);
+    };
+
+    const runNuke = async () => {
         setNukeLoading(true);
         setNukeResults(null);
         try {
@@ -50,6 +56,7 @@ export default function AdminDataWipe({ walletAddress }) {
             if (res.data?.error) throw new Error(res.data.error);
             setNukeResults(res.data.deleted);
             toast({ title: '☢️ Full Nuke Complete', description: 'All data + non-admin users deleted.' });
+            setNukeDialogOpen(false);
         } catch (err) {
             toast({ title: 'Error', description: err.message, variant: 'destructive' });
         }
@@ -70,16 +77,6 @@ export default function AdminDataWipe({ walletAddress }) {
                 </div>
 
                 <form onSubmit={handleWipe} className="bg-slate-900/60 border border-slate-700 rounded-xl p-5 space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-1">Admin Secret Key</label>
-                        <input
-                            type="password"
-                            value={adminKey}
-                            onChange={e => setAdminKey(e.target.value)}
-                            placeholder="Enter AdminDash secret"
-                            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white text-sm font-mono outline-none focus:border-red-500"
-                        />
-                    </div>
                     <div>
                         <label className="block text-xs font-bold text-slate-400 mb-1">Type to confirm</label>
                         <input
@@ -129,17 +126,7 @@ export default function AdminDataWipe({ walletAddress }) {
                     </div>
                 </div>
 
-                <form onSubmit={handleFullNuke} className="bg-slate-900/60 border border-fuchsia-900/60 rounded-xl p-5 space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-1">Admin Secret Key</label>
-                        <input
-                            type="password"
-                            value={adminKey}
-                            onChange={e => setAdminKey(e.target.value)}
-                            placeholder="Enter AdminDash secret (shared with above)"
-                            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white text-sm font-mono outline-none focus:border-fuchsia-500"
-                        />
-                    </div>
+                <form onSubmit={startNuke} className="bg-slate-900/60 border border-fuchsia-900/60 rounded-xl p-5 space-y-4">
                     <div>
                         <label className="block text-xs font-bold text-slate-400 mb-1">Type to confirm</label>
                         <input
@@ -174,6 +161,22 @@ export default function AdminDataWipe({ walletAddress }) {
                     </div>
                 )}
             </section>
+
+            <ConfirmDialog
+                open={nukeDialogOpen}
+                onClose={() => !nukeLoading && setNukeDialogOpen(false)}
+                onConfirm={runNuke}
+                busy={nukeLoading}
+                title="☢️ FINAL WARNING — Full Nuke"
+                description="This deletes EVERY Base44 user account except admins, plus all game data. Players will be logged out and must re-register from scratch. There is no recovery."
+                items={[
+                    'All PlayerSaves, RunScores, Squads, Messages',
+                    'All TokenPools, SpendLogs, PayoutLogs',
+                    'All non-admin Base44 user accounts',
+                ]}
+                confirmText="NUKE_EVERYTHING_INCLUDING_USERS"
+                confirmLabel="Nuke everything"
+            />
         </div>
     );
 }
