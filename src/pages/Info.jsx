@@ -11,6 +11,7 @@ const TABS = [
     { id: 'missions',   label: 'Missions',     icon: Target },
     { id: 'compete',    label: 'Compete',      icon: Trophy },
     { id: 'squads',     label: 'Squads',       icon: Users },
+    { id: 'wars',       label: 'Squad Wars',   icon: Swords },
     { id: 'nft',        label: 'NFT Unlocks',  icon: Gem },
     { id: 'combat',     label: 'Combat',       icon: Zap },
     { id: 'raid',       label: 'Global Raid',  icon: Skull },
@@ -362,38 +363,53 @@ const TABS_CONTENT = {
             </SectionCard>
 
             <SectionCard title="📈 Squad Levels & XP" color="cyan">
-                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">At the end of each week, your squad earns XP equal to its total weekly kills. Level up through 7 tiers to unlock bigger bounties.</p>
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Every kill any member contributes adds <strong className="text-white">1 XP</strong> to your squad's lifetime total. Level up through 7 tiers to unlock bigger Daily and Weekly bounty rewards. XP is permanent — squads only ever level up, never down.</p>
                 <div className="space-y-2">
                     {[
-                        { badge: '🦥', name: 'Recruits',     level: 1, color: 'text-slate-400' },
-                        { badge: '⭐', name: 'Drifters',     level: 2, color: 'text-blue-400' },
-                        { badge: '🔥', name: 'Hunters',      level: 3, color: 'text-emerald-400' },
-                        { badge: '⚡', name: 'Vanguards',    level: 4, color: 'text-amber-400' },
-                        { badge: '💀', name: 'Reapers',      level: 5, color: 'text-red-400' },
-                        { badge: '👑', name: 'Legends',      level: 6, color: 'text-purple-400' },
-                        { badge: '🌌', name: 'Cosmic Elite', level: 7, color: 'text-pink-400' },
+                        { badge: '🦥', name: 'Recruits',     level: 1, xp: '0',        color: 'text-slate-400' },
+                        { badge: '⭐', name: 'Drifters',     level: 2, xp: '5,000',    color: 'text-blue-400' },
+                        { badge: '🔥', name: 'Hunters',      level: 3, xp: '15,000',   color: 'text-emerald-400' },
+                        { badge: '⚡', name: 'Vanguards',    level: 4, xp: '35,000',   color: 'text-amber-400' },
+                        { badge: '💀', name: 'Reapers',      level: 5, xp: '75,000',   color: 'text-red-400' },
+                        { badge: '👑', name: 'Legends',      level: 6, xp: '150,000',  color: 'text-purple-400' },
+                        { badge: '🌌', name: 'Cosmic Elite', level: 7, xp: '300,000',  color: 'text-pink-400' },
                     ].map(t => (
                         <div key={t.level} className="flex items-center gap-3 md:gap-4 bg-slate-900/60 rounded-xl px-4 py-3 border border-slate-700/50">
                             <span className="text-xl md:text-2xl w-8 text-center">{t.badge}</span>
                             <span className={`font-bold text-sm md:text-base ${t.color} min-w-[120px]`}>Lv.{t.level} {t.name}</span>
-                            <span className="text-xs md:text-sm text-slate-400 hidden sm:inline">higher bounty rewards unlocked</span>
+                            <span className="text-xs md:text-sm text-slate-500 font-mono shrink-0">{t.xp} XP</span>
                         </div>
                     ))}
                 </div>
             </SectionCard>
 
-            <SectionCard title="🛡️ Daily & Weekly Bounties" color="amber">
+            <SectionCard title="🛡️ Weekly Bounties" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Your squad receives both a Daily and a Weekly kill target based on its level. Hit the targets together, and <strong className="text-white">every member</strong> can individually claim Gold and Relic Fragments.
+                    Your squad has a kill target each week based on its level. Hit the target together, and <strong className="text-white">every member</strong> can individually claim Gold and Relic Fragments. Weekly kills reset Monday 00:00 UTC.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">2,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×1</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">5,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 1,200 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×2</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">10,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 2,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×3</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">18,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 4,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×4</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">30,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 6,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×5</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend Bounty</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">50,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 10,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×7</div></div>
-                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Bounty 🌌</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">75,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 15,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×10</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">2,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×1</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">5,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 1,200 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×2</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">10,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 2,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×3</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">18,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 4,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×4</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">30,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 6,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×5</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">50,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 10,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×7</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Elite 🌌</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">75,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 15,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×10</div></div>
+                </div>
+            </SectionCard>
+
+            <SectionCard title="☀️ Daily Bounties" color="cyan">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
+                    A smaller daily kill target that resets every day at 00:00 UTC. Easier to clear, gives all members a steady extra income on top of weekly bounties.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.1 — Rookie</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">300 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 150</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.2 — Drifter</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">800 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 300</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.3 — Hunter</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">1,500 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 600 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×1</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.4 — Vanguard</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">2,500 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 1,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×1</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.5 — Reaper</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">4,500 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 1,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×2</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-slate-700 flex flex-col justify-center"><div className="font-bold text-white mb-1">Lv.6 — Legend</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">7,500 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 2,500 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×2</div></div>
+                    <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-pink-900/40 sm:col-span-2 flex flex-col justify-center"><div className="font-bold text-pink-400 mb-1">Lv.7 — Cosmic Elite 🌌</div><div className="text-slate-400 flex items-center gap-1 flex-wrap">12,000 kills → <Coins className="w-3 h-3 fill-yellow-500 text-yellow-500" /> 4,000 + <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />×3</div></div>
                 </div>
             </SectionCard>
 
@@ -428,7 +444,11 @@ const TABS_CONTENT = {
                     The top squads by weekly kills are ranked on the <strong className="text-white">Squads tab</strong> in the Hall of Fame leaderboard. Your squad's level badge and total members are shown — compete to be the most dominant squad this week!
                 </p>
             </SectionCard>
+        </div>
+    ),
 
+    wars: (
+        <div className="space-y-4 md:space-y-6">
             <SectionCard title="⚔️ Squad Wars (Weekly Head-to-Head)" color="rose">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-3">
                     Every Monday, your squad is automatically paired against another squad of similar level. From Monday 00:00 UTC to <strong className="text-white">Sunday 23:59 UTC</strong>, every kill any of your members scores in any run counts toward your squad's war total. Whoever has more kills at the deadline wins.
