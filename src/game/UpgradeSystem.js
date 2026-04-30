@@ -231,7 +231,10 @@ export function checkEvolutions(engine) {
 
             try {
                 const newName = WEAPONS[evolution.evolvedWeapon]?.name || 'Evolved Weapon';
-                const fromNames = [WEAPONS[evolution.baseWeapon]?.name, evolution.passive].filter(Boolean);
+                // Resolve the passive's friendly display name (e.g. 'cd_down' → 'Quantum Accelerator')
+                // so the evolution banner doesn't show raw backend ids. Hugo bug 2026-04-30.
+                const passiveName = UPGRADES.find(u => u.id === evolution.passive)?.name || evolution.passive;
+                const fromNames = [WEAPONS[evolution.baseWeapon]?.name, passiveName].filter(Boolean);
                 window.dispatchEvent(new CustomEvent('weaponEvolved', { detail: { name: newName, from: fromNames } }));
             } catch (_) {}
 

@@ -373,12 +373,14 @@ export default function Game() {
         const interval = setInterval(() => {
             if (engineRef.current && !engineRef.current.isPaused) {
                 const engine = engineRef.current;
+                // Mirror the server's score formula EXACTLY (functions/saveScore.js).
+                // Any divergence here causes the HUD to show one number and the leaderboard
+                // to record a different one — Hugo bug 2026-04-30 (bullet_hell mismatch).
                 const arenaIndex = ARENAS.findIndex(a => a.id === engine.arena?.id);
                 const isEndlessRun = engine.arena?.duration === Infinity;
                 const arenaMultiplier = isEndlessRun ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
-                const bulletHellMult = (engine.save?.bossModifiers?.bullet_hell) ? 1.3 : 1.0;
                 const baseScore = engine.kills * 10 + engine.level * 100 + engine.time * 5 + engine.gold * 5;
-                const liveScore = Math.floor(baseScore * arenaMultiplier * bulletHellMult);
+                const liveScore = Math.floor(baseScore * arenaMultiplier);
 
                 // Rolling 10s window so post-boss/late upgrades show up in the HUD immediately.
                 const dps = engine.getRollingDps ? Math.floor(engine.getRollingDps()) : 0;
