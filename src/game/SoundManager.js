@@ -68,6 +68,19 @@ class SoundManagerClass {
 
         // Pick a starting track from the menu playlist
         this._loadRandomFromActivePlaylist();
+
+        // Pause BGM when tab is hidden, resume when visible again (if not muted).
+        if (typeof document !== 'undefined') {
+            this._wasPlayingBeforeHidden = false;
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    this._wasPlayingBeforeHidden = !this.bgm.paused;
+                    if (this._wasPlayingBeforeHidden) this.bgm.pause();
+                } else if (this._wasPlayingBeforeHidden && this.enabled) {
+                    this.bgm.play().catch(() => {});
+                }
+            });
+        }
     }
 
     init() {
