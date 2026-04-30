@@ -6,6 +6,8 @@ import ConfirmDialog from './ConfirmDialog';
 // Player rewards take 20% of each weekly pool (see distributeRewards.js).
 // Staff payouts come on top, so total allocation = 20% + (staff_count * pct).
 const PLAYER_POOL_PCT = 0.20;
+const SOFT_CAP_PCT = 0.75; // warn above this
+const HARD_CAP_PCT = 0.85; // block save above this
 
 // Owner-only widget: read & update the per-staff weekly payout percentage.
 // Stored in AppConfig under key 'staff_pct_per_wallet' via setStaffPayoutPct fn.
@@ -42,9 +44,9 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
     const numericPct = Number(pctInput) / 100;
     const staffTotalPct = staffCount * numericPct; // total share of pool going to staff
     const grandTotalPct = PLAYER_POOL_PCT + staffTotalPct; // players + staff
-    const isOverPool = grandTotalPct > 1.0;
-    const isWarning = grandTotalPct > 0.80 && !isOverPool;
-    const isValid = isFinite(numericPct) && numericPct >= 0 && numericPct <= 0.10 && !isOverPool;
+    const isOverHardCap = grandTotalPct > HARD_CAP_PCT;
+    const isOverSoftCap = grandTotalPct > SOFT_CAP_PCT && !isOverHardCap;
+    const isValid = isFinite(numericPct) && numericPct >= 0 && numericPct <= 0.10 && !isOverHardCap;
     const changed = current && Math.abs(numericPct - current.pct) > 0.00001;
 
     const handleSave = async () => {
@@ -109,33 +111,41 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                     {/* Total pool allocation — live preview using the value in the input */}
                     <div className="bg-slate-900/60 border border-slate-700 rounded p-3 mb-3">
                         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                            <div className="text-[10px] text-slate-500 uppercase font-bold">Total Weekly Pool Allocation (preview)</div>
-                            <div className={`text-xs font-mono font-bold ${isOverPool ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                {(grandTotalPct * 100).toFixed(2)}% of pool
+                            <div className="text-[10px] text-slate-500 uppercase font-bold">Total Weekly Spend Allocation (preview)</div>
+                            <div className={`text-xs font-mono font-bold ${isOverHardCap ? 'text-red-400' : isOverSoftCap ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                {(grandTotalPct * 100).toFixed(2)}% of weekly spend
                             </div>
                         </div>
-                        {/* Stacked bar */}
-                        <div className="h-3 w-full bg-slate-950 rounded overflow-hidden flex border border-slate-800">
-                            <div className="bg-cyan-600 h-full" style={{ width: `${Math.min(PLAYER_POOL_PCT, 1) * 100}%` }} title={`Players: ${(PLAYER_POOL_PCT * 100).toFixed(0)}%`} />
-                            <div className={`${isOverPool ? 'bg-red-600' : 'bg-amber-500'} h-full`} style={{ width: `${Math.min(Math.max(0, 1 - PLAYER_POOL_PCT), staffTotalPct) * 100}%` }} title={`Staff: ${(staffTotalPct * 100).toFixed(2)}%`} />
+                        {/* Stacked bar with cap markers */}
+                        <div className="relative h-3 w-full bg-slate-950 rounded overflow-hidden flex border border-slate-800">
+                            <div className="bg-cyan-600 h-full" style={{ width: `${PLAYER_POOL_PCT * 100}%` }} title={`Players: ${(PLAYER_POOL_PCT * 100).toFixed(0)}%`} />
+                            <div className={`${isOverHardCap ? 'bg-red-600' : isOverSoftCap ? 'bg-amber-500' : 'bg-emerald-500'} h-full`}
+                                style={{ width: `${Math.min(staffTotalPct, 1 - PLAYER_POOL_PCT) * 100}%` }}
+                                title={`Staff: ${(staffTotalPct * 100).toFixed(2)}%`} />
+                            {/* Soft cap line (75%) */}
+                            <div className="absolute top-0 bottom-0 w-px bg-amber-300/80" style={{ left: `${SOFT_CAP_PCT * 100}%` }} title="Soft cap 75%" />
+                            {/* Hard cap line (85%) */}
+                            <div className="absolute top-0 bottom-0 w-px bg-red-400" style={{ left: `${HARD_CAP_PCT * 100}%` }} title="Hard cap 85%" />
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[10px] font-mono">
                             <span className="text-cyan-400">■ Players {(PLAYER_POOL_PCT * 100).toFixed(0)}%</span>
-                            <span className={isOverPool ? 'text-red-400' : 'text-amber-400'}>
+                            <span className={isOverHardCap ? 'text-red-400' : isOverSoftCap ? 'text-amber-400' : 'text-emerald-400'}>
                                 ■ Staff {(staffTotalPct * 100).toFixed(2)}% ({staffCount} × {(numericPct * 100).toFixed(2)}%)
                             </span>
+                            <span className="text-amber-300">┊ Soft cap {(SOFT_CAP_PCT * 100).toFixed(0)}%</span>
+                            <span className="text-red-400">┊ Hard cap {(HARD_CAP_PCT * 100).toFixed(0)}%</span>
                             <span className="text-slate-500">
-                                ■ Remaining {Math.max(0, (1 - grandTotalPct) * 100).toFixed(2)}%
+                                ■ Retained {Math.max(0, (1 - grandTotalPct) * 100).toFixed(2)}%
                             </span>
                         </div>
-                        {isOverPool && (
+                        {isOverHardCap && (
                             <div className="mt-2 text-xs text-red-400 flex items-center gap-1.5 font-bold">
-                                <AlertTriangle size={12} /> Total exceeds 100% of pool — staff payouts would be cut by the pool. Lower % or remove staff wallets.
+                                <AlertTriangle size={12} /> Hard cap exceeded ({(HARD_CAP_PCT * 100).toFixed(0)}%) — save blocked. Lower % or remove staff wallets.
                             </div>
                         )}
-                        {isWarning && (
+                        {isOverSoftCap && (
                             <div className="mt-2 text-xs text-amber-400 flex items-center gap-1.5">
-                                <AlertTriangle size={12} /> Allocation above 80% leaves little buffer for retained pool.
+                                <AlertTriangle size={12} /> Above soft cap ({(SOFT_CAP_PCT * 100).toFixed(0)}%) — proceed with caution.
                             </div>
                         )}
                     </div>
@@ -176,7 +186,7 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                         </button>
                     </div>
 
-                    {!isValid && !isOverPool && (
+                    {!isValid && !isOverHardCap && (
                         <div className="flex items-center gap-1.5 mt-2 text-xs text-red-400">
                             <AlertTriangle size={12} /> Must be between 0 and 10%.
                         </div>
