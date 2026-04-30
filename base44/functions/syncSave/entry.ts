@@ -264,14 +264,18 @@ Deno.serve(async (req) => {
         // Cloud writes are exclusive: saveScore (progress) + claimBounty (claimed/reward).
         // Client may rotate the bounty list locally on a new day; we accept the LIST
         // from the client only when it's a new day reset. Otherwise cloud wins.
+        // Client uses `date` (set in SaveManager.load); some legacy records may use `lastReset`.
         const cloudBounties = existingData.bounties || null;
         const clientBounties = saveData.bounties || null;
-        if (cloudBounties && clientBounties && cloudBounties.lastReset === clientBounties.lastReset) {
+        const bountyDateOf = (b) => (b && (b.date || b.lastReset)) || null;
+        const cloudDate = bountyDateOf(cloudBounties);
+        const clientDate = bountyDateOf(clientBounties);
+        if (cloudBounties && clientBounties && cloudDate && clientDate && cloudDate === clientDate) {
             // Same day — cloud is truth (server already tracked progress).
             merged.bounties = JSON.parse(JSON.stringify(cloudBounties));
-        } else if (clientBounties) {
-            // Client rolled to a new day or has fresh bounties — accept the new structure
-            // but null-out progress/claimed so server can re-track from zero.
+        } else if (clientBounties && clientDate) {
+            // Client rolled to a new day — accept the new structure but null-out
+            // progress/claimed so server can re-track from zero.
             const fresh = JSON.parse(JSON.stringify(clientBounties));
             if (Array.isArray(fresh.active)) {
                 fresh.active = fresh.active.map(b => ({ ...b, progress: 0, claimed: false }));
