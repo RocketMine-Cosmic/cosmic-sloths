@@ -31,6 +31,13 @@ Deno.serve(async (req) => {
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
 
+        const rewardsKeys = [
+            Deno.env.get('OMENX_REWARDS_API_KEY'),
+            Deno.env.get('OMENX_REWARDS_API_KEY_2'),
+            Deno.env.get('OMENX_REWARDS_API_KEY_3'),
+            Deno.env.get('OMENX_REWARDS_API_KEY_4'),
+        ].filter(Boolean);
+
         const getCurrentPeriodIds = () => {
             const now = new Date();
             const year = now.getUTCFullYear();
@@ -77,7 +84,7 @@ Deno.serve(async (req) => {
             if (isClosedWeekly) {
                 try {
                     await reconcilePoolBeforeDistribution(pool);
-                    const result = await distributeWeekly(sdk, pool, apiBaseUrl, apiKey);
+                    const result = await distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys);
                     results.push({ pool: pool.period_id, type: 'weekly', ...result });
                 } catch (err) {
                     console.error('[distributeRewards] WEEKLY FAILED:', err.message);
@@ -86,7 +93,7 @@ Deno.serve(async (req) => {
             } else if (isClosedSeasonal) {
                 try {
                     await reconcilePoolBeforeDistribution(pool);
-                    const result = await distributeSeasonal(sdk, pool, apiBaseUrl, apiKey);
+                    const result = await distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys);
                     results.push({ pool: pool.period_id, type: 'seasonal', ...result });
                 } catch (err) {
                     console.error('[distributeRewards] SEASONAL FAILED:', err.message);
@@ -129,6 +136,46 @@ function getWeeklyRewardPercentage(rank) {
      return 0;
  }
 
+const CHUNK_SIZE = 20;
+
+async function grantBatchChunked(allPayments, apiBaseUrl, rewardsKeys, gameId, gameName, note) {
+    if (allPayments.length === 0) return { txId: '', chunks: 0 };
+    const chunks = [];
+    for (let i = 0; i < allPayments.length; i += CHUNK_SIZE) {
+        chunks.push(allPayments.slice(i, i + CHUNK_SIZE));
+    }
+    const txIds = [];
+    for (let ci = 0; ci < chunks.length; ci++) {
+        const chunk = chunks[ci];
+        // Rotate keys per chunk + retry on 429/5xx across the pool
+        const startIdx = ci % rewardsKeys.length;
+        let lastErr = null;
+        let ok = false;
+        for (let attempt = 0; attempt < rewardsKeys.length; attempt++) {
+            const key = rewardsKeys[(startIdx + attempt) % rewardsKeys.length];
+            const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                body: JSON.stringify({
+                    payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    gameId, gameName, note: `${note} chunk ${ci + 1}/${chunks.length}`,
+                }),
+            });
+            const batchResult = await response.json().catch(() => ({}));
+            if (response.ok) {
+                txIds.push(batchResult?.transactionId || batchResult?.txHash || '');
+                ok = true;
+                break;
+            }
+            lastErr = `HTTP ${response.status}: ${JSON.stringify(batchResult)}`;
+            console.warn(`[distributeRewards] chunk ${ci + 1} key ${attempt + 1} failed:`, lastErr);
+            if (response.status !== 429 && response.status < 500) break; // don't retry on 4xx (other than 429)
+        }
+        if (!ok) throw new Error(`Chunk ${ci + 1}/${chunks.length} failed: ${lastErr}`);
+    }
+    return { txId: txIds.join(','), chunks: chunks.length };
+}
+
 function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     const uniqueScores = [];
     const seenWallets = new Set();
@@ -159,7 +206,7 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
-async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
+async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
      if (!pool.total_spent || pool.total_spent <= 0) {
          await db.entities.TokenPool.update(pool.id, { distributed: true });
          return { paid: 0, skipped: 'zero spend' };
@@ -181,23 +228,16 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
-    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ payments: allPayments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })), gameId: GAME_ID, gameName: GAME_NAME, note: `weekly payout ${pool.period_id}` }),
-    });
-    const batchResult = await response.json();
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-    const txId = batchResult?.transactionId || batchResult?.txHash || '';
+    const { txId, chunks } = await grantBatchChunked(allPayments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `weekly payout ${pool.period_id}`);
     await Promise.all([
         db.entities.TokenPool.update(pool.id, { distributed: true }),
         ...payments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'weekly', wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress, amount: p.amount, rank: p.rank, tx_id: txId })),
         ...staffPayments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'staff_weekly', wallet_address: p.walletAddress, player_name: p.player_name, amount: p.amount, rank: 0, tx_id: txId })),
     ]);
-    return { paid: payments.length, staff_paid: staffPayments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), staffOmenx: staffPayments.reduce((s, p) => s + p.amount, 0), payments, staffPayments };
+    return { paid: payments.length, staff_paid: staffPayments.length, chunks, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), staffOmenx: staffPayments.reduce((s, p) => s + p.amount, 0), payments, staffPayments };
 }
 
-async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
+async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
      if (!pool.total_spent || pool.total_spent <= 0) {
          await db.entities.TokenPool.update(pool.id, { distributed: true });
          return { paid: 0, skipped: 'zero spend' };
@@ -212,17 +252,10 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
-    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })), gameId: GAME_ID, gameName: GAME_NAME, note: `seasonal payout ${pool.period_id}` }),
-    });
-    const batchResult = await response.json();
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-    const txId = batchResult?.transactionId || batchResult?.txHash || '';
+    const { txId, chunks } = await grantBatchChunked(payments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `seasonal payout ${pool.period_id}`);
     await Promise.all([
         db.entities.TokenPool.update(pool.id, { distributed: true }),
         ...payments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'seasonal', wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress, amount: p.amount, rank: p.rank, tx_id: txId })),
     ]);
-    return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
+    return { paid: payments.length, chunks, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
 }
