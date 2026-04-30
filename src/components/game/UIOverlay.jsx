@@ -8,6 +8,17 @@ function OmenXIcon({ className }) {
 // Endless-mode reward caps — must mirror functions/saveScore.js
 const ENDLESS_GOLD_CAP = 5000;
 
+// UpgradeSystem prefixes every upgrade with "<CharName>'s " for flavour, but the HUD
+// is space-constrained on mobile so the unique part ("Plasma Core", "Hyperdrive Fuel"…)
+// gets truncated and every passive looks the same ("SkyByte's …"). Strip the prefix
+// for HUD display only — the full name remains in the tooltip via title="".
+const stripOwnerPrefix = (name) => {
+    if (!name) return name;
+    const apos = name.indexOf("'s ");
+    if (apos > 0 && apos < 20) return name.slice(apos + 3);
+    return name;
+};
+
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, boss = null, onPause, onSquadUltimate }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
@@ -44,7 +55,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         <div className="flex flex-col gap-1 mt-1 md:mt-2">
                             {weapons.map(w => (
                                 <div key={w.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-cyan-500/30 rounded px-1.5 py-1 flex items-center justify-between gap-1 min-w-0">
-                                    <div className="text-[9px] md:text-xs text-cyan-400 font-bold truncate flex-1 min-w-0" title={w.name}>{w.name}</div>
+                                    <div className="text-[9px] md:text-xs text-cyan-400 font-bold truncate flex-1 min-w-0" title={w.name}>{stripOwnerPrefix(w.name)}</div>
                                     <div className="text-[7px] md:text-[10px] bg-cyan-950/80 text-cyan-200 px-1 rounded border border-cyan-500/50 shrink-0">Lv.{w.level}</div>
                                 </div>
                             ))}
@@ -60,7 +71,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                                 return acc;
                             }, {})).map(p => (
                                 <div key={p.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-purple-500/30 rounded px-1.5 py-1 flex items-center justify-between gap-1 min-w-0">
-                                    <div className="text-[9px] md:text-xs text-purple-400 font-bold truncate flex-1 min-w-0" title={p.name}>{p.name}</div>
+                                    <div className="text-[9px] md:text-xs text-purple-400 font-bold truncate flex-1 min-w-0" title={p.name}>{stripOwnerPrefix(p.name)}</div>
                                     <div className="text-[7px] md:text-[10px] bg-purple-950/80 text-purple-200 px-1 rounded border border-purple-500/50 shrink-0">Lv.{p.level}</div>
                                 </div>
                             ))}
