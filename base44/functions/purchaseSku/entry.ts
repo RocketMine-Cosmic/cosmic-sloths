@@ -153,6 +153,19 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
     const skuPrefix = skuId.split('-lvl')[0]; // e.g. "stat-upgrade-permanent"
 
     switch (type) {
+        case 'talent_respec': {
+            // grantInfo: { type, tier, charId } — clears all talents for one character at one tier. No refund.
+            const { tier, charId } = grantInfo;
+            const validPrefixes = ['talent-respec-'];
+            const ok = validPrefixes.some(p => skuId.startsWith(p));
+            if (!ok) throw new Error(`This respec doesn't match. Please refresh and try again.`);
+            const key = tier === 'permanent' ? 'permanentTalents'
+                      : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
+            const obj = { ...(s[key] || {}) };
+            obj[charId] = [];
+            s[key] = obj;
+            break;
+        }
         case 'stat': {
             // grantInfo: { type, tier: 'permanent'|'weekly'|'seasonal', stat, level }
             const { tier, stat, level } = grantInfo;

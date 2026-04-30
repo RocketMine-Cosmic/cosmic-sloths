@@ -14,11 +14,12 @@ import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { getAuthData } from '@/lib/getAuthData';
-import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku } from '@/lib/skuMap';
+import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku, getTalentRespecSku, TALENT_RESPEC_GOLD_COSTS } from '@/lib/skuMap';
 import { refreshBalance } from '@/lib/playerDataCache';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import ForgePanel from '../components/game/ForgePanel';
+import TalentRespecModal from '../components/game/TalentRespecModal';
 import StatPips, { SmallStatPips } from '../components/game/StatPips';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -83,6 +84,7 @@ export default function Upgrades({ isCarousel }) {
     const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail', 'kill', or 'skin'
     const [skinCharIndex, setSkinCharIndex] = useState(0);
     const [previewSkinColor, setPreviewSkinColor] = useState(null); // color being previewed (not yet purchased)
+    const [respecModal, setRespecModal] = useState(null); // { tier, charId, charName, count, goldCost, omenxCost }
 
     useEffect(() => {
         const updateTimer = () => {
@@ -321,6 +323,43 @@ export default function Upgrades({ isCarousel }) {
                 refreshBalance();
             });
         }
+    };
+
+    const handleRespecPayGold = async () => {
+        if (!respecModal) return;
+        const { tier, charId } = respecModal;
+        try {
+            await spendGold({ type: 'talent_respec', tier, charId });
+            SoundManager.playUIClick();
+            setRespecModal(null);
+        } catch (err) {
+            console.error('[handleRespecPayGold] failed:', err);
+        }
+    };
+
+    const handleRespecPayOmenx = async () => {
+        if (!respecModal) return;
+        const { tier, charId, omenxCost } = respecModal;
+        const skuId = getTalentRespecSku(tier);
+        if (!skuId) {
+            setPurchaseError('Respec is not available right now. Please try again later.');
+            return;
+        }
+        // Wrap in confirmPurchase to honor the user's "skip OMENX confirms for 24h" toggle
+        const doPurchase = async () => {
+            setPurchasing(true);
+            try {
+                await purchaseSku(skuId, { type: 'talent_respec', tier, charId });
+                SoundManager.playUIClick();
+                setRespecModal(null);
+            } catch (err) {
+                console.error('[handleRespecPayOmenx] failed:', err);
+            } finally {
+                setPurchasing(false);
+                refreshBalance();
+            }
+        };
+        confirmPurchase(omenxCost, `Respec ${respecModal.charName}'s Talents`, doPurchase);
     };
 
     const handleBuyRelic = async (relic) => {
@@ -694,25 +733,16 @@ export default function Upgrades({ isCarousel }) {
         const handleRespecTalents = () => {
             const unlocked = save[saveKey]?.[selectedChar] || [];
             if (unlocked.length === 0) return;
-            
-            let refundedGold = 0;
-            const charTalents = CHARACTER_TALENTS[selectedChar] || [];
-            
-            unlocked.forEach(tId => {
-                const talent = charTalents.find(t => t.id === tId);
-                if (talent) {
-                    const costTier = (talent.tier - 1) * 2;
-                    refundedGold += typeConfig.goldCosts[costTier];
-                }
+            const charData = CHARACTERS.find(c => c.id === selectedChar);
+            const omenxCosts = { permanent: 10, weekly: 4, seasonal: 20 };
+            setRespecModal({
+                tier: activeCategory,
+                charId: selectedChar,
+                charName: charData?.name || selectedChar,
+                count: unlocked.length,
+                goldCost: TALENT_RESPEC_GOLD_COSTS[activeCategory] || 5000,
+                omenxCost: omenxCosts[activeCategory] || 10,
             });
-            
-            const newSave = { ...save, gold: save.gold + refundedGold };
-            if (newSave[saveKey]) {
-                newSave[saveKey][selectedChar] = [];
-            }
-            SaveManager.save(newSave);
-            setSave(newSave);
-            SaveManager.syncToBackendImmediate();
             SoundManager.playUIClick();
         };
 
@@ -725,7 +755,7 @@ export default function Upgrades({ isCarousel }) {
                         disabled={(save[saveKey]?.[selectedChar] || []).length === 0}
                         className="px-3 py-1.5 bg-red-900/50 hover:bg-red-800/80 text-red-400 border border-red-800 rounded-lg font-bold text-xs md:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Respec (Refunds Gold)
+                        Respec Talents
                     </button>
                 </div>
                 
@@ -1357,6 +1387,22 @@ export default function Upgrades({ isCarousel }) {
                     onConfirm={pending.onConfirm}
                     onCancel={pending.onCancel}
                     pageId="upgrades-page"
+                />
+            )}
+
+            {respecModal && (
+                <TalentRespecModal
+                    charName={respecModal.charName}
+                    tierLabel={respecModal.tier}
+                    talentCount={respecModal.count}
+                    goldCost={respecModal.goldCost}
+                    omenxCost={respecModal.omenxCost}
+                    canAffordGold={save.gold >= respecModal.goldCost}
+                    canAffordOmenx={(omenxBalance ?? 0) >= respecModal.omenxCost}
+                    onPayGold={handleRespecPayGold}
+                    onPayOmenx={handleRespecPayOmenx}
+                    onCancel={() => setRespecModal(null)}
+                    busy={purchasing}
                 />
             )}
         </div>

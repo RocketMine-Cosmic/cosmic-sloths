@@ -101,11 +101,23 @@ function getPoolRespecCost(save) {
     return POOL_RESPEC_GOLD_TIERS[Math.min(count, POOL_RESPEC_GOLD_TIERS.length - 1)];
 }
 
+// Talent respec: flat gold fee per tier (mirrors lib/skuMap.js TALENT_RESPEC_GOLD_COSTS).
+const TALENT_RESPEC_GOLD_COSTS = {
+    permanent: 5000,
+    weekly:    2000,
+    seasonal:  8000,
+};
+
 // Compute server-authoritative gold cost for the requested grant.
 function computeCost(grantInfo, save) {
     const { type } = grantInfo || {};
     if (type === 'pool_respec') {
         return getPoolRespecCost(save);
+    }
+    if (type === 'talent_respec') {
+        const cost = TALENT_RESPEC_GOLD_COSTS[grantInfo.tier];
+        if (!cost) throw new Error(`This respec isn't available. Please refresh and try again.`);
+        return cost;
     }
     if (type === 'stat') {
         const { tier, level } = grantInfo;
@@ -146,6 +158,16 @@ function applyGrant(save, grantInfo, periodIds) {
             // Clear allocations and bump the respec counter (drives next cost tier).
             s.poolBiasAllocations = {};
             s.poolBiasGoldRespecCount = Number(s.poolBiasGoldRespecCount || 0) + 1;
+            break;
+        }
+        case 'talent_respec': {
+            // Clear all talents for one character at one tier (permanent / weekly / seasonal). No refund.
+            const { tier, charId } = grantInfo;
+            const key = tier === 'permanent' ? 'permanentTalents'
+                      : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
+            const obj = { ...(s[key] || {}) };
+            obj[charId] = [];
+            s[key] = obj;
             break;
         }
         case 'stat': {

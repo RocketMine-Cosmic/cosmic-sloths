@@ -60,6 +60,29 @@ const SKIN_SKUS = {
     20000: 'character-skins-advance',
 };
 
+// Talent respec SKUs — flat OMENX fee per tier to clear all talents for a single character.
+// Replace these with your real SKU IDs once registered in the OmenX portal.
+const TALENT_RESPEC_SKUS = {
+    permanent: 'talent-respec-permanent', // ~10 OMENX
+    weekly:    'talent-respec-weekly',    // ~4 OMENX
+    seasonal:  'talent-respec-seasonal',  // ~20 OMENX
+};
+
+/**
+ * Returns the SKU for a talent respec.
+ * @param {'permanent'|'weekly'|'seasonal'} tier
+ */
+export function getTalentRespecSku(tier) {
+    return TALENT_RESPEC_SKUS[tier] || null;
+}
+
+// Gold cost for talent respec (per tier). Mirror in functions/spendGold.js.
+export const TALENT_RESPEC_GOLD_COSTS = {
+    permanent: 5000,
+    weekly:    2000,
+    seasonal:  8000,
+};
+
 /**
  * Returns the SKU for a stat upgrade.
  * @param {'permanent'|'weekly'|'seasonal'} tier
