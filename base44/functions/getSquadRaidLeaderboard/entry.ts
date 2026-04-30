@@ -37,25 +37,58 @@ Deno.serve(async (req) => {
             skip += PAGE;
         }
 
-        // Aggregate by squad_id (skip contributions without a squad)
+        // Back-fill squad info for contributions missing it (older records were created
+        // before submitBossDamage attached squad info). Look up current squad membership
+        // by wallet for any contribution with no squad_id.
+        const walletsNeedingLookup = new Set();
+        for (const c of all) {
+            if (!c.squad_id && c.user_id) walletsNeedingLookup.add(c.user_id.toLowerCase());
+        }
+        const walletToSquad = new Map();
+        if (walletsNeedingLookup.size > 0) {
+            // Batch in groups so we don't hit a query limit
+            const wallets = Array.from(walletsNeedingLookup);
+            for (const wallet of wallets) {
+                try {
+                    const members = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: wallet });
+                    if (members.length > 0) {
+                        const sq = await base44.asServiceRole.entities.Squad.get(members[0].squad_id);
+                        if (sq) {
+                            walletToSquad.set(wallet, {
+                                squad_id: sq.id,
+                                squad_name: sq.name || '',
+                                squad_tag: sq.tag || '',
+                                squad_icon: sq.icon || '🛡️',
+                            });
+                        }
+                    }
+                } catch (e) {
+                    // Skip if lookup fails
+                }
+            }
+        }
+
+        // Aggregate by squad_id (using back-filled lookups when needed)
         const bySquad = new Map();
         for (const c of all) {
-            if (!c.squad_id) continue;
-            const key = c.squad_id;
+            let squadInfo = c.squad_id
+                ? { squad_id: c.squad_id, squad_name: c.squad_name, squad_tag: c.squad_tag, squad_icon: c.squad_icon }
+                : (c.user_id ? walletToSquad.get(c.user_id.toLowerCase()) : null);
+            if (!squadInfo?.squad_id) continue;
+            const key = squadInfo.squad_id;
             const cur = bySquad.get(key) || {
-                squad_id: c.squad_id,
-                squad_name: c.squad_name || '',
-                squad_tag: c.squad_tag || '',
-                squad_icon: c.squad_icon || '🛡️',
+                squad_id: squadInfo.squad_id,
+                squad_name: squadInfo.squad_name || '',
+                squad_tag: squadInfo.squad_tag || '',
+                squad_icon: squadInfo.squad_icon || '🛡️',
                 total_damage: 0,
                 contributors: new Set(),
             };
             cur.total_damage += Number(c.damage || 0);
             if (c.user_id) cur.contributors.add(c.user_id);
-            // Refresh cached display fields with the latest values seen
-            if (c.squad_name) cur.squad_name = c.squad_name;
-            if (c.squad_tag) cur.squad_tag = c.squad_tag;
-            if (c.squad_icon) cur.squad_icon = c.squad_icon;
+            if (squadInfo.squad_name) cur.squad_name = squadInfo.squad_name;
+            if (squadInfo.squad_tag) cur.squad_tag = squadInfo.squad_tag;
+            if (squadInfo.squad_icon) cur.squad_icon = squadInfo.squad_icon;
             bySquad.set(key, cur);
         }
 
