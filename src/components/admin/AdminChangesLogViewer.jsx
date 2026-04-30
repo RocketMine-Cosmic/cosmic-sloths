@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Activity, Settings, Zap, Shield, Filter } from 'lucide-react';
 import moment from 'moment';
+import AdminLogDetailsSummary from './AdminLogDetailsSummary';
 
 const ACTION_ICONS = {
     sku_update: <Settings className="w-4 h-4 text-blue-400" />,
@@ -67,9 +68,10 @@ export default function AdminChangesLogViewer() {
                                         <span className="text-[10px] text-slate-500">{moment(change.created_date).format('MMM D YYYY, HH:mm:ss')}</span>
                                         <span className="text-[10px] text-slate-600">{moment(change.created_date).fromNow()}</span>
                                     </div>
+                                    <AdminLogDetailsSummary actionType={change.action_type} details={change.details} />
                                     {change.details && Object.keys(change.details).length > 0 && (
-                                        <details className="mt-1">
-                                            <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300">Details</summary>
+                                        <details className="mt-1.5">
+                                            <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300">Raw JSON</summary>
                                             <pre className="text-[9px] text-slate-400 mt-1 bg-slate-900/50 rounded p-2 overflow-x-auto">
                                                 {JSON.stringify(change.details, null, 2)}
                                             </pre>
