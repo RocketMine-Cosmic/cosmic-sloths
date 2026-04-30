@@ -136,12 +136,15 @@ Forge upgrades **never reset**.
 
 ⚡ **+50% XP Session Buff** — 60-minute boost for 10 OMENX.
 
-👑 **Character Mastery** — Earned per pilot:
-• 2k kills → +5% Speed
-• 5k kills → +10% Damage
-• 10k kills → +15% Area
-• 25k kills → −10% Cooldown
-+ Mastery badges on your profile (Novice → Grandmaster).`,
+👑 **Character Mastery** — 7 tiers per pilot, kills tracked individually:
+• 🥚 Cadet (0) — earn your wings
+• 🚀 Star Runner (2k) → +5% Speed
+• ⚔️ Void Reaper (5k) → +10% Damage
+• 🌌 Nebula Warden (10k) → +15% Area
+• 👑 Cosmic Overlord (25k) → −10% Cooldown
+• 🌟 **Tier 6 (50k)** → character-specific stat boost
+• 💎 **Tier 7 (100k)** → buffs that pilot's signature ability
+Tier 6 & 7 are unique per pilot — e.g. Pandypaws gets +50 HP & +3 Armor, Glitch's phase-shift goes 15%→25%, SkyByte unlocks HYPER BOOM. Check the **Mastery** page in-game for each pilot's full path.`,
     },
     {
         title: 'Post 6 — Dailies, Squads & Squad Wars',
