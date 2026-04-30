@@ -98,10 +98,21 @@ export default function GlobalRaid({ isCarousel }) {
                 if (bosses.length > 0) {
                     setWorldBossData(bosses[0]);
                     const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                    // Read own contribution directly (open RLS)
+                    // Read own contribution directly (open RLS).
+                    // submitBossDamage creates a NEW row per run, so a player can have many.
+                    // Aggregate damage AND claimed_milestones across ALL rows so the UI matches
+                    // the server's view (which also unions across rows in claimBossReward).
                     if (authData?.walletAddress) {
                         const contribs = await base44.entities.GlobalBossContribution.filter({ week_id, user_id: authData.walletAddress });
-                        if (contribs.length > 0) setWorldBossContribution(contribs[0]);
+                        if (contribs.length > 0) {
+                            const totalDamage = contribs.reduce((sum, c) => sum + (c.damage || 0), 0);
+                            const allClaimed = [...new Set(contribs.flatMap(c => Array.isArray(c.claimed_milestones) ? c.claimed_milestones : []))];
+                            setWorldBossContribution({
+                                ...contribs[0],
+                                damage: totalDamage,
+                                claimed_milestones: allClaimed,
+                            });
+                        }
                     }
                     // Fetch more rows so we can aggregate per-player totals before showing top 10.
                     const allContribs = await base44.entities.GlobalBossContribution.filter({ week_id }, '-damage', 500);
