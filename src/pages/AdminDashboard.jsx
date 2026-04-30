@@ -23,7 +23,7 @@ import AdminManagers from '../components/admin/AdminManagers';
 import AdminOrphanedData from '../components/admin/AdminOrphanedData';
 import AdminDiscordGuide from '../components/admin/AdminDiscordGuide';
 import AdminDataBackup from '../components/admin/AdminDataBackup';
-import AdminDataWipe from '../components/admin/AdminDataWipe.jsx';
+import AdminDataWipe from '../components/admin/AdminDataWipe';
 import AdminBlacklist from '../components/admin/AdminBlacklist';
 import AdminRefundOmenx from '../components/admin/AdminRefundOmenx';
 import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
