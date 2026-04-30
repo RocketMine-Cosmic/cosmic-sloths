@@ -26,7 +26,7 @@ const LeviathanTrials = React.lazy(() => import('./pages/LeviathanTrials'));
 const Dailys = React.lazy(() => import('./pages/Dailys'));
 const GlobalRaid = React.lazy(() => import('./pages/GlobalRaid'));
 const Mastery = React.lazy(() => import('./pages/Mastery'));
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard.jsx'));
 const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
 const Jukebox = React.lazy(() => import('./pages/Jukebox'));
 const Titles = React.lazy(() => import('./pages/Titles'));
