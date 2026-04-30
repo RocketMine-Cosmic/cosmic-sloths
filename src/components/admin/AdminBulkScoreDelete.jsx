@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Trash2, AlertTriangle } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
+import { useAvailablePeriods } from './useAvailablePeriods';
 
 export default function AdminBulkScoreDelete({ walletAddress }) {
     const [period, setPeriod] = useState('');
     const [periodType, setPeriodType] = useState('week');
+    const { weeks, seasons, currentWeek, currentSeason } = useAvailablePeriods(walletAddress);
+    const periodOptions = periodType === 'week' ? weeks : seasons;
+    const currentMarker = periodType === 'week' ? currentWeek : currentSeason;
     const [showConfirm, setShowConfirm] = useState(false);
     const [busyConfirm, setBusyConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -76,18 +80,23 @@ export default function AdminBulkScoreDelete({ walletAddress }) {
             <div className="flex flex-wrap gap-3 items-end">
                 <div className="flex flex-col gap-1">
                     <label className="text-[10px] text-slate-500 uppercase">Type</label>
-                    <select value={periodType} onChange={e => { setPeriodType(e.target.value); setPreview(null); setShowConfirm(false); }}
+                    <select value={periodType} onChange={e => { setPeriodType(e.target.value); setPeriod(''); setPreview(null); setShowConfirm(false); }}
                         style={{ colorScheme: 'dark' }}
                         className="bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-red-500">
-                        <option value="week">Week (e.g. 2026-W16)</option>
-                        <option value="season">Season (e.g. 2026-S4)</option>
+                        <option value="week">Week</option>
+                        <option value="season">Season</option>
                     </select>
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-slate-500 uppercase">Period ID</label>
-                    <input type="text" value={period} onChange={e => { setPeriod(e.target.value); setPreview(null); setShowConfirm(false); }}
-                        placeholder={periodType === 'week' ? '2026-W16' : '2026-S4'}
-                        className="bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 w-36" />
+                    <label className="text-[10px] text-slate-500 uppercase">Period</label>
+                    <select value={period} onChange={e => { setPeriod(e.target.value); setPreview(null); setShowConfirm(false); }}
+                        style={{ colorScheme: 'dark' }}
+                        className="bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 w-48 font-mono">
+                        <option value="">— select {periodType} —</option>
+                        {periodOptions.map(p => (
+                            <option key={p} value={p}>{p}{p === currentMarker ? ' (current)' : ''}</option>
+                        ))}
+                    </select>
                 </div>
                 <button onClick={handlePreview} disabled={loading}
                     className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white px-4 py-1.5 rounded font-bold text-sm transition-colors">

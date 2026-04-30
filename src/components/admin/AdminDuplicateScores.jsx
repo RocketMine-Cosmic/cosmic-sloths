@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import moment from 'moment';
 import ConfirmDialog from './ConfirmDialog';
+import { useAvailablePeriods, getCurrentWeekId } from './useAvailablePeriods';
 
 async function autoSnapshot(notes) {
     try {
@@ -14,18 +15,9 @@ async function autoSnapshot(notes) {
     } catch (e) { console.warn('[autoSnapshot]', e.message); }
 }
 
-function getCurrentWeekId() {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    return `${year}-W${String(isoWeek).padStart(2, '0')}`;
-}
-
 export default function AdminDuplicateScores({ walletAddress }) {
     const [period, setPeriod] = useState(getCurrentWeekId());
+    const { weeks, currentWeek } = useAvailablePeriods(walletAddress);
     const [deleting, setDeleting] = useState({});
     const [msg, setMsg] = useState('');
     const [confirmState, setConfirmState] = useState(null); // { kind: 'one'|'group', score?, group? }
@@ -97,13 +89,17 @@ export default function AdminDuplicateScores({ walletAddress }) {
                     <AlertTriangle size={16} /> Duplicate Score Detector
                 </h2>
                 <div className="ml-auto flex items-center gap-2">
-                    <input
-                        type="text"
+                    <select
                         value={period}
                         onChange={e => setPeriod(e.target.value)}
-                        placeholder="e.g. 2026-W16 or all"
-                        className="bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-yellow-500 w-36"
-                    />
+                        style={{ colorScheme: 'dark' }}
+                        className="bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-yellow-500 w-44 font-mono"
+                    >
+                        <option value="all">All weeks</option>
+                        {weeks.map(w => (
+                            <option key={w} value={w}>{w}{w === currentWeek ? ' (current)' : ''}</option>
+                        ))}
+                    </select>
                     {msg && <span className={`text-xs font-mono ${msg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{msg}</span>}
                 </div>
             </div>

@@ -1,23 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Plus, Search } from 'lucide-react';
-
-function getCurrentWeekId() {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    return `${year}-W${String(isoWeek).padStart(2, '0')}`;
-}
-function getCurrentSeasonId() {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const week = Number(getCurrentWeekId().split('-W')[1]);
-    const seasonNum = Math.floor((week - 1) / 4) + 1;
-    return `${year}-S${seasonNum}`;
-}
+import { useAvailablePeriods, getCurrentWeekId, getCurrentSeasonId, seasonIdFromWeekId } from './useAvailablePeriods';
 
 const ARENAS = ['station', 'asteroid', 'nebula', 'voidring', 'singularity', 'endless'];
 const CHARACTERS = ['neobyte', 'pandypaws', 'novabyte', 'glitch', 'holodrift', 'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'];
@@ -27,6 +11,7 @@ export default function AdminRestoreScore({ walletAddress: adminWalletAddress })
     const [player, setPlayer] = useState(null);
     const [searching, setSearching] = useState(false);
     const [msg, setMsg] = useState('');
+    const { weeks, currentWeek } = useAvailablePeriods(adminWalletAddress);
 
     const [form, setForm] = useState({
         score: 15000,
@@ -39,6 +24,11 @@ export default function AdminRestoreScore({ walletAddress: adminWalletAddress })
         season_id: getCurrentSeasonId(),
     });
     const [submitting, setSubmitting] = useState(false);
+
+    // Keep season_id in lockstep with week_id so staff can't desync them.
+    const setWeek = (weekId) => {
+        setForm(f => ({ ...f, week_id: weekId, season_id: seasonIdFromWeekId(weekId) || f.season_id }));
+    };
 
     const findPlayer = async () => {
         const q = walletQuery.trim();
@@ -130,8 +120,21 @@ export default function AdminRestoreScore({ walletAddress: adminWalletAddress })
                     <Field label="Time (sec)" value={form.time_survived} onChange={set('time_survived')} type="number" />
                     <SelectField label="Character" value={form.character_id} onChange={set('character_id')} options={CHARACTERS} />
                     <SelectField label="Arena" value={form.arena_id} onChange={set('arena_id')} options={ARENAS} />
-                    <Field label="Week ID" value={form.week_id} onChange={set('week_id')} />
-                    <Field label="Season ID" value={form.season_id} onChange={set('season_id')} />
+                    <label className="flex flex-col gap-1">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Week</span>
+                        <select value={form.week_id} onChange={e => setWeek(e.target.value)} style={{ colorScheme: 'dark' }}
+                            className="bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 font-mono">
+                            {weeks.map(w => (
+                                <option key={w} value={w}>{w}{w === currentWeek ? ' (current)' : ''}</option>
+                            ))}
+                            {!weeks.includes(form.week_id) && <option value={form.week_id}>{form.week_id}</option>}
+                        </select>
+                    </label>
+                    <label className="flex flex-col gap-1">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Season (auto)</span>
+                        <input type="text" value={form.season_id} readOnly
+                            className="bg-slate-900/50 border border-slate-700 text-slate-400 rounded px-2 py-1 text-xs font-mono cursor-not-allowed" />
+                    </label>
                 </div>
                 <button onClick={restore} disabled={submitting}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-2 rounded text-sm">
