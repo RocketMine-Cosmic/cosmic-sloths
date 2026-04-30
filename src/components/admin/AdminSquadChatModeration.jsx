@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Shield, Trash2, RefreshCw, Search } from 'lucide-react';
+import { Shield, Trash2, RefreshCw, Search, ChevronDown, ChevronRight, List, Users } from 'lucide-react';
 import moment from 'moment';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -11,6 +11,8 @@ export default function AdminSquadChatModeration({ walletAddress }) {
     const [confirm, setConfirm] = useState(null);
     const [busy, setBusy] = useState(false);
     const [msg, setMsg] = useState('');
+    const [view, setView] = useState('all'); // 'all' | 'bysquad'
+    const [expandedSquad, setExpandedSquad] = useState(null);
 
     const { data: messages = [], isLoading, refetch } = useQuery({
         queryKey: ['squadMessagesAll'],
@@ -26,6 +28,27 @@ export default function AdminSquadChatModeration({ walletAddress }) {
             || m.squad_name?.toLowerCase().includes(q)
             || m.wallet_address?.toLowerCase().includes(q);
     });
+
+    // Group filtered messages by squad for the "By Squad" view
+    const squadGroups = useMemo(() => {
+        const map = new Map();
+        for (const m of filtered) {
+            const key = m.squad_id || m.squad_name || 'unknown';
+            if (!map.has(key)) {
+                map.set(key, {
+                    squad_id: m.squad_id,
+                    squad_name: m.squad_name || '(no squad)',
+                    messages: [],
+                    latest: 0,
+                });
+            }
+            const group = map.get(key);
+            group.messages.push(m);
+            const ts = new Date(m.created_date).getTime();
+            if (ts > group.latest) group.latest = ts;
+        }
+        return Array.from(map.values()).sort((a, b) => b.latest - a.latest);
+    }, [filtered]);
 
     const handleDelete = async () => {
         if (!confirm) return;
@@ -50,7 +73,17 @@ export default function AdminSquadChatModeration({ walletAddress }) {
                     <Shield size={16} /> Squad Chat Moderation
                 </h2>
                 <span className="text-[10px] text-slate-500">Last 200 messages</span>
-                <button onClick={() => refetch()} className="ml-auto text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-bold flex items-center gap-1">
+                <div className="flex bg-slate-900 border border-slate-700 rounded overflow-hidden ml-auto">
+                    <button onClick={() => setView('all')}
+                        className={`text-xs px-2.5 py-1 font-bold flex items-center gap-1 transition-colors ${view === 'all' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                        <List size={11} /> All
+                    </button>
+                    <button onClick={() => setView('bysquad')}
+                        className={`text-xs px-2.5 py-1 font-bold flex items-center gap-1 transition-colors ${view === 'bysquad' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                        <Users size={11} /> By Squad
+                    </button>
+                </div>
+                <button onClick={() => refetch()} className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-bold flex items-center gap-1">
                     <RefreshCw size={11} /> Refresh
                 </button>
             </div>
@@ -68,25 +101,34 @@ export default function AdminSquadChatModeration({ walletAddress }) {
                 <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-t-2 border-orange-500"></div></div>
             ) : filtered.length === 0 ? (
                 <div className="text-center text-slate-500 py-6 text-sm">No messages match.</div>
+            ) : view === 'all' ? (
+                <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
+                    {filtered.map(m => <MessageRow key={m.id} m={m} onDelete={setConfirm} showSquad />)}
+                </div>
             ) : (
                 <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
-                    {filtered.map(m => (
-                        <div key={m.id} className="bg-slate-900/60 border border-orange-800/30 rounded px-3 py-2 flex items-start gap-3">
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-bold text-white text-xs">{m.player_name}</span>
-                                    <span className="text-[10px] text-orange-400 font-mono">[{m.squad_name}]</span>
-                                    <span className="text-[10px] text-slate-500">{moment(m.created_date).fromNow()}</span>
-                                </div>
-                                <div className="text-sm text-slate-200 mt-1 break-words whitespace-pre-wrap">{m.content}</div>
-                                <div className="text-[9px] text-slate-600 font-mono mt-1">{m.wallet_address?.slice(0, 10)}…{m.wallet_address?.slice(-6)}</div>
+                    <div className="text-[10px] text-slate-500 mb-1">{squadGroups.length} squad{squadGroups.length === 1 ? '' : 's'} · click to expand</div>
+                    {squadGroups.map(group => {
+                        const isOpen = expandedSquad === (group.squad_id || group.squad_name);
+                        return (
+                            <div key={group.squad_id || group.squad_name} className="bg-slate-900/40 border border-orange-800/30 rounded overflow-hidden">
+                                <button
+                                    onClick={() => setExpandedSquad(isOpen ? null : (group.squad_id || group.squad_name))}
+                                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-800/60 transition-colors text-left"
+                                >
+                                    {isOpen ? <ChevronDown size={14} className="text-orange-400 shrink-0" /> : <ChevronRight size={14} className="text-slate-500 shrink-0" />}
+                                    <span className="font-bold text-orange-400 text-sm">[{group.squad_name}]</span>
+                                    <span className="text-[10px] text-slate-400 ml-auto">{group.messages.length} msg{group.messages.length === 1 ? '' : 's'}</span>
+                                    <span className="text-[10px] text-slate-500 ml-2">latest {moment(group.latest).fromNow()}</span>
+                                </button>
+                                {isOpen && (
+                                    <div className="border-t border-orange-900/30 p-2 space-y-1.5 bg-slate-950/40">
+                                        {group.messages.map(m => <MessageRow key={m.id} m={m} onDelete={setConfirm} />)}
+                                    </div>
+                                )}
                             </div>
-                            <button onClick={() => setConfirm(m)}
-                                className="bg-red-900/60 hover:bg-red-800 text-red-200 text-xs px-2.5 py-1 rounded font-bold flex items-center gap-1 transition-colors shrink-0">
-                                <Trash2 size={11} /> Delete
-                            </button>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
@@ -100,6 +142,26 @@ export default function AdminSquadChatModeration({ walletAddress }) {
                 items={confirm ? [`"${(confirm.content || '').slice(0, 200)}"`] : []}
                 confirmLabel="Delete message"
             />
+        </div>
+    );
+}
+
+function MessageRow({ m, onDelete, showSquad }) {
+    return (
+        <div className="bg-slate-900/60 border border-orange-800/30 rounded px-3 py-2 flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-white text-xs">{m.player_name}</span>
+                    {showSquad && <span className="text-[10px] text-orange-400 font-mono">[{m.squad_name}]</span>}
+                    <span className="text-[10px] text-slate-500">{moment(m.created_date).fromNow()}</span>
+                </div>
+                <div className="text-sm text-slate-200 mt-1 break-words whitespace-pre-wrap">{m.content}</div>
+                <div className="text-[9px] text-slate-600 font-mono mt-1">{m.wallet_address?.slice(0, 10)}…{m.wallet_address?.slice(-6)}</div>
+            </div>
+            <button onClick={() => onDelete(m)}
+                className="bg-red-900/60 hover:bg-red-800 text-red-200 text-xs px-2.5 py-1 rounded font-bold flex items-center gap-1 transition-colors shrink-0">
+                <Trash2 size={11} /> Delete
+            </button>
         </div>
     );
 }
