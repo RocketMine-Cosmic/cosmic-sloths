@@ -14,18 +14,39 @@ Deno.serve(async (req) => {
         let apiBaseUrlEnv = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrlEnv.startsWith('http')) apiBaseUrlEnv = `https://${apiBaseUrlEnv}`;
 
-        const res = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
-            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
-        });
-        if (!res.ok) {
-            console.error('[getNFTs] HTTP', res.status);
-            // Return error status so frontend doesn't wipe cached NFTs (and unlocked characters)
-            return Response.json({ error: `HTTP ${res.status}`, nfts: null }, { status: 502 });
+        const apiKeys = [
+            Deno.env.get('OMENX_BALANCE_API_KEY'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_2'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_3'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_4'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_5'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_6'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_7'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_8'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_9'),
+        ].filter(Boolean);
+        const shuffled = apiKeys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
+
+        let lastStatus = 0;
+        for (const key of shuffled) {
+            const res = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
+                headers: { 'Authorization': `Bearer ${key}` },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const nfts = data?.nfts || [];
+                console.log(`[getNFTs] wallet=${walletAddress} nfts=${nfts.length}`);
+                return Response.json({ nfts });
+            }
+            lastStatus = res.status;
+            if (res.status !== 429 && res.status < 500) {
+                console.error('[getNFTs] HTTP', res.status, '— not retrying');
+                return Response.json({ error: `HTTP ${res.status}`, nfts: null }, { status: 502 });
+            }
+            console.warn('[getNFTs] HTTP', res.status, '— trying next key');
         }
-        const data = await res.json();
-        const nfts = data?.nfts || [];
-        console.log(`[getNFTs] wallet=${walletAddress} nfts=${nfts.length}`);
-        return Response.json({ nfts });
+        console.error('[getNFTs] All keys exhausted, last status:', lastStatus);
+        return Response.json({ error: `HTTP ${lastStatus}`, nfts: null }, { status: 502 });
     } catch (error) {
         console.error('[getNFTs]', error.message);
         return Response.json({ error: error.message, nfts: null }, { status: 502 });
