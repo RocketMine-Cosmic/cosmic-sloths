@@ -82,6 +82,10 @@ function getPaymentKeys() {
         Deno.env.get('OMENX_PAYMENT_API_KEY_2'),
         Deno.env.get('OMENX_PAYMENT_API_KEY_3'),
         Deno.env.get('OMENX_PAYMENT_API_KEY_4'),
+        Deno.env.get('OMENX_PAYMENT_API_KEY_5'),
+        Deno.env.get('OMENX_PAYMENT_API_KEY_6'),
+        Deno.env.get('OMENX_PAYMENT_API_KEY_7'),
+        Deno.env.get('OMENX_PAYMENT_API_KEY_8'),
     ].filter(Boolean);
     return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
 }
