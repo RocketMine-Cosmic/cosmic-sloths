@@ -17,15 +17,12 @@ const formatKey = (k) =>
     k.replace(/_/g, ' ')
      .replace(/\b\w/g, c => c.toUpperCase());
 
-// Pull out the most meaningful fields. We hide noisy/internal ones.
 const HIDDEN_KEYS = new Set(['period_id', 'period_type', 'wallet_address', 'admin_wallet']);
 
-// Common short-form chips for known patterns.
 function buildChips(actionType, details) {
     const chips = [];
     if (!details || typeof details !== 'object') return chips;
 
-    // Permission updates → show the permissions list
     if (Array.isArray(details.permissions)) {
         chips.push({ label: 'Perms', value: details.permissions.length === 0 ? '(none)' : details.permissions.join(', ') });
     }
@@ -39,7 +36,6 @@ function buildChips(actionType, details) {
         chips.push({ label: 'Name', value: details.admin_name });
     }
 
-    // Save patches — show the fields that changed
     if (details.patched_fields && Array.isArray(details.patched_fields)) {
         chips.push({ label: 'Fields', value: details.patched_fields.join(', ') });
     }
@@ -53,7 +49,6 @@ function buildChips(actionType, details) {
         });
     }
 
-    // Gold / currency adjustments
     if (typeof details.gold_delta === 'number') {
         chips.push({ label: 'Gold', value: (details.gold_delta >= 0 ? '+' : '') + details.gold_delta.toLocaleString() });
     }
@@ -64,21 +59,19 @@ function buildChips(actionType, details) {
         chips.push({ label: 'Reason', value: details.reason });
     }
 
-    // SKU updates
     if (details.sku_id) chips.push({ label: 'SKU', value: details.sku_id });
     if (details.action) chips.push({ label: 'Action', value: details.action });
 
-    // Generic fallback — surface anything else that's a primitive or short array
     if (chips.length === 0) {
         Object.entries(details).forEach(([k, v]) => {
             if (HIDDEN_KEYS.has(k)) return;
             if (v === null || v === undefined) return;
-            if (typeof v === 'object' && !Array.isArray(v)) return; // skip nested objects in fallback
+            if (typeof v === 'object' && !Array.isArray(v)) return;
             chips.push({ label: formatKey(k), value: formatVal(v) });
         });
     }
 
-    return chips.slice(0, 6); // cap to keep rows tidy
+    return chips.slice(0, 6);
 }
 
 export default function AdminLogDetailsSummary({ actionType, details }) {
