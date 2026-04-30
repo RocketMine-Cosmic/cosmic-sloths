@@ -3,122 +3,225 @@ import { Copy, Check } from 'lucide-react';
 
 const POSTS = [
     {
-        title: 'Post 1 — Quick Start',
+        title: 'Post 1 — Welcome & Quick Start',
         content: `🚀 **COSMIC SLOTHS — QUICK START**
 
-Top-down auto-shooter. Weapons auto-fire — you move & dodge. Survive the timer to win.
+Top-down auto-shooter where your weapons fire automatically — you move, dodge, and pick upgrades. Survive the sector timer to win, or push into Endless Void for infinite scaling.
 
-**Controls:** WASD/Arrows or Virtual Joystick | ESC/P Pause | Full gamepad & mobile support
+🎮 **Controls**
+• Desktop: WASD or Arrow Keys
+• Mobile: Virtual Joystick
+• ESC / P to Pause
+• Full gamepad support (Xbox / PS / generic)
 
-**Scoring:** Server-side formula — (Kills×10 + Level×100 + Time×5 + Gold×5 + 5,000 victory bonus) × Sector Multiplier (×1.0 → ×2.0 in Endless). Only your highest score per week counts on the leaderboard.
+🌍 **Difficulty Modes** (choose before each run)
+• Easy — −50% XP & Gold
+• Normal — baseline
+• Hard — +100% XP & Gold
+• Cosmic — +200% XP & Gold
 
-**Difficulties:** Easy (−50% XP/Gold) | Normal (baseline) | Hard (+100% XP/Gold) | Cosmic (+200% XP/Gold). Difficulty does NOT directly multiply score — but more XP & Gold means a bigger score.`,
+Difficulty doesn't directly multiply your score — but more XP & Gold per run *feeds* the score formula, so harder = bigger numbers.
+
+🪐 **Sectors** — Station → Asteroid → Nebula → VoidRing → Singularity → Endless Void. Beat each sector with each pilot to unlock the next. Playing older sectors applies a **−10% Gold penalty per sector below your max** (capped at −50%) — keep pushing forward!
+
+✅ **Just sign in with OmenX to start.** Your save, wallet, and progression sync automatically.`,
     },
     {
-        title: 'Post 2 — Leaderboards & OMENX',
-        content: `🏆 **LEADERBOARDS — EARN REAL CRYPTO**
+        title: 'Post 2 — Scoring & Leaderboards',
+        content: `🏆 **HOW SCORING WORKS**
 
-Three live leaderboards. Only your **highest score per period** counts. Real OMENX rewards are auto-sent to your OmenX wallet — no claiming, no clicking.
+Score is calculated **server-side** at the end of every run:
 
-📅 **Weekly** (resets every Monday) — **Top 100** earn OMENX
-• Ranks 1–30: Top-tier rewards
-• Ranks 31–50: Mid-tier rewards
-• Ranks 51–100: Lower rewards
+\`Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier\`
+
+• **Victory Bonus:** flat +5,000 if you beat the timer
+• **Sector Multiplier:** ×1.0 (Station) → +0.2 per sector → ×1.8 (Singularity) → **×2.0 in Endless Void**
+• Only your **highest score per period** counts on the leaderboard
+
+📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Top 100 earn OMENX
+🥇 #1 — 10% | 🥈 #2 — 8% | 🥉 #3 — 6%
+#4–10: 4% each | #11–20: 3% each | #21–30: 1.8% each
+#31–50: 1.2% each | #51–100: 0.8% each
 *(Weekly stat upgrades also reset.)*
 
-🗓️ **Seasonal** (4-week cycles) — **Top 100** earn OMENX
-• Ranks 1–40: Top-tier rewards
-• Ranks 41–60: Mid-tier rewards
-• Ranks 61–100: Lower rewards
-*(Seasonal stat upgrades reset at end-of-season.)*
+🗓️ **Seasonal Leaderboard** (4-week cycles) — Top 100 earn OMENX
+🥇 #1 — 8% | 🥈 #2 — 6% | 🥉 #3 — 5%
+#4–10: 3% each | #11–20: 2.5% each | #21–30: 2% each
+#31–40: 1.5% each | #41–60: 1% each | #61–100: 0.6% each
+*(Seasonal stat upgrades reset at season end.)*
 
-♾️ **Endless Void** — Infinitely scaling, all-time high score. **No OMENX rewards** — purely a permanent legacy ranking. Note: regular enemies don't drop Gold, and boss Gold is **capped at 5,000 per run**.
+♾️ **Endless Void Leaderboard** — Permanent legacy ranking, never resets. **NOT eligible for OMENX payouts.** Single endless run is capped at 5,000 Gold and 2,000 kills credited to your account.
 
-💠 **Reward Pool:** Every OMENX spent **in Cosmic Sloths** (rerolls, banishes, revives, ults, buffs, cosmetics, stat upgrades) feeds the prize pool — **25% of weekly spend** goes to weekly payouts, **35% of seasonal spend** goes to seasonal payouts. More activity = bigger payouts.
-
-✅ **Just sign in with OmenX** — that's it. Payouts auto-distribute to your wallet at the end of each cycle.`,
+💠 Real OMENX is paid directly to your wallet at the end of each cycle — no claiming, no clicking.`,
     },
     {
         title: 'Post 3 — The 10 Pilots & NFT Unlocks',
-        content: `👥 **10 UNIQUE PILOTS**
+        content: `👥 **THE 10 PILOTS**
 
-🔵 **NeoByte** — Balanced starter. Support banner boosts damage & cooldowns.
-🩷 **Pandypaws** — Tank. High HP & armor.
-🟠 **NovaByte** — Glass cannon with massive damage.
+🔵 **NeoByte** — Balanced starter. Support banner boosts allies' damage & cooldowns.
+🩷 **Pandypaws** — Tank. High HP & armor, slow but unstoppable.
+🟠 **NovaByte** — Glass cannon. Massive damage, low survivability.
 🟣 **Glitch** — Assassin. Fastest movement, phase-shifts on hit.
-🩵 **HoloDrift** — Engineer. Huge magnet range.
-🟢 **CodeBreaker** — Fastest cooldowns, hacks enemies.
-🔵 **DataPhantom** — Fastest projectiles, leeches damage.
-🟡 **NeonVortex** — Sniper with instant kills.
-🟡 **SynthBeats** — Gold farmer (×1.5 income).
-🩵 **SkyByte** — Balanced speed & damage.
+🩵 **HoloDrift** — Engineer. Huge magnet range, drone synergy.
+🟢 **CodeBreaker** — Fastest cooldowns, hacks enemies into allies.
+🔵 **DataPhantom** — Fastest projectiles, life-leech on damage.
+🟡 **NeonVortex** — Sniper. Long range, instant-kill chance.
+🟡 **SynthBeats** — Gold farmer (×1.5 Gold income).
+🩵 **SkyByte** — Balanced speed & damage all-rounder.
 
 ---
 
-💎 **UNLOCK PATHS**
+💎 **HOW TO UNLOCK PILOTS**
 
-**NFT Ownership (Instant)** — Own the NFT = instant unlock + per-run bonuses (+5% to +15% Gold & Fragments based on rarity)
+**Path 1 — NFT Ownership (Instant)**
+Own a pilot's OmenX NFT? Unlocks instantly on sign-in. Plus you earn rarity-based per-run bonuses every single run:
+⬜ Common → +5% Gold / +5% Fragments
+🟢 Uncommon → +7% / +8%
+🔵 Rare → +10% / +10%
+🟣 Epic → +12% / +13%
+🟡 Legendary → +15% / +15%
+*(Sell the NFT and the pilot is removed — but your kill mastery is preserved if you re-acquire it.)*
 
-**Kill Milestones (Permanent)** — 2k/5k/10k/20k kills unlock random pilots (never expire)
+**Path 2 — Kill Milestones (Permanent)**
+Reach cumulative kill thresholds to randomly unlock pilots: **2k / 5k / 10k / 20k kills**. These unlocks **never expire**, NFT or not.
 
-**Rarity Bonuses (NFT Only):** ⬜ Common +5% | 🟢 Uncommon +7%/+8% | 🔵 Rare +10% | 🟣 Epic +12%/+13% | 🟡 Legendary +15%`,
+NeoByte is unlocked by default. Everyone else needs an NFT or a milestone.`,
     },
     {
-        title: 'Post 4 — Weapons & Synergies',
-        content: `🔫 **WEAPONS, SYNERGIES & EVOLUTIONS**
+        title: 'Post 4 — Weapons, Synergies & Evolutions',
+        content: `🔫 **IN-RUN WEAPONS & UPGRADES**
 
-Pick 1 of 3 upgrades every level (Common to Legendary). Spend OMENX to swing the odds:
-• **Reroll** the 3 choices — 2 OMENX (once per level-up)
-• **Banish** an upgrade for the rest of the run — tiered: **2 OMENX** for the first 3 banishes, **4 OMENX** for the next 3, then **6 OMENX** per banish
-• **Emergency Revive** on death — 4 OMENX (50% HP + 3s i-frames)
+Every level-up offers 3 random upgrades (Common / Rare / Epic / Legendary — higher rarity = bigger numbers). Spend OMENX to swing the RNG:
 
-**Base Weapons:** Blaster · Nap Beam · Plasma Whip · Orbital Drones · Napalm · Nova Pulse · Shield Bubble · Ricochet Blade · Toxic Emitter
+• **Reroll** the 3 choices → **2 OMENX** (once per level-up)
+• **Banish** an upgrade for the rest of the run → tiered cost: **2 OMENX** for the first 3 banishes, **4 OMENX** for the next 3, then **6 OMENX** each
+• **Emergency Revive** on death → **4 OMENX** (50% HP + 3s invincibility)
 
-**Per-Weapon Thematic Upgrades** — Each weapon's Armory upgrades use thematic names tailored to that weapon (e.g. Shield Bubble → *Barrier Strength / Bubble Size / Recharge Rate*, Hellfire → *Inferno Heat / Pool Size / Drop Rate*).
+💡 *Permanent stat upgrades, talents, and Armory upgrades from the Sloth Lounge appear +15% more often per level invested in your in-run choices.*
 
-**Synergies** (combine 2 weapons):
-Napalm+Shield → Burning Barrier | Nap+Nova → Laser Nova | Whip+Drones → Plasma Swarm
-Nap+Drones → Orbital Lasers | Whip+Nova → Seismic Whip | Napalm+Whip → Flaming Lash
-Toxic+Whip → Venom Lash
+**🪖 Base Weapons:** Neo Blaster · Cosmic Nap Beam · Plasma Whip · Sloth Swarm (drones) · Zero-G Napalm · Nova Pulse · Shield Bubble · Bouncing Blade · Toxic Cloud
 
-**Evolutions** (max weapon = special forms):
-Nap+Area → Supernova | Whip+Regen → Vampiric | Drones+Speed → Network
-Napalm+Damage → Hellfire | Nova+Cooldown → Quantum Collapse | Bubble+HP → Aegis`,
+**🔥 Synergies** (own 2 specific weapons in the same run = combine):
+• Napalm + Shield → **Burning Barrier**
+• Nap Beam + Nova Pulse → **Laser Nova**
+• Whip + Drones → **Plasma Swarm**
+• Napalm + Whip → **Flaming Lash**
+• Toxic + Whip → **Venom Lash**
+*(more to discover...)*
+
+**✨ Evolutions** (max a weapon + own a specific passive = ultimate form):
+• Nap Beam + Spatial Expander → **Supernova**
+• Plasma Whip + Regen → **Vampiric Whip**
+• Drones + Speed → **Drone Network**
+• Napalm + Damage → **Hellfire**
+• Nova Pulse + Cooldown → **Quantum Collapse**
+• Shield Bubble + HP → **Aegis**
+
+Track every discovered synergy + evolution in the **Codex**.`,
     },
     {
-        title: 'Post 5 — Meta Progression',
-        content: `📈 **SLOTH LOUNGE — PERMANENT UPGRADES**
+        title: 'Post 5 — Meta Progression (Sloth Lounge)',
+        content: `📈 **SLOTH LOUNGE — BETWEEN-RUN UPGRADES**
 
-🔧 **Stat Upgrades** (3 tiers: Permanent/Weekly/Seasonal)
-Damage · HP · Speed · Magnet · Regen · Cooldown · Luck
+🔧 **Stat Upgrades** — 3 tiers per stat:
+• **Permanent** (forever)
+• **Weekly** (resets Monday)
+• **Seasonal** (resets every 4 weeks)
+Stats: Damage · HP · Speed · Magnet · Regen · Cooldown · Luck · Armor · Crit
 
-🔫 **Armory** — Upgrade weapons (Damage/Area/Cooldown). Max all 3 = Mastery + Evolution.
+🔫 **Armory** — Upgrade individual weapons across **3 thematic stats** unique to each weapon (e.g. Shield Bubble → Barrier Strength / Bubble Size / Recharge Rate). Max all 3 to **Master** the weapon and unlock its ultimate form.
 
-🌳 **Talent Trees** — Unique per pilot. Respec anytime for gold.
+🌳 **Talent Trees** — Each pilot has a unique branching skill tree. Respec anytime for a Gold refund.
 
-💎 **Relics** — Global stat boosts, upgrade to Lv.5: Cosmic Dice · Midas Core · Knowledge Drive · Blood Chalice · Annihilation Core
+💎 **Ancient Relics** — Equip Relics for global stat boosts. Use **Relic Fragments** (dropped by bosses) to upgrade them to Lv.5: Cosmic Dice · Midas Core · Knowledge Drive · Blood Chalice · Annihilation Core.
 
-🔨 **The Forge** — 10k Gold = 1 Star Fragment (max 30/day). Permanently enhance weapons & unlock character traits. NEVER resets.
+🔨 **The Forge** — Convert 10,000 Gold → 1 Star Fragment (cap 30/day). Spend fragments to:
+• Permanently enhance weapons beyond their normal cap
+• Unlock powerful per-character passive augments
+Forge upgrades **never reset**.
 
-👑 **Character Mastery** — 2k kills +5% Speed | 5k kills +10% Damage | 10k kills +15% Area | 25k kills -10% Cooldown`,
+✨ **Cosmetics** — Trails, kill effects, character skins. Preview before you buy.
+
+⚡ **+50% XP Session Buff** — 60-minute boost for 10 OMENX.
+
+👑 **Character Mastery** — Earned per pilot:
+• 2k kills → +5% Speed
+• 5k kills → +10% Damage
+• 10k kills → +15% Area
+• 25k kills → −10% Cooldown
++ Mastery badges on your profile (Novice → Grandmaster).`,
     },
     {
-        title: 'Post 6 — Dailies, Squads, Raids & VIP',
-        content: `🎯 **DAILIES, SQUADS & EVENTS**
+        title: 'Post 6 — Dailies, Squads & Squad Wars',
+        content: `🎯 **DAILY ACTIVITIES**
 
-📅 **Login Streak** — 7 days up to 4k Gold (miss 1 = reset)
-🎯 **3 Bounties/day** — Gold or Relic Fragments
-⚔️ **1 Daily Mission** — Seasonal Points (100 = exclusive skin)
+📅 **Daily Login Streak** — 7-day cycle, up to **4,000 Gold** on day 7. Miss a day → resets to day 1.
+🎯 **3 Daily Bounties** — Gold or Relic Fragments. Auto-tracked during runs.
+⚔️ **1 Daily Mission** — Awards **Seasonal Points** (100 = exclusive seasonal skin per pilot).
 
-👥 **Squads** (up to 5 pilots) — Kills auto-count. 7 levels (Recruits → Elite). Hit weekly target = all members claim Gold + Fragments.
+---
 
-💀 **Global Raid** (5 runs/day, +5 more for 10 OMENX) — Your damage permanently cuts boss HP. Levels up every defeat. Rewards scale with level. Live Activity banner shows real-time damage milestones & boss kills from players worldwide.
+👥 **SQUADS** (up to 5 pilots)
 
-⚔️ **Leviathan Trials** — Stack 6 boss modifiers: FURY (+50% dmg) · FRENZY (+50% speed) · THICK HIDE (+100% HP) · BULLET HELL (+projectiles) · REGEN (+heal) · UNSTOPPABLE (no slows). Each unlocks a bonus reward (Gold, XP, Score, Tokens).
+Every kill any member scores auto-counts toward the squad's daily + weekly totals. Squads level from **Lv.1 Recruits → Lv.7 Cosmic Elite** (300k lifetime XP).
 
-🎮 **Squad Ultimates** — Mid-run, summon a clone from your roster: ULT LITE (5 OMENX, capped power) or ULT FULL (10 OMENX, scales with your full upgrades).
+**Daily target** scales 300 → 12,000 kills | reward 150 Gold → 4,000 Gold + 3 Fragments
+**Weekly target** scales 2,000 → 75,000 kills | reward 500 Gold → 15,000 Gold + 10 Fragments
 
-👑 **VIP** (14 tiers, Bronze 1 → Diamond 4) — Each tier grants **+1% Damage & +1% Max HP** per run, stacking with all upgrades. Weekly OMENX allocation paid to your wallet (Phase 2 + Phase 3, 10 weeks each). Your tier is fetched **once on sign-in** and cached — use the **Refresh VIP** button on your Profile (24h cooldown) to pull a new tier after upgrading.`,
+Hit the target = **every member claims** their share. Roles: Leader (manages squad) + Members. Real-time squad chat included.
+
+---
+
+⚔️ **SQUAD WARS** (NEW — head-to-head every week)
+
+Every Monday, your squad is auto-paired against a similar-level rival squad. Whichever squad scores more kills by **Sunday 23:59 UTC** wins. No opponent? You get a **bye week** (auto-win).
+
+Per-member rewards (claim once after the war ends):
+• 🏆 Win → **2,500 Gold + 3 Fragments**
+• 🤝 Tie → 1,000 Gold + 1 Fragment
+• 💀 Loss → 500 Gold (consolation)
+
+👑 **CHAMPIONS POOL** — **10% of the entire seasonal OMENX pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members. Live standings on the **Squad Wars** page.`,
+    },
+    {
+        title: 'Post 7 — Raids, Trials, Ultimates & VIP',
+        content: `💀 **GLOBAL RAID** — Community vs World Boss
+
+A massive boss with **shared global HP**. Every player's damage is permanently subtracted from its health pool worldwide.
+
+• **5 Raid Runs/day** free, +5 more for **10 OMENX**
+• Damage cuts the boss HP for everyone
+• Boss defeated → respawns at next level with **+50% HP**
+• Claim **250 Gold × Boss Level** per defeat (must have contributed damage)
+• Live Activity banner shows real-time milestones + kills from players worldwide
+
+---
+
+⚡ **LEVIATHAN TRIALS** — Optional boss modifiers
+
+Activate before a run. Stack any of: **FURY** (boss +50% dmg) · **FRENZY** (+50% speed) · **TITAN** (+100% HP). Beating the boss with modifiers active grants bonus rewards.
+
+---
+
+🎮 **SQUAD ULTIMATES** (mid-run panic button)
+
+Floating buttons (bottom-right) summon an AI clone from your unlocked roster:
+• **ULT LITE** — 5 OMENX (capped power, instant help)
+• **ULT FULL** — 10 OMENX (scales with your full upgrades)
+
+---
+
+👑 **VIP** (14 tiers — Bronze 1 → Diamond 4)
+
+Earned via **real-money VIP subscription** on the OmenX platform. Each tier grants **+1% Damage & +1% Max HP per run**, stacking with all your other upgrades.
+
+Bonus: every VIP tier earns a **weekly OMENX allocation** paid directly to your wallet (Phase 2 + Phase 3, 10 weeks each) — your subscription literally pays you back in crypto.
+
+🔄 Your VIP tier is fetched **once on sign-in** and cached for the session. Upgraded your tier? Use the **Refresh VIP** button on your Profile page (24h cooldown) to pull the new value.
+
+---
+
+🎉 **That's the full game.** Sign in with OmenX, hop in, and start climbing. Real crypto. Real competition. Real cute sloths in space. 🦥`,
     },
 ];
 
@@ -172,7 +275,7 @@ export default function AdminDiscordGuide() {
             <div className="bg-[#0b0416]/80 border border-indigo-900/50 rounded-xl p-4 flex items-center justify-between gap-4">
                 <div>
                     <h2 className="text-base font-bold text-indigo-400 uppercase tracking-widest">📋 Discord Guide Posts</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">6 ready-to-paste Discord posts. Copy each individually and post in sequence in your #game-guide channel.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">7 ready-to-paste Discord posts. Each fits within Discord's 2,000-char limit. Copy individually and post in sequence in your #game-guide channel.</p>
                 </div>
                 <button
                     onClick={handleCopyAll}
