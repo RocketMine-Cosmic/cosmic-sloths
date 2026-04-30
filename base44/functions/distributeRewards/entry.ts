@@ -242,7 +242,10 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
          await db.entities.TokenPool.update(pool.id, { distributed: true });
          return { paid: 0, skipped: 'zero spend' };
      }
-     const rewardPool = Math.floor(pool.total_spent * 0.35);
+     // 5% of seasonal pool is reserved for the Squad Wars Champions Pool — distributed
+     // separately by `distributeSquadChampions`. Players get the remaining 95% of 35%.
+     const playerSeasonalPool = pool.total_spent * 0.95;
+     const rewardPool = Math.floor(playerSeasonalPool * 0.35);
      const allScores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');

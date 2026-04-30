@@ -34,6 +34,7 @@ import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
 import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
 import AdminStaffPayouts from '../components/admin/AdminStaffPayouts';
 import MyStaffIncomeCard from '../components/admin/MyStaffIncomeCard';
+import AdminSquadChampions from '../components/admin/AdminSquadChampions';
 
 const TAB_GROUPS = [
     {
@@ -73,6 +74,7 @@ const TAB_GROUPS = [
         tabs: [
             { id: 'raid',    label: 'Global Raid', icon: Skull, perm: 'manage_raid' },
             { id: 'rewards', label: 'Rewards',     icon: Gift,  perm: 'distribute_rewards' },
+            { id: 'champions', label: '👑 Squad Champions', icon: Trophy, perm: 'distribute_rewards' },
             { id: 'skus',    label: 'SKUs',        icon: Gift,  perm: 'view_data' },
             { id: 'content', label: 'Content',     icon: Database, perm: 'view_data' },
         ],
@@ -242,6 +244,7 @@ export default function AdminDashboard() {
         suspicious: <AdminSuspiciousRuns walletAddress={adminWallet} />,
         chat: <AdminSquadChatModeration walletAddress={adminWallet} />,
         rewards: <AdminRewards walletAddress={adminWallet} />,
+        champions: <AdminSquadChampions walletAddress={adminWallet} />,
         skus: <AdminSkus walletAddress={adminWallet} />,
         content: <AdminContent />,
         duplicates: (

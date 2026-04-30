@@ -11,11 +11,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //  - 'pairAndResolve' : ADMIN-ONLY — pair squads for new week + resolve previous week wars
 //  - 'claimWinBonus'  : member of winning squad collects per-member bonus (idempotent)
 
-const WAR_WIN_GOLD_PER_MEMBER = 3500;
-const WAR_WIN_FRAGMENTS_PER_MEMBER = 5;
-const WAR_TIE_GOLD_PER_MEMBER = 1500;
+// Weekly war rewards reduced — Champions Pool (5% of seasonal OMENX) supplements these.
+const WAR_WIN_GOLD_PER_MEMBER = 2500;
+const WAR_WIN_FRAGMENTS_PER_MEMBER = 3;
+const WAR_TIE_GOLD_PER_MEMBER = 1000;
 const WAR_TIE_FRAGMENTS_PER_MEMBER = 1;
-const WAR_LOSS_GOLD_PER_MEMBER = 750;
+const WAR_LOSS_GOLD_PER_MEMBER = 500;
 
 function getCurrentWeekId() {
     const now = new Date();

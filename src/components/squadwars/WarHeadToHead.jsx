@@ -101,17 +101,17 @@ export default function WarHeadToHead({ war, mySquadId, compact = false, onClaim
                     <div className="grid grid-cols-3 gap-2">
                         <div className="bg-amber-950/30 border border-amber-700/40 rounded p-2">
                             <div className="text-[10px] text-amber-400 font-bold uppercase">Win</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-amber-200"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 3,500</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-fuchsia-300"><Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> 5</div>
+                            <div className="flex items-center gap-1 text-xs font-bold text-amber-200"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 2,500</div>
+                            <div className="flex items-center gap-1 text-xs font-bold text-fuchsia-300"><Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> 3</div>
                         </div>
                         <div className="bg-slate-800/50 border border-slate-700 rounded p-2">
                             <div className="text-[10px] text-slate-400 font-bold uppercase">Tie</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-slate-300"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 1,500</div>
+                            <div className="flex items-center gap-1 text-xs font-bold text-slate-300"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 1,000</div>
                             <div className="flex items-center gap-1 text-xs font-bold text-fuchsia-300"><Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> 1</div>
                         </div>
                         <div className="bg-slate-900/60 border border-slate-700 rounded p-2">
                             <div className="text-[10px] text-slate-500 font-bold uppercase">Loss</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-slate-400"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 750</div>
+                            <div className="flex items-center gap-1 text-xs font-bold text-slate-400"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 500</div>
                         </div>
                     </div>
                 </div>

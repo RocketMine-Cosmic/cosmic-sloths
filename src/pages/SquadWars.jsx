@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Swords, Trophy, Skull, ArrowLeft, Crown, Shield, Coins, Puzzle, Flame, Users } from 'lucide-react';
+import { Swords, Trophy, Skull, ArrowLeft, Crown, Shield, Coins, Puzzle, Flame, Users, Award } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { useToast } from '@/components/ui/use-toast';
@@ -12,13 +12,14 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import WarHeadToHead from '../components/squadwars/WarHeadToHead';
 import WarHistoryRow from '../components/squadwars/WarHistoryRow';
 import RaidLeaderboardRow from '../components/squadwars/RaidLeaderboardRow';
+import ChampionsPanel from '../components/squadwars/ChampionsPanel';
 
 export default function SquadWars({ isCarousel }) {
     const navigate = useNavigate();
     const { toast } = useToast();
     const { user: omenxUser } = useOmenXUser();
 
-    const [activeTab, setActiveTab] = useState('myWar'); // 'myWar' | 'roster' | 'raid' | 'history'
+    const [activeTab, setActiveTab] = useState('myWar'); // 'myWar' | 'roster' | 'champions' | 'raid' | 'history'
     const [mySquadId, setMySquadId] = useState(null);
     const [myWar, setMyWar] = useState(null);
     const [weekId, setWeekId] = useState('');
@@ -164,6 +165,7 @@ export default function SquadWars({ isCarousel }) {
                     {[
                         { id: 'myWar', label: 'My War', icon: Swords },
                         { id: 'roster', label: 'Wars Board', icon: Trophy },
+                        { id: 'champions', label: 'Champions', icon: Award },
                         { id: 'raid', label: 'Raid Damage', icon: Flame },
                         { id: 'history', label: 'History', icon: Crown },
                     ].map(tab => {
@@ -216,6 +218,10 @@ export default function SquadWars({ isCarousel }) {
                                         <WarHeadToHead key={war.id} war={war} mySquadId={mySquadId} compact />
                                     ))}
                                 </div>
+                            )}
+
+                            {activeTab === 'champions' && (
+                                <ChampionsPanel mySquadId={mySquadId} />
                             )}
 
                             {activeTab === 'raid' && (
