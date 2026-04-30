@@ -9,6 +9,7 @@ import BossPreview from '../components/game/BossPreview';
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import LiveActivityBanner from '../components/game/LiveActivityBanner';
 import { CHARACTERS } from '../game/Constants';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { useCurrency } from '@/lib/CurrencyContext';
@@ -244,6 +245,7 @@ export default function GlobalRaid({ isCarousel }) {
                 </header>
 
                 <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto pt-2 md:pt-4 pb-12">
+                    <LiveActivityBanner events={recentEvents} />
                     <div className="flex justify-center gap-2 mb-2 md:mb-4 w-full max-w-2xl shrink-0">
                         <button onClick={() => { SoundManager.playUIClick(); setActiveTab('raid'); }} className={`flex-1 px-2 md:px-4 py-2 md:py-3 font-bold uppercase tracking-widest text-[10px] md:text-sm rounded-lg border transition-all ${activeTab === 'raid' ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
                             Raid Event
