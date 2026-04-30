@@ -128,7 +128,7 @@ export function updateProjectiles(engine, dt) {
                                             engine.enemies.forEach(ce => {
                                                 if (ce === e || Math.abs(ce.x - e.x) > 60 || Math.abs(ce.y - e.y) > 60) return;
                                                 if (Math.hypot(ce.x - e.x, ce.y - e.y) < 60) {
-                                                    engine.damageEnemy(ce, p.damage * 0.3);
+                                                    engine.damageEnemy(ce, p.damage * 0.3, p);
                                                 }
                                             });
                                         }
@@ -143,7 +143,7 @@ export function updateProjectiles(engine, dt) {
                                                 }
                                             });
                                             if (nearest) {
-                                                engine.damageEnemy(nearest, p.damage * 0.5);
+                                                engine.damageEnemy(nearest, p.damage * 0.5, p);
                                                 p.hitList.add(nearest);
                                                 engine.addParticle(nearest.x, nearest.y, '#4169E1', 5);
                                                 const distToNearest = Math.hypot(nearest.x - e.x, nearest.y - e.y);
@@ -206,7 +206,7 @@ export function updateProjectiles(engine, dt) {
                         if (!p.hitList) p.hitList = new Set();
                         if (!p.hitList.has(e)) {
                             p.hitList.add(e);
-                            engine.damageEnemy(e, p.damage);
+                            engine.damageEnemy(e, p.damage, p);
                             engine.addParticle(e.x, e.y, p.color, 5);
                         }
                     }
@@ -219,7 +219,7 @@ export function updateProjectiles(engine, dt) {
                     const dist = Math.hypot(e.x - p.x, e.y - p.y);
                     if (dist < p.radius) {
                         if (engine.frameCount % 15 === 0) {
-                            engine.damageEnemy(e, p.damage);
+                            engine.damageEnemy(e, p.damage, p);
                             if (p.burn) {
                                 engine.addParticle(e.x, e.y, '#ff4500', 3);
                             }
@@ -260,7 +260,7 @@ export function updateProjectiles(engine, dt) {
                     checkAoe(e => {
                         if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
-                            engine.damageEnemy(e, p.damage);
+                            engine.damageEnemy(e, p.damage, p);
                             engine.addParticle(e.x, e.y, p.weaponId === 'napalm' ? '#ff4500' : p.color, 2);
                             if (p.isMastered && p.weaponId === 'napalm') {
                                 e.slowTimer = 0.5;
