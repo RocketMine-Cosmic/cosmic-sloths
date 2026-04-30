@@ -559,11 +559,14 @@ export default function Game() {
     };
 
     React.useEffect(() => {
-        // Disable pull-to-refresh on mobile
+        // Disable pull-to-refresh on mobile — but allow touchmove inside interactive
+        // controls (range sliders, modals, scrollable content) so volume sliders and
+        // other UI inputs work correctly on mobile.
         const preventPullToRefresh = (e) => {
-            if (e.touches && e.touches.length > 0 && window.scrollY === 0) {
-                e.preventDefault();
-            }
+            if (!e.touches || e.touches.length === 0 || window.scrollY !== 0) return;
+            const t = e.target;
+            if (t && t.closest && t.closest('input[type="range"], [data-allow-touchmove], .overflow-y-auto, [role="dialog"]')) return;
+            e.preventDefault();
         };
         document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
         return () => document.removeEventListener('touchmove', preventPullToRefresh);
@@ -604,7 +607,7 @@ export default function Game() {
                 <HideHudButton onShow={() => setHudHidden(false)} />
             )}
 
-            {isPaused && (
+            {isPaused && !hudHidden && (
                 <PauseModal
                     onResume={handleResume}
                     onQuit={handleQuit}

@@ -80,7 +80,7 @@ export default function SettingsModal({ onClose }) {
     const handleTestSfx = () => SFXManager.playLevelUp();
 
     return (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[60] p-4">
+        <div data-allow-touchmove role="dialog" className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[60] p-4">
             <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
