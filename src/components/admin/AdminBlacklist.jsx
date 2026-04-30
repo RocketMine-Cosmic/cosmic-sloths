@@ -2,16 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Trash2, Plus, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import PlayerSearchInput from './PlayerSearchInput';
+import ConfirmDialog from './ConfirmDialog';
 
 function getAdminKey() { return sessionStorage.getItem('admin_key') || ''; }
 
 export default function AdminBlacklist() {
     const [blacklist, setBlacklist] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [newWallet, setNewWallet] = useState('');
+    const [selected, setSelected] = useState(null);
     const [newReason, setNewReason] = useState('');
     const [newNotes, setNewNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [unbanTarget, setUnbanTarget] = useState(null);
+    const [unbanBusy, setUnbanBusy] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -33,22 +37,22 @@ export default function AdminBlacklist() {
     };
 
     const handleBan = async () => {
-        if (!newWallet.trim() || !newReason.trim()) {
-            toast({ title: 'Error', description: 'Wallet and reason required' });
+        if (!selected || !newReason.trim()) {
+            toast({ title: 'Error', description: 'Pick a player and enter a reason.' });
             return;
         }
         setSubmitting(true);
         try {
             const result = await base44.functions.invoke('manageBlacklist', {
                 action: 'ban',
-                wallet_address: newWallet.trim(),
+                wallet_address: selected.wallet_address,
                 reason: newReason.trim(),
                 notes: newNotes.trim(),
                 ...buildAuth(),
             });
             if (result.data.success) {
                 toast({ title: 'Success', description: 'Wallet banned' });
-                setNewWallet(''); setNewReason(''); setNewNotes('');
+                setSelected(null); setNewReason(''); setNewNotes('');
                 fetchBlacklist();
             } else {
                 toast({ title: 'Error', description: result.data.error || 'Failed', variant: 'destructive' });
@@ -60,12 +64,13 @@ export default function AdminBlacklist() {
         }
     };
 
-    const handleUnban = async (id, wallet) => {
-        if (!confirm(`Unban ${wallet}?`)) return;
+    const handleUnban = async () => {
+        if (!unbanTarget) return;
+        setUnbanBusy(true);
         try {
             const result = await base44.functions.invoke('manageBlacklist', {
                 action: 'unban',
-                wallet_address: wallet,
+                wallet_address: unbanTarget.wallet_address,
                 ...buildAuth(),
             });
             if (result.data.success) {
@@ -76,6 +81,9 @@ export default function AdminBlacklist() {
             }
         } catch (error) {
             toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        } finally {
+            setUnbanBusy(false);
+            setUnbanTarget(null);
         }
     };
 
@@ -86,9 +94,7 @@ export default function AdminBlacklist() {
                     <AlertCircle className="w-5 h-5" /> Ban Wallet
                 </h3>
                 <div className="space-y-4">
-                    <input type="text" placeholder="Wallet address (0x...)" value={newWallet}
-                        onChange={(e) => setNewWallet(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500" />
+                    <PlayerSearchInput selected={selected} onSelect={setSelected} accent="red" />
                     <input type="text" placeholder="Reason (abuse, exploit, fraud, etc)" value={newReason}
                         onChange={(e) => setNewReason(e.target.value)}
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-red-500" />
@@ -120,7 +126,7 @@ export default function AdminBlacklist() {
                                         Banned by {entry.banned_by} • {new Date(entry.banned_at).toLocaleDateString()}
                                     </div>
                                 </div>
-                                <button onClick={() => handleUnban(entry.id, entry.wallet_address)}
+                                <button onClick={() => setUnbanTarget(entry)}
                                     className="shrink-0 p-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors" title="Unban">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -129,6 +135,17 @@ export default function AdminBlacklist() {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                open={!!unbanTarget}
+                onClose={() => !unbanBusy && setUnbanTarget(null)}
+                onConfirm={handleUnban}
+                busy={unbanBusy}
+                title="Unban wallet"
+                description={unbanTarget ? `Unban ${unbanTarget.wallet_address}? They will be able to play again immediately.` : ''}
+                items={unbanTarget ? [`Banned for: ${unbanTarget.reason}`] : []}
+                confirmLabel="Unban"
+            />
         </div>
     );
 }

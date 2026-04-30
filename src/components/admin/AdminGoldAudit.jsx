@@ -1,32 +1,35 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, Coins, AlertCircle, CheckCircle2, Loader2, Clock } from 'lucide-react';
+import { Coins, AlertCircle, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import moment from 'moment';
+import PlayerSearchInput from './PlayerSearchInput';
+import ConfirmDialog from './ConfirmDialog';
 
 // Admin tool: look up any player's gold history, see blocked sync attempts,
 // and refund gold in one click.
 
 export default function AdminGoldAudit() {
-    const [walletInput, setWalletInput] = useState('');
+    const [selected, setSelected] = useState(null);
     const [audit, setAudit] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [refunding, setRefunding] = useState(false);
     const [refundResult, setRefundResult] = useState('');
     const [customRefund, setCustomRefund] = useState('');
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     const adminKey = sessionStorage.getItem('admin_key') || undefined;
 
-    const lookup = async (e) => {
-        e?.preventDefault();
-        if (!walletInput.trim()) return;
-        setLoading(true);
-        setError('');
+    const handleSelect = async (player) => {
+        setSelected(player);
         setAudit(null);
+        setError('');
         setRefundResult('');
+        if (!player) return;
+        setLoading(true);
         try {
             const res = await base44.functions.invoke('auditPlayerGold', {
-                walletAddress: walletInput.trim(),
+                walletAddress: player.wallet_address,
                 adminKey,
             });
             if (res.data?.error) throw new Error(res.data.error);
@@ -42,14 +45,12 @@ export default function AdminGoldAudit() {
         const amount = parseInt(customRefund, 10);
         if (!amount || amount <= 0) {
             setRefundResult('❌ Enter a positive amount');
+            setConfirmOpen(false);
             return;
         }
-        if (!confirm(`Credit ${amount.toLocaleString()} gold to ${audit.wallet}?`)) return;
-
         setRefunding(true);
         setRefundResult('');
         try {
-            // Find the saveId
             const saves = await base44.entities.PlayerSave.filter({ wallet_address: audit.wallet });
             if (!saves || saves.length === 0) throw new Error('PlayerSave not found');
             const saveId = saves[0].id;
@@ -62,12 +63,12 @@ export default function AdminGoldAudit() {
             });
             if (res.data?.error) throw new Error(res.data.error);
             setRefundResult(`✅ Credited ${amount.toLocaleString()} gold. New balance: ${newGold.toLocaleString()}`);
-            // Refresh audit
             setAudit(a => ({ ...a, currentCloudGold: newGold }));
         } catch (err) {
             setRefundResult(`❌ ${err.message}`);
         }
         setRefunding(false);
+        setConfirmOpen(false);
     };
 
     return (
@@ -81,23 +82,12 @@ export default function AdminGoldAudit() {
                 </p>
             </div>
 
-            <form onSubmit={lookup} className="flex gap-2">
-                <input
-                    type="text"
-                    value={walletInput}
-                    onChange={(e) => setWalletInput(e.target.value)}
-                    placeholder="0x..."
-                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-amber-500"
-                />
-                <button
-                    type="submit"
-                    disabled={loading || !walletInput.trim()}
-                    className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                    Lookup
-                </button>
-            </form>
+            <PlayerSearchInput selected={selected} onSelect={handleSelect} accent="amber" />
+            {loading && (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading audit…
+                </div>
+            )}
 
             {error && (
                 <div className="bg-red-950/40 border border-red-900/50 text-red-300 text-xs p-3 rounded-lg flex items-center gap-2">
@@ -231,8 +221,8 @@ export default function AdminGoldAudit() {
                                 placeholder="Amount"
                             />
                             <button
-                                onClick={refund}
-                                disabled={refunding || !customRefund}
+                                onClick={() => setConfirmOpen(true)}
+                                disabled={refunding || !customRefund || parseInt(customRefund, 10) <= 0}
                                 className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg flex items-center gap-2 text-sm whitespace-nowrap"
                             >
                                 {refunding ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -247,6 +237,16 @@ export default function AdminGoldAudit() {
                     </div>
                 </div>
             )}
+
+            <ConfirmDialog
+                open={confirmOpen}
+                onClose={() => !refunding && setConfirmOpen(false)}
+                onConfirm={refund}
+                busy={refunding}
+                title="Credit gold to player"
+                description={audit ? `Credit ${parseInt(customRefund || 0, 10).toLocaleString()} gold to ${audit.playerName || audit.wallet?.slice(0, 10)}? New balance will be ${((audit.currentCloudGold || 0) + parseInt(customRefund || 0, 10)).toLocaleString()}.` : ''}
+                confirmLabel="Credit gold"
+            />
         </div>
     );
 }
