@@ -3,9 +3,16 @@ import { base44 } from '@/api/base44Client';
 import { Settings, Loader2, Save, AlertTriangle } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
-// Player rewards take 20% of each weekly pool (see distributeRewards.js).
-// Staff payouts come on top, so total allocation = 20% + (staff_count * pct).
-const PLAYER_POOL_PCT = 0.20;
+// Allocation breakdown of total weekly OMENX spend (see distributeRewards.js + distributeSquadChampions.js):
+//   • Weekly player rewards   = 20% of weekly spend
+//   • Weekly staff payouts    = staff_count × pct (this widget controls pct)
+//   • Seasonal player rewards = 30% of seasonal spend (≈ same as weekly spend over the season)
+//   • Squad Champions pool    = 10% of seasonal spend
+// Combined fixed allocation (non-staff) = 20 + 30 + 10 = 60%.
+const WEEKLY_PLAYER_PCT = 0.20;
+const SEASONAL_PLAYER_PCT = 0.30;
+const SQUAD_CHAMPIONS_PCT = 0.10;
+const FIXED_ALLOCATION_PCT = WEEKLY_PLAYER_PCT + SEASONAL_PLAYER_PCT + SQUAD_CHAMPIONS_PCT; // 0.60
 const SOFT_CAP_PCT = 0.75; // warn above this
 const HARD_CAP_PCT = 0.85; // block save above this
 
@@ -42,8 +49,8 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
     }, [isOwner]);
 
     const numericPct = Number(pctInput) / 100;
-    const staffTotalPct = staffCount * numericPct; // total share of pool going to staff
-    const grandTotalPct = PLAYER_POOL_PCT + staffTotalPct; // players + staff
+    const staffTotalPct = staffCount * numericPct; // total share going to staff
+    const grandTotalPct = FIXED_ALLOCATION_PCT + staffTotalPct; // weekly players + staff + seasonal players + champions
     const isOverHardCap = grandTotalPct > HARD_CAP_PCT;
     const isOverSoftCap = grandTotalPct > SOFT_CAP_PCT && !isOverHardCap;
     const isValid = isFinite(numericPct) && numericPct >= 0 && numericPct <= 0.10 && !isOverHardCap;
@@ -118,9 +125,11 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                         </div>
                         {/* Stacked bar with cap markers */}
                         <div className="relative h-3 w-full bg-slate-950 rounded overflow-hidden flex border border-slate-800">
-                            <div className="bg-cyan-600 h-full" style={{ width: `${PLAYER_POOL_PCT * 100}%` }} title={`Players: ${(PLAYER_POOL_PCT * 100).toFixed(0)}%`} />
+                            <div className="bg-cyan-600 h-full" style={{ width: `${WEEKLY_PLAYER_PCT * 100}%` }} title={`Weekly players: ${(WEEKLY_PLAYER_PCT * 100).toFixed(0)}%`} />
+                            <div className="bg-indigo-600 h-full" style={{ width: `${SEASONAL_PLAYER_PCT * 100}%` }} title={`Seasonal players: ${(SEASONAL_PLAYER_PCT * 100).toFixed(0)}%`} />
+                            <div className="bg-purple-600 h-full" style={{ width: `${SQUAD_CHAMPIONS_PCT * 100}%` }} title={`Squad Champions: ${(SQUAD_CHAMPIONS_PCT * 100).toFixed(0)}%`} />
                             <div className={`${isOverHardCap ? 'bg-red-600' : isOverSoftCap ? 'bg-amber-500' : 'bg-emerald-500'} h-full`}
-                                style={{ width: `${Math.min(staffTotalPct, 1 - PLAYER_POOL_PCT) * 100}%` }}
+                                style={{ width: `${Math.min(staffTotalPct, Math.max(0, 1 - FIXED_ALLOCATION_PCT)) * 100}%` }}
                                 title={`Staff: ${(staffTotalPct * 100).toFixed(2)}%`} />
                             {/* Soft cap line (75%) */}
                             <div className="absolute top-0 bottom-0 w-px bg-amber-300/80" style={{ left: `${SOFT_CAP_PCT * 100}%` }} title="Soft cap 75%" />
@@ -128,7 +137,9 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                             <div className="absolute top-0 bottom-0 w-px bg-red-400" style={{ left: `${HARD_CAP_PCT * 100}%` }} title="Hard cap 85%" />
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[10px] font-mono">
-                            <span className="text-cyan-400">■ Players {(PLAYER_POOL_PCT * 100).toFixed(0)}%</span>
+                            <span className="text-cyan-400">■ Weekly players {(WEEKLY_PLAYER_PCT * 100).toFixed(0)}%</span>
+                            <span className="text-indigo-400">■ Seasonal players {(SEASONAL_PLAYER_PCT * 100).toFixed(0)}%</span>
+                            <span className="text-purple-400">■ Squad Champions {(SQUAD_CHAMPIONS_PCT * 100).toFixed(0)}%</span>
                             <span className={isOverHardCap ? 'text-red-400' : isOverSoftCap ? 'text-amber-400' : 'text-emerald-400'}>
                                 ■ Staff {(staffTotalPct * 100).toFixed(2)}% ({staffCount} × {(numericPct * 100).toFixed(2)}%)
                             </span>
