@@ -128,69 +128,6 @@ Deno.serve(async (req) => {
                 footer: { text: 'Cosmic Sloths · NFTs unlock characters instantly + boost runs' },
                 timestamp: new Date().toISOString(),
             });
-
-            // Champions Pool embed — live snapshot of seasonal squad standings
-            try {
-                const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' });
-                const totalSpent = pools.length > 0 ? (pools[0].total_spent || 0) : 0;
-                const championsPool = Math.floor(totalSpent * 0.05);
-
-                // Aggregate this season's squad war stats (4 weeks)
-                const m = /^(\d{4})-S(\d+)$/.exec(season_id);
-                const weekIds = [];
-                if (m) {
-                    const yr = parseInt(m[1], 10);
-                    const sNum = parseInt(m[2], 10);
-                    const startWk = (sNum - 1) * 4 + 1;
-                    for (let i = 0; i < 4; i++) weekIds.push(`${yr}-W${String(startWk + i).padStart(2, '0')}`);
-                }
-                const allWars = [];
-                for (const wid of weekIds) {
-                    const wars = await base44.asServiceRole.entities.SquadWar.filter({ week_id: wid });
-                    allWars.push(...wars);
-                }
-                const bySquad = new Map();
-                const ensure = (id, name, tag, icon) => {
-                    if (!id) return null;
-                    if (!bySquad.has(id)) bySquad.set(id, { squad_id: id, name: name || '', tag: tag || '', icon: icon || '🛡️', wins: 0, ties: 0, byes: 0, kills: 0, wars_fought: 0 });
-                    return bySquad.get(id);
-                };
-                for (const w of allWars) {
-                    const a = ensure(w.squad_a_id, w.squad_a_name, w.squad_a_tag, w.squad_a_icon);
-                    const b = w.squad_b_id ? ensure(w.squad_b_id, w.squad_b_name, w.squad_b_tag, w.squad_b_icon) : null;
-                    if (a) { a.wars_fought++; a.kills += Number(w.kills_a || 0); }
-                    if (b) { b.wars_fought++; b.kills += Number(w.kills_b || 0); }
-                    if (!w.is_resolved) continue;
-                    if (w.result_kind === 'bye' && a) a.byes++;
-                    else if (w.result_kind === 'tie') { if (a) a.ties++; if (b) b.ties++; }
-                    else if (w.result_kind === 'win_a') { if (a) a.wins++; }
-                    else if (w.result_kind === 'win_b') { if (b) b.wins++; }
-                }
-                const ranked = Array.from(bySquad.values())
-                    .map(s => ({ ...s, points: s.wins * 3 + s.ties + s.byes, eligible: s.wars_fought >= 2 }))
-                    .filter(s => s.eligible)
-                    .sort((a, b) => b.points - a.points || b.kills - a.kills || b.wars_fought - a.wars_fought)
-                    .slice(0, 3);
-
-                const shares = ranked.length === 1 ? [1.0] : ranked.length === 2 ? [0.65, 0.35] : [0.5, 0.3, 0.2];
-                const medals = ['🥇', '🥈', '🥉'];
-                const rows = ranked.length > 0
-                    ? ranked.map((s, i) => {
-                        const share = Math.floor(championsPool * shares[i]);
-                        return `${medals[i]} ${s.icon} **${s.name}** [${s.tag}] — ${s.points} pts · ${s.kills.toLocaleString()} kills — projected **${share.toLocaleString()} OMENX**`;
-                    }).join('\n')
-                    : '_No eligible squads yet — fight ≥ 2 wars + ≥ 2 members to qualify._';
-
-                embeds.push({
-                    title: '👑 Squad Wars Champions Pool',
-                    description: `**Season ${season_id}** · 5% of the seasonal OMENX pool reserved for top 3 squads\n💰 Current pool: **${championsPool.toLocaleString()} OMENX** (split 🥇 50% / 🥈 30% / 🥉 20%)\n⏳ ${formatCountdown(seasonalClose)}\n\n${rows}\n\n*Each squad's share is split equally among current members. Distributed automatically at season end. Projected = estimate based on current pool.*`,
-                    color: 0xF59E0B,
-                    footer: { text: 'Eligibility: ≥ 2 wars fought + ≥ 2 members at season end' },
-                    timestamp: new Date().toISOString(),
-                });
-            } catch (e) {
-                console.warn('[postDiscordLeaderboard] Champions Pool embed failed:', e.message);
-            }
         }
 
         if (embeds.length === 0) return Response.json({ message: 'No scores to post' });
