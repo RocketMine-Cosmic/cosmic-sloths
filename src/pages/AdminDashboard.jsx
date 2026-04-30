@@ -35,6 +35,7 @@ import AdminSquadChatModeration from '../components/admin/AdminSquadChatModerati
 import AdminStaffPayouts from '../components/admin/AdminStaffPayouts';
 import MyStaffIncomeCard from '../components/admin/MyStaffIncomeCard';
 import AdminSquadChampions from '../components/admin/AdminSquadChampions';
+import AdminTabNav from '../components/admin/AdminTabNav';
 
 const TAB_GROUPS = [
     {
@@ -311,43 +312,11 @@ export default function AdminDashboard() {
                     </div>
                 </header>
 
-                <div className="flex flex-col gap-2 mb-5">
-                    {TAB_GROUPS.map(group => {
-                        const groupTabs = group.tabs.filter(canSeeTab);
-                        if (groupTabs.length === 0) return null;
-                        const isDanger = group.id === 'danger';
-                        return (
-                            <div key={group.id} className={`flex items-center gap-2 flex-wrap ${isDanger ? 'mt-2 pt-2 border-t border-red-900/40' : ''}`}>
-                                <span className={`text-[10px] font-black uppercase tracking-widest shrink-0 w-32 ${isDanger ? 'text-red-400' : 'text-slate-500'}`}>
-                                    {group.label}
-                                </span>
-                                <div className="flex gap-1.5 flex-wrap flex-1">
-                                    {groupTabs.map(tab => {
-                                        const Icon = tab.icon;
-                                        const isActive = activeTab === tab.id;
-                                        return (
-                                            <button
-                                                key={tab.id}
-                                                onClick={() => setActiveTab(tab.id)}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
-                                                    isActive
-                                                        ? (isDanger
-                                                            ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.4)]'
-                                                            : 'bg-cyan-600 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]')
-                                                        : (isDanger
-                                                            ? 'bg-red-950/60 text-red-300 hover:bg-red-900/60 border border-red-900/50'
-                                                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white')
-                                                }`}
-                                            >
-                                                <Icon size={13} /> {tab.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                <AdminTabNav
+                    groups={TAB_GROUPS.map(g => ({ ...g, tabs: g.tabs.filter(canSeeTab) }))}
+                    activeTab={activeTab}
+                    onSelectTab={setActiveTab}
+                />
 
                 {visibleTabs.length === 0 ? (
                     <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-6 text-center text-slate-400">
