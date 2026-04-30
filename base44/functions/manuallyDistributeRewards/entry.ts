@@ -160,8 +160,8 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
 }
 
 async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
-    // 5% reserved for Squad Wars Champions Pool — distributed separately.
-    const rewardPool = Math.floor(pool.total_spent * 0.95 * 0.35);
+    // Seasonal pool split: 30% to top players, 5% to Squad Wars Champions (separate fn).
+    const rewardPool = Math.floor(pool.total_spent * 0.30);
     const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 100);

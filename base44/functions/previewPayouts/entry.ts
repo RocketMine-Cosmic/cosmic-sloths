@@ -93,8 +93,8 @@ Deno.serve(async (req) => {
             const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 100);
         } else if (period_type === 'seasonal') {
-            // 5% reserved for Squad Wars Champions Pool — players get 95% of 35%.
-            rewardPool = Math.floor(pool.total_spent * 0.95 * 0.35);
+            // Seasonal pool split: 30% to top players, 5% to Squad Wars Champions (separate fn).
+            rewardPool = Math.floor(pool.total_spent * 0.30);
             const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: period_id }, '-score', 1000);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 100);

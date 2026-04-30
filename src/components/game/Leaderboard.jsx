@@ -338,7 +338,7 @@ export default function Leaderboard() {
                                 const isEligibleForReward = view === 'weekly' || view === 'seasonal';
                                 const rewardAmount = view === 'weekly' 
                                     ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.25, scores.length)
-                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.35, scores.length);
+                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.30, scores.length);
 
                                 if (view === 'squads') {
                                     const squadLvl = getSquadLevel(score.xp || 0);
