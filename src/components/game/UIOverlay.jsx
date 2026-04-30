@@ -102,8 +102,8 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 </div>
 
                 {/* Top Right: Gold & Controls & ULT */}
-                <div className="flex gap-1 md:gap-2 pointer-events-auto shrink-0 flex-col md:flex-row">
-                    <div className="flex gap-1 md:gap-2">
+                <div className="flex gap-1 md:gap-2 pointer-events-auto shrink-0 flex-col md:flex-row min-w-0">
+                    <div className="flex gap-1 md:gap-2 flex-wrap justify-end min-w-0">
                         <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-emerald-500/30 flex flex-col justify-center text-right">
                             <div className="text-[8px] md:text-xs font-black tracking-widest text-purple-500/80 uppercase mb-0.5">OMENX</div>
                             <div className="text-purple-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
