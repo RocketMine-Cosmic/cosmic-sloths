@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Coins } from 'lucide-react';
 import moment from 'moment';
 
-const STAFF_PCT_PER_WALLET = 0.02; // matches distributeRewards.js
+const FALLBACK_STAFF_PCT = 0.02; // matches distributeRewards.js fallback
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -38,6 +38,17 @@ export default function AdminStaffPayouts({ canViewFinance }) {
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts' }).then(r => (r.data?.payouts || []).filter(p => p.period_type === 'staff_weekly')),
         enabled: canViewFinance,
     });
+
+    // Live staff % from AppConfig (any admin can read; falls back to 0.02 if missing)
+    const { data: pctConfig } = useQuery({
+        queryKey: ['staffPayoutPct'],
+        queryFn: () => base44.functions.invoke('setStaffPayoutPct', {
+            action: 'get',
+            adminKey: sessionStorage.getItem('admin_key') || undefined,
+        }).then(r => r.data).catch(() => null),
+        enabled: canViewFinance,
+    });
+    const STAFF_PCT_PER_WALLET = Number(pctConfig?.pct ?? FALLBACK_STAFF_PCT);
 
     if (!canViewFinance) {
         return (
@@ -73,7 +84,7 @@ export default function AdminStaffPayouts({ canViewFinance }) {
                 <h2 className="text-base font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
                     <Coins size={16} /> Staff Weekly Payouts
                 </h2>
-                <span className="text-[10px] text-slate-500 font-mono">2% of weekly spend per staff wallet</span>
+                <span className="text-[10px] text-slate-500 font-mono">{(STAFF_PCT_PER_WALLET * 100).toFixed(2)}% of weekly spend per staff wallet</span>
             </div>
 
             {/* Current week summary */}

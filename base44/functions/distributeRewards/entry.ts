@@ -212,7 +212,13 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
          return { paid: 0, skipped: 'zero spend' };
      }
      const adminWallets = await db.entities.AdminWallet.list();
-     const STAFF_PCT_PER_WALLET = 0.02;
+     // Staff % is configurable by owners via setStaffPayoutPct. Falls back to 2%.
+     let STAFF_PCT_PER_WALLET = 0.02;
+     try {
+         const cfg = await db.entities.AppConfig.filter({ key: 'staff_pct_per_wallet' });
+         const v = Number(cfg[0]?.value?.pct);
+         if (isFinite(v) && v >= 0 && v <= 0.10) STAFF_PCT_PER_WALLET = v;
+     } catch {}
      const rewardPool = Math.floor(pool.total_spent * 0.20);
      const allScores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
