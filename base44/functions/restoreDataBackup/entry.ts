@@ -49,14 +49,26 @@ Deno.serve(async (req) => {
 
         console.log('[restoreDataBackup] Clearing existing data and restoring...');
 
-        const [existingPlayerSaves, existingRunScores, existingSquads, existingSquadMembers, existingTokenPools, existingPayoutLogs, existingGlobalBosses] = await Promise.all([
+        const [
+            existingPlayerSaves, existingRunScores, existingSquads, existingSquadMembers, existingSquadMessages,
+            existingTokenPools, existingTokenSpendLogs, existingPayoutLogs,
+            existingGlobalBosses, existingGlobalBossContributions, existingGlobalBossEvents,
+            existingSquadWars, existingSquadChampionsPayoutLogs, existingSquadSeasonRosters
+        ] = await Promise.all([
             base44.asServiceRole.entities.PlayerSave.list('', 10000),
             base44.asServiceRole.entities.RunScore.list('', 10000),
             base44.asServiceRole.entities.Squad.list('', 10000),
             base44.asServiceRole.entities.SquadMember.list('', 10000),
+            base44.asServiceRole.entities.SquadMessage.list('', 10000),
             base44.asServiceRole.entities.TokenPool.list('', 10000),
+            base44.asServiceRole.entities.TokenSpendLog.list('', 10000),
             base44.asServiceRole.entities.PayoutLog.list('', 10000),
             base44.asServiceRole.entities.GlobalBoss.list('', 10000),
+            base44.asServiceRole.entities.GlobalBossContribution.list('', 10000),
+            base44.asServiceRole.entities.GlobalBossEvent.list('', 10000),
+            base44.asServiceRole.entities.SquadWar.list('', 10000),
+            base44.asServiceRole.entities.SquadChampionsPayoutLog.list('', 10000),
+            base44.asServiceRole.entities.SquadSeasonRoster.list('', 10000),
         ]);
 
         await Promise.all([
@@ -64,9 +76,16 @@ Deno.serve(async (req) => {
             ...existingRunScores.map(e => base44.asServiceRole.entities.RunScore.delete(e.id)),
             ...existingSquads.map(e => base44.asServiceRole.entities.Squad.delete(e.id)),
             ...existingSquadMembers.map(e => base44.asServiceRole.entities.SquadMember.delete(e.id)),
+            ...existingSquadMessages.map(e => base44.asServiceRole.entities.SquadMessage.delete(e.id)),
             ...existingTokenPools.map(e => base44.asServiceRole.entities.TokenPool.delete(e.id)),
+            ...existingTokenSpendLogs.map(e => base44.asServiceRole.entities.TokenSpendLog.delete(e.id)),
             ...existingPayoutLogs.map(e => base44.asServiceRole.entities.PayoutLog.delete(e.id)),
             ...existingGlobalBosses.map(e => base44.asServiceRole.entities.GlobalBoss.delete(e.id)),
+            ...existingGlobalBossContributions.map(e => base44.asServiceRole.entities.GlobalBossContribution.delete(e.id)),
+            ...existingGlobalBossEvents.map(e => base44.asServiceRole.entities.GlobalBossEvent.delete(e.id)),
+            ...existingSquadWars.map(e => base44.asServiceRole.entities.SquadWar.delete(e.id)),
+            ...existingSquadChampionsPayoutLogs.map(e => base44.asServiceRole.entities.SquadChampionsPayoutLog.delete(e.id)),
+            ...existingSquadSeasonRosters.map(e => base44.asServiceRole.entities.SquadSeasonRoster.delete(e.id)),
         ]);
 
         console.log('[restoreDataBackup] Restoring from snapshot...');
@@ -97,6 +116,27 @@ Deno.serve(async (req) => {
         }
         if (snapshot_data.globalBosses?.length > 0) {
             restoreTasks.push(...snapshot_data.globalBosses.map(e => base44.asServiceRole.entities.GlobalBoss.create(stripFields(e))));
+        }
+        if (snapshot_data.squadMessages?.length > 0) {
+            restoreTasks.push(...snapshot_data.squadMessages.map(e => base44.asServiceRole.entities.SquadMessage.create(stripFields(e))));
+        }
+        if (snapshot_data.tokenSpendLogs?.length > 0) {
+            restoreTasks.push(...snapshot_data.tokenSpendLogs.map(e => base44.asServiceRole.entities.TokenSpendLog.create(stripFields(e))));
+        }
+        if (snapshot_data.globalBossContributions?.length > 0) {
+            restoreTasks.push(...snapshot_data.globalBossContributions.map(e => base44.asServiceRole.entities.GlobalBossContribution.create(stripFields(e))));
+        }
+        if (snapshot_data.globalBossEvents?.length > 0) {
+            restoreTasks.push(...snapshot_data.globalBossEvents.map(e => base44.asServiceRole.entities.GlobalBossEvent.create(stripFields(e))));
+        }
+        if (snapshot_data.squadWars?.length > 0) {
+            restoreTasks.push(...snapshot_data.squadWars.map(e => base44.asServiceRole.entities.SquadWar.create(stripFields(e))));
+        }
+        if (snapshot_data.squadChampionsPayoutLogs?.length > 0) {
+            restoreTasks.push(...snapshot_data.squadChampionsPayoutLogs.map(e => base44.asServiceRole.entities.SquadChampionsPayoutLog.create(stripFields(e))));
+        }
+        if (snapshot_data.squadSeasonRosters?.length > 0) {
+            restoreTasks.push(...snapshot_data.squadSeasonRosters.map(e => base44.asServiceRole.entities.SquadSeasonRoster.create(stripFields(e))));
         }
 
         await Promise.all(restoreTasks);

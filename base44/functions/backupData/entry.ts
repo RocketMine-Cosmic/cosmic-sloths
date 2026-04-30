@@ -24,14 +24,26 @@ Deno.serve(async (req) => {
 
         console.log('[backupData] Starting backup...');
 
-        const [playerSaves, runScores, squads, squadMembers, tokenPools, payoutLogs, globalBosses] = await Promise.all([
+        const [
+            playerSaves, runScores, squads, squadMembers, squadMessages,
+            tokenPools, tokenSpendLogs, payoutLogs,
+            globalBosses, globalBossContributions, globalBossEvents,
+            squadWars, squadChampionsPayoutLogs, squadSeasonRosters
+        ] = await Promise.all([
             base44.asServiceRole.entities.PlayerSave.list('', 10000),
             base44.asServiceRole.entities.RunScore.list('', 10000),
             base44.asServiceRole.entities.Squad.list('', 10000),
             base44.asServiceRole.entities.SquadMember.list('', 10000),
+            base44.asServiceRole.entities.SquadMessage.list('', 10000),
             base44.asServiceRole.entities.TokenPool.list('', 10000),
+            base44.asServiceRole.entities.TokenSpendLog.list('', 10000),
             base44.asServiceRole.entities.PayoutLog.list('', 10000),
             base44.asServiceRole.entities.GlobalBoss.list('', 10000),
+            base44.asServiceRole.entities.GlobalBossContribution.list('', 10000),
+            base44.asServiceRole.entities.GlobalBossEvent.list('', 10000),
+            base44.asServiceRole.entities.SquadWar.list('', 10000),
+            base44.asServiceRole.entities.SquadChampionsPayoutLog.list('', 10000),
+            base44.asServiceRole.entities.SquadSeasonRoster.list('', 10000),
         ]);
 
         const snapshot_data = {
@@ -39,9 +51,16 @@ Deno.serve(async (req) => {
             runScores,
             squads,
             squadMembers,
+            squadMessages,
             tokenPools,
+            tokenSpendLogs,
             payoutLogs,
             globalBosses,
+            globalBossContributions,
+            globalBossEvents,
+            squadWars,
+            squadChampionsPayoutLogs,
+            squadSeasonRosters,
             backup_timestamp: new Date().toISOString(),
         };
 
@@ -50,9 +69,16 @@ Deno.serve(async (req) => {
             RunScore: runScores.length,
             Squad: squads.length,
             SquadMember: squadMembers.length,
+            SquadMessage: squadMessages.length,
             TokenPool: tokenPools.length,
+            TokenSpendLog: tokenSpendLogs.length,
             PayoutLog: payoutLogs.length,
             GlobalBoss: globalBosses.length,
+            GlobalBossContribution: globalBossContributions.length,
+            GlobalBossEvent: globalBossEvents.length,
+            SquadWar: squadWars.length,
+            SquadChampionsPayoutLog: squadChampionsPayoutLogs.length,
+            SquadSeasonRoster: squadSeasonRosters.length,
         };
 
         const backup_name = `backup-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substring(7)}`;

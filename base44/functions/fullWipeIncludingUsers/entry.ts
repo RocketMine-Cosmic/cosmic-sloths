@@ -65,17 +65,20 @@ Deno.serve(async (req) => {
         };
 
         // 1) Wipe all gameplay data
-        results.RunScore                 = await deleteAll('RunScore');
-        results.PlayerSave               = await deleteAll('PlayerSave');
-        results.TokenPool                = await deleteAll('TokenPool');
-        results.TokenSpendLog            = await deleteAll('TokenSpendLog');
-        results.PayoutLog                = await deleteAll('PayoutLog');
-        results.Squad                    = await deleteAll('Squad');
-        results.SquadMember              = await deleteAll('SquadMember');
-        results.SquadMessage             = await deleteAll('SquadMessage');
-        results.GlobalBoss               = await deleteAll('GlobalBoss');
-        results.GlobalBossContribution   = await deleteAll('GlobalBossContribution');
-        results.GlobalBossEvent          = await deleteAll('GlobalBossEvent');
+        results.RunScore                  = await deleteAll('RunScore');
+        results.PlayerSave                = await deleteAll('PlayerSave');
+        results.TokenPool                 = await deleteAll('TokenPool');
+        results.TokenSpendLog             = await deleteAll('TokenSpendLog');
+        results.PayoutLog                 = await deleteAll('PayoutLog');
+        results.Squad                     = await deleteAll('Squad');
+        results.SquadMember               = await deleteAll('SquadMember');
+        results.SquadMessage              = await deleteAll('SquadMessage');
+        results.SquadWar                  = await deleteAll('SquadWar');
+        results.SquadChampionsPayoutLog   = await deleteAll('SquadChampionsPayoutLog');
+        results.SquadSeasonRoster         = await deleteAll('SquadSeasonRoster');
+        results.GlobalBoss                = await deleteAll('GlobalBoss');
+        results.GlobalBossContribution    = await deleteAll('GlobalBossContribution');
+        results.GlobalBossEvent           = await deleteAll('GlobalBossEvent');
 
         // 2) Build admin wallet whitelist — never delete those Base44 users.
         const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({}, null, 500);
