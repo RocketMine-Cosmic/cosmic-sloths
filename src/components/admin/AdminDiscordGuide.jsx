@@ -69,9 +69,14 @@ Three live leaderboards. Only your **highest score per period** counts. Real OME
         title: 'Post 4 — Weapons & Synergies',
         content: `🔫 **WEAPONS, SYNERGIES & EVOLUTIONS**
 
-Pick 1 of 3 upgrades every level (Common to Legendary). Use OMENX to Reroll or Banish.
+Pick 1 of 3 upgrades every level (Common to Legendary). Spend OMENX to swing the odds:
+• **Reroll** the 3 choices — 2 OMENX (once per level-up)
+• **Banish** an upgrade for the rest of the run — tiered: **2 OMENX** for the first 3 banishes, **4 OMENX** for the next 3, then **6 OMENX** per banish
+• **Emergency Revive** on death — 4 OMENX (50% HP + 3s i-frames)
 
 **Base Weapons:** Blaster · Nap Beam · Plasma Whip · Orbital Drones · Napalm · Nova Pulse · Shield Bubble · Ricochet Blade · Toxic Emitter
+
+**Per-Weapon Thematic Upgrades** — Each weapon's Armory upgrades use thematic names tailored to that weapon (e.g. Shield Bubble → *Barrier Strength / Bubble Size / Recharge Rate*, Hellfire → *Inferno Heat / Pool Size / Drop Rate*).
 
 **Synergies** (combine 2 weapons):
 Napalm+Shield → Burning Barrier | Nap+Nova → Laser Nova | Whip+Drones → Plasma Swarm
@@ -109,7 +114,7 @@ Damage · HP · Speed · Magnet · Regen · Cooldown · Luck
 
 👥 **Squads** (up to 5 pilots) — Kills auto-count. 7 levels (Recruits → Elite). Hit weekly target = all members claim Gold + Fragments.
 
-💀 **Global Raid** (5 runs/day) — Your damage permanently cuts boss HP. Levels up every defeat. Rewards scale with level.
+💀 **Global Raid** (5 runs/day, +5 more for 10 OMENX) — Your damage permanently cuts boss HP. Levels up every defeat. Rewards scale with level. Live Activity banner shows real-time damage milestones & boss kills from players worldwide.
 
 ⚔️ **Leviathan Trials** — Stack 6 boss modifiers: FURY (+50% dmg) · FRENZY (+50% speed) · THICK HIDE (+100% HP) · BULLET HELL (+projectiles) · REGEN (+heal) · UNSTOPPABLE (no slows). Each unlocks a bonus reward (Gold, XP, Score, Tokens).
 

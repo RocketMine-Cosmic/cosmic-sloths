@@ -29,7 +29,7 @@ Between runs, visit your cosmic base and spend **Gold** and **OMENX** to get str
 |---------|-------------|
 | **👤 Characters** | Unlock sloths via **kill milestones OR NFT ownership**. Own an NFT? Instant unlock + per-run bonuses (+5-15% Gold & Fragments based on rarity). |
 | **⬆️ Stat Upgrades** | 3 tiers: Permanent / Weekly / Seasonal—stronger each cycle |
-| **🔫 Armory** | Master weapons (Damage + Area + Cooldown) to unlock ultimate forms |
+| **🔫 Armory** | Master weapons across 3 thematic upgrades tailored per-weapon (e.g. Shield Bubble's *Barrier Strength / Bubble Size / Recharge Rate*) to unlock ultimate forms |
 | **💎 Ancient Relics** | Equip for global buffs. Upgrade with Relic Fragments. |
 | **✨ Cosmetics** | Trails, kill effects, character skins—flex your style |
 | **🔨 The Forge** | Convert Gold → Star Fragments to permanently enhance weapons |
@@ -126,12 +126,15 @@ Hit your squad's shared weekly kill target → every member individually claims 
 
 ## 💀 GLOBAL RAID BOSS
 
-**Community-wide cooperative event.** A massive World Boss with **shared HP across all players**. Deal damage in up to **5 Raid Runs per day**—your damage is permanent.
+**Community-wide cooperative event.** A massive World Boss with **shared HP across all players**. Deal damage in up to **5 Raid Runs per day** (or buy +5 more for 10 OMENX) — your damage is permanent.
 
 ### 🔥 **Infinite Scaling**
 - Boss reaches 0 HP? → Respawns at **next level**
 - Each level? → Boss gains **+50% max HP**
 - Your rewards? → **Scale with boss level** (250 Gold × Level claimable per milestone)
+
+### 📡 **Live Activity Feed**
+A rotating banner at the top of the Raid page surfaces real-time damage milestones and boss kills from players around the world. The **Top Contributors** tab ranks the highest-damage pilots this week.
 
 ---
 
@@ -192,10 +195,11 @@ Play a character repeatedly → Rank up through **5 tiers (Novice → Grandmaste
 ## 💰 OMENX — THE PREMIUM CURRENCY
 
 Earn via **leaderboard rankings**. Spend in-game to:
-- 🔄 Reroll upgrade picks (2 OMENX)
-- 🚫 Banish unwanted upgrades (1 OMENX)
+- 🔄 Reroll upgrade picks (2 OMENX, once per level-up)
+- 🚫 Banish unwanted upgrades — tiered: **2 OMENX** for the first 3 banishes, **4 OMENX** for the next 3, then **6 OMENX** per banish
 - ⚡ Activate Squad Ultimates — **Lite (5 OMENX)** capped clone power, or **Full (10 OMENX)** scales with your full upgrades
-- 💀 Emergency Revive on death (4 OMENX)
+- 💀 Emergency Revive on death (4 OMENX — 50% HP + 3s invincibility)
+- ➕ Buy 5 extra Galactic Raid runs (10 OMENX)
 - ✨ Buy cosmetics, stat upgrades & a +50% XP session buff (10 OMENX / 60 min)
 
 **Live balance always shown in the top bar of your screen.**
