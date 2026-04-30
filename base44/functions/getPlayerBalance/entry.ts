@@ -22,6 +22,11 @@ Deno.serve(async (req) => {
             Deno.env.get('OMENX_BALANCE_API_KEY_2'),
             Deno.env.get('OMENX_BALANCE_API_KEY_3'),
             Deno.env.get('OMENX_BALANCE_API_KEY_4'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_5'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_6'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_7'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_8'),
+            Deno.env.get('OMENX_BALANCE_API_KEY_9'),
         ].filter(Boolean);
 
         if (apiKeys.length === 0) {
