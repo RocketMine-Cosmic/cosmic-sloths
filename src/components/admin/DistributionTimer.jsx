@@ -6,17 +6,27 @@ export default function DistributionTimer() {
 
     useEffect(() => {
         const updateTimers = () => {
-            const now = new Date();
-            const utcNow = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+            const utcNow = new Date();
 
-            // Weekly: Monday 23:00 UTC
+            // Weekly: next Monday 23:00 UTC (the Monday that closes the *current* ISO week)
             const weeklyNext = new Date(utcNow);
             weeklyNext.setUTCDate(weeklyNext.getUTCDate() + ((1 - weeklyNext.getUTCDay() + 7) % 7 || 7));
             weeklyNext.setUTCHours(23, 0, 0, 0);
 
-            // Seasonal: every 4 weeks on Monday 23:00 UTC (starting from a fixed date)
+            // Seasonal: figure out which ISO week ends the current 4-week season,
+            // then fire on the Monday after that week at 23:00 UTC.
+            // Must mirror lib/periodIds.js: seasonNum = floor((isoWeek - 1) / 4) + 1.
+            const year = utcNow.getUTCFullYear();
+            const startOfYear = new Date(Date.UTC(year, 0, 1));
+            const startOfWeek1 = new Date(startOfYear);
+            startOfWeek1.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+            const isoWeek = Math.ceil(((utcNow - startOfWeek1) / 86400000 + 1) / 7);
+            const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+            const lastWeekOfSeason = seasonNum * 4; // e.g. season 5 → week 20
+            const weeksUntilSeasonEnd = lastWeekOfSeason - isoWeek;
+
             const seasonalNext = new Date(weeklyNext);
-            seasonalNext.setUTCDate(seasonalNext.getUTCDate() + 21); // 3 weeks after weekly
+            seasonalNext.setUTCDate(seasonalNext.getUTCDate() + weeksUntilSeasonEnd * 7);
 
             const formatCountdown = (targetDate) => {
                 const diff = targetDate - utcNow;
