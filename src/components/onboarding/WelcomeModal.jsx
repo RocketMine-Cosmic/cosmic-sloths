@@ -39,7 +39,7 @@ const STEPS = [
         title: 'Launch Your First Run',
         body: (
             <>
-                <p>Swipe right (or use the <span className="text-fuchsia-300 font-bold">Warp</span> menu at the top) to open the <span className="text-cyan-300 font-bold">Sloth Lounge</span>. Pick a sloth, sector, and difficulty — then hit <span className="text-cyan-300 font-bold">LAUNCH</span> for a normal run or <span className="text-fuchsia-300 font-bold">ENDLESS</span> for the high-score mode.</p>
+                <p>Swipe right (or use the <span className="text-fuchsia-300 font-bold">Warp</span> menu at the top) to open <span className="text-cyan-300 font-bold">Sloth Command</span>. Pick a sloth, sector, and difficulty — then hit <span className="text-cyan-300 font-bold">LAUNCH</span> for a normal run or <span className="text-fuchsia-300 font-bold">ENDLESS</span> for the high-score mode.</p>
                 <p className="mt-2 text-slate-400">Move with WASD or the on-screen joystick. Weapons fire automatically — focus on dodging and grabbing XP gems.</p>
             </>
         ),
