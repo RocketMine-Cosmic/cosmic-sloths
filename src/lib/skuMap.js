@@ -129,14 +129,19 @@ export function getCosmeticSku(type, name, goldCost) {
 
 /**
  * Returns the OMENX cost for an in-game consumable.
+ * Mirror of OmenX dev portal prices — server is the source of truth, but UIs
+ * use this for display.
  * @param {string} skuId - SKU ID (e.g., 'ingame-banish')
  */
 export function getConsumableCost(skuId) {
     const costs = {
-        'ingame-banish': 1,
+        'ingame-banish': 2,
+        'ingame-banish-2': 4,
+        'ingame-banish-3': 6,
         'ingame-reroll': 2,
-        'ingame-squad-buff': 4,
         'ingame-revive': 4,
+        'ingame-squad-ult-lite': 5,
+        'ingame-squad-ult-full': 10,
         'ingame-xp-buff': 10,
     };
     return costs[skuId] || 0;
