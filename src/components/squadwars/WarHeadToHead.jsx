@@ -14,24 +14,24 @@ export default function WarHeadToHead({ war, mySquadId, compact = false, onClaim
     const isResolved = !!war.is_resolved;
 
     const SideBadge = ({ icon, name, tag, level, isWinner, isMine, kills, isLeading }) => (
-        <div className={`flex-1 rounded-lg p-3 border-2 transition-all ${
+        <div className={`flex-1 min-w-0 rounded-lg p-2 md:p-3 border-2 transition-all ${
             isWinner ? 'border-amber-400 bg-amber-950/30 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
                      : isLeading ? 'border-emerald-500/60 bg-emerald-950/20'
                      : 'border-slate-700 bg-slate-900/50'
         } ${isMine ? 'ring-2 ring-cyan-400/50' : ''}`}>
-            <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl shrink-0 w-8 h-8 inline-flex items-center justify-center overflow-hidden rounded-md bg-slate-800">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-2">
+                <span className="text-xl md:text-2xl shrink-0 w-7 h-7 md:w-8 md:h-8 inline-flex items-center justify-center overflow-hidden rounded-md bg-slate-800">
                     {icon?.startsWith('http') ? <img src={icon} className="w-full h-full object-cover" alt="" /> : (icon || '🛡️')}
                 </span>
                 <div className="min-w-0 flex-1">
-                    <div className="font-bold text-white text-sm truncate">{name || 'Unknown'}</div>
-                    <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                        <span className="bg-slate-800 px-1 rounded">[{tag || '---'}]</span>
-                        <span>Lv.{level || 1}</span>
-                        {isMine && <span className="text-cyan-400 font-bold">YOU</span>}
+                    <div className="font-bold text-white text-xs md:text-sm truncate">{name || 'Unknown'}</div>
+                    <div className="text-[10px] text-slate-400 flex items-center gap-1 flex-wrap">
+                        <span className="bg-slate-800 px-1 rounded truncate max-w-[60px] md:max-w-none">[{tag || '---'}]</span>
+                        <span className="shrink-0">Lv.{level || 1}</span>
+                        {isMine && <span className="text-cyan-400 font-bold shrink-0">YOU</span>}
                     </div>
                 </div>
-                {isWinner && <Crown className="w-5 h-5 text-amber-400 shrink-0" />}
+                {isWinner && <Crown className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0" />}
             </div>
             <div className={`text-2xl md:text-3xl font-black tabular-nums ${isWinner ? 'text-amber-300' : isLeading ? 'text-emerald-300' : 'text-slate-300'}`}>
                 {(kills || 0).toLocaleString()}
@@ -47,7 +47,7 @@ export default function WarHeadToHead({ war, mySquadId, compact = false, onClaim
         <div className={`bg-[#0b0416]/60 border ${isMineA || isMineB ? 'border-cyan-500/50' : 'border-slate-700'} rounded-xl ${compact ? 'p-2.5' : 'p-3 md:p-4'}`}>
             {/* Status banner */}
             {isResolved ? (
-                <div className="flex items-center justify-center gap-2 mb-3 text-xs font-black uppercase tracking-widest">
+                <div className="flex items-center justify-center gap-2 mb-3 text-[10px] md:text-xs font-black uppercase tracking-widest">
                     {war.result_kind === 'tie' ? (
                         <span className="text-slate-300 bg-slate-800/60 px-3 py-1 rounded">🤝 War Tied</span>
                     ) : war.result_kind === 'bye' ? (
@@ -57,8 +57,8 @@ export default function WarHeadToHead({ war, mySquadId, compact = false, onClaim
                     )}
                 </div>
             ) : (
-                <div className="flex items-center justify-center gap-2 mb-3 text-xs font-black uppercase tracking-widest text-red-300 bg-red-950/40 border border-red-500/40 px-3 py-1 rounded w-fit mx-auto">
-                    <Swords className="w-3 h-3" /> Live — Ends Sunday 23:59 UTC
+                <div className="flex items-center justify-center gap-1.5 mb-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-red-300 bg-red-950/40 border border-red-500/40 px-2 md:px-3 py-1 rounded w-fit max-w-full mx-auto text-center">
+                    <Swords className="w-3 h-3 shrink-0" /> <span className="truncate">Live — Ends Sun 23:59 UTC</span>
                 </div>
             )}
 
@@ -98,20 +98,20 @@ export default function WarHeadToHead({ war, mySquadId, compact = false, onClaim
             {!compact && !isResolved && (
                 <div className="mt-3 pt-3 border-t border-slate-800">
                     <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Per-member rewards</div>
-                    <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-amber-950/30 border border-amber-700/40 rounded p-2">
+                    <div className="grid grid-cols-3 gap-1.5 md:gap-2">
+                        <div className="bg-amber-950/30 border border-amber-700/40 rounded p-1.5 md:p-2">
                             <div className="text-[10px] text-amber-400 font-bold uppercase">Win</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-amber-200"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 2,500</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-fuchsia-300"><Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> 3</div>
+                            <div className="flex items-center gap-1 text-[11px] md:text-xs font-bold text-amber-200 tabular-nums"><Coins className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" /> 2,500</div>
+                            <div className="flex items-center gap-1 text-[11px] md:text-xs font-bold text-fuchsia-300 tabular-nums"><Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400 shrink-0" /> 3</div>
                         </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded p-2">
+                        <div className="bg-slate-800/50 border border-slate-700 rounded p-1.5 md:p-2">
                             <div className="text-[10px] text-slate-400 font-bold uppercase">Tie</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-slate-300"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 1,000</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-fuchsia-300"><Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> 1</div>
+                            <div className="flex items-center gap-1 text-[11px] md:text-xs font-bold text-slate-300 tabular-nums"><Coins className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" /> 1,000</div>
+                            <div className="flex items-center gap-1 text-[11px] md:text-xs font-bold text-fuchsia-300 tabular-nums"><Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400 shrink-0" /> 1</div>
                         </div>
-                        <div className="bg-slate-900/60 border border-slate-700 rounded p-2">
+                        <div className="bg-slate-900/60 border border-slate-700 rounded p-1.5 md:p-2">
                             <div className="text-[10px] text-slate-500 font-bold uppercase">Loss</div>
-                            <div className="flex items-center gap-1 text-xs font-bold text-slate-400"><Coins className="w-3 h-3 fill-amber-400 text-amber-400" /> 500</div>
+                            <div className="flex items-center gap-1 text-[11px] md:text-xs font-bold text-slate-400 tabular-nums"><Coins className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" /> 500</div>
                         </div>
                     </div>
                 </div>
