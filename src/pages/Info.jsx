@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull, Coins, Puzzle, Gem } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull, Coins, Puzzle, Gem, Swords, Award } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 
@@ -427,6 +427,77 @@ const TABS_CONTENT = {
                 <p className="text-sm text-slate-300 leading-relaxed">
                     The top squads by weekly kills are ranked on the <strong className="text-white">Squads tab</strong> in the Hall of Fame leaderboard. Your squad's level badge and total members are shown — compete to be the most dominant squad this week!
                 </p>
+            </SectionCard>
+
+            <SectionCard title="⚔️ Squad Wars (Weekly Head-to-Head)" color="rose">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-3">
+                    Every Monday, your squad is automatically paired against another squad of similar level. From Monday 00:00 UTC to <strong className="text-white">Sunday 23:59 UTC</strong>, every kill any of your members scores in any run counts toward your squad's war total. Whoever has more kills at the deadline wins.
+                </p>
+                <div className="bg-slate-900/60 rounded-xl p-3 border border-rose-900/40 mb-3 text-xs md:text-sm text-slate-400 leading-relaxed">
+                    💡 Find your active war on the <strong className="text-rose-300">Squad Wars</strong> page (linked from the carousel). The "Wars Board" shows every active pairing this week, and the "History" tab logs your past results. If your squad has no opponent, you get a <strong className="text-emerald-300">bye week</strong> — auto-win, no kills needed.
+                </div>
+                <div className="text-xs md:text-sm font-bold text-rose-300 mb-2">Per-member rewards (claim once after the war ends):</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs md:text-sm">
+                    <div className="bg-amber-950/30 border border-amber-700/40 rounded-xl p-3 flex flex-col">
+                        <div className="font-bold text-amber-300 mb-1">🏆 Win</div>
+                        <div className="text-slate-300 flex items-center gap-1 flex-wrap"><Coins className="w-3.5 h-3.5 fill-yellow-500 text-yellow-500" /> 2,500 + <Puzzle className="w-3.5 h-3.5 fill-fuchsia-400 text-fuchsia-400" />×3</div>
+                    </div>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3 flex flex-col">
+                        <div className="font-bold text-slate-300 mb-1">🤝 Tie</div>
+                        <div className="text-slate-400 flex items-center gap-1 flex-wrap"><Coins className="w-3.5 h-3.5 fill-yellow-500 text-yellow-500" /> 1,000 + <Puzzle className="w-3.5 h-3.5 fill-fuchsia-400 text-fuchsia-400" />×1</div>
+                    </div>
+                    <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-3 flex flex-col">
+                        <div className="font-bold text-slate-400 mb-1">💀 Loss</div>
+                        <div className="text-slate-500 flex items-center gap-1 flex-wrap"><Coins className="w-3.5 h-3.5 fill-yellow-500 text-yellow-500" /> 500 (consolation)</div>
+                    </div>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-3 italic">Even on a loss, every member still gets a small consolation bonus for showing up.</div>
+            </SectionCard>
+
+            <SectionCard title="👑 Squad Wars Champions Pool" color="amber">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-3">
+                    Beyond the weekly war prizes, <strong className="text-amber-400">5% of the entire seasonal OMENX pool</strong> is reserved for the squads who dominate the season. At the end of every 4-week season, the top 3 squads on the Champions leaderboard split this pool in <strong className="text-emerald-400">real OMENX</strong>, paid directly to every member's wallet.
+                </p>
+                <div className="bg-amber-950/30 border border-amber-700/40 rounded-xl p-4 mb-3">
+                    <div className="font-bold text-amber-300 text-sm mb-2 flex items-center gap-2"><Award className="w-4 h-4" /> How squads are ranked</div>
+                    <ul className="text-xs md:text-sm text-slate-300 space-y-1 list-disc list-inside leading-relaxed">
+                        <li><strong className="text-white">Win</strong> = 3 ranking points</li>
+                        <li><strong className="text-white">Tie</strong> = 1 ranking point</li>
+                        <li><strong className="text-white">Bye week</strong> = 1 ranking point</li>
+                        <li><strong className="text-white">Loss</strong> = 0 points</li>
+                        <li>Tie-breaker: total <strong className="text-rose-300">kills</strong> across the season, then wars fought.</li>
+                    </ul>
+                </div>
+                <div className="grid grid-cols-3 gap-2 md:gap-3 text-center mb-3">
+                    <div className="bg-amber-950/40 border-2 border-amber-500/60 rounded-xl p-3 shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+                        <div className="text-2xl md:text-3xl mb-1">🥇</div>
+                        <div className="font-bold text-amber-300 text-sm">1st place</div>
+                        <div className="text-amber-200 font-mono font-black text-base md:text-lg">50%</div>
+                    </div>
+                    <div className="bg-slate-800/60 border-2 border-slate-400/50 rounded-xl p-3">
+                        <div className="text-2xl md:text-3xl mb-1">🥈</div>
+                        <div className="font-bold text-slate-200 text-sm">2nd place</div>
+                        <div className="text-slate-200 font-mono font-black text-base md:text-lg">30%</div>
+                    </div>
+                    <div className="bg-orange-950/40 border-2 border-orange-500/50 rounded-xl p-3">
+                        <div className="text-2xl md:text-3xl mb-1">🥉</div>
+                        <div className="font-bold text-orange-300 text-sm">3rd place</div>
+                        <div className="text-orange-200 font-mono font-black text-base md:text-lg">20%</div>
+                    </div>
+                </div>
+                <div className="bg-slate-900/60 rounded-xl p-3 border border-amber-900/30 mb-3">
+                    <div className="font-bold text-amber-300 text-sm mb-1.5">📋 Eligibility & payout split</div>
+                    <ul className="text-xs md:text-sm text-slate-400 space-y-1 list-disc list-inside leading-relaxed">
+                        <li>Squad must have fought <strong className="text-white">at least 2 wars</strong> during the season.</li>
+                        <li>Squad must have <strong className="text-white">at least 2 active members</strong> at season end.</li>
+                        <li>Each squad's share is split <strong className="text-white">equally</strong> among all its current members.</li>
+                        <li>Blacklisted wallets are skipped automatically.</li>
+                        <li>The pool grows live as players spend OMENX during the season.</li>
+                    </ul>
+                </div>
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-cyan-900/30 text-xs md:text-sm text-slate-400 leading-relaxed">
+                    📊 The <strong className="text-amber-300">Champions</strong> tab on the Squad Wars page shows the live leaderboard, the current pool size, and your squad's <strong className="text-white">projected OMENX share</strong> if the season ended right now. Climb the rankings to lock in your squad's payout!
+                </div>
             </SectionCard>
         </div>
     ),
