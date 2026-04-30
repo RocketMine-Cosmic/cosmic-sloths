@@ -82,6 +82,7 @@ export function generateChoices(engine) {
 
     const MAX_PASSIVE_LEVEL = 5;
     const isEndless = engine.arena?.duration === Infinity;
+    const isRaid = engine.arena?.id === 'world_boss_arena';
     const choices = [];
     const pool = [...UPGRADES].filter(u => {
         if (engine.banishedUpgrades.has(u.id)) return false;
@@ -89,6 +90,13 @@ export function generateChoices(engine) {
         // Endless caps gold at 5k and regular enemies don't drop gold —
         // gold-multiplier upgrades are useless here, so hide them from the level-up pool.
         if (isEndless && u.stat === 'goldMult') return false;
+        // Global Raid: no pickups drop and there are no XP/gold rewards in-run, so
+        // pickup-range, XP, gold upgrades are wastes. Bouncing Blade also wastes
+        // shots ricocheting into empty space against a single boss.
+        if (isRaid) {
+            if (u.stat === 'magnetRange' || u.stat === 'xpMult' || u.stat === 'goldMult') return false;
+            if (u.type === 'weapon' && u.weaponId === 'bouncingBlade') return false;
+        }
         if (u.type === 'passive') {
             const currentCount = engine.player.passives.filter(p => p.id === u.id).length;
             if (currentCount >= MAX_PASSIVE_LEVEL) return false;
