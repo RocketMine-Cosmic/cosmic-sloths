@@ -161,12 +161,12 @@ export default function SquadWars({ isCarousel }) {
                 </header>
 
                 {/* Tabs */}
-                <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1 shrink-0">
+                <div className="grid grid-cols-5 gap-1 md:gap-1.5 mb-4 shrink-0">
                     {[
                         { id: 'myWar', label: 'My War', icon: Swords },
-                        { id: 'roster', label: 'Wars Board', icon: Trophy },
-                        { id: 'champions', label: 'Champions', icon: Award },
-                        { id: 'raid', label: 'Raid Damage', icon: Flame },
+                        { id: 'roster', label: 'Board', longLabel: 'Wars Board', icon: Trophy },
+                        { id: 'champions', label: 'Champs', longLabel: 'Champions', icon: Award },
+                        { id: 'raid', label: 'Raid', longLabel: 'Raid Damage', icon: Flame },
                         { id: 'history', label: 'History', icon: Crown },
                     ].map(tab => {
                         const Icon = tab.icon;
@@ -174,11 +174,13 @@ export default function SquadWars({ isCarousel }) {
                         return (
                             <button key={tab.id}
                                 onClick={() => { SoundManager.playUIClick(); setActiveTab(tab.id); }}
-                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs md:text-sm whitespace-nowrap transition-all ${
+                                className={`flex items-center justify-center gap-1 md:gap-1.5 px-1.5 md:px-3 py-2 rounded-lg font-bold text-[11px] md:text-sm transition-all min-w-0 ${
                                     isActive ? 'bg-red-600/30 border border-red-400 text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.3)]'
                                              : 'bg-slate-900/60 border border-slate-700 text-slate-400 hover:text-white'
                                 }`}>
-                                <Icon className="w-3.5 h-3.5" /> {tab.label}
+                                <Icon className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate md:hidden">{tab.label}</span>
+                                <span className="truncate hidden md:inline">{tab.longLabel || tab.label}</span>
                             </button>
                         );
                     })}
