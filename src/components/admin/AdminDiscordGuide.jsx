@@ -89,7 +89,7 @@ Every level-up offers 3 random upgrades (Common / Rare / Epic / Legendary — hi
 • **Banish** an upgrade for the rest of the run → tiered cost: **2 OMENX** for the first 3 banishes, **4 OMENX** for the next 3, then **6 OMENX** each
 • **Emergency Revive** on death → **4 OMENX** (50% HP + 3s invincibility)
 
-💡 *Permanent stat upgrades, talents, and Armory upgrades from the Sloth Lounge appear +15% more often per level invested in your in-run choices.*
+💡 **POOL BIAS** — Every permanent upgrade you buy in the Lounge (stats, weapons, talents) earns you bias points: **1 pt per level for the first 10 levels, then 1 pt per 2 levels** after. Spend points on the **Loadouts** page to bias the in-run upgrade pool toward **specific** weapons or stats (**+10% draw weight per point**). Respec anytime: 2k → 4k → 8k → 16k Gold (or 10 OMENX for an instant reset).
 
 **🪖 Base Weapons:** Blaster · Cosmic Nap Beam · Plasma Whip · Orbital Drones · Zero-G Napalm · Nova Pulse · Shield Bubble · Ricochet Blade · Toxic Emitter
 
