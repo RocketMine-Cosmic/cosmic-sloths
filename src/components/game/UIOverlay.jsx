@@ -24,8 +24,8 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
     return (
         <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
             <div className="flex justify-between items-start gap-1 md:gap-4">
-                {/* Top Left: HP & Equipped */}
-                <div className="w-24 md:w-48 pointer-events-auto shrink-0 flex flex-col gap-2">
+                {/* Top Left: HP & Equipped — wider on mobile so weapon/passive names ("Cosmic Nap Beam", "Plasma Whip", etc.) aren't cut off mid-word. */}
+                <div className="w-36 md:w-56 pointer-events-auto shrink-0 flex flex-col gap-2">
                     <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-red-500/30">
                         <div className="flex justify-between items-center mb-1 text-[9px] md:text-sm font-bold text-slate-200">
                             <span className="flex items-center gap-0.5 md:gap-1 text-red-400"><Heart className="w-3 h-3 md:w-4 md:h-4 fill-current" /> <span className="hidden md:inline">HP</span></span>
@@ -43,9 +43,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     {weapons.length > 0 && (
                         <div className="flex flex-col gap-1 mt-1 md:mt-2">
                             {weapons.map(w => (
-                                <div key={w.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-cyan-500/30 rounded px-1.5 py-1 flex items-center justify-between">
-                                    <div className="text-[8px] md:text-xs text-cyan-400 font-bold truncate flex-1" title={w.name}>{w.name}</div>
-                                    <div className="text-[7px] md:text-[10px] bg-cyan-950/80 text-cyan-200 px-1 rounded border border-cyan-500/50 ml-1 shrink-0">Lv.{w.level}</div>
+                                <div key={w.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-cyan-500/30 rounded px-1.5 py-1 flex items-center justify-between gap-1 min-w-0">
+                                    <div className="text-[9px] md:text-xs text-cyan-400 font-bold truncate flex-1 min-w-0" title={w.name}>{w.name}</div>
+                                    <div className="text-[7px] md:text-[10px] bg-cyan-950/80 text-cyan-200 px-1 rounded border border-cyan-500/50 shrink-0">Lv.{w.level}</div>
                                 </div>
                             ))}
                         </div>
@@ -59,9 +59,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                                 acc[p.id].level += 1;
                                 return acc;
                             }, {})).map(p => (
-                                <div key={p.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-purple-500/30 rounded px-1.5 py-1 flex items-center justify-between">
-                                    <div className="text-[8px] md:text-xs text-purple-400 font-bold truncate flex-1" title={p.name}>{p.name}</div>
-                                    <div className="text-[7px] md:text-[10px] bg-purple-950/80 text-purple-200 px-1 rounded border border-purple-500/50 ml-1 shrink-0">Lv.{p.level}</div>
+                                <div key={p.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-purple-500/30 rounded px-1.5 py-1 flex items-center justify-between gap-1 min-w-0">
+                                    <div className="text-[9px] md:text-xs text-purple-400 font-bold truncate flex-1 min-w-0" title={p.name}>{p.name}</div>
+                                    <div className="text-[7px] md:text-[10px] bg-purple-950/80 text-purple-200 px-1 rounded border border-purple-500/50 shrink-0">Lv.{p.level}</div>
                                 </div>
                             ))}
                         </div>

@@ -24,6 +24,7 @@ import { refreshBalance } from '@/lib/playerDataCache';
 import CharacterAbilityMeter from '../components/game/CharacterAbilityMeter';
 import GameLoadingScreen from '../components/game/GameLoadingScreen';
 import HideHudButton from '../components/game/HideHudButton';
+import SynergyBanner from '../components/game/SynergyBanner';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -602,6 +603,7 @@ export default function Game() {
             
             {!hudHidden && <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
+            {!hudHidden && <SynergyBanner />}
 
             {hudHidden && (
                 <HideHudButton onShow={() => setHudHidden(false)} />

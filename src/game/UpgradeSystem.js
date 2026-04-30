@@ -187,6 +187,14 @@ export function checkSynergies(engine) {
 
             engine.addDamageText(engine.player.x, engine.player.y - 40, "SYNERGY FORMED!", '#ff00ff');
 
+            // Dispatch a UI event so the SynergyBanner can show a celebratory toast
+            // naming the new weapon and the components that fused. Pure UI signal.
+            try {
+                const newName = WEAPONS[synergy.result]?.name || 'Synergy';
+                const fromNames = [WEAPONS[synergy.weapon1]?.name, WEAPONS[synergy.weapon2]?.name].filter(Boolean);
+                window.dispatchEvent(new CustomEvent('synergyFormed', { detail: { name: newName, from: fromNames } }));
+            } catch (_) {}
+
             if (!engine.save.discoveredSynergies) engine.save.discoveredSynergies = [];
             if (!engine.save.discoveredSynergies.includes(synergy.result)) {
                 engine.save.discoveredSynergies.push(synergy.result);
@@ -209,6 +217,12 @@ export function checkEvolutions(engine) {
             engine.player.weapons = engine.player.weapons.filter(w => w.id !== evolution.baseWeapon);
             engine.player.weapons.push({ ...WEAPONS[evolution.evolvedWeapon], level: baseWeapon.level, timer: 0 });
             engine.addDamageText(engine.player.x, engine.player.y - 40, "WEAPON EVOLVED!", '#ff4500');
+
+            try {
+                const newName = WEAPONS[evolution.evolvedWeapon]?.name || 'Evolved Weapon';
+                const fromNames = [WEAPONS[evolution.baseWeapon]?.name, evolution.passive].filter(Boolean);
+                window.dispatchEvent(new CustomEvent('weaponEvolved', { detail: { name: newName, from: fromNames } }));
+            } catch (_) {}
 
             // Track evolution discovery in the player's save (mirrors how synergies are recorded).
             if (!engine.save.discoveredEvolutions) engine.save.discoveredEvolutions = [];
