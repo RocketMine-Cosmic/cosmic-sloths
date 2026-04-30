@@ -44,25 +44,22 @@ Discover **Weapon Synergies**: combine two specific weapons mid-run to unlock ga
 Three leaderboards. Real crypto rewards.
 
 ### 📅 **Weekly Leaderboard**
-- Resets every Monday
-- **Top 100 ranked players earn OMENX** with dynamic scaling:
-  - Ranks 1–30: Top-tier rewards
-  - Ranks 31–50: Mid-tier rewards
-  - Ranks 51–100: Lower rewards
-- Stat upgrades reset each week
+- Resets every Monday 00:00 UTC
+- **Only the top 100 players earn OMENX** — higher rank = bigger payout
+- Weekly stat upgrades also reset
 
 ### 🗓️ **Seasonal Leaderboard**
 - 4-week cycles
-- **Top 100 ranked players earn OMENX** with dynamic scaling:
-  - Ranks 1–40: Top-tier rewards
-  - Ranks 41–60: Mid-tier rewards
-  - Ranks 61–100: Lower rewards
-- Seasonal upgrades reset end-of-season
+- **Only the top 100 players earn OMENX** — higher rank = bigger payout
+- Seasonal stat upgrades reset at season end
 
 ### ♾️ **Endless Void**
-- Infinitely scaling difficulty
-- Boss fights every 3 minutes
-- All-time high scores tracked globally
+- Infinitely scaling difficulty with boss fights every 3 minutes
+- Permanent legacy leaderboard — no resets
+- **Excluded from OMENX payouts.** A single endless run is capped at 5,000 Gold and 2,000 kills credited to your account
+
+### 📊 **How Scores Work**
+Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier. Only your **highest score per period** counts. Sector multiplier ×1.0 → ×1.8 (Singularity), ×2.0 in Endless Void.
 
 ---
 
@@ -75,10 +72,16 @@ Create or join a crew of up to **5 players**. Every kill you make—in any run�
 
 **Level up?** Unlock harder bounties with bigger rewards.
 
-### 🛡️ **Shared Bounties**
-Hit weekly kill targets. **Every member** can individually claim:
-- 💰 Gold (scales by squad level: 500–15,000)
-- 🧩 Relic Fragments (scales by squad level: 1–10)
+### 🛡️ **Daily & Weekly Bounties**
+Both reset on schedule. Hit the kill targets and **every member** individually claims:
+- ☀️ **Daily** — 150 → 4,000 Gold + up to 3 Fragments (scales by squad level)
+- 📅 **Weekly** — 500 → 15,000 Gold + up to 10 Fragments (scales by squad level)
+
+### ⚔️ **Squad Wars** (head-to-head every week)
+Every Monday, your squad is auto-paired against a similar-level rival. Whoever scores more kills by Sunday 23:59 UTC wins. No opponent? Bye week (auto-win). Per-member rewards: **Win** 2,500 Gold + 3 Fragments | **Tie** 1,000 Gold + 1 Fragment | **Loss** 500 Gold (consolation).
+
+### 👑 **Squad Champions Pool**
+A dedicated **OMENX prize pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members.
 
 ### 💬 **Squad Chat**
 Real-time messaging to coordinate with your team.
@@ -91,18 +94,17 @@ Real-time messaging to coordinate with your team.
 Playing older sectors? **-10% Gold per sector below your max unlocked arena** (capped at -50%). Keep pushing forward to maximize earnings!
 
 ### 🌟 **Difficulty Modes**
-- **Normal** — Learn the ropes
-- **Hard** — Enemies hit harder. Better score multiplier.
-- **Cosmic** — Maximum chaos. Best multiplier for leaderboard grinders.
+Difficulty changes enemy strength + how much XP and Gold you earn per run (which feeds the score formula).
+- **Easy** — −50% XP & Gold
+- **Normal** — Baseline
+- **Hard** — +100% XP & Gold
+- **Cosmic** — +200% XP & Gold
 
 ### ⚔️ **Leviathan Trials**
-Stack any of 6 modifiers before a run to make bosses **tougher & more rewarding**:
-- 🔴 **FURY** — Bosses deal +50% damage (+500 boss Gold drop)
-- 🟠 **FRENZY** — Bosses move +50% faster (+1 reroll token on boss kill)
-- 🟣 **THICK HIDE** — Bosses have +100% HP (+50% boss XP)
-- 🔵 **BULLET HELL** — Bosses fire 2× projectiles (+30% total score)
-- 🟢 **REGEN** — Boss heals 1% Max HP/sec (+800 boss Gold drop)
-- 🟧 **UNSTOPPABLE** — Boss ignores slow & pushback (+1,000 boss Gold drop)
+Stack any of 3 boss modifiers before a run to make encounters **tougher & more rewarding**:
+- 🔴 **FURY** — Boss deals +50% damage
+- 🟠 **FRENZY** — Boss moves +50% faster
+- 🟣 **TITAN** — Boss has +100% HP
 
 ---
 
@@ -117,8 +119,8 @@ Stack any of 6 modifiers before a run to make bosses **tougher & more rewarding*
 ### ⚔️ **Daily Mission**
 One harder challenge → **Seasonal Points** (collect 100 for exclusive seasonal skins)
 
-### 👥 **Squad Weekly Bounty**
-Hit your squad's shared weekly kill target → every member individually claims **Gold + Relic Fragments** (scales with squad level: up to 15,000 Gold + 10 Fragments at Lv.7)
+### 👥 **Squad Daily & Weekly Bounties**
+Hit your squad's shared daily and weekly kill targets → every member individually claims **Gold + Relic Fragments** (scales with squad level, up to 15,000 Gold + 10 Fragments at Lv.7).
 
 ---
 
