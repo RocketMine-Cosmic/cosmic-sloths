@@ -137,7 +137,7 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🔫 Armory</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Upgrade individual weapons' Damage, Area, and Cooldown. Max all 3 to Master a weapon and unlock its ultimate form!</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Upgrade individual weapons across <strong className="text-white">three thematic stats</strong> tailored to that weapon (e.g. Shield Bubble's <em>Barrier Strength / Bubble Size / Recharge Rate</em>, or Hellfire's <em>Inferno Heat / Pool Size / Drop Rate</em>). Max all 3 to Master a weapon and unlock its ultimate form!</p>
                     </div>
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">🌳 Talent Trees</div>
@@ -439,7 +439,11 @@ const TABS_CONTENT = {
                 </p>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-red-900/40 mt-4">
                     <div className="font-bold text-white text-sm md:text-base mb-1.5">⚔️ How to Participate</div>
-                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool.</p>
+                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool. Need more attempts? You can <strong className="text-purple-300">Buy 5 More Runs</strong> for <strong className="text-purple-300">10 OMENX</strong> directly on the Raid page.</p>
+                </div>
+                <div className="bg-slate-900/60 p-4 rounded-xl border border-cyan-900/40 mt-3">
+                    <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5">📡 Live Activity Feed</div>
+                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">A rotating banner at the top of the Raid page shows real-time damage milestones and boss kills from players around the world. The full <strong className="text-white">Top Contributors</strong> tab also lists the highest-damage pilots this week.</p>
                 </div>
             </SectionCard>
 
@@ -724,8 +728,17 @@ TABS_CONTENT.combat = (
                         <div className="text-slate-400 text-xs">×3 value</div>
                     </div>
                 </div>
-                <div className="mt-4 space-y-1.5">
-                    <p className="text-xs md:text-sm text-slate-500">Use <strong className="text-emerald-400 inline-flex items-center gap-1"><img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className="w-3 h-3 inline" alt="OMENX" /> OMENX</strong> during the level-up screen to <strong className="text-white">Reroll</strong> (new options) or <strong className="text-white">Banish</strong> (remove an upgrade from the pool for the rest of the run).</p>
+                <div className="mt-4 space-y-2">
+                    <div className="bg-slate-900/60 rounded-lg p-3 border border-emerald-700/40">
+                        <div className="font-bold text-emerald-300 text-xs md:text-sm mb-1.5 flex items-center gap-1.5">
+                            <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className="w-3.5 h-3.5" alt="OMENX" /> In-Run OMENX Actions
+                        </div>
+                        <ul className="text-xs md:text-sm text-slate-400 space-y-1 leading-relaxed">
+                            <li>• <strong className="text-white">Reroll</strong> the 3 upgrade choices — <strong className="text-emerald-300">2 OMENX</strong> (once per level-up).</li>
+                            <li>• <strong className="text-white">Banish</strong> an upgrade from the pool for the rest of the run — tiered cost: <strong className="text-emerald-300">2 OMENX</strong> for the first 3 banishes, then <strong className="text-amber-300">4 OMENX</strong> for the next 3, then <strong className="text-rose-300">6 OMENX</strong> per banish.</li>
+                            <li>• <strong className="text-white">Emergency Revive</strong> on death — <strong className="text-emerald-300">4 OMENX</strong> for 50% HP and 3s of invincibility.</li>
+                        </ul>
+                    </div>
                     <p className="text-xs text-slate-600">💡 Banishing a weapon you don't want increases the odds of getting your preferred ones on future level-ups.</p>
                 </div>
             </SectionCard>

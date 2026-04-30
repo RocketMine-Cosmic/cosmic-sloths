@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, X, Rocket, Wallet, Compass, Swords, Trophy } from 'lucide-react';
+import { ChevronRight, ChevronLeft, X, Rocket, Wallet, Compass, Swords, Trophy, Zap } from 'lucide-react';
 import { SoundManager } from '../../game/SoundManager';
 
 const STORAGE_KEY = 'cosmic_sloths_welcome_seen_v1';
@@ -45,14 +45,32 @@ const STEPS = [
         ),
     },
     {
+        icon: Zap,
+        accent: 'text-purple-300',
+        border: 'border-purple-500/40',
+        title: 'OMENX In-Run Power',
+        body: (
+            <>
+                <p>Spend small amounts of <span className="text-purple-300 font-bold">$OMENX</span> mid-run to swing the odds in your favour:</p>
+                <ul className="mt-2 text-left text-xs text-slate-400 space-y-1 mx-auto max-w-[260px]">
+                    <li>• <span className="text-white font-bold">Reroll</span> level-up choices — 2 OMENX</li>
+                    <li>• <span className="text-white font-bold">Banish</span> bad upgrades — from 2 OMENX (tiered)</li>
+                    <li>• <span className="text-white font-bold">Emergency Revive</span> on death — 4 OMENX</li>
+                    <li>• <span className="text-white font-bold">Squad Ultimate</span> clone backup — 5 or 10 OMENX</li>
+                </ul>
+            </>
+        ),
+    },
+    {
         icon: Trophy,
         accent: 'text-emerald-300',
         border: 'border-emerald-500/40',
-        title: 'Progress & Earn',
+        title: 'Progress, Squads & Earn',
         body: (
             <>
-                <p>Every run earns gold you keep. Spend it in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, grab daily quests on the <span className="text-emerald-300 font-bold">Mission Board</span>, and check your rank on the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
-                <p className="mt-2 text-slate-400">Unlock new sloths by hitting kill milestones (or owning the matching NFT). Each week, top scorers split the OMENX reward pool.</p>
+                <p>Every run earns gold you keep. Spend it in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, grab quests on the <span className="text-emerald-300 font-bold">Mission Board</span>, and check your rank on the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
+                <p className="mt-2 text-slate-400">Join a <span className="text-orange-300 font-bold">Squad</span> (up to 5) to share kill bounties, and team up in the global <span className="text-rose-300 font-bold">Galactic Raid</span> against a community-wide boss for bonus Gold.</p>
+                <p className="mt-2 text-slate-400">Unlock new sloths via kill milestones or by owning the matching NFT. Each week, top scorers split the OMENX reward pool.</p>
             </>
         ),
     },
