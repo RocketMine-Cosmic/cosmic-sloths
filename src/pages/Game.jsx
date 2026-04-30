@@ -597,7 +597,7 @@ export default function Game() {
                     onResume={handleResume}
                     onQuit={handleQuit}
                     onRestart={handleRestart}
-                    onHideHud={() => { setHudHidden(true); handleResume(); }}
+                    onHideHud={() => { setHudHidden(true); }}
                 />
             )}
 

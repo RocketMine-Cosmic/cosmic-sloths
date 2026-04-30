@@ -81,10 +81,14 @@ export function generateChoices(engine) {
     };
 
     const MAX_PASSIVE_LEVEL = 5;
+    const isEndless = engine.arena?.duration === Infinity;
     const choices = [];
     const pool = [...UPGRADES].filter(u => {
         if (engine.banishedUpgrades.has(u.id)) return false;
         if (u.characterSpecific && u.characterSpecific !== engine.characterId) return false;
+        // Endless caps gold at 5k and regular enemies don't drop gold —
+        // gold-multiplier upgrades are useless here, so hide them from the level-up pool.
+        if (isEndless && u.stat === 'goldMult') return false;
         if (u.type === 'passive') {
             const currentCount = engine.player.passives.filter(p => p.id === u.id).length;
             if (currentCount >= MAX_PASSIVE_LEVEL) return false;
