@@ -13,6 +13,18 @@ export function fireWeaponLogic(engine, w) {
     const weaponLevelMult = 1 + Math.min(19, w.level - 1) * 0.15; // Reduced from 20% to 15% per level, capped at level 20
     let dmg = w.baseDamage * Math.min(5.0, engine.player.damageMult) * weaponLevelMult * Math.min(2.0, wDmgMult);
     let area = w.baseArea * Math.min(4.0, engine.player.areaMult) * (1 + Math.min(19, w.level - 1) * 0.08) * Math.min(2.0, wAreaMult); // Reduced area scaling from 10% to 8%
+
+    // Projectile Speed → Damage scaling (kinetic energy):
+    // Faster projectiles hit harder. Applies ONLY to projectile-based weapons (not melee/AoE).
+    // +50% projSpeedMult → +25% damage. Capped so it can't double damage on its own.
+    const PROJECTILE_WEAPONS = new Set([
+        'neoBlaster', 'napBeam', 'bouncingBlade', 'buzzsawSwarm',
+        'supernovaBeam', 'orbitalLasers', 'orbitalDefense', 'laserNova'
+    ]);
+    if (PROJECTILE_WEAPONS.has(w.id)) {
+        const speedBonus = Math.min(1.0, (Math.max(1.0, engine.player.projSpeedMult) - 1.0) * 0.5);
+        dmg *= 1 + speedBonus;
+    }
     
     if (engine.player.synAmpTimer > 0) area *= 2.0;
     

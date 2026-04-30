@@ -171,7 +171,7 @@ export const UPGRADES = [
   { id: 'regen_up', name: 'Nano-Repair Bots', desc: '+0.5 HP/sec', type: 'passive', stat: 'regen', value: 0.5 },
   { id: 'armor_up', name: 'Deflector Shield', desc: '+2 Armor', type: 'passive', stat: 'armor', value: 2 },
   { id: 'gold_up', name: 'Asteroid Miner', desc: '+20% Gold Drops', type: 'passive', stat: 'goldMult', value: 0.2 },
-  { id: 'proj_spd', name: 'Ion Thrusters', desc: '+15% Projectile Speed', type: 'passive', stat: 'projSpeedMult', value: 0.15 },
+  { id: 'proj_spd', name: 'Ion Thrusters', desc: '+15% Projectile Speed (also adds bonus damage)', type: 'passive', stat: 'projSpeedMult', value: 0.15 },
   { id: 'xp_up', name: 'Neural Implant', desc: '+15% XP Gain', type: 'passive', stat: 'xpMult', value: 0.15 },
   { id: 'dmg_up2', name: 'Dark Matter Core', desc: '+15% Damage', type: 'passive', stat: 'damageMult', value: 0.15 },
   { id: 'spd_up2', name: 'Warp Drive', desc: '+15% Move Speed', type: 'passive', stat: 'speedMult', value: 0.15 },
