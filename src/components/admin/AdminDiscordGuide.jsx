@@ -91,23 +91,25 @@ Every level-up offers 3 random upgrades (Common / Rare / Epic / Legendary — hi
 
 💡 *Permanent stat upgrades, talents, and Armory upgrades from the Sloth Lounge appear +15% more often per level invested in your in-run choices.*
 
-**🪖 Base Weapons:** Neo Blaster · Cosmic Nap Beam · Plasma Whip · Sloth Swarm (drones) · Zero-G Napalm · Nova Pulse · Shield Bubble · Bouncing Blade · Toxic Cloud
+**🪖 Base Weapons:** Blaster · Cosmic Nap Beam · Plasma Whip · Orbital Drones · Zero-G Napalm · Nova Pulse · Shield Bubble · Ricochet Blade · Toxic Emitter
 
 **🔥 Synergies** (own 2 specific weapons in the same run = combine):
 • Napalm + Shield → **Burning Barrier**
 • Nap Beam + Nova Pulse → **Laser Nova**
 • Whip + Drones → **Plasma Swarm**
+• Nap Beam + Drones → **Orbital Lasers**
+• Whip + Nova Pulse → **Seismic Whip**
 • Napalm + Whip → **Flaming Lash**
 • Toxic + Whip → **Venom Lash**
-*(more to discover...)*
 
 **✨ Evolutions** (max a weapon + own a specific passive = ultimate form):
-• Nap Beam + Spatial Expander → **Supernova**
-• Plasma Whip + Regen → **Vampiric Whip**
-• Drones + Speed → **Drone Network**
+• Nap Beam + Spatial Expander → **Supernova Beam**
+• Plasma Whip + Regen → **Vampiric Lash**
+• Drones + Speed → **Orbital Defense**
 • Napalm + Damage → **Hellfire**
 • Nova Pulse + Cooldown → **Quantum Collapse**
-• Shield Bubble + HP → **Aegis**
+• Shield Bubble + HP → **Aegis Matrix**
+• Ricochet Blade + Proj Speed → **Buzzsaw Swarm**
 
 Track every discovered synergy + evolution in the **Codex**.`,
     },
