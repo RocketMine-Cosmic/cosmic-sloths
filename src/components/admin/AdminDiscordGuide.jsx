@@ -181,7 +181,7 @@ Per-member rewards (claim once after the war ends):
 • 🤝 Tie → 1,000 Gold + 1 Fragment
 • 💀 Loss → 500 Gold (consolation)
 
-👑 **CHAMPIONS POOL** — **10% of the entire seasonal OMENX pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members. Live standings on the **Squad Wars** page.`,
+👑 **CHAMPIONS POOL** — A dedicated **OMENX prize pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members. Live standings + your projected payout on the **Squad Wars** page.`,
     },
     {
         title: 'Post 7 — Raids, Trials, Ultimates & VIP',
