@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function AdminMaintenanceReset({ walletAddress }) {
     const [step, setStep] = useState(0); // 0=confirm, 1=refunding, 2=wiping, 3=done
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [result, setResult] = useState(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const handleReset = async () => {
+        setDialogOpen(false);
         setLoading(true);
         setError(null);
         try {
@@ -85,7 +88,7 @@ export default function AdminMaintenanceReset({ walletAddress }) {
                     <p className="text-red-400 font-bold text-sm mt-4">⚠️ THIS CANNOT BE UNDONE</p>
                     {error && <p className="text-red-400 text-sm">{error}</p>}
                     <button
-                        onClick={handleReset}
+                        onClick={() => setDialogOpen(true)}
                         disabled={loading}
                         className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-6 py-3 rounded font-bold flex items-center justify-center gap-2"
                     >
@@ -94,6 +97,22 @@ export default function AdminMaintenanceReset({ walletAddress }) {
                     </button>
                 </div>
             )}
+
+            <ConfirmDialog
+                open={dialogOpen}
+                onClose={() => !loading && setDialogOpen(false)}
+                onConfirm={handleReset}
+                busy={loading}
+                title="🚨 FULL RESET — refund + wipe"
+                description="Refunds every OMENX spent across all wallets, then permanently deletes all PlayerSaves, RunScores, Squads, and game data. This cannot be undone."
+                items={[
+                    'All players will receive their lifetime OMENX spend back',
+                    'Every player save & leaderboard score will be deleted',
+                    'Squads, messages, raids, and bounties will be wiped',
+                ]}
+                confirmText="FULL_RESET"
+                confirmLabel="Execute full reset"
+            />
 
             {step === 1 && (
                 <div className="flex flex-col items-center gap-3 py-4">

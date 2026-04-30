@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function AdminRefundOmenx({ walletAddress }) {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
-    const [confirmStep, setConfirmStep] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
     const [preview, setPreview] = useState(null);
 
     const handlePreview = async () => {
@@ -51,7 +52,7 @@ export default function AdminRefundOmenx({ walletAddress }) {
                 setError(res.data.error);
             } else {
                 setResult(res.data);
-                setConfirmStep(false);
+                setDialogOpen(false);
                 setPreview(null);
             }
         } catch (e) {
@@ -82,7 +83,7 @@ export default function AdminRefundOmenx({ walletAddress }) {
                         </div>
                     )}
                     <button
-                        onClick={() => { setResult(null); setConfirmStep(false); }}
+                        onClick={() => { setResult(null); setDialogOpen(false); }}
                         className="mt-4 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-xs font-bold"
                     >
                         Reset
@@ -106,42 +107,20 @@ export default function AdminRefundOmenx({ walletAddress }) {
                             )}
                         </div>
                     </div>
-                    {confirmStep ? (
-                        <div className="space-y-3">
-                            <p className="text-red-400 font-bold text-sm">⚠️ Click again to confirm execution</p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={handleRefund}
-                                    disabled={loading}
-                                    className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
-                                >
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                    {loading ? 'Processing...' : 'EXECUTE REFUND'}
-                                </button>
-                                <button
-                                    onClick={() => setConfirmStep(false)}
-                                    className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded font-bold text-sm"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setConfirmStep(true)}
-                                className="flex-1 bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
-                            >
-                                Proceed to Confirm
-                            </button>
-                            <button
-                                onClick={() => setPreview(null)}
-                                className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded font-bold text-sm"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    )}
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setDialogOpen(true)}
+                            className="flex-1 bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded font-bold text-sm transition-colors"
+                        >
+                            Execute Refund
+                        </button>
+                        <button
+                            onClick={() => setPreview(null)}
+                            className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded font-bold text-sm"
+                        >
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -157,6 +136,22 @@ export default function AdminRefundOmenx({ walletAddress }) {
                     </button>
                 </div>
             )}
+
+            <ConfirmDialog
+                open={dialogOpen}
+                onClose={() => !loading && setDialogOpen(false)}
+                onConfirm={handleRefund}
+                busy={loading}
+                title="Execute OMENX refund"
+                description={preview ? `Send ${preview.totalAmount.toLocaleString()} OMENX back to ${preview.count} wallets via the OmenX payment API. This cannot be undone.` : 'Refund all spent OMENX to all players.'}
+                items={preview ? [
+                    `${preview.count} wallets will be paid`,
+                    `${preview.totalAmount.toLocaleString()} OMENX total`,
+                    'Failures will be reported per-wallet in the result',
+                ] : []}
+                confirmText="REFUND_ALL"
+                confirmLabel="Send refunds"
+            />
         </div>
     );
 }
