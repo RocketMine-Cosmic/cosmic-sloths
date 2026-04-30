@@ -38,17 +38,9 @@ Score is calculated **server-side** at the end of every run:
 • **Sector Multiplier:** ×1.0 (Station) → +0.2 per sector → ×1.8 (Singularity) → **×2.0 in Endless Void**
 • Only your **highest score per period** counts on the leaderboard
 
-📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Top 100 earn OMENX
-🥇 #1 — 10% | 🥈 #2 — 8% | 🥉 #3 — 6%
-#4–10: 4% each | #11–20: 3% each | #21–30: 1.8% each
-#31–50: 1.2% each | #51–100: 0.8% each
-*(Weekly stat upgrades also reset.)*
+📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Weekly stat upgrades also reset.
 
-🗓️ **Seasonal Leaderboard** (4-week cycles) — Top 100 earn OMENX
-🥇 #1 — 8% | 🥈 #2 — 6% | 🥉 #3 — 5%
-#4–10: 3% each | #11–20: 2.5% each | #21–30: 2% each
-#31–40: 1.5% each | #41–60: 1% each | #61–100: 0.6% each
-*(Seasonal stat upgrades reset at season end.)*
+🗓️ **Seasonal Leaderboard** (4-week cycles) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Seasonal stat upgrades reset at season end.
 
 ♾️ **Endless Void Leaderboard** — Permanent legacy ranking, never resets. **NOT eligible for OMENX payouts.** Single endless run is capped at 5,000 Gold and 2,000 kills credited to your account.
 
