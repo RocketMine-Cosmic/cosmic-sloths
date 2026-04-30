@@ -83,12 +83,12 @@ export default function Leaderboard() {
                 const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
                 const lastWeekOfSeason = seasonNum * 4; // last ISO week in this season
 
-                // Find the Sunday that ends lastWeekOfSeason
-                // ISO week starts Monday, so Sunday of that week = Monday + 6 days
-                const startOfYear = new Date(Date.UTC(year, 0, 1));
-                const dayOfWeek = startOfYear.getUTCDay(); // 0=Sun
-                // Monday of ISO week 1
-                const mondayW1 = new Date(Date.UTC(year, 0, 1 + ((1 - dayOfWeek + 7) % 7)));
+                // ISO 8601: week 1 is the week containing Jan 4 (or the first Thursday).
+                // Find Monday of ISO week 1 — must match Champions countdown exactly.
+                const jan1 = new Date(Date.UTC(year, 0, 1));
+                const jan1Day = jan1.getUTCDay() || 7; // 1..7 (Mon..Sun)
+                const mondayW1 = new Date(jan1);
+                mondayW1.setUTCDate(jan1.getUTCDate() - (jan1Day - 1) + (jan1Day <= 4 ? 0 : 7));
                 const msPerWeek = 7 * 24 * 60 * 60 * 1000;
                 // Monday of lastWeekOfSeason, then +6 days = Sunday
                 const mondayOfLastWeek = new Date(mondayW1.getTime() + (lastWeekOfSeason - 1) * msPerWeek);
