@@ -73,7 +73,7 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
             },
             player: {
                 x: W / 2, y: H / 2, radius: 16, color: '#00D4FF',
-                damageMult: 1, areaMult: 1, projSpeedMult: 1,
+                damageMult: 1, areaMult: 1.6, projSpeedMult: 1,
                 speedMult: 1, hp: 100, maxHp: 100,
                 weapons: [{ id: weaponId, level: 1 }]
             },
