@@ -20,18 +20,16 @@ Top-down auto-shooter. Weapons auto-fire — you move & dodge. Survive the timer
 
 Three live leaderboards. Only your **highest score per period** counts. Real OMENX rewards are auto-sent to your OmenX wallet — no claiming, no clicking.
 
-📅 **Weekly** (resets every Monday) — ALL ranked players earn OMENX
+📅 **Weekly** (resets every Monday) — **Top 100** earn OMENX
 • Ranks 1–30: Top-tier rewards
 • Ranks 31–50: Mid-tier rewards
 • Ranks 51–100: Lower rewards
-• Rank 100+: Minimal rewards
 *(Weekly stat upgrades also reset.)*
 
-🗓️ **Seasonal** (4-week cycles) — ALL ranked players earn OMENX
+🗓️ **Seasonal** (4-week cycles) — **Top 100** earn OMENX
 • Ranks 1–40: Top-tier rewards
 • Ranks 41–60: Mid-tier rewards
 • Ranks 61–100: Lower rewards
-• Rank 100+: Minimal rewards
 *(Seasonal stat upgrades reset at end-of-season.)*
 
 ♾️ **Endless Void** — Infinitely scaling, all-time high score. **No OMENX rewards** — purely a permanent legacy ranking. Note: regular enemies don't drop Gold, and boss Gold is **capped at 5,000 per run**.

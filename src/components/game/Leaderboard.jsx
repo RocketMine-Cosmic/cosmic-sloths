@@ -19,6 +19,7 @@ export default function Leaderboard() {
     const [timeLeft, setTimeLeft] = useState('');
     const [currentPool, setCurrentPool] = useState(0);
 
+    // Must match functions/distributeRewards.js — payouts capped at top 100.
     const getWeeklyRewardPercentage = (rank) => {
         if (rank === 1) return 0.10;
         if (rank === 2) return 0.08;
@@ -28,7 +29,6 @@ export default function Leaderboard() {
         if (rank >= 21 && rank <= 30) return 0.018;
         if (rank >= 31 && rank <= 50) return 0.012;
         if (rank >= 51 && rank <= 100) return 0.008;
-        if (rank > 100) return 0.003;
         return 0;
     };
 
@@ -42,7 +42,6 @@ export default function Leaderboard() {
         if (rank >= 31 && rank <= 40) return 0.015;
         if (rank >= 41 && rank <= 60) return 0.010;
         if (rank >= 61 && rank <= 100) return 0.006;
-        if (rank > 100) return 0.002;
         return 0;
     };
 

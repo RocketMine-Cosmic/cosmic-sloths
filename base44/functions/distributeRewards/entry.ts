@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
     }
 });
 
+// Payouts are capped at top 100 ranks (weekly + seasonal) so top players'
+// share of the pool isn't diluted by an unbounded long tail of minimal payouts.
 function getWeeklyRewardPercentage(rank) {
      if (rank === 1) return 0.10;
      if (rank === 2) return 0.08;
@@ -111,7 +113,6 @@ function getWeeklyRewardPercentage(rank) {
      if (rank >= 21 && rank <= 30) return 0.018;
      if (rank >= 31 && rank <= 50) return 0.012;
      if (rank >= 51 && rank <= 100) return 0.008;
-     if (rank > 100) return 0.003;
      return 0;
  }
 
@@ -125,7 +126,6 @@ function getWeeklyRewardPercentage(rank) {
      if (rank >= 31 && rank <= 40) return 0.015;
      if (rank >= 41 && rank <= 60) return 0.010;
      if (rank >= 61 && rank <= 100) return 0.006;
-     if (rank > 100) return 0.002;
      return 0;
  }
 
@@ -170,7 +170,8 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, apiKey) {
      const allScores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, scores.length);
+     // Capped at top 100 — protects top players' share from long-tail dilution.
+     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 100);
     const staffPayments = adminWallets
         .filter(a => a.wallet_address)
         .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * STAFF_PCT_PER_WALLET), player_name: a.admin_name || a.wallet_address, isStaff: true }))
@@ -205,7 +206,8 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, apiKey) {
      const allScores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, scores.length);
+     // Capped at top 100 — protects top players' share from long-tail dilution.
+     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 100);
     if (payments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };

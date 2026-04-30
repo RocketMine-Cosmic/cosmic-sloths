@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
     }
 });
 
+// Must match distributeRewards.js — payouts capped at top 100.
 function getWeeklyRewardPercentage(rank) {
     if (rank === 1) return 0.10;
     if (rank === 2) return 0.08;
@@ -74,6 +75,8 @@ function getWeeklyRewardPercentage(rank) {
     if (rank >= 4 && rank <= 10) return 0.04;
     if (rank >= 11 && rank <= 20) return 0.03;
     if (rank >= 21 && rank <= 30) return 0.018;
+    if (rank >= 31 && rank <= 50) return 0.012;
+    if (rank >= 51 && rank <= 100) return 0.008;
     return 0;
 }
 
@@ -85,6 +88,8 @@ function getSeasonalRewardPercentage(rank) {
     if (rank >= 11 && rank <= 20) return 0.025;
     if (rank >= 21 && rank <= 30) return 0.02;
     if (rank >= 31 && rank <= 40) return 0.015;
+    if (rank >= 41 && rank <= 60) return 0.010;
+    if (rank >= 61 && rank <= 100) return 0.006;
     return 0;
 }
 
@@ -122,9 +127,9 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 
 async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.25);
-    const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 300);
+    const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
-    const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 30);
+    const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 100);
 
     if (payments.length === 0) {
         await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
@@ -156,9 +161,9 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
 
 async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.35);
-    const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 400);
+    const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
-    const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 40);
+    const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 100);
 
     if (payments.length === 0) {
         await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });

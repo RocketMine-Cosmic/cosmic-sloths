@@ -45,20 +45,18 @@ Three leaderboards. Real crypto rewards.
 
 ### 📅 **Weekly Leaderboard**
 - Resets every Monday
-- **ALL ranked players earn OMENX** with dynamic scaling:
+- **Top 100 ranked players earn OMENX** with dynamic scaling:
   - Ranks 1–30: Top-tier rewards
   - Ranks 31–50: Mid-tier rewards
   - Ranks 51–100: Lower rewards
-  - Rank 100+: Minimal rewards
 - Stat upgrades reset each week
 
 ### 🗓️ **Seasonal Leaderboard**
 - 4-week cycles
-- **ALL ranked players earn OMENX** with dynamic scaling:
+- **Top 100 ranked players earn OMENX** with dynamic scaling:
   - Ranks 1–40: Top-tier rewards
   - Ranks 41–60: Mid-tier rewards
   - Ranks 61–100: Lower rewards
-  - Rank 100+: Minimal rewards
 - Seasonal upgrades reset end-of-season
 
 ### ♾️ **Endless Void**
