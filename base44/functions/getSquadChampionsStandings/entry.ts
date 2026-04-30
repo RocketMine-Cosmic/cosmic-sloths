@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         // Look up the seasonal pool to compute current Champions Pool size
         const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: periodId, period_type: 'seasonal' });
         const totalSpent = pools.length > 0 ? (pools[0].total_spent || 0) : 0;
-        const championsPool = Math.floor(totalSpent * CHAMPIONS_POOL_PCT * 100) / 100;
+        const championsPool = Math.floor(totalSpent * CHAMPIONS_POOL_PCT);
 
         // Aggregate squad performance for the season (resolved + in-progress wars both count for standings)
         const weekIds = getWeekIdsForSeason(periodId);
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
         const top10 = rows.slice(0, 10).map((r, i) => {
             const isProjectedWinner = r.eligible && i < numWinners;
             const projectedShare = isProjectedWinner
-                ? Math.floor(championsPool * shares[i] * 100) / 100
+                ? Math.floor(championsPool * shares[i])
                 : 0;
             return {
                 rank: i + 1,

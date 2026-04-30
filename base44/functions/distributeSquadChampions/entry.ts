@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: `No seasonal pool found for ${period_id}` }, { status: 404 });
         }
         const pool = pools[0];
-        const championsPool = Math.floor((pool.total_spent || 0) * CHAMPIONS_POOL_PCT * 100) / 100;
+        const championsPool = Math.floor((pool.total_spent || 0) * CHAMPIONS_POOL_PCT);
 
         // Idempotency: already distributed?
         const existingPayouts = await db.entities.SquadChampionsPayoutLog.filter({ period_id });
@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
 
         for (let i = 0; i < top3.length; i++) {
             const squad = top3[i];
-            const squadShare = Math.floor(championsPool * shares[i] * 100) / 100;
+            const squadShare = Math.floor(championsPool * shares[i]);
             const wallets = await fetchSquadMemberWallets(squad.squad_id);
 
             // Filter out blacklisted wallets defensively
@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
 
             const memberCount = eligibleWallets.length;
             const perMember = memberCount > 0
-                ? Math.floor((squadShare / memberCount) * 100) / 100
+                ? Math.floor(squadShare / memberCount)
                 : 0;
 
             const memberPayouts = eligibleWallets.map(w => ({
@@ -312,7 +312,7 @@ Deno.serve(async (req) => {
                 member_wallets: eligibleWallets,
             });
 
-            if (perMember >= 0.01) {
+            if (perMember >= 1) {
                 allMemberPayments.push(...memberPayouts);
             }
         }

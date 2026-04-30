@@ -53,7 +53,7 @@ export default function ChampionsPanel({ mySquadId }) {
                 </div>
                 <div className="flex items-baseline gap-2">
                     <OmenXIcon className="w-7 h-7" />
-                    <span className="text-3xl md:text-4xl font-black text-amber-100 tabular-nums">{championsPool.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-3xl md:text-4xl font-black text-amber-100 tabular-nums">{Math.floor(championsPool).toLocaleString()}</span>
                     <span className="text-xs text-amber-300 font-bold uppercase tracking-wider">OMENX</span>
                 </div>
                 <p className="text-[11px] text-amber-200/80 mt-2 leading-snug">
@@ -101,7 +101,7 @@ export default function ChampionsPanel({ mySquadId }) {
                                     <div className="text-[9px] text-slate-500 uppercase tracking-widest">points</div>
                                     {isTop3 && (
                                         <div className="mt-1 text-[10px] font-bold text-amber-200 bg-amber-950/50 border border-amber-500/40 rounded px-1.5 py-0.5 flex items-center gap-1 justify-end">
-                                            <OmenXIcon className="w-3 h-3" /> ~{s.projected_squad_share_omenx.toFixed(2)}
+                                            <OmenXIcon className="w-3 h-3" /> ~{Math.floor(s.projected_squad_share_omenx).toLocaleString()}
                                         </div>
                                     )}
                                 </div>

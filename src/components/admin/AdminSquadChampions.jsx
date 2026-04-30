@@ -111,10 +111,10 @@ export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
                         <div className="flex flex-wrap gap-3">
                             {[
                                 { label: 'Season', value: previewData.period_id, color: 'text-white' },
-                                { label: 'Pool Total', value: `${(previewData.pool_total_spent || 0).toFixed(2)} OMENX`, color: 'text-white' },
-                                { label: 'Champions Pool (5%)', value: `${(previewData.champions_pool_omenx || 0).toFixed(2)} OMENX`, color: 'text-amber-300' },
+                                { label: 'Pool Total', value: `${Math.floor(previewData.pool_total_spent || 0).toLocaleString()} OMENX`, color: 'text-white' },
+                                { label: 'Champions Pool (5%)', value: `${Math.floor(previewData.champions_pool_omenx || 0).toLocaleString()} OMENX`, color: 'text-amber-300' },
                                 { label: 'Eligible Squads', value: previewData.eligible_squads, color: 'text-emerald-400' },
-                                { label: 'Total Payout', value: `${(previewData.total_payout_omenx || 0).toFixed(2)} OMENX`, color: 'text-emerald-400' },
+                                { label: 'Total Payout', value: `${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMENX`, color: 'text-emerald-400' },
                                 { label: 'Recipients', value: previewData.total_member_payouts, color: 'text-white' },
                             ].map(s => (
                                 <div key={s.label} className="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
@@ -151,8 +151,8 @@ export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <div className="text-amber-300 font-mono font-bold flex items-center gap-1 justify-end"><OmenXIcon className="w-4 h-4" /> {sq.squad_share_omenx.toFixed(2)}</div>
-                                                    <div className="text-[9px] text-slate-500 uppercase">~{sq.per_member_omenx.toFixed(2)}/member</div>
+                                                    <div className="text-amber-300 font-mono font-bold flex items-center gap-1 justify-end"><OmenXIcon className="w-4 h-4" /> {Math.floor(sq.squad_share_omenx).toLocaleString()}</div>
+                                                    <div className="text-[9px] text-slate-500 uppercase">~{Math.floor(sq.per_member_omenx).toLocaleString()}/member</div>
                                                 </div>
                                             </div>
                                         );
@@ -202,7 +202,7 @@ export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
                 </h3>
                 <p className="text-xs text-slate-400 mb-3">
                     {previewData
-                        ? `Will pay ${previewData.total_member_payouts || 0} members ${(previewData.total_payout_omenx || 0).toFixed(2)} OMENX total for ${previewData.period_id}.`
+                        ? `Will pay ${previewData.total_member_payouts || 0} members ${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMENX total for ${previewData.period_id}.`
                         : 'Run a preview first.'}
                 </p>
                 <button
