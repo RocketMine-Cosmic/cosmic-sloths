@@ -2,21 +2,32 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SettingsModal from './SettingsModal';
+import PlayerStatsPanel from './PlayerStatsPanel';
 
-export default function PauseModal({ onResume, onQuit, onRestart, onHideHud }) {
+export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef }) {
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
+    const [showStats, setShowStats] = useState(false);
 
     return (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
             <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-slate-900 border-2 border-cyan-500 p-6 md:p-8 rounded-xl max-w-sm w-full text-center"
+                className="bg-slate-900 border-2 border-cyan-500 p-6 md:p-8 rounded-xl max-w-sm w-full text-center my-auto"
             >
-                <h2 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-8 font-mono">PAUSED</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-4 font-mono">PAUSED</h2>
+
+                <button
+                    onClick={() => setShowStats(s => !s)}
+                    className="text-xs text-cyan-300 hover:text-cyan-200 underline underline-offset-2 mb-4"
+                >
+                    {showStats ? 'Hide live build stats' : 'Show live build stats'}
+                </button>
+
+                {showStats && <PlayerStatsPanel engineRef={engineRef} />}
                 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 mt-4">
                     <button
                         onClick={onResume}
                         className="w-full bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"

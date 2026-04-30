@@ -6,7 +6,39 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
-export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null }) {
+// Maps an upgrade.stat key to a friendly label, the live value on player,
+// and how to format it. Returns null for upgrades without a clean numeric stat
+// (e.g. weapon picks — those are previewed differently).
+function getStatPreview(upgrade, player) {
+    if (!upgrade || upgrade.type !== 'passive' || !player) return null;
+    const stat = upgrade.stat;
+    const map = {
+        damageMult:    { label: 'Damage',      format: (v) => `${Math.round(v * 100)}%`, mode: 'mult' },
+        speedMult:     { label: 'Move Speed',  format: (v) => `${Math.round(v * 100)}%`, mode: 'mult' },
+        cooldownMult:  { label: 'Cooldown',    format: (v) => `${Math.round(v * 100)}%`, mode: 'mult', lowerBetter: true },
+        areaMult:      { label: 'Area',        format: (v) => `${Math.round(v * 100)}%`, mode: 'mult' },
+        projSpeedMult: { label: 'Proj. Speed', format: (v) => `${Math.round(v * 100)}%`, mode: 'mult' },
+        goldMult:      { label: 'Gold',        format: (v) => `${Math.round(v * 100)}%`, mode: 'mult' },
+        xpMult:        { label: 'XP',          format: (v) => `${Math.round(v * 100)}%`, mode: 'mult' },
+        magnetRange:   { label: 'Magnet',      format: (v) => `${Math.round(v)}`,         mode: 'flat' },
+        regen:         { label: 'Regen/s',     format: (v) => v.toFixed(1),               mode: 'flat' },
+        armor:         { label: 'Armor',       format: (v) => `${Math.round(v)}`,         mode: 'flat' },
+        luck:          { label: 'Luck',        format: (v) => `${Math.round(v)}`,         mode: 'flat' },
+        maxHp:         { label: 'Max HP',      format: (v) => `${Math.round(v)}`,         mode: 'flat' },
+    };
+    const entry = map[stat];
+    if (!entry) return null;
+    const before = Number(player[stat] || 0);
+    const after = before + Number(upgrade.value || 0);
+    return {
+        label: entry.label,
+        before: entry.format(before),
+        after: entry.format(after),
+        isGain: entry.lowerBetter ? upgrade.value < 0 : upgrade.value > 0,
+    };
+}
+
+export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null, engineRef }) {
     // Each tier has 3 uses (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
     const banishTier = banishCount < 3 ? 1 : banishCount < 6 ? 2 : 3;
     const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
@@ -124,6 +156,20 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                             <div className="text-xs md:text-sm text-slate-300 flex-1">
                                                 {choice.desc}
                                             </div>
+                                            {(() => {
+                                                const preview = getStatPreview(choice, engineRef?.current?.player);
+                                                if (!preview) return null;
+                                                return (
+                                                    <div className="mt-2 bg-slate-950/60 border border-slate-700 rounded px-2 py-1 text-[10px] md:text-xs flex items-center justify-between">
+                                                        <span className="text-slate-400 font-bold uppercase tracking-wider">{preview.label}</span>
+                                                        <div className="flex items-baseline gap-1.5 font-mono">
+                                                            <span className="text-slate-500">{preview.before}</span>
+                                                            <span className="text-slate-600">→</span>
+                                                            <span className={`font-bold ${preview.isGain ? 'text-emerald-400' : 'text-red-400'}`}>{preview.after}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
