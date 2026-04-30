@@ -29,8 +29,22 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
     const tier = getArenaTier(arenaId);
     
     if (!boss.currentPhase) boss.currentPhase = 1;
-    
-    if (boss.hp < boss.maxHp * 0.1 && boss.currentPhase < 3) {
+
+    // World boss uses a per-run TIME-based phase trigger so late joiners don't
+    // spawn into Phase 3 just because cloud HP is already drained. Other bosses
+    // keep the original HP-based logic.
+    if (boss.isWorldBoss) {
+        boss.runTime = (boss.runTime || 0) + dt;
+        if (boss.runTime > 120 && boss.currentPhase < 3) {
+            boss.currentPhase = 3;
+            addDamageText(boss.x, boss.y - boss.radius - 50, '⚠️ ENRAGE: MAXIMAL OVERDRIVE! ⚠️', '#ff0000');
+            addParticle(boss.x, boss.y, '#ff0000', 50, 'glow', 5);
+        } else if (boss.runTime > 60 && boss.currentPhase < 2) {
+            boss.currentPhase = 2;
+            addDamageText(boss.x, boss.y - boss.radius - 50, '⚠️ PHASE 2 INITIATED! ⚠️', '#ffaa00');
+            addParticle(boss.x, boss.y, '#ffaa00', 30, 'glow', 4);
+        }
+    } else if (boss.hp < boss.maxHp * 0.1 && boss.currentPhase < 3) {
         boss.currentPhase = 3;
         addDamageText(boss.x, boss.y - boss.radius - 50, '⚠️ CRITICAL HEALTH: MAXIMAL OVERDRIVE! ⚠️', '#ff0000');
         addParticle(boss.x, boss.y, '#ff0000', 50, 'glow', 5);
