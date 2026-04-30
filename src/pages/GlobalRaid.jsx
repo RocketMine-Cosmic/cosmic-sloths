@@ -214,11 +214,8 @@ export default function GlobalRaid({ isCarousel }) {
             return;
         }
         
-        const currentSave = SaveManager.load();
-        if (!currentSave.raidRuns) currentSave.raidRuns = {};
-        currentSave.raidRuns[todayDate] = (currentSave.raidRuns[todayDate] || 0) + 1;
-        SaveManager.save(currentSave);
-        
+        // Note: raid run counter is incremented in pages/Game.jsx initGame()
+        // so all entry paths (Launch, Try Again, etc.) are counted once.
         SoundManager.playUIClick();
         navigate('/game', { state: { characterId: selectedChar, arenaId: 'world_boss_arena', difficultyId: 'normal', isEndless: false, worldBossId: worldBossData?.boss_id, worldBossName: worldBossData?.name } });
     };

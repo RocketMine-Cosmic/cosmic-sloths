@@ -89,6 +89,15 @@ export default function Game() {
             
             const save = SaveManager.load();
 
+            // Increment daily raid-run counter when a raid run starts (covers Try Again
+            // and any other entry path that bypasses GlobalRaid's launch handler).
+            if (arenaId === 'world_boss_arena') {
+                const todayDate = new Date().toISOString().split('T')[0];
+                if (!save.raidRuns) save.raidRuns = {};
+                save.raidRuns[todayDate] = (save.raidRuns[todayDate] || 0) + 1;
+                SaveManager.save(save);
+            }
+
         const saveScore = async (stats, isVictory) => {
             try {
                     const user = getOmenXUserSync();
