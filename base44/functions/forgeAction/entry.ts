@@ -41,6 +41,23 @@ function getToday() {
     return new Date().toISOString().slice(0, 10);
 }
 
+// Rotate across all 9 balance API keys (each 100 req/min) so a single rate-limited
+// key doesn't make ownsCharacter fail and block the player from forging augments.
+function getBalanceKeys() {
+    const keys = [
+        Deno.env.get('OMENX_BALANCE_API_KEY'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_2'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_3'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_4'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_5'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_6'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_7'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_8'),
+        Deno.env.get('OMENX_BALANCE_API_KEY_9'),
+    ].filter(Boolean);
+    return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
+}
+
 async function ownsCharacter(save, walletAddress, charId) {
     if (charId === 'neobyte') return true;
     const unlocked = save.unlockedCharacters || ['neobyte'];
@@ -48,13 +65,20 @@ async function ownsCharacter(save, walletAddress, charId) {
     try {
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
-        const res = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
-            headers: { 'Authorization': `Bearer ${Deno.env.get('OMENX_BALANCE_API_KEY')}` },
-        });
-        if (!res.ok) return false;
-        const data = await res.json();
-        const nfts = data?.nfts || [];
-        return nfts.some(nft => (nft?.metadata?.name || '').toLowerCase() === charId);
+        const keys = getBalanceKeys();
+        for (const key of keys) {
+            const res = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
+                headers: { 'Authorization': `Bearer ${key}` },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const nfts = data?.nfts || [];
+                return nfts.some(nft => (nft?.metadata?.name || '').toLowerCase() === charId);
+            }
+            // Retry only on rate-limit / server errors. Other 4xx → genuine miss.
+            if (res.status !== 429 && res.status < 500) return false;
+        }
+        return false;
     } catch {
         return false;
     }

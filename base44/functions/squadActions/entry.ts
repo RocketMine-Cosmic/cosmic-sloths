@@ -30,6 +30,18 @@ function getTier(level, table) {
     return tier;
 }
 
+// Verify the caller is the leader of the given squad. Returns true if so,
+// otherwise false. Used to gate squad-management actions (kick, settings,
+// transfer leadership) so any random member can't mess with the squad.
+async function isCallerLeader(base44, walletAddress, squadId) {
+    if (!walletAddress || !squadId) return false;
+    const records = await base44.asServiceRole.entities.SquadMember.filter({
+        squad_id: squadId,
+        wallet_address: walletAddress,
+    });
+    return records.length > 0 && records[0].role === 'leader';
+}
+
 // Grants gold/fragments directly to the player's cloud PlayerSave so the
 // reward grant is server-authoritative and can't be tampered with by the client.
 async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
@@ -148,6 +160,19 @@ Deno.serve(async (req) => {
             const { targetMemberId, squadId } = body;
             if (!targetMemberId || !squadId) return Response.json({ error: 'Couldn\'t kick this member — please refresh and try again.' }, { status: 400 });
 
+            // Only the leader can kick members.
+            if (!(await isCallerLeader(base44, walletAddress, squadId))) {
+                return Response.json({ error: 'Only the squad leader can kick members.' }, { status: 403 });
+            }
+
+            // Don't let the leader kick themselves via this endpoint (use 'leave' for that).
+            try {
+                const target = await base44.asServiceRole.entities.SquadMember.get(targetMemberId);
+                if (target && target.wallet_address === walletAddress) {
+                    return Response.json({ error: 'Use "leave squad" to remove yourself.' }, { status: 400 });
+                }
+            } catch {}
+
             await base44.asServiceRole.entities.SquadMember.delete(targetMemberId);
 
             // Decrement member count
@@ -181,15 +206,26 @@ Deno.serve(async (req) => {
             const { targetMemberId, squadId } = body;
             if (!targetMemberId || !squadId) return Response.json({ error: 'Couldn\'t transfer leadership — please refresh and try again.' }, { status: 400 });
 
-            // Find current leader's member record by squad + wallet
+            // Only the current leader can transfer leadership.
             const currentLeaderRecords = await base44.asServiceRole.entities.SquadMember.filter({
                 squad_id: squadId,
                 wallet_address: walletAddress
             });
-            if (currentLeaderRecords.length > 0) {
-                await base44.asServiceRole.entities.SquadMember.update(currentLeaderRecords[0].id, { role: 'member' });
+            if (currentLeaderRecords.length === 0 || currentLeaderRecords[0].role !== 'leader') {
+                return Response.json({ error: 'Only the current squad leader can transfer leadership.' }, { status: 403 });
             }
 
+            // Sanity-check the target is a real member of the same squad
+            try {
+                const target = await base44.asServiceRole.entities.SquadMember.get(targetMemberId);
+                if (!target || target.squad_id !== squadId) {
+                    return Response.json({ error: 'Target is not a member of this squad.' }, { status: 400 });
+                }
+            } catch {
+                return Response.json({ error: 'Target is not a member of this squad.' }, { status: 400 });
+            }
+
+            await base44.asServiceRole.entities.SquadMember.update(currentLeaderRecords[0].id, { role: 'member' });
             await base44.asServiceRole.entities.SquadMember.update(targetMemberId, { role: 'leader' });
 
             return Response.json({ success: true, newLeaderMemberId: targetMemberId });
@@ -198,6 +234,11 @@ Deno.serve(async (req) => {
         if (action === 'saveSettings') {
             const { squadId, name, tag, description, icon } = body;
             if (!squadId) return Response.json({ error: 'Couldn\'t save squad settings — please refresh and try again.' }, { status: 400 });
+
+            // Only the leader can change squad settings.
+            if (!(await isCallerLeader(base44, walletAddress, squadId))) {
+                return Response.json({ error: 'Only the squad leader can change squad settings.' }, { status: 403 });
+            }
 
             await base44.asServiceRole.entities.Squad.update(squadId, {
                 name: name?.trim(),
@@ -253,10 +294,40 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'resetPeriods') {
+            // Restricted to ONLY the period-reset fields. Previously trusted the client's
+            // `updateData` blob, which let any caller bump weekly_kills, level, etc.
             const { squadId, updateData } = body;
-            if (!squadId) return Response.json({ error: 'Couldn\'t update squad — please refresh and try again.' }, { status: 400 });
+            if (!squadId || !updateData) return Response.json({ error: 'Couldn\'t update squad — please refresh and try again.' }, { status: 400 });
 
-            await base44.asServiceRole.entities.Squad.update(squadId, updateData);
+            // Verify caller is actually a member of this squad (any role is fine — daily/weekly
+            // reset triggers naturally on the client whoever opens the page first).
+            const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({
+                squad_id: squadId,
+                wallet_address: walletAddress
+            });
+            if (memberRecords.length === 0) {
+                return Response.json({ error: 'You\'re not a member of this squad.' }, { status: 403 });
+            }
+
+            // Only allow the legitimate period-reset fields. Anything else is silently dropped.
+            const ALLOWED_FIELDS = new Set(['daily_kills', 'current_day', 'weekly_kills', 'current_week']);
+            const safePatch = {};
+            for (const [k, v] of Object.entries(updateData)) {
+                if (!ALLOWED_FIELDS.has(k)) continue;
+                // Kill counters MUST be reset to 0. Date/week strings pass through as-is.
+                if (k === 'daily_kills' || k === 'weekly_kills') {
+                    if (Number(v) !== 0) continue;
+                    safePatch[k] = 0;
+                } else {
+                    safePatch[k] = v;
+                }
+            }
+
+            if (Object.keys(safePatch).length === 0) {
+                return Response.json({ error: 'No valid reset fields supplied.' }, { status: 400 });
+            }
+
+            await base44.asServiceRole.entities.Squad.update(squadId, safePatch);
 
             return Response.json({ success: true });
         }
