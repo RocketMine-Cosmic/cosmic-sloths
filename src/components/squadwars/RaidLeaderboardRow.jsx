@@ -11,16 +11,16 @@ export default function RaidLeaderboardRow({ entry, rank, isMine }) {
     const style = rankStyles[rank] || { color: 'text-slate-400', bg: 'bg-slate-900/60 border-slate-700' };
 
     return (
-        <div className={`flex items-center gap-3 p-3 rounded-lg border ${style.bg} ${isMine ? 'ring-2 ring-cyan-400/50' : ''}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${style.color} bg-slate-950/60 shrink-0`}>
+        <div className={`flex items-center gap-2 md:gap-3 p-2.5 md:p-3 rounded-lg border ${style.bg} ${isMine ? 'ring-2 ring-cyan-400/50' : ''}`}>
+            <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-xs md:text-sm ${style.color} bg-slate-950/60 shrink-0`}>
                 #{rank}
             </div>
-            <span className="text-2xl shrink-0 w-9 h-9 inline-flex items-center justify-center overflow-hidden rounded-md bg-slate-900">
+            <span className="text-xl md:text-2xl shrink-0 w-8 h-8 md:w-9 md:h-9 inline-flex items-center justify-center overflow-hidden rounded-md bg-slate-900">
                 {entry.squad_icon?.startsWith('http') ? <img src={entry.squad_icon} className="w-full h-full object-cover" alt="" /> : (entry.squad_icon || '🛡️')}
             </span>
             <div className="flex-1 min-w-0">
-                <div className="font-bold text-white text-sm flex items-center gap-2">
-                    <span className="truncate">{entry.squad_name}</span>
+                <div className="font-bold text-white text-xs md:text-sm flex items-center gap-1.5 flex-wrap">
+                    <span className="truncate min-w-0">{entry.squad_name}</span>
                     <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 rounded shrink-0">[{entry.squad_tag}]</span>
                     {isMine && <span className="text-[10px] bg-cyan-900 text-cyan-300 px-1.5 rounded shrink-0">YOU</span>}
                 </div>
@@ -29,11 +29,11 @@ export default function RaidLeaderboardRow({ entry, rank, isMine }) {
                 </div>
             </div>
             <div className="text-right shrink-0">
-                <div className="text-base md:text-lg font-black text-rose-300 tabular-nums flex items-center gap-1 justify-end">
-                    <Flame className="w-4 h-4 text-rose-500" />
+                <div className="text-sm md:text-lg font-black text-rose-300 tabular-nums flex items-center gap-1 justify-end">
+                    <Flame className="w-3.5 h-3.5 md:w-4 md:h-4 text-rose-500" />
                     {entry.total_damage.toLocaleString()}
                 </div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest">damage</div>
+                <div className="text-[9px] md:text-[10px] text-slate-500 uppercase tracking-widest">damage</div>
             </div>
         </div>
     );

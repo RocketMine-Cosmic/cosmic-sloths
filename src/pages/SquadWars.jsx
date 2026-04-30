@@ -160,7 +160,7 @@ export default function SquadWars({ isCarousel }) {
                     <CurrencyHeader />
                 </header>
 
-                {/* Tabs */}
+                {/* Tabs — icon-only on mobile (label below), full label on md+ */}
                 <div className="grid grid-cols-5 gap-1 md:gap-1.5 mb-4 shrink-0">
                     {[
                         { id: 'myWar', label: 'My War', icon: Swords },
@@ -174,12 +174,12 @@ export default function SquadWars({ isCarousel }) {
                         return (
                             <button key={tab.id}
                                 onClick={() => { SoundManager.playUIClick(); setActiveTab(tab.id); }}
-                                className={`flex items-center justify-center gap-1 md:gap-1.5 px-1.5 md:px-3 py-2 rounded-lg font-bold text-[11px] md:text-sm transition-all min-w-0 ${
+                                className={`flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 px-1 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-[10px] md:text-sm transition-all min-w-0 ${
                                     isActive ? 'bg-red-600/30 border border-red-400 text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.3)]'
                                              : 'bg-slate-900/60 border border-slate-700 text-slate-400 hover:text-white'
                                 }`}>
-                                <Icon className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate md:hidden">{tab.label}</span>
+                                <Icon className="w-4 h-4 md:w-3.5 md:h-3.5 shrink-0" />
+                                <span className="md:hidden leading-none">{tab.label}</span>
                                 <span className="truncate hidden md:inline">{tab.longLabel || tab.label}</span>
                             </button>
                         );
