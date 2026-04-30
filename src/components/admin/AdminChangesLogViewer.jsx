@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Activity, Settings, Zap, Shield, Filter } from 'lucide-react';
 import moment from 'moment';
-import AdminLogDetailsSummary from './AdminLogDetailsSummary';
+import AdminLogDetailsSummary from './AdminLogDetailsSummary.jsx';
 
 const ACTION_ICONS = {
     sku_update: <Settings className="w-4 h-4 text-blue-400" />,
