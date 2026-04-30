@@ -518,7 +518,7 @@ export default function Game() {
                 _suppressModal: true,
             });
         }
-        navigate(isRaid ? '/global-raid' : '/', isRaid ? undefined : { state: { slide: 1 } });
+        navigate(isRaid ? '/?slide=10' : '/', { state: { slide: isRaid ? 10 : 1 } });
     };
 
     const handleRevive = () => {

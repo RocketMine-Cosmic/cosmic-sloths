@@ -42,7 +42,7 @@ export default function GameOverModal({ stats }) {
                             return (
                                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
                                     <button
-                                        onClick={() => navigate(isRaid ? '/global-raid' : '/', isRaid ? undefined : { state: { slide: 1 } })}
+                                        onClick={() => navigate(isRaid ? '/?slide=10' : '/', isRaid ? { state: { slide: 10 } } : { state: { slide: 1 } })}
                                         className="bg-slate-800 hover:bg-slate-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors border border-slate-600 text-sm md:text-base w-full sm:w-auto"
                                     >
                                         {isRaid ? 'Exit to Global Raid' : 'Sloth Lounge'}
