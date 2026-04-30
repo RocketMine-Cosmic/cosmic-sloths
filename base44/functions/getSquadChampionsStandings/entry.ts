@@ -35,6 +35,27 @@ function getWeekIdsForSeason(seasonId) {
     return weeks;
 }
 
+// End of the season = end of the last ISO week (Sunday 23:59:59.999 UTC).
+function getSeasonEndIso(seasonId) {
+    const m = /^(\d{4})-S(\d+)$/.exec(seasonId);
+    if (!m) return null;
+    const year = parseInt(m[1], 10);
+    const sNum = parseInt(m[2], 10);
+    const lastWeek = sNum * 4;
+    // ISO week N: find its Monday by anchoring to Jan 1 then adding (N-1)*7 days from week 1's Monday.
+    const jan1 = new Date(Date.UTC(year, 0, 1));
+    const jan1Day = jan1.getUTCDay() || 7; // 1..7 (Mon..Sun)
+    // Monday of ISO week 1
+    const week1Monday = new Date(jan1);
+    week1Monday.setUTCDate(jan1.getUTCDate() - (jan1Day - 1) + (jan1Day <= 4 ? 0 : 7));
+    const lastWeekMonday = new Date(week1Monday);
+    lastWeekMonday.setUTCDate(week1Monday.getUTCDate() + (lastWeek - 1) * 7);
+    const seasonEnd = new Date(lastWeekMonday);
+    seasonEnd.setUTCDate(lastWeekMonday.getUTCDate() + 7);
+    seasonEnd.setUTCMilliseconds(seasonEnd.getUTCMilliseconds() - 1);
+    return seasonEnd.toISOString();
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -85,11 +106,17 @@ Deno.serve(async (req) => {
         const rows = [];
         for (const sq of bySquad.values()) {
             const points = sq.wins * 3 + sq.ties * 1 + sq.byes * 1;
-            // Use cached display fields from the war record (avoid extra Squad.get N+1)
+            // Look up current member count for per-member projections
+            let memberCount = 0;
+            try {
+                const fresh = await base44.asServiceRole.entities.Squad.get(sq.squad_id);
+                if (fresh) memberCount = fresh.member_count || 0;
+            } catch {}
             rows.push({
                 ...sq,
                 ranking_points: points,
-                eligible: sq.wars_fought >= MIN_WARS_FOUGHT,
+                member_count: memberCount,
+                eligible: sq.wars_fought >= MIN_WARS_FOUGHT && memberCount >= MIN_SQUAD_MEMBERS,
             });
         }
 
@@ -112,6 +139,9 @@ Deno.serve(async (req) => {
             const projectedShare = isProjectedWinner
                 ? Math.floor(championsPool * shares[i])
                 : 0;
+            const projectedPerMember = isProjectedWinner && r.member_count > 0
+                ? Math.floor(projectedShare / r.member_count)
+                : 0;
             return {
                 rank: i + 1,
                 squad_id: r.squad_id,
@@ -122,8 +152,10 @@ Deno.serve(async (req) => {
                 wins: r.wins, losses: r.losses, ties: r.ties, byes: r.byes,
                 total_kills: r.total_kills,
                 wars_fought: r.wars_fought,
+                member_count: r.member_count,
                 eligible: r.eligible,
                 projected_squad_share_omenx: projectedShare,
+                projected_per_member_omenx: projectedPerMember,
             };
         });
 
@@ -133,6 +165,8 @@ Deno.serve(async (req) => {
             pool_total_spent: totalSpent,
             champions_pool_omenx: championsPool,
             min_wars_for_eligibility: MIN_WARS_FOUGHT,
+            min_squad_members: MIN_SQUAD_MEMBERS,
+            season_end_iso: getSeasonEndIso(periodId),
             standings: top10,
         });
     } catch (error) {

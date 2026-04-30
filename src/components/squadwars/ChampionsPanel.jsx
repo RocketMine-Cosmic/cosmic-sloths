@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Crown, Trophy, Medal, AlertTriangle } from 'lucide-react';
+import { Crown, Trophy, Medal, AlertTriangle, Users } from 'lucide-react';
+import SeasonCountdown from './SeasonCountdown';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -46,7 +47,7 @@ export default function ChampionsPanel({ mySquadId }) {
         <div className="space-y-3">
             {/* Pool banner */}
             <div className="bg-gradient-to-r from-amber-950/50 via-yellow-950/50 to-amber-950/50 border-2 border-amber-500/50 rounded-xl p-4 shadow-[0_0_20px_rgba(251,191,36,0.2)]">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <Crown className="w-6 h-6 text-amber-300" />
                     <h3 className="text-lg font-black uppercase tracking-widest text-amber-200">Champions Pool</h3>
                     <span className="text-[10px] bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded font-bold">{data.period_id}</span>
@@ -56,13 +57,16 @@ export default function ChampionsPanel({ mySquadId }) {
                     <span className="text-3xl md:text-4xl font-black text-amber-100 tabular-nums">{Math.floor(championsPool).toLocaleString()}</span>
                     <span className="text-xs text-amber-300 font-bold uppercase tracking-wider">OMENX</span>
                 </div>
-                <p className="text-[11px] text-amber-200/80 mt-2 leading-snug">
+                <div className="mt-3">
+                    <SeasonCountdown endIso={data.season_end_iso} />
+                </div>
+                <p className="text-[11px] text-amber-200/80 mt-3 leading-snug">
                     5% of the seasonal OMENX pool is reserved for the top squads. Distributed at season end:
                     <strong className="text-amber-100"> 🥇 50%</strong> /
                     <strong className="text-amber-100"> 🥈 30%</strong> /
                     <strong className="text-amber-100"> 🥉 20%</strong>
                 </p>
-                <p className="text-[10px] text-amber-300/70 mt-1">Eligibility: ≥ {data.min_wars_for_eligibility} wars fought + ≥ 2 squad members. Pool grows as players spend OMENX during the season.</p>
+                <p className="text-[10px] text-amber-300/70 mt-1">Eligibility: ≥ {data.min_wars_for_eligibility} wars fought + ≥ {data.min_squad_members || 2} squad members. Pool grows as players spend OMENX during the season.</p>
             </div>
 
             {/* Standings */}
@@ -92,16 +96,26 @@ export default function ChampionsPanel({ mySquadId }) {
                                         {isMine && <span className="text-[10px] bg-cyan-900 text-cyan-300 px-1.5 rounded shrink-0">YOU</span>}
                                         {!s.eligible && <span className="text-[10px] bg-red-900/50 text-red-300 px-1.5 rounded shrink-0 flex items-center gap-1"><AlertTriangle className="w-2.5 h-2.5" /> Need {data.min_wars_for_eligibility}+ wars</span>}
                                     </div>
-                                    <div className="text-[10px] text-slate-500 mt-0.5">
+                                    <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1 flex-wrap">
                                         <strong className="text-emerald-400">{s.wins}W</strong> · <strong className="text-rose-400">{s.losses}L</strong> · <strong className="text-slate-400">{s.ties}T</strong> · {s.total_kills.toLocaleString()} kills · {s.wars_fought} wars
+                                        {s.member_count > 0 && (
+                                            <span className="inline-flex items-center gap-0.5 text-slate-500">· <Users className="w-2.5 h-2.5" /> {s.member_count}</span>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="text-right shrink-0">
                                     <div className="text-lg font-black text-amber-300 tabular-nums">{s.ranking_points}</div>
                                     <div className="text-[9px] text-slate-500 uppercase tracking-widest">points</div>
                                     {isTop3 && (
-                                        <div className="mt-1 text-[10px] font-bold text-amber-200 bg-amber-950/50 border border-amber-500/40 rounded px-1.5 py-0.5 flex items-center gap-1 justify-end">
-                                            <OmenXIcon className="w-3 h-3" /> ~{Math.floor(s.projected_squad_share_omenx).toLocaleString()}
+                                        <div className="mt-1 space-y-0.5">
+                                            <div className="text-[10px] font-bold text-amber-200 bg-amber-950/50 border border-amber-500/40 rounded px-1.5 py-0.5 flex items-center gap-1 justify-end" title="Projected total to the squad">
+                                                <OmenXIcon className="w-3 h-3" /> ~{Math.floor(s.projected_squad_share_omenx).toLocaleString()}
+                                            </div>
+                                            {s.projected_per_member_omenx > 0 && (
+                                                <div className="text-[9px] text-amber-300/80 flex items-center gap-1 justify-end" title="Projected per-member share">
+                                                    <Users className="w-2.5 h-2.5" /> ~{s.projected_per_member_omenx.toLocaleString()}/member
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
