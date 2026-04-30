@@ -4,7 +4,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Read-only — used by the Squad Wars UI to show live progress.
 // Auth: any signed-in user.
 
-const CHAMPIONS_POOL_PCT = 0.05;
+const CHAMPIONS_POOL_PCT = 0.10;
 const TOP_3_SHARES = [0.5, 0.3, 0.2];
 const MIN_WARS_FOUGHT = 2;
 const MIN_SQUAD_MEMBERS = 2;

@@ -337,7 +337,7 @@ export default function Leaderboard() {
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
                                 const isEligibleForReward = view === 'weekly' || view === 'seasonal';
                                 const rewardAmount = view === 'weekly' 
-                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.25, scores.length)
+                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.20, scores.length)
                                     : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.30, scores.length);
 
                                 if (view === 'squads') {

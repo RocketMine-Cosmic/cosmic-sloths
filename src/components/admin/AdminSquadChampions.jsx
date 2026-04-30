@@ -71,7 +71,7 @@ export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
                     <Crown size={18} /> Squad Wars Champions Pool
                 </h2>
                 <p className="text-xs text-slate-300">
-                    Distributes <strong className="text-amber-300">5% of the seasonal OMENX pool</strong> to the top 3 squads of the previous season (50/30/20 split). Idempotent — safe to run multiple times.
+                    Distributes <strong className="text-amber-300">10% of the seasonal OMENX pool</strong> to the top 3 squads of the previous season (50/30/20 split). Idempotent — safe to run multiple times.
                 </p>
                 <ul className="text-[11px] text-slate-400 mt-2 space-y-0.5 list-disc list-inside">
                     <li>Eligibility: ≥ 2 wars fought + ≥ 2 squad members</li>
@@ -112,7 +112,7 @@ export default function AdminSquadChampions({ walletAddress: _walletAddress }) {
                             {[
                                 { label: 'Season', value: previewData.period_id, color: 'text-white' },
                                 { label: 'Pool Total', value: `${Math.floor(previewData.pool_total_spent || 0).toLocaleString()} OMENX`, color: 'text-white' },
-                                { label: 'Champions Pool (5%)', value: `${Math.floor(previewData.champions_pool_omenx || 0).toLocaleString()} OMENX`, color: 'text-amber-300' },
+                                { label: 'Champions Pool (10%)', value: `${Math.floor(previewData.champions_pool_omenx || 0).toLocaleString()} OMENX`, color: 'text-amber-300' },
                                 { label: 'Eligible Squads', value: previewData.eligible_squads, color: 'text-emerald-400' },
                                 { label: 'Total Payout', value: `${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMENX`, color: 'text-emerald-400' },
                                 { label: 'Recipients', value: previewData.total_member_payouts, color: 'text-white' },

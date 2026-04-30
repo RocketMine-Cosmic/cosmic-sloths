@@ -17,7 +17,7 @@ const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
-const CHAMPIONS_POOL_PCT = 0.05; // 5% of seasonal pool
+const CHAMPIONS_POOL_PCT = 0.10; // 10% of seasonal pool
 const TOP_3_SHARES = [0.5, 0.3, 0.2]; // 1st, 2nd, 3rd
 const MIN_WARS_FOUGHT = 2;
 const MIN_SQUAD_MEMBERS = 2;

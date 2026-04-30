@@ -456,7 +456,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="👑 Squad Wars Champions Pool" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-3">
-                    Beyond the weekly war prizes, <strong className="text-amber-400">5% of the entire seasonal OMENX pool</strong> is reserved for the squads who dominate the season. At the end of every 4-week season, the top 3 squads on the Champions leaderboard split this pool in <strong className="text-emerald-400">real OMENX</strong>, paid directly to every member's wallet.
+                    Beyond the weekly war prizes, <strong className="text-amber-400">10% of the entire seasonal OMENX pool</strong> is reserved for the squads who dominate the season. At the end of every 4-week season, the top 3 squads on the Champions leaderboard split this pool in <strong className="text-emerald-400">real OMENX</strong>, paid directly to every member's wallet.
                 </p>
                 <div className="bg-amber-950/30 border border-amber-700/40 rounded-xl p-4 mb-3">
                     <div className="font-bold text-amber-300 text-sm mb-2 flex items-center gap-2"><Award className="w-4 h-4" /> How squads are ranked</div>
