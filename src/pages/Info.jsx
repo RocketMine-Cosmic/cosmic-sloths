@@ -93,7 +93,7 @@ const TABS_CONTENT = {
                     Survive the full time limit of each sector to <strong className="text-green-400">win</strong>. As time progresses, enemies get stronger and more numerous. An optional <strong className="text-purple-400">Endless Void</strong> mode scales infinitely with boss fights every 3 minutes.
                 </p>
                 <div className="mt-3 bg-slate-900/40 rounded-lg p-3 border border-purple-700/50 text-xs text-slate-400">
-                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold, and the Gold you earn from bosses is <strong className="text-white">capped at 5,000 per run</strong>. Play <strong className="text-white">Sectors</strong> to farm Gold.
+                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold, and a single endless run can credit at most <strong className="text-white">5,000 Gold</strong> and <strong className="text-white">2,000 kills</strong> toward your account totals. Endless runs are also <strong className="text-white">excluded from OMENX leaderboard payouts</strong>. Play <strong className="text-white">Sectors</strong> to farm Gold.
                 </div>
             </SectionCard>
 
@@ -280,15 +280,38 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
                         <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Resets every <strong className="text-white">Monday</strong>. <strong className="text-white">All ranked players</strong> earn OMENX with dynamic scaling: top 30 earn the most, ranks 31–50 earn mid-tier rewards, ranks 51–100 earn lower, and beyond rank 100 earn minimal rewards. Weekly stat upgrades also reset.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. The <strong className="text-emerald-400">top 100 players</strong> share <strong className="text-white">20% of the weekly OMENX pool</strong>. Players outside the top 100 earn nothing, so push hard! Weekly stat upgrades also reset.</p>
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
+                            <div className="bg-amber-950/30 border border-amber-700/40 rounded px-2 py-1 flex justify-between"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
+                            <div className="bg-slate-800/50 border border-slate-600/40 rounded px-2 py-1 flex justify-between"><span className="text-slate-200">🥈 #2</span><span className="text-white">8%</span></div>
+                            <div className="bg-orange-950/30 border border-orange-700/40 rounded px-2 py-1 flex justify-between"><span className="text-orange-300">🥉 #3</span><span className="text-white">6%</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#4–10</span><span className="text-white">4% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">3% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">1.8% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#31–50</span><span className="text-white">1.2% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#51–100</span><span className="text-white">0.8% each</span></div>
+                        </div>
+                        <div className="text-[10px] text-slate-500 italic mt-2">Percentages are normalized so the top 100 always splits the full 20% pool. Endless Void runs are excluded from OMENX payouts.</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Runs for <strong className="text-white">4 weeks</strong>. <strong className="text-white">All ranked players</strong> earn OMENX with dynamic scaling: top 40 earn the most, ranks 41–60 earn mid-tier rewards, ranks 61–100 earn lower, and beyond rank 100 earn minimal rewards. Seasonal stat upgrades reset at end.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. The <strong className="text-emerald-400">top 100 players</strong> share <strong className="text-white">30% of the seasonal OMENX pool</strong>. Players outside the top 100 earn nothing. Seasonal stat upgrades reset at season end.</p>
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
+                            <div className="bg-amber-950/30 border border-amber-700/40 rounded px-2 py-1 flex justify-between"><span className="text-amber-300">🥇 #1</span><span className="text-white">8%</span></div>
+                            <div className="bg-slate-800/50 border border-slate-600/40 rounded px-2 py-1 flex justify-between"><span className="text-slate-200">🥈 #2</span><span className="text-white">6%</span></div>
+                            <div className="bg-orange-950/30 border border-orange-700/40 rounded px-2 py-1 flex justify-between"><span className="text-orange-300">🥉 #3</span><span className="text-white">5%</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#4–10</span><span className="text-white">3% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">2.5% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">2% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#31–40</span><span className="text-white">1.5% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#41–60</span><span className="text-white">1% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#61–100</span><span className="text-white">0.6% each</span></div>
+                        </div>
+                        <div className="text-[10px] text-slate-500 italic mt-2">Percentages are normalized so the top 100 always splits the full 30% pool. Endless Void runs are excluded.</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Note:</strong> Regular enemies don't drop Gold in Endless, and boss Gold is capped at 5,000 per run.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Gold is capped at 5,000/run and credited kills at 2,000/run.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -301,7 +324,7 @@ const TABS_CONTENT = {
                     Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier
                 </div>
                 <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-                    The <strong className="text-green-300">Sector Multiplier</strong> grows the further you push: ×1.0 in Sector 1, +0.2 per sector, up to ×2.0 in <strong className="text-purple-300">Endless Void</strong>. Beating the timer adds a flat <strong className="text-white">+5,000 Victory Bonus</strong>.
+                    The <strong className="text-green-300">Sector Multiplier</strong> grows the further you push: ×1.0 in Sector 1 (Station), +0.2 per sector up to ×1.8 in Singularity, then <strong className="text-purple-300">×2.0 in Endless Void</strong>. Beating the sector timer adds a flat <strong className="text-white">+5,000 Victory Bonus</strong>.
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-slate-700 mb-3 leading-relaxed">
                     <strong className="text-white">Difficulty doesn't directly multiply score</strong> — instead, harder difficulties grant more XP & Gold per run, which feed into the formula above. Hard = +100% XP/Gold, Cosmic = +200% XP/Gold.
