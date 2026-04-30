@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pause, Heart, CircleDollarSign } from 'lucide-react';
+import React, { useState } from 'react';
+import { Pause, Heart, CircleDollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -20,6 +20,17 @@ const stripOwnerPrefix = (name) => {
 };
 
 export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, boss = null, onPause, onSquadUltimate }) {
+    // Collapse loadout list by default on mobile so the pause button + top row stay visible.
+    // Players can tap the HP bar to expand and review their build.
+    const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
+
+    // Aggregate passives once so both the count badge and the expanded list use the same data.
+    const aggregatedPassives = Object.values(passives.reduce((acc, p) => {
+        if (!acc[p.id]) acc[p.id] = { ...p, level: 0 };
+        acc[p.id].level += 1;
+        return acc;
+    }, {}));
+
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -35,7 +46,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
     return (
         <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
             <div className="flex justify-between items-start gap-1 md:gap-4">
-                {/* Top Left: HP & Equipped — wider on mobile so weapon/passive names ("Cosmic Nap Beam", "Plasma Whip", etc.) aren't cut off mid-word. */}
+                {/* Top Left: HP & Equipped — collapsible on mobile so the loadout list doesn't push the pause button off-screen. */}
                 <div className="w-36 md:w-56 pointer-events-auto shrink-0 flex flex-col gap-2">
                     <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-red-500/30">
                         <div className="flex justify-between items-center mb-1 text-[9px] md:text-sm font-bold text-slate-200">
@@ -50,9 +61,24 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         </div>
                     </div>
 
+                    {/* Loadout toggle — tap to expand/collapse weapons + passives */}
+                    {(weapons.length > 0 || aggregatedPassives.length > 0) && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setLoadoutCollapsed(c => !c); }}
+                            className="bg-[#0b0416]/80 border border-slate-700 hover:border-cyan-500/60 rounded px-1.5 py-1 flex items-center justify-between gap-1 text-[9px] md:text-xs font-bold text-slate-300 transition-colors"
+                            title={loadoutCollapsed ? 'Show loadout' : 'Hide loadout'}
+                        >
+                            <span className="flex items-center gap-1.5">
+                                <span className="text-cyan-400">⚔ {weapons.length}</span>
+                                <span className="text-purple-400">✦ {aggregatedPassives.length}</span>
+                            </span>
+                            {loadoutCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+                        </button>
+                    )}
+
                     {/* Equipped Weapons */}
-                    {weapons.length > 0 && (
-                        <div className="flex flex-col gap-1 mt-1 md:mt-2">
+                    {!loadoutCollapsed && weapons.length > 0 && (
+                        <div className="flex flex-col gap-1">
                             {weapons.map(w => (
                                 <div key={w.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-cyan-500/30 rounded px-1.5 py-1 flex items-center justify-between gap-1 min-w-0">
                                     <div className="text-[9px] md:text-xs text-cyan-400 font-bold truncate flex-1 min-w-0" title={w.name}>{stripOwnerPrefix(w.name)}</div>
@@ -63,13 +89,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     )}
 
                     {/* Equipped Passives */}
-                    {passives.length > 0 && (
-                        <div className="flex flex-col gap-1 mt-1">
-                            {Object.values(passives.reduce((acc, p) => {
-                                if (!acc[p.id]) acc[p.id] = { ...p, level: 0 };
-                                acc[p.id].level += 1;
-                                return acc;
-                            }, {})).map(p => (
+                    {!loadoutCollapsed && aggregatedPassives.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                            {aggregatedPassives.map(p => (
                                 <div key={p.id} className="bg-[#0b0416]/60 backdrop-blur-sm border border-purple-500/30 rounded px-1.5 py-1 flex items-center justify-between gap-1 min-w-0">
                                     <div className="text-[9px] md:text-xs text-purple-400 font-bold truncate flex-1 min-w-0" title={p.name}>{stripOwnerPrefix(p.name)}</div>
                                     <div className="text-[7px] md:text-[10px] bg-purple-950/80 text-purple-200 px-1 rounded border border-purple-500/50 shrink-0">Lv.{p.level}</div>
