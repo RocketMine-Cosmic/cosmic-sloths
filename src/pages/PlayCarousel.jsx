@@ -27,20 +27,20 @@ import Titles from './Titles';
 
 const SLIDE_LABELS = [
     { name: 'Main Menu', color: 'text-white' },
-    { name: 'Sloth Lounge', color: 'text-cyan-300' },
-    { name: 'Mission Board', color: 'text-emerald-300' },
-    { name: 'Upgrade Lounge', color: 'text-fuchsia-300' },
-    { name: 'Hall of Fame', color: 'text-amber-300' },
+    { name: 'Sloth Command', color: 'text-cyan-300' },
+    { name: 'Star Ops', color: 'text-emerald-300' },
+    { name: 'Cosmic Armory', color: 'text-fuchsia-300' },
+    { name: 'Star Charts', color: 'text-amber-300' },
     { name: 'Sloth Squads', color: 'text-orange-300' },
-    { name: 'Cosmic Codex', color: 'text-rose-300' },
-    { name: 'Synergy Codex', color: 'text-pink-400' },
-    { name: 'Character Mastery', color: 'text-amber-500' },
-    { name: 'Leviathan Trials', color: 'text-red-400' },
-    { name: 'Global Raid', color: 'text-red-500' },
-    { name: 'NFT Collection', color: 'text-purple-300' },
-    { name: 'Pilot Profile', color: 'text-violet-300' },
-    { name: 'Space Jukebox', color: 'text-fuchsia-300' },
-    { name: 'Titles', color: 'text-amber-300' },
+    { name: 'Galactic Bestiary', color: 'text-rose-300' },
+    { name: 'Cosmic Codex', color: 'text-pink-400' },
+    { name: 'Pilot Mastery', color: 'text-amber-500' },
+    { name: 'Cosmic Mutations', color: 'text-red-400' },
+    { name: 'Galactic Raid', color: 'text-red-500' },
+    { name: 'Cosmic Vault', color: 'text-purple-300' },
+    { name: 'Pilot Dossier', color: 'text-violet-300' },
+    { name: 'Stellar Jukebox', color: 'text-fuchsia-300' },
+    { name: 'Star Callsigns', color: 'text-amber-300' },
 ];
 
 // Renders a slide ONLY when it's active or adjacent. Off-screen slides stay

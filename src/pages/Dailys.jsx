@@ -38,7 +38,7 @@ export default function Dailys({ isCarousel }) {
                             </button>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #34D399, #10B981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(52,211,153,0.5))' }}>
-                            <Target className="w-6 h-6 md:w-8 md:h-8 text-emerald-400" /> MISSION BOARD
+                            <Target className="w-6 h-6 md:w-8 md:h-8 text-emerald-400" /> STAR OPS
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Complete daily missions and bounties for rewards.</p>
                     </div>

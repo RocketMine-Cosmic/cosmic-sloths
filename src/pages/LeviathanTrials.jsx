@@ -60,17 +60,17 @@ export default function LeviathanTrials({ isCarousel }) {
                             </button>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #EF4444, #DC2626)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(239,68,68,0.5))' }}>
-                            <Skull className="w-6 h-6 md:w-8 md:h-8 text-red-500" /> LEVIATHAN TRIALS
+                            <Skull className="w-6 h-6 md:w-8 md:h-8 text-red-500" /> COSMIC MUTATIONS
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">
-                            Total Leviathans Slain: <span className="text-red-400 font-bold">{totalLeviathanKills}</span>
+                            Total Bosses Slain: <span className="text-red-400 font-bold">{totalLeviathanKills}</span>
                         </p>
                     </div>
                     <CurrencyHeader />
                 </header>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-                    <p className="text-slate-300 text-xs md:text-base">Toggle difficulty modifiers for Boss encounters to increase your rewards.</p>
+                    <p className="text-slate-300 text-xs md:text-base">Toggle cosmic mutations on Boss encounters to increase your rewards.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                         {BOSS_MODIFIERS.map(mod => {
                             const isActive = modifiers[mod.id];

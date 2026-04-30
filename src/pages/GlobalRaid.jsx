@@ -228,7 +228,7 @@ export default function GlobalRaid({ isCarousel }) {
                             </button>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #DC2626, #991B1B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(220,38,38,0.5))' }}>
-                            <Skull className="w-6 h-6 md:w-8 md:h-8 text-red-600" /> GLOBAL RAID
+                            <Skull className="w-6 h-6 md:w-8 md:h-8 text-red-600" /> GALACTIC RAID
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Join forces with all players globally.</p>
                     </div>

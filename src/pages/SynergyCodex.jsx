@@ -51,7 +51,7 @@ export default function SynergyCodex({ isCarousel }) {
                             </button>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #F43F5E, #E11D48)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(244,63,94,0.5))' }}>
-                            <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-rose-500" /> THE CODEX
+                            <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-rose-500" /> COSMIC CODEX
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">
                             Synergies · Evolutions

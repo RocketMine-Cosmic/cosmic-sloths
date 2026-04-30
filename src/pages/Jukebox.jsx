@@ -25,7 +25,7 @@ export default function Jukebox({ isCarousel }) {
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2 md:gap-3" style={{ background: 'linear-gradient(90deg, #D946EF, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(217,70,239,0.5))' }}>
                             <Disc3 className="w-7 h-7 md:w-9 md:h-9 text-fuchsia-400 animate-spin" style={{ animationDuration: '8s' }} />
-                            SPACE JUKEBOX
+                            STELLAR JUKEBOX
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Curate your cosmic soundtrack.</p>
                     </div>

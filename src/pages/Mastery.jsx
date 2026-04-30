@@ -50,7 +50,7 @@ export default function Mastery({ isCarousel }) {
                             </button>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #F59E0B, #D97706)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(245,158,11,0.5))' }}>
-                            <Award className="w-6 h-6 md:w-8 md:h-8 text-amber-500" /> MASTERY
+                            <Award className="w-6 h-6 md:w-8 md:h-8 text-amber-500" /> PILOT MASTERY
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">
                             Characters · Weapons

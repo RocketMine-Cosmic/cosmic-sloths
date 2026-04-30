@@ -14,9 +14,9 @@ const SLIDE_GROUPS = [
         border: 'border-cyan-500/30',
         slides: [
             { idx: 0, name: 'Main Menu', icon: '🚀', color: 'from-slate-700 to-slate-900', border: 'border-white/30' },
-            { idx: 1, name: 'Sloth Lounge', icon: '🦥', color: 'from-cyan-700 to-cyan-950', border: 'border-cyan-400/50' },
-            { idx: 2, name: 'Mission Board', icon: '🎯', color: 'from-emerald-700 to-emerald-950', border: 'border-emerald-400/50' },
-            { idx: 12, name: 'Pilot Profile', icon: '🪪', color: 'from-violet-700 to-violet-950', border: 'border-violet-400/50' },
+            { idx: 1, name: 'Sloth Command', icon: '🦥', color: 'from-cyan-700 to-cyan-950', border: 'border-cyan-400/50' },
+            { idx: 2, name: 'Star Ops', icon: '🎯', color: 'from-emerald-700 to-emerald-950', border: 'border-emerald-400/50' },
+            { idx: 12, name: 'Pilot Dossier', icon: '🪪', color: 'from-violet-700 to-violet-950', border: 'border-violet-400/50' },
         ],
     },
     {
@@ -25,10 +25,10 @@ const SLIDE_GROUPS = [
         accent: 'text-fuchsia-300',
         border: 'border-fuchsia-500/30',
         slides: [
-            { idx: 3, name: 'Upgrade Lounge', icon: '⚡', color: 'from-fuchsia-700 to-fuchsia-950', border: 'border-fuchsia-400/50' },
-            { idx: 8, name: 'Mastery', icon: '🎖️', color: 'from-amber-600 to-yellow-900', border: 'border-yellow-400/50' },
-            { idx: 14, name: 'Titles', icon: '🏅', color: 'from-amber-700 to-rose-950', border: 'border-amber-400/50' },
-            { idx: 11, name: 'NFT Collection', icon: '💎', color: 'from-purple-700 to-purple-950', border: 'border-purple-400/50' },
+            { idx: 3, name: 'Cosmic Armory', icon: '⚡', color: 'from-fuchsia-700 to-fuchsia-950', border: 'border-fuchsia-400/50' },
+            { idx: 8, name: 'Pilot Mastery', icon: '🎖️', color: 'from-amber-600 to-yellow-900', border: 'border-yellow-400/50' },
+            { idx: 14, name: 'Star Callsigns', icon: '🏅', color: 'from-amber-700 to-rose-950', border: 'border-amber-400/50' },
+            { idx: 11, name: 'Cosmic Vault', icon: '💎', color: 'from-purple-700 to-purple-950', border: 'border-purple-400/50' },
         ],
     },
     {
@@ -37,8 +37,8 @@ const SLIDE_GROUPS = [
         accent: 'text-rose-300',
         border: 'border-rose-500/30',
         slides: [
-            { idx: 9, name: 'Leviathan Trials', icon: '🐉', color: 'from-red-700 to-red-950', border: 'border-red-400/50' },
-            { idx: 10, name: 'Global Raid', icon: '⚔️', color: 'from-red-800 to-rose-950', border: 'border-rose-500/60' },
+            { idx: 9, name: 'Cosmic Mutations', icon: '🧬', color: 'from-red-700 to-red-950', border: 'border-red-400/50' },
+            { idx: 10, name: 'Galactic Raid', icon: '⚔️', color: 'from-red-800 to-rose-950', border: 'border-rose-500/60' },
         ],
     },
     {
@@ -48,7 +48,7 @@ const SLIDE_GROUPS = [
         border: 'border-orange-500/30',
         slides: [
             { idx: 5, name: 'Sloth Squads', icon: '👥', color: 'from-orange-700 to-orange-950', border: 'border-orange-400/50' },
-            { idx: 4, name: 'Hall of Fame', icon: '🏆', color: 'from-amber-700 to-amber-950', border: 'border-amber-400/50' },
+            { idx: 4, name: 'Star Charts', icon: '🏆', color: 'from-amber-700 to-amber-950', border: 'border-amber-400/50' },
         ],
     },
     {
@@ -57,9 +57,9 @@ const SLIDE_GROUPS = [
         accent: 'text-pink-300',
         border: 'border-pink-500/30',
         slides: [
-            { idx: 6, name: 'Cosmic Codex', icon: '📖', color: 'from-rose-700 to-rose-950', border: 'border-rose-400/50' },
-            { idx: 7, name: 'Synergy Codex', icon: '✨', color: 'from-pink-700 to-pink-950', border: 'border-pink-400/50' },
-            { idx: 13, name: 'Jukebox', icon: '🎵', color: 'from-fuchsia-600 to-purple-950', border: 'border-fuchsia-400/50' },
+            { idx: 6, name: 'Galactic Bestiary', icon: '📖', color: 'from-rose-700 to-rose-950', border: 'border-rose-400/50' },
+            { idx: 7, name: 'Cosmic Codex', icon: '✨', color: 'from-pink-700 to-pink-950', border: 'border-pink-400/50' },
+            { idx: 13, name: 'Stellar Jukebox', icon: '🎵', color: 'from-fuchsia-600 to-purple-950', border: 'border-fuchsia-400/50' },
         ],
     },
 ];

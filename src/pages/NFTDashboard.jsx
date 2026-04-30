@@ -72,7 +72,7 @@ export default function NFTDashboard({ isCarousel }) {
                             </button>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest" style={{ background: 'linear-gradient(90deg, #A78BFA, #EC4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(168,85,247,0.5))' }}>
-                            NFT COLLECTION
+                            COSMIC VAULT
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">View your NFTs and exclusive perks.</p>
                         <div className="mt-2 md:mt-3">

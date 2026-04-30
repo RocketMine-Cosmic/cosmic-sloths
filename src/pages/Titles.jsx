@@ -140,7 +140,7 @@ export default function Titles({ isCarousel }) {
                             )}
                             <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-3"
                                 style={{ background: 'linear-gradient(90deg, #f59e0b, #f43f5e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(245,158,11,0.5))' }}>
-                                <Award className="w-6 h-6 md:w-8 md:h-8 text-amber-400" /> Titles
+                                <Award className="w-6 h-6 md:w-8 md:h-8 text-amber-400" /> Star Callsigns
                             </h1>
                             <p className="text-slate-400 mt-0.5 text-xs md:text-sm tracking-widest uppercase">
                                 Earned <span className="text-amber-400 font-bold">{unlockedCount}</span> / {rows.length}
