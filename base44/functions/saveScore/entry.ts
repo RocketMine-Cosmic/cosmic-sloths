@@ -332,6 +332,22 @@ Deno.serve(async (req) => {
                     current_day: today
                 });
                 console.log(`[saveScore] Squad ${squadIdToUpdate} +${killsToAdd} kills (weekly=${(squad.weekly_kills || 0) + killsToAdd}, daily=${dailyKillsReset + killsToAdd})`);
+
+                // ---- Squad Wars: also credit kills to the active war (if any) ----
+                try {
+                    const activeWars = await base44.asServiceRole.entities.SquadWar.filter({ week_id, is_resolved: false });
+                    const myWar = activeWars.find(w => w.squad_a_id === squadIdToUpdate || w.squad_b_id === squadIdToUpdate);
+                    if (myWar) {
+                        const isSideA = myWar.squad_a_id === squadIdToUpdate;
+                        const patch = isSideA
+                            ? { kills_a: (myWar.kills_a || 0) + killsToAdd }
+                            : { kills_b: (myWar.kills_b || 0) + killsToAdd };
+                        await base44.asServiceRole.entities.SquadWar.update(myWar.id, patch);
+                        console.log(`[saveScore] War ${myWar.id} +${killsToAdd} kills to side ${isSideA ? 'A' : 'B'}`);
+                    }
+                } catch (warErr) {
+                    console.error('[saveScore] SquadWar update failed:', warErr.message);
+                }
             } catch (err) {
                 console.error('[saveScore] Squad update failed:', err.message);
             }

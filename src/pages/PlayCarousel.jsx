@@ -24,6 +24,7 @@ import NFTDashboard from './NFTDashboard';
 import Profile from './Profile';
 import Jukebox from './Jukebox';
 import Titles from './Titles';
+import SquadWars from './SquadWars';
 
 const SLIDE_LABELS = [
     { name: 'Main Menu', color: 'text-white' },
@@ -32,6 +33,7 @@ const SLIDE_LABELS = [
     { name: 'Cosmic Armory', color: 'text-fuchsia-300' },
     { name: 'Hall of Fame', color: 'text-amber-300' },
     { name: 'Sloth Squads', color: 'text-orange-300' },
+    { name: 'Squad Wars', color: 'text-red-400' },
     { name: 'Galactic Bestiary', color: 'text-rose-300' },
     { name: 'Cosmic Codex', color: 'text-pink-400' },
     { name: 'Pilot Mastery', color: 'text-amber-500' },
@@ -69,7 +71,7 @@ export default function PlayCarousel() {
     // Initialize from ?slide= so deep-links and the back button restore the right page.
     const initialSlide = (() => {
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        return Number.isFinite(raw) && raw >= 0 && raw < 15 ? raw : 0;
+        return Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
     })();
     const [selectedIndex, setSelectedIndex] = useState(initialSlide);
     // Tracks whether a slide change came from the URL (popstate / back button)
@@ -104,7 +106,7 @@ export default function PlayCarousel() {
     useEffect(() => {
         if (!emblaApi) return;
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        const target = Number.isFinite(raw) && raw >= 0 && raw < 15 ? raw : 0;
+        const target = Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
         if (target !== emblaApi.selectedScrollSnap()) {
             syncingFromUrlRef.current = true;
             emblaApi.scrollTo(target, true);
@@ -186,15 +188,16 @@ export default function PlayCarousel() {
                     <LazySlide shouldMount={isNear(3)}><Upgrades isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(4)}><LeaderboardPage isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(5)}><Squads isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(6)}><Bestiary isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(7)}><SynergyCodex isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(8)}><Mastery isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(9)}><LeviathanTrials isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(10)}><GlobalRaid isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(11)}><NFTDashboard isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(12)}><Profile isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(13)}><Jukebox isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(14)}><Titles isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(6)}><SquadWars isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(7)}><Bestiary isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(8)}><SynergyCodex isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(9)}><Mastery isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(10)}><LeviathanTrials isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(11)}><GlobalRaid isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(12)}><NFTDashboard isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(13)}><Profile isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(14)}><Jukebox isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(15)}><Titles isCarousel={true} /></LazySlide>
                 </div>
             </div>
 

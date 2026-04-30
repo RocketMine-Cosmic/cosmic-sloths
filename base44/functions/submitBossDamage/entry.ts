@@ -36,6 +36,25 @@ Deno.serve(async (req) => {
         const { week_id } = getCurrentPeriodIds();
         const displayName = playerName || me.full_name || walletAddress;
 
+        // Look up squad membership so contributions can be aggregated for the squad raid leaderboard
+        let squadInfo = { squad_id: '', squad_name: '', squad_tag: '', squad_icon: '' };
+        try {
+            const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
+            if (memberRecords.length > 0) {
+                const sq = await base44.asServiceRole.entities.Squad.get(memberRecords[0].squad_id);
+                if (sq) {
+                    squadInfo = {
+                        squad_id: sq.id,
+                        squad_name: sq.name || '',
+                        squad_tag: sq.tag || '',
+                        squad_icon: sq.icon || '🛡️',
+                    };
+                }
+            }
+        } catch (e) {
+            console.log('[submitBossDamage] Could not fetch squad membership:', e.message);
+        }
+
         // Create GlobalBossEvent (live activity feed)
         try {
             await base44.asServiceRole.entities.GlobalBossEvent.create({
@@ -56,7 +75,8 @@ Deno.serve(async (req) => {
                 user_id: walletAddress,
                 player_name: displayName,
                 damage: clampedDamage,
-                claimed: false
+                claimed: false,
+                ...squadInfo,
             });
         } catch (e) {
             console.error('[submitBossDamage] Contribution failed:', e.message);

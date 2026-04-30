@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
-import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle } from 'lucide-react';
+import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle, Swords } from 'lucide-react';
 import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -825,6 +825,13 @@ export default function Squads({ isCarousel }) {
 
                         {/* RIGHT PANEL: CHAT, MEMBERS & SETTINGS */}
                         <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-orange-500/30 shadow-[0_0_30px_rgba(249,115,22,0.15)] rounded-xl flex flex-col overflow-hidden min-h-0">
+                            <button
+                                onClick={() => { SoundManager.playUIClick(); navigate('/squad-wars'); }}
+                                className="m-2 mb-0 flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-red-600/30 to-amber-600/30 border border-red-500/50 hover:border-red-400 text-red-200 hover:text-white font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                            >
+                                <Swords className="w-4 h-4" /> Enter Squad Wars
+                                <span className="text-[9px] bg-red-500/40 px-1.5 py-0.5 rounded text-white">NEW</span>
+                            </button>
                             <div className="flex border-b border-slate-800 shrink-0">
                                 <button 
                                     onClick={() => setActiveTab('chat')}

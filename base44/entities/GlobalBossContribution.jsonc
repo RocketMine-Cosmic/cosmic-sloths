@@ -24,6 +24,21 @@
         "type": "number"
       },
       "default": []
+    },
+    "squad_id": {
+      "type": "string",
+      "description": "Squad id of the contributor at time of submission (for squad raid leaderboard)"
+    },
+    "squad_name": {
+      "type": "string",
+      "description": "Cached squad name for display"
+    },
+    "squad_tag": {
+      "type": "string",
+      "description": "Cached squad tag for display"
+    },
+    "squad_icon": {
+      "type": "string"
     }
   },
   "required": [

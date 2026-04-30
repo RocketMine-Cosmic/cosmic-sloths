@@ -46,6 +46,26 @@
     "level": {
       "type": "number",
       "default": 1
+    },
+    "war_wins": {
+      "type": "number",
+      "default": 0,
+      "description": "Lifetime Squad War wins"
+    },
+    "war_losses": {
+      "type": "number",
+      "default": 0,
+      "description": "Lifetime Squad War losses"
+    },
+    "war_ties": {
+      "type": "number",
+      "default": 0,
+      "description": "Lifetime Squad War ties"
+    },
+    "war_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Current consecutive win streak (resets on loss/tie)"
     }
   },
   "required": [
