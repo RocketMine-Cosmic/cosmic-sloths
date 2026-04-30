@@ -43,6 +43,27 @@ export class SFXManagerClass {
             saved.sfxCategories = this.categories;
             localStorage.setItem('cosmic_sloth_settings', JSON.stringify(saved));
         } catch (e) {}
+        // Also mirror SFX category toggles into the cloud save so they sync across devices.
+        // Loaded asynchronously to avoid circular imports.
+        try {
+            import('./SaveManager').then(({ SaveManager }) => {
+                const s = SaveManager.load();
+                s.sfxCategories = { ...this.categories };
+                SaveManager.save(s);
+            }).catch(() => {});
+        } catch {}
+    }
+
+    // Called by SaveManager after the cloud save loads — mirrors cloud-stored
+    // SFX category toggles back into localStorage + the live instance.
+    applyCloudCategories(cats) {
+        if (!cats || typeof cats !== 'object') return;
+        this.categories = { ...this.categories, ...cats };
+        try {
+            const saved = JSON.parse(localStorage.getItem('cosmic_sloth_settings') || '{}');
+            saved.sfxCategories = this.categories;
+            localStorage.setItem('cosmic_sloth_settings', JSON.stringify(saved));
+        } catch {}
     }
 
     setSfxVolume(vol) {

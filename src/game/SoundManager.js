@@ -21,6 +21,30 @@ function loadJukebox() {
 
 function saveJukebox(state) {
     try { localStorage.setItem(JUKEBOX_KEY, JSON.stringify(state)); } catch {}
+    // Also mirror into the cloud save so preferences sync across devices.
+    // Loaded asynchronously to avoid a circular import at module init.
+    try {
+        import('./SaveManager').then(({ SaveManager }) => {
+            const s = SaveManager.load();
+            s.jukeboxPrefs = state;
+            SaveManager.save(s);
+        }).catch(() => {});
+    } catch {}
+}
+
+// Called by SaveManager after the cloud save loads — mirrors cloud-stored
+// jukebox preferences back into localStorage + the live SoundManager instance.
+export function applyCloudJukeboxPrefs(prefs) {
+    if (!prefs || typeof prefs !== 'object') return;
+    const next = {
+        menu: Array.isArray(prefs.menu) ? prefs.menu : [...defaultEnabledIds],
+        game: Array.isArray(prefs.game) ? prefs.game : [...defaultEnabledIds],
+    };
+    try { localStorage.setItem(JUKEBOX_KEY, JSON.stringify(next)); } catch {}
+    if (SoundManager) {
+        SoundManager.jukebox = next;
+        SoundManager._notify();
+    }
 }
 
 class SoundManagerClass {

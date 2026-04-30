@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SFXManager } from '../../game/SFXManager';
 import { Volume2 } from 'lucide-react';
 
@@ -13,6 +13,14 @@ const SFX_CATEGORIES = [
 
 export default function SfxCategoryToggles() {
     const [cats, setCats] = useState({ ...SFXManager.categories });
+
+    // Re-sync from SFXManager when the cloud save loads after this component
+    // has already mounted (otherwise the panel would show stale local toggles).
+    useEffect(() => {
+        const onSaveUpdated = () => setCats({ ...SFXManager.categories });
+        window.addEventListener('saveUpdated', onSaveUpdated);
+        return () => window.removeEventListener('saveUpdated', onSaveUpdated);
+    }, []);
 
     const toggle = (id) => {
         const next = !cats[id];

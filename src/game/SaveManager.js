@@ -155,6 +155,20 @@ export const SaveManager = {
             }
           } catch (e) { console.warn('[SaveManager] Profile restore failed:', e.message); }
           
+          // Apply cloud-synced audio preferences (jukebox + SFX categories) so they
+          // follow the user across devices/browsers. Local edits stream back via the
+          // save() flow, so we always prefer cloud truth here on first load.
+          try {
+            if (cloudData.jukeboxPrefs) {
+              const { applyCloudJukeboxPrefs } = await import('./SoundManager');
+              applyCloudJukeboxPrefs(cloudData.jukeboxPrefs);
+            }
+            if (cloudData.sfxCategories) {
+              const { SFXManager } = await import('./SFXManager');
+              SFXManager.applyCloudCategories(cloudData.sfxCategories);
+            }
+          } catch (e) { console.warn('[SaveManager] Audio prefs apply failed:', e.message); }
+
           if (localSave) {
             const localData = JSON.parse(localSave);
             // CRITICAL: Deep merge upgrades by taking MAX values (never lose paid upgrades)
