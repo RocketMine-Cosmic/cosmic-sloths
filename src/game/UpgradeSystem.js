@@ -3,6 +3,7 @@ import { UPGRADES, WEAPONS, SYNERGIES, EVOLUTIONS } from './Constants';
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
 import { getBiasMultiplier } from '@/lib/poolBias';
+import { getWeaponLevelUpEffect } from './WeaponLevelEffects';
 
 // Pool weight is now driven by the player's allocated bias points (Loadouts page).
 // See lib/poolBias.js for the math + category mapping.
@@ -129,7 +130,17 @@ export function generateChoices(engine) {
             });
         } else if (baseUpgrade.type === 'weapon') {
             newValue = rarity.mult;
-            newDesc = `${baseUpgrade.desc} (+${rarity.mult} Levels)`;
+            // If the player already owns this weapon, this pick LEVELS it up — show what
+            // the level-up actually does (damage/area scaling + per-weapon extras like
+            // "+1 drone every 2 levels"). Otherwise it's a fresh weapon, so keep the
+            // base description that explains what the weapon is.
+            const owned = !!engine.player.weapons.find(w => w.id === baseUpgrade.weaponId);
+            if (owned) {
+                const effect = getWeaponLevelUpEffect(baseUpgrade.weaponId);
+                newDesc = `+${rarity.mult} Level${rarity.mult > 1 ? 's' : ''} — ${effect}`;
+            } else {
+                newDesc = `${baseUpgrade.desc} (Starts at Lv.${rarity.mult})`;
+            }
         }
 
         choices.push({
