@@ -47,7 +47,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
         <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
             <div className="flex justify-between items-start gap-1 md:gap-4">
                 {/* Top Left: HP & Equipped — collapsible on mobile so the loadout list doesn't push the pause button off-screen. */}
-                <div className="w-36 md:w-56 pointer-events-auto shrink-0 flex flex-col gap-2">
+                <div className={`pointer-events-auto shrink-0 flex flex-col gap-2 ${loadoutCollapsed ? 'w-20 md:w-28' : 'w-36 md:w-56'}`}>
                     <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-red-500/30">
                         <div className="flex justify-between items-center mb-1 text-[9px] md:text-sm font-bold text-slate-200">
                             <span className="flex items-center gap-0.5 md:gap-1 text-red-400"><Heart className="w-3 h-3 md:w-4 md:h-4 fill-current" /> <span className="hidden md:inline">HP</span></span>
