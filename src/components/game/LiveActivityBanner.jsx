@@ -3,12 +3,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Skull, Zap, Activity } from 'lucide-react';
 
 // Compact rotating banner that cycles through the most recent raid events.
-// Auto-advances every 4s; pauses when there's only one event.
+// Shown above the Raid Event / Top Contributors tabs so it's always visible.
 export default function LiveActivityBanner({ events }) {
     const [idx, setIdx] = useState(0);
 
+    // Reset to newest event whenever the feed changes.
     useEffect(() => { setIdx(0); }, [events?.length]);
 
+    // Auto-rotate through the events every 4s. Skip if there's only one.
     useEffect(() => {
         if (!events || events.length <= 1) return;
         const t = setInterval(() => {
