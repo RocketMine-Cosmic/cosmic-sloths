@@ -352,26 +352,44 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
-            <SectionCard title="⚡ Leviathan Trials" color="rose">
+            <SectionCard title="⚡ Cosmic Mutations" color="rose">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Activate special <strong className="text-rose-400">modifiers</strong> on the Trials page before a run to make boss encounters harder — but earn bonus rewards for completing them.
+                    Toggle special <strong className="text-rose-400">mutations</strong> on the Cosmic Mutations page before a run to make boss encounters harder — but earn bonus rewards for completing them.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                    <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-red-900/40 text-center flex flex-col justify-center">
-                        <div className="text-red-400 font-bold mb-1 text-base">⚔️ FURY</div>
-                        <div className="text-slate-400 text-xs">Boss deals +50% damage</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-red-900/40 flex flex-col">
+                        <div className="text-red-400 font-bold mb-1 text-sm">⚔️ Leviathan's Fury</div>
+                        <div className="text-slate-400 text-xs mb-1">Bosses deal +50% damage</div>
+                        <div className="text-emerald-400 text-[11px] font-bold">→ +500 boss Gold</div>
                     </div>
-                    <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-orange-900/40 text-center flex flex-col justify-center">
-                        <div className="text-orange-400 font-bold mb-1 text-base">💨 FRENZY</div>
-                        <div className="text-slate-400 text-xs">Boss moves +50% faster</div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-slate-700 flex flex-col">
+                        <div className="text-slate-300 font-bold mb-1 text-sm">🛡️ Thick Hide</div>
+                        <div className="text-slate-400 text-xs mb-1">Bosses have +100% HP</div>
+                        <div className="text-emerald-400 text-[11px] font-bold">→ +50% boss XP</div>
                     </div>
-                    <div className="bg-slate-900/60 rounded-xl p-3 md:p-4 border border-purple-900/40 text-center flex flex-col justify-center">
-                        <div className="text-purple-400 font-bold mb-1 text-base">🛡️ TITAN</div>
-                        <div className="text-slate-400 text-xs">Boss has +100% HP</div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-yellow-900/40 flex flex-col">
+                        <div className="text-yellow-400 font-bold mb-1 text-sm">💨 Frenzy</div>
+                        <div className="text-slate-400 text-xs mb-1">Bosses move +50% faster</div>
+                        <div className="text-emerald-400 text-[11px] font-bold">→ +1 Relic Fragment per boss kill</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-cyan-900/40 flex flex-col">
+                        <div className="text-cyan-400 font-bold mb-1 text-sm">⚡ Bullet Hell</div>
+                        <div className="text-slate-400 text-xs mb-1">Bosses fire 2× projectiles</div>
+                        <div className="text-emerald-400 text-[11px] font-bold">→ +30% total score</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-green-900/40 flex flex-col">
+                        <div className="text-green-400 font-bold mb-1 text-sm">💚 Cellular Regeneration</div>
+                        <div className="text-slate-400 text-xs mb-1">Boss heals 1% Max HP / sec</div>
+                        <div className="text-emerald-400 text-[11px] font-bold">→ +800 boss Gold</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-3 border border-orange-900/40 flex flex-col">
+                        <div className="text-orange-400 font-bold mb-1 text-sm">⚓ Unstoppable Force</div>
+                        <div className="text-slate-400 text-xs mb-1">Boss ignores slow & pushback</div>
+                        <div className="text-emerald-400 text-[11px] font-bold">→ +1,000 boss Gold</div>
                     </div>
                 </div>
                 <div className="text-xs text-slate-500 mt-3 bg-slate-900/40 rounded-lg p-2 border border-slate-800">
-                    💡 Stack multiple modifiers for even greater challenge and rewards. Modifiers can be combined freely.
+                    💡 Stack multiple mutations for even greater challenge and rewards. They can all be combined freely.
                 </div>
             </SectionCard>
         </div>
