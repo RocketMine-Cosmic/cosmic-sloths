@@ -253,7 +253,7 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
                 const frame = Math.floor(time / (1 / 12)) % 25;
                 const col = frame % cols;
                 const row = Math.floor(frame / cols);
-                const drawSize = p.radius * 2.4;
+                const drawSize = p.radius * 2.0;
                 ctx.drawImage(
                     playerSprite,
                     col * frameW, row * frameH, frameW, frameH,
