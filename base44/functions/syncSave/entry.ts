@@ -143,6 +143,16 @@ Deno.serve(async (req) => {
             ? { ...saveData, ...existingData }
             : { ...existingData, ...saveData };
 
+        // Client-owned audio prefs: always trust the latest client write.
+        // These are pure UI prefs (no anti-cheat concern) and the stale-client
+        // guard above would otherwise wipe them when the cloud has an older copy.
+        if (saveData.jukeboxPrefs && typeof saveData.jukeboxPrefs === 'object') {
+            merged.jukeboxPrefs = saveData.jukeboxPrefs;
+        }
+        if (saveData.sfxCategories && typeof saveData.sfxCategories === 'object') {
+            merged.sfxCategories = saveData.sfxCategories;
+        }
+
         // Collect anti-cheat blocks for audit logging at the end. Each entry becomes
         // a SyncBlockLog row so admins can review and refund false-positives.
         const blocks = [];
