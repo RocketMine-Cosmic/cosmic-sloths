@@ -11,10 +11,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //  - 'pairAndResolve' : ADMIN-ONLY — pair squads for new week + resolve previous week wars
 //  - 'claimWinBonus'  : member of winning squad collects per-member bonus (idempotent)
 
-const WAR_WIN_GOLD_PER_MEMBER = 1500;
-const WAR_WIN_FRAGMENTS_PER_MEMBER = 2;
-const WAR_TIE_GOLD_PER_MEMBER = 500;
-const WAR_LOSS_GOLD_PER_MEMBER = 250;
+const WAR_WIN_GOLD_PER_MEMBER = 3500;
+const WAR_WIN_FRAGMENTS_PER_MEMBER = 5;
+const WAR_TIE_GOLD_PER_MEMBER = 1500;
+const WAR_TIE_FRAGMENTS_PER_MEMBER = 1;
+const WAR_LOSS_GOLD_PER_MEMBER = 750;
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -245,7 +246,7 @@ Deno.serve(async (req) => {
                 label = 'win';
             } else if (isTie) {
                 gold = WAR_TIE_GOLD_PER_MEMBER;
-                fragments = 0;
+                fragments = WAR_TIE_FRAGMENTS_PER_MEMBER;
                 label = 'tie';
             } else {
                 gold = WAR_LOSS_GOLD_PER_MEMBER;
