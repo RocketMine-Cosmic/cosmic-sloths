@@ -1,8 +1,24 @@
 import React, { useEffect, useRef } from 'react';
-import { WEAPONS } from '../../game/Constants';
+import { WEAPONS, CHARACTERS, ENEMIES } from '../../game/Constants';
 import { fireWeaponLogic } from '../../game/WeaponSystem';
 import { drawProjectiles } from '../../game/ProjectileRenderer';
 import { ParticleManager } from '../../game/ParticleManager';
+
+// Pick visually distinct sprite-backed enemies for the dummy targets so the
+// preview shows actual creatures instead of generic red circles.
+const PREVIEW_ENEMY_IDS = ['t1_void_glow', 't2_eye_tentacle', 't3_starfish', 't4_mothra'];
+
+// Lazily load the player sprite once and reuse across instances.
+let _playerSpriteCache = null;
+const getPlayerSprite = () => {
+    if (_playerSpriteCache) return _playerSpriteCache;
+    const neoByte = CHARACTERS.find(c => c.id === 'neobyte');
+    if (!neoByte?.idleSprite) return null;
+    const img = new Image();
+    img.src = neoByte.idleSprite;
+    _playerSpriteCache = img;
+    return img;
+};
 
 export default function WeaponSimulation({ weaponId, isMastered }) {
     const canvasRef = useRef(null);
@@ -19,12 +35,32 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
         let frameCount = 0;
         let lastFireTime = 0;
 
-        const dummies = [
-            { x: W * 0.2, y: H * 0.3, radius: 15, hp: 100, maxHp: 100, color: '#ff4444', isBoss: false },
-            { x: W * 0.8, y: H * 0.7, radius: 15, hp: 100, maxHp: 100, color: '#ff4444', isBoss: false },
-            { x: W * 0.8, y: H * 0.3, radius: 15, hp: 100, maxHp: 100, color: '#ff4444', isBoss: false },
-            { x: W * 0.2, y: H * 0.7, radius: 15, hp: 100, maxHp: 100, color: '#ff4444', isBoss: false }
+        // Build dummies with real enemy sprites + sane preview radii (smaller than in-game
+        // so 4 of them fit comfortably in a 400×200 canvas).
+        const PREVIEW_RADIUS = 22;
+        const positions = [
+            { x: W * 0.2, y: H * 0.3 },
+            { x: W * 0.8, y: H * 0.7 },
+            { x: W * 0.8, y: H * 0.3 },
+            { x: W * 0.2, y: H * 0.7 },
         ];
+        const dummies = positions.map((pos, i) => {
+            const def = ENEMIES.find(e => e.id === PREVIEW_ENEMY_IDS[i]) || ENEMIES[0];
+            return {
+                ...pos,
+                radius: PREVIEW_RADIUS,
+                hp: 100, maxHp: 100,
+                color: def.color || '#ff4444',
+                isBoss: false,
+                sprite: def.spriteImage || null,
+                frameCount: def.frameCount || 1,
+                animationSpeed: def.animationSpeed || 0.15,
+                _frame: 0,
+                _frameTimer: Math.random() * 0.5,
+            };
+        });
+
+        const playerSprite = getPlayerSprite();
 
         const particleManager = new ParticleManager();
 
@@ -90,10 +126,15 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
             mockEngine.time = time;
             mockEngine.frameCount = frameCount;
 
-            // Move dummies slowly
+            // Move dummies slowly + advance sprite animation
             dummies.forEach((d, i) => {
                 d.x += Math.sin(time + i) * 0.5;
                 d.y += Math.cos(time + i) * 0.5;
+                d._frameTimer += dt;
+                if (d._frameTimer >= d.animationSpeed) {
+                    d._frameTimer = 0;
+                    d._frame = (d._frame + 1) % d.frameCount;
+                }
                 if (d.hp <= 0) {
                     d.hp = d.maxHp; // respawn
                     d.x = W/2 + (Math.random() - 0.5) * W * 0.8;
@@ -179,17 +220,35 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
             for (let gx = 0; gx < W; gx += 30) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
             for (let gy = 0; gy < H; gy += 30) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
-            // Dummies
+            // Dummies — draw real enemy sprite if available, fall back to a coloured circle.
             dummies.forEach(d => {
-                ctx.strokeStyle = '#ff4444';
-                ctx.lineWidth = 2;
-                ctx.fillStyle = 'rgba(255,50,50,0.15)';
-                ctx.beginPath(); ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                if (d.sprite && d.sprite.complete && d.sprite.naturalWidth > 0) {
+                    const sheetW = d.sprite.naturalWidth;
+                    const sheetH = d.sprite.naturalHeight;
+                    const frameW = sheetW / d.frameCount;
+                    const drawSize = d.radius * 2.4;
+                    ctx.drawImage(
+                        d.sprite,
+                        d._frame * frameW, 0, frameW, sheetH,
+                        d.x - drawSize / 2, d.y - drawSize / 2, drawSize, drawSize
+                    );
+                } else {
+                    ctx.strokeStyle = d.color;
+                    ctx.lineWidth = 2;
+                    ctx.fillStyle = 'rgba(255,50,50,0.15)';
+                    ctx.beginPath(); ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                }
             });
 
-            // Player
-            ctx.fillStyle = mockEngine.player.color;
-            ctx.beginPath(); ctx.arc(mockEngine.player.x, mockEngine.player.y, mockEngine.player.radius, 0, Math.PI * 2); ctx.fill();
+            // Player — draw NeoByte's idle sprite if loaded, otherwise the original coloured circle.
+            const p = mockEngine.player;
+            if (playerSprite && playerSprite.complete && playerSprite.naturalWidth > 0) {
+                const drawSize = p.radius * 3.2;
+                ctx.drawImage(playerSprite, p.x - drawSize / 2, p.y - drawSize / 2, drawSize, drawSize);
+            } else {
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+            }
 
             // Sloth Swarm Preview
             if (weaponId === 'slothSwarm') {
