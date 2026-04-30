@@ -7,6 +7,7 @@ import SpendLogDescription from './SpendLogDescription';
 
 export default function AdminEconomy({ walletAddress }) {
     const [preset, setPreset] = useState('this_week');
+    const [search, setSearch] = useState('');
 
     const PRESETS = [
         { id: 'today',      label: 'Today' },
@@ -38,11 +39,20 @@ export default function AdminEconomy({ walletAddress }) {
     });
 
     const [start, end] = getDateRange(preset);
+    const q = search.trim().toLowerCase();
     const filteredLogs = (spendLogs || []).filter(log => {
-        if (!start) return true;
-        const d = moment(log.created_date);
-        return d.isSameOrAfter(start) && d.isSameOrBefore(end);
+        if (start) {
+            const d = moment(log.created_date);
+            if (!d.isSameOrAfter(start) || !d.isSameOrBefore(end)) return false;
+        }
+        if (q) {
+            const name = (log.player_name || '').toLowerCase();
+            const wallet = (log.wallet_address || '').toLowerCase();
+            if (!name.includes(q) && !wallet.includes(q)) return false;
+        }
+        return true;
     });
+    const filteredTotal = filteredLogs.reduce((s, l) => s + Number(l.amount || 0), 0);
 
     return (
         <div className="space-y-4">
@@ -95,6 +105,23 @@ export default function AdminEconomy({ walletAddress }) {
                                 {p.label}
                             </button>
                         ))}
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Filter by player name or wallet…"
+                            className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                        />
+                        {search && (
+                            <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs">✕</button>
+                        )}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-mono ml-auto">
+                        {filteredLogs.length} {filteredLogs.length === 1 ? 'entry' : 'entries'} • <span className="text-amber-400">{filteredTotal.toFixed(2)} OMENX</span>
                     </div>
                 </div>
                 <div className="overflow-x-auto">
