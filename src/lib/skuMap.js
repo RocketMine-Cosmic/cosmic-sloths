@@ -9,10 +9,9 @@ export const IN_GAME_SKUS = {
     banishT2:      'ingame-banish-2',  // T2 — 4 OMENX
     banishT3:      'ingame-banish-3',  // T3 — 6 OMENX
     reroll:        'ingame-reroll',
-    // Squad Ultimate now has two tiers — lite (capped clone power) and full (scales with player upgrades).
-    // Reuses existing stat-upgrade SKUs that are already priced at 5 and 10 OMENX.
-    squadUltimateLite: 'stat-upgrade-permanent-lvl1', // 5 OMENX — capped clone
-    squadUltimateFull: 'stat-upgrade-permanent-lvl2', // 10 OMENX — full-power clone
+    // Squad Ultimate has two tiers — lite (capped clone power) and full (scales with player upgrades).
+    squadUltimateLite: 'ingame-squad-ult-lite', // 5 OMENX — capped clone
+    squadUltimateFull: 'ingame-squad-ult-full', // 10 OMENX — full-power clone
     revive:        'ingame-revive',
     xpSession:     'ingame-xp-buff',
 };
