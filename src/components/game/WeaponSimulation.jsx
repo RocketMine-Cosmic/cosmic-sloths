@@ -9,6 +9,7 @@ import { ParticleManager } from '../../game/ParticleManager';
 const PREVIEW_ENEMY_IDS = ['t1_void_glow', 't2_eye_tentacle', 't3_starfish', 't4_mothra'];
 
 // Lazily load the player sprite once and reuse across instances.
+// Character sheets are a 5×5 grid (25 frames), drawn at radius × 5 like in GameEngineDraw.
 let _playerSpriteCache = null;
 const getPlayerSprite = () => {
     if (_playerSpriteCache) return _playerSpriteCache;
@@ -243,17 +244,16 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
                 }
             });
 
-            // Player — NeoByte idle sheet is a 4×4 grid like enemies. Pick a single frame.
+            // Player — NeoByte idle sheet is a 5×5 grid (25 frames), matches GameEngineDraw.
             const p = mockEngine.player;
             if (playerSprite && playerSprite.complete && playerSprite.naturalWidth > 0) {
-                const PLAYER_FRAMES = 16;
-                const cols = 4, rows = 4;
+                const cols = 5, rows = 5;
                 const frameW = playerSprite.naturalWidth / cols;
                 const frameH = playerSprite.naturalHeight / rows;
-                const frame = Math.floor(time / 0.12) % PLAYER_FRAMES;
+                const frame = Math.floor(time / (1 / 12)) % 25;
                 const col = frame % cols;
                 const row = Math.floor(frame / cols);
-                const drawSize = p.radius * 3.2;
+                const drawSize = p.radius * 5;
                 ctx.drawImage(
                     playerSprite,
                     col * frameW, row * frameH, frameW, frameH,
