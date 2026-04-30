@@ -534,17 +534,19 @@ export default function Upgrades({ isCarousel }) {
 
     const renderArmory = () => {
         const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
-        const upgradeTypes = [
-            { id: 'damage', name: 'Plasma Output', icon: Zap, desc: '+10% per level' },
-            { id: 'area', name: 'Blast Radius', icon: Sparkles, desc: '+10% per level' },
-            { id: 'cooldown', name: 'Cooling Rate', icon: Timer, desc: '-5% per level' }
-        ];
-        
+
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
         if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
 
         const weapon = baseWeapons.find(w => w.id === selectedWeapon) || baseWeapons[0];
+
+        // Per-weapon thematic labels — fall back to neutral names for synergies/evolutions without a `labels` map.
+        const upgradeTypes = [
+            { id: 'damage',   name: weapon.labels?.damage   || 'Damage',   icon: Zap,      desc: '+10% per level' },
+            { id: 'area',     name: weapon.labels?.area     || 'Area',     icon: Sparkles, desc: '+10% per level' },
+            { id: 'cooldown', name: weapon.labels?.cooldown || 'Cooldown', icon: Timer,    desc: '-5% per level' }
+        ];
         
         const getWeaponUpgrade = (wId, stat) => {
             const perm = save.permanentWeaponUpgrades?.[wId]?.[stat] || 0;
