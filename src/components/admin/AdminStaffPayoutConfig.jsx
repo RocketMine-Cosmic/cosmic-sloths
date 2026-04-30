@@ -3,6 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { Settings, Loader2, Save, AlertTriangle } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
+// Player rewards take 20% of each weekly pool (see distributeRewards.js).
+// Staff payouts come on top, so total allocation = 20% + (staff_count * pct).
+const PLAYER_POOL_PCT = 0.20;
+
 // Owner-only widget: read & update the per-staff weekly payout percentage.
 // Stored in AppConfig under key 'staff_pct_per_wallet' via setStaffPayoutPct fn.
 // Distribution functions read this at payout time (with 0.02 fallback).
@@ -13,24 +17,34 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
     const [pctInput, setPctInput] = useState('2.00');
     const [notes, setNotes] = useState('');
     const [current, setCurrent] = useState(null);
+    const [staffCount, setStaffCount] = useState(0);
     const [msg, setMsg] = useState('');
 
     const adminKey = sessionStorage.getItem('admin_key') || undefined;
 
     useEffect(() => {
         if (!isOwner) { setLoading(false); return; }
-        base44.functions.invoke('setStaffPayoutPct', { action: 'get', adminKey })
-            .then(r => {
-                if (r.data?.error) throw new Error(r.data.error);
-                setCurrent(r.data);
-                setPctInput(((r.data.pct ?? 0.02) * 100).toFixed(2));
+        Promise.all([
+            base44.functions.invoke('setStaffPayoutPct', { action: 'get', adminKey }),
+            base44.functions.invoke('getAdminData', { type: 'adminWallets' }),
+        ])
+            .then(([cfgRes, walletsRes]) => {
+                if (cfgRes.data?.error) throw new Error(cfgRes.data.error);
+                setCurrent(cfgRes.data);
+                setPctInput(((cfgRes.data.pct ?? 0.02) * 100).toFixed(2));
+                const wallets = walletsRes.data?.records || [];
+                setStaffCount(wallets.filter(w => w.wallet_address).length);
             })
             .catch(e => setMsg(`✗ ${e.message}`))
             .finally(() => setLoading(false));
     }, [isOwner]);
 
     const numericPct = Number(pctInput) / 100;
-    const isValid = isFinite(numericPct) && numericPct >= 0 && numericPct <= 0.10;
+    const staffTotalPct = staffCount * numericPct; // total share of pool going to staff
+    const grandTotalPct = PLAYER_POOL_PCT + staffTotalPct; // players + staff
+    const isOverPool = grandTotalPct > 1.0;
+    const isWarning = grandTotalPct > 0.80 && !isOverPool;
+    const isValid = isFinite(numericPct) && numericPct >= 0 && numericPct <= 0.10 && !isOverPool;
     const changed = current && Math.abs(numericPct - current.pct) > 0.00001;
 
     const handleSave = async () => {
@@ -92,6 +106,40 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                         </div>
                     </div>
 
+                    {/* Total pool allocation — live preview using the value in the input */}
+                    <div className="bg-slate-900/60 border border-slate-700 rounded p-3 mb-3">
+                        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                            <div className="text-[10px] text-slate-500 uppercase font-bold">Total Weekly Pool Allocation (preview)</div>
+                            <div className={`text-xs font-mono font-bold ${isOverPool ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                {(grandTotalPct * 100).toFixed(2)}% of pool
+                            </div>
+                        </div>
+                        {/* Stacked bar */}
+                        <div className="h-3 w-full bg-slate-950 rounded overflow-hidden flex border border-slate-800">
+                            <div className="bg-cyan-600 h-full" style={{ width: `${Math.min(PLAYER_POOL_PCT, 1) * 100}%` }} title={`Players: ${(PLAYER_POOL_PCT * 100).toFixed(0)}%`} />
+                            <div className={`${isOverPool ? 'bg-red-600' : 'bg-amber-500'} h-full`} style={{ width: `${Math.min(Math.max(0, 1 - PLAYER_POOL_PCT), staffTotalPct) * 100}%` }} title={`Staff: ${(staffTotalPct * 100).toFixed(2)}%`} />
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[10px] font-mono">
+                            <span className="text-cyan-400">■ Players {(PLAYER_POOL_PCT * 100).toFixed(0)}%</span>
+                            <span className={isOverPool ? 'text-red-400' : 'text-amber-400'}>
+                                ■ Staff {(staffTotalPct * 100).toFixed(2)}% ({staffCount} × {(numericPct * 100).toFixed(2)}%)
+                            </span>
+                            <span className="text-slate-500">
+                                ■ Remaining {Math.max(0, (1 - grandTotalPct) * 100).toFixed(2)}%
+                            </span>
+                        </div>
+                        {isOverPool && (
+                            <div className="mt-2 text-xs text-red-400 flex items-center gap-1.5 font-bold">
+                                <AlertTriangle size={12} /> Total exceeds 100% of pool — staff payouts would be cut by the pool. Lower % or remove staff wallets.
+                            </div>
+                        )}
+                        {isWarning && (
+                            <div className="mt-2 text-xs text-amber-400 flex items-center gap-1.5">
+                                <AlertTriangle size={12} /> Allocation above 80% leaves little buffer for retained pool.
+                            </div>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-2 items-end">
                         <label className="flex flex-col gap-1">
                             <span className="text-[10px] text-slate-500 uppercase">New % per staff</span>
@@ -128,7 +176,7 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                         </button>
                     </div>
 
-                    {!isValid && (
+                    {!isValid && !isOverPool && (
                         <div className="flex items-center gap-1.5 mt-2 text-xs text-red-400">
                             <AlertTriangle size={12} /> Must be between 0 and 10%.
                         </div>
