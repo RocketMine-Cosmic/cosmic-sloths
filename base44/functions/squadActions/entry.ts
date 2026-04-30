@@ -52,32 +52,32 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!me) return Response.json({ error: 'Please sign in to continue.' }, { status: 401 });
 
         const walletAddress = me.wallet_address;
-        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+        if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         const body = await req.json();
         const { action } = body;
 
         if (action === 'join') {
             const { squadId, playerName, playerTitle } = body;
-            if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
+            if (!squadId) return Response.json({ error: 'Couldn\'t join the squad — please refresh and try again.' }, { status: 400 });
 
             // Validate squad exists & has space; reject duplicate joins.
             let squad;
             try {
                 squad = await base44.asServiceRole.entities.Squad.get(squadId);
             } catch {
-                return Response.json({ error: 'Squad not found' }, { status: 404 });
+                return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
             }
-            if (!squad) return Response.json({ error: 'Squad not found' }, { status: 404 });
+            if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
             if ((squad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
-                return Response.json({ error: 'Squad is full' }, { status: 400 });
+                return Response.json({ error: 'This squad is full.' }, { status: 400 });
             }
             const existingMember = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
             if (existingMember.length > 0) {
-                return Response.json({ error: 'You are already in a squad' }, { status: 400 });
+                return Response.json({ error: 'You\'re already in a squad. Leave it before joining another.' }, { status: 400 });
             }
 
             // Mark current period as already-claimed so the new member can't claim
@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 
         if (action === 'leave') {
             const { memberId, squadId, playerName } = body;
-            if (!memberId || !squadId) return Response.json({ error: 'memberId and squadId required' }, { status: 400 });
+            if (!memberId || !squadId) return Response.json({ error: 'Couldn\'t leave the squad — please refresh and try again.' }, { status: 400 });
 
             await base44.asServiceRole.entities.SquadMember.delete(memberId);
 
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
 
         if (action === 'kick') {
             const { targetMemberId, squadId } = body;
-            if (!targetMemberId || !squadId) return Response.json({ error: 'targetMemberId and squadId required' }, { status: 400 });
+            if (!targetMemberId || !squadId) return Response.json({ error: 'Couldn\'t kick this member — please refresh and try again.' }, { status: 400 });
 
             await base44.asServiceRole.entities.SquadMember.delete(targetMemberId);
 
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
 
         if (action === 'sendMessage') {
             const { squadId, content, playerName, playerTitle } = body;
-            if (!squadId || !content) return Response.json({ error: 'squadId and content required' }, { status: 400 });
+            if (!squadId || !content) return Response.json({ error: 'Couldn\'t send your message — please try again.' }, { status: 400 });
 
             const message = await base44.asServiceRole.entities.SquadMessage.create({
                 squad_id: squadId,
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
 
         if (action === 'transferLeadership') {
             const { targetMemberId, squadId } = body;
-            if (!targetMemberId || !squadId) return Response.json({ error: 'targetMemberId and squadId required' }, { status: 400 });
+            if (!targetMemberId || !squadId) return Response.json({ error: 'Couldn\'t transfer leadership — please refresh and try again.' }, { status: 400 });
 
             // Find current leader's member record by squad + wallet
             const currentLeaderRecords = await base44.asServiceRole.entities.SquadMember.filter({
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
 
         if (action === 'saveSettings') {
             const { squadId, name, tag, description, icon } = body;
-            if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
+            if (!squadId) return Response.json({ error: 'Couldn\'t save squad settings — please refresh and try again.' }, { status: 400 });
 
             await base44.asServiceRole.entities.Squad.update(squadId, {
                 name: name?.trim(),
@@ -211,31 +211,31 @@ Deno.serve(async (req) => {
 
         if (action === 'claimWeekly' || action === 'claimDaily') {
             const { memberId, squadId, currentWeek, currentDay } = body;
-            if (!memberId || !squadId) return Response.json({ error: 'memberId and squadId required' }, { status: 400 });
+            if (!memberId || !squadId) return Response.json({ error: 'Couldn\'t claim your bounty — please refresh and try again.' }, { status: 400 });
 
             // Load member + squad to validate
             const member = await base44.asServiceRole.entities.SquadMember.get(memberId);
-            if (!member) return Response.json({ error: 'Member not found' }, { status: 404 });
-            if (member.wallet_address !== walletAddress) return Response.json({ error: 'Forbidden' }, { status: 403 });
-            if (member.squad_id !== squadId) return Response.json({ error: 'Member not in squad' }, { status: 400 });
+            if (!member) return Response.json({ error: 'You\'re no longer a member of this squad.' }, { status: 404 });
+            if (member.wallet_address !== walletAddress) return Response.json({ error: 'You can only claim your own rewards.' }, { status: 403 });
+            if (member.squad_id !== squadId) return Response.json({ error: 'You\'re not a member of this squad.' }, { status: 400 });
 
             const squad = await base44.asServiceRole.entities.Squad.get(squadId);
-            if (!squad) return Response.json({ error: 'Squad not found' }, { status: 404 });
+            if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
 
             const isWeekly = action === 'claimWeekly';
             const periodId = isWeekly ? currentWeek : currentDay;
-            if (!periodId) return Response.json({ error: 'period id required' }, { status: 400 });
+            if (!periodId) return Response.json({ error: 'Couldn\'t claim your bounty — please refresh and try again.' }, { status: 400 });
             const lastClaimedField = isWeekly ? 'last_payout_week' : 'last_daily_payout_date';
             const killsField = isWeekly ? 'weekly_kills' : 'daily_kills';
             const tier = getTier(squad.level || 1, isWeekly ? WEEKLY_BOUNTY_TIERS : DAILY_BOUNTY_TIERS);
 
             // Check already claimed
             if (member[lastClaimedField] === periodId) {
-                return Response.json({ error: 'Already claimed', alreadyClaimed: true }, { status: 409 });
+                return Response.json({ error: 'You\'ve already claimed this bounty.', alreadyClaimed: true }, { status: 409 });
             }
             // Check progress threshold met
             if ((squad[killsField] || 0) < tier.target) {
-                return Response.json({ error: 'Bounty target not yet reached' }, { status: 400 });
+                return Response.json({ error: 'Your squad hasn\'t reached the kill target yet.' }, { status: 400 });
             }
 
             // Mark claimed FIRST so concurrent calls fail
@@ -254,16 +254,16 @@ Deno.serve(async (req) => {
 
         if (action === 'resetPeriods') {
             const { squadId, updateData } = body;
-            if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
+            if (!squadId) return Response.json({ error: 'Couldn\'t update squad — please refresh and try again.' }, { status: 400 });
 
             await base44.asServiceRole.entities.Squad.update(squadId, updateData);
 
             return Response.json({ success: true });
         }
 
-        return Response.json({ error: 'Unknown action' }, { status: 400 });
+        return Response.json({ error: 'Couldn\'t process this request — please refresh and try again.' }, { status: 400 });
     } catch (error) {
         console.error('[squadActions]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Something went wrong with your squad. Please try again.' }, { status: 500 });
     }
 });

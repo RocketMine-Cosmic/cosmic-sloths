@@ -29,17 +29,17 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!me) return Response.json({ error: 'Please sign in to claim your daily reward.' }, { status: 401 });
 
         const wallet = me.wallet_address;
-        if (!wallet) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+        if (!wallet) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         const walletLower = wallet.toLowerCase();
         const today = todayUTC();
         const yesterday = yesterdayUTC();
 
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
-        if (records.length === 0) return Response.json({ error: 'PlayerSave not found' }, { status: 404 });
+        if (records.length === 0) return Response.json({ error: 'We couldn\'t find your save. Please play a run first to create one.' }, { status: 404 });
 
         const record = records[0];
         const saveData = typeof record.save_data === 'string' ? JSON.parse(record.save_data) : record.save_data;
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
         // Already claimed today? Reject.
         if (login.lastDate === today && login.claimed) {
-            return Response.json({ error: 'Already claimed today', alreadyClaimed: true }, { status: 409 });
+            return Response.json({ error: 'You\'ve already claimed today\'s reward — come back tomorrow!', alreadyClaimed: true }, { status: 409 });
         }
 
         // Compute new streak: continues if yesterday, resets otherwise.
@@ -85,6 +85,6 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[claimDailyLogin]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Couldn\'t claim your daily reward right now. Please try again.' }, { status: 500 });
     }
 });

@@ -71,10 +71,10 @@ function validateTalentPrereqs(save, charId, talentId) {
     if (!prereqs) return;
     const owned = getAllUnlockedTalents(save, charId);
     if (prereqs.requires && !owned.has(prereqs.requires)) {
-        throw new Error(`Talent prerequisite missing: ${talentId} requires ${prereqs.requires}`);
+        throw new Error(`You need to unlock the previous talent first.`);
     }
     if (prereqs.excludes && owned.has(prereqs.excludes)) {
-        throw new Error(`Talent path conflict: ${talentId} excludes ${prereqs.excludes}`);
+        throw new Error(`You've already chosen the other path on this branch — only one is allowed.`);
     }
 }
 
@@ -125,7 +125,7 @@ async function getSkuPrice(skuId, apiBaseUrl, apiKeys) {
             if (res.status !== 429 && res.status < 500) break;
             console.warn('[purchaseSku] catalog HTTP', res.status, '— trying next key');
         }
-        if (!res || !res.ok) throw new Error(`Failed to fetch SKU catalog: HTTP ${lastStatus || res?.status}`);
+        if (!res || !res.ok) throw new Error(`Couldn't load store prices right now. Please try again in a moment.`);
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data?.products || data?.skus || data?.items || []);
         skuPriceCache = {};
@@ -157,14 +157,14 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             // grantInfo: { type, tier: 'permanent'|'weekly'|'seasonal', stat, level }
             const { tier, stat, level } = grantInfo;
             const expected = `stat-upgrade-${tier}`;
-            if (skuPrefix !== expected) throw new Error(`SKU/grant mismatch: ${skuPrefix} vs ${expected}`);
+            if (skuPrefix !== expected) throw new Error(`This upgrade doesn't match your save. Please refresh and try again.`);
             const key = tier === 'permanent' ? 'permanentUpgrades'
                       : tier === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
             const obj = { ...(s[key] || {}) };
             const currentLvl = Number(obj[stat] || 0);
             // Level being purchased must be exactly currentLvl + 1
             if (level !== currentLvl + 1) {
-                throw new Error(`Stat level mismatch: requested ${level} but cloud is at ${currentLvl}`);
+                throw new Error(`Your save is out of sync. Please refresh and try again.`);
             }
             obj[stat] = level;
             // Stamp period id
@@ -177,14 +177,14 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             // grantInfo: { type, tier, weaponId, stat, level }
             const { tier, weaponId, stat, level } = grantInfo;
             const expected = `weapon-upgrades-${tier}`;
-            if (skuPrefix !== expected) throw new Error(`SKU/grant mismatch: ${skuPrefix} vs ${expected}`);
+            if (skuPrefix !== expected) throw new Error(`This upgrade doesn't match your save. Please refresh and try again.`);
             const key = tier === 'permanent' ? 'permanentWeaponUpgrades'
                       : tier === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
             const obj = { ...(s[key] || {}) };
             const weaponObj = { ...(obj[weaponId] || {}) };
             const currentLvl = Number(weaponObj[stat] || 0);
             if (level !== currentLvl + 1) {
-                throw new Error(`Weapon level mismatch: requested ${level} but cloud is at ${currentLvl}`);
+                throw new Error(`Your save is out of sync. Please refresh and try again.`);
             }
             weaponObj[stat] = level;
             obj[weaponId] = weaponObj;
@@ -197,18 +197,18 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             // grantInfo: { type, tier, charId, talentId, talentTier }
             const { tier, charId, talentId, talentTier } = grantInfo;
             const expected = `character-talents-${tier}`;
-            if (skuPrefix !== expected) throw new Error(`SKU/grant mismatch: ${skuPrefix} vs ${expected}`);
+            if (skuPrefix !== expected) throw new Error(`This talent doesn't match your save. Please refresh and try again.`);
             // Validate SKU level matches talent tier
             const skuLevel = parseInt(skuId.split('-lvl')[1] || '1', 10);
             if (skuLevel !== talentTier) {
-                throw new Error(`Talent SKU/tier mismatch: SKU lvl${skuLevel} vs tier ${talentTier}`);
+                throw new Error(`This talent's tier doesn't match. Please refresh and try again.`);
             }
             const key = tier === 'permanent' ? 'permanentTalents'
                       : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
             const obj = { ...(s[key] || {}) };
             const charArr = Array.isArray(obj[charId]) ? [...obj[charId]] : [];
             if (charArr.includes(talentId)) {
-                throw new Error('Talent already unlocked');
+                throw new Error('You already own this talent.');
             }
             // Enforce tier prerequisites (tier 1 needed for tier 2, tier 2 for tier 3, exclusive paths).
             validateTalentPrereqs(s, charId, talentId);
@@ -228,7 +228,7 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
                 skin:  ['character-skins-'],
             };
             const ok = (validPrefixes[slot] || []).some(p => skuId.startsWith(p));
-            if (!ok) throw new Error(`SKU/cosmetic slot mismatch: ${skuId} for slot ${slot}`);
+            if (!ok) throw new Error(`This cosmetic doesn't match the slot. Please refresh and try again.`);
 
             if (slot === 'trail') {
                 const arr = Array.isArray(s.unlockedCosmetics) ? [...s.unlockedCosmetics] : [];
@@ -251,7 +251,7 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             break;
         }
         default:
-            throw new Error(`Unknown grant type: ${type}`);
+            throw new Error(`Something went wrong with this purchase. Please try again.`);
     }
     s.updated_at = Date.now();
     return s;
@@ -261,19 +261,20 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!me) return Response.json({ error: 'Please sign in to continue.' }, { status: 401 });
 
         const walletAddress = me.wallet_address;
-        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+        if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         const { skuId, quantity = 1, playerName: playerNameParam, grantInfo } = await req.json();
-        if (!skuId) return Response.json({ error: 'skuId required' }, { status: 400 });
+        if (!skuId) return Response.json({ error: 'Missing item info — please refresh and try again.' }, { status: 400 });
 
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
         const apiKeys = getPaymentKeys();
         if (apiKeys.length === 0) {
-            return Response.json({ error: 'No payment API keys configured' }, { status: 500 });
+            console.error('[purchaseSku] No payment API keys configured');
+            return Response.json({ error: 'Payments are temporarily unavailable. Please try again shortly.' }, { status: 500 });
         }
         const idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
@@ -284,7 +285,7 @@ Deno.serve(async (req) => {
         if (!unitPrice || unitPrice <= 0) {
             const sampleKeys = skuPriceCache ? Object.keys(skuPriceCache).slice(0, 5) : [];
             console.error('[purchaseSku] Unknown SKU price for:', skuId, 'cache size:', skuPriceCache ? Object.keys(skuPriceCache).length : 'null', 'sample keys:', sampleKeys);
-            return Response.json({ error: 'SKU price not configured', skuId }, { status: 500 });
+            return Response.json({ error: 'This item isn\'t available right now. Please try again shortly.', skuId }, { status: 500 });
         }
         const totalAmount = unitPrice * quantity;
 
@@ -298,7 +299,7 @@ Deno.serve(async (req) => {
         if (grantInfo) {
             const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
             if (records.length === 0) {
-                return Response.json({ error: 'PlayerSave not found — sync your save first' }, { status: 400 });
+                return Response.json({ error: 'We couldn\'t find your save. Please play a run first to create one.' }, { status: 400 });
             }
             saveRecord = records[0];
             const saveData = typeof saveRecord.save_data === 'string'
@@ -309,14 +310,15 @@ Deno.serve(async (req) => {
             if (grantInfo.type === 'talent') {
                 const owns = await ownsCharacter(saveData, walletAddress, grantInfo.charId);
                 if (!owns) {
-                    return Response.json({ error: `Character not unlocked: ${grantInfo.charId}` }, { status: 403 });
+                    return Response.json({ error: `You haven't unlocked this character yet.` }, { status: 403 });
                 }
             }
 
             try {
                 updatedSave = applyGrant(saveData, grantInfo, skuId, periodIds);
             } catch (e) {
-                return Response.json({ error: `Grant validation failed: ${e.message}` }, { status: 400 });
+                // applyGrant already throws human-friendly messages
+                return Response.json({ error: e.message }, { status: 400 });
             }
         }
 
@@ -344,14 +346,18 @@ Deno.serve(async (req) => {
                     console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
                     continue;
                 }
-                if (msg.includes('429')) return Response.json({ error: 'Rate limited by payment processor' }, { status: 429 });
+                if (msg.includes('429')) return Response.json({ error: 'Too many purchases right now — please try again in a moment.' }, { status: 429 });
                 console.error('[purchaseSku] SDK purchase failed:', msg);
-                return Response.json({ error: msg }, { status: 500 });
+                // Surface common payment errors clearly, hide raw stack traces
+                const friendly = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
+                    : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
+                    : "Your purchase couldn't be completed. Please try again.";
+                return Response.json({ error: friendly }, { status: 500 });
             }
         }
         if (!purchaseData) {
-            const msg = lastErr?.message || 'Purchase failed';
-            return Response.json({ error: msg }, { status: 500 });
+            console.error('[purchaseSku] No purchase data; lastErr:', lastErr?.message);
+            return Response.json({ error: "Your purchase couldn't be completed. Please try again." }, { status: 500 });
         }
 
         const txHash = purchaseData?.transactionId || purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.paymentTxHash || null;
@@ -359,7 +365,7 @@ Deno.serve(async (req) => {
         console.log(`[purchaseSku] OmenX status=${status} txHash=${txHash || 'NONE'}`);
         if (status !== 'confirmed') {
             console.error('[purchaseSku] Purchase not confirmed:', JSON.stringify(purchaseData).slice(0, 500));
-            return Response.json({ error: 'Purchase not confirmed', detail: purchaseData }, { status: 500 });
+            return Response.json({ error: "Your payment didn't go through. Please try again — you haven't been charged." }, { status: 500 });
         }
 
         // --- Apply grant to PlayerSave (if any) ---
@@ -428,6 +434,6 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Something went wrong with your purchase. Please try again.' }, { status: 500 });
     }
 });

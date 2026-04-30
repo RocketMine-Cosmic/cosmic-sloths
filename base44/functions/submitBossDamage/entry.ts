@@ -22,14 +22,14 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!me) return Response.json({ error: 'Please sign in to join the raid.' }, { status: 401 });
 
         const walletAddress = me.wallet_address;
-        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+        if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         const { damage, playerName } = await req.json();
         if (typeof damage !== 'number' || damage <= 0) {
-            return Response.json({ error: 'Invalid damage' }, { status: 400 });
+            return Response.json({ error: 'Couldn\'t record your damage — please try again.' }, { status: 400 });
         }
 
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);
@@ -114,6 +114,6 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, damage: clampedDamage, boss: bossUpdate });
     } catch (error) {
         console.error('[submitBossDamage]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Couldn\'t record your raid damage. Please try again.' }, { status: 500 });
     }
 });

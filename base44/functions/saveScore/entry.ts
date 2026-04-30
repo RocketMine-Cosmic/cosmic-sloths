@@ -234,19 +234,19 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!me) return Response.json({ error: 'Please sign in to save your score.' }, { status: 401 });
 
         const walletAddress = me.wallet_address;
-        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+        if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         const { scoreData, squadStats } = await req.json();
-        if (!scoreData) return Response.json({ error: 'scoreData required' }, { status: 400 });
+        if (!scoreData) return Response.json({ error: 'Couldn\'t save your run — missing data. Please try again.' }, { status: 400 });
 
         // Validate stats and recompute score server-side
         const validation = validateAndRecompute(scoreData);
         if (!validation.ok) {
             console.warn(`[saveScore] REJECTED tampered run from ${walletAddress}: ${validation.reason}`);
-            return Response.json({ error: 'Run failed validation', detail: validation.reason }, { status: 400 });
+            return Response.json({ error: 'Your run couldn\'t be validated and wasn\'t saved.' }, { status: 400 });
         }
 
         const isVictory = !!scoreData.is_victory;
@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
         const walletLower = walletAddress.toLowerCase();
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
         if (records.length === 0) {
-            return Response.json({ error: 'PlayerSave not found — sync your save first' }, { status: 400 });
+            return Response.json({ error: 'We couldn\'t find your save. Please refresh and try again.' }, { status: 400 });
         }
         const saveRecord = records[0];
         const saveData = typeof saveRecord.save_data === 'string'
@@ -354,6 +354,6 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[saveScore]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Something went wrong saving your score. Please try again.' }, { status: 500 });
     }
 });

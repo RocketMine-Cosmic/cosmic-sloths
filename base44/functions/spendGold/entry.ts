@@ -55,10 +55,10 @@ function validateTalentPrereqs(save, charId, talentId) {
     if (!prereqs) return; // tier 1 or unknown — no prereqs
     const owned = getAllUnlockedTalents(save, charId);
     if (prereqs.requires && !owned.has(prereqs.requires)) {
-        throw new Error(`Talent prerequisite missing: ${talentId} requires ${prereqs.requires}`);
+        throw new Error(`You need to unlock the previous talent first.`);
     }
     if (prereqs.excludes && owned.has(prereqs.excludes)) {
-        throw new Error(`Talent path conflict: ${talentId} excludes ${prereqs.excludes}`);
+        throw new Error(`You've already chosen the other path on this branch — only one is allowed.`);
     }
 }
 
@@ -110,28 +110,28 @@ function computeCost(grantInfo, save) {
     if (type === 'stat') {
         const { tier, level } = grantInfo;
         const costs = GOLD_COSTS.stat[tier];
-        if (!costs || !level || level < 1 || level > costs.length) throw new Error(`Bad stat cost: tier=${tier} level=${level}`);
+        if (!costs || !level || level < 1 || level > costs.length) throw new Error(`This upgrade isn't available. Please refresh and try again.`);
         return costs[level - 1];
     }
     if (type === 'weapon') {
         const { tier, level } = grantInfo;
         const costs = GOLD_COSTS.weapon[tier];
-        if (!costs || !level || level < 1 || level > costs.length) throw new Error(`Bad weapon cost: tier=${tier} level=${level}`);
+        if (!costs || !level || level < 1 || level > costs.length) throw new Error(`This upgrade isn't available. Please refresh and try again.`);
         return costs[level - 1];
     }
     if (type === 'talent') {
         const { tier, talentTier } = grantInfo;
         const costs = GOLD_COSTS.talent[tier];
-        if (!costs || !talentTier) throw new Error(`Bad talent cost: tier=${tier} talentTier=${talentTier}`);
+        if (!costs || !talentTier) throw new Error(`This talent isn't available. Please refresh and try again.`);
         const idx = Math.min((talentTier - 1) * 2, costs.length - 1);
         return costs[idx];
     }
     if (type === 'cosmetic') {
         const { goldCost } = grantInfo;
-        if (typeof goldCost !== 'number' || goldCost < 0) throw new Error(`Bad cosmetic cost: ${goldCost}`);
+        if (typeof goldCost !== 'number' || goldCost < 0) throw new Error(`This cosmetic isn't available. Please refresh and try again.`);
         return goldCost;
     }
-    throw new Error(`Unknown grant type: ${type}`);
+    throw new Error(`Something went wrong with this purchase. Please try again.`);
 }
 
 // Validates the grant against current cloud save and returns updated save_data.
@@ -154,7 +154,7 @@ function applyGrant(save, grantInfo, periodIds) {
                       : tier === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
             const obj = { ...(s[key] || {}) };
             const currentLvl = Number(obj[stat] || 0);
-            if (level !== currentLvl + 1) throw new Error(`Stat level mismatch: requested ${level} but cloud at ${currentLvl}`);
+            if (level !== currentLvl + 1) throw new Error(`Your save is out of sync. Please refresh and try again.`);
             obj[stat] = level;
             if (tier === 'weekly') obj.weekId = periodIds.week_id;
             if (tier === 'seasonal') obj.seasonId = periodIds.season_id;
@@ -168,7 +168,7 @@ function applyGrant(save, grantInfo, periodIds) {
             const obj = { ...(s[key] || {}) };
             const weaponObj = { ...(obj[weaponId] || {}) };
             const currentLvl = Number(weaponObj[stat] || 0);
-            if (level !== currentLvl + 1) throw new Error(`Weapon level mismatch: requested ${level} but cloud at ${currentLvl}`);
+            if (level !== currentLvl + 1) throw new Error(`Your save is out of sync. Please refresh and try again.`);
             weaponObj[stat] = level;
             obj[weaponId] = weaponObj;
             if (tier === 'weekly') obj.weekId = periodIds.week_id;
@@ -182,7 +182,7 @@ function applyGrant(save, grantInfo, periodIds) {
                       : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
             const obj = { ...(s[key] || {}) };
             const charArr = Array.isArray(obj[charId]) ? [...obj[charId]] : [];
-            if (charArr.includes(talentId)) throw new Error('Talent already unlocked');
+            if (charArr.includes(talentId)) throw new Error('You already own this talent.');
             // Enforce tier prerequisites — tier 2 needs tier 1, tier 3 needs tier 2,
             // and exclusive sibling cannot already be owned.
             validateTalentPrereqs(s, charId, talentId);
@@ -213,12 +213,12 @@ function applyGrant(save, grantInfo, periodIds) {
                 if (charId) skins[charId] = cosmeticId;
                 s.cosmetics = { ...(s.cosmetics || {}), skins };
             } else {
-                throw new Error(`Unknown cosmetic slot: ${slot}`);
+                throw new Error(`This cosmetic isn't available. Please refresh and try again.`);
             }
             break;
         }
         default:
-            throw new Error(`Unknown grant type: ${type}`);
+            throw new Error(`Something went wrong with this purchase. Please try again.`);
     }
     s.updated_at = Date.now();
     return s;
@@ -228,20 +228,20 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!me) return Response.json({ error: 'Please sign in to continue.' }, { status: 401 });
 
         const walletAddress = me.wallet_address;
-        if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+        if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         const { grantInfo } = await req.json();
         if (!grantInfo || !grantInfo.type) {
-            return Response.json({ error: 'grantInfo required' }, { status: 400 });
+            return Response.json({ error: 'Missing upgrade info — please refresh and try again.' }, { status: 400 });
         }
 
         // Load current save (needed before computing cost for pool_respec).
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
         if (records.length === 0) {
-            return Response.json({ error: 'PlayerSave not found — sync your save first' }, { status: 400 });
+            return Response.json({ error: 'We couldn\'t find your save. Please play a run first to create one.' }, { status: 400 });
         }
         const saveRecord = records[0];
         const saveData = typeof saveRecord.save_data === 'string'
@@ -253,13 +253,14 @@ Deno.serve(async (req) => {
         try {
             cost = computeCost(grantInfo, saveData);
         } catch (e) {
-            return Response.json({ error: `Cost computation failed: ${e.message}` }, { status: 400 });
+            // computeCost already throws human-friendly messages
+            return Response.json({ error: e.message }, { status: 400 });
         }
 
         // Verify funds
         const currentGold = Number(saveData.gold || 0);
         if (currentGold < cost) {
-            return Response.json({ error: `Insufficient gold: need ${cost} have ${currentGold}` }, { status: 400 });
+            return Response.json({ error: `Not enough gold — you need ${cost.toLocaleString()} but have ${currentGold.toLocaleString()}.` }, { status: 400 });
         }
 
         // Apply grant
@@ -269,7 +270,7 @@ Deno.serve(async (req) => {
         if (grantInfo.type === 'talent') {
             const owns = await ownsCharacter(saveData, walletAddress, grantInfo.charId);
             if (!owns) {
-                return Response.json({ error: `Character not unlocked: ${grantInfo.charId}` }, { status: 403 });
+                return Response.json({ error: `You haven't unlocked this character yet.` }, { status: 403 });
             }
         }
 
@@ -277,7 +278,8 @@ Deno.serve(async (req) => {
         try {
             updatedSave = applyGrant(saveData, grantInfo, periodIds);
         } catch (e) {
-            return Response.json({ error: `Grant validation failed: ${e.message}` }, { status: 400 });
+            // applyGrant already throws human-friendly messages
+            return Response.json({ error: e.message }, { status: 400 });
         }
 
         // Deduct gold
@@ -293,6 +295,6 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, cost, saveData: updatedSave });
     } catch (error) {
         console.error('[spendGold]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Something went wrong with your purchase. Please try again.' }, { status: 500 });
     }
 });

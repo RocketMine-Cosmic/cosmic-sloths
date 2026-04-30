@@ -8,41 +8,41 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!me) return Response.json({ error: 'Please sign in to claim your bounty.' }, { status: 401 });
 
         const wallet = me.wallet_address;
-        if (!wallet) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
+        if (!wallet) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         const { type, bountyIndex } = await req.json();
         if (!type || (type !== 'bounty' && type !== 'dailyMission')) {
-            return Response.json({ error: 'type must be "bounty" or "dailyMission"' }, { status: 400 });
+            return Response.json({ error: 'Couldn\'t process this claim — please refresh and try again.' }, { status: 400 });
         }
         if (type === 'bounty' && (bountyIndex === undefined || bountyIndex < 0 || bountyIndex > 2)) {
-            return Response.json({ error: 'bountyIndex required (0-2) for type=bounty' }, { status: 400 });
+            return Response.json({ error: 'Couldn\'t process this claim — please refresh and try again.' }, { status: 400 });
         }
 
         const walletLower = wallet.toLowerCase();
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
-        if (records.length === 0) return Response.json({ error: 'PlayerSave not found' }, { status: 404 });
+        if (records.length === 0) return Response.json({ error: 'We couldn\'t find your save. Please play a run first to create one.' }, { status: 404 });
 
         const record = records[0];
         const saveData = typeof record.save_data === 'string' ? JSON.parse(record.save_data) : record.save_data;
 
-        if (!saveData.bounties) return Response.json({ error: 'No bounties data' }, { status: 400 });
+        if (!saveData.bounties) return Response.json({ error: 'No bounties available yet — play a run to refresh.' }, { status: 400 });
 
         let bounty;
         if (type === 'bounty') {
             const list = saveData.bounties.active;
-            if (!Array.isArray(list) || !list[bountyIndex]) return Response.json({ error: 'Bounty not found' }, { status: 404 });
+            if (!Array.isArray(list) || !list[bountyIndex]) return Response.json({ error: 'This bounty is no longer available.' }, { status: 404 });
             bounty = list[bountyIndex];
         } else {
             bounty = saveData.bounties.dailyMission;
-            if (!bounty) return Response.json({ error: 'Daily mission not found' }, { status: 404 });
+            if (!bounty) return Response.json({ error: 'No daily mission available right now.' }, { status: 404 });
         }
 
         // Validate
-        if (bounty.claimed) return Response.json({ error: 'Already claimed', alreadyClaimed: true }, { status: 409 });
-        if ((bounty.progress || 0) < (bounty.target || 0)) return Response.json({ error: 'Bounty not complete' }, { status: 400 });
+        if (bounty.claimed) return Response.json({ error: 'You\'ve already claimed this bounty.', alreadyClaimed: true }, { status: 409 });
+        if ((bounty.progress || 0) < (bounty.target || 0)) return Response.json({ error: 'You haven\'t finished this bounty yet.' }, { status: 400 });
 
         // Mark claimed and grant reward atomically in saveData
         bounty.claimed = true;
@@ -82,6 +82,6 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[claimBounty]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: 'Couldn\'t claim your bounty right now. Please try again.' }, { status: 500 });
     }
 });
