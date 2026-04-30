@@ -28,7 +28,7 @@ export default function SquadWars({ isCarousel }) {
     const [loading, setLoading] = useState(true);
     const [claiming, setClaiming] = useState(false);
 
-    // Load my squad membership
+    // Load my squad membership — wallets are stored lowercase in DB
     useEffect(() => {
         if (!omenxUser?.wallet_address) {
             setLoading(false);
@@ -36,7 +36,12 @@ export default function SquadWars({ isCarousel }) {
         }
         (async () => {
             try {
-                const members = await base44.entities.SquadMember.filter({ wallet_address: omenxUser.wallet_address });
+                const wallet = omenxUser.wallet_address.toLowerCase();
+                let members = await base44.entities.SquadMember.filter({ wallet_address: wallet });
+                // Fallback to original case in case some records were stored mixed-case
+                if (members.length === 0 && wallet !== omenxUser.wallet_address) {
+                    members = await base44.entities.SquadMember.filter({ wallet_address: omenxUser.wallet_address });
+                }
                 if (members.length > 0) setMySquadId(members[0].squad_id);
             } catch (e) {
                 console.error('[SquadWars] Failed to load membership:', e);
