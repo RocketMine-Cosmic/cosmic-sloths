@@ -92,8 +92,8 @@ export default function Leaderboard() {
                 const msPerWeek = 7 * 24 * 60 * 60 * 1000;
                 // Monday of lastWeekOfSeason, then +6 days = Sunday
                 const mondayOfLastWeek = new Date(mondayW1.getTime() + (lastWeekOfSeason - 1) * msPerWeek);
-                const endOfSeason = new Date(mondayOfLastWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
-                endOfSeason.setUTCHours(23, 59, 0, 0);
+                // Season ends at Sunday 23:59:59.999 UTC — exactly matches getSquadChampionsStandings.getSeasonEndIso
+                const endOfSeason = new Date(mondayOfLastWeek.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
                 
                 const msLeft = endOfSeason - now;
                 const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
