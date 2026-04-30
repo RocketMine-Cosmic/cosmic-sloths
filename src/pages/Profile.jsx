@@ -204,7 +204,7 @@ export default function Profile({ isCarousel }) {
                             </button>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2" style={{ background: 'linear-gradient(90deg, #0CA7B8, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(6,182,212,0.5))' }}>
-                            PILOT DOSSIER
+                            PILOT PROFILE
                         </h1>
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">View your career and statistics.</p>
                     </div>

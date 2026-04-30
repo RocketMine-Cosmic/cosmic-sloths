@@ -16,7 +16,7 @@ const SLIDE_GROUPS = [
             { idx: 0, name: 'Main Menu', icon: '🚀', color: 'from-slate-700 to-slate-900', border: 'border-white/30' },
             { idx: 1, name: 'Sloth Command', icon: '🦥', color: 'from-cyan-700 to-cyan-950', border: 'border-cyan-400/50' },
             { idx: 2, name: 'Star Ops', icon: '🎯', color: 'from-emerald-700 to-emerald-950', border: 'border-emerald-400/50' },
-            { idx: 12, name: 'Pilot Dossier', icon: '🪪', color: 'from-violet-700 to-violet-950', border: 'border-violet-400/50' },
+            { idx: 12, name: 'Pilot Profile', icon: '🪪', color: 'from-violet-700 to-violet-950', border: 'border-violet-400/50' },
         ],
     },
     {
@@ -48,7 +48,7 @@ const SLIDE_GROUPS = [
         border: 'border-orange-500/30',
         slides: [
             { idx: 5, name: 'Sloth Squads', icon: '👥', color: 'from-orange-700 to-orange-950', border: 'border-orange-400/50' },
-            { idx: 4, name: 'Star Charts', icon: '🏆', color: 'from-amber-700 to-amber-950', border: 'border-amber-400/50' },
+            { idx: 4, name: 'Hall of Fame', icon: '🏆', color: 'from-amber-700 to-amber-950', border: 'border-amber-400/50' },
         ],
     },
     {

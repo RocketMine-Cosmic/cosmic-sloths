@@ -30,7 +30,7 @@ const SLIDE_LABELS = [
     { name: 'Sloth Command', color: 'text-cyan-300' },
     { name: 'Star Ops', color: 'text-emerald-300' },
     { name: 'Cosmic Armory', color: 'text-fuchsia-300' },
-    { name: 'Star Charts', color: 'text-amber-300' },
+    { name: 'Hall of Fame', color: 'text-amber-300' },
     { name: 'Sloth Squads', color: 'text-orange-300' },
     { name: 'Galactic Bestiary', color: 'text-rose-300' },
     { name: 'Cosmic Codex', color: 'text-pink-400' },
@@ -38,7 +38,7 @@ const SLIDE_LABELS = [
     { name: 'Cosmic Mutations', color: 'text-red-400' },
     { name: 'Galactic Raid', color: 'text-red-500' },
     { name: 'Cosmic Vault', color: 'text-purple-300' },
-    { name: 'Pilot Dossier', color: 'text-violet-300' },
+    { name: 'Pilot Profile', color: 'text-violet-300' },
     { name: 'Stellar Jukebox', color: 'text-fuchsia-300' },
     { name: 'Star Callsigns', color: 'text-amber-300' },
 ];
