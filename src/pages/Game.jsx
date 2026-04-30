@@ -77,6 +77,9 @@ export default function Game() {
         setLevelUpChoices(null);
         setShowRevivePrompt(false);
         setIsPaused(false);
+        // Reset per-run banish counter so "Try Again" doesn't carry over the
+        // previous run's tier-up cost (Hugo bug 2026-04-30).
+        setBanishCount(0);
 
         const initGame = async () => {
             const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
