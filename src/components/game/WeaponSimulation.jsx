@@ -220,16 +220,19 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
             for (let gx = 0; gx < W; gx += 30) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
             for (let gy = 0; gy < H; gy += 30) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
-            // Dummies — draw real enemy sprite if available, fall back to a coloured circle.
+            // Dummies — sprite sheets are arranged in a square grid (e.g. 16 frames = 4×4).
             dummies.forEach(d => {
                 if (d.sprite && d.sprite.complete && d.sprite.naturalWidth > 0) {
-                    const sheetW = d.sprite.naturalWidth;
-                    const sheetH = d.sprite.naturalHeight;
-                    const frameW = sheetW / d.frameCount;
-                    const drawSize = d.radius * 2.4;
+                    const cols = Math.ceil(Math.sqrt(d.frameCount));
+                    const rows = Math.ceil(d.frameCount / cols);
+                    const frameW = d.sprite.naturalWidth / cols;
+                    const frameH = d.sprite.naturalHeight / rows;
+                    const col = d._frame % cols;
+                    const row = Math.floor(d._frame / cols);
+                    const drawSize = d.radius * 2.6;
                     ctx.drawImage(
                         d.sprite,
-                        d._frame * frameW, 0, frameW, sheetH,
+                        col * frameW, row * frameH, frameW, frameH,
                         d.x - drawSize / 2, d.y - drawSize / 2, drawSize, drawSize
                     );
                 } else {
@@ -240,11 +243,22 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
                 }
             });
 
-            // Player — draw NeoByte's idle sprite if loaded, otherwise the original coloured circle.
+            // Player — NeoByte idle sheet is a 4×4 grid like enemies. Pick a single frame.
             const p = mockEngine.player;
             if (playerSprite && playerSprite.complete && playerSprite.naturalWidth > 0) {
+                const PLAYER_FRAMES = 16;
+                const cols = 4, rows = 4;
+                const frameW = playerSprite.naturalWidth / cols;
+                const frameH = playerSprite.naturalHeight / rows;
+                const frame = Math.floor(time / 0.12) % PLAYER_FRAMES;
+                const col = frame % cols;
+                const row = Math.floor(frame / cols);
                 const drawSize = p.radius * 3.2;
-                ctx.drawImage(playerSprite, p.x - drawSize / 2, p.y - drawSize / 2, drawSize, drawSize);
+                ctx.drawImage(
+                    playerSprite,
+                    col * frameW, row * frameH, frameW, frameH,
+                    p.x - drawSize / 2, p.y - drawSize / 2, drawSize, drawSize
+                );
             } else {
                 ctx.fillStyle = p.color;
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
