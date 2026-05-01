@@ -139,6 +139,9 @@ async function fetchNfts() {
             lastNftFetchAt = Date.now();
             saveJSON('omenx_nft_cache', { nfts, timestamp: lastNftFetchAt });
             saveJSON('omenx_nft_data', nfts);
+            // Track which wallet this NFT inventory belongs to, mirroring VIP,
+            // so we can detect wallet changes and force a re-fetch on swap.
+            saveJSON('omenx_nft_cache_wallet', auth.walletAddress.toLowerCase());
             applyData({ nfts });
         } catch (e) {
             console.error('[playerDataCache] nft fetch failed:', e?.message);
@@ -247,37 +250,47 @@ export function subscribePlayerData(fn) {
         storageListenerAttached = true;
         const onAuthChange = () => {
             // New login — clear balance & user caches and re-fetch.
-            // VIP cache is preserved across logins of the SAME wallet (since VIP
-            // rarely changes); it's cleared only when the wallet itself changes.
+            // VIP and NFT caches are preserved across logins of the SAME wallet
+            // (rarely change); cleared only when the wallet itself changes.
             lastBalanceFetchAt = 0;
-            lastNftFetchAt = 0;
             userFetched = false;
 
-            // Detect wallet change → wipe VIP cache too.
+            // Detect wallet change → wipe VIP + NFT caches.
             const auth = getAuthData();
             const newWallet = auth?.walletAddress?.toLowerCase() || null;
-            const cachedWallet = loadJSON('omenx_vip_cache_wallet');
-            if (newWallet && cachedWallet && cachedWallet !== newWallet) {
+            const cachedVipWallet = loadJSON('omenx_vip_cache_wallet');
+            if (newWallet && cachedVipWallet && cachedVipWallet !== newWallet) {
                 lastVipFetchAt = 0;
                 try { localStorage.removeItem('omenx_vip_cache'); } catch {}
             }
+            const cachedNftWallet = loadJSON('omenx_nft_cache_wallet');
+            if (newWallet && cachedNftWallet && cachedNftWallet !== newWallet) {
+                lastNftFetchAt = 0;
+                try {
+                    localStorage.removeItem('omenx_nft_cache');
+                    localStorage.removeItem('omenx_nft_data');
+                } catch {}
+            }
 
             const freshVip = loadJSON('omenx_vip_cache');
+            const freshNfts = loadJSON('omenx_nft_cache');
             cachedData = {
                 balance: 0,
                 vipLevel: freshVip?.vipLevel ?? 0,
-                nfts: [],
+                nfts: freshNfts?.nfts ?? [],
             };
             try {
                 localStorage.removeItem('omenx_balance_cache');
-                localStorage.removeItem('omenx_nft_cache');
             } catch {}
             if (scheduledBalanceTimer) { clearTimeout(scheduledBalanceTimer); scheduledBalanceTimer = null; }
             loadUserDataLocal();
             fetchBalance(true);
-            // Auto-fetch VIP once per wallet (no-op if already cached for this wallet)
+            // Auto-fetch VIP + NFTs once per wallet (no-op if already cached for this wallet).
+            // Critical for users arriving pre-authed from the Omen website — without
+            // this, VIP-gated and NFT-gated features (character unlocks, perks) would
+            // be missing on first visit until they manually opened those pages.
             if (lastVipFetchAt === 0 && newWallet) fetchVip();
-            // NFTs still wait for NFT Dashboard mount
+            if (lastNftFetchAt === 0 && newWallet) fetchNfts();
         };
         // Cross-tab login (real storage event) — has storageArea set
         window.addEventListener('storage', (e) => {
