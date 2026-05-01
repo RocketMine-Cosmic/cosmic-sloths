@@ -288,6 +288,9 @@ export default function Game() {
                     }
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
+                    // Unblock the modal so the player isn't stuck on the spinner forever.
+                    // Show their client-side estimate so the buttons render and they can continue.
+                    setGameOverStats(s => ({ ...s, score: s.score || 1, _saveFailed: true }));
                 });
                 
                 if (stats.worldBossDamage > 0) {
@@ -329,6 +332,8 @@ export default function Game() {
                     }
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
+                    // Unblock the modal so the player isn't stuck on the spinner forever.
+                    setVictoryStats(s => ({ ...s, score: s.score || 1, _saveFailed: true }));
                 });
                 
                 if (stats.worldBossDamage > 0) {
