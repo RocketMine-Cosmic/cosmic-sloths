@@ -550,8 +550,8 @@ export default function Game() {
     const handleQuit = async () => {
         const engine = engineRef.current;
         const isRaid = engine?.arena?.id === 'world_boss_arena';
-        const target = isRaid ? '/?slide=10' : '/';
-        const navState = { state: { slide: isRaid ? 10 : 1 } };
+        const target = isRaid ? '/?slide=11' : '/';
+        const navState = { state: { slide: isRaid ? 11 : 1 } };
 
         if (!engine || engine.isGameOver || engine.isVictory) {
             navigate(target, navState);
