@@ -31,7 +31,14 @@ export default function OmenXGate({ children, isCarousel }) {
             ? 'Your wallet is connected, but you need to sign in to link it and enable cloud saves.'
             : 'Sign in to access this area.';
         ctaLabel = 'Sign In';
-        ctaAction = () => base44.auth.redirectToLogin(window.location.href);
+        ctaAction = async () => {
+            try {
+                const result = base44.auth.redirectToLogin(window.location.href);
+                if (result && typeof result.then === 'function') await result;
+            } catch (err) {
+                console.error('[OmenXGate] redirectToLogin failed:', err);
+            }
+        };
     } else {
         icon = '🔗';
         title = 'Wallet Required';

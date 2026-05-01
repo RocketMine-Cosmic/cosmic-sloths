@@ -50,11 +50,19 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         }
     }, [authData]);
 
-    const handleBase44SignIn = () => {
+    const handleBase44SignIn = async () => {
         setLoading(true);
+        // redirectToLogin can be async and may reject silently — if so the button
+        // appears dead. Await it, log any error, and reset the loading state so
+        // the user can tap again instead of staring at a stuck "Redirecting…".
         try {
-            base44.auth.redirectToLogin(window.location.href);
-        } catch {
+            const result = base44.auth.redirectToLogin(window.location.href);
+            if (result && typeof result.then === 'function') await result;
+            // If we're still here after a brief moment, something went wrong with
+            // the redirect — reset so the user can retry.
+            setTimeout(() => setLoading(false), 4000);
+        } catch (err) {
+            console.error('[OmenXAuthButton] redirectToLogin failed:', err);
             setLoading(false);
         }
     };
