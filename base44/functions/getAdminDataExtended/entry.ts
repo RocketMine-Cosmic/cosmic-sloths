@@ -143,6 +143,16 @@ Deno.serve(async (req) => {
             return Response.json({ runs: flagged.slice(0, 100) });
         }
 
+        if (type === 'mutedWallets') {
+            const all = await base44.asServiceRole.entities.MutedWallet.list('-created_date', 500);
+            const now = Date.now();
+            const active = all.filter(m => {
+                if (!m.muted_until) return true;
+                return new Date(m.muted_until).getTime() >= now;
+            });
+            return Response.json({ mutes: active });
+        }
+
         if (type === 'squadMessages') {
             const filter = squadId ? { squad_id: squadId } : {};
             const messages = await base44.asServiceRole.entities.SquadMessage.filter(filter, '-created_date', 200);

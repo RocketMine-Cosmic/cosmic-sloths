@@ -192,6 +192,21 @@ Deno.serve(async (req) => {
             const { squadId, content, playerName, playerTitle } = body;
             if (!squadId || !content) return Response.json({ error: 'Couldn\'t send your message — please try again.' }, { status: 400 });
 
+            // Block muted wallets. Auto-clean expired mutes inline so they don't linger.
+            const mutes = await base44.asServiceRole.entities.MutedWallet.filter({ wallet_address: walletAddress.toLowerCase() });
+            if (mutes.length > 0) {
+                const m = mutes[0];
+                const until = m.muted_until ? new Date(m.muted_until).getTime() : null;
+                if (until && until < Date.now()) {
+                    try { await base44.asServiceRole.entities.MutedWallet.delete(m.id); } catch {}
+                } else {
+                    const remaining = until
+                        ? `until ${new Date(until).toISOString().replace('T', ' ').slice(0, 16)} UTC`
+                        : 'by a moderator';
+                    return Response.json({ error: `You've been muted from squad chat ${remaining}.`, muted: true }, { status: 403 });
+                }
+            }
+
             const message = await base44.asServiceRole.entities.SquadMessage.create({
                 squad_id: squadId,
                 wallet_address: walletAddress,
