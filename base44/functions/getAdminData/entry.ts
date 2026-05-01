@@ -64,6 +64,12 @@ Deno.serve(async (req) => {
 
         return Response.json({ error: 'Invalid type' }, { status: 400 });
     } catch (error) {
+        // 401 from auth.me() is expected — every player's WarpMenu pings this on
+        // mount to check admin status. Silently return Unauthorized; only log
+        // unexpected errors so #errors / runtime logs stay actionable.
+        if (error?.status === 401 || /Authentication required/i.test(error?.message || '')) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
         console.error('[getAdminData] Error:', error);
         return Response.json({ error: error.message || 'Internal error' }, { status: 500 });
     }
