@@ -443,7 +443,9 @@ export default function Upgrades({ isCarousel }) {
             } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
                 setPurchasing(true);
                 const skuId = getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost);
-                const grantInfo = { type: 'cosmetic', slot: 'skin', cosmeticId: cosmetic.id, charId: cosmetic.charId };
+                // Pass goldCost so server can verify it matches the SKU's price tier
+                // (prevents tampered grantInfo from unlocking expensive skins via cheap SKU).
+                const grantInfo = { type: 'cosmetic', slot: 'skin', cosmeticId: cosmetic.id, charId: cosmetic.charId, goldCost: cosmetic.goldCost };
                 purchaseSku(skuId, grantInfo).then(() => {
                     SoundManager.playUIClick();
                 }).catch(err => {
@@ -488,7 +490,9 @@ export default function Upgrades({ isCarousel }) {
         } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
             setPurchasing(true);
             const skuId = getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost);
-            const grantInfo = { type: 'cosmetic', slot, cosmeticId: cosmetic.id };
+            // Pass goldCost so server can verify it matches the SKU's price tier
+            // (prevents tampered grantInfo from unlocking expensive cosmetics via cheap SKU).
+            const grantInfo = { type: 'cosmetic', slot, cosmeticId: cosmetic.id, goldCost: cosmetic.goldCost };
             purchaseSku(skuId, grantInfo).then(() => {
                 SoundManager.playUIClick();
             }).catch(err => {
