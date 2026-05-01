@@ -17,6 +17,16 @@ import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { refreshBalance } from '@/lib/playerDataCache';
+import { sanitizePilotName } from '@/lib/sanitizePilotName';
+
+// Re-derive raid feed messages so historical rows (saved before the privacy fix)
+// don't expose real OAuth names embedded in the `message` string.
+function sanitizeEventMessage(evt) {
+    const original = evt?.message || '';
+    if (!evt?.player_name || !original.includes(evt.player_name)) return original;
+    const safe = sanitizePilotName(evt.player_name, evt.user_id || '');
+    return original.split(evt.player_name).join(safe);
+}
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -391,7 +401,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     {topContributors.map((c, idx) => (
                                         <div key={c.id} className="flex justify-between items-center bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-800/50">
                                             <span className="text-slate-300 font-bold text-xs md:text-sm truncate mr-4">
-                                                <span className="text-slate-500 w-6 md:w-8 inline-block">#{idx + 1}</span> {c.player_name}
+                                                <span className="text-slate-500 w-6 md:w-8 inline-block">#{idx + 1}</span> {sanitizePilotName(c.player_name, c.id)}
                                             </span>
                                             <span className="text-yellow-400 font-mono font-bold text-xs md:text-sm">
                                                 {c.damage.toLocaleString()} DMG
@@ -415,7 +425,7 @@ export default function GlobalRaid({ isCarousel }) {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="text-xs text-slate-300">
-                                                    {evt.message}
+                                                    {sanitizeEventMessage(evt)}
                                                 </div>
                                                 <div className="text-[10px] text-slate-500 mt-0.5">
                                                     {new Date(evt.created_date).toLocaleString()}

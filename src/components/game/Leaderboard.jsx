@@ -7,6 +7,7 @@ import { getSquadLevel } from '../../game/SquadLevels';
 import { getCurrentPeriodIds } from '../../lib/periodIds';
 import { useIsIdle } from '@/hooks/useIsIdle';
 import { getTitleStyle } from '@/lib/playerTitles';
+import { sanitizePilotName } from '@/lib/sanitizePilotName';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -414,7 +415,7 @@ export default function Leaderboard() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 truncate">
                                                 <div className="font-bold text-white text-lg md:text-xl truncate">
-                                                    {score.player_name}
+                                                    {sanitizePilotName(score.player_name, score.wallet_address || score.user_id)}
                                                 </div>
                                                     {score.player_title && (() => {
                                                         const st = getTitleStyle(score.player_title);

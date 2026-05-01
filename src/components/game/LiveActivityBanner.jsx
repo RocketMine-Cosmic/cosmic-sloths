@@ -1,6 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Skull, Zap, Activity } from 'lucide-react';
+import { sanitizePilotName } from '@/lib/sanitizePilotName';
+
+// Historical GlobalBossEvent rows have player names baked into `message`.
+// Re-derive the message from `player_name` (which is sanitized at render time)
+// so we don't show real names from pre-fix events. Falls back to the original
+// message when we can't reconstruct (e.g. system messages without a name).
+function sanitizeMessage(evt) {
+    const original = evt?.message || '';
+    const safeName = sanitizePilotName(evt?.player_name, evt?.user_id || '');
+    if (!evt?.player_name || !original.includes(evt.player_name)) return original;
+    return original.split(evt.player_name).join(safeName);
+}
 
 // Compact rotating banner that cycles through the most recent raid events.
 // Shown above the Raid Event / Top Contributors tabs so it's always visible.
@@ -45,7 +57,7 @@ export default function LiveActivityBanner({ events }) {
                                 {isKill ? <Skull className="w-2.5 h-2.5 md:w-3 md:h-3" /> : <Zap className="w-2.5 h-2.5 md:w-3 md:h-3" />}
                             </div>
                             <div className="text-[11px] md:text-xs text-slate-200 truncate">
-                                {evt.message}
+                                {sanitizeMessage(evt)}
                             </div>
                         </motion.div>
                     </AnimatePresence>

@@ -12,6 +12,18 @@ import { getSquadLevel, getNextSquadLevel, getSquadXpProgress } from '../game/Sq
 import SpaceBackground from '../components/game/SpaceBackground';
 import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
+import { sanitizePilotName } from '@/lib/sanitizePilotName';
+
+// System messages contain player names baked into the content string
+// (e.g. "William Luce has joined the squad!"). Pre-privacy-fix rows may have
+// real OAuth names; mask any space-containing token-with-uppercase pattern that
+// looks like a real name. Single-word handles like "Pilot_ABC123" pass through.
+function sanitizeSystemMessage(content) {
+    if (!content || typeof content !== 'string') return content;
+    // Match "<word> <word>" at start of message (e.g. "William Luce") and replace
+    // with an anonymous "A pilot" placeholder. Keeps the rest of the message intact.
+    return content.replace(/^([A-Z][a-z]+ [A-Z][a-z]+)(?=\s)/, 'A pilot');
+}
 
 const MAX_SQUAD_MEMBERS = 5;
 
@@ -886,7 +898,7 @@ export default function Squads({ isCarousel }) {
                                                 <div key={msg.id} className={`flex flex-col ${msg.wallet_address === user.wallet_address ? 'items-end' : 'items-start'}`}>
                                                     {msg.wallet_address === 'system' ? (
                                                         <div className="w-full text-center text-xs text-slate-500 my-2 italic">
-                                                            {msg.content}
+                                                            {sanitizeSystemMessage(msg.content)}
                                                         </div>
                                                     ) : (
                                                         <div className={`max-w-[70%] rounded-lg p-2 ${
@@ -895,7 +907,7 @@ export default function Squads({ isCarousel }) {
                                                                 : 'bg-slate-800 text-slate-200 border border-slate-700'
                                                         }`}>
                                                             <div className="text-[10px] font-bold opacity-50 mb-0.5 flex items-center gap-1">
-                                                                {msg.player_name}
+                                                                {sanitizePilotName(msg.player_name, msg.wallet_address)}
                                                                 {msg.player_title && <span className="px-1 bg-slate-900/50 rounded text-[8px] tracking-wider text-amber-300">{msg.player_title}</span>}
                                                             </div>
                                                             <div className="text-sm break-words">
