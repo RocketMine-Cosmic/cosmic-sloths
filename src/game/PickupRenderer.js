@@ -12,15 +12,15 @@ export function drawPickups(ctx, pickups, time) {
         if (p.type === 'xp') {
             // 4 tiers: shard (<5) → crystal (5-19) → cluster (20-99) → shard core (100+).
             // Each tier is a *different shape* — not just bigger.
-            // Scaled up 35% — players reported pickups felt too small to spot in busy fights.
-            ctx.scale(1.35, 1.35);
+            // Scaled up 15% — players reported pickups felt too small to spot in busy fights.
+            ctx.scale(1.15, 1.15);
             drawXpByTier(ctx, getXpTier(p.value || 1), time, p.color);
 
         } else if (p.type === 'gold') {
             // 5 tiers: coin (<10) → coin stack (10-49) → money bag (50-199)
             //          → treasure chest (200-999) → pile of gold (1000+).
             // Each tier is a different icon — silhouette tells you the value at a glance.
-            ctx.scale(1.35, 1.35);
+            ctx.scale(1.15, 1.15);
             drawGoldByTier(ctx, getGoldTier(p.value || 1), time);
             
         } else if (p.type === 'fragment') {
