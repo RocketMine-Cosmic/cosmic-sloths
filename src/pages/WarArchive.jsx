@@ -80,18 +80,10 @@ export default function WarArchive({ isCarousel }) {
             <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>
-                        {!isCarousel && (
-                            <div className="mb-2 flex items-center gap-1.5 flex-wrap">
-                                <button onClick={() => { SoundManager.playUIClick(); navigate('/squad-wars'); }}
-                                    className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700">
-                                    <ArrowLeft className="w-3 h-3" /> Squad Wars
-                                </button>
-                                <button onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
-                                    className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700">
-                                    <ArrowLeft className="w-3 h-3" /> Main Menu
-                                </button>
-                            </div>
-                        )}
+                        <button onClick={() => { SoundManager.playUIClick(); navigate('/?slide=6'); }}
+                            className="mb-2 flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700 w-fit">
+                            <ArrowLeft className="w-3 h-3" /> Back to Squad Wars
+                        </button>
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2"
                             style={{ background: 'linear-gradient(90deg, #F59E0B, #EF4444)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(245,158,11,0.5))' }}>
                             <Crown className="w-6 h-6 md:w-8 md:h-8 text-amber-400" /> WAR ARCHIVE
