@@ -48,6 +48,7 @@ export default function Game() {
     const [banishCount, setBanishCount] = useState(0); // resets per run (component remounts on new game)
     const [isInitializing, setIsInitializing] = useState(true);
     const [hudHidden, setHudHidden] = useState(false);
+    const saveScoreRef = useRef(null);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
 
     // Banish tier: 3 uses at 2 OMENX, 3 uses at 4 OMENX, then 6 OMENX onwards.
@@ -147,6 +148,8 @@ export default function Game() {
                 throw e;
             }
         };
+        // Expose to handleQuit so it can await the save before unmounting.
+        saveScoreRef.current = saveScore;
 
         // Inject skin color override into save so GameEngine can read it
         const equippedSkinId = save.cosmetics?.skins?.[characterId];
@@ -510,27 +513,47 @@ export default function Game() {
         });
     };
 
-    const handleQuit = () => {
+    const [isQuitting, setIsQuitting] = useState(false);
+    const handleQuit = async () => {
         const engine = engineRef.current;
         const isRaid = engine?.arena?.id === 'world_boss_arena';
-        if (engine && !engine.isGameOver && !engine.isVictory) {
-            engine.isPaused = false;
-            // Manually trigger the same save logic as gameOver without showing the modal
-            engine.isGameOver = true;
-            engine.callbacks.onGameOver({
-                time: Math.floor(engine.time),
-                level: engine.level,
-                kills: engine.kills,
-                gold: engine.gold,
-                characterId: engine.characterId,
-                arenaId: engine.arena?.id,
-                encountered: Array.from(engine.encounteredEnemies),
-                enemyKills: engine.enemyKills,
-                worldBossDamage: engine.worldBossDamage || 0,
-                _suppressModal: true,
-            });
+        const target = isRaid ? '/?slide=10' : '/';
+        const navState = { state: { slide: isRaid ? 10 : 1 } };
+
+        if (!engine || engine.isGameOver || engine.isVictory) {
+            navigate(target, navState);
+            return;
         }
-        navigate(isRaid ? '/?slide=10' : '/', { state: { slide: isRaid ? 10 : 1 } });
+        // Endless / abandoned runs: must await saveScore before navigating away,
+        // otherwise unmount cancels the in-flight fetch and progress is lost.
+        setIsQuitting(true);
+        engine.isPaused = false;
+        engine.isGameOver = true;
+        const stats = {
+            time: Math.floor(engine.time),
+            level: engine.level,
+            kills: engine.kills,
+            gold: engine.gold,
+            characterId: engine.characterId,
+            arenaId: engine.arena?.id,
+            encountered: Array.from(engine.encounteredEnemies),
+            enemyKills: engine.enemyKills,
+            worldBossDamage: engine.worldBossDamage || 0,
+            _suppressModal: true,
+        };
+        try {
+            // Mirrors onGameOver's saveScore call but awaited so it survives unmount.
+            const isEndless = engine.arena?.duration === Infinity;
+            await saveScoreRef.current?.(stats, false, isEndless);
+            if (stats.worldBossDamage > 0) {
+                const user = getOmenXUserSync();
+                base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name }).catch(() => {});
+            }
+        } catch (e) {
+            console.error('[Game] handleQuit save failed:', e);
+        } finally {
+            navigate(target, navState);
+        }
     };
 
     const handleRevive = () => {
@@ -668,6 +691,15 @@ export default function Game() {
             )}
 
             {isInitializing && <GameLoadingScreen />}
+
+            {isQuitting && (
+                <div className="absolute inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-[70]">
+                    <div className="flex flex-col items-center gap-3 text-cyan-300">
+                        <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="font-mono font-bold tracking-widest text-sm">SAVING RUN…</div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
