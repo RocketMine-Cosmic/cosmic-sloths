@@ -127,14 +127,21 @@ export default function WelcomeModal() {
             t = setTimeout(() => setOpen(true), 400);
         }
 
+        // Tracks an active manual replay so an incoming cloud save (which may still
+        // have welcomeSeen=true until our cleared flag round-trips) doesn't auto-close
+        // the modal we just intentionally re-opened.
+        let isReplaying = false;
+
         // If cloud save loads after we already showed the modal and it has welcomeSeen=true,
         // close it (returning user on a new device whose local cache was empty).
         const onSaveUpdated = (e) => {
+            if (isReplaying) return;
             if (e.detail?.welcomeSeen) setOpen(false);
         };
         // Allow other pages (e.g. Profile "Replay Tour") to re-open the modal
         // without needing PlayCarousel to remount.
         const onReplay = () => {
+            isReplaying = true;
             setStep(0);
             setOpen(true);
         };
