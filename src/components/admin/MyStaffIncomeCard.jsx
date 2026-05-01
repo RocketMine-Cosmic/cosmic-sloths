@@ -12,8 +12,11 @@ export default function MyStaffIncomeCard({ walletAddress, isEmergencyKey }) {
     const { data, isLoading } = useQuery({
         queryKey: ['myStaffIncome'],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'my_staff_income' }).then(r => r.data),
-        refetchInterval: 30000,
-        refetchOnWindowFocus: true,
+        // Was 30s — that's way too aggressive for a passive header card.
+        // Bumped to 2 min to ease pressure on the Base44 request quota.
+        refetchInterval: 120000,
+        refetchOnWindowFocus: false,
+        staleTime: 60_000,
         enabled: !isEmergencyKey && !!walletAddress,
     });
 
