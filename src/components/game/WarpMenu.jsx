@@ -16,7 +16,7 @@ const SLIDE_GROUPS = [
             { idx: 0, name: 'Main Menu', icon: '🚀', color: 'from-slate-700 to-slate-900', border: 'border-white/30' },
             { idx: 1, name: 'Sloth Command', icon: '🦥', color: 'from-cyan-700 to-cyan-950', border: 'border-cyan-400/50' },
             { idx: 11, name: 'Galactic Raid', icon: '⚔️', color: 'from-red-800 to-rose-950', border: 'border-rose-500/60' },
-            { idx: 6, name: 'Squad Wars', icon: '⚔️', color: 'from-red-700 to-amber-900', border: 'border-red-400/60' },
+            { idx: 6, name: 'Squad Wars', icon: '⚔️', color: 'from-orange-700 to-red-950', border: 'border-orange-400/70' },
         ],
     },
     {
