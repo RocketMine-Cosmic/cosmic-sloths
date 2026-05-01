@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, X, Rocket, Wallet, Compass, Swords, Trophy, Zap } from 'lucide-react';
+import { ChevronRight, ChevronLeft, X, Rocket, Wallet, Compass, Swords, Trophy, Zap, Crown, Shield } from 'lucide-react';
 import { SoundManager } from '../../game/SoundManager';
 import { SaveManager } from '../../game/SaveManager';
 
@@ -58,7 +58,7 @@ const STEPS = [
                 <p>Spend small amounts of <span className="text-purple-300 font-bold">$OMENX</span> mid-run to swing the odds in your favour:</p>
                 <ul className="mt-2 text-left text-xs text-slate-400 space-y-1 mx-auto max-w-[260px]">
                     <li>• <span className="text-white font-bold">Reroll</span> level-up choices — 2 OMENX</li>
-                    <li>• <span className="text-white font-bold">Banish</span> bad upgrades — from 2 OMENX (tiered)</li>
+                    <li>• <span className="text-white font-bold">Banish</span> bad upgrades — 2 / 4 / 6 OMENX (tiered)</li>
                     <li>• <span className="text-white font-bold">Emergency Revive</span> on death — 4 OMENX</li>
                     <li>• <span className="text-white font-bold">Squad Ultimate</span> clone backup — 5 or 10 OMENX</li>
                 </ul>
@@ -67,14 +67,40 @@ const STEPS = [
     },
     {
         icon: Trophy,
-        accent: 'text-emerald-300',
-        border: 'border-emerald-500/40',
-        title: 'Progress, Squads & Earn',
+        accent: 'text-amber-300',
+        border: 'border-amber-500/40',
+        title: 'Hall of Fame & Weekly Payouts',
         body: (
             <>
-                <p>Every run earns gold you keep. Spend it in the <span className="text-fuchsia-300 font-bold">Upgrade Lounge</span>, grab quests on the <span className="text-emerald-300 font-bold">Mission Board</span>, and check your rank on the <span className="text-amber-300 font-bold">Hall of Fame</span>.</p>
-                <p className="mt-2 text-slate-400">Join a <span className="text-orange-300 font-bold">Squad</span> (up to 5) to share kill bounties, and team up in the global <span className="text-rose-300 font-bold">Galactic Raid</span> against a community-wide boss for bonus Gold.</p>
-                <p className="mt-2 text-slate-400">Unlock new sloths via kill milestones or by owning the matching NFT. Each week, top scorers split the OMENX reward pool.</p>
+                <p>Every run earns gold you keep AND posts a score to the <span className="text-amber-300 font-bold">Hall of Fame</span>. Each week, the OMENX you and others spend in-game funds a <span className="text-amber-300 font-bold">community reward pool</span>.</p>
+                <p className="mt-2 text-slate-400">When the week ends, the top scorers automatically receive a share of that pool — paid straight to your linked wallet. Seasonal leaderboards (every 4 weeks) pay out a bigger pool.</p>
+                <p className="mt-2 text-slate-400 text-xs">Tip: <span className="text-fuchsia-300 font-bold">Endless</span> runs feed a separate leaderboard with its own payouts.</p>
+            </>
+        ),
+    },
+    {
+        icon: Shield,
+        accent: 'text-orange-300',
+        border: 'border-orange-500/40',
+        title: 'Squads, Wars & Champions Pool',
+        body: (
+            <>
+                <p>Form a <span className="text-orange-300 font-bold">Sloth Squad</span> (up to 5 pilots) to share daily/weekly kill bounties and chat in-squad.</p>
+                <p className="mt-2 text-slate-400">Each week your squad is auto-paired into a <span className="text-red-400 font-bold">Squad War</span> — the team with the most combined kills wins. Stack wins across the season to climb the standings.</p>
+                <p className="mt-2 text-slate-400">The top 3 squads at season end split the <span className="text-yellow-300 font-bold">Champions Pool</span> (10% of seasonal OMENX), paid to every qualifying member.</p>
+            </>
+        ),
+    },
+    {
+        icon: Crown,
+        accent: 'text-emerald-300',
+        border: 'border-emerald-500/40',
+        title: 'Progress That Sticks',
+        body: (
+            <>
+                <p>Spend gold in the <span className="text-fuchsia-300 font-bold">Cosmic Armory</span> on permanent stats, weapon upgrades and character talents. Tackle daily quests on the <span className="text-emerald-300 font-bold">Star Ops</span> board for bonus rewards.</p>
+                <p className="mt-2 text-slate-400">Team up in the <span className="text-red-500 font-bold">Galactic Raid</span> against a community-wide boss for milestone gold.</p>
+                <p className="mt-2 text-slate-400">Unlock new sloths via kill milestones or by owning the matching <span className="text-purple-300 font-bold">NFT</span>. Holding NFTs also grants permanent in-game perks.</p>
             </>
         ),
     },
