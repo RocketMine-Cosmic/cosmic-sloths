@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+async function postDiscordSquadWars(payload) {
+    const url = Deno.env.get('DISCORD_SQUADWARS_WEBHOOK');
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{ ...payload, color: payload.color ?? 0xdc2626, timestamp: new Date().toISOString() }] }),
+        });
+    } catch {}
+}
+
 // Auth: Base44 session.
 // Single endpoint for Squad Wars: viewing current war, history, and admin pairing/resolution.
 // Server is the sole writer for kills/scores/winners — all updates server-authoritative.
@@ -133,6 +145,24 @@ async function resolveWarsForWeek(base44, weekId) {
             is_resolved: true,
             winner_squad_id: winnerId,
             result_kind: resultKind,
+        });
+
+        // Announce result to #squad-wars
+        const aLabel = `${war.squad_a_icon || '🛡️'} [${war.squad_a_tag}] ${war.squad_a_name}`;
+        const bLabel = war.squad_b_id ? `${war.squad_b_icon || '🛡️'} [${war.squad_b_tag}] ${war.squad_b_name}` : '👻 (no opponent)';
+        let title, color;
+        if (resultKind === 'bye') { title = `🎟️ Bye week — ${aLabel}`; color = 0x6b7280; }
+        else if (resultKind === 'tie') { title = `🤝 War tied — ${aLabel} vs ${bLabel}`; color = 0xeab308; }
+        else if (resultKind === 'win_a') { title = `🏆 ${aLabel} wins!`; color = 0x10b981; }
+        else { title = `🏆 ${bLabel} wins!`; color = 0x10b981; }
+        postDiscordSquadWars({
+            title,
+            color,
+            fields: [
+                { name: war.squad_a_name, value: `${war.kills_a || 0} kills`, inline: true },
+                { name: war.squad_b_name || 'No Opponent', value: `${war.kills_b || 0} kills`, inline: true },
+                { name: 'Week', value: weekId, inline: true },
+            ],
         });
 
         // Update lifetime squad stats
@@ -283,6 +313,17 @@ Deno.serve(async (req) => {
             const resolvedCount = prevWeek ? await resolveWarsForWeek(base44, prevWeek) : 0;
             // 2. Pair this week's squads
             const pairResult = await pairSquadsForWeek(base44, currentWeek);
+
+            postDiscordSquadWars({
+                title: '⚔️ New week of Squad Wars!',
+                color: 0xdc2626,
+                fields: [
+                    { name: 'Current week', value: currentWeek, inline: true },
+                    { name: 'New pairings', value: String(pairResult.paired), inline: true },
+                    { name: 'Byes', value: String(pairResult.byes), inline: true },
+                    { name: 'Previous week resolved', value: `${resolvedCount} war${resolvedCount === 1 ? '' : 's'} (${prevWeek || '—'})`, inline: false },
+                ],
+            });
 
             return Response.json({
                 success: true,
