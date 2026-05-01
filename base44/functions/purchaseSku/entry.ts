@@ -19,7 +19,7 @@ async function postDiscord(envName, color, { title, description, fields }) {
         });
     } catch {}
 }
-const LARGE_OMENX_THRESHOLD = 50; // ≥ 50 OMENX in a single purchase pings #economy-alerts
+const LARGE_OMENX_THRESHOLD = 1000; // ≥ 1,000 OMENX in a single purchase pings #economy-alerts
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
 // Pricing: server-side via OmenX dev portal (cached in memory).

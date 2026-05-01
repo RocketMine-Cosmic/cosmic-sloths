@@ -112,7 +112,7 @@ const CHANNELS = [
         color: 'amber',
         icon: Coins,
         triggers: [
-            'Single OMENX purchase ≥ 50 (large spend signal)',
+            'Single OMENX purchase ≥ 1,000 (whale-tier spend signal)',
             'Gold-loss audit triggered by player support ticket',
             'Bulk refunds and treasury payouts',
         ],
