@@ -482,10 +482,9 @@ Deno.serve(async (req) => {
             postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xf59e0b, {
                 title: '💰 Large OMENX purchase',
                 fields: [
-                    { name: 'Player', value: playerNameParam || me.full_name || walletAddress.slice(0, 10), inline: true },
+                    { name: 'Player', value: playerNameParam || me.full_name || 'Unknown pilot', inline: true },
                     { name: 'Amount', value: `${totalAmount} OMENX`, inline: true },
                     { name: 'SKU', value: skuId, inline: true },
-                    { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
                     { name: 'Week', value: week_id, inline: true },
                 ],
             });
