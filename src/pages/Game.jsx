@@ -144,9 +144,10 @@ export default function Game() {
 
             const payload = { scoreData, squadStats };
 
-            // Retry with exponential backoff so transient network/server hiccups
-            // don't lose the player's run. 5 attempts: 1s, 2s, 4s, 8s, 16s = ~31s total.
-            const delays = [1000, 2000, 4000, 8000, 16000];
+            // Retry with short backoff so transient network/server hiccups
+            // don't lose the player's run. 5 attempts: 0.5s, 1s, 2s, 3s, 4s = ~10.5s total.
+            // If all fail, the run is queued to localStorage and retried in the background.
+            const delays = [500, 1000, 2000, 3000, 4000];
             let lastErr = null;
             for (let attempt = 0; attempt < delays.length; attempt++) {
                 try {
