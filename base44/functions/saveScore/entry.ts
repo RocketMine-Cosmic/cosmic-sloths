@@ -29,8 +29,10 @@ const MIN_TIME_SEC = 1;       // No instant runs
 const ENDLESS_GOLD_CAP_PER_RUN = 5000;
 const ENDLESS_KILLS_CAP_PER_RUN = 2000;
 
-// Arena progression — must mirror game/Constants.js ARENAS order.
-const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'voidring', 'singularity'];
+// Arena progression — must mirror game/Constants.js ARENAS order EXACTLY.
+// Bug 2026-05-01 (Crybel): old order had stale ids ('voidring', 'singularity')
+// and was missing 5 arenas, so beating Ethereal Nebula / Crimson Void didn't unlock the next sector.
+const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension'];
 
 // Character unlock kill milestones — must mirror game/CharacterUnlocks.js.
 const KILL_MILESTONES = [0, 2000, 5000, 10000, 20000];
