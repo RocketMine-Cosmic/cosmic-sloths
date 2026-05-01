@@ -437,6 +437,8 @@ export default function Profile({ isCarousel }) {
                                     delete s.welcomeSeen;
                                     SaveManager.save(s);
                                 }
+                                // Tell the (already-mounted) WelcomeModal to re-open.
+                                window.dispatchEvent(new CustomEvent('replayWelcomeTour'));
                                 navigate('/');
                             }}
                             className="bg-cyan-900/50 hover:bg-cyan-800/70 text-cyan-300 border border-cyan-700/60 px-3 py-1.5 rounded-lg font-bold text-xs transition-colors w-full sm:w-auto"

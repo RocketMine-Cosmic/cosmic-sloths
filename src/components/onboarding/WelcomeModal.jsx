@@ -121,19 +121,29 @@ export default function WelcomeModal() {
             return false;
         };
 
-        if (checkSeen()) return;
-        // Slight delay so it doesn't fight with the initial page load animation.
-        const t = setTimeout(() => setOpen(true), 400);
+        let t;
+        if (!checkSeen()) {
+            // Slight delay so it doesn't fight with the initial page load animation.
+            t = setTimeout(() => setOpen(true), 400);
+        }
 
         // If cloud save loads after we already showed the modal and it has welcomeSeen=true,
         // close it (returning user on a new device whose local cache was empty).
         const onSaveUpdated = (e) => {
             if (e.detail?.welcomeSeen) setOpen(false);
         };
+        // Allow other pages (e.g. Profile "Replay Tour") to re-open the modal
+        // without needing PlayCarousel to remount.
+        const onReplay = () => {
+            setStep(0);
+            setOpen(true);
+        };
         window.addEventListener('saveUpdated', onSaveUpdated);
+        window.addEventListener('replayWelcomeTour', onReplay);
         return () => {
-            clearTimeout(t);
+            if (t) clearTimeout(t);
             window.removeEventListener('saveUpdated', onSaveUpdated);
+            window.removeEventListener('replayWelcomeTour', onReplay);
         };
     }, []);
 
