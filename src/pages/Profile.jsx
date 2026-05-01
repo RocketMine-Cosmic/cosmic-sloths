@@ -429,9 +429,7 @@ export default function Profile({ isCarousel }) {
                         <button
                             onClick={() => {
                                 SoundManager.playUIClick();
-                                // Clear both the local cache flag AND the cloud-saved flag, then reload
-                                // so PlayCarousel re-mounts WelcomeModal which will see the unset flag.
-                                try { localStorage.removeItem('cosmic_sloths_welcome_seen_v1'); } catch {}
+                                // Clear the cloud-saved flag so the tour re-opens on next mount.
                                 const s = SaveManager.load();
                                 if (s.welcomeSeen) {
                                     delete s.welcomeSeen;

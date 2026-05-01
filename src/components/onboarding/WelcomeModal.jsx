@@ -5,9 +5,8 @@ import { SoundManager } from '../../game/SoundManager';
 import { SaveManager } from '../../game/SaveManager';
 
 // Persist `welcomeSeen` on the cloud PlayerSave so the tour follows the wallet across
-// devices/browsers. localStorage key is kept as a fallback for pre-auth users + as a
-// quick local cache (avoids flashing the modal while cloud save loads).
-const STORAGE_KEY = 'cosmic_sloths_welcome_seen_v1';
+// devices/browsers. SaveManager.load() reads the local cache of the cloud save, so
+// no separate localStorage flag is needed.
 
 const STEPS = [
     {
@@ -113,12 +112,9 @@ export default function WelcomeModal() {
     useEffect(() => {
         const checkSeen = () => {
             try {
-                // Cloud save is source of truth; localStorage is a fast-path cache.
                 const save = SaveManager.load();
-                if (save?.welcomeSeen) return true;
-                if (localStorage.getItem(STORAGE_KEY)) return true;
-            } catch {}
-            return false;
+                return !!save?.welcomeSeen;
+            } catch { return false; }
         };
 
         let t;
@@ -156,8 +152,6 @@ export default function WelcomeModal() {
 
     const close = () => {
         SoundManager.playUIClick();
-        try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
-        // Persist to cloud save too so it follows the wallet across devices.
         try {
             const save = SaveManager.load();
             if (!save.welcomeSeen) {
