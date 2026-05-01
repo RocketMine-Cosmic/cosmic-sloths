@@ -15,9 +15,10 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
-// 500k cap is well above the realistic top-tier run damage (~200-300k) but tight
-// enough to prevent tampered clients from milestone-farming via inflated damage.
-const MAX_DAMAGE_PER_SUBMISSION = 500_000;
+// 5M cap — fully-upgraded top-tier players legitimately push 1-3M per raid run,
+// so 500k was clipping real damage. 5M still blocks tampered clients from one-shotting
+// high-level bosses (Lv.7 = 3.2M HP, Lv.8 = 6.4M) and milestone-farming via inflation.
+const MAX_DAMAGE_PER_SUBMISSION = 5_000_000;
 const BOSS_BASE_HP = 50000;
 
 Deno.serve(async (req) => {
