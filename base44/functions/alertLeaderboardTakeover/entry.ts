@@ -55,7 +55,10 @@ Deno.serve(async (req) => {
         if (!isCurrentWeek && !isCurrentSeason) return Response.json({ skipped: 'not current period' });
 
         const name = newScore.player_name || 'Unknown Pilot';
-        const icon = newScore.pilot_icon || '🦥';
+        // Only accept short emoji-style icons. URLs / long strings get dropped so
+        // Discord doesn't auto-link an uploaded image into the message body.
+        const rawIcon = newScore.pilot_icon || '';
+        const icon = (rawIcon && rawIcon.length <= 8 && !/^https?:\/\//i.test(rawIcon)) ? rawIcon : '🦥';
         const title = newScore.player_title ? ` — *${newScore.player_title}*` : '';
         const score = newScore.score?.toLocaleString() || '0';
 
