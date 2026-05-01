@@ -22,6 +22,7 @@ import AdminChangesLogViewer from '../components/admin/AdminChangesLogViewer';
 import AdminManagers from '../components/admin/AdminManagers';
 import AdminOrphanedData from '../components/admin/AdminOrphanedData';
 import AdminDiscordGuide from '../components/admin/AdminDiscordGuide';
+import AdminDiscordChannelsGuide from '../components/admin/AdminDiscordChannelsGuide';
 import AdminDataBackup from '../components/admin/AdminDataBackup';
 import AdminDataWipe from '../components/admin/AdminDataWipe';
 import AdminBlacklist from '../components/admin/AdminBlacklist';
@@ -266,7 +267,12 @@ export default function AdminDashboard() {
                 <AdminManagers walletAddress={adminWallet} />
             </div>
         ),
-        discord: <AdminDiscordGuide />,
+        discord: (
+            <div className="space-y-6">
+                <AdminDiscordChannelsGuide />
+                <AdminDiscordGuide />
+            </div>
+        ),
         backups: <AdminDataBackup walletAddress={adminWallet} />,
         blacklist: <AdminBlacklist />,
         wipe: <AdminDataWipe walletAddress={adminWallet} />,
