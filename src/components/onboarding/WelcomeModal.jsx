@@ -73,7 +73,6 @@ const STEPS = [
             <>
                 <p>Every run earns gold you keep AND posts a score to the <span className="text-amber-300 font-bold">Hall of Fame</span>. Each week, the OMENX you and others spend in-game funds a <span className="text-amber-300 font-bold">community reward pool</span>.</p>
                 <p className="mt-2 text-slate-400">When the week ends, the top scorers automatically receive a share of that pool — paid straight to your linked wallet. Seasonal leaderboards (every 4 weeks) pay out a bigger pool.</p>
-                <p className="mt-2 text-slate-400 text-xs">Tip: <span className="text-fuchsia-300 font-bold">Endless</span> runs feed a separate leaderboard with its own payouts.</p>
             </>
         ),
     },
@@ -86,7 +85,7 @@ const STEPS = [
             <>
                 <p>Form a <span className="text-orange-300 font-bold">Sloth Squad</span> (up to 5 pilots) to share daily/weekly kill bounties and chat in-squad.</p>
                 <p className="mt-2 text-slate-400">Each week your squad is auto-paired into a <span className="text-red-400 font-bold">Squad War</span> — the team with the most combined kills wins. Stack wins across the season to climb the standings.</p>
-                <p className="mt-2 text-slate-400">The top 3 squads at season end split the <span className="text-yellow-300 font-bold">Champions Pool</span> (10% of seasonal OMENX), paid to every qualifying member.</p>
+                <p className="mt-2 text-slate-400">The top 3 squads at season end split the <span className="text-yellow-300 font-bold">Champions Pool</span>, paid to every qualifying member.</p>
             </>
         ),
     },
