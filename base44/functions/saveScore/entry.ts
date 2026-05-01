@@ -282,10 +282,22 @@ Deno.serve(async (req) => {
 
         // Build RunScore record
         const { week_id, season_id } = getCurrentPeriodIds();
+
+        // Sanitize player_name: never expose the user's real OAuth name in
+        // public scoreboards / Discord. If the client-supplied name matches
+        // me.full_name (the real name they signed up with), replace it with an
+        // anonymous Pilot_XXXXXX handle derived from their wallet.
+        const anonName = `Pilot_${walletAddress.slice(-6).toUpperCase()}`;
+        const realName = (me.full_name || '').trim().toLowerCase();
+        const submittedName = (scoreData.player_name || '').trim();
+        const safeName = (!submittedName || (realName && submittedName.toLowerCase() === realName))
+            ? anonName
+            : submittedName;
+
         const runScore = {
             user_id: me.id,
             wallet_address: walletAddress,
-            player_name: scoreData.player_name,
+            player_name: safeName,
             player_title: scoreData.player_title || '',
             pilot_icon: scoreData.pilot_icon || '',
             score: validation.score,

@@ -37,7 +37,16 @@ Deno.serve(async (req) => {
 
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);
         const { week_id } = getCurrentPeriodIds();
-        const displayName = playerName || me.full_name || walletAddress;
+
+        // Never expose the user's real OAuth name in the public raid feed /
+        // Discord. If no pilot name was set, or the supplied name matches their
+        // real name, fall back to an anonymous Pilot_XXXXXX handle.
+        const anonName = `Pilot_${walletAddress.slice(-6).toUpperCase()}`;
+        const realName = (me.full_name || '').trim().toLowerCase();
+        const submittedName = (playerName || '').trim();
+        const displayName = (!submittedName || (realName && submittedName.toLowerCase() === realName))
+            ? anonName
+            : submittedName;
 
         // Look up squad membership so contributions can be aggregated for the squad raid leaderboard
         let squadInfo = { squad_id: '', squad_name: '', squad_tag: '', squad_icon: '' };
