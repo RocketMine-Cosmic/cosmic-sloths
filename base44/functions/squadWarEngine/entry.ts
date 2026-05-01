@@ -241,6 +241,18 @@ Deno.serve(async (req) => {
             return Response.json({ wars, weekId });
         }
 
+        if (action === 'getArchive') {
+            // Global archive of every resolved war, newest first. Used by the War Archive page.
+            // Optional filters: weekId (specific week), squadId (only wars involving that squad), limit (default 200).
+            const { weekId, squadId, limit } = body;
+            const all = await base44.asServiceRole.entities.SquadWar.list('-created_date', 1000);
+            let filtered = all.filter(w => w.is_resolved);
+            if (weekId) filtered = filtered.filter(w => w.week_id === weekId);
+            if (squadId) filtered = filtered.filter(w => w.squad_a_id === squadId || w.squad_b_id === squadId);
+            const cap = Math.min(Math.max(parseInt(limit, 10) || 200, 1), 500);
+            return Response.json({ wars: filtered.slice(0, cap) });
+        }
+
         // ---- Member action: claim per-member bonus from a resolved war ----
         if (action === 'claimWinBonus') {
             const { warId } = body;

@@ -32,6 +32,7 @@ const Jukebox = React.lazy(() => import('./pages/Jukebox'));
 const Titles = React.lazy(() => import('./pages/Titles'));
 const Loadouts = React.lazy(() => import('./pages/Loadouts'));
 const SquadWars = React.lazy(() => import('./pages/SquadWars'));
+const WarArchive = React.lazy(() => import('./pages/WarArchive'));
 import { initOmenX } from '@/lib/omenx';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { SoundManager } from './game/SoundManager';
@@ -87,6 +88,7 @@ const MainApp = () => {
           <Route path="/titles" element={<Titles />} />
           <Route path="/loadouts" element={<Loadouts />} />
           <Route path="/squad-wars" element={<SquadWars />} />
+          <Route path="/war-archive" element={<WarArchive />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </React.Suspense>
@@ -129,6 +131,7 @@ const MainApp = () => {
       <Route path="/titles" element={<Titles />} />
       <Route path="/loadouts" element={<Loadouts />} />
       <Route path="/squad-wars" element={<SquadWars />} />
+      <Route path="/war-archive" element={<WarArchive />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </>
