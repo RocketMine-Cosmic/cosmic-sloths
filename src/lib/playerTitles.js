@@ -80,9 +80,6 @@ export const PLAYER_TITLES = [
     { id: 'Power Up', label: 'Power Up', tier: 'common', buff: { xpMult: 0.02 },
       describe: () => 'Reach level 15 in a single run.',
       isUnlocked: (s) => s.maxLevelReached >= 15 },
-    { id: 'Growing Crew', label: 'Growing Crew', tier: 'common', buff: null,
-      describe: () => 'Unlock 3 different characters.',
-      isUnlocked: (s) => s.unlockedCharactersCount >= 3 },
     { id: 'Coin Collector', label: 'Coin Collector', tier: 'common', buff: { goldMult: 0.02 },
       describe: () => 'Earn 50,000 gold (lifetime).',
       isUnlocked: (s) => s.totalGoldEarned >= 50000 },
@@ -112,9 +109,6 @@ export const PLAYER_TITLES = [
     { id: 'Gold Hoarder', label: 'Gold Hoarder', tier: 'uncommon', buff: { goldMult: 0.03 },
       describe: () => 'Earn 250,000 gold (lifetime).',
       isUnlocked: (s) => s.totalGoldEarned >= 250000 },
-    { id: 'Commander', label: 'Commander', tier: 'uncommon', buff: { luck: 1 },
-      describe: () => 'Unlock 5 different characters.',
-      isUnlocked: (s) => s.unlockedCharactersCount >= 5 },
     { id: 'Lucky Sloth', label: 'Lucky Sloth', tier: 'uncommon', buff: { luck: 1 },
       describe: () => 'Defeat 5 Leviathan bosses.',
       isUnlocked: (s) => s.leviathanKills >= 5 },
@@ -165,10 +159,6 @@ export const PLAYER_TITLES = [
     { id: 'Aegis Bearer', label: 'Aegis Bearer', tier: 'rare', buff: { armor: 2, hpMult: 0.02 },
       describe: () => 'Survive 12 minutes in a single Endless run.',
       isUnlocked: (s) => s.maxTimeSurvived >= 720 },
-    { id: 'Quartermaster', label: 'Quartermaster', tier: 'rare', buff: null,
-      describe: () => 'Unlock 7 different characters.',
-      isUnlocked: (s) => s.unlockedCharactersCount >= 7 },
-
     // ============ EPIC ============
     { id: 'Eternal', label: 'Eternal', tier: 'epic', buff: { hpMult: 0.05, regen: 0.3 },
       describe: () => 'Survive 15 minutes in a single Endless run.',
@@ -222,9 +212,6 @@ export const PLAYER_TITLES = [
       isUnlocked: (s) => s.globalRaidDamage >= 2500000 },
 
     // ============ MYTHIC ============
-    { id: 'Completionist', label: 'Completionist', tier: 'mythic', buff: { luck: 3, damageMult: 0.03 },
-      describe: () => 'Unlock all 10 characters.',
-      isUnlocked: (s) => s.unlockedCharactersCount >= 10 },
     { id: 'Bringer of Extinction', label: 'Bringer of Extinction', tier: 'mythic', buff: { damageMult: 0.10 },
       describe: () => 'Defeat 750,000 enemies (lifetime).',
       isUnlocked: (s) => s.totalKills >= 750000 },
