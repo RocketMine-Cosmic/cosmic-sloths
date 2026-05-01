@@ -37,9 +37,11 @@ export function updateProjectiles(engine, dt) {
                 // away from the projectile but the boss radius still overlaps. Check all bosses
                 // explicitly so projectiles never "phase through" them — produced the
                 // "DPS stalls 20-30s while boss HP doesn't move" symptom.
-                const bosses = engine.enemies.filter(e => e.isBoss && e.hp > 0);
+                // Use the cached per-frame active-boss list to avoid re-filtering
+                // engine.enemies for every single projectile (perf hot path).
+                const bosses = engine._activeBosses || engine.enemies.filter(e => e.isBoss && e.hp > 0);
                 const candidates = [];
-                bosses.forEach(b => candidates.push(b));
+                for (let bi = 0; bi < bosses.length; bi++) candidates.push(bosses[bi]);
                 for (let x = cx - 1; x <= cx + 1; x++) {
                     for (let y = cy - 1; y <= cy + 1; y++) {
                         const cellEnemies = engine.spatialHash?.get(`${x},${y}`);
@@ -179,12 +181,15 @@ export function updateProjectiles(engine, dt) {
                 const maxY = Math.floor((p.y + r + 50) / cellSize);
                 const seen = new Set();
                 // Always include active bosses — their large radii can miss the cell window.
-                engine.enemies.forEach(e => {
+                // Use the cached per-frame active-boss list to skip the full enemy scan.
+                const bosses = engine._activeBosses || engine.enemies;
+                for (let bi = 0; bi < bosses.length; bi++) {
+                    const e = bosses[bi];
                     if (e.isBoss && e.hp > 0 && !seen.has(e)) {
                         seen.add(e);
                         callback(e);
                     }
-                });
+                }
                 for (let x = minX; x <= maxX; x++) {
                     for (let y = minY; y <= maxY; y++) {
                         const cellEnemies = engine.spatialHash?.get(`${x},${y}`);

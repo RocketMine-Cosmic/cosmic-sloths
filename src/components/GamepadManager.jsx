@@ -7,6 +7,24 @@ export default function GamepadManager() {
         let isGamepadActive = false;
         let cursorX = window.innerWidth / 2;
         let cursorY = window.innerHeight / 2;
+
+        // Expose a global flag the GameEngine can check before calling
+        // navigator.getGamepads() each frame — that call is surprisingly
+        // expensive in some browsers (allocates a fresh array) and we don't
+        // want to pay for it 60×/sec when no gamepad is plugged in.
+        const onGamepadConnected = () => { window.__gamepadConnected = true; };
+        const onGamepadDisconnected = () => {
+            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            const anyConnected = Array.from(pads).some(g => g && g.connected);
+            window.__gamepadConnected = anyConnected;
+        };
+        // Pre-seed in case a gamepad was already connected before mount.
+        if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+            const pads = navigator.getGamepads();
+            window.__gamepadConnected = Array.from(pads).some(g => g && g.connected);
+        }
+        window.addEventListener('gamepadconnected', onGamepadConnected);
+        window.addEventListener('gamepaddisconnected', onGamepadDisconnected);
         
         let cursorEl = document.getElementById('gamepad-virtual-cursor');
         if (!cursorEl) {
@@ -403,6 +421,8 @@ export default function GamepadManager() {
             window.removeEventListener('mousedown', handleUserInteraction);
             window.removeEventListener('keydown', handleUserInteraction);
             window.removeEventListener('touchstart', handleUserInteraction);
+            window.removeEventListener('gamepadconnected', onGamepadConnected);
+            window.removeEventListener('gamepaddisconnected', onGamepadDisconnected);
             if (cursorEl) cursorEl.remove();
         };
     }, []);

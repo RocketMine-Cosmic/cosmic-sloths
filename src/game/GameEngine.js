@@ -577,7 +577,10 @@ export class GameEngine {
         if (this.keys['d'] || this.keys['arrowright']) dx += 1;
         
         let usingGamepad = false;
-        if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+        // Skip the (relatively expensive) getGamepads() call entirely when no
+        // gamepad has ever been connected this session. GamepadManager flips
+        // window.__gamepadConnected on the gamepadconnected event.
+        if (typeof navigator !== 'undefined' && navigator.getGamepads && window.__gamepadConnected) {
             const gamepads = navigator.getGamepads();
             for (let i = 0; i < gamepads.length; i++) {
                 const gp = gamepads[i];
@@ -645,17 +648,28 @@ export class GameEngine {
         
         if (!this.enemyPool) this.enemyPool = [];
 
-        // Build Spatial Hash for Collision Optimization
-        this.spatialHash = new Map();
+        // Build Spatial Hash for Collision Optimization.
+        // Reuse the Map + cell arrays across frames to avoid GC churn — at 200+
+        // enemies × 60fps the previous "new Map() + fresh arrays" approach was
+        // ~12k allocations/sec and a real source of stutter in long endless runs.
+        if (!this.spatialHash) this.spatialHash = new Map();
+        // Clear cell arrays in place; keep the Map keys for reuse next frame.
+        for (const arr of this.spatialHash.values()) arr.length = 0;
+        // Cache active bosses once per frame so projectile code doesn't re-filter
+        // engine.enemies for every single bullet (was O(projectiles × enemies)).
+        this._activeBosses = [];
         const cellSize = 100;
-        this.enemies.forEach(e => {
-            if (e.hp <= 0) return;
+        for (let i = 0; i < this.enemies.length; i++) {
+            const e = this.enemies[i];
+            if (e.hp <= 0) continue;
+            if (e.isBoss) this._activeBosses.push(e);
             const cx = Math.floor(e.x / cellSize);
             const cy = Math.floor(e.y / cellSize);
             const key = `${cx},${cy}`;
-            if (!this.spatialHash.has(key)) this.spatialHash.set(key, []);
-            this.spatialHash.get(key).push(e);
-        });
+            let cell = this.spatialHash.get(key);
+            if (!cell) { cell = []; this.spatialHash.set(key, cell); }
+            cell.push(e);
+        }
 
         this.updateProjectiles(dt);
         this.updateEnemies(dt);
