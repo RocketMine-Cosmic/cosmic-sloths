@@ -7,6 +7,8 @@ import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
+import { useCurrency } from '@/lib/CurrencyContext';
+import { CHARACTERS } from '../game/Constants';
 import { PLAYER_TITLES, TITLE_TIERS, TIER_ORDER, formatBuff } from '@/lib/playerTitles';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -22,6 +24,7 @@ const STATUS_TABS = [
 export default function Titles({ isCarousel }) {
     const navigate = useNavigate();
     const { user: omenxUser } = useOmenXUser();
+    const { nfts } = useCurrency();
     const [stats, setStats] = useState(null);
     const [equippedTitle, setEquippedTitle] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -50,6 +53,35 @@ export default function Titles({ isCarousel }) {
                 .filter(id => id.startsWith('boss_') || id === 'world_boss')
                 .reduce((sum, id) => sum + (enemyKills[id] || 0), 0);
 
+            // Count talents across permanent/weekly/seasonal containers (current schema)
+            // plus the legacy `unlockedTalents` field. Each container is { charId: [talentIds] }
+            // with a `weekId`/`seasonId` key we must skip. Dedupe by `${charId}:${talentId}` so
+            // the same talent picked in two periods doesn't double-count.
+            const talentKeys = new Set();
+            const addTalents = (container, skipKey) => {
+                if (!container || typeof container !== 'object') return;
+                for (const charId of Object.keys(container)) {
+                    if (charId === skipKey) continue;
+                    const arr = container[charId];
+                    if (Array.isArray(arr)) arr.forEach(t => talentKeys.add(`${charId}:${t}`));
+                }
+            };
+            addTalents(save.permanentTalents, null);
+            addTalents(save.weeklyTalents, 'weekId');
+            addTalents(save.seasonalTalents, 'seasonId');
+            addTalents(save.unlockedTalents, null); // legacy fallback
+            const totalUnlockedTalents = talentKeys.size;
+
+            // Count characters: gameplay-unlocked + NFT-granted (by name match, same as NFTPerks.js).
+            const owned = new Set(save.unlockedCharacters || []);
+            if (Array.isArray(nfts)) {
+                const charIds = new Set(CHARACTERS.map(c => c.id.toLowerCase()));
+                nfts.forEach(nft => {
+                    const name = (nft?.metadata?.name || '').toLowerCase();
+                    if (charIds.has(name)) owned.add(name);
+                });
+            }
+
             setStats({
                 totalKills: save.totalKills || 0,
                 leviathanKills,
@@ -59,12 +91,12 @@ export default function Titles({ isCarousel }) {
                 totalGoldEarned: save.totalGoldEarned || 0,
                 maxLevelReached: save.maxLevelReached || 0,
                 maxTimeSurvived: save.maxTimeSurvived || 0,
-                unlockedCharactersCount: save.unlockedCharacters?.length || 0,
+                unlockedCharactersCount: owned.size,
                 totalUnlockedCosmetics: save.unlockedCosmetics?.length || 0,
-                totalUnlockedTalents: Object.values(save.unlockedTalents || {}).reduce((a, arr) => a + arr.length, 0),
+                totalUnlockedTalents,
             });
         })();
-    }, [omenxUser]);
+    }, [omenxUser, nfts]);
 
     const rows = useMemo(() => {
         if (!stats) return [];
