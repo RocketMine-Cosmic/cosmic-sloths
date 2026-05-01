@@ -437,6 +437,7 @@ export default function Game() {
                     score: liveScore,
                     dps,
                     boss,
+                    kills: engine.kills || 0,
                     totalDamage: Math.floor(engine.totalDamageDealt || 0)
                 }));
             }

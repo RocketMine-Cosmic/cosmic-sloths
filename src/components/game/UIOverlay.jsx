@@ -19,7 +19,7 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, boss = null, onPause, onSquadUltimate }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, boss = null, onPause, onSquadUltimate }) {
     // Collapse loadout list by default on mobile so the pause button + top row stay visible.
     // Players can tap the HP bar to expand and review their build.
     const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
@@ -112,6 +112,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     </div>
                     <div className="text-[9px] md:text-xs font-bold text-orange-400 font-mono mt-0.5" title="Damage per second">
                         DPS: {dps.toLocaleString()}
+                    </div>
+                    <div className="text-[9px] md:text-xs font-bold text-red-300 font-mono mt-0.5" title="Enemies defeated this run">
+                        KILLS: {kills.toLocaleString()}
                     </div>
 
                     {boss && boss.maxHp > 0 && (

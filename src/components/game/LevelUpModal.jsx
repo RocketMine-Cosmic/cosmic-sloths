@@ -136,8 +136,8 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                         >
                                             <HelpCircle className="w-8 h-8 md:w-12 md:h-12 mb-1 md:mb-2 animate-pulse" />
                                             <span className="font-bold font-mono text-sm md:text-base">MYSTERY</span>
-                                            <span className={`mt-1 md:mt-2 text-[10px] md:text-xs font-bold px-2 py-0.5 md:py-1 rounded bg-black/50 ${rarityColors[choice.rarity].split(' ')[0]}`}>
-                                                {choice.rarity}
+                                            <span className="mt-1 md:mt-2 text-[10px] md:text-xs font-bold px-2 py-0.5 md:py-1 rounded bg-black/50 text-slate-500">
+                                                ???
                                             </span>
                                         </motion.div>
                                     ) : (
