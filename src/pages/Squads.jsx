@@ -285,8 +285,29 @@ export default function Squads({ isCarousel }) {
                 toast({ title: "Error", description: res.data?.error || "Failed to join squad." });
                 return;
             }
-            setMyMemberRecord(res.data.member);
-            setMySquad(res.data.squad);
+            // Fall back to a fresh fetch if the server response is missing the full
+            // squad record — keeps the UI from getting stuck on the squad-list view.
+            let joinedSquad = res.data.squad;
+            if (!joinedSquad?.id || !joinedSquad?.name) {
+                try { joinedSquad = await base44.entities.Squad.get(squadId); } catch {}
+            }
+            if (joinedSquad?.id) {
+                setMyMemberRecord(res.data.member);
+                setMySquad(joinedSquad);
+                // Cache membership so Game.jsx can read it without a network call.
+                const walletKey = user?.wallet_address || user?.walletAddress;
+                if (walletKey && res.data.member) {
+                    localStorage.setItem(`squad_membership_${walletKey}`, JSON.stringify(res.data.member));
+                }
+                toast({ title: "Joined Squad!", description: `Welcome to ${joinedSquad.name}.` });
+            } else {
+                toast({ title: "Joined Squad!", description: "Refreshing squad info…" });
+                // Last-resort: refresh the page state from scratch.
+                setMySquad(null);
+                setMyMemberRecord(null);
+                setAllSquads([]);
+                setUser({ ...user });
+            }
         } catch (e) {
             console.error(e);
             toast({ title: "Error", description: e?.response?.data?.error || "Failed to join squad." });

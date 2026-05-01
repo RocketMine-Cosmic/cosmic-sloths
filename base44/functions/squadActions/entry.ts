@@ -115,10 +115,13 @@ Deno.serve(async (req) => {
                 last_daily_payout_date: today
             });
 
-            // Increment member count
-            const updatedSquad = await base44.asServiceRole.entities.Squad.update(squadId, {
+            // Increment member count. Some SDK versions don't return the full record
+            // from .update(), so re-fetch to guarantee the client gets a complete squad
+            // object (this was causing "join" to silently leave the UI on the squad list).
+            await base44.asServiceRole.entities.Squad.update(squadId, {
                 member_count: (squad.member_count || 0) + 1
             });
+            const updatedSquad = await base44.asServiceRole.entities.Squad.get(squadId);
 
             await base44.asServiceRole.entities.SquadMessage.create({
                 squad_id: squadId,
