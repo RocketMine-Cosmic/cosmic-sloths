@@ -40,6 +40,27 @@ Deno.serve(async (req) => {
             const records = await base44.asServiceRole.entities.AdminWallet.list('-created_date', 200);
             return Response.json({ records });
         }
+        // Staff-safe: any admin can see their own projected weekly OMENX income
+        // (the current week's total_spent + the live staff pct). Does NOT expose
+        // logs, payouts, or all-time totals.
+        if (type === 'my_staff_income') {
+            // Current ISO week id (matches getCurrentWeekId on the client)
+            const now = new Date();
+            const year = now.getUTCFullYear();
+            const startOfYear = new Date(Date.UTC(year, 0, 1));
+            const startOfWeek = new Date(startOfYear);
+            startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+            const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+            const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+
+            const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' });
+            const totalSpent = pools[0]?.total_spent || 0;
+
+            const cfg = await base44.asServiceRole.entities.AppConfig.filter({ key: 'staff_pct_per_wallet' });
+            const pct = Number(cfg[0]?.value?.pct ?? 0.02);
+
+            return Response.json({ week_id, total_spent: totalSpent, pct });
+        }
 
         return Response.json({ error: 'Invalid type' }, { status: 400 });
     } catch (error) {
