@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const ALL_PERMISSIONS = [
     'view_data', 'view_finance', 'edit_players', 'delete_scores', 'manage_blacklist',
     'distribute_rewards', 'manage_raid', 'manage_admins', 'wipe_data',
-    'refund_omenx', 'manage_backups', 'moderate_chat', 'owner'
+    'refund_omenx', 'refund_single', 'manage_backups', 'moderate_chat', 'owner'
 ];
 
 async function verifyCaller(base44, adminKey) {
