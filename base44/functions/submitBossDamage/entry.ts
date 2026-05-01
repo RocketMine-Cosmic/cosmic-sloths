@@ -15,7 +15,9 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
-const MAX_DAMAGE_PER_SUBMISSION = 1_000_000;
+// 500k cap is well above the realistic top-tier run damage (~200-300k) but tight
+// enough to prevent tampered clients from milestone-farming via inflated damage.
+const MAX_DAMAGE_PER_SUBMISSION = 500_000;
 const BOSS_BASE_HP = 50000;
 
 Deno.serve(async (req) => {

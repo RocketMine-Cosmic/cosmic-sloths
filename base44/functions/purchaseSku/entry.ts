@@ -142,6 +142,21 @@ async function getSkuPrice(skuId, apiBaseUrl, apiKeys) {
     return skuPriceCache[skuId] || 0;
 }
 
+// Cosmetic SKU ↔ goldCost binding — MUST mirror lib/skuMap.js. Used to verify the
+// SKU the player is actually paying for matches the cosmeticId being granted, so
+// a cheap SKU can't unlock an expensive cosmetic via tampered grantInfo.
+const COSMETIC_SKU_COSTS = {
+    'character-trails-basic':           3000,
+    'character-trails-advanced':        10000,
+    'character-trails-epic':            20000,
+    'character-trails-leg':             30000,
+    'character-kill-effects-basic':     3000,
+    'character-kill-effects-advanced':  12000,
+    'character-kill-effects-epic':      25000,
+    'character-skins-basic':            5000,
+    'character-skins-advance':          20000,
+};
+
 // ---- Grant application ----
 // Applies grantInfo to the player's cloud PlayerSave atomically. Returns the
 // updated save_data. Validates that the SKU prefix matches the grant type so a
@@ -156,9 +171,11 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
         case 'talent_respec': {
             // grantInfo: { type, tier, charId } — clears all talents for one character at one tier. No refund.
             const { tier, charId } = grantInfo;
-            const validPrefixes = ['talent-respec-'];
-            const ok = validPrefixes.some(p => skuId.startsWith(p));
-            if (!ok) throw new Error(`This respec doesn't match. Please refresh and try again.`);
+            // Exact-match SKU↔tier check — previously a `talent-respec-weekly` (cheap)
+            // SKU could clear `permanent` talents (expensive respec).
+            if (skuId !== `talent-respec-${tier}`) {
+                throw new Error(`This respec doesn't match. Please refresh and try again.`);
+            }
             const key = tier === 'permanent' ? 'permanentTalents'
                       : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
             const obj = { ...(s[key] || {}) };
@@ -233,8 +250,8 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             break;
         }
         case 'cosmetic': {
-            // grantInfo: { type, slot: 'trail'|'kill'|'skin', cosmeticId, charId? }
-            const { slot, cosmeticId, charId } = grantInfo;
+            // grantInfo: { type, slot: 'trail'|'kill'|'skin', cosmeticId, charId?, goldCost }
+            const { slot, cosmeticId, charId, goldCost } = grantInfo;
             const validPrefixes = {
                 trail: ['character-trails-'],
                 kill:  ['character-kill-effects-'],
@@ -242,6 +259,15 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             };
             const ok = (validPrefixes[slot] || []).some(p => skuId.startsWith(p));
             if (!ok) throw new Error(`This cosmetic doesn't match the slot. Please refresh and try again.`);
+            // Verify the SKU's goldCost-tier matches grantInfo.goldCost — prevents
+            // buying a cheap SKU and granting an expensive cosmetic via tampered grant.
+            const skuGoldCost = COSMETIC_SKU_COSTS[skuId];
+            if (skuGoldCost === undefined) {
+                throw new Error(`This cosmetic SKU isn't recognised. Please refresh and try again.`);
+            }
+            if (Number(goldCost) !== skuGoldCost) {
+                throw new Error(`This cosmetic doesn't match the SKU price. Please refresh and try again.`);
+            }
 
             if (slot === 'trail') {
                 const arr = Array.isArray(s.unlockedCosmetics) ? [...s.unlockedCosmetics] : [];
@@ -382,12 +408,24 @@ Deno.serve(async (req) => {
         }
 
         // --- Apply grant to PlayerSave (if any) ---
-        if (grantInfo && saveRecord && updatedSave) {
+        // CRITICAL: re-fetch the save AFTER charge confirmed and re-apply the grant.
+        // Otherwise two concurrent purchases could each pre-validate against the same
+        // old snapshot, charge, and one would clobber the other on write — player gets
+        // charged 2× OMENX but only 1 grant lands.
+        if (grantInfo && saveRecord) {
             try {
-                await base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
-                    save_data: updatedSave,
+                const freshRecords = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
+                if (freshRecords.length === 0) throw new Error('Save vanished mid-purchase');
+                const freshRecord = freshRecords[0];
+                const freshSave = typeof freshRecord.save_data === 'string'
+                    ? JSON.parse(freshRecord.save_data)
+                    : freshRecord.save_data;
+                const reAppliedSave = applyGrant(freshSave, grantInfo, skuId, periodIds);
+                await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, {
+                    save_data: reAppliedSave,
                     updated_at: Date.now()
                 });
+                updatedSave = reAppliedSave;
                 console.log(`[purchaseSku] Granted ${grantInfo.type} to ${walletAddress}`);
             } catch (err) {
                 console.error('[purchaseSku] CRITICAL: charged but failed to apply grant:', err.message);
