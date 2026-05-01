@@ -392,11 +392,17 @@ export class GameEngine {
             actualDmg = Math.max(1, Math.floor(actualDmg * 0.85));
         }
 
-        const bribeCost = this.masteryAbilityBoost?.bribeCost ?? 5;
-        if (this.characterId === 'synthbeats' && this.gold >= bribeCost) {
+        // Bribe (SynthBeats): dodge a hit by paying gold. Now scales with the damage
+        // being negated (so big hits cost a lot of gold) and is rate-limited so
+        // players can't infinitely tank damage by farming gold faster than they spend it.
+        const bribeBaseCost = this.masteryAbilityBoost?.bribeCost ?? 5;
+        const bribeCost = bribeBaseCost + Math.floor(amount * 2); // 5 + 2× incoming damage
+        const bribeCooldown = 3.0;
+        if (this.characterId === 'synthbeats' && this.gold >= bribeCost && (this.player.bribeCooldown || 0) <= 0) {
             this.gold -= bribeCost;
+            this.player.bribeCooldown = bribeCooldown;
             if (this.callbacks.onGoldChange) this.callbacks.onGoldChange(this.gold);
-            this.addDamageText(this.player.x, this.player.y - 20, "BRIBED!", '#FFD700');
+            this.addDamageText(this.player.x, this.player.y - 20, `BRIBED! -${bribeCost}g`, '#FFD700');
             this.particleManager.createExplosion(this.player.x, this.player.y, '#FFD700', 1.0, 'default');
             this.player.iFrames = 0.5;
             return;
@@ -638,6 +644,7 @@ export class GameEngine {
         if (this.player.invincibleTimer > 0) this.player.invincibleTimer -= dt;
         if (this.player.iFrames > 0) this.player.iFrames -= dt;
         if (this.player.synAmpTimer > 0) this.player.synAmpTimer -= dt;
+        if (this.player.bribeCooldown > 0) this.player.bribeCooldown -= dt;
         
         this.zoom = window.innerWidth < 768 ? 0.5 : 0.8;
         this.camera.x = this.player.x - (this.canvas.width / this.zoom) / 2;
