@@ -311,16 +311,11 @@ export const SaveManager = {
   _cloudSyncComplete: cloudSyncComplete,
   
   load: () => {
-    // Check if local save is stale (last update was >5 min ago and cloud might have newer data)
-    const localSave = localStorage.getItem('cosmic_sloth_save');
-    const localMeta = localSave ? JSON.parse(localSave) : null;
-    const now = Date.now();
-    const fiveMinAgo = now - (5 * 60 * 1000);
-    
-    // If local is old and we're authenticated, re-sync in background (don't block load())
-    if (SaveManager._walletAddress && localMeta?.updated_at && localMeta.updated_at < fiveMinAgo) {
-      SaveManager.syncToBackend().catch(e => console.warn('[SaveManager] Background re-sync failed:', e.message));
-    }
+    // NOTE: We intentionally do NOT trigger a background re-sync here.
+    // load() runs constantly during UI re-renders, and pushing a stale local
+    // save up just to be told "cloud is newer" wasted a request and spammed
+    // the syncSave logs with "Stale client" warnings every few minutes.
+    // Cloud truth is loaded on initialize() and on walletLinked events.
 
     // Canonical UTC ISO week calculation — must match lib/periodIds.js exactly
     const { week_id: currentWeek, season_id: currentSeason } = (() => {

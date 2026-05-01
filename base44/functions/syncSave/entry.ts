@@ -133,7 +133,10 @@ Deno.serve(async (req) => {
         const clientTs = Number(saveData.updated_at || 0);
         const cloudTs = Number(existing[0].updated_at || existingData.updated_at || 0);
         const clientIsStale = cloudTs > 0 && clientTs > 0 && clientTs < cloudTs;
-        if (clientIsStale) {
+        // Only log meaningful staleness (>5s gap). Sub-5s gaps are almost always
+        // races with concurrent server-side writes (saveScore, claimBounty, etc.)
+        // landing milliseconds before the debounced client sync — not actionable.
+        if (clientIsStale && (cloudTs - clientTs) > 5000) {
             console.log(`[syncSave] Stale client (client=${clientTs} cloud=${cloudTs}) — cloud wins for scalars`);
         }
 
