@@ -21,6 +21,7 @@ import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import { getAuthData } from '@/lib/getAuthData';
 import { SpritePreloader } from '../game/SpritePreloader';
 import { refreshBalance } from '@/lib/playerDataCache';
+import { flushPendingScores } from '@/lib/flushPendingScores';
 import CharacterAbilityMeter from '../components/game/CharacterAbilityMeter';
 import GameLoadingScreen from '../components/game/GameLoadingScreen';
 import HideHudButton from '../components/game/HideHudButton';
@@ -88,6 +89,8 @@ export default function Game() {
             
             // CRITICAL: Initialize SaveManager first to load cloud save + merge upgrades
             await SaveManager.initialize();
+            // Try to flush any runs queued from a previous failed save (background, non-blocking)
+            flushPendingScores().catch(() => {});
             
             const save = SaveManager.load();
 
@@ -101,52 +104,76 @@ export default function Game() {
             }
 
         const saveScore = async (stats, isVictory) => {
-            try {
-                    const user = getOmenXUserSync();
-                    if (!user) return null;
-                    const displayName = user.player_name || user.full_name;
-                    const walletAddress = user.walletAddress;
-                    
-                    if (!displayName || displayName.includes('@') || displayName.includes('0x') || displayName.trim() === '') {
-                        console.warn('[saveScore] No proper pilot name — score not recorded');
-                        return null;
-                    }
+            const user = getOmenXUserSync();
+            if (!user) return null;
+            const displayName = user.player_name || user.full_name;
+            const walletAddress = user.walletAddress;
 
-                    const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
-                    const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
-                    
-                    // Server validates, recomputes score, and writes run aggregates to PlayerSave.
-                    const scoreData = {
-                        player_name: displayName,
-                        player_title: user.data?.player_title || '',
-                        pilot_icon: pilotIcon,
-                        time_survived: stats.time,
-                        level: stats.level,
-                        kills: stats.kills,
-                        character_id: stats.characterId || characterId,
-                        arena_id,
-                        // Server-side validation/aggregation fields:
-                        gold: stats.gold,
-                        is_victory: !!isVictory,
-                        encountered: stats.encountered || [],
-                        enemyKills: stats.enemyKills || {},
-                    };
-
-                    // Read squad membership from local cache to avoid a network round-trip
-                    let squadStats = null;
-                    try {
-                        const cached = localStorage.getItem(`squad_membership_${walletAddress}`);
-                        if (cached) {
-                            squadStats = { squadId: JSON.parse(cached).squad_id, kills: stats.kills };
-                        }
-                    } catch (_) {}
-
-                    const res = await base44.functions.invoke('saveScore', { scoreData, squadStats });
-                    return res?.data || null;
-            } catch (e) {
-                console.error('[saveScore] FAILED:', e?.message || e);
-                throw e;
+            if (!displayName || displayName.includes('@') || displayName.includes('0x') || displayName.trim() === '') {
+                console.warn('[saveScore] No proper pilot name — score not recorded');
+                return null;
             }
+
+            const arena_id = isEndless ? 'endless' : (stats.arenaId || arenaId);
+            const pilotIcon = user.pilot_icon || user.data?.pilot_icon || '🦥';
+
+            // Server validates, recomputes score, and writes run aggregates to PlayerSave.
+            const scoreData = {
+                player_name: displayName,
+                player_title: user.data?.player_title || '',
+                pilot_icon: pilotIcon,
+                time_survived: stats.time,
+                level: stats.level,
+                kills: stats.kills,
+                character_id: stats.characterId || characterId,
+                arena_id,
+                gold: stats.gold,
+                is_victory: !!isVictory,
+                encountered: stats.encountered || [],
+                enemyKills: stats.enemyKills || {},
+            };
+
+            // Read squad membership from local cache to avoid a network round-trip
+            let squadStats = null;
+            try {
+                const cached = localStorage.getItem(`squad_membership_${walletAddress}`);
+                if (cached) {
+                    squadStats = { squadId: JSON.parse(cached).squad_id, kills: stats.kills };
+                }
+            } catch (_) {}
+
+            const payload = { scoreData, squadStats };
+
+            // Retry with exponential backoff so transient network/server hiccups
+            // don't lose the player's run. 5 attempts: 1s, 2s, 4s, 8s, 16s = ~31s total.
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            let lastErr = null;
+            for (let attempt = 0; attempt < delays.length; attempt++) {
+                try {
+                    const res = await base44.functions.invoke('saveScore', payload);
+                    return res?.data || null;
+                } catch (e) {
+                    lastErr = e;
+                    console.warn(`[saveScore] attempt ${attempt + 1}/${delays.length} failed:`, e?.message || e);
+                    if (attempt < delays.length - 1) {
+                        await new Promise(r => setTimeout(r, delays[attempt]));
+                    }
+                }
+            }
+
+            // All retries failed — queue the run locally so we can retry on next launch.
+            try {
+                const queue = JSON.parse(localStorage.getItem('pending_score_saves') || '[]');
+                queue.push({ payload, queuedAt: Date.now() });
+                // Keep queue bounded — 20 most recent runs is plenty.
+                while (queue.length > 20) queue.shift();
+                localStorage.setItem('pending_score_saves', JSON.stringify(queue));
+                console.warn('[saveScore] All retries exhausted — run queued for later retry.');
+            } catch (qErr) {
+                console.error('[saveScore] Failed to queue run:', qErr);
+            }
+            console.error('[saveScore] FAILED after retries:', lastErr?.message || lastErr);
+            throw lastErr;
         };
         // Expose to handleQuit so it can await the save before unmounting.
         saveScoreRef.current = saveScore;

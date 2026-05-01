@@ -34,6 +34,7 @@ const Loadouts = React.lazy(() => import('./pages/Loadouts'));
 const SquadWars = React.lazy(() => import('./pages/SquadWars'));
 const WarArchive = React.lazy(() => import('./pages/WarArchive'));
 import { initOmenX } from '@/lib/omenx';
+import { flushPendingScores } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { SoundManager } from './game/SoundManager';
 import GamepadManager from './components/GamepadManager';
@@ -142,6 +143,8 @@ const MainApp = () => {
 function App() {
   useEffect(() => {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
+    // Retry any runs that failed to save in a previous session.
+    flushPendingScores().catch(err => console.error('[flushPendingScores]', err));
     // CurrencyProvider subscription will handle centralized fetch
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)
