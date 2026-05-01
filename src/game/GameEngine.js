@@ -690,42 +690,9 @@ export class GameEngine {
             this.levelUp();
         }
         
-        if (!this.characterPickupSpawned && this.lockedCharacters.length > 0) {
-            if (this.characterSpawnRoll === undefined) {
-                this.characterSpawnRoll = Math.random();
-                this.characterSpawnTime = 120 + Math.random() * 120;
-            }
-            
-            if (this.time > this.characterSpawnTime) {
-                this.characterPickupSpawned = true;
-                
-                if (this.characterSpawnRoll < 0.30) {
-                    const charIdToSpawn = this.lockedCharacters[Math.floor(Math.random() * this.lockedCharacters.length)];
-                    const charData = CHARACTERS.find(c => c.id === charIdToSpawn);
-                    
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = 3000 + Math.random() * 2000;
-                    this.characterPickup = {
-                        x: this.player.x + Math.cos(angle) * dist,
-                        y: this.player.y + Math.sin(angle) * dist,
-                        charId: charIdToSpawn,
-                        color: charData.color,
-                        name: charData.name
-                    };
-                }
-            }
-        }
-        
-        if (this.characterPickup) {
-            const dist = Math.hypot(this.player.x - this.characterPickup.x, this.player.y - this.characterPickup.y);
-            if (dist < this.player.radius + 20) {
-                if (this.callbacks.onCharacterFound) {
-                    this.callbacks.onCharacterFound(this.characterPickup.charId);
-                }
-                this.addDamageText(this.characterPickup.x, this.characterPickup.y - 20, `UNLOCKED: ${this.characterPickup.name}!`, '#00ffff');
-                this.characterPickup = null;
-            }
-        }
+        // In-run character pickup spawning was the OLD unlock method — disabled
+        // since unlocks are now exclusively server-granted at kill milestones via saveScore.
+        // Keeping `this.characterPickup` null guarantees the pickup never spawns or grants.
 
         // Particles & Text
         this.particleManager.update(dt);
