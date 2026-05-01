@@ -87,6 +87,9 @@ export default function BountiesPanel({ save, setSave }) {
                     const isComplete = bounty.progress >= bounty.target;
                     const isClaimed = bounty.claimed;
                     const isClaimingThis = claiming === `bounty-${index}`;
+                    // Endless runs are excluded from gold/play bounty progress (anti-farm).
+                    // Mirrors functions/saveScore.js — keep the two in sync.
+                    const endlessExcluded = bounty.type === 'gold' || bounty.type === 'play';
 
                     return (
                         <div key={bounty.id + index} className={`p-3 rounded-lg border transition-colors ${
@@ -96,11 +99,19 @@ export default function BountiesPanel({ save, setSave }) {
                         }`}>
                             <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         {isComplete ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <Circle className="w-4 h-4 text-slate-500" />}
                                         <span className={`font-bold text-sm ${isComplete ? 'text-white' : 'text-slate-300'}`}>
                                             {bounty.desc}
                                         </span>
+                                        {endlessExcluded && !isClaimed && (
+                                            <span
+                                                className="text-[9px] font-bold uppercase tracking-wider bg-orange-950/60 text-orange-300 border border-orange-700/50 px-1.5 py-0.5 rounded"
+                                                title="Endless runs do not count toward this bounty (anti-farm)."
+                                            >
+                                                Endless excluded
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
                                         <span className="font-mono bg-slate-900 px-1.5 py-0.5 rounded text-[10px]">
@@ -152,7 +163,8 @@ export default function BountiesPanel({ save, setSave }) {
                     const isClaimed = mission.claimed;
                     const mProgressPercent = Math.min(100, (mission.progress / mission.target) * 100);
                     const isClaimingThis = claiming === 'mission';
-                    
+                    const endlessExcluded = mission.type === 'gold' || mission.type === 'play';
+
                     return (
                         <div className={`p-4 rounded-lg border relative z-10 ${
                             isClaimed ? 'bg-slate-800/50 border-slate-700 opacity-60' : 
@@ -161,7 +173,17 @@ export default function BountiesPanel({ save, setSave }) {
                         }`}>
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <div className="font-bold text-sm text-white mb-1">{mission.desc}</div>
+                                    <div className="font-bold text-sm text-white mb-1 flex items-center gap-2 flex-wrap">
+                                        <span>{mission.desc}</span>
+                                        {endlessExcluded && !isClaimed && (
+                                            <span
+                                                className="text-[9px] font-bold uppercase tracking-wider bg-orange-950/60 text-orange-300 border border-orange-700/50 px-1.5 py-0.5 rounded"
+                                                title="Endless runs do not count toward this mission (anti-farm)."
+                                            >
+                                                Endless excluded
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="text-xs text-purple-300 font-mono">
                                         Progress: {Math.min(mission.progress, mission.target)} / {mission.target}
                                     </div>

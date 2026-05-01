@@ -80,6 +80,10 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
         };
         // Big gold piles (boss reward) — small piles aren't worth indicating.
         const BOSS_GOLD_THRESHOLD = 500;
+        // Large XP orbs (mostly from bosses) — endless boss kills auto-credit
+        // gold + fragments, leaving only the XP orb as the visible drop.
+        // Without an indicator a far-off-screen boss looks like it dropped nothing.
+        const BOSS_XP_THRESHOLD = 200;
 
         // Pulse so it stands out among other UI.
         const pulse = 0.7 + Math.sin(time * 4) * 0.3;
@@ -88,6 +92,9 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
             let style = DROP_STYLE[p.type];
             if (!style && p.type === 'gold' && (p.value || 0) >= BOSS_GOLD_THRESHOLD) {
                 style = { color: 'rgba(255, 215, 0, 0.9)', icon: '💰' };
+            }
+            if (!style && p.type === 'xp' && (p.value || 0) >= BOSS_XP_THRESHOLD) {
+                style = { color: 'rgba(0, 255, 204, 0.9)', icon: '✦' };
             }
             if (!style) return;
             // Only show when off-screen.
