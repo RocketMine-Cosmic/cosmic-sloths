@@ -56,8 +56,14 @@ Deno.serve(async (req) => {
         const totalSpent = spendLogs.reduce((sum, log) => sum + (Number(log.amount) || 0), 0);
         const playerName = spendLogs[0]?.player_name || 'Unknown pilot';
 
-        // --- Preview mode: return totals, no transfer ---
+        // --- Preview mode: return totals + recent purchases, no transfer ---
         if (mode === 'preview') {
+            const recentPurchases = spendLogs.slice(0, 20).map(log => ({
+                sku_id: log.sku_id || '(unknown)',
+                amount: Number(log.amount) || 0,
+                created_date: log.created_date,
+                grant_type: log.grant_info?.type || null,
+            }));
             return Response.json({
                 preview: true,
                 walletAddress: target,
@@ -65,6 +71,7 @@ Deno.serve(async (req) => {
                 totalSpent,
                 purchaseCount: spendLogs.length,
                 lastPurchaseDate: spendLogs[0]?.created_date || null,
+                recentPurchases,
             });
         }
 

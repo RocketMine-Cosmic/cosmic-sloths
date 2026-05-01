@@ -119,20 +119,38 @@ export default function AdminRefundSingle() {
                             {loadingPreview ? (
                                 <div className="text-xs text-slate-400 flex items-center gap-2"><Search size={12} className="animate-pulse" /> Loading spend history…</div>
                             ) : preview ? (
-                                <div className="grid grid-cols-3 gap-3 text-center">
-                                    <div>
-                                        <div className="text-[10px] text-slate-500 uppercase">Total Spent</div>
-                                        <div className="text-sm font-mono font-bold text-amber-300">{preview.totalSpent.toFixed(1)} OMENX</div>
+                                <>
+                                    <div className="grid grid-cols-3 gap-3 text-center mb-3">
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase">Total Spent</div>
+                                            <div className="text-sm font-mono font-bold text-amber-300">{preview.totalSpent.toFixed(1)} OMENX</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase">Purchases</div>
+                                            <div className="text-sm font-mono font-bold text-white">{preview.purchaseCount}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase">Last Purchase</div>
+                                            <div className="text-[10px] font-mono text-slate-300">{preview.lastPurchaseDate ? new Date(preview.lastPurchaseDate).toLocaleDateString() : '—'}</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="text-[10px] text-slate-500 uppercase">Purchases</div>
-                                        <div className="text-sm font-mono font-bold text-white">{preview.purchaseCount}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-slate-500 uppercase">Last Purchase</div>
-                                        <div className="text-[10px] font-mono text-slate-300">{preview.lastPurchaseDate ? new Date(preview.lastPurchaseDate).toLocaleDateString() : '—'}</div>
-                                    </div>
-                                </div>
+                                    {preview.recentPurchases?.length > 0 && (
+                                        <details className="border-t border-slate-800 pt-2">
+                                            <summary className="text-[10px] text-slate-400 uppercase tracking-wider font-bold cursor-pointer hover:text-amber-300">
+                                                📋 Recent purchases ({preview.recentPurchases.length}{preview.purchaseCount > preview.recentPurchases.length ? ` of ${preview.purchaseCount}` : ''}) — click to expand
+                                            </summary>
+                                            <div className="mt-2 max-h-64 overflow-y-auto space-y-0.5">
+                                                {preview.recentPurchases.map((p, i) => (
+                                                    <div key={i} className="flex items-center justify-between gap-2 text-[11px] font-mono bg-slate-950/40 rounded px-2 py-1">
+                                                        <span className="text-slate-400 truncate flex-1" title={p.sku_id}>{p.sku_id}</span>
+                                                        <span className="text-amber-300 font-bold shrink-0">{p.amount} OMENX</span>
+                                                        <span className="text-slate-600 text-[10px] shrink-0 w-20 text-right">{new Date(p.created_date).toLocaleDateString()}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </details>
+                                    )}
+                                </>
                             ) : null}
                         </div>
                     )}
