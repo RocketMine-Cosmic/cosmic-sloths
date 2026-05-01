@@ -1,5 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Discord error webhook (fire-and-forget).
+async function postDiscordError(title, error) {
+    const url = Deno.env.get('DISCORD_ERROR_WEBHOOK');
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{
+                title: title.slice(0, 256),
+                description: `\`\`\`${(error?.message || String(error)).slice(0, 1500)}\`\`\``,
+                color: 0xef4444,
+                timestamp: new Date().toISOString(),
+            }] }),
+        });
+    } catch {}
+}
+
 // Server-authoritative gold spending. Atomically deducts gold from cloud save
 // and applies a grant (stat / weapon / talent / cosmetic).
 //
@@ -344,6 +362,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, cost, saveData: updatedSave });
     } catch (error) {
         console.error('[spendGold]', error.message);
+        postDiscordError('❌ spendGold failed', error);
         return Response.json({ error: 'Something went wrong with your purchase. Please try again.' }, { status: 500 });
     }
 });

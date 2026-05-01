@@ -3,6 +3,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 
+async function postDiscord(envName, color, payload) {
+    const url = Deno.env.get(envName);
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{ ...payload, color, timestamp: new Date().toISOString() }] }),
+        });
+    } catch {}
+}
+
 // Auth: Base44 session + 'refund_omenx' permission, OR emergency master key.
 
 Deno.serve(async (req) => {
@@ -84,6 +96,16 @@ Deno.serve(async (req) => {
         const totalRefunded = Object.values(refundMap).reduce((sum, data) => sum + data.amount, 0);
         console.log(`[refundAllOmenx] Refund complete: ${payments.length} wallets, ${totalRefunded} OMENX total`);
 
+        postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xf59e0b, {
+            title: '🚨 FULL OMENX REFUND issued',
+            fields: [
+                { name: 'Triggered by', value: `\`${callerWallet}\``, inline: false },
+                { name: 'Wallets refunded', value: String(payments.length), inline: true },
+                { name: 'Total OMENX', value: totalRefunded.toLocaleString(), inline: true },
+                { name: 'Tx', value: batchResult?.transactionId || batchResult?.txHash || '(none)', inline: false },
+            ],
+        });
+
         return Response.json({
             success: true,
             refunded: payments.length,
@@ -93,6 +115,10 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[refundAllOmenx] Error:', error.message);
+        postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
+            title: '❌ refundAllOmenx failed',
+            description: `\`\`\`${(error.message || String(error)).slice(0, 1500)}\`\`\``,
+        });
         return Response.json({ error: error.message }, { status: 500 });
     }
 });

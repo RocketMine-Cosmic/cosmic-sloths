@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+async function postDiscordMod(payload) {
+    const url = Deno.env.get('DISCORD_MOD_WEBHOOK');
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{ ...payload, color: 0xea580c, timestamp: new Date().toISOString() }] }),
+        });
+    } catch {}
+}
+
 // Auth: Base44 session + 'moderate_chat' permission, OR emergency master key.
 // Soft-deletes a SquadMessage and writes an audit log entry.
 
@@ -43,6 +55,15 @@ Deno.serve(async (req) => {
                 },
             });
         } catch (e) { console.error('[deleteSquadMessage] audit log failed:', e.message); }
+
+        postDiscordMod({
+            title: '🗑️ Squad message deleted',
+            fields: [
+                { name: 'Author', value: target.player_name || '(unknown)', inline: true },
+                { name: 'By moderator', value: `\`${callerWallet}\``, inline: true },
+                { name: 'Content', value: `\`\`\`${(target.content || '').slice(0, 900)}\`\`\``, inline: false },
+            ],
+        });
 
         return Response.json({ success: true });
     } catch (error) {

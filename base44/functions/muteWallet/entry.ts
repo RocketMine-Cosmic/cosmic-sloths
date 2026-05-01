@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+async function postDiscordMod(payload) {
+    const url = Deno.env.get('DISCORD_MOD_WEBHOOK');
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{ ...payload, color: 0xea580c, timestamp: new Date().toISOString() }] }),
+        });
+    } catch {}
+}
+
 // Auth: Base44 session + 'moderate_chat' permission, OR emergency master key.
 // Actions:
 //   - 'mute'   { walletAddress, durationMinutes?, reason?, playerName? }
@@ -59,6 +71,14 @@ Deno.serve(async (req) => {
                     details: { wallet, removed_count: existing.length },
                 });
             } catch {}
+            postDiscordMod({
+                title: '🔊 Wallet unmuted',
+                fields: [
+                    { name: 'Player', value: playerName || '(unknown)', inline: true },
+                    { name: 'By moderator', value: `\`${callerWallet}\``, inline: true },
+                    { name: 'Wallet', value: `\`${wallet}\``, inline: false },
+                ],
+            });
             return Response.json({ success: true, removed: existing.length });
         }
 
@@ -90,6 +110,17 @@ Deno.serve(async (req) => {
                     details: { wallet, minutes, muted_until, reason: reason || '' },
                 });
             } catch {}
+
+            postDiscordMod({
+                title: '🔇 Wallet muted',
+                fields: [
+                    { name: 'Player', value: playerName || '(unknown)', inline: true },
+                    { name: 'Duration', value: minutes > 0 ? `${minutes} min` : 'Permanent', inline: true },
+                    { name: 'By moderator', value: `\`${callerWallet}\``, inline: true },
+                    { name: 'Reason', value: reason || '(none)', inline: false },
+                    { name: 'Wallet', value: `\`${wallet}\``, inline: false },
+                ],
+            });
 
             return Response.json({ success: true, mute: created });
         }

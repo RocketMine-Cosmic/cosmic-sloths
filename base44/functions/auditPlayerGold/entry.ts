@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+async function postDiscord(envName, color, payload) {
+    const url = Deno.env.get(envName);
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{ ...payload, color, timestamp: new Date().toISOString() }] }),
+        });
+    } catch {}
+}
+
 // Admin-only audit tool for investigating gold loss complaints.
 // Returns:
 //   - currentCloudGold: what's on PlayerSave right now
@@ -51,6 +63,20 @@ Deno.serve(async (req) => {
             const delta = (Number(b.client_value) || 0) - (Number(b.cloud_value) || 0);
             return delta > max ? delta : max;
         }, 0);
+
+        // Alert #economy-alerts when blocked syncs reveal a meaningful gold loss
+        if (maxBlockedGold >= 5000) {
+            postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xf59e0b, {
+                title: '🪙 Gold audit flagged a loss',
+                fields: [
+                    { name: 'Player', value: save?.player_name || saveData?.player_name || '(unknown)', inline: true },
+                    { name: 'Suggested refund', value: `${maxBlockedGold.toLocaleString()} gold`, inline: true },
+                    { name: 'Wallet', value: `\`${walletLower}\``, inline: false },
+                    { name: 'Current cloud gold', value: Number(saveData?.gold || 0).toLocaleString(), inline: true },
+                    { name: 'Blocked syncs (gold)', value: String(goldBlocks.length), inline: true },
+                ],
+            });
+        }
 
         return Response.json({
             wallet: walletLower,

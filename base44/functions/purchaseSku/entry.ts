@@ -1,6 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
+// Discord webhook fire-and-forget. Never throws — any failure is swallowed.
+async function postDiscord(envName, color, { title, description, fields }) {
+    const url = Deno.env.get(envName);
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{
+                title: title?.slice(0, 256),
+                description: description?.slice(0, 4000),
+                color,
+                timestamp: new Date().toISOString(),
+                fields: (fields || []).slice(0, 25).map(f => ({ name: String(f.name).slice(0, 256), value: String(f.value).slice(0, 1024), inline: !!f.inline })),
+            }] }),
+        });
+    } catch {}
+}
+const LARGE_OMENX_THRESHOLD = 50; // ≥ 50 OMENX in a single purchase pings #economy-alerts
+
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
 // Pricing: server-side via OmenX dev portal (cached in memory).
 // Phase 3a: also applies the grant to PlayerSave server-side after charge confirmed.
@@ -457,6 +477,20 @@ Deno.serve(async (req) => {
             console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
         }
 
+        // Alert #economy-alerts on large purchases (≥ threshold OMENX)
+        if (totalAmount >= LARGE_OMENX_THRESHOLD) {
+            postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xf59e0b, {
+                title: '💰 Large OMENX purchase',
+                fields: [
+                    { name: 'Player', value: playerNameParam || me.full_name || walletAddress.slice(0, 10), inline: true },
+                    { name: 'Amount', value: `${totalAmount} OMENX`, inline: true },
+                    { name: 'SKU', value: skuId, inline: true },
+                    { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
+                    { name: 'Week', value: week_id, inline: true },
+                ],
+            });
+        }
+
         // Update TokenPool (non-fatal)
         try {
             const [weeklyPools, seasonalPools] = await Promise.all([
@@ -485,6 +519,10 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
+        postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
+            title: '❌ purchaseSku failed',
+            description: `\`\`\`${(error.message || String(error)).slice(0, 1500)}\`\`\``,
+        });
         return Response.json({ error: 'Something went wrong with your purchase. Please try again.' }, { status: 500 });
     }
 });
