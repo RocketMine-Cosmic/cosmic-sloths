@@ -71,16 +71,19 @@ export function updateEnemies(engine, dt) {
             }
 
             if (e.isBoss) {
+                const isEndless = engine.arena.duration === Infinity;
                 const fragmentReward = 1 + (engine.bossModifiers.frenzy ? 1 : 0);
                 // Auto-credit fragments directly to the save instead of dropping a pickup the
                 // player might miss (especially in endless mode where the boss can die far away,
                 // or when quitting/dying during the post-boss grace window).
+                let creditedFrags = 0;
                 if (engine.callbacks.onFragmentFound) {
                     const nftRelicMult = engine.save?.nftRelicMultiplier || 1.0;
                     const finalFrags = (nftRelicMult > 1.0 && Math.random() < (nftRelicMult - 1.0))
                         ? fragmentReward + 1
                         : fragmentReward;
                     engine.callbacks.onFragmentFound(finalFrags);
+                    creditedFrags = finalFrags;
                     engine.addDamageText(e.x, e.y - 40, `+${finalFrags} Relic Fragment!`, '#a855f7');
                     engine.addParticle(e.x, e.y, '#a855f7', 20, 'glow', 2);
                 }
@@ -94,18 +97,19 @@ export function updateEnemies(engine, dt) {
                 if (engine.bossModifiers.unstoppable) extraGold += 1000;
                 if (engine.bossModifiers.regen) extraGold += 800;
 
+                let creditedGold = 0;
                 if (extraGold > 0) {
                     // In endless: auto-credit gold instead of dropping a pickup that lingers
                     // visually long after the boss is gone (Hugo perceived these as
                     // "non-boss" gold drops because regular enemies spawn around the pile
                     // while the magnet pulls it in). Normal arenas keep the dropped pickup
                     // so players can collect it as part of the post-boss reward moment.
-                    const isEndless = engine.arena.duration === Infinity;
                     if (isEndless) {
                         const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
                         const finalGold = Math.floor(extraGold * engine.player.goldMult * nftGoldMult);
                         engine.gold += finalGold;
                         engine.callbacks.onGoldChange(engine.gold);
+                        creditedGold = finalGold;
                         engine.addDamageText(e.x, e.y - 20, `+${finalGold.toLocaleString()} GOLD`, '#ffd700');
                     } else {
                         engine.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: extraGold, color: '#ffd700' });
@@ -114,6 +118,18 @@ export function updateEnemies(engine, dt) {
 
                 engine.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                 engine.isBossActive = false;
+
+                // Boss-loot recap pinned to the PLAYER (always on-screen) so the player
+                // can never miss what they earned even if the boss died far off-screen.
+                // Endless: shows auto-credited gold + frags. Normal arenas: shows frags
+                // (gold is a pickup the player physically collects) — never both numbers
+                // mixed up. Stagger the lines so they don't overlap.
+                const recap = [];
+                if (creditedFrags > 0) recap.push({ text: `+${creditedFrags} RELIC FRAGMENT${creditedFrags > 1 ? 'S' : ''}`, color: '#c084fc' });
+                if (isEndless && creditedGold > 0) recap.push({ text: `+${creditedGold.toLocaleString()} GOLD`, color: '#ffd700' });
+                recap.forEach((line, idx) => {
+                    engine.addDamageText(engine.player.x, engine.player.y - 110 - idx * 22, line.text, line.color, true);
+                });
 
                 // Clear any in-flight enemy projectiles + the boss's own telegraph
                 // warnings so attacks don't continue after death.

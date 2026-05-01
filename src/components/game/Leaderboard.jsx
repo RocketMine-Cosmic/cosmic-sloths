@@ -129,9 +129,11 @@ export default function Leaderboard() {
     // The polling is the safety net — realtime keeps it instant, polling guarantees
     // freshness even if the websocket drops or the user has been idle.
     useEffect(() => {
+        // All background refreshes are silent (no spinner) so the list
+        // doesn't flash every 20s. Only initial load + view change show the spinner.
         const triggerRefetch = (delay = 300) => {
             if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-            fetchTimeoutRef.current = setTimeout(() => fetchScores(), delay);
+            fetchTimeoutRef.current = setTimeout(() => fetchScores(true), delay);
         };
 
         const unsubscribeScores = base44.entities.RunScore.subscribe((event) => {
@@ -156,7 +158,7 @@ export default function Leaderboard() {
         const startPolling = () => {
             if (pollIntervalRef.current || isIdle) return;
             pollIntervalRef.current = setInterval(() => {
-                if (!document.hidden && !isIdle) fetchScores();
+                if (!document.hidden && !isIdle) fetchScores(true);
             }, 20000);
         };
         const stopPolling = () => {
@@ -169,7 +171,7 @@ export default function Leaderboard() {
 
         // Refetch immediately when tab regains focus (catches any missed updates)
         const onVisibilityChange = () => {
-            if (!document.hidden) fetchScores();
+            if (!document.hidden) fetchScores(true);
         };
         document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -205,8 +207,11 @@ export default function Leaderboard() {
         }
     }, [poolData]);
 
-    const fetchScores = async () => {
-        setLoading(true);
+    // `silent=true` skips the loading spinner — used for background polling /
+    // realtime refreshes so the list doesn't flash empty every 20s. Initial
+    // load and view changes still show the spinner.
+    const fetchScores = async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
             const { week_id, season_id } = getCurrentPeriodIds();
 
@@ -216,7 +221,7 @@ export default function Leaderboard() {
                 const squadsData = await base44.entities.Squad.filter({ current_week: week_id }, '-weekly_kills', 50);
                 setScores(squadsData);
                 setCurrentPool(0);
-                setLoading(false);
+                if (!silent) setLoading(false);
                 return;
             }
 
@@ -250,7 +255,7 @@ export default function Leaderboard() {
         } catch (error) {
             console.error('Failed to fetch leaderboard', error);
         }
-        setLoading(false);
+        if (!silent) setLoading(false);
     };
 
     const formatTime = (s) => {
