@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { maskWallet } from '@/lib/maskWallet';
 import { getOmenXUser, updateOmenXUser } from '@/lib/omenxUser';
-import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon } from 'lucide-react';
+import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon, BookOpen } from 'lucide-react';
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -415,6 +415,34 @@ export default function Profile({ isCarousel }) {
                                 No VIP level detected. Earn VIP status on OmenX to unlock in-game bonuses.
                             </div>
                         )}
+                    </div>
+
+                    {/* Replay Welcome Tour */}
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-slate-700/50 rounded-xl md:rounded-2xl p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                            <BookOpen className="w-5 h-5 text-cyan-400 shrink-0" />
+                            <div>
+                                <div className="font-bold text-white text-sm">Welcome Tour</div>
+                                <div className="text-xs text-slate-400">Replay the new-player intro modal.</div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => {
+                                SoundManager.playUIClick();
+                                // Clear both the local cache flag AND the cloud-saved flag, then reload
+                                // so PlayCarousel re-mounts WelcomeModal which will see the unset flag.
+                                try { localStorage.removeItem('cosmic_sloths_welcome_seen_v1'); } catch {}
+                                const s = SaveManager.load();
+                                if (s.welcomeSeen) {
+                                    delete s.welcomeSeen;
+                                    SaveManager.save(s);
+                                }
+                                navigate('/');
+                            }}
+                            className="bg-cyan-900/50 hover:bg-cyan-800/70 text-cyan-300 border border-cyan-700/60 px-3 py-1.5 rounded-lg font-bold text-xs transition-colors w-full sm:w-auto"
+                        >
+                            Replay Tour
+                        </button>
                     </div>
 
                     {/* Rewards History */}
