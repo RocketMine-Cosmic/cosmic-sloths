@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
         postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xf59e0b, {
             title: '🚨 FULL OMENX REFUND issued',
             fields: [
-                { name: 'Triggered by', value: `\`${callerWallet}\``, inline: false },
+                { name: 'Triggered by', value: callerWallet === 'EMERGENCY_KEY' ? '🔑 Emergency master key' : `Admin \`${callerWallet.slice(0, 6)}…${callerWallet.slice(-4)}\``, inline: false },
                 { name: 'Wallets refunded', value: String(payments.length), inline: true },
                 { name: 'Total OMENX', value: totalRefunded.toLocaleString(), inline: true },
                 { name: 'Tx', value: batchResult?.transactionId || batchResult?.txHash || '(none)', inline: false },
