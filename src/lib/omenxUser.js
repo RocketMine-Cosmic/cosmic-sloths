@@ -9,7 +9,11 @@ export function getOmenXUserSync() {
         if (!stored) return null;
         const authData = JSON.parse(stored);
         if (!authData || !authData.walletAddress) return null;
-        const playerName = authData.player_name || authData.pilotName || authData.username || 'Player';
+        // PRIVACY: never fall back to authData.username — OmenX may return the
+        // user's real OAuth name there. If the player hasn't set a custom pilot
+        // name, default to an anonymous wallet-derived handle.
+        const anonName = `Pilot_${authData.walletAddress.slice(-6).toUpperCase()}`;
+        const playerName = authData.player_name || authData.pilotName || anonName;
         return {
             walletAddress: authData.walletAddress,
             username: authData.username,
@@ -45,7 +49,11 @@ export async function getOmenXUser() {
             return null;
         }
         
-        const playerName = authData.player_name || authData.pilotName || authData.username || 'Player';
+        // PRIVACY: never fall back to authData.username — OmenX may return the
+        // user's real OAuth name there. If the player hasn't set a custom pilot
+        // name, default to an anonymous wallet-derived handle.
+        const anonName = `Pilot_${authData.walletAddress.slice(-6).toUpperCase()}`;
+        const playerName = authData.player_name || authData.pilotName || anonName;
         return {
             walletAddress: authData.walletAddress,
             username: authData.username,
