@@ -94,11 +94,28 @@ Deno.serve(async (req) => {
 
         console.log(`[backupData] Backup complete: ${backup_name} with ${Object.values(entity_counts).reduce((a, b) => a + b, 0)} total records`);
 
+        // Retention: prune AUTOMATED backups older than 14 days. Manual backups are kept indefinitely.
+        let pruned = 0;
+        if (is_automated) {
+            try {
+                const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
+                const oldAutomated = await base44.asServiceRole.entities.DataBackup.filter({ backup_type: 'automated' }, '-created_date', 1000);
+                const toDelete = oldAutomated.filter(b => new Date(b.created_date).getTime() < cutoffMs);
+                for (const old of toDelete) {
+                    try { await base44.asServiceRole.entities.DataBackup.delete(old.id); pruned++; } catch {}
+                }
+                if (pruned > 0) console.log(`[backupData] Pruned ${pruned} automated backup(s) older than 14 days`);
+            } catch (e) {
+                console.error('[backupData] Retention prune failed:', e.message);
+            }
+        }
+
         return Response.json({
             success: true,
             backup_id: backup.id,
             backup_name,
             entity_counts,
+            pruned,
         });
     } catch (error) {
         console.error('[backupData] Error:', error.message);
