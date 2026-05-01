@@ -15,8 +15,9 @@ const ALL_PERMISSIONS = [
     { id: 'manage_raid',        label: '⚔️ Manage Raid',          desc: 'Manage the global boss' },
     { id: 'manage_backups',     label: '💾 Manage Backups',       desc: 'Create / restore data backups' },
     { id: 'manage_admins',      label: '👥 Manage Admins',         desc: 'Add / remove staff (high trust)' },
+    { id: 'refund_single',      label: '💸 Refund Single Player', desc: 'Issue one-off OMENX refunds (cap 100k)' },
     { id: 'wipe_data',          label: '🗑️ Wipe Data',             desc: 'OWNER-LEVEL — destructive resets' },
-    { id: 'refund_omenx',       label: '💰 Refund OMENX',          desc: 'OWNER-LEVEL — bulk refunds' },
+    { id: 'refund_omenx',       label: '💰 Refund OMENX (Bulk)',   desc: 'OWNER-LEVEL — bulk refunds' },
     { id: 'owner',              label: '👑 Owner',                 desc: 'Full access. Bypasses all checks. Only owners can grant.' },
 ];
 

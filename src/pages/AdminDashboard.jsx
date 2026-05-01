@@ -27,6 +27,7 @@ import AdminDataBackup from '../components/admin/AdminDataBackup';
 import AdminDataWipe from '../components/admin/AdminDataWipe';
 import AdminBlacklist from '../components/admin/AdminBlacklist';
 import AdminRefundOmenx from '../components/admin/AdminRefundOmenx';
+import AdminRefundSingle from '../components/admin/AdminRefundSingle';
 import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
 import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
 import AdminGoldAudit from '../components/admin/AdminGoldAudit';
@@ -94,7 +95,8 @@ const TAB_GROUPS = [
         id: 'finance',
         label: '💸 Finance',
         tabs: [
-            { id: 'refund', label: '💸 Refund OMENX', icon: AlertTriangle, perm: 'refund_omenx' },
+            { id: 'refund_one', label: '💸 Refund Player', icon: Coins, perm: 'refund_single' },
+            { id: 'refund', label: '💰 Bulk Refund', icon: AlertTriangle, perm: 'refund_omenx' },
         ],
     },
     {
@@ -278,6 +280,7 @@ export default function AdminDashboard() {
         wipe: <AdminDataWipe walletAddress={adminWallet} />,
         backfill: <AdminTokenSpendLogBackfill />,
         refund: <AdminRefundOmenx walletAddress={adminWallet} />,
+        refund_one: <AdminRefundSingle />,
         goldaudit: <AdminGoldAudit />,
         reset: <AdminMaintenanceReset walletAddress={adminWallet} />,
     };
