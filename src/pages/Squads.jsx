@@ -871,7 +871,14 @@ export default function Squads({ isCarousel }) {
                         {/* RIGHT PANEL: CHAT, MEMBERS & SETTINGS */}
                         <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-orange-500/30 shadow-[0_0_30px_rgba(249,115,22,0.15)] rounded-xl flex flex-col overflow-hidden min-h-0">
                             <button
-                                onClick={() => { SoundManager.playUIClick(); navigate('/squad-wars'); }}
+                                onClick={() => {
+                                    SoundManager.playUIClick();
+                                    // Inside the carousel, Squad Wars is slide 6 — navigate to / with
+                                    // ?slide=6 so the carousel snaps to it. Standalone /squads route
+                                    // can use the regular /squad-wars route.
+                                    if (isCarousel) navigate('/?slide=6');
+                                    else navigate('/squad-wars');
+                                }}
                                 className="m-2 mb-0 flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-red-600/30 to-amber-600/30 border border-red-500/50 hover:border-red-400 text-red-200 hover:text-white font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                             >
                                 <Swords className="w-4 h-4" /> Enter Squad Wars

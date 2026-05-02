@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
 
         // Per-member stats — fetch in parallel
         const weekId = getCurrentWeekId();
-        const [saves, raidContribs, squadWars] = await Promise.all([
-            // PlayerSave per-member (weekly + total kills live in save_data)
+        const [saves, raidContribs, squadWars, weeklyRuns] = await Promise.all([
+            // PlayerSave per-member (total kills live in save_data.totalKills)
             memberWallets.length
                 ? base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: { $in: memberWallets } })
                 : Promise.resolve([]),
@@ -47,6 +47,13 @@ Deno.serve(async (req) => {
                 $or: [{ squad_a_id: squadId }, { squad_b_id: squadId }],
                 is_resolved: true,
             }, '-created_date', 200),
+            // Weekly kills come from RunScore — sum per wallet for this week.
+            // PlayerSave has no weeklyKills field (squad weekly_kills is the
+            // aggregate). RunScore.wallet_address is the canonical wallet
+            // (user_id on RunScore is the Base44 user id, NOT the wallet).
+            memberWallets.length
+                ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', 1000)
+                : Promise.resolve([]),
         ]);
 
         // Index helpers
@@ -59,6 +66,12 @@ Deno.serve(async (req) => {
             const w = (c.user_id || '').toLowerCase();
             if (!w) continue;
             raidByWallet.set(w, (raidByWallet.get(w) || 0) + (c.damage || 0));
+        }
+        const weeklyKillsByWallet = new Map();
+        for (const r of weeklyRuns) {
+            const w = (r.wallet_address || '').toLowerCase();
+            if (!w) continue;
+            weeklyKillsByWallet.set(w, (weeklyKillsByWallet.get(w) || 0) + (r.kills || 0));
         }
         const warWinsByWallet = new Map();
         for (const w of squadWars) {
@@ -83,7 +96,7 @@ Deno.serve(async (req) => {
                 player_name: m.player_name,
                 player_title: m.player_title || '',
                 role: m.role,
-                weekly_kills: Number(sd.weeklyKills || 0),
+                weekly_kills: weeklyKillsByWallet.get(wallet) || 0,
                 total_kills: Number(sd.totalKills || 0),
                 raid_damage_this_week: raidByWallet.get(wallet) || 0,
                 war_wins_claimed: warWinsByWallet.get(wallet) || 0,
