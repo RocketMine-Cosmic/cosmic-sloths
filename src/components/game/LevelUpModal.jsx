@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import MysteryCard from './MysteryCard';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -37,7 +38,7 @@ function getStatPreview(upgrade, player) {
     };
 }
 
-export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null, engineRef }) {
+export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null, engineRef, mysteryMode = false }) {
     // Each tier has 3 uses (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
     const banishTier = banishCount < 3 ? 1 : banishCount < 6 ? 2 : 3;
     const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
@@ -78,15 +79,27 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                     <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" /> {typeof cosmicTokens === 'number' ? cosmicTokens.toFixed(2) : (cosmicTokens || 0)}
                 </div>
                 <h2 className="text-xl md:text-3xl font-bold text-center text-cyan-400 mb-1 md:mb-2 font-mono">
-                    LEVEL UP!
+                    {mysteryMode ? 'VEILED LEVEL UP' : 'LEVEL UP!'}
                 </h2>
                 <p className="text-slate-400 mb-2 md:mb-8 text-center text-xs md:text-base">
-                    Choose an upgrade to enhance your build.
+                    {mysteryMode
+                        ? 'The Veil hides your choices. Pick blind — only rarity tints are visible.'
+                        : 'Choose an upgrade to enhance your build.'}
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 w-full mb-4 md:mb-8">
                     {choices.map((choice, i) => {
                         const isSelected = selectedIndex === i;
+                        if (mysteryMode) {
+                            return (
+                                <MysteryCard
+                                    key={i}
+                                    rarity={choice.rarity}
+                                    isSelected={isSelected}
+                                    onClick={() => setSelectedIndex(i)}
+                                />
+                            );
+                        }
                         const preview = getStatPreview(choice, engineRef?.current?.player);
                         return (
                             <motion.button

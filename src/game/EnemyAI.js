@@ -141,10 +141,12 @@ export function updateEnemies(engine, dt) {
                 const isEndless = engine.arena.duration === Infinity;
                 if (!isEndless) {
                     const baseGoldChance = 0.35;
+                    // Veil of the Unknown mutation rewards +15% gold from kills.
+                    const mysteryBonus = engine.bossModifiers?.mystery_levelups ? 1.15 : 1.0;
                     if (Math.random() < baseGoldChance + (engine.player.luck * 0.02)) {
                         const maxGoldValue = 35;
                         const goldValue = Math.min(maxGoldValue, 2 + Math.floor(engine.time / 90) * 1);
-                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 1.5) : 1;
+                        const goldMultiplier = (e.isElite ? (e.eliteGoldBonus || 1.5) : 1) * mysteryBonus;
                         const goldCount = e.isElite ? 1 : 1;
                         for (let gi = 0; gi < goldCount; gi++) {
                             engine.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });

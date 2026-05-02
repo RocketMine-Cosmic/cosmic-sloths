@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Skull, ArrowLeft, Trophy, Zap, Shield, Swords, FastForward, Heart, Anchor } from 'lucide-react';
+import { Skull, ArrowLeft, Trophy, Zap, Shield, Swords, FastForward, Heart, Anchor, HelpCircle } from 'lucide-react';
 import { SaveManager } from '../game/SaveManager';
 import { ENEMIES } from '../game/Constants';
 import { SoundManager } from '../game/SoundManager';
@@ -15,7 +15,8 @@ const BOSS_MODIFIERS = [
     { id: 'frenzy', name: 'Frenzy', desc: 'Bosses move 50% faster', rewardDesc: '+1 Relic Fragment on Boss Kill', icon: FastForward, color: 'text-yellow-500' },
     { id: 'bullet_hell', name: 'Bullet Hell', desc: 'Bosses fire twice as many projectiles', rewardDesc: '+30% Total Score', icon: Zap, color: 'text-cyan-400' },
     { id: 'regen', name: 'Cellular Regeneration', desc: 'Boss heals 1% Max HP every second', rewardDesc: '+800 Boss Gold Drop', icon: Heart, color: 'text-green-500' },
-    { id: 'unstoppable', name: 'Unstoppable Force', desc: 'Boss ignores slow and pushback', rewardDesc: '+1000 Boss Gold Drop', icon: Anchor, color: 'text-orange-500' }
+    { id: 'unstoppable', name: 'Unstoppable Force', desc: 'Boss ignores slow and pushback', rewardDesc: '+1000 Boss Gold Drop', icon: Anchor, color: 'text-orange-500' },
+    { id: 'mystery_levelups', name: 'Veil of the Unknown', desc: 'Level-up choices are hidden until selected', rewardDesc: '+15% Gold from all kills', icon: HelpCircle, color: 'text-fuchsia-400' }
 ];
 
 export default function LeviathanTrials({ isCarousel }) {
