@@ -162,6 +162,9 @@ export default function SquadWars({ isCarousel }) {
                             Weekly head-to-head. Outkill your rival squad.
                         </p>
                         {weekId && <div className="text-[10px] text-slate-500 font-mono mt-1">Week: {weekId}</div>}
+                        <div className="text-[10px] md:text-xs text-amber-300/80 mt-1 font-bold">
+                            ⚠ Endless Void kills do NOT count toward Squad Wars — play sectors to earn war kills.
+                        </div>
                         <button onClick={() => { SoundManager.playUIClick(); navigate('/war-archive'); }}
                             className="mt-2 inline-flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-600/40 px-2 py-1 rounded transition-colors">
                             <Crown className="w-3 h-3" /> View full War Archive →
