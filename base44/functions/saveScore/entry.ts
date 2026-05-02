@@ -77,8 +77,20 @@ function validateAndRecompute(scoreData) {
     if (level < 1 || level > MAX_LEVEL) {
         return { ok: false, reason: `level out of range: ${level}` };
     }
-    if (gold < 0 || gold > Math.max(100, kills * MAX_GOLD_PER_KILL)) {
+    // For endless: skip the per-kill gold sanity check — endless has its own
+    // hard ceiling (ENDLESS_GOLD_HARD_CEILING) that already prevents tampering,
+    // and boss drops can legitimately give large gold with few kills (early quit).
+    // (Bug 2026-05-02: Texxy lost gold on early-quit endless runs — boss gold
+    // exceeded kills*500 → entire run rejected → no save credited.)
+    const isEndlessRun = scoreData.arena_id === 'endless';
+    if (gold < 0) {
+        return { ok: false, reason: `gold negative: ${gold}` };
+    }
+    if (!isEndlessRun && gold > Math.max(100, kills * MAX_GOLD_PER_KILL)) {
         return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills` };
+    }
+    if (isEndlessRun && gold > ENDLESS_GOLD_HARD_CEILING * 2) {
+        return { ok: false, reason: `endless gold absurd: ${gold}` };
     }
 
     // Endless economy nerf: cap gold + kills credited from endless runs.
