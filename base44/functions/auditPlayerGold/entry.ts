@@ -57,14 +57,18 @@ Deno.serve(async (req) => {
             ? (typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data)
             : null;
 
-        // Sum gold from blocked sync attempts (likely the lost amount)
-        const goldBlocks = blocks.filter(b => b.field === 'gold');
+        // Sum gold from blocked sync attempts (likely the lost amount).
+        // EXCLUDE stale-client blocks — those are sync races where the cloud
+        // already has the player's gold (client was sending an outdated value),
+        // not actual losses. Only fresh-client blocks indicate the client tried
+        // to push gold the cloud doesn't know about, which IS a real loss signal.
+        const goldBlocks = blocks.filter(b => b.field === 'gold' && !b.client_was_stale);
         const maxBlockedGold = goldBlocks.reduce((max, b) => {
             const delta = (Number(b.client_value) || 0) - (Number(b.cloud_value) || 0);
             return delta > max ? delta : max;
         }, 0);
 
-        // Alert #economy-alerts when blocked syncs reveal a meaningful gold loss
+        // Alert #economy-alerts when fresh-client blocks reveal a meaningful gold loss
         if (maxBlockedGold >= 5000) {
             postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xf59e0b, {
                 title: '🪙 Gold audit flagged a loss',
