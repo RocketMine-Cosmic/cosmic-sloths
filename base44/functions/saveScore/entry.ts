@@ -39,8 +39,8 @@ const ENDLESS_GOLD_PER_SEC = 12;        // ~720/min — fair for skilled play, w
 const ENDLESS_KILLS_PER_SEC = 4;        // ~240/min sustained
 const ENDLESS_GOLD_FLOOR = 1500;        // minimum cap for very short runs
 const ENDLESS_KILLS_FLOOR = 600;
-const ENDLESS_GOLD_HARD_CEILING = 30000;
-const ENDLESS_KILLS_HARD_CEILING = 10000;
+const ENDLESS_GOLD_HARD_CEILING = 18000;
+const ENDLESS_KILLS_HARD_CEILING = 6000;
 
 // Arena progression — must mirror game/Constants.js ARENAS order EXACTLY.
 // Bug 2026-05-01 (Crybel): old order had stale ids ('voidring', 'singularity')
