@@ -126,7 +126,12 @@ function validateAndRecompute(scoreData) {
 
     const arenaMult = getArenaMultiplier(scoreData.arena_id);
     const isVictory = !!scoreData.is_victory;
-    const baseScore = kills * 10 + level * 100 + time * 5 + gold * 5 + (isVictory ? 5000 : 0);
+    // Score formula — reduced gold weight from ×5 to ×2 (balance pass 2026-05-02).
+    // Whales with stacked gold multipliers (Synthbeats + mastery + talents + augments + VIP)
+    // were earning 3-4× the gold of fresh players, which dominated leaderboard scores
+    // and made the gap between top and mid-tier players unreachable. Skill-based
+    // contributions (kills, time, level, victory) now matter more than character optimisation.
+    const baseScore = kills * 10 + level * 100 + time * 5 + gold * 2 + (isVictory ? 5000 : 0);
     const score = Math.floor(baseScore * arenaMult);
 
     return {

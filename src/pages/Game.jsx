@@ -438,7 +438,7 @@ export default function Game() {
                 const arenaIndex = ARENAS.findIndex(a => a.id === engine.arena?.id);
                 const isEndlessRun = engine.arena?.duration === Infinity;
                 const arenaMultiplier = isEndlessRun ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
-                const baseScore = engine.kills * 10 + engine.level * 100 + engine.time * 5 + engine.gold * 5;
+                const baseScore = engine.kills * 10 + engine.level * 100 + engine.time * 5 + engine.gold * 2;
                 const liveScore = Math.floor(baseScore * arenaMultiplier);
 
                 // Rolling 10s window so post-boss/late upgrades show up in the HUD immediately.
