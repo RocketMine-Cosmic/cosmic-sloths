@@ -245,62 +245,70 @@ export default function AdminDashboard() {
 
     const canViewFinance = isEmergencyKey || (callerPerms || []).includes('owner') || (callerPerms || []).includes('view_finance');
 
-    const TabContent = {
-        overview: <AdminOverview walletAddress={adminWallet} canViewFinance={canViewFinance} />,
-        health: <AdminHealthCheck walletAddress={adminWallet} />,
-        leaderboard: <AdminLeaderboard walletAddress={adminWallet} />,
-        players: (
-            <div className="space-y-4">
-                <AdminPlayers walletAddress={adminWallet} />
-                <AdminRunScoreLookup />
-            </div>
-        ),
-        grant: <AdminGrantPanel walletAddress={adminWallet} />,
-        squads: <AdminSquads walletAddress={adminWallet} />,
-        raid: <AdminRaid walletAddress={adminWallet} />,
-        economy: <AdminEconomy walletAddress={adminWallet} />,
-        suspicious: <AdminSuspiciousRuns walletAddress={adminWallet} />,
-        chat: <AdminSquadChatModeration walletAddress={adminWallet} />,
-        rewards: <AdminRewards walletAddress={adminWallet} />,
-        champions: <AdminSquadChampions walletAddress={adminWallet} />,
-        skus: <AdminSkus walletAddress={adminWallet} />,
-        content: <AdminContent />,
-        duplicates: (
-            <div className="space-y-4">
-                <AdminDeletedScores />
-                <AdminRestoreScore walletAddress={adminWallet} />
-                <AdminDuplicateScores walletAddress={adminWallet} />
-                <AdminBulkScoreDelete walletAddress={adminWallet} />
-            </div>
-        ),
-        cleanup: (
-            <div className="space-y-4">
-                <AdminBackfillNames />
-                <AdminOrphanedData walletAddress={adminWallet} />
-            </div>
-        ),
-        changelog: <AdminChangesLogViewer />,
-        managers: (
-            <div className="space-y-4">
-                <AdminStaffPayoutConfig isOwner={isEmergencyKey || (callerPerms || []).includes('owner')} />
-                <AdminStaffPayouts canViewFinance={canViewFinance} />
-                <AdminManagers walletAddress={adminWallet} />
-            </div>
-        ),
-        discord: (
-            <div className="space-y-6">
-                <AdminDiscordChannelsGuide />
-                <AdminDiscordGuide />
-            </div>
-        ),
-        backups: <AdminDataBackup walletAddress={adminWallet} />,
-        blacklist: <AdminBlacklist />,
-        wipe: <AdminDataWipe walletAddress={adminWallet} />,
-        backfill: <AdminTokenSpendLogBackfill />,
-        refund: <AdminRefundOmenx walletAddress={adminWallet} />,
-        refund_one: <AdminRefundSingle />,
-        goldaudit: <AdminGoldAudit />,
-        reset: <AdminMaintenanceReset walletAddress={adminWallet} />,
+    // CRITICAL: render ONLY the active tab. Previously this was an object literal,
+    // which evaluated EVERY tab's JSX on every render → every admin sub-component
+    // mounted simultaneously → all of them fired their `getAdminData` queries
+    // in parallel on dashboard load → 429 rate limit. Now only the selected tab
+    // mounts, so its queries run alone.
+    const renderActiveTab = () => {
+        switch (activeTab) {
+            case 'overview':    return <AdminOverview walletAddress={adminWallet} canViewFinance={canViewFinance} />;
+            case 'health':      return <AdminHealthCheck walletAddress={adminWallet} />;
+            case 'leaderboard': return <AdminLeaderboard walletAddress={adminWallet} />;
+            case 'players':     return (
+                <div className="space-y-4">
+                    <AdminPlayers walletAddress={adminWallet} />
+                    <AdminRunScoreLookup />
+                </div>
+            );
+            case 'grant':       return <AdminGrantPanel walletAddress={adminWallet} />;
+            case 'squads':      return <AdminSquads walletAddress={adminWallet} />;
+            case 'raid':        return <AdminRaid walletAddress={adminWallet} />;
+            case 'economy':     return <AdminEconomy walletAddress={adminWallet} />;
+            case 'suspicious':  return <AdminSuspiciousRuns walletAddress={adminWallet} />;
+            case 'chat':        return <AdminSquadChatModeration walletAddress={adminWallet} />;
+            case 'rewards':     return <AdminRewards walletAddress={adminWallet} />;
+            case 'champions':   return <AdminSquadChampions walletAddress={adminWallet} />;
+            case 'skus':        return <AdminSkus walletAddress={adminWallet} />;
+            case 'content':     return <AdminContent />;
+            case 'duplicates':  return (
+                <div className="space-y-4">
+                    <AdminDeletedScores />
+                    <AdminRestoreScore walletAddress={adminWallet} />
+                    <AdminDuplicateScores walletAddress={adminWallet} />
+                    <AdminBulkScoreDelete walletAddress={adminWallet} />
+                </div>
+            );
+            case 'cleanup':     return (
+                <div className="space-y-4">
+                    <AdminBackfillNames />
+                    <AdminOrphanedData walletAddress={adminWallet} />
+                </div>
+            );
+            case 'changelog':   return <AdminChangesLogViewer />;
+            case 'managers':    return (
+                <div className="space-y-4">
+                    <AdminStaffPayoutConfig isOwner={isEmergencyKey || (callerPerms || []).includes('owner')} />
+                    <AdminStaffPayouts canViewFinance={canViewFinance} />
+                    <AdminManagers walletAddress={adminWallet} />
+                </div>
+            );
+            case 'discord':     return (
+                <div className="space-y-6">
+                    <AdminDiscordChannelsGuide />
+                    <AdminDiscordGuide />
+                </div>
+            );
+            case 'backups':     return <AdminDataBackup walletAddress={adminWallet} />;
+            case 'blacklist':   return <AdminBlacklist />;
+            case 'wipe':        return <AdminDataWipe walletAddress={adminWallet} />;
+            case 'backfill':    return <AdminTokenSpendLogBackfill />;
+            case 'refund':      return <AdminRefundOmenx walletAddress={adminWallet} />;
+            case 'refund_one':  return <AdminRefundSingle />;
+            case 'goldaudit':   return <AdminGoldAudit />;
+            case 'reset':       return <AdminMaintenanceReset walletAddress={adminWallet} />;
+            default:            return null;
+        }
     };
 
     const callerLabel = isEmergencyKey
@@ -352,7 +360,7 @@ export default function AdminDashboard() {
                         Loading permissions...
                     </div>
                 ) : (
-                    TabContent[activeTab]
+                    renderActiveTab()
                 )}
             </div>
         </div>
