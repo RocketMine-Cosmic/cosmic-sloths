@@ -32,7 +32,9 @@ export default function VictoryModal({ stats }) {
                 <div className="p-4 sm:p-6 md:p-8 pt-2 md:pt-4 shrink-0">
                     {stats._saveFailed && (
                         <div className="mb-3 text-center text-[11px] md:text-xs text-amber-300 bg-amber-950/40 border border-amber-500/40 rounded-lg px-3 py-2">
-                            ⚠ Couldn't sync this run to the server — progress may not be saved. Check your connection.
+                            {stats._authExpired
+                                ? '⚠ Your sign-in expired during this long run — the run is queued and will save automatically next time you launch the game.'
+                                : '⚠ Couldn\'t sync this run to the server — it\'s queued and will retry on next launch. Check your connection.'}
                         </div>
                     )}
                     {/* Wait until the server has saved this run before letting the player start a new one — otherwise the in-flight save could clobber the new run's progress. */}

@@ -148,14 +148,25 @@ export default function Game() {
             // Retry with short backoff so transient network/server hiccups
             // don't lose the player's run. 5 attempts: 0.5s, 1s, 2s, 3s, 4s = ~10.5s total.
             // If all fail, the run is queued to localStorage and retried in the background.
+            // EXCEPTION: 401 (auth expired — long endless runs outlive the session) bails
+            // out immediately and queues the run, since retrying for 10s won't fix auth.
             const delays = [500, 1000, 2000, 3000, 4000];
             let lastErr = null;
+            let authExpired = false;
             for (let attempt = 0; attempt < delays.length; attempt++) {
                 try {
                     const res = await base44.functions.invoke('saveScore', payload);
                     return res?.data || null;
                 } catch (e) {
                     lastErr = e;
+                    const status = e?.response?.status || e?.status;
+                    const msg = (e?.message || '').toLowerCase();
+                    // Detect expired Base44 session — happens on long runs (>1hr endless).
+                    if (status === 401 || msg.includes('authentication required') || msg.includes('unauthorized')) {
+                        authExpired = true;
+                        console.warn('[saveScore] Session expired during run — queueing for next launch.');
+                        break; // skip remaining retries
+                    }
                     console.warn(`[saveScore] attempt ${attempt + 1}/${delays.length} failed:`, e?.message || e);
                     if (attempt < delays.length - 1) {
                         await new Promise(r => setTimeout(r, delays[attempt]));
@@ -163,18 +174,20 @@ export default function Game() {
                 }
             }
 
-            // All retries failed — queue the run locally so we can retry on next launch.
+            // All retries failed (or auth expired) — queue the run locally so we can retry on next launch.
             try {
                 const queue = JSON.parse(localStorage.getItem('pending_score_saves') || '[]');
-                queue.push({ payload, queuedAt: Date.now() });
+                queue.push({ payload, queuedAt: Date.now(), reason: authExpired ? 'auth_expired' : 'network' });
                 // Keep queue bounded — 20 most recent runs is plenty.
                 while (queue.length > 20) queue.shift();
                 localStorage.setItem('pending_score_saves', JSON.stringify(queue));
-                console.warn('[saveScore] All retries exhausted — run queued for later retry.');
+                console.warn('[saveScore] Run queued for later retry.', authExpired ? '(auth expired)' : '');
             } catch (qErr) {
                 console.error('[saveScore] Failed to queue run:', qErr);
             }
-            console.error('[saveScore] FAILED after retries:', lastErr?.message || lastErr);
+            console.error('[saveScore] FAILED:', lastErr?.message || lastErr);
+            // Tag error so the UI can show a more specific message.
+            if (lastErr) lastErr._authExpired = authExpired;
             throw lastErr;
         };
         // Expose to handleQuit so it can await the save before unmounting.
@@ -332,7 +345,7 @@ export default function Game() {
                     console.error('[Game] saveScore failed:', err);
                     // Unblock the modal so the player isn't stuck on the spinner forever.
                     // Show their client-side estimate so the buttons render and they can continue.
-                    setGameOverStats(s => ({ ...s, score: s.score || 1, _saveFailed: true }));
+                    setGameOverStats(s => ({ ...s, score: s.score || 1, _saveFailed: true, _authExpired: !!err?._authExpired }));
                 });
                 
                 if (stats.worldBossDamage > 0) {
@@ -384,7 +397,7 @@ export default function Game() {
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
                     // Unblock the modal so the player isn't stuck on the spinner forever.
-                    setVictoryStats(s => ({ ...s, score: s.score || 1, _saveFailed: true }));
+                    setVictoryStats(s => ({ ...s, score: s.score || 1, _saveFailed: true, _authExpired: !!err?._authExpired }));
                 });
                 
                 if (stats.worldBossDamage > 0) {
