@@ -518,9 +518,19 @@ export default function Hub({ isCarousel }) {
                                                                 ✓ UNLOCKED
                                                             </span>
                                                             {(() => {
+                                                                // Penalty only applies if the player has actually unlocked
+                                                                // a LATER arena than the one they're viewing. Was previously
+                                                                // count-based, which mis-reported -10% on freshly-unlocked
+                                                                // maps when the per-character unlock list wasn't strictly
+                                                                // sequential (Hugo bug 2026-05-02 — Crybel/Codebreaker).
+                                                                const unlockedIds = save?.unlockedArenasByCharacter?.[selectedChar] || ['station'];
                                                                 const currentIndex = ARENAS.findIndex(a => a.id === selectedArena);
-                                                                const unlockedCount = (save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).length;
-                                                                const diff = Math.max(0, unlockedCount - 1 - currentIndex);
+                                                                let highestUnlockedIndex = -1;
+                                                                for (const id of unlockedIds) {
+                                                                    const i = ARENAS.findIndex(a => a.id === id);
+                                                                    if (i > highestUnlockedIndex) highestUnlockedIndex = i;
+                                                                }
+                                                                const diff = Math.max(0, highestUnlockedIndex - currentIndex);
                                                                 const penalty = diff * 10;
                                                                 if (penalty > 0) {
                                                                     return <span className="text-[9px] text-yellow-500 font-bold tracking-wider uppercase">-{Math.min(50, penalty)}% Gold Penalty</span>;
