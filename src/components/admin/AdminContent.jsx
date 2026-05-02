@@ -56,7 +56,7 @@ Three leaderboards. Real crypto rewards.
 ### ♾️ **Endless Void**
 - Infinitely scaling difficulty with boss fights every 3 minutes
 - Permanent legacy leaderboard — no resets
-- **Excluded from OMENX payouts.** A single endless run is capped at 5,000 Gold and 2,000 kills credited to your account
+- **Excluded from OMENX payouts.** Endless runs credit Gold/kills scaled by playtime (~720 Gold/min, ~240 kills/min) so longer runs earn proportionally more, with a hard ceiling of 18,000 Gold and 6,000 kills per run
 
 ### 📊 **How Scores Work**
 Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier. Only your **highest score per period** counts. Sector multiplier ×1.0 → ×1.8 (Singularity), ×2.0 in Endless Void.

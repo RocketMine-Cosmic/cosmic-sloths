@@ -93,7 +93,7 @@ const TABS_CONTENT = {
                     Survive the full time limit of each sector to <strong className="text-green-400">win</strong>. As time progresses, enemies get stronger and more numerous. An optional <strong className="text-purple-400">Endless Void</strong> mode scales infinitely with boss fights every 3 minutes.
                 </p>
                 <div className="mt-3 bg-slate-900/40 rounded-lg p-3 border border-purple-700/50 text-xs text-slate-400">
-                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold, and a single endless run can credit at most <strong className="text-white">5,000 Gold</strong> and <strong className="text-white">2,000 kills</strong> toward your account totals. Endless runs are also <strong className="text-white">excluded from OMENX leaderboard payouts</strong>. Play <strong className="text-white">Sectors</strong> to farm Gold.
+                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold, and credited Gold/kills <strong className="text-white">scale with how long you survive</strong> (~720 Gold/min, ~240 kills/min) up to a hard cap of <strong className="text-white">18,000 Gold</strong> and <strong className="text-white">6,000 kills</strong> per run. Endless runs are also <strong className="text-white">excluded from OMENX leaderboard payouts</strong>. Play <strong className="text-white">Sectors</strong> to farm Gold.
                 </div>
             </SectionCard>
 
@@ -311,7 +311,7 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Gold is capped at 5,000/run and credited kills at 2,000/run.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Credited Gold/kills scale with run time (~720 Gold/min, ~240 kills/min) up to 18,000 Gold and 6,000 kills per run.</p>
                     </div>
                 </div>
             </SectionCard>
