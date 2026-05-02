@@ -661,9 +661,9 @@ export default function Game() {
             _suppressModal: true,
         };
         try {
-            // Quit is a "clean" exit — clear any safety snapshot so we don't
-            // double-credit this run on next launch.
-            try { const m = await import('@/lib/runSnapshot'); m.clearRunSnapshot(); } catch {}
+            // Quit is a "clean" exit — clear any safety snapshot SYNCHRONOUSLY
+            // BEFORE saveScore so a hot-reload/refresh mid-save can't re-queue it.
+            try { localStorage.removeItem('pending_run_snapshot'); } catch {}
             // Mirrors onGameOver's saveScore call but awaited so it survives unmount.
             await saveScoreRef.current?.(stats, false);
             // Also await boss damage submission so raid contributions aren't dropped

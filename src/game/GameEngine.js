@@ -1033,15 +1033,17 @@ export class GameEngine {
         this.isGameOver = true;
         if (this.save) { this.save.enemyKills = this.enemyKills; SaveManager.save(this.save); }
         SFXManager.playGameOver();
-        // Clean game-over — clear any safety snapshot so we don't double-credit
-        // this run on next launch.
-        try { import('@/lib/runSnapshot').then(m => m.clearRunSnapshot()); } catch {}
+        // SYNCHRONOUSLY clear the safety snapshot BEFORE saveScore is invoked.
+        // (Was using async dynamic import — the import could land after a hot-reload
+        // / refresh, leaving the snapshot intact, which flushPendingScores then
+        // re-queued as a "lost" run, double-crediting on next launch.)
+        try { localStorage.removeItem('pending_run_snapshot'); } catch {}
         this.callbacks.onGameOver(this._runStats());
     }
     victory() {
         this.isVictory = true;
         SFXManager.playVictory();
-        try { import('@/lib/runSnapshot').then(m => m.clearRunSnapshot()); } catch {}
+        try { localStorage.removeItem('pending_run_snapshot'); } catch {}
         this.callbacks.onVictory(this._runStats({ arenaId: this.arena.id }));
     }
 
