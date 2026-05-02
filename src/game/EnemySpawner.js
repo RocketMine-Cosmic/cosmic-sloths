@@ -89,6 +89,12 @@ export function spawnEnemies(engine, dt) {
 
     if (engine.isBossActive || (engine.postBossGraceUntil && engine.time < engine.postBossGraceUntil)) return;
 
+    // After the sector boss has been killed in a fixed-duration arena, stop spawning entirely.
+    // Otherwise the gap between grace ending and the victory timer triggering becomes a
+    // late-game elite farm window (Hugo bug 2026-05-02 — Mystic Cosmos elites kept pouring
+    // in after boss death because progress≈1 → 5% elite chance per tick).
+    if (engine.bossSpawned && !engine.isBossActive && engine.arena.duration !== Infinity) return;
+
     const progress = engine.arena.duration === Infinity ? engine.time / 300 : Math.min(1, engine.time / engine.arena.duration);
     const effectiveProgress = Math.min(1, progress);
     const dynamicRate = engine.envModifiers.enemySpawnRate * (engine.dynamicDifficulty?.spawnRateMult || 1.0);
