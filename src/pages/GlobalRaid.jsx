@@ -161,10 +161,16 @@ export default function GlobalRaid({ isCarousel }) {
             if (res.data.status === 'success') {
                 const { type, id } = res.data.reward;
                 const currentSave = SaveManager.load();
-                
+
                 if (type === 'gold') {
-                    const amount = parseInt(id, 10) || 10000;
-                    currentSave.gold = (currentSave.gold || 0) + amount;
+                    const amount = parseInt(id, 10) || 0;
+                    // Trust server's authoritative gold value (server already credited it
+                    // to PlayerSave); falling back to local-add only if not provided.
+                    if (typeof res.data.saveData?.gold === 'number') {
+                        currentSave.gold = res.data.saveData.gold;
+                    } else {
+                        currentSave.gold = (currentSave.gold || 0) + amount;
+                    }
                     setSave(currentSave);
                     toast({ title: `Level ${level} Reward Claimed!`, description: `Received ${amount.toLocaleString()} Gold!` });
                 }

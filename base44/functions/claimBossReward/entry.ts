@@ -1,6 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
+// Server-authoritative claim — credits gold directly to PlayerSave.gold so the
+// reward survives sync (otherwise syncSave blocks the local "gold bump" as suspicious).
 
 function getCurrentWeekId() {
     const now = new Date();
@@ -26,6 +28,16 @@ Deno.serve(async (req) => {
 
         const week_id = getCurrentWeekId();
 
+        // Validate the boss is actually past the level the player is claiming —
+        // can only claim levels strictly LESS than the boss's current level
+        // (matches the client's "isReached = lvl < boss.level" check).
+        const bosses = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
+        if (!bosses || bosses.length === 0) return Response.json({ error: 'No raid running this week.' }, { status: 404 });
+        const bossLevel = bosses[0].level || 1;
+        if (levelNum >= bossLevel) {
+            return Response.json({ error: 'This level hasn\'t been defeated yet.' }, { status: 400 });
+        }
+
         // Find ALL of this player's contribution rows for the week.
         // submitBossDamage creates a new row per run, so a player can have many.
         // We must check claimed_milestones across ALL of them to prevent re-claiming.
@@ -45,16 +57,39 @@ Deno.serve(async (req) => {
             return Response.json({ status: 'error', error: 'You\'ve already claimed this reward.' }, { status: 409 });
         }
 
-        // Mark claimed on the first row (sufficient for the check above to catch future attempts)
+        // Load PlayerSave so we can credit the gold server-side.
+        const walletLower = walletAddress.toLowerCase();
+        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+        if (records.length === 0) {
+            return Response.json({ error: 'We couldn\'t find your save. Please play a run first to create one.' }, { status: 404 });
+        }
+        const record = records[0];
+        const saveData = typeof record.save_data === 'string' ? JSON.parse(record.save_data) : record.save_data;
+
+        const goldReward = levelNum * 250;
+
+        // Mark claimed on the first row (sufficient for the duplicate check above)
+        // and credit gold atomically. Order: mark claimed first; if gold update fails
+        // we'd rather lose the gold than allow a double-claim.
         const target = contribs[0];
         const targetClaimed = Array.isArray(target.claimed_milestones) ? target.claimed_milestones : [];
         await base44.asServiceRole.entities.GlobalBossContribution.update(target.id, {
             claimed_milestones: [...targetClaimed, levelNum],
         });
 
-        const goldReward = levelNum * 250;
-        console.log('[claimBossReward] Claimed level', levelNum, 'for wallet:', walletAddress);
-        return Response.json({ status: 'success', reward: { type: 'gold', id: goldReward.toString() } });
+        saveData.gold = (saveData.gold || 0) + goldReward;
+        saveData.updated_at = Date.now();
+        await base44.asServiceRole.entities.PlayerSave.update(record.id, {
+            save_data: saveData,
+            updated_at: Date.now(),
+        });
+
+        console.log('[claimBossReward] Claimed level', levelNum, '+', goldReward, 'gold for', walletAddress);
+        return Response.json({
+            status: 'success',
+            reward: { type: 'gold', id: goldReward.toString() },
+            saveData: { gold: saveData.gold },
+        });
     } catch (error) {
         console.error('[claimBossReward]', error.message);
         return Response.json({ error: 'Couldn\'t claim your reward right now. Please try again.' }, { status: 500 });
