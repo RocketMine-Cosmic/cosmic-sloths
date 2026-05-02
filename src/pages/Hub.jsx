@@ -513,31 +513,9 @@ export default function Hub({ isCarousel }) {
                                                             🔒 LOCKED
                                                         </span>
                                                     ) : (
-                                                        <div className="flex flex-col items-center gap-1">
-                                                            <span className="inline-flex items-center gap-1 text-cyan-300 font-black tracking-widest text-[9px] md:text-[10px] bg-cyan-950/60 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/50 backdrop-blur-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]">
-                                                                ✓ UNLOCKED
-                                                            </span>
-                                                            {(() => {
-                                                                // Penalty only applies if the player has actually unlocked
-                                                                // a LATER arena than the one they're viewing. Was previously
-                                                                // count-based, which mis-reported -10% on freshly-unlocked
-                                                                // maps when the per-character unlock list wasn't strictly
-                                                                // sequential (Hugo bug 2026-05-02 — Crybel/Codebreaker).
-                                                                const unlockedIds = save?.unlockedArenasByCharacter?.[selectedChar] || ['station'];
-                                                                const currentIndex = ARENAS.findIndex(a => a.id === selectedArena);
-                                                                let highestUnlockedIndex = -1;
-                                                                for (const id of unlockedIds) {
-                                                                    const i = ARENAS.findIndex(a => a.id === id);
-                                                                    if (i > highestUnlockedIndex) highestUnlockedIndex = i;
-                                                                }
-                                                                const diff = Math.max(0, highestUnlockedIndex - currentIndex);
-                                                                const penalty = diff * 10;
-                                                                if (penalty > 0) {
-                                                                    return <span className="text-[9px] text-yellow-500 font-bold tracking-wider uppercase">-{Math.min(50, penalty)}% Gold Penalty</span>;
-                                                                }
-                                                                return null;
-                                                            })()}
-                                                        </div>
+                                                        <span className="inline-flex items-center gap-1 text-cyan-300 font-black tracking-widest text-[9px] md:text-[10px] bg-cyan-950/60 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/50 backdrop-blur-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                                                            ✓ UNLOCKED
+                                                        </span>
                                                     )}
                                                 </div>
 
