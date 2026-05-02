@@ -104,11 +104,14 @@ async function fetchVip() {
         try {
             const res = await base44.functions.invoke('getVipLevel', {});
             const vipLevel = res.data?.vipLevel ?? 0;
-            lastVipFetchAt = Date.now();
-            saveJSON('omenx_vip_cache', { vipLevel, timestamp: lastVipFetchAt });
-            // Record which wallet this VIP value belongs to, so we can detect
-            // wallet changes and re-fetch only when the wallet itself swaps.
-            saveJSON('omenx_vip_cache_wallet', auth.walletAddress.toLowerCase());
+            // Don't burn the 24h cooldown on a zero result — usually means the
+            // wallet wasn't fully linked yet or the upstream API blipped.
+            // Auto-retry on next page load instead of locking users out.
+            if (vipLevel > 0) {
+                lastVipFetchAt = Date.now();
+                saveJSON('omenx_vip_cache', { vipLevel, timestamp: lastVipFetchAt });
+                saveJSON('omenx_vip_cache_wallet', auth.walletAddress.toLowerCase());
+            }
             applyData({ vipLevel });
         } catch (e) {
             console.error('[playerDataCache] vip fetch failed:', e?.message);
@@ -136,12 +139,15 @@ async function fetchNfts() {
                 return;
             }
             const nfts = res.data.nfts;
-            lastNftFetchAt = Date.now();
-            saveJSON('omenx_nft_cache', { nfts, timestamp: lastNftFetchAt });
-            saveJSON('omenx_nft_data', nfts);
-            // Track which wallet this NFT inventory belongs to, mirroring VIP,
-            // so we can detect wallet changes and force a re-fetch on swap.
-            saveJSON('omenx_nft_cache_wallet', auth.walletAddress.toLowerCase());
+            // Don't burn the 12h cooldown on an empty result — usually means
+            // the wallet wasn't fully linked yet or the upstream API blipped.
+            // Auto-retry on next page load instead of locking users out.
+            if (Array.isArray(nfts) && nfts.length > 0) {
+                lastNftFetchAt = Date.now();
+                saveJSON('omenx_nft_cache', { nfts, timestamp: lastNftFetchAt });
+                saveJSON('omenx_nft_data', nfts);
+                saveJSON('omenx_nft_cache_wallet', auth.walletAddress.toLowerCase());
+            }
             applyData({ nfts });
         } catch (e) {
             console.error('[playerDataCache] nft fetch failed:', e?.message);
