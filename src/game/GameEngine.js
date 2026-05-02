@@ -27,7 +27,7 @@ export class GameEngine {
         if (this.isNGPlus) {
             this.difficulty.enemyHpMult *= 3.0;
             this.difficulty.enemyDmgMult *= 2.0;
-            this.difficulty.goldMult *= 2.0;
+            this.difficulty.goldMult *= 1.5;
             this.difficulty.xpMult *= 1.5;
             this.difficulty.speedMult = (this.difficulty.speedMult || 1.0) * 1.2;
         }
