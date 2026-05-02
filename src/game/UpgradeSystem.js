@@ -105,6 +105,15 @@ export function generateChoices(engine) {
         if (u.type === 'weapon') {
             const existing = engine.player.weapons.find(w => w.id === u.weaponId);
             if (existing && existing.level >= 20) return false;
+            // Block base weapons whose evolved form the player already owns —
+            // otherwise re-rolling the base weapon would let it evolve a second time
+            // with the same passive (Hugo bug 2026-05-02).
+            const evo = EVOLUTIONS.find(e => e.baseWeapon === u.weaponId);
+            if (evo && engine.player.weapons.some(w => w.id === evo.evolvedWeapon)) return false;
+            // Same protection for synergies — block base components if their synergy
+            // result is already owned, so re-rolling can't fuse the synergy a 2nd time.
+            const syn = SYNERGIES.find(s => (s.weapon1 === u.weaponId || s.weapon2 === u.weaponId));
+            if (syn && engine.player.weapons.some(w => w.id === syn.result)) return false;
         }
         return true;
     });
