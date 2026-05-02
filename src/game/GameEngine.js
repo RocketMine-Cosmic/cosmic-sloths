@@ -556,7 +556,12 @@ export class GameEngine {
             this.callbacks.onTimeChange(Math.floor(this.time));
         }
 
-        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory && !this.isBossActive) {
+        // Victory fires when the arena timer expires AND no boss is active AND the
+        // post-boss grace window has elapsed. The grace window (set in EnemyAI on
+        // boss death) gives players ~5s to walk over and collect gold/relic drops
+        // before the modal interrupts them.
+        const inPostBossGrace = this.postBossGraceUntil && this.time < this.postBossGraceUntil;
+        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory && !this.isBossActive && !inPostBossGrace) {
             this.victory();
             return;
         }
