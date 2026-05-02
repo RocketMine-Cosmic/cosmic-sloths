@@ -18,8 +18,10 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
+import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
+import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 
 import { subscribePlayerData, ensureNftsFetched, refreshBalance } from '@/lib/playerDataCache';
 
@@ -166,6 +168,7 @@ export default function Hub({ isCarousel }) {
     const touchStartX = React.useRef(null);
     const [currentTime, setCurrentTime] = useState(Date.now());
     const [buffPurchasing, setBuffPurchasing] = useState(false);
+    const { pending: buffPending, confirm: confirmBuffPurchase } = useOmenXConfirmation('hub-xp-buff');
 
     useEffect(() => {
         const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
@@ -645,28 +648,30 @@ export default function Hub({ isCarousel }) {
                                     
                                     const timeLeft = hasXpBuff ? formatTimeLeft(sessionBuffs.xpExpiry - currentTime) : '';
                                     
-                                    const buyBuff = async () => {
+                                    const buyBuff = () => {
                                         if ((omenxBalance ?? 0) < 10) return;
                                         if (hasXpBuff || buffPurchasing) return; // prevent double-buy while one is in flight or already active
                                         SoundManager.playUIClick();
-                                        setBuffPurchasing(true);
-                                        try {
-                                            const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                                            const week_id = moment().format('YYYY-[W]ww');
-                                            const seasonNum = Math.floor(moment().week() / 4) + 1;
-                                            const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-                                            const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData?.walletAddress, week_id, season_id, amount: 10 });
-                                            if (!res.data?.success) { toast({ title: 'Purchase Failed', description: res.data?.error || 'Try again.' }); return; }
-                                            const newSave = { ...SaveManager.load() };
-                                            newSave.sessionBuffs = newSave.sessionBuffs || {};
-                                            newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
-                                            SaveManager.save(newSave);
-                                            setSave(newSave);
-                                            refreshBalance();
-                                            toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
-                                        } finally {
-                                            setBuffPurchasing(false);
-                                        }
+                                        confirmBuffPurchase(10, '+50% XP Buff (60 min)', async () => {
+                                            setBuffPurchasing(true);
+                                            try {
+                                                const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
+                                                const week_id = moment().format('YYYY-[W]ww');
+                                                const seasonNum = Math.floor(moment().week() / 4) + 1;
+                                                const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
+                                                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData?.walletAddress, week_id, season_id, amount: 10 });
+                                                if (!res.data?.success) { toast({ title: 'Purchase Failed', description: res.data?.error || 'Try again.' }); return; }
+                                                const newSave = { ...SaveManager.load() };
+                                                newSave.sessionBuffs = newSave.sessionBuffs || {};
+                                                newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
+                                                SaveManager.save(newSave);
+                                                setSave(newSave);
+                                                refreshBalance();
+                                                toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
+                                            } finally {
+                                                setBuffPurchasing(false);
+                                            }
+                                        });
                                     };
                                     
                                     return (
@@ -780,6 +785,15 @@ export default function Hub({ isCarousel }) {
 
                 </div>
             </div>
+            {buffPending && (
+                <OmenXConfirmation
+                    amount={buffPending.amount}
+                    itemName={buffPending.itemName}
+                    onConfirm={buffPending.onConfirm}
+                    onCancel={buffPending.onCancel}
+                    pageId="hub-xp-buff"
+                />
+            )}
         </div>
       </OmenXGate>
     );
