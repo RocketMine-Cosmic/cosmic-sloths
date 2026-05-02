@@ -816,8 +816,8 @@ TABS_CONTENT.combat = (
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Each sector has a unique environment, enemy pool, and difficulty. Unlock new sectors by completing runs with each character. Every sector has its own environmental effect:
                 </p>
-                <div className="bg-slate-900/40 rounded-lg p-3 border border-yellow-700/50 text-xs text-slate-400 mb-4">
-                    <strong className="text-yellow-400">Sector Level Penalty:</strong> Playing older sectors applies a <strong className="text-white">-10% Gold Penalty</strong> per sector below your maximum unlocked arena (capped at -50%). Keep pushing forward to maximize your wealth!
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-cyan-700/50 text-xs text-slate-400 mb-4">
+                    <strong className="text-cyan-400">Dynamic Difficulty:</strong> Enemies adapt to your performance — if you're crushing a sector, spawns get faster and tougher; if you're struggling, the game eases up. <strong className="text-white">No gold penalties</strong> for replaying earlier sectors.
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-sm">
                     <div className="bg-slate-900/60 p-3 md:p-4 rounded-xl border border-cyan-900/40 text-center flex flex-col justify-center">

@@ -186,14 +186,11 @@ export class GameEngine {
 
         const initialWeaponId = startingWeaponId || 'neoBlaster';
 
-        let sectorPenalty = 1.0;
-        if (arenaId !== 'world_boss_arena' && !isEndless) {
-            const currentIndex = ARENAS.findIndex(a => a.id === arenaId);
-            const unlockedCount = save.unlockedArenasByCharacter?.[characterId]?.length || 1;
-            const maxUnlockedIndex = unlockedCount - 1;
-            const diff = Math.max(0, maxUnlockedIndex - currentIndex);
-            sectorPenalty = Math.max(0.5, 1.0 - (diff * 0.10));
-        }
+        // Sector gold penalty removed — dynamic difficulty already adjusts spawn rate
+        // based on player performance, and sectors unlock linearly (you can't skip
+        // ahead) so punishing earlier sectors was player-hostile with no anti-farm value.
+        // Leaderboard score still uses an arena multiplier in saveScore — that's untouched.
+        const sectorPenalty = 1.0;
 
         // VIP bonus: 1% damage + 1% HP per VIP level (stored in save.vipLevel)
         const vipLevel = save.vipLevel || 0;
