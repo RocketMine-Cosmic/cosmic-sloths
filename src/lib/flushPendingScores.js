@@ -1,9 +1,11 @@
 // Background retry for runs that couldn't be saved at game-over time
-// (e.g. server hiccup, lost connection). Called on app launch and again
-// when a new game starts — quietly drains the queue without blocking UI.
+// (e.g. server hiccup, lost connection, expired session during a long endless run).
+// Called on app launch, when a new game starts, and whenever the wallet link is
+// (re)established — drains the queue without blocking UI.
 import { base44 } from '@/api/base44Client';
 
 let flushing = false;
+let listenersBound = false;
 
 export async function flushPendingScores() {
     if (flushing) return;
@@ -37,4 +39,20 @@ export async function flushPendingScores() {
     } finally {
         flushing = false;
     }
+}
+
+// Auto-flush when auth (re)establishes — covers the case where a long endless
+// run lost its session, queued, and the player re-signs in. Idempotent: won't
+// double-bind even if called from multiple modules.
+export function bindFlushListeners() {
+    if (listenersBound) return;
+    listenersBound = true;
+    if (typeof window === 'undefined') return;
+    const handler = () => { flushPendingScores().catch(() => {}); };
+    window.addEventListener('walletLinked', handler);
+    // Also retry whenever the tab regains focus — a queued run from a closed-tab
+    // crash gets a chance to flush as soon as the user returns.
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) handler();
+    });
 }

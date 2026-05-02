@@ -26,6 +26,8 @@ import CharacterAbilityMeter from '../components/game/CharacterAbilityMeter';
 import GameLoadingScreen from '../components/game/GameLoadingScreen';
 import HideHudButton from '../components/game/HideHudButton';
 import SynergyBanner from '../components/game/SynergyBanner';
+import SessionExpiredBanner from '../components/game/SessionExpiredBanner';
+import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -61,6 +63,13 @@ export default function Game() {
     };
     const banishCost = getBanishCost(banishCount);
     const nextBanishCost = getBanishCost(banishCount + 1);
+
+    // Endless runs only: ping base44.auth.me() every 10 min to keep the Base44
+    // session warm. Without this, runs over ~1hr expire and saveScore fails
+    // with 401 at run-end. Disabled outside endless to avoid pointless traffic
+    // on short fixed-duration arenas.
+    const isEndlessRun = !!location.state?.isEndless;
+    useSessionKeepAlive(isEndlessRun && !gameOverStats && !victoryStats);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -718,6 +727,7 @@ export default function Game() {
             {!hudHidden && <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
             {!hudHidden && <SynergyBanner />}
+            {!hudHidden && <SessionExpiredBanner />}
 
             {hudHidden && (
                 <HideHudButton onShow={() => setHudHidden(false)} />

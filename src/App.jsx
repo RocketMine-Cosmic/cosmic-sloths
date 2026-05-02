@@ -34,7 +34,7 @@ const Loadouts = React.lazy(() => import('./pages/Loadouts'));
 const SquadWars = React.lazy(() => import('./pages/SquadWars'));
 const WarArchive = React.lazy(() => import('./pages/WarArchive'));
 import { initOmenX } from '@/lib/omenx';
-import { flushPendingScores } from '@/lib/flushPendingScores';
+import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { SoundManager } from './game/SoundManager';
 import GamepadManager from './components/GamepadManager';
@@ -145,6 +145,8 @@ function App() {
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
     // Retry any runs that failed to save in a previous session.
     flushPendingScores().catch(err => console.error('[flushPendingScores]', err));
+    // Auto-retry the queue when auth (re)establishes or tab regains focus.
+    bindFlushListeners();
     // CurrencyProvider subscription will handle centralized fetch
 
     // Listen for auth data pushed from parent page (when embedded on Omen website)
