@@ -99,21 +99,16 @@ export function updateEnemies(engine, dt) {
 
                 let creditedGold = 0;
                 if (extraGold > 0) {
-                    // In endless: auto-credit gold instead of dropping a pickup that lingers
-                    // visually long after the boss is gone (Hugo perceived these as
-                    // "non-boss" gold drops because regular enemies spawn around the pile
-                    // while the magnet pulls it in). Normal arenas keep the dropped pickup
-                    // so players can collect it as part of the post-boss reward moment.
-                    if (isEndless) {
-                        const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
-                        const finalGold = Math.floor(extraGold * engine.player.goldMult * nftGoldMult);
-                        engine.gold += finalGold;
-                        engine.callbacks.onGoldChange(engine.gold);
-                        creditedGold = finalGold;
-                        engine.addDamageText(e.x, e.y - 20, `+${finalGold.toLocaleString()} GOLD`, '#ffd700');
-                    } else {
-                        engine.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: extraGold, color: '#ffd700' });
-                    }
+                    // Auto-credit boss gold in BOTH modes:
+                    // - Endless: pickup pile would linger and be confused with regular drops.
+                    // - Story arenas: match ends instantly on boss death, so any dropped
+                    //   pickup is unreachable (Hugo bug 2026-05-02).
+                    const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
+                    const finalGold = Math.floor(extraGold * engine.player.goldMult * nftGoldMult);
+                    engine.gold += finalGold;
+                    engine.callbacks.onGoldChange(engine.gold);
+                    creditedGold = finalGold;
+                    engine.addDamageText(e.x, e.y - 20, `+${finalGold.toLocaleString()} GOLD`, '#ffd700');
                 }
 
                 engine.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');

@@ -999,7 +999,6 @@ export class GameEngine {
             bossesKilled: this.bossesKilled || 0, elitesKilled: this.elitesKilled || 0,
             weaponDamage: this.weaponDamage || {},
             weaponKills: this.weaponKills || {},
-            killedBy: this._lastDamageSource || null,
             ...extra
         };
     }
@@ -1007,7 +1006,8 @@ export class GameEngine {
         this.isGameOver = true;
         if (this.save) { this.save.enemyKills = this.enemyKills; SaveManager.save(this.save); }
         SFXManager.playGameOver();
-        this.callbacks.onGameOver(this._runStats());
+        // killedBy only makes sense on death — not victory.
+        this.callbacks.onGameOver(this._runStats({ killedBy: this._lastDamageSource || null }));
     }
     victory() {
         this.isVictory = true;
