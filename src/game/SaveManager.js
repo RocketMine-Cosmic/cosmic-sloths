@@ -257,9 +257,34 @@ export const SaveManager = {
       const localSave = localStorage.getItem('cosmic_sloth_save');
       if (!localSave) return;
 
+      // Strip SERVER-OWNED fields from the payload before sending. syncSave
+      // ignores them anyway and logs a SyncBlockLog row for each one — which
+      // produced thousands of noise rows when the engine wrote `this.save` mid-run
+      // (engine snapshot was loaded pre-run, so its run-aggregates are stale
+      // relative to whatever saveScore just credited). Stripping client-side
+      // makes the wire payload smaller AND keeps SyncBlockLog clean for real
+      // anti-cheat signals.
+      const parsed = JSON.parse(localSave);
+      const SERVER_OWNED = [
+        'gold', 'totalKills', 'totalGoldEarned', 'maxTimeSurvived', 'maxLevelReached',
+        'relicFragments', 'cosmicTokens', 'seasonalPoints', 'starFragments',
+        'unlockedCharacters', 'unlockedRelics', 'unlockedCosmetics',
+        'unlockedKillEffects', 'unlockedSkins',
+        'foundCharacters', 'encounteredEnemies',
+        'characterKills', 'enemyKills', 'unlockedArenasByCharacter',
+        'newGamePlusUnlocked', 'pendingRunSnapshot',
+        'forgeWeaponAugments', 'forgeCharAugments', 'forgeConvertedToday',
+        'permanentUpgrades', 'weeklyUpgrades', 'seasonalUpgrades',
+        'permanentWeaponUpgrades', 'weeklyWeaponUpgrades', 'seasonalWeaponUpgrades',
+        'permanentTalents', 'weeklyTalents', 'seasonalTalents',
+        'relicLevels',
+      ];
+      const payload = { ...parsed };
+      for (const k of SERVER_OWNED) delete payload[k];
+
       const { base44 } = await import('@/api/base44Client');
       const res = await base44.functions.invoke('syncSave', {
-        saveData: JSON.parse(localSave),
+        saveData: payload,
       });
       if (res.data?.error) {
         console.warn('[SaveManager] Sync failed:', res.data.error);
