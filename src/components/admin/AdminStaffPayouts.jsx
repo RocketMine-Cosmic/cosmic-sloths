@@ -65,8 +65,14 @@ export default function AdminStaffPayouts({ canViewFinance }) {
 
     const currentPool = pools.find(p => p.period_type === 'weekly' && p.period_id === currentWeekId);
     const currentSpent = currentPool?.total_spent || 0;
-    const perStaffOmenx = Math.floor(currentSpent * STAFF_PCT_PER_WALLET);
-    const totalStaffWeekly = perStaffOmenx * admins.length;
+    // Per-wallet override (AdminWallet.payout_pct_override) takes priority over the global pct.
+    const effectivePctFor = (a) => {
+        const o = a.payout_pct_override;
+        if (o !== null && o !== undefined && isFinite(Number(o))) return Number(o);
+        return STAFF_PCT_PER_WALLET;
+    };
+    const perStaffByAdmin = (a) => Math.floor(currentSpent * effectivePctFor(a));
+    const totalStaffWeekly = admins.reduce((sum, a) => sum + perStaffByAdmin(a), 0);
 
     // Group past payouts by week for the recent history table
     const recentByWeek = {};
@@ -98,8 +104,8 @@ export default function AdminStaffPayouts({ canViewFinance }) {
                     <div className="text-sm font-mono font-bold text-cyan-400">{currentSpent.toFixed(1)} OMENX</div>
                 </div>
                 <div className="bg-slate-900/60 border border-amber-700/40 rounded p-2.5">
-                    <div className="text-[10px] text-slate-500 uppercase">Per Staff (Projected)</div>
-                    <div className="text-sm font-mono font-bold text-amber-400">{perStaffOmenx.toLocaleString()} OMENX</div>
+                    <div className="text-[10px] text-slate-500 uppercase">Per Staff (Default)</div>
+                    <div className="text-sm font-mono font-bold text-amber-400">{Math.floor(currentSpent * STAFF_PCT_PER_WALLET).toLocaleString()} OMENX</div>
                 </div>
                 <div className="bg-slate-900/60 border border-amber-700/40 rounded p-2.5">
                     <div className="text-[10px] text-slate-500 uppercase">Total Staff Cost</div>
@@ -115,16 +121,21 @@ export default function AdminStaffPayouts({ canViewFinance }) {
                 <div className="text-slate-500 text-sm py-4 text-center">No staff configured.</div>
             ) : (
                 <div className="space-y-1 mb-4">
-                    {admins.map(a => (
-                        <div key={a.id} className="flex items-center justify-between bg-slate-900/40 border border-slate-800 rounded px-3 py-1.5">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                                <span className="text-sm font-bold text-white truncate">{a.admin_name || 'Unnamed'}</span>
-                                {(a.permissions || []).includes('owner') && <span className="text-[9px] bg-yellow-900/50 text-yellow-300 px-1 py-0.5 rounded font-bold shrink-0">👑 OWNER</span>}
-                                <span className="text-[10px] text-slate-500 font-mono truncate">{a.wallet_address?.slice(0, 8)}…{a.wallet_address?.slice(-4)}</span>
+                    {admins.map(a => {
+                        const pct = effectivePctFor(a);
+                        const hasOverride = a.payout_pct_override !== null && a.payout_pct_override !== undefined && isFinite(Number(a.payout_pct_override));
+                        return (
+                            <div key={a.id} className="flex items-center justify-between bg-slate-900/40 border border-slate-800 rounded px-3 py-1.5">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <span className="text-sm font-bold text-white truncate">{a.admin_name || 'Unnamed'}</span>
+                                    {(a.permissions || []).includes('owner') && <span className="text-[9px] bg-yellow-900/50 text-yellow-300 px-1 py-0.5 rounded font-bold shrink-0">👑 OWNER</span>}
+                                    {hasOverride && <span className="text-[9px] bg-amber-900/40 border border-amber-700/40 text-amber-300 px-1 py-0.5 rounded font-bold shrink-0">custom {(pct * 100).toFixed(2)}%</span>}
+                                    <span className="text-[10px] text-slate-500 font-mono truncate">{a.wallet_address?.slice(0, 8)}…{a.wallet_address?.slice(-4)}</span>
+                                </div>
+                                <span className="text-sm font-mono font-bold text-amber-400 shrink-0">{perStaffByAdmin(a).toLocaleString()} OMENX</span>
                             </div>
-                            <span className="text-sm font-mono font-bold text-amber-400 shrink-0">{perStaffOmenx.toLocaleString()} OMENX</span>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

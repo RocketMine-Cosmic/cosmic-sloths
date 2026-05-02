@@ -71,9 +71,14 @@ Deno.serve(async (req) => {
             const totalSpent = pools[0]?.total_spent || 0;
 
             const cfg = await base44.asServiceRole.entities.AppConfig.filter({ key: 'staff_pct_per_wallet' });
-            const pct = Number(cfg[0]?.value?.pct ?? 0.02);
+            const globalPct = Number(cfg[0]?.value?.pct ?? 0.02);
 
-            return Response.json({ week_id, total_spent: totalSpent, pct });
+            // Per-wallet override (set via setStaffPayoutPct setOverride) wins over global.
+            const myOverride = adminWallets[0].payout_pct_override;
+            const hasOverride = myOverride !== null && myOverride !== undefined && isFinite(Number(myOverride));
+            const pct = hasOverride ? Number(myOverride) : globalPct;
+
+            return Response.json({ week_id, total_spent: totalSpent, pct, has_override: hasOverride, global_pct: globalPct });
         }
 
         return Response.json({ error: 'Invalid type' }, { status: 400 });

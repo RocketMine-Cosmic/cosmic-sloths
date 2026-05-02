@@ -41,6 +41,7 @@ import MyStaffIncomeCard from '../components/admin/MyStaffIncomeCard';
 import AdminSquadChampions from '../components/admin/AdminSquadChampions';
 import AdminTabNav from '../components/admin/AdminTabNav';
 import AdminStaffPayoutConfig from '../components/admin/AdminStaffPayoutConfig';
+import AdminStaffPayoutOverrides from '../components/admin/AdminStaffPayoutOverrides';
 
 const TAB_GROUPS = [
     {
@@ -289,6 +290,7 @@ export default function AdminDashboard() {
             case 'managers':    return (
                 <div className="space-y-4">
                     <AdminStaffPayoutConfig isOwner={isEmergencyKey || (callerPerms || []).includes('owner')} />
+                    <AdminStaffPayoutOverrides isOwner={isEmergencyKey || (callerPerms || []).includes('owner')} />
                     <AdminStaffPayouts canViewFinance={canViewFinance} />
                     <AdminManagers walletAddress={adminWallet} />
                 </div>

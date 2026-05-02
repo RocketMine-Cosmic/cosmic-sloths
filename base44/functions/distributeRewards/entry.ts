@@ -225,9 +225,19 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
      const scores = allScores.filter(s => s.arena_id !== 'endless');
      // Capped at top 100 — protects top players' share from long-tail dilution.
      const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 100);
+    // Per-wallet override on AdminWallet.payout_pct_override (number, 0–0.10)
+    // takes priority over the global STAFF_PCT_PER_WALLET — lets owners set
+    // different cuts per staff member (e.g. lead mods get more than chat mods).
+    const resolveStaffPct = (a) => {
+        const o = a.payout_pct_override;
+        if (o !== null && o !== undefined && isFinite(Number(o)) && Number(o) >= 0 && Number(o) <= 0.10) {
+            return Number(o);
+        }
+        return STAFF_PCT_PER_WALLET;
+    };
     const staffPayments = adminWallets
         .filter(a => a.wallet_address)
-        .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * STAFF_PCT_PER_WALLET), player_name: a.admin_name || a.wallet_address, isStaff: true }))
+        .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * resolveStaffPct(a)), player_name: a.admin_name || a.wallet_address, isStaff: true }))
         .filter(p => p.amount >= 1);
     const allPayments = [...payments, ...staffPayments];
     if (allPayments.length === 0) {

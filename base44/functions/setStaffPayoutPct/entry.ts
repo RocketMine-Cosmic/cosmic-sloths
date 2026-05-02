@@ -78,6 +78,46 @@ Deno.serve(async (req) => {
             return Response.json({ success: true, pct: newPct });
         }
 
+        // Per-wallet override — owner-only. Pass admin_id + override_pct (or null to clear).
+        if (action === 'setOverride') {
+            const { admin_id, override_pct } = body;
+            if (!admin_id) return Response.json({ error: 'admin_id required' }, { status: 400 });
+
+            const target = await base44.asServiceRole.entities.AdminWallet.get(admin_id);
+            if (!target) return Response.json({ error: 'Admin not found' }, { status: 404 });
+
+            // null/undefined/'' → clear the override (revert to global default)
+            let newOverride = null;
+            if (override_pct !== null && override_pct !== undefined && override_pct !== '') {
+                const n = Number(override_pct);
+                if (!isFinite(n) || n < 0 || n > MAX_PCT) {
+                    return Response.json({ error: `Invalid override_pct — must be between 0 and ${MAX_PCT}` }, { status: 400 });
+                }
+                newOverride = n;
+            }
+
+            const previousOverride = target.payout_pct_override ?? null;
+            await base44.asServiceRole.entities.AdminWallet.update(admin_id, { payout_pct_override: newOverride });
+
+            try {
+                const fmt = (v) => v === null ? 'global default' : `${(v * 100).toFixed(2)}%`;
+                await base44.asServiceRole.entities.AdminChangesLog.create({
+                    wallet_address: callerWallet,
+                    action_type: 'reward_adjustment',
+                    description: `Per-wallet payout override for ${target.admin_name || target.wallet_address}: ${fmt(previousOverride)} → ${fmt(newOverride)}`,
+                    details: {
+                        target_wallet: target.wallet_address,
+                        target_player_name: target.admin_name,
+                        previous_override: previousOverride,
+                        new_override: newOverride,
+                        notes: notes || '',
+                    },
+                });
+            } catch {}
+
+            return Response.json({ success: true, override_pct: newOverride });
+        }
+
         return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });
     } catch (err) {
         console.error('[setStaffPayoutPct]', err);
