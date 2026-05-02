@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
-import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle, Swords } from 'lucide-react';
+import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle, Swords, Globe } from 'lucide-react';
 import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -158,6 +158,11 @@ export default function Squads({ isCarousel }) {
                          }
 
                          setMySquad(updatedSquad);
+                         // Also load all squads for the Browse tab (so members can scout rivals).
+                         try {
+                             const squads = await base44.entities.Squad.list('-created_date', 50);
+                             setAllSquads(squads);
+                         } catch {}
                      } else {
                          // Load all squads
                          const squads = await base44.entities.Squad.list('-created_date', 50);
@@ -897,6 +902,12 @@ export default function Squads({ isCarousel }) {
                                 >
                                     <Users className="w-4 h-4" /> Members ({squadMembers.length}/{MAX_SQUAD_MEMBERS})
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab('browse')}
+                                    className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'browse' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
+                                >
+                                    <Globe className="w-4 h-4" /> <span className="hidden sm:inline">Browse</span>
+                                </button>
                                 {isLeader && (
                                     <button 
                                         onClick={() => setActiveTab('settings')}
@@ -1027,6 +1038,46 @@ export default function Squads({ isCarousel }) {
                                             )}
                                         </div>
                                     );})}
+                                </div>
+                            ) : activeTab === 'browse' ? (
+                                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1 px-1">
+                                        Scout other squads — tap to view their stats & roster
+                                    </div>
+                                    {allSquads.filter(s => s.id !== mySquad.id).length === 0 ? (
+                                        <div className="text-center text-slate-500 py-8 text-sm">No other squads yet.</div>
+                                    ) : (
+                                        allSquads.filter(s => s.id !== mySquad.id).map(squad => {
+                                            const lvl = getSquadLevel(squad.xp || 0);
+                                            return (
+                                                <button
+                                                    key={squad.id}
+                                                    type="button"
+                                                    onClick={() => { SoundManager.playUIClick(); setProfileSquadId(squad.id); }}
+                                                    className="w-full text-left bg-slate-800 hover:bg-slate-750 hover:border-cyan-500/60 p-3 rounded-lg flex justify-between items-center transition-colors cursor-pointer"
+                                                    style={{ border: `1px solid ${lvl.borderColor}50` }}
+                                                >
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-lg w-6 h-6 inline-flex items-center justify-center overflow-hidden rounded-md shrink-0">
+                                                                {(squad.icon || lvl.badge).startsWith('http') ? <img src={squad.icon} className="w-full h-full object-cover" alt="squad" /> : (squad.icon || lvl.badge)}
+                                                            </span>
+                                                            <span className="font-bold text-white truncate">{squad.name}</span>
+                                                            <span className="px-1.5 py-0.5 rounded text-[10px] border bg-slate-900 shrink-0"
+                                                                style={{ color: lvl.borderColor, borderColor: lvl.borderColor + '60' }}>[{squad.tag}]</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                                style={{ color: lvl.borderColor, background: lvl.glowColor }}>Lv.{lvl.level} {lvl.name}</span>
+                                                            <span className="text-[10px] text-slate-500"><Users className="w-3 h-3 inline mr-1" />{squad.member_count || 1}/{MAX_SQUAD_MEMBERS}</span>
+                                                            {(squad.war_wins || 0) > 0 && <span className="text-[10px] text-amber-400 font-bold">🏆 {squad.war_wins}W</span>}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest shrink-0 ml-2">View →</span>
+                                                </button>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             ) : (
                                 <div className="flex-1 overflow-y-auto p-4">
