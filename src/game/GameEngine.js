@@ -900,9 +900,11 @@ export class GameEngine {
         }
 
         const executeThreshold = this.masteryAbilityBoost?.executeThreshold ?? 0.2;
-        // Execute exempts bosses + elites — elites have inflated HP in endless and
-        // were causing NeonVortex to snowball uncontrollably as runs progressed.
-        if (this.characterId === 'neonvortex' && !enemy.isBoss && !enemy.isElite && enemy.hp > 0 && enemy.hp <= enemy.maxHp * executeThreshold) {
+        // Execute exempts bosses, elites, and tier-7+ enemies — high-tier enemies have
+        // inflated HP pools that NeonVortex was vaporising at 20% HP, causing runaway
+        // snowballing in late sectors and endless. (Balance pass 2026-05-02 — leaderboard
+        // showed NeonVortex dominating top 30 scores.)
+        if (this.characterId === 'neonvortex' && !enemy.isBoss && !enemy.isElite && (enemy.tier || 0) < 7 && enemy.hp > 0 && enemy.hp <= enemy.maxHp * executeThreshold) {
             enemy.hp = 0;
             this.addDamageText(enemy.x, enemy.y - 20, "EXECUTED", '#7A00FF');
             for(let i=0; i<3; i++) {
