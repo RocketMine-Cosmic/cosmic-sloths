@@ -295,12 +295,25 @@ export default function Game() {
                 saveScore(stats, false).then((res) => {
                     if (res?.success) {
                         // Apply server-truthful save (includes gold/kills/bounty progress + relicFragments).
-                        // Preserve client-credited cosmicTokens — server doesn't track in-run drops for that.
+                        // Preserve client-owned fields that saveScore doesn't touch — otherwise the
+                        // server response would wipe any UI prefs / cosmetics the player edited
+                        // between their last sync and this run (e.g. jukebox toggles, SFX categories,
+                        // selected character/arena, equipped cosmetics).
                         if (res.saveData) {
                             const localSave = SaveManager.load();
                             const merged = {
                                 ...res.saveData,
                                 cosmicTokens: Math.max(Number(res.saveData.cosmicTokens || 0), Number(localSave?.cosmicTokens || 0)),
+                                // Client-owned UI prefs — never overwrite with cloud's older copy.
+                                jukeboxPrefs: localSave?.jukeboxPrefs ?? res.saveData.jukeboxPrefs,
+                                sfxCategories: localSave?.sfxCategories ?? res.saveData.sfxCategories,
+                                cosmetics: localSave?.cosmetics ?? res.saveData.cosmetics,
+                                lastSelectedChar: localSave?.lastSelectedChar ?? res.saveData.lastSelectedChar,
+                                lastSelectedArena: localSave?.lastSelectedArena ?? res.saveData.lastSelectedArena,
+                                lastSelectedDifficulty: localSave?.lastSelectedDifficulty ?? res.saveData.lastSelectedDifficulty,
+                                lastSelectedWeapon: localSave?.lastSelectedWeapon ?? res.saveData.lastSelectedWeapon,
+                                equippedRelics: localSave?.equippedRelics ?? res.saveData.equippedRelics,
+                                poolBias: localSave?.poolBias ?? res.saveData.poolBias,
                             };
                             SaveManager.save(merged);
                         }
@@ -339,12 +352,22 @@ export default function Game() {
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
                 saveScore(stats, true).then((res) => {
                     if (res?.success) {
-                        // Server now credits relicFragments — preserve only cosmicTokens locally.
+                        // Server now credits relicFragments — preserve only cosmicTokens + client-owned UI prefs.
+                        // (Same protection as the game-over path — see comment there.)
                         if (res.saveData) {
                             const localSave = SaveManager.load();
                             const merged = {
                                 ...res.saveData,
                                 cosmicTokens: Math.max(Number(res.saveData.cosmicTokens || 0), Number(localSave?.cosmicTokens || 0)),
+                                jukeboxPrefs: localSave?.jukeboxPrefs ?? res.saveData.jukeboxPrefs,
+                                sfxCategories: localSave?.sfxCategories ?? res.saveData.sfxCategories,
+                                cosmetics: localSave?.cosmetics ?? res.saveData.cosmetics,
+                                lastSelectedChar: localSave?.lastSelectedChar ?? res.saveData.lastSelectedChar,
+                                lastSelectedArena: localSave?.lastSelectedArena ?? res.saveData.lastSelectedArena,
+                                lastSelectedDifficulty: localSave?.lastSelectedDifficulty ?? res.saveData.lastSelectedDifficulty,
+                                lastSelectedWeapon: localSave?.lastSelectedWeapon ?? res.saveData.lastSelectedWeapon,
+                                equippedRelics: localSave?.equippedRelics ?? res.saveData.equippedRelics,
+                                poolBias: localSave?.poolBias ?? res.saveData.poolBias,
                             };
                             SaveManager.save(merged);
                         }
