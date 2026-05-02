@@ -54,6 +54,9 @@ Deno.serve(async (req) => {
 
         if (!isCurrentWeek && !isCurrentSeason) return Response.json({ skipped: 'not current period' });
 
+        // Endless runs have their own leaderboard — never compete for weekly/seasonal #1.
+        if (newScore.arena_id === 'endless') return Response.json({ skipped: 'endless run' });
+
         const name = newScore.player_name || 'Unknown Pilot';
         // Only accept short emoji-style icons. URLs / long strings get dropped so
         // Discord doesn't auto-link an uploaded image into the message body.
@@ -64,11 +67,15 @@ Deno.serve(async (req) => {
 
         const alerts = [];
 
+        // Endless runs share the same week_id/season_id as normal runs but have their
+        // own dedicated leaderboard — they must be excluded from weekly/seasonal rankings,
+        // matching the UI in components/game/Leaderboard.jsx.
         const getTopTwoWithBase44 = async (filter) => {
-            const scores = await base44.asServiceRole.entities.RunScore.filter(filter, '-score', 50);
+            const scores = await base44.asServiceRole.entities.RunScore.filter(filter, '-score', 100);
             const seen = new Set();
             const unique = [];
             for (const s of scores) {
+                if (s.arena_id === 'endless') continue;
                 const key = s.wallet_address || s.user_id;
                 if (!key || seen.has(key)) continue;
                 seen.add(key);
