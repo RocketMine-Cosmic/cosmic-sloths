@@ -15,6 +15,9 @@ function OmenXIcon({ className }) {
 
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
+    // Total unique ranked players in the period (capped at 100) — used as the
+    // denominator for payout math so the displayed OMENX matches previewPayouts/distributeRewards.
+    const [totalRankedPlayers, setTotalRankedPlayers] = useState(0);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState('weekly');
     const [timeLeft, setTimeLeft] = useState('');
@@ -46,18 +49,22 @@ export default function Leaderboard() {
         return 0;
     };
 
-    // Calculate actual payout amount (mirrors backend distributeRewards exactly)
-    const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier, totalPlayers) => {
+    // Calculate actual payout amount (mirrors backend distributeRewards/previewPayouts EXACTLY).
+    // Backend caps at 100 ranked players and sums percentages over uniqueScores.length (capped at 100),
+    // so we must use the SAME denominator here — using only the top 50 we display would inflate
+    // each player's slice of the pie and show numbers that don't match the admin preview.
+    const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier, totalRankedPlayers) => {
         const rewardPool = Math.floor(pool * poolMultiplier);
-        
-        // Sum percentages only for players that actually exist
+        const cappedTotal = Math.min(100, totalRankedPlayers);
+        if (cappedTotal === 0) return 0;
+
         let totalPct = 0;
-        for (let i = 1; i <= totalPlayers; i++) {
+        for (let i = 1; i <= cappedTotal; i++) {
             totalPct += percentageFn(i);
         }
         if (totalPct === 0) return 0;
-        
-        // Payout = (player_pct / total_pct) * reward_pool
+
+        // Payout = (player_pct / total_pct) * reward_pool — backend uses Math.floor.
         return Math.floor((percentageFn(rank) / totalPct) * rewardPool);
     };
 
@@ -222,36 +229,38 @@ export default function Leaderboard() {
                 const squadsData = await base44.entities.Squad.filter({ current_week: week_id }, '-weekly_kills', 50);
                 setScores(squadsData);
                 setCurrentPool(0);
+                setTotalRankedPlayers(0);
                 if (!silent) setLoading(false);
                 return;
             }
 
-            // Fetch top scores (fetch more to allow deduplication)
-            const data = await base44.entities.RunScore.filter(filter, '-score', 300);
-            
+            // Fetch enough scores to mirror the backend's ranked pool (capped at 100 unique).
+            // 1000 fetched is the same ceiling as previewPayouts/distributeRewards.
+            const data = await base44.entities.RunScore.filter(filter, '-score', 1000);
+
             if (view === 'squads') {
                 setCurrentPool(0);
             }
             // Pool fetch is now handled by useQuery hook above
-            
-            // Deduplicate by user_id (wallet_address is masked by RLS)
-            const uniqueScores = [];
+
+            // Deduplicate by user_id (wallet_address is masked by RLS) — count up to
+            // 100 unique players for payout math, but only display the top 50.
+            const allUnique = [];
             const seenUserIds = new Set();
 
             for (const score of data) {
                 if (view !== 'endless' && score.arena_id === 'endless') continue;
 
                 const userId = score.user_id;
-
                 if (userId && seenUserIds.has(userId)) continue;
-
                 if (userId) seenUserIds.add(userId);
-                uniqueScores.push(score);
+                allUnique.push(score);
 
-                if (uniqueScores.length >= 50) break;
+                if (allUnique.length >= 100) break;
             }
-            
-            setScores(uniqueScores);
+
+            setScores(allUnique.slice(0, 50));
+            setTotalRankedPlayers(allUnique.length); // up to 100 — used as payout denominator
             setLastUpdated(Date.now());
         } catch (error) {
             console.error('Failed to fetch leaderboard', error);
@@ -342,9 +351,9 @@ export default function Leaderboard() {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
                                 const isEligibleForReward = view === 'weekly' || view === 'seasonal';
-                                const rewardAmount = view === 'weekly' 
-                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.20, scores.length)
-                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.30, scores.length);
+                                const rewardAmount = view === 'weekly'
+                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.20, totalRankedPlayers)
+                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.30, totalRankedPlayers);
 
                                 if (view === 'squads') {
                                     const squadLvl = getSquadLevel(score.xp || 0);
