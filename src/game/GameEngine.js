@@ -567,6 +567,19 @@ export class GameEngine {
             } catch {}
         }
 
+        // Cloud checkpoint fallback — every 5 minutes for endless/raid runs.
+        // Boss kills also trigger a checkpoint, but if a player dies before any boss
+        // they'd otherwise have no cloud safety net. Survives device wipes / reinstalls
+        // (localStorage doesn't). Fire-and-forget. ~12 writes/hr — trivial.
+        if (this.frameCount % (60 * 300) === 0 && this.frameCount > 0 && (this.arena.duration === Infinity || this.arena.id === 'world_boss_arena')) {
+            try {
+                const stats = this._runStats();
+                import('@/api/base44Client').then(({ base44 }) => {
+                    base44.functions.invoke('checkpointRun', { stats }).catch(() => {});
+                });
+            } catch {}
+        }
+
         // Victory fires when the arena timer expires AND no boss is active AND the
         // post-boss grace window has elapsed. The grace window (set in EnemyAI on
         // boss death) gives players ~5s to walk over and collect gold/relic drops

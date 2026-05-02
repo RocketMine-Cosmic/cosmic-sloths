@@ -122,6 +122,18 @@ export function updateEnemies(engine, dt) {
                 engine.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                 engine.isBossActive = false;
 
+                // Endless / raid: persist a cloud checkpoint so this boss kill's
+                // progress survives even a device wipe / app reinstall. Fire-and-forget,
+                // never blocks gameplay. saveScore validates + de-dupes on recovery.
+                if (isEndless || engine.arena.id === 'world_boss_arena') {
+                    try {
+                        const stats = engine._runStats();
+                        import('@/api/base44Client').then(({ base44 }) => {
+                            base44.functions.invoke('checkpointRun', { stats }).catch(() => {});
+                        });
+                    } catch {}
+                }
+
                 // Boss-loot recap pinned to the PLAYER (always on-screen) so the player
                 // can never miss what they earned even if the boss died far off-screen.
                 // Endless: shows auto-credited gold + frags. Normal arenas: shows frags

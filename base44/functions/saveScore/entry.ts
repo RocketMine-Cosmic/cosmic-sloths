@@ -328,6 +328,12 @@ Deno.serve(async (req) => {
             enemyKills: sanitisedEnemyKills,
         }, isVictory, charId, validation.isEndless);
 
+        // Run finished cleanly — clear any cloud checkpoint snapshot so we don't
+        // double-credit it on next launch via flushPendingScores.
+        if (updatedSave.pendingRunSnapshot) {
+            delete updatedSave.pendingRunSnapshot;
+        }
+
         await base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
             save_data: updatedSave,
             updated_at: Date.now()
