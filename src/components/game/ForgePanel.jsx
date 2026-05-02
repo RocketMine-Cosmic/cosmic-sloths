@@ -4,6 +4,7 @@ import { CHARACTERS, WEAPONS } from '../../game/Constants';
 import { SoundManager } from '../../game/SoundManager';
 import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star, Coins, Hexagon } from 'lucide-react';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 const GOLD_PER_FRAGMENT = 10000;
 const DAILY_CONVERT_CAP = 30; // max fragments from conversion per day
@@ -170,7 +171,18 @@ export default function ForgePanel({ save, setSave }) {
     const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
     const currentWeaponIndex = baseWeapons.findIndex(w => w.id === selectedWeaponId);
 
-    const unlockedChars = save.unlockedCharacters || ['neobyte'];
+    // Merge save's cloud-authoritative unlockedCharacters with NFT-unlocked chars (UI only).
+    // Server's ownsCharacter() already accepts NFT owners, but the client cycler was
+    // hiding them from the list — players couldn't pick them to forge augments.
+    const { nfts } = useCurrency();
+    const nftUnlockedChars = React.useMemo(() => (
+        (nfts || [])
+            .map(nft => nft.metadata?.name?.toLowerCase())
+            .filter(charId => charId && CHARACTERS.find(c => c.id === charId))
+    ), [nfts]);
+    const unlockedChars = React.useMemo(() => (
+        [...new Set([...(save.unlockedCharacters || ['neobyte']), ...nftUnlockedChars])]
+    ), [save.unlockedCharacters, nftUnlockedChars]);
     const currentCharId = unlockedChars[selectedCharIndex % unlockedChars.length] || 'neobyte';
     const currentChar = CHARACTERS.find(c => c.id === currentCharId) || CHARACTERS[0];
 
