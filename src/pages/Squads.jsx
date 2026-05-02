@@ -274,7 +274,7 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
+            const displayName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
             const res = await base44.functions.invoke('createSquad', {
                 squadName: newSquadName,
                 squadTag: newSquadTag,
@@ -308,7 +308,7 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A new pilot').trim();
+            const displayName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
             const res = await base44.functions.invoke('squadActions', {
                 action: 'join', squadId,
                 playerName: displayName,
@@ -351,7 +351,7 @@ export default function Squads({ isCarousel }) {
         if (!myMemberRecord) return;
         try {
             SoundManager.playUIClick();
-            const leaveName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'A pilot').trim();
+            const leaveName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
             const res = await base44.functions.invoke('squadActions', {
                 action: 'leave',
                 memberId: myMemberRecord.id,
@@ -384,7 +384,7 @@ export default function Squads({ isCarousel }) {
         setNewMessage('');
         SoundManager.playUIClick();
 
-        const displayName = (user?.data?.player_name || user?.player_name || user?.data?.full_name || user?.full_name || 'Pilot').trim();
+        const displayName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
         const optimisticMsg = {
             id: `optimistic-${Date.now()}`,
             squad_id: mySquad.id,
