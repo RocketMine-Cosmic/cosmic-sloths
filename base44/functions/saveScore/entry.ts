@@ -32,9 +32,15 @@ const MAX_FRAGMENTS_PER_SEC = 0.2; // = 1 frag / 5s
 const ENDLESS_FRAGMENTS_CAP_PER_RUN = 30;
 
 // Endless mode anti-exploit caps. Long endless runs were granting up to 800k gold,
-// breaking the upgrade economy. Cap gold/kills written from endless runs server-side.
-const ENDLESS_GOLD_CAP_PER_RUN = 5000;
-const ENDLESS_KILLS_CAP_PER_RUN = 2000;
+// breaking the upgrade economy. Caps now scale with playtime so a 30-min legit
+// run isn't truncated like a 60s tampered one. Per-second budget × time + a small
+// floor for very short runs. Hard ceiling prevents infinite-AFK exploits.
+const ENDLESS_GOLD_PER_SEC = 12;        // ~720/min — fair for skilled play, well below tamper rates
+const ENDLESS_KILLS_PER_SEC = 4;        // ~240/min sustained
+const ENDLESS_GOLD_FLOOR = 1500;        // minimum cap for very short runs
+const ENDLESS_KILLS_FLOOR = 600;
+const ENDLESS_GOLD_HARD_CEILING = 30000;
+const ENDLESS_KILLS_HARD_CEILING = 10000;
 
 // Arena progression — must mirror game/Constants.js ARENAS order EXACTLY.
 // Bug 2026-05-01 (Crybel): old order had stale ids ('voidring', 'singularity')
@@ -83,12 +89,14 @@ function validateAndRecompute(scoreData) {
     let endlessGoldCapped = false;
     let endlessKillsCapped = false;
     if (isEndless) {
-        if (gold > ENDLESS_GOLD_CAP_PER_RUN) {
-            goldForLedger = ENDLESS_GOLD_CAP_PER_RUN;
+        const goldCap = Math.min(ENDLESS_GOLD_HARD_CEILING, Math.max(ENDLESS_GOLD_FLOOR, Math.floor(time * ENDLESS_GOLD_PER_SEC)));
+        const killsCap = Math.min(ENDLESS_KILLS_HARD_CEILING, Math.max(ENDLESS_KILLS_FLOOR, Math.floor(time * ENDLESS_KILLS_PER_SEC)));
+        if (gold > goldCap) {
+            goldForLedger = goldCap;
             endlessGoldCapped = true;
         }
-        if (kills > ENDLESS_KILLS_CAP_PER_RUN) {
-            killsForLedger = ENDLESS_KILLS_CAP_PER_RUN;
+        if (kills > killsCap) {
+            killsForLedger = killsCap;
             endlessKillsCapped = true;
         }
     }
