@@ -5,8 +5,13 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
-// Endless-mode reward caps — must mirror functions/saveScore.js
-const ENDLESS_GOLD_CAP = 5000;
+// Endless-mode reward caps — must mirror functions/saveScore.js EXACTLY.
+// Cap = clamp(time_seconds * 12, 1500, 18000). Anything above this isn't credited.
+const ENDLESS_GOLD_PER_SEC = 12;
+const ENDLESS_GOLD_FLOOR = 1500;
+const ENDLESS_GOLD_HARD_CEILING = 18000;
+const computeEndlessGoldCap = (timeSec) =>
+    Math.min(ENDLESS_GOLD_HARD_CEILING, Math.max(ENDLESS_GOLD_FLOOR, Math.floor((timeSec || 0) * ENDLESS_GOLD_PER_SEC)));
 
 // UpgradeSystem prefixes every upgrade with "<CharName>'s " for flavour, but the HUD
 // is space-constrained on mobile so the unique part ("Plasma Core", "Hyperdrive Fuel"…)
@@ -37,11 +42,12 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
         return `${m}:${sec.toString().padStart(2, '0')}`;
     };
 
-    // In endless mode, only the first 5,000 gold credits to the wallet — display the capped value.
-    // Regular enemies don't drop gold in endless; only bosses do (see GameEngine).
+    // In endless mode, gold credited to the wallet is capped by playtime (see saveScore.js).
+    // The HUD must show what the player will ACTUALLY get, not the raw earned amount.
     const isEndless = duration === Infinity;
-    const displayGold = isEndless ? Math.min(gold, ENDLESS_GOLD_CAP) : gold;
-    const goldCapped = isEndless && gold >= ENDLESS_GOLD_CAP;
+    const endlessCap = isEndless ? computeEndlessGoldCap(time) : Infinity;
+    const displayGold = isEndless ? Math.min(gold, endlessCap) : gold;
+    const goldCapped = isEndless && gold >= endlessCap;
 
     return (
         <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
