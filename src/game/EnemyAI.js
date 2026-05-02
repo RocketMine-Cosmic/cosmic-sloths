@@ -99,16 +99,21 @@ export function updateEnemies(engine, dt) {
 
                 let creditedGold = 0;
                 if (extraGold > 0) {
-                    // Auto-credit boss gold in BOTH modes:
-                    // - Endless: pickup pile would linger and be confused with regular drops.
-                    // - Story arenas: match ends instantly on boss death, so any dropped
-                    //   pickup is unreachable (Hugo bug 2026-05-02).
-                    const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
-                    const finalGold = Math.floor(extraGold * engine.player.goldMult * nftGoldMult);
-                    engine.gold += finalGold;
-                    engine.callbacks.onGoldChange(engine.gold);
-                    creditedGold = finalGold;
-                    engine.addDamageText(e.x, e.y - 20, `+${finalGold.toLocaleString()} GOLD`, '#ffd700');
+                    // In endless: auto-credit gold instead of dropping a pickup that lingers
+                    // visually long after the boss is gone (Hugo perceived these as
+                    // "non-boss" gold drops because regular enemies spawn around the pile
+                    // while the magnet pulls it in). Normal arenas keep the dropped pickup
+                    // so players can collect it as part of the post-boss reward moment.
+                    if (isEndless) {
+                        const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
+                        const finalGold = Math.floor(extraGold * engine.player.goldMult * nftGoldMult);
+                        engine.gold += finalGold;
+                        engine.callbacks.onGoldChange(engine.gold);
+                        creditedGold = finalGold;
+                        engine.addDamageText(e.x, e.y - 20, `+${finalGold.toLocaleString()} GOLD`, '#ffd700');
+                    } else {
+                        engine.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: extraGold, color: '#ffd700' });
+                    }
                 }
 
                 engine.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
@@ -121,7 +126,7 @@ export function updateEnemies(engine, dt) {
                 // mixed up. Stagger the lines so they don't overlap.
                 const recap = [];
                 if (creditedFrags > 0) recap.push({ text: `+${creditedFrags} RELIC FRAGMENT${creditedFrags > 1 ? 'S' : ''}`, color: '#c084fc' });
-                if (creditedGold > 0) recap.push({ text: `+${creditedGold.toLocaleString()} GOLD`, color: '#ffd700' });
+                if (isEndless && creditedGold > 0) recap.push({ text: `+${creditedGold.toLocaleString()} GOLD`, color: '#ffd700' });
                 recap.forEach((line, idx) => {
                     engine.addDamageText(engine.player.x, engine.player.y - 110 - idx * 22, line.text, line.color, true);
                 });
@@ -141,12 +146,10 @@ export function updateEnemies(engine, dt) {
                 const isEndless = engine.arena.duration === Infinity;
                 if (!isEndless) {
                     const baseGoldChance = 0.35;
-                    // Veil of the Unknown mutation rewards +15% gold from kills.
-                    const mysteryBonus = engine.bossModifiers?.mystery_levelups ? 1.15 : 1.0;
                     if (Math.random() < baseGoldChance + (engine.player.luck * 0.02)) {
                         const maxGoldValue = 35;
                         const goldValue = Math.min(maxGoldValue, 2 + Math.floor(engine.time / 90) * 1);
-                        const goldMultiplier = (e.isElite ? (e.eliteGoldBonus || 1.5) : 1) * mysteryBonus;
+                        const goldMultiplier = e.isElite ? (e.eliteGoldBonus || 1.5) : 1;
                         const goldCount = e.isElite ? 1 : 1;
                         for (let gi = 0; gi < goldCount; gi++) {
                             engine.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: goldValue * goldMultiplier, color: '#ffd700' });

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import MysteryCard from './MysteryCard';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HelpCircle } from 'lucide-react';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -38,18 +38,36 @@ function getStatPreview(upgrade, player) {
     };
 }
 
-export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null, engineRef, mysteryMode = false }) {
+export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null, engineRef }) {
     // Each tier has 3 uses (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
     const banishTier = banishCount < 3 ? 1 : banishCount < 6 ? 2 : 3;
     const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
     const showNextPrice = nextBanishCost !== null && nextBanishCost !== banishCost;
+    const [revealedIndex, setRevealedIndex] = useState(null);
     const [hasRerolled, setHasRerolled] = useState(false);
-    const [selectedIndex, setSelectedIndex] = useState(null);
 
     React.useEffect(() => {
         setHasRerolled(false);
-        setSelectedIndex(null);
-    }, [level, choices]);
+    }, [level]);
+
+    // Reset the revealed card whenever a new set of choices arrives (e.g. after a
+    // successful reroll/banish). This way we don't reset prematurely if the user
+    // cancels the OMENX confirmation — they keep seeing their original pick.
+    React.useEffect(() => {
+        setRevealedIndex(null);
+    }, [choices]);
+
+    const handleSelect = (index) => {
+        if (revealedIndex === null) {
+            setRevealedIndex(index);
+        }
+    };
+
+    const handleConfirm = () => {
+        if (revealedIndex !== null) {
+            onSelect(choices[revealedIndex]);
+        }
+    };
 
     const rarityColors = {
         'Common': 'text-slate-400 border-slate-500',
@@ -79,64 +97,94 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                     <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" /> {typeof cosmicTokens === 'number' ? cosmicTokens.toFixed(2) : (cosmicTokens || 0)}
                 </div>
                 <h2 className="text-xl md:text-3xl font-bold text-center text-cyan-400 mb-1 md:mb-2 font-mono">
-                    {mysteryMode ? 'VEILED LEVEL UP' : 'LEVEL UP!'}
+                    {revealedIndex === null ? 'CHOOSE A MYSTERY UPGRADE' : 'UPGRADE REVEALED!'}
                 </h2>
                 <p className="text-slate-400 mb-2 md:mb-8 text-center text-xs md:text-base">
-                    {mysteryMode
-                        ? 'The Veil hides your choices. Pick blind — only rarity tints are visible.'
-                        : 'Choose an upgrade to enhance your build.'}
+                    {revealedIndex === null ? 'Select one to reveal its true power.' : 'A powerful addition to your arsenal.'}
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 w-full mb-4 md:mb-8">
                     {choices.map((choice, i) => {
-                        const isSelected = selectedIndex === i;
-                        if (mysteryMode) {
-                            return (
-                                <MysteryCard
-                                    key={i}
-                                    rarity={choice.rarity}
-                                    isSelected={isSelected}
-                                    onClick={() => setSelectedIndex(i)}
-                                />
-                            );
-                        }
-                        const preview = getStatPreview(choice, engineRef?.current?.player);
+                        const isRevealed = revealedIndex === i;
+                        const isHidden = revealedIndex !== null && revealedIndex !== i;
+                        
+                        if (isHidden) return (
+                            <div key={i} className="opacity-30 scale-95 transition-all duration-500 bg-slate-800 border border-slate-700 p-3 md:p-4 rounded-lg flex items-center justify-center min-h-[90px] md:min-h-[160px]">
+                                <span className="text-slate-600 font-bold text-xs md:text-base">Discarded</span>
+                            </div>
+                        );
+
                         return (
                             <motion.button
                                 key={i}
-                                onClick={() => setSelectedIndex(i)}
-                                className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-200 flex flex-col min-h-[90px] md:min-h-[160px] border-2 cursor-pointer ${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ').slice(1).join(' ')} ${isSelected ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900' : 'hover:brightness-110'}`}
+                                onClick={() => handleSelect(i)}
+                                disabled={revealedIndex !== null}
+                                className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-300 flex flex-col min-h-[90px] md:min-h-[160px] border-2 ${
+                                    isRevealed 
+                                    ? `${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ')[1]} ${rarityColors[choice.rarity].split(' ')[2] || ''}` 
+                                    : 'bg-slate-800 border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer'
+                                }`}
                             >
-                                <div className={`text-[10px] md:text-xs font-bold mb-1 md:mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
-                                    {choice.rarity} {choice.type}
-                                </div>
-                                <div className="text-base md:text-xl font-bold text-white mb-1 md:mb-2 leading-tight">
-                                    {choice.name}
-                                </div>
-                                <div className="text-xs md:text-sm text-slate-300 flex-1">
-                                    {choice.desc}
-                                </div>
-                                {preview && (
-                                    <div className="mt-2 bg-slate-950/60 border border-slate-700 rounded px-2 py-1 text-[10px] md:text-xs flex items-center justify-between">
-                                        <span className="text-slate-400 font-bold uppercase tracking-wider">{preview.label}</span>
-                                        <div className="flex items-baseline gap-1.5 font-mono">
-                                            <span className="text-slate-500">{preview.before}</span>
-                                            <span className="text-slate-600">→</span>
-                                            <span className={`font-bold ${preview.isGain ? 'text-emerald-400' : 'text-red-400'}`}>{preview.after}</span>
-                                        </div>
-                                    </div>
-                                )}
+                                <AnimatePresence mode="wait">
+                                    {!isRevealed ? (
+                                        <motion.div 
+                                            key="mystery"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="absolute inset-0 flex flex-col items-center justify-center text-cyan-500"
+                                        >
+                                            <HelpCircle className="w-8 h-8 md:w-12 md:h-12 mb-1 md:mb-2 animate-pulse" />
+                                            <span className="font-bold font-mono text-sm md:text-base">MYSTERY</span>
+                                            <span className="mt-1 md:mt-2 text-[10px] md:text-xs font-bold px-2 py-0.5 md:py-1 rounded bg-black/50 text-slate-500">
+                                                ???
+                                            </span>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="revealed"
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="flex flex-col h-full w-full"
+                                        >
+                                            <div className={`text-[10px] md:text-xs font-bold mb-1 md:mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
+                                                {choice.rarity} {choice.type}
+                                            </div>
+                                            <div className="text-base md:text-xl font-bold text-white mb-1 md:mb-2 leading-tight">
+                                                {choice.name}
+                                            </div>
+                                            <div className="text-xs md:text-sm text-slate-300 flex-1">
+                                                {choice.desc}
+                                            </div>
+                                            {(() => {
+                                                const preview = getStatPreview(choice, engineRef?.current?.player);
+                                                if (!preview) return null;
+                                                return (
+                                                    <div className="mt-2 bg-slate-950/60 border border-slate-700 rounded px-2 py-1 text-[10px] md:text-xs flex items-center justify-between">
+                                                        <span className="text-slate-400 font-bold uppercase tracking-wider">{preview.label}</span>
+                                                        <div className="flex items-baseline gap-1.5 font-mono">
+                                                            <span className="text-slate-500">{preview.before}</span>
+                                                            <span className="text-slate-600">→</span>
+                                                            <span className={`font-bold ${preview.isGain ? 'text-emerald-400' : 'text-red-400'}`}>{preview.after}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </motion.button>
                         );
                     })}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-6 mt-2 md:mt-4">
-                    {selectedIndex !== null && (
+                    {revealedIndex !== null && (
                         <motion.button
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            onClick={() => onSelect(choices[selectedIndex])}
+                            onClick={handleConfirm}
                             className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg text-base md:text-lg transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                         >
                             Accept Upgrade
@@ -151,6 +199,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                 if ((cosmicTokens || 0) < 2) return;
                                 setHasRerolled(true);
                                 onReroll();
+                                // revealedIndex resets automatically when new choices arrive
                             }}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 2 ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
                         >
@@ -158,13 +207,14 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                         </motion.button>
                     )}
                     
-                    {selectedIndex !== null && (
+                    {revealedIndex !== null && (
                         <motion.button
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => {
                                 if ((cosmicTokens || 0) < banishCost) return;
-                                onBanish(choices[selectedIndex]);
+                                onBanish(choices[revealedIndex]);
+                                // revealedIndex resets automatically when new choices arrive
                             }}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex flex-col items-center justify-center gap-0.5 ${(cosmicTokens || 0) < banishCost ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
                         >
