@@ -15,8 +15,13 @@ Deno.serve(async (req) => {
         const { type, query, period, squadId } = await req.json();
 
         if (type === 'overview') {
-            // Page through all records to get accurate totals (Base44 list defaults are capped per request)
+            // Page through all records to get accurate totals.
+            // IMPORTANT: Base44's list()/filter() pagination is unreliable — it can return
+            // the same records on subsequent pages, causing inflated counts (e.g. 520
+            // real rows being counted as 10,499). We dedupe by `id` and stop as soon
+            // as a page contains zero new records.
             const fetchAll = async (entity, sort, useFilter = false) => {
+                const seen = new Set();
                 const all = [];
                 let page = 1;
                 const PAGE = 500;
@@ -25,7 +30,15 @@ Deno.serve(async (req) => {
                         ? await entity.filter({}, sort, PAGE, page)
                         : await entity.list(sort, PAGE, page);
                     if (!batch || batch.length === 0) break;
-                    all.push(...batch);
+                    let newCount = 0;
+                    for (const row of batch) {
+                        if (row.id && !seen.has(row.id)) {
+                            seen.add(row.id);
+                            all.push(row);
+                            newCount++;
+                        }
+                    }
+                    if (newCount === 0) break; // page returned only duplicates → end of data
                     if (batch.length < PAGE) break;
                     page++;
                     if (page > 50) break;
