@@ -36,7 +36,7 @@ export default function MyStaffIncomeCard({ walletAddress, isEmergencyKey }) {
                     {isLoading ? '…' : `${projected.toLocaleString()} OMENX`}
                 </span>
             </div>
-            <span className="text-[9px] text-slate-500 font-mono hidden md:inline">live · {(pct * 100).toFixed(2)}% of {totalSpent.toFixed(1)}</span>
+            <span className="text-[9px] text-slate-500 font-mono hidden md:inline">live</span>
         </div>
     );
 }
