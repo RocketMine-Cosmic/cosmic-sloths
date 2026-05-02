@@ -98,16 +98,26 @@ export default function PlayerSearchInput({ selected, onSelect, placeholder = 'W
             {error && <div className="text-xs text-slate-400 italic">{error}</div>}
             {results.length > 0 && (
                 <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {results.map(p => (
-                        <button
-                            key={p.id}
-                            onClick={() => pick(p)}
-                            className={`w-full text-left bg-slate-900/60 border border-slate-700 rounded px-3 py-1.5 transition-colors ${accentBorder}`}
-                        >
-                            <div className="text-sm font-bold text-white">{p.save_data?.pilotName || p.player_name || 'Unnamed'}</div>
-                            <div className="text-[10px] text-slate-500 font-mono">{p.wallet_address?.slice(0,10)}…{p.wallet_address?.slice(-6)}</div>
-                        </button>
-                    ))}
+                    {results.map(p => {
+                        const currentName = p.save_data?.pilotName || p.save_data?.player_name || p.player_name || 'Unnamed';
+                        const isHistorical = p._matchedVia && p._matchedVia !== 'current';
+                        return (
+                            <button
+                                key={p.id}
+                                onClick={() => pick(p)}
+                                className={`w-full text-left bg-slate-900/60 border border-slate-700 rounded px-3 py-1.5 transition-colors ${accentBorder}`}
+                            >
+                                <div className="text-sm font-bold text-white">{currentName}</div>
+                                <div className="text-[10px] text-slate-500 font-mono">{p.wallet_address?.slice(0,10)}…{p.wallet_address?.slice(-6)}</div>
+                                {isHistorical && p._matchedName && (
+                                    <div className="text-[10px] text-amber-400 mt-0.5 italic">
+                                        ↳ matched old name: <span className="font-mono not-italic">{p._matchedName}</span>
+                                        <span className="text-slate-500 ml-1">({p._matchedVia === 'historical_squad' ? 'squad' : 'runs'})</span>
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>

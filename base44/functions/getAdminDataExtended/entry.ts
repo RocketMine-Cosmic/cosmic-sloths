@@ -87,6 +87,9 @@ Deno.serve(async (req) => {
                 return Response.json({ players: saves });
             }
             const q = query.toLowerCase();
+
+            // Page through all PlayerSaves once — used both for current-name matching
+            // AND as the canonical lookup table when resolving wallets from historical names.
             const all = [];
             let page = 1;
             const PAGE = 500;
@@ -98,12 +101,77 @@ Deno.serve(async (req) => {
                 page++;
                 if (page > 50) break;
             }
-            const matched = all.filter(s =>
-                s.wallet_address?.toLowerCase().includes(q) ||
-                s.save_data?.player_name?.toLowerCase().includes(q) ||
-                s.player_name?.toLowerCase().includes(q)
-            ).slice(0, 30);
-            return Response.json({ players: matched });
+            const byWallet = new Map();
+            for (const s of all) {
+                if (s.wallet_address) byWallet.set(s.wallet_address.toLowerCase(), s);
+            }
+
+            // Tier 1 — direct match on PlayerSave (wallet or current name).
+            const matchedWallets = new Set();
+            const tagged = []; // { player, matchedVia, matchedName }
+            for (const s of all) {
+                if (
+                    s.wallet_address?.toLowerCase().includes(q) ||
+                    s.save_data?.player_name?.toLowerCase().includes(q) ||
+                    s.player_name?.toLowerCase().includes(q)
+                ) {
+                    matchedWallets.add(s.wallet_address.toLowerCase());
+                    tagged.push({ player: s, matchedVia: 'current', matchedName: s.save_data?.player_name || s.player_name || '' });
+                }
+            }
+
+            // Tier 2 — historical name match via RunScore. Catches players who renamed
+            // themselves but had old runs under the searched name.
+            try {
+                const recentRuns = await base44.asServiceRole.entities.RunScore.list('-created_date', 2000);
+                const seenHistorical = new Map(); // wallet -> first historical name found
+                for (const r of recentRuns) {
+                    if (!r.wallet_address || !r.player_name) continue;
+                    const w = r.wallet_address.toLowerCase();
+                    if (matchedWallets.has(w)) continue; // already surfaced via current name
+                    if (!r.player_name.toLowerCase().includes(q)) continue;
+                    if (!seenHistorical.has(w)) seenHistorical.set(w, r.player_name);
+                }
+                for (const [w, oldName] of seenHistorical) {
+                    const player = byWallet.get(w);
+                    if (player) {
+                        matchedWallets.add(w);
+                        tagged.push({ player, matchedVia: 'historical_run', matchedName: oldName });
+                    }
+                }
+            } catch (e) {
+                console.warn('[playerSearch] historical RunScore scan failed:', e.message);
+            }
+
+            // Tier 3 — historical squad name match. Cheap; SquadMember rows are small.
+            try {
+                const members = await base44.asServiceRole.entities.SquadMember.list('-created_date', 2000);
+                const seenSquad = new Map();
+                for (const m of members) {
+                    if (!m.wallet_address || !m.player_name) continue;
+                    const w = m.wallet_address.toLowerCase();
+                    if (matchedWallets.has(w)) continue;
+                    if (!m.player_name.toLowerCase().includes(q)) continue;
+                    if (!seenSquad.has(w)) seenSquad.set(w, m.player_name);
+                }
+                for (const [w, oldName] of seenSquad) {
+                    const player = byWallet.get(w);
+                    if (player) {
+                        matchedWallets.add(w);
+                        tagged.push({ player, matchedVia: 'historical_squad', matchedName: oldName });
+                    }
+                }
+            } catch (e) {
+                console.warn('[playerSearch] historical SquadMember scan failed:', e.message);
+            }
+
+            // Decorate with match metadata so the UI can show "matched via old name: X".
+            const players = tagged.slice(0, 30).map(t => ({
+                ...t.player,
+                _matchedVia: t.matchedVia,
+                _matchedName: t.matchedName,
+            }));
+            return Response.json({ players });
         }
 
         if (type === 'squads') {
