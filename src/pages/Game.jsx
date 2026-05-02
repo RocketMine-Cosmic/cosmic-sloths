@@ -641,11 +641,16 @@ export default function Game() {
         };
         try {
             // Mirrors onGameOver's saveScore call but awaited so it survives unmount.
-            const isEndless = engine.arena?.duration === Infinity;
-            await saveScoreRef.current?.(stats, false, isEndless);
+            await saveScoreRef.current?.(stats, false);
+            // Also await boss damage submission so raid contributions aren't dropped
+            // when the navigate() unmounts the component mid-flight.
             if (stats.worldBossDamage > 0) {
                 const user = getOmenXUserSync();
-                base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name }).catch(() => {});
+                try {
+                    await base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name });
+                } catch (bossErr) {
+                    console.warn('[Game] submitBossDamage on quit failed:', bossErr?.message);
+                }
             }
         } catch (e) {
             console.error('[Game] handleQuit save failed:', e);
