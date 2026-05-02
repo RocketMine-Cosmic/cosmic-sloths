@@ -39,11 +39,13 @@ const TALENT_PREREQS = {
     skybyte: { sky_2a: { requires: 'sky_1', excludes: 'sky_2b' }, sky_2b: { requires: 'sky_1', excludes: 'sky_2a' }, sky_3a: { requires: 'sky_2a' }, sky_3b: { requires: 'sky_2b' } },
 };
 
-function getAllUnlockedTalents(save, charId) {
-    const perm = save.permanentTalents?.[charId] || [];
-    const week = save.weeklyTalents?.[charId] || [];
-    const season = save.seasonalTalents?.[charId] || [];
-    return new Set([...perm, ...week, ...season]);
+// Tier-scoped — prereqs check only the same tree (permanent/weekly/seasonal),
+// so buying neo_1 in permanent doesn't unlock neo_2a in seasonal (Hugo bug 2026-05-02).
+function getUnlockedTalentsForTier(save, charId, tier) {
+    const key = tier === 'permanent' ? 'permanentTalents'
+              : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
+    const arr = save[key]?.[charId] || [];
+    return new Set(arr);
 }
 
 function getBalanceKeys() {
@@ -86,10 +88,10 @@ async function ownsCharacter(save, walletAddress, charId) {
     }
 }
 
-function validateTalentPrereqs(save, charId, talentId) {
+function validateTalentPrereqs(save, charId, talentId, tier) {
     const prereqs = TALENT_PREREQS[charId]?.[talentId];
     if (!prereqs) return;
-    const owned = getAllUnlockedTalents(save, charId);
+    const owned = getUnlockedTalentsForTier(save, charId, tier);
     if (prereqs.requires && !owned.has(prereqs.requires)) {
         throw new Error(`You need to unlock the previous talent first.`);
     }
@@ -260,8 +262,8 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             if (charArr.includes(talentId)) {
                 throw new Error('You already own this talent.');
             }
-            // Enforce tier prerequisites (tier 1 needed for tier 2, tier 2 for tier 3, exclusive paths).
-            validateTalentPrereqs(s, charId, talentId);
+            // Enforce tier prerequisites scoped to THIS tree (permanent/weekly/seasonal).
+            validateTalentPrereqs(s, charId, talentId, tier);
             charArr.push(talentId);
             obj[charId] = charArr;
             if (tier === 'weekly') obj.weekId = periodIds.week_id;

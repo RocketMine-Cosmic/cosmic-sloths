@@ -30,7 +30,7 @@ import NFTPerkBadge from '../components/game/NFTPerkBadge';
 const UPGRADE_TYPES = [
     { id: 'permanent', name: 'Permanent', goldCosts: [1000, 2000, 4000, 8000, 16000], tokenCosts: [15, 30, 60, 120, 240] },
     { id: 'weekly', name: 'Weekly', goldCosts: [500, 1000, 2000, 4000, 8000], tokenCosts: [4, 8, 15, 30, 60] },
-    { id: 'seasonal', name: 'Seasonal', goldCosts: [1500, 3000, 6000, 12000, 24000], tokenCosts: [10, 20, 40, 80, 160] }
+    { id: 'seasonal', name: 'Seasonal', goldCosts: [750, 1500, 3000, 6000, 12000], tokenCosts: [10, 20, 40, 80, 160] }
 ];
 
 const STATS = [
@@ -822,14 +822,11 @@ export default function Upgrades({ isCarousel }) {
                     
                     {(() => {
                         const allTalents = CHARACTER_TALENTS[selectedChar || 'neobyte'] || [];
-                        const getUnlockedTalents = (char) => {
-                            const perm = save.permanentTalents?.[char] || [];
-                            const week = save.weeklyTalents?.[char] || [];
-                            const season = save.seasonalTalents?.[char] || [];
-                            return [...new Set([...perm, ...week, ...season])];
-                        };
-                        const allUnlocked = getUnlockedTalents(selectedChar || 'neobyte');
+                        // Talent prereqs are scoped to the CURRENT tree (permanent / weekly / seasonal).
+                        // Buying neo_1 in permanent does NOT let you skip neo_1 in seasonal — each
+                        // tree progresses independently (Hugo bug 2026-05-02).
                         const unlocked = save[saveKey]?.[selectedChar || 'neobyte'] || [];
+                        const allUnlocked = unlocked;
 
                         // Group talents: pairs of (Path A, Path B) at same tier render side-by-side; standalone talents render full-width.
                         // Pairs are detected either by the `excludes` property OR by matching `_a`/`_b` id suffixes at the same tier.

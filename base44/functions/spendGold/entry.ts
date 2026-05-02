@@ -39,12 +39,14 @@ const TALENT_PREREQS = {
     skybyte: { sky_2a: { requires: 'sky_1', excludes: 'sky_2b' }, sky_2b: { requires: 'sky_1', excludes: 'sky_2a' }, sky_3a: { requires: 'sky_2a' }, sky_3b: { requires: 'sky_2b' } },
 };
 
-// Returns the union of unlocked talent ids for a character across permanent/weekly/seasonal.
-function getAllUnlockedTalents(save, charId) {
-    const perm = save.permanentTalents?.[charId] || [];
-    const week = save.weeklyTalents?.[charId] || [];
-    const season = save.seasonalTalents?.[charId] || [];
-    return new Set([...perm, ...week, ...season]);
+// Returns the unlocked talent ids for a character within a SINGLE tier
+// (permanent / weekly / seasonal). Prereqs are tree-scoped — buying neo_1
+// in permanent doesn't let you skip neo_1 in seasonal (Hugo bug 2026-05-02).
+function getUnlockedTalentsForTier(save, charId, tier) {
+    const key = tier === 'permanent' ? 'permanentTalents'
+              : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
+    const arr = save[key]?.[charId] || [];
+    return new Set(arr);
 }
 
 // Rotate across all 9 balance API keys (each 100 req/min). Returns shuffled list
@@ -95,10 +97,10 @@ async function ownsCharacter(save, walletAddress, charId) {
     }
 }
 
-function validateTalentPrereqs(save, charId, talentId) {
+function validateTalentPrereqs(save, charId, talentId, tier) {
     const prereqs = TALENT_PREREQS[charId]?.[talentId];
     if (!prereqs) return; // tier 1 or unknown — no prereqs
-    const owned = getAllUnlockedTalents(save, charId);
+    const owned = getUnlockedTalentsForTier(save, charId, tier);
     if (prereqs.requires && !owned.has(prereqs.requires)) {
         throw new Error(`You need to unlock the previous talent first.`);
     }
@@ -107,22 +109,25 @@ function validateTalentPrereqs(save, charId, talentId) {
     }
 }
 
+// Seasonal gold costs are ~⅔ of permanent (matching the OMENX ratio of 10/15)
+// because seasonal upgrades reset every season — they should be cheaper, not
+// pricier, than permanent ones (Hugo bug 2026-05-02).
 const GOLD_COSTS = {
     stat: {
         permanent: [1000, 2000, 4000, 8000, 16000],
         weekly:    [500,  1000, 2000, 4000, 8000],
-        seasonal:  [1500, 3000, 6000, 12000, 24000],
+        seasonal:  [750,  1500, 3000, 6000, 12000],
     },
     weapon: {
         permanent: [1000, 2000, 4000, 8000, 16000],
         weekly:    [500,  1000, 2000, 4000, 8000],
-        seasonal:  [1500, 3000, 6000, 12000, 24000],
+        seasonal:  [750,  1500, 3000, 6000, 12000],
     },
     // talent cost = goldCosts[(tier-1)*2]
     talent: {
         permanent: [1000, 2000, 4000, 8000, 16000],
         weekly:    [500,  1000, 2000, 4000, 8000],
-        seasonal:  [1500, 3000, 6000, 12000, 24000],
+        seasonal:  [750,  1500, 3000, 6000, 12000],
     },
 };
 
@@ -250,9 +255,9 @@ function applyGrant(save, grantInfo, periodIds) {
             const obj = { ...(s[key] || {}) };
             const charArr = Array.isArray(obj[charId]) ? [...obj[charId]] : [];
             if (charArr.includes(talentId)) throw new Error('You already own this talent.');
-            // Enforce tier prerequisites — tier 2 needs tier 1, tier 3 needs tier 2,
-            // and exclusive sibling cannot already be owned.
-            validateTalentPrereqs(s, charId, talentId);
+            // Enforce tier prerequisites scoped to THIS tree (permanent/weekly/seasonal):
+            // tier 2 needs tier 1 in same tree, tier 3 needs tier 2, exclusive sibling locked.
+            validateTalentPrereqs(s, charId, talentId, tier);
             charArr.push(talentId);
             obj[charId] = charArr;
             if (tier === 'weekly') obj.weekId = periodIds.week_id;
