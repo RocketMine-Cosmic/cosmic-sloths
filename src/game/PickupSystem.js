@@ -18,6 +18,14 @@ export function updatePickups(engine, dt) {
                 const finalGold = Math.floor(p.value * engine.player.goldMult * nftGoldMult);
                 SFXManager.playGoldPickup(finalGold);
                 engine.gold += finalGold;
+                // Endless mode: cap the in-game gold counter at the same value saveScore credits
+                // (clamp(time*12, 1500, 18000)) so the HUD, the engine, and the awarded gold all match.
+                // Without this, players see their gold ticker keep climbing past 18k even though only
+                // 18k will be credited at run end — feels like the cap is "stealing" gold.
+                if (engine.arena?.duration === Infinity) {
+                    const cap = Math.min(18000, Math.max(1500, Math.floor((engine.time || 0) * 12)));
+                    if (engine.gold > cap) engine.gold = cap;
+                }
                 engine.callbacks.onGoldChange(engine.gold);
                 if (nftGoldMult > 1.0 && Math.random() < 0.1) {
                     engine.addDamageText(engine.player.x, engine.player.y - 50, `NFT +${Math.round((nftGoldMult - 1) * 100)}% GOLD`, '#f59e0b');
