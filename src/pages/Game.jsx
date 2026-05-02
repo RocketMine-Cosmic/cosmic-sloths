@@ -71,6 +71,27 @@ export default function Game() {
     const isEndlessRun = !!location.state?.isEndless;
     useSessionKeepAlive(isEndlessRun && !gameOverStats && !victoryStats);
 
+    // Android tab-kill safety: when the page is being torn down (phone lock,
+    // app switch, low memory eviction), dump the current run stats to localStorage
+    // synchronously so flushPendingScores can recover them on next launch.
+    // `pagehide` is more reliable than `beforeunload` on mobile browsers.
+    useEffect(() => {
+        const onPageHide = () => {
+            const engine = engineRef.current;
+            if (!engine || engine.isGameOver || engine.isVictory) return;
+            const arena = engine.arena?.id;
+            if (arena !== 'endless' && arena !== 'world_boss_arena') return;
+            try {
+                const stats = engine._runStats();
+                if ((stats.kills || 0) >= 5 && (stats.time || 0) >= 30) {
+                    localStorage.setItem('pending_run_snapshot', JSON.stringify({ stats, takenAt: Date.now() }));
+                }
+            } catch {}
+        };
+        window.addEventListener('pagehide', onPageHide);
+        return () => window.removeEventListener('pagehide', onPageHide);
+    }, []);
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -640,6 +661,9 @@ export default function Game() {
             _suppressModal: true,
         };
         try {
+            // Quit is a "clean" exit — clear any safety snapshot so we don't
+            // double-credit this run on next launch.
+            try { const m = await import('@/lib/runSnapshot'); m.clearRunSnapshot(); } catch {}
             // Mirrors onGameOver's saveScore call but awaited so it survives unmount.
             await saveScoreRef.current?.(stats, false);
             // Also await boss damage submission so raid contributions aren't dropped

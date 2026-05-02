@@ -557,6 +557,16 @@ export class GameEngine {
             this.callbacks.onTimeChange(Math.floor(this.time));
         }
 
+        // Periodic safety snapshot — protects against Android tab kills mid-run.
+        // Every ~10s for endless/world-boss arenas, dump current stats to localStorage.
+        // If the tab dies before gameOver(), next launch picks this up and queues it
+        // as a normal saveScore. ~6 writes/min — negligible storage churn.
+        if (this.frameCount % 600 === 0 && (this.arena.duration === Infinity || this.arena.id === 'world_boss_arena')) {
+            try {
+                import('@/lib/runSnapshot').then(m => m.writeRunSnapshot(this._runStats()));
+            } catch {}
+        }
+
         // Victory fires when the arena timer expires AND no boss is active AND the
         // post-boss grace window has elapsed. The grace window (set in EnemyAI on
         // boss death) gives players ~5s to walk over and collect gold/relic drops
@@ -1016,11 +1026,15 @@ export class GameEngine {
         this.isGameOver = true;
         if (this.save) { this.save.enemyKills = this.enemyKills; SaveManager.save(this.save); }
         SFXManager.playGameOver();
+        // Clean game-over — clear any safety snapshot so we don't double-credit
+        // this run on next launch.
+        try { import('@/lib/runSnapshot').then(m => m.clearRunSnapshot()); } catch {}
         this.callbacks.onGameOver(this._runStats());
     }
     victory() {
         this.isVictory = true;
         SFXManager.playVictory();
+        try { import('@/lib/runSnapshot').then(m => m.clearRunSnapshot()); } catch {}
         this.callbacks.onVictory(this._runStats({ arenaId: this.arena.id }));
     }
 
