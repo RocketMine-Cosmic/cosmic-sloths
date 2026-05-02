@@ -22,7 +22,7 @@ Top-down auto-shooter where your weapons fire automatically — you move, dodge,
 
 Difficulty doesn't directly multiply your score — but more XP & Gold per run *feeds* the score formula, so harder = bigger numbers.
 
-🪐 **Sectors** — Station → Asteroid → Nebula → VoidRing → Singularity → Endless Void. Beat each sector with each pilot to unlock the next. Playing older sectors applies a **−10% Gold penalty per sector below your max** (capped at −50%) — keep pushing forward!
+🪐 **Sectors** — Station → Asteroid → Nebula → VoidRing → Singularity → Endless Void. Beat each sector with each pilot to unlock the next. Replay any unlocked sector freely — **dynamic difficulty** adapts spawns to your performance, no gold penalties.
 
 ✅ **Just sign in with OmenX to start.** Your save, wallet, and progression sync automatically.`,
     },

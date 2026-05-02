@@ -90,8 +90,8 @@ Real-time messaging to coordinate with your team.
 
 ## 🌍 DIFFICULTY & MODIFIERS
 
-### 🎯 **Sector Penalties**
-Playing older sectors? **-10% Gold per sector below your max unlocked arena** (capped at -50%). Keep pushing forward to maximize earnings!
+### 🎯 **Dynamic Difficulty**
+Replay any unlocked sector freely — enemy spawns and speed adapt to your performance. Crushing it? Spawns ramp up. Struggling? The game eases off. **No gold penalties** for playing earlier sectors.
 
 ### 🌟 **Difficulty Modes**
 Difficulty changes enemy strength + how much XP and Gold you earn per run (which feeds the score formula).
