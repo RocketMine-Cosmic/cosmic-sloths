@@ -82,6 +82,9 @@ export function updateEnemies(engine, dt) {
                     const finalFrags = (nftRelicMult > 1.0 && Math.random() < (nftRelicMult - 1.0))
                         ? fragmentReward + 1
                         : fragmentReward;
+                    // Accumulate per-run so saveScore credits these to PlayerSave at run end.
+                    // Was missing — boss frags showed in HUD but never reached the server.
+                    engine.runFragments = (engine.runFragments || 0) + finalFrags;
                     engine.callbacks.onFragmentFound(finalFrags);
                     creditedFrags = finalFrags;
                     engine.addDamageText(e.x, e.y - 40, `+${finalFrags} Relic Fragment!`, '#a855f7');
