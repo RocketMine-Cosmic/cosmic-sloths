@@ -16,7 +16,22 @@ Deno.serve(async (req) => {
         }
 
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet.toLowerCase() });
-        const saveData = records.length > 0 ? records[0].save_data : null;
+        let saveData = records.length > 0 ? records[0].save_data : null;
+
+        // Belt-and-braces: ensure profile fields (player_name) are present in save_data
+        // so cross-device cloud restore works even for legacy saves where the name lives
+        // only on the top-level PlayerSave column. SaveManager reads from save_data only.
+        if (saveData && records.length > 0) {
+            const row = records[0];
+            if (typeof saveData === 'string') {
+                try { saveData = JSON.parse(saveData); } catch {}
+            }
+            if (saveData && typeof saveData === 'object') {
+                if (!saveData.player_name && row.player_name) {
+                    saveData = { ...saveData, player_name: row.player_name };
+                }
+            }
+        }
 
         console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData);
         return Response.json({ saveData });
