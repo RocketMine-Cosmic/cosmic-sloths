@@ -87,23 +87,52 @@ export default function Upgrades({ isCarousel }) {
     const [respecModal, setRespecModal] = useState(null); // { tier, charId, charName, count, goldCost, omenxCost }
 
     useEffect(() => {
+        // Must match Leaderboard countdown EXACTLY (Sunday 23:59 UTC).
+        // Previously used moment().endOf('week') which is locale-dependent
+        // (Saturday in US locale) — caused Armory and Hall of Fame to show
+        // different reset times (Hugo bug 2026-05-02).
         const updateTimer = () => {
+            const now = new Date();
             if (activeCategory === 'weekly') {
-                const endOfWeek = moment().endOf('week');
-                const duration = moment.duration(endOfWeek.diff(moment()));
-                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+                const currentDay = now.getUTCDay(); // 0=Sun, 6=Sat
+                const daysUntilSunday = (7 - currentDay) % 7 || 7;
+                const endOfWeek = new Date(now);
+                endOfWeek.setUTCDate(now.getUTCDate() + daysUntilSunday);
+                endOfWeek.setUTCHours(23, 59, 0, 0);
+
+                const msLeft = endOfWeek - now;
+                const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
+                const hoursLeft = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const minutesLeft = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000));
+                setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
             } else if (activeCategory === 'seasonal') {
-                const weekNum = moment().week();
-                const seasonNum = Math.floor(weekNum / 4) + 1;
-                const lastWeekOfSeason = seasonNum * 4 - 1;
-                const endOfSeason = moment().week(lastWeekOfSeason).endOf('week');
-                const duration = moment.duration(endOfSeason.diff(moment()));
-                setTimeLeft(`${Math.floor(duration.asDays())}d ${duration.hours()}h ${duration.minutes()}m`);
+                // Mirror Leaderboard's ISO-8601 season-end calc exactly.
+                const year = now.getUTCFullYear();
+                const startOfYear = new Date(Date.UTC(year, 0, 1));
+                const startOfWeek = new Date(startOfYear);
+                startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
+                const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+                const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+                const lastWeekOfSeason = seasonNum * 4;
+
+                const jan1 = new Date(Date.UTC(year, 0, 1));
+                const jan1Day = jan1.getUTCDay() || 7;
+                const mondayW1 = new Date(jan1);
+                mondayW1.setUTCDate(jan1.getUTCDate() - (jan1Day - 1) + (jan1Day <= 4 ? 0 : 7));
+                const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+                const mondayOfLastWeek = new Date(mondayW1.getTime() + (lastWeekOfSeason - 1) * msPerWeek);
+                const endOfSeason = new Date(mondayOfLastWeek.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+
+                const msLeft = endOfSeason - now;
+                const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
+                const hoursLeft = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const minutesLeft = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000));
+                setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
             } else {
                 setTimeLeft('');
             }
         };
-        
+
         updateTimer();
         const interval = setInterval(updateTimer, 60000);
         return () => clearInterval(interval);
