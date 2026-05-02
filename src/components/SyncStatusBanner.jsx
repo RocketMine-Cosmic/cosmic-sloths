@@ -24,10 +24,16 @@ export default function SyncStatusBanner() {
             });
         };
         const onLinkFailed = () => {
+            // Detect iOS Safari/WebKit so we can show targeted help — Private Relay
+            // and "Prevent Cross-Site Tracking" are the most common culprits there.
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Mac') && navigator.maxTouchPoints > 1);
             setWarning({
                 kind: 'link',
                 title: 'Cloud saves disabled',
-                message: 'Could not link your wallet to your account. Refresh the page to retry — your local progress is safe.',
+                message: isIOS
+                    ? 'Could not link your wallet. On iOS, try disabling iCloud Private Relay and "Prevent Cross-Site Tracking" (Settings → Safari), then tap Retry.'
+                    : 'Could not link your wallet to your account. Tap Retry — your local progress is safe.',
             });
         };
         // Auto-dismiss the banner once a sync goes through (e.g. after the
@@ -48,15 +54,26 @@ export default function SyncStatusBanner() {
         setRetrying(true);
         setRetrySuccess(false);
         try {
-            await SaveManager.syncToBackendImmediate();
-            // syncToBackendImmediate fires saveSyncSuccess on success which clears
-            // the banner via the listener. If we got here without that firing,
-            // it means another syncFailed event already replaced the warning.
-            setRetrySuccess(true);
-            // Brief success flash before the banner is dismissed by the success listener
-            setTimeout(() => setRetrySuccess(false), 1500);
+            if (warning?.kind === 'link') {
+                // Tell Base44AuthLinker to re-run its link attempt. We can't await
+                // its result here (it dispatches its own walletLinkFailed if it
+                // fails again), so optimistically dismiss after a short delay if
+                // no new failure event arrives.
+                window.dispatchEvent(new CustomEvent('retryWalletLink'));
+                await new Promise(r => setTimeout(r, 12000)); // a bit more than the 10s linker timeout
+                // If the warning is still 'link' after the retry window, the linker
+                // will have re-fired walletLinkFailed and refreshed the message.
+                // If it succeeded, the linker stays quiet — clear the banner here.
+                setWarning(prev => prev?.kind === 'link' ? null : prev);
+                setRetrySuccess(true);
+                setTimeout(() => setRetrySuccess(false), 1500);
+            } else {
+                await SaveManager.syncToBackendImmediate();
+                setRetrySuccess(true);
+                setTimeout(() => setRetrySuccess(false), 1500);
+            }
         } catch {
-            // syncFailed listener will refresh the warning copy.
+            // syncFailed / walletLinkFailed listener will refresh the warning copy.
         } finally {
             setRetrying(false);
         }
@@ -64,7 +81,7 @@ export default function SyncStatusBanner() {
 
     if (!warning) return null;
 
-    const isSync = warning.kind === 'sync';
+    const showRetry = warning.kind === 'sync' || warning.kind === 'link';
 
     return (
         <div className="fixed top-0 left-0 right-0 z-[10000] flex justify-center px-3 pt-3 pointer-events-none">
@@ -73,7 +90,7 @@ export default function SyncStatusBanner() {
                 <div className="flex-1 min-w-0">
                     <div className="text-amber-200 font-bold text-sm">{warning.title}</div>
                     <div className="text-amber-300/80 text-xs mt-0.5 leading-snug">{warning.message}</div>
-                    {isSync && (
+                    {showRetry && (
                         <button
                             onClick={handleRetry}
                             disabled={retrying}
