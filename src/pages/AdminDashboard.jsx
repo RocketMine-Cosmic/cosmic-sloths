@@ -6,6 +6,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import { base44 } from '@/api/base44Client';
 import AdminOverview from '../components/admin/AdminOverview';
 import AdminPlayers from '../components/admin/AdminPlayers';
+import AdminRunScoreLookup from '../components/admin/AdminRunScoreLookup';
 import AdminEconomy from '../components/admin/AdminEconomy';
 import AdminRewards from '../components/admin/AdminRewards';
 import AdminSquads from '../components/admin/AdminSquads';
@@ -248,7 +249,12 @@ export default function AdminDashboard() {
         overview: <AdminOverview walletAddress={adminWallet} canViewFinance={canViewFinance} />,
         health: <AdminHealthCheck walletAddress={adminWallet} />,
         leaderboard: <AdminLeaderboard walletAddress={adminWallet} />,
-        players: <AdminPlayers walletAddress={adminWallet} />,
+        players: (
+            <div className="space-y-4">
+                <AdminPlayers walletAddress={adminWallet} />
+                <AdminRunScoreLookup />
+            </div>
+        ),
         grant: <AdminGrantPanel walletAddress={adminWallet} />,
         squads: <AdminSquads walletAddress={adminWallet} />,
         raid: <AdminRaid walletAddress={adminWallet} />,
