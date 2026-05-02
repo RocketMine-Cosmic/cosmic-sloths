@@ -429,7 +429,7 @@ export default function Squads({ isCarousel }) {
                 return;
             }
             setSquadMembers(prev => prev.filter(m => m.id !== member.id));
-            toast({ title: "Member Kicked", description: `${member.player_name} has been removed.` });
+            toast({ title: "Member Kicked", description: `${sanitizePilotName(member.player_name, member.wallet_address)} has been removed.` });
         } catch (e) {
             console.error(e);
         }
@@ -455,7 +455,7 @@ export default function Squads({ isCarousel }) {
                 if (m.id === newLeaderMemberId) return { ...m, role: 'leader' };
                 return m;
             }));
-            toast({ title: "Leadership Transferred", description: `${member.player_name} is now the leader.` });
+            toast({ title: "Leadership Transferred", description: `${sanitizePilotName(member.player_name, member.wallet_address)} is now the leader.` });
         } catch (e) {
             console.error(e);
         }
@@ -980,17 +980,18 @@ export default function Squads({ isCarousel }) {
                                         const memberWallet = (member.wallet_address || '').toLowerCase();
                                         const myWallet = (user.wallet_address || '').toLowerCase();
                                         const hasStats = member.weekly_kills !== undefined;
+                                        const safeName = sanitizePilotName(member.player_name, member.wallet_address);
                                         return (
                                         <div key={member.id} className="bg-slate-800 p-3 rounded-lg border border-slate-700">
                                             <div className="flex justify-between items-start gap-2">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 shrink-0">
-                                                        {member.player_name.charAt(0).toUpperCase()}
+                                                        {safeName.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="min-w-0">
                                                         <div className="font-bold text-white flex items-center gap-2 flex-wrap">
                                                             {member.role === 'leader' && <Crown className="w-3 h-3 text-yellow-400 shrink-0" />}
-                                                            <span className="truncate">{member.player_name}</span>
+                                                            <span className="truncate">{safeName}</span>
                                                             {member.player_title && <span className="text-[9px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider">{member.player_title}</span>}
                                                             {memberWallet === myWallet && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 rounded">YOU</span>}
                                                         </div>
