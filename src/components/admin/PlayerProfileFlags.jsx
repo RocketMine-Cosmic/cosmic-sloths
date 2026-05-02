@@ -56,13 +56,19 @@ export default function PlayerProfileFlags({ draft, setDraft }) {
                         <input type="checkbox" checked={!!draft.hasSetProfileName} onChange={e => set('hasSetProfileName', e.target.checked)} className="accent-cyan-500" />
                         Has Set Profile Name
                     </label>
-                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                        <input type="checkbox" checked={!!draft.newGamePlusUnlocked} onChange={e => set('newGamePlusUnlocked', e.target.checked)} className="accent-cyan-500" />
-                        New Game+ Unlocked
+                    <label className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
+                        <input type="checkbox" checked={!!draft.newGamePlusUnlocked} onChange={e => set('newGamePlusUnlocked', e.target.checked)} className="accent-cyan-500 mt-0.5" />
+                        <span>
+                            New Game+ Unlocked
+                            <span className="block text-[9px] text-slate-500 normal-case">Player has beaten the final sector — the NG+ toggle is now visible in their Hub.</span>
+                        </span>
                     </label>
-                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                        <input type="checkbox" checked={!!draft.isNGPlus} onChange={e => set('isNGPlus', e.target.checked)} className="accent-cyan-500" />
-                        NG+ Active
+                    <label className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
+                        <input type="checkbox" checked={!!draft.isNGPlus} onChange={e => set('isNGPlus', e.target.checked)} className="accent-cyan-500 mt-0.5" />
+                        <span>
+                            NG+ Active (harder runs, better rewards)
+                            <span className="block text-[9px] text-slate-500 normal-case">Player has the NG+ checkbox ticked in their Hub — every run starts in NG+ mode.</span>
+                        </span>
                     </label>
                     <NumericField label="VIP Level (cached)" value={draft.vipLevel} onChange={v => set('vipLevel', v)} max={20} />
                 </div>

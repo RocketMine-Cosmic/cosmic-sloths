@@ -5,6 +5,7 @@ import { Plus, Minus, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
 import PlayerNftsVipPanel from './PlayerNftsVipPanel';
 import PlayerForgeAugments from './PlayerForgeAugments';
 import PlayerProfileFlags from './PlayerProfileFlags';
+import PlayerTalentTree from './PlayerTalentTree';
 
 const ALL_CHARACTER_IDS = CHARACTERS.map(c => c.id);
 const ALL_ARENA_IDS = ARENAS.map(a => a.id);
@@ -287,7 +288,6 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                     <NumericField label="Gold" value={draft.gold} onChange={v => set('gold', v)} />
                     <NumericField label="Relic Fragments" value={draft.relicFragments} onChange={v => set('relicFragments', v)} />
                     <NumericField label="Star Fragments" value={draft.starFragments} onChange={v => set('starFragments', v)} />
-                    <NumericField label="Cosmic Tokens" value={draft.cosmicTokens} onChange={v => set('cosmicTokens', v)} />
                     <NumericField label="Total Kills" value={draft.totalKills} onChange={v => set('totalKills', v)} />
                     <NumericField label="Total Runs" value={draft.totalRuns} onChange={v => set('totalRuns', v)} />
                     <NumericField label="Total Gold Earned (lifetime)" value={draft.totalGoldEarned} onChange={v => set('totalGoldEarned', v)} />
@@ -472,19 +472,14 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                     </Section>
                 ))}
 
-                {/* Talent Upgrades — all 3 tiers */}
+                {/* Talent Upgrades — all 3 tiers (proper tree, not a count) */}
                 {[
                     { key: 'permanentTalents', title: '🌟 Permanent Talents', color: 'text-green-400' },
                     { key: 'weeklyTalents',    title: '🌟 Weekly Talents',    color: 'text-cyan-400' },
                     { key: 'seasonalTalents',  title: '🌟 Seasonal Talents',  color: 'text-purple-400' },
                 ].map(({ key, title, color }) => (
                     <Section key={key} title={title} color={color}>
-                        <div className="text-[10px] text-slate-500 mb-3">Number of talent purchases per character (max 3).</div>
-                        {CHARACTERS.map(c => (
-                            <NumericField key={c.id} label={c.name} max={3}
-                                value={(draft[key] || {})[c.id] || 0}
-                                onChange={v => setDraft(d => ({ ...d, [key]: { ...(d[key] || {}), [c.id]: v } }))} />
-                        ))}
+                        <PlayerTalentTree tierKey={key} draft={draft} setDraft={setDraft} />
                     </Section>
                 ))}
 
