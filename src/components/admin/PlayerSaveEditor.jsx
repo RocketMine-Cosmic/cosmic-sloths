@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CHARACTERS, ARENAS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS } from '../../game/Constants';
 import { Plus, Minus, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
+import PlayerNftsVipPanel from './PlayerNftsVipPanel';
 
 const ALL_CHARACTER_IDS = CHARACTERS.map(c => c.id);
 const ALL_ARENA_IDS = ARENAS.map(a => a.id);
@@ -276,6 +277,9 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
             </div>
 
             <div className="space-y-2">
+                {/* NFTs & VIP (live from OmenX) */}
+                <PlayerNftsVipPanel walletAddress={player.wallet_address} />
+
                 {/* Currency & Stats */}
                 <Section title="💰 Currency & Resources" defaultOpen={true}>
                     <NumericField label="Gold" value={draft.gold} onChange={v => set('gold', v)} />
