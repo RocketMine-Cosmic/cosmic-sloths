@@ -256,10 +256,11 @@ export default function Game() {
                 setLevelUpChoices(choices);
             },
             onFragmentFound: (amount) => {
-                const save = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
-                save.relicFragments = (save.relicFragments || 0) + amount;
-                SaveManager.save(save);
-                setGameState(s => ({ ...s, relicFragments: save.relicFragments }));
+                // Per-run pickup display only. The server credits PlayerSave.relicFragments
+                // at run end (saveScore validates engine.runFragments and bumps the cloud).
+                // Do NOT write relicFragments to localStorage here — syncSave treats it as
+                // server-owned and blocks any client bump.
+                setGameState(s => ({ ...s, relicFragments: (s.relicFragments || 0) + amount }));
             },
             onTokenFound: () => {
                 const save = localStorage.getItem('cosmic_sloth_save') ? JSON.parse(localStorage.getItem('cosmic_sloth_save')) : SaveManager.load();
@@ -292,13 +293,12 @@ export default function Game() {
                 // Server validates run, applies aggregates to PlayerSave, returns updated save.
                 saveScore(stats, false).then((res) => {
                     if (res?.success) {
-                        // Apply server-truthful save (includes gold/kills/bounty progress/etc.)
-                        // Preserve client-credited relicFragments + cosmicTokens — server doesn't track in-run drops.
+                        // Apply server-truthful save (includes gold/kills/bounty progress + relicFragments).
+                        // Preserve client-credited cosmicTokens — server doesn't track in-run drops for that.
                         if (res.saveData) {
                             const localSave = SaveManager.load();
                             const merged = {
                                 ...res.saveData,
-                                relicFragments: Math.max(Number(res.saveData.relicFragments || 0), Number(localSave?.relicFragments || 0)),
                                 cosmicTokens: Math.max(Number(res.saveData.cosmicTokens || 0), Number(localSave?.cosmicTokens || 0)),
                             };
                             SaveManager.save(merged);
@@ -338,12 +338,11 @@ export default function Game() {
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
                 saveScore(stats, true).then((res) => {
                     if (res?.success) {
-                        // Preserve client-credited relicFragments + cosmicTokens — server doesn't track in-run drops.
+                        // Server now credits relicFragments — preserve only cosmicTokens locally.
                         if (res.saveData) {
                             const localSave = SaveManager.load();
                             const merged = {
                                 ...res.saveData,
-                                relicFragments: Math.max(Number(res.saveData.relicFragments || 0), Number(localSave?.relicFragments || 0)),
                                 cosmicTokens: Math.max(Number(res.saveData.cosmicTokens || 0), Number(localSave?.cosmicTokens || 0)),
                             };
                             SaveManager.save(merged);

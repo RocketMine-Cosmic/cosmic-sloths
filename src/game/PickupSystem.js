@@ -27,6 +27,10 @@ export function updatePickups(engine, dt) {
                 const nftRelicMult = engine.save.nftRelicMultiplier || 1.0;
                 const fragValue = p.value || 1;
                 const finalFrags = nftRelicMult > 1.0 && Math.random() < (nftRelicMult - 1.0) ? fragValue + 1 : fragValue;
+                // Accumulate per-run; the SERVER credits PlayerSave.relicFragments at run end
+                // via saveScore. (Direct localStorage writes here used to be silently
+                // discarded by syncSave's anti-cheat — see fix 2026-05-02.)
+                engine.runFragments = (engine.runFragments || 0) + finalFrags;
                 if (engine.callbacks.onFragmentFound) engine.callbacks.onFragmentFound(finalFrags);
                 engine.addDamageText(engine.player.x, engine.player.y - 40, `+${finalFrags} Relic Fragment!`, '#a855f7');
             } else if (p.type === 'nuke') {

@@ -24,6 +24,13 @@ const MAX_LEVEL = 500;
 const MAX_TIME_SEC = 60 * 60; // 60 minutes
 const MIN_TIME_SEC = 1;       // No instant runs
 
+// Relic fragment caps. Drop rates in PickupSystem produce ~1 fragment per 30-60s
+// of normal play, NFT bonus may add up to +1 per drop. 1 fragment per 5 seconds
+// is a generous upper bound that catches obvious tampering without rejecting
+// long fragment-heavy runs. Endless runs get a smaller per-run cap.
+const MAX_FRAGMENTS_PER_SEC = 0.2; // = 1 frag / 5s
+const ENDLESS_FRAGMENTS_CAP_PER_RUN = 30;
+
 // Endless mode anti-exploit caps. Long endless runs were granting up to 800k gold,
 // breaking the upgrade economy. Cap gold/kills written from endless runs server-side.
 const ENDLESS_GOLD_CAP_PER_RUN = 5000;
@@ -53,6 +60,7 @@ function validateAndRecompute(scoreData) {
     let kills = Number(scoreData.kills) || 0;
     const level = Number(scoreData.level) || 1;
     let gold = Number(scoreData.gold) || 0;
+    let fragments = Math.max(0, Math.floor(Number(scoreData.fragments) || 0));
 
     if (time < MIN_TIME_SEC || time > MAX_TIME_SEC) {
         return { ok: false, reason: `time out of range: ${time}` };
@@ -85,6 +93,17 @@ function validateAndRecompute(scoreData) {
         }
     }
 
+    // Cap relic fragments per-run by playtime (generic anti-tamper) and a hard
+    // ceiling for endless runs. Anything beyond is silently clamped (never reject
+    // the run — players have legitimately lost too many of these already).
+    const fragmentsTimeCap = Math.max(5, Math.ceil(time * MAX_FRAGMENTS_PER_SEC) + 2);
+    let fragmentsForLedger = Math.min(fragments, fragmentsTimeCap);
+    let fragmentsCapped = fragmentsForLedger < fragments;
+    if (isEndless && fragmentsForLedger > ENDLESS_FRAGMENTS_CAP_PER_RUN) {
+        fragmentsForLedger = ENDLESS_FRAGMENTS_CAP_PER_RUN;
+        fragmentsCapped = true;
+    }
+
     const arenaMult = getArenaMultiplier(scoreData.arena_id);
     const isVictory = !!scoreData.is_victory;
     const baseScore = kills * 10 + level * 100 + time * 5 + gold * 5 + (isVictory ? 5000 : 0);
@@ -92,9 +111,9 @@ function validateAndRecompute(scoreData) {
 
     return {
         ok: true, score,
-        kills, time, level, gold, // raw values (for score / leaderboard display)
-        goldForLedger, killsForLedger, // capped values (for PlayerSave aggregation)
-        endlessGoldCapped, endlessKillsCapped, isEndless
+        kills, time, level, gold, fragments, // raw values (for score / leaderboard display)
+        goldForLedger, killsForLedger, fragmentsForLedger, // capped values (for PlayerSave aggregation)
+        endlessGoldCapped, endlessKillsCapped, fragmentsCapped, isEndless
     };
 }
 
@@ -164,6 +183,12 @@ function applyRunToSave(save, run, isVictory, charId, isEndless) {
     // Currencies — use capped values from validation (endless caps applied here)
     s.gold = Number(s.gold || 0) + run.gold;
     s.totalGoldEarned = Number(s.totalGoldEarned || 0) + run.gold;
+
+    // Relic fragments — picked up in-run, server is the SOLE writer to PlayerSave.relicFragments.
+    // (Client cannot bump this via syncSave; previous architecture lost legitimate pickups.)
+    if (run.fragments > 0) {
+        s.relicFragments = Number(s.relicFragments || 0) + run.fragments;
+    }
 
     // Kills
     const prevTotalKills = Number(s.totalKills || 0);
@@ -272,6 +297,7 @@ Deno.serve(async (req) => {
             time: validation.time,
             level: validation.level,
             gold: validation.goldForLedger,
+            fragments: validation.fragmentsForLedger,
             arena_id: scoreData.arena_id,
             encountered: Array.isArray(scoreData.encountered) ? scoreData.encountered : [],
             enemyKills: sanitisedEnemyKills,
@@ -365,7 +391,8 @@ Deno.serve(async (req) => {
 
         if (validation.endlessGoldCapped) console.log(`[saveScore] ${walletAddress} ENDLESS gold capped: raw=${validation.gold} → ledger=${validation.goldForLedger}`);
         if (validation.endlessKillsCapped) console.log(`[saveScore] ${walletAddress} ENDLESS kills capped: raw=${validation.kills} → ledger=${validation.killsForLedger}`);
-        console.log(`[saveScore] ${walletAddress} score=${validation.score} kills=${validation.kills} gold=${validation.goldForLedger} victory=${isVictory} endless=${validation.isEndless}${grantedCharacter ? ` granted=${grantedCharacter}` : ''}${unlockedArena ? ` unlockedArena=${unlockedArena}` : ''}`);
+        if (validation.fragmentsCapped) console.log(`[saveScore] ${walletAddress} fragments capped: raw=${validation.fragments} → ledger=${validation.fragmentsForLedger}`);
+        console.log(`[saveScore] ${walletAddress} score=${validation.score} kills=${validation.kills} gold=${validation.goldForLedger} fragments=${validation.fragmentsForLedger} victory=${isVictory} endless=${validation.isEndless}${grantedCharacter ? ` granted=${grantedCharacter}` : ''}${unlockedArena ? ` unlockedArena=${unlockedArena}` : ''}`);
         return Response.json({
             success: true,
             score: validation.score,
@@ -375,8 +402,10 @@ Deno.serve(async (req) => {
             // Tell client what was actually credited (may be < raw values for endless mode).
             goldCredited: validation.goldForLedger,
             killsCredited: validation.killsForLedger,
+            fragmentsCredited: validation.fragmentsForLedger,
             endlessGoldCapped: !!validation.endlessGoldCapped,
             endlessKillsCapped: !!validation.endlessKillsCapped,
+            fragmentsCapped: !!validation.fragmentsCapped,
         });
     } catch (error) {
         console.error('[saveScore]', error.message);

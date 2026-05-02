@@ -315,6 +315,10 @@ export class GameEngine {
         // Per-weapon stat tracking — credit damage on every hit, credit kill on the killing blow.
         this.weaponDamage = {};
         this.weaponKills = {};
+        // Per-run relic fragment accumulator. Picked up via PickupSystem,
+        // sent to saveScore at run end where the SERVER credits PlayerSave.relicFragments
+        // (client cannot bump that field — syncSave blocks it as anti-cheat).
+        this.runFragments = 0;
 
         // Rolling 10-second damage window. Each entry is { t, dmg }; we sum entries
         // whose timestamp is within the last DPS_WINDOW seconds. Lets the HUD's DPS
@@ -1005,6 +1009,7 @@ export class GameEngine {
             weaponDamage: this.weaponDamage || {},
             weaponKills: this.weaponKills || {},
             killedBy: this._lastDamageSource || null,
+            fragments: this.runFragments || 0,
             ...extra
         };
     }
