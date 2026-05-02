@@ -189,6 +189,11 @@ export function applyUpgrade(engine, upgrade) {
         } else {
             engine.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: Math.min(20, levelIncrement), timer: 0 });
         }
+        // CHECK EVOLUTIONS FIRST. Otherwise a synergy can consume the base weapon
+        // before its evolution has a chance to fire (Hugo bug 2026-05-02 — picked up
+        // napBeam with Spatial Expander already owned, but napBeam+drones synergy'd
+        // into Orbital Lasers and the Supernova Beam evolution never happened).
+        if (engine.checkEvolutions) engine.checkEvolutions();
         checkSynergies(engine);
     }
     engine.isPaused = false;
@@ -199,7 +204,11 @@ export function checkSynergies(engine) {
         const w1 = engine.player.weapons.find(w => w.id === synergy.weapon1);
         const w2 = engine.player.weapons.find(w => w.id === synergy.weapon2);
 
-        if (w1 && w2) {
+        // Belt-and-braces: if the synergy result is somehow already owned (e.g. stale
+        // pre-cached choices that picked napBeam after a previous synergy fired), skip
+        // — otherwise a second Orbital Lasers gets stacked on top of the existing one.
+        const alreadyHasResult = engine.player.weapons.some(w => w.id === synergy.result);
+        if (w1 && w2 && !alreadyHasResult) {
             engine.player.weapons = engine.player.weapons.filter(w => w.id !== synergy.weapon1 && w.id !== synergy.weapon2);
 
             const newLevel = Math.min(20, Math.max(w1.level, w2.level) + 1);
