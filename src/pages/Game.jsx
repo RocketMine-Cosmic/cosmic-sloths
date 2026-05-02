@@ -487,19 +487,32 @@ export default function Game() {
     };
 
     const handleUpgradeSelect = (upgrade) => {
-        if (engineRef.current) {
-            engineRef.current.applyUpgrade(upgrade);
-            // Brief grace period so the player has a moment to reposition before
-            // enemies start moving again. UpgradeSystem sets isPaused=true on level-up;
-            // keep it paused for 1.5s after the modal closes.
-            engineRef.current.isPaused = true;
-            setTimeout(() => {
-                if (engineRef.current && !engineRef.current.isGameOver && !engineRef.current.isVictory) {
-                    engineRef.current.lastTime = performance.now(); // prevent dt spike
-                    engineRef.current.isPaused = false;
-                }
-            }, 1500);
+        const engine = engineRef.current;
+        if (!engine) { setLevelUpChoices(null); return; }
+        engine.applyUpgrade(upgrade);
+        // If applyUpgrade caused another level-up (XP overflow), UpgradeSystem will have
+        // re-paused the engine and onLevelUp will fire with new choices. Don't start a
+        // grace timer in that case — wait until the LAST modal closes so multi-level-ups
+        // don't stop-start the game between picks.
+        if (engine.xp >= engine.xpRequired && !engine.isGameOver && !engine.isVictory) {
+            setLevelUpChoices(null);
+            return;
         }
+        // Final pick — start the 1.5s grace period. Use a timestamp on the engine so
+        // any previously-scheduled timeout from an earlier level-up can't fight us.
+        engine.isPaused = true;
+        const myGraceId = (engine._graceId || 0) + 1;
+        engine._graceId = myGraceId;
+        setTimeout(() => {
+            const e = engineRef.current;
+            if (!e || e.isGameOver || e.isVictory) return;
+            // Only unpause if we're still the latest grace timer AND there's no
+            // pending level-up modal showing.
+            if (e._graceId === myGraceId) {
+                e.lastTime = performance.now();
+                e.isPaused = false;
+            }
+        }, 1500);
         setLevelUpChoices(null);
     };
 
