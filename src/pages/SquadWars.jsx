@@ -143,10 +143,16 @@ export default function SquadWars({ isCarousel }) {
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 mb-4 border-b border-slate-800 pb-2 md:pb-4 shrink-0">
                     <div>
                         {!isCarousel && (
-                            <button onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
-                                className="mb-2 flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700 w-fit">
-                                <ArrowLeft className="w-3 h-3" /> Main Menu
-                            </button>
+                            <div className="mb-2 flex items-center gap-2 flex-wrap">
+                                <button onClick={() => { SoundManager.playUIClick(); navigate('/squads'); }}
+                                    className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700 w-fit">
+                                    <ArrowLeft className="w-3 h-3" /> Back to Squads
+                                </button>
+                                <button onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
+                                    className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700 w-fit">
+                                    <ArrowLeft className="w-3 h-3" /> Main Menu
+                                </button>
+                            </div>
                         )}
                         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest flex items-center gap-2"
                             style={{ background: 'linear-gradient(90deg, #EF4444, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(239,68,68,0.5))' }}>
