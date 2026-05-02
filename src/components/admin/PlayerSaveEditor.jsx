@@ -163,6 +163,24 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
     const [msg, setMsg] = useState('');
     const [rank, setRank] = useState(null);
     const [resetting, setResetting] = useState(false);
+    const [nftCharIds, setNftCharIds] = useState([]);
+
+    // Load NFT-owned character ids so the arenas section can show them too
+    // (NFT chars aren't in unlockedCharacters — they're granted at runtime).
+    useEffect(() => {
+        let cancelled = false;
+        base44.functions.invoke('getPlayerNftsAndVip', { walletAddress: player.wallet_address })
+            .then(res => {
+                if (cancelled) return;
+                const nfts = res?.data?.nfts || [];
+                const ids = nfts
+                    .map(n => (n.metadata?.name || n.name || '').toLowerCase())
+                    .filter(id => CHARACTERS.find(c => c.id === id));
+                setNftCharIds([...new Set(ids)]);
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [player.wallet_address]);
 
     // Load weekly rank
     useEffect(() => {
@@ -244,6 +262,9 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
 
     const unlockedChars = draft.unlockedCharacters || [];
     const unlockedArenas = draft.unlockedArenasByCharacter || {};
+    // Effective roster for the Arenas section: cloud-unlocked + NFT-owned, so
+    // staff can edit arena unlocks for NFT characters too.
+    const arenaEditableCharIds = [...new Set([...unlockedChars, ...nftCharIds])];
 
     return (
         <div className="space-y-3">
@@ -328,10 +349,16 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                 {/* Arenas per character */}
                 <Section title="🗺️ Arenas" color="text-orange-400">
                     <button onClick={grantAllArenas} className="text-xs bg-orange-800 hover:bg-orange-700 text-white px-3 py-1 rounded font-bold mb-3 transition-colors">Grant All Arenas to All Characters</button>
+                    <div className="text-[10px] text-slate-500 mb-2">Showing all characters the player owns (kill-milestone unlocks + NFT-owned).</div>
                     <div className="space-y-3">
-                        {CHARACTERS.filter(c => unlockedChars.includes(c.id)).map(c => (
+                        {CHARACTERS.filter(c => arenaEditableCharIds.includes(c.id)).map(c => (
                             <div key={c.id}>
-                                <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">{c.name}</div>
+                                <div className="text-[10px] text-slate-400 uppercase font-bold mb-1 flex items-center gap-1.5">
+                                    {c.name}
+                                    {nftCharIds.includes(c.id) && !unlockedChars.includes(c.id) && (
+                                        <span className="text-[8px] bg-purple-900/60 text-purple-300 px-1.5 py-0.5 rounded font-bold normal-case tracking-normal">NFT</span>
+                                    )}
+                                </div>
                                 <div className="flex flex-wrap gap-1">
                                     {ARENAS.map(a => (
                                         <ToggleChip key={a.id} label={a.name}
