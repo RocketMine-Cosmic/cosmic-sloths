@@ -21,6 +21,7 @@ import AdminDeletedScores from '../components/admin/AdminDeletedScores';
 import AdminChangesLogViewer from '../components/admin/AdminChangesLogViewer';
 import AdminManagers from '../components/admin/AdminManagers';
 import AdminOrphanedData from '../components/admin/AdminOrphanedData';
+import AdminBackfillNames from '../components/admin/AdminBackfillNames';
 import AdminDiscordGuide from '../components/admin/AdminDiscordGuide';
 import AdminDiscordChannelsGuide from '../components/admin/AdminDiscordChannelsGuide';
 import AdminDataBackup from '../components/admin/AdminDataBackup';
@@ -266,7 +267,12 @@ export default function AdminDashboard() {
                 <AdminBulkScoreDelete walletAddress={adminWallet} />
             </div>
         ),
-        cleanup: <AdminOrphanedData walletAddress={adminWallet} />,
+        cleanup: (
+            <div className="space-y-4">
+                <AdminBackfillNames />
+                <AdminOrphanedData walletAddress={adminWallet} />
+            </div>
+        ),
         changelog: <AdminChangesLogViewer />,
         managers: (
             <div className="space-y-4">

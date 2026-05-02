@@ -293,9 +293,23 @@ Deno.serve(async (req) => {
 
         const newTs = Date.now();
         merged.updated_at = newTs;
+
+        // PRIVACY/AUTHORITY: player_name on PlayerSave is the source of truth for
+        // every leaderboard display. The client must NEVER overwrite it via syncSave —
+        // that path is reserved for the explicit Profile-page flow (`syncProfileName`)
+        // which also cascades the new name to RunScore / SquadMember / etc.
+        // syncSave preserves whatever the cloud already had to prevent stale local
+        // state (e.g. an old `pilotName` field carrying the OAuth full_name) from
+        // leaking back into the database and onto the leaderboard.
+        const cloudName = (existing[0].player_name || existingData.player_name || existingData.pilotName || '').trim();
+        const preservedName = cloudName || merged.player_name || merged.pilotName || '';
+        // Mirror the preserved name back into save_data so the next saveScore call
+        // reads a consistent value.
+        merged.player_name = preservedName;
+
         await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
             wallet_address: walletLower,
-            player_name: merged.player_name || merged.pilotName || '',
+            player_name: preservedName,
             save_data: merged,
             updated_at: newTs
         });
