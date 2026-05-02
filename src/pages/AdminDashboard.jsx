@@ -191,6 +191,12 @@ export default function AdminDashboard() {
             <div className="min-h-screen relative text-slate-200 flex items-center justify-center font-sans p-4">
                 <SpaceBackground />
                 <div className="relative z-10 w-full max-w-sm">
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); navigate('/'); }}
+                        className="mb-3 flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-bold text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700"
+                    >
+                        <ArrowLeft className="w-3 h-3" /> Back to Main Menu
+                    </button>
                     <div className="bg-[#0b0416]/90 border border-red-900/50 rounded-xl p-8 flex flex-col gap-5 shadow-[0_0_40px_rgba(239,68,68,0.15)]">
                         <div className="text-center">
                             <h1 className="text-2xl font-black uppercase tracking-widest text-red-400">Admin Access</h1>

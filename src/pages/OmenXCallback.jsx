@@ -152,6 +152,14 @@ export default function OmenXCallback() {
                         {JSON.stringify(debugInfo, null, 2)}
                     </pre>
                 )}
+                {status.startsWith('❌') && (
+                    <button
+                        onClick={() => window.location.replace('/')}
+                        className="mt-4 px-4 py-2 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/60 rounded text-purple-100 hover:text-white text-xs font-bold tracking-widest uppercase transition-colors"
+                    >
+                        ← Back to Main Menu
+                    </button>
+                )}
             </div>
         </div>
     );
