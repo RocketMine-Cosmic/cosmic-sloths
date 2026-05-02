@@ -153,8 +153,11 @@ async function fetchNfts() {
 }
 
 // User profile — local-only (read from omenx_auth_data) — no network.
-function loadUserDataLocal() {
-    if (userFetched) return;
+// `force=true` re-reads localStorage even if already loaded — used when
+// SaveManager merges cloud profile fields back into omenx_auth_data after
+// boot, so the cached user reflects the freshly-restored title/name/icon.
+function loadUserDataLocal(force = false) {
+    if (userFetched && !force) return;
     try {
         const stored = localStorage.getItem('omenx_auth_data');
         if (!stored) return;
@@ -302,6 +305,12 @@ export function subscribePlayerData(fn) {
         // OmenXAuthContext dispatches a StorageEvent but its storageArea is null.
         // Listen on walletLinked CustomEvent instead, which fires reliably.
         window.addEventListener('walletLinked', onAuthChange);
+
+        // Profile edits (title/name/icon) update omenx_auth_data and dispatch this.
+        // Re-read localStorage so the cached user object reflects the change for
+        // any subsequent page that subscribes (otherwise they get stale data
+        // from cachedData.user that was set at boot).
+        window.addEventListener('omenxUserUpdated', () => loadUserDataLocal(true));
 
     }
 
