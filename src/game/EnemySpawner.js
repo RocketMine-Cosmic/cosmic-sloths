@@ -146,7 +146,7 @@ export function spawnEnemies(engine, dt) {
                 newElite.speed = elite.speed * 1.2 * spdMult;
                 newElite.xp = elite.xp * 4;
                 newElite.isElite = true;
-                newElite.eliteGoldBonus = 3;
+                newElite.eliteGoldBonus = 2;
 
                 engine.enemies.push(newElite);
                 engine.encounteredEnemies.add(elite.id);
