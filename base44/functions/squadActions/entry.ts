@@ -72,8 +72,27 @@ Deno.serve(async (req) => {
         const body = await req.json();
         const { action } = body;
 
+        // Authoritative pilot name from PlayerSave (set via Profile page).
+        // We look it up once here so all writes (join/leave/message/system events)
+        // use the same source of truth — never trust the client-submitted name.
+        const fallbackName = `Pilot_${walletAddress.slice(-6).toUpperCase()}`;
+        let authoritativeName = fallbackName;
+        let authoritativeTitle = '';
+        try {
+            const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
+            if (saves.length > 0) {
+                const sd = typeof saves[0].save_data === 'string' ? JSON.parse(saves[0].save_data) : saves[0].save_data;
+                const n = (sd?.player_name || saves[0].player_name || '').trim();
+                if (n) authoritativeName = n;
+                const t = (sd?.player_title || '').trim();
+                if (t) authoritativeTitle = t;
+            }
+        } catch {}
+
         if (action === 'join') {
-            const { squadId, playerName, playerTitle } = body;
+            const { squadId } = body;
+            const playerName = authoritativeName;
+            const playerTitle = authoritativeTitle;
             if (!squadId) return Response.json({ error: 'Couldn\'t join the squad — please refresh and try again.' }, { status: 400 });
 
             // Validate squad exists & has space; reject duplicate joins.
@@ -134,7 +153,8 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'leave') {
-            const { memberId, squadId, playerName } = body;
+            const { memberId, squadId } = body;
+            const playerName = authoritativeName;
             if (!memberId || !squadId) return Response.json({ error: 'Couldn\'t leave the squad — please refresh and try again.' }, { status: 400 });
 
             await base44.asServiceRole.entities.SquadMember.delete(memberId);
@@ -192,7 +212,9 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'sendMessage') {
-            const { squadId, content, playerName, playerTitle } = body;
+            const { squadId, content } = body;
+            const playerName = authoritativeName;
+            const playerTitle = authoritativeTitle;
             if (!squadId || !content) return Response.json({ error: 'Couldn\'t send your message — please try again.' }, { status: 400 });
 
             // Block muted wallets. Auto-clean expired mutes inline so they don't linger.

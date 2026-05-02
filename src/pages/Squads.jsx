@@ -274,7 +274,7 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const displayName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
+            const displayName = (currentSave.player_name || user?.data?.player_name || user?.player_name || `Pilot_${walletAddr.slice(-6).toUpperCase()}`).trim();
             const res = await base44.functions.invoke('createSquad', {
                 squadName: newSquadName,
                 squadTag: newSquadTag,
@@ -308,7 +308,8 @@ export default function Squads({ isCarousel }) {
                 return;
             }
 
-            const displayName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
+            const localSave = SaveManager.load();
+            const displayName = (localSave.player_name || user?.data?.player_name || user?.player_name || `Pilot_${walletAddr.slice(-6).toUpperCase()}`).trim();
             const res = await base44.functions.invoke('squadActions', {
                 action: 'join', squadId,
                 playerName: displayName,
@@ -351,7 +352,8 @@ export default function Squads({ isCarousel }) {
         if (!myMemberRecord) return;
         try {
             SoundManager.playUIClick();
-            const leaveName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
+            const localSave = SaveManager.load();
+            const leaveName = (localSave.player_name || user?.data?.player_name || user?.player_name || `Pilot_${walletAddr.slice(-6).toUpperCase()}`).trim();
             const res = await base44.functions.invoke('squadActions', {
                 action: 'leave',
                 memberId: myMemberRecord.id,
@@ -384,7 +386,8 @@ export default function Squads({ isCarousel }) {
         setNewMessage('');
         SoundManager.playUIClick();
 
-        const displayName = sanitizePilotName(user?.data?.player_name || user?.player_name, walletAddr);
+        const localSave = SaveManager.load();
+        const displayName = (localSave.player_name || user?.data?.player_name || user?.player_name || `Pilot_${walletAddr.slice(-6).toUpperCase()}`).trim();
         const optimisticMsg = {
             id: `optimistic-${Date.now()}`,
             squad_id: mySquad.id,

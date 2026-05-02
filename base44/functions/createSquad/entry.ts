@@ -11,8 +11,23 @@ Deno.serve(async (req) => {
         const walletAddress = me.wallet_address;
         if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
 
-        const { squadName, squadTag, squadDesc, playerName, playerTitle } = await req.json();
+        const { squadName, squadTag, squadDesc } = await req.json();
         if (!squadName || !squadTag) return Response.json({ error: 'Missing required fields' }, { status: 400 });
+
+        // Authoritative pilot name from PlayerSave (set via Profile). Never trust the client.
+        const fallbackName = `Pilot_${walletAddress.slice(-6).toUpperCase()}`;
+        let playerName = fallbackName;
+        let playerTitle = '';
+        try {
+            const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
+            if (saves.length > 0) {
+                const sd = typeof saves[0].save_data === 'string' ? JSON.parse(saves[0].save_data) : saves[0].save_data;
+                const n = (sd?.player_name || saves[0].player_name || '').trim();
+                if (n) playerName = n;
+                const t = (sd?.player_title || '').trim();
+                if (t) playerTitle = t;
+            }
+        } catch {}
 
         const tag = squadTag.toUpperCase().substring(0, 4);
         const today = new Date().toISOString().split('T')[0];
@@ -37,7 +52,7 @@ Deno.serve(async (req) => {
 
         const member = await base44.asServiceRole.entities.SquadMember.create({
             squad_id: squad.id, wallet_address: walletAddress,
-            player_name: playerName || 'Leader', player_title: playerTitle || '',
+            player_name: playerName, player_title: playerTitle,
             role: 'leader', last_payout_week: '', last_daily_payout_date: ''
         });
 
