@@ -363,6 +363,22 @@ Deno.serve(async (req) => {
             updated_at: Date.now()
         });
 
+        // Audit log — never block the purchase if logging fails.
+        try {
+            await base44.asServiceRole.entities.GoldSpendLog.create({
+                wallet_address: walletAddress.toLowerCase(),
+                player_name: saveRecord.player_name || updatedSave.player_name || updatedSave.pilotName || '',
+                amount: cost,
+                balance_before: currentGold,
+                balance_after: updatedSave.gold,
+                grant_info: grantInfo,
+                week_id: periodIds.week_id,
+                season_id: periodIds.season_id,
+            });
+        } catch (logErr) {
+            console.error('[spendGold] GoldSpendLog write failed (non-fatal):', logErr.message);
+        }
+
         console.log(`[spendGold] ${walletAddress} spent ${cost} gold on ${grantInfo.type}`);
         return Response.json({ success: true, cost, saveData: updatedSave });
     } catch (error) {
