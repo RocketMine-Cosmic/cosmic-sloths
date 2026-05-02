@@ -141,14 +141,14 @@ export default function Titles({ isCarousel }) {
         setSaving(true);
         SoundManager.playUIClick();
         try {
+            // Always sync to cloud — local IndexedDB write isn't enough; without this
+            // call the title is lost on next session/cross-device load (Hugo 2026-05-02).
             await updateOmenXUser({ player_title: titleId });
             setEquippedTitle(titleId);
-            const currentName = omenxUser?.player_name || omenxUser?.data?.player_name || '';
-            if (currentName) {
-                base44.functions.invoke('syncProfileName', {
-                    newName: currentName,
-                    newTitle: titleId,
-                }).catch(e => console.error('[Titles] sync failed', e));
+            try {
+                await base44.functions.invoke('syncProfileName', { newTitle: titleId });
+            } catch (e) {
+                console.error('[Titles] sync failed', e);
             }
         } finally {
             setSaving(false);
