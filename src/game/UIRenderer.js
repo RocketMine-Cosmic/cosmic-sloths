@@ -75,8 +75,11 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
         const edgePadding = 60;
 
         const DROP_STYLE = {
-            fragment: { color: 'rgba(168, 85, 247, 0.9)', icon: '💎' },
-            nuke:     { color: 'rgba(255, 50, 50, 0.9)',  icon: '☢️' },
+            fragment:     { color: 'rgba(168, 85, 247, 0.9)', icon: '💎' },
+            nuke:         { color: 'rgba(255, 50, 50, 0.9)',  icon: '☢️' },
+            magnet_power: { color: 'rgba(80, 130, 255, 0.9)', icon: '🧲' },
+            shield_power: { color: 'rgba(255, 230, 80, 0.9)', icon: '🛡️' },
+            reroll:       { color: 'rgba(255, 0, 255, 0.9)',  icon: 'R'  },
         };
         // Big gold piles (boss reward) — small piles aren't worth indicating.
         const BOSS_GOLD_THRESHOLD = 500;
