@@ -75,22 +75,17 @@ const periodMismatch = (a, b, idKey) => {
     return a[idKey] !== b[idKey];
 };
 
-// Period roll: when client OR cloud has advanced to a new period, weekly/seasonal
-// upgrade containers reset to the newer period and zero out previous values.
+// Period roll: cloud is the source of truth for periodic upgrade containers.
+// We NEVER let a client-side period mismatch reset cloud levels — that bug
+// wiped CRYBEL's seasonal upgrades on 2026-05-01 (client had a stale seasonId
+// from before purchases landed → "newer" id heuristic returned an empty object
+// and clobbered freshly-paid `damage:1, magnet:1`). The cloud period is bumped
+// only by purchaseSku / spendGold / claimBounty when those grants apply.
 function resolvePeriodicUpgradeContainer(cloudVal, clientVal, idKey) {
     const c = cloudVal || {};
-    const x = clientVal || {};
     if (!idKey) return c; // permanent: cloud wins, no period
-    const cloudId = c[idKey];
-    const clientId = x[idKey];
-    // Both same period — cloud is truth (server-owned).
-    if (cloudId === clientId) return c;
-    // Neither has an id — keep cloud.
-    if (!cloudId && !clientId) return c;
-    // Different periods: take whichever id is "newer" (lexicographic works for
-    // YYYY-Www and YYYY-Sn formats). Reset levels for that period.
-    const newerId = (clientId || '') > (cloudId || '') ? clientId : cloudId;
-    return { [idKey]: newerId };
+    // Cloud always wins. Client cannot reset, advance, or modify periodic upgrades via syncSave.
+    return c;
 }
 
 Deno.serve(async (req) => {
