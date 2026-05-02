@@ -3,6 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { CHARACTERS, ARENAS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS } from '../../game/Constants';
 import { Plus, Minus, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
 import PlayerNftsVipPanel from './PlayerNftsVipPanel';
+import PlayerForgeAugments from './PlayerForgeAugments';
+import PlayerProfileFlags from './PlayerProfileFlags';
 
 const ALL_CHARACTER_IDS = CHARACTERS.map(c => c.id);
 const ALL_ARENA_IDS = ARENAS.map(a => a.id);
@@ -285,10 +287,20 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                     <NumericField label="Gold" value={draft.gold} onChange={v => set('gold', v)} />
                     <NumericField label="Relic Fragments" value={draft.relicFragments} onChange={v => set('relicFragments', v)} />
                     <NumericField label="Star Fragments" value={draft.starFragments} onChange={v => set('starFragments', v)} />
+                    <NumericField label="Cosmic Tokens" value={draft.cosmicTokens} onChange={v => set('cosmicTokens', v)} />
                     <NumericField label="Total Kills" value={draft.totalKills} onChange={v => set('totalKills', v)} />
                     <NumericField label="Total Runs" value={draft.totalRuns} onChange={v => set('totalRuns', v)} />
+                    <NumericField label="Total Gold Earned (lifetime)" value={draft.totalGoldEarned} onChange={v => set('totalGoldEarned', v)} />
+                    <NumericField label="Max Time Survived (s)" value={draft.maxTimeSurvived} onChange={v => set('maxTimeSurvived', v)} />
+                    <NumericField label="Max Level Reached" value={draft.maxLevelReached} onChange={v => set('maxLevelReached', v)} />
+                    <NumericField label="Best Score" value={draft.bestScore} onChange={v => set('bestScore', v)} />
+                    <NumericField label="Leviathan Kills" value={draft.leviathanKills} onChange={v => set('leviathanKills', v)} />
+                    <NumericField label="Global Raid Damage" value={draft.globalRaidDamage} onChange={v => set('globalRaidDamage', v)} />
                     <NumericField label="Seasonal Points" value={draft.seasonalPoints} onChange={v => set('seasonalPoints', v)} />
                 </Section>
+
+                {/* Profile, NG+, VIP, session buffs, per-character kills */}
+                <PlayerProfileFlags draft={draft} setDraft={setDraft} />
 
                 {/* Characters */}
                 <Section title="🧑‍🚀 Characters" color="text-purple-400">
@@ -296,10 +308,19 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                         <button onClick={grantAllCharacters} className="text-xs bg-purple-800 hover:bg-purple-700 text-white px-3 py-1 rounded font-bold transition-colors">Grant All</button>
                         <button onClick={() => set('unlockedCharacters', ['neobyte'])} className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded font-bold transition-colors">Reset to Default</button>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="text-[10px] text-slate-500 mb-2">Unlocked roster (kill-milestone unlocks). NFT-owned chars are auto-granted at runtime — see NFTs panel above.</div>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
                         {CHARACTERS.map(c => (
                             <ToggleChip key={c.id} label={c.name} active={unlockedChars.includes(c.id)}
                                 onClick={() => toggleArrayItem('unlockedCharacters', c.id)} />
+                        ))}
+                    </div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Found Characters (in-run discoveries)</div>
+                    <div className="flex flex-wrap gap-1.5">
+                        {CHARACTERS.map(c => (
+                            <ToggleChip key={c.id} label={c.name}
+                                active={(draft.foundCharacters || []).includes(c.id)}
+                                onClick={() => toggleArrayItem('foundCharacters', c.id)} />
                         ))}
                     </div>
                 </Section>
@@ -372,6 +393,18 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                                 </div>
                             );
                         })}
+                    </div>
+                </Section>
+
+                {/* Equipped Relics (max 3 in game) */}
+                <Section title="💎 Equipped Relics" color="text-fuchsia-300">
+                    <div className="text-[10px] text-slate-500 mb-2">Active relics applied at run start (game caps at 3 equipped).</div>
+                    <div className="flex flex-wrap gap-1.5">
+                        {RELICS.map(r => (
+                            <ToggleChip key={r.id} label={`${r.icon} ${r.name}`}
+                                active={(draft.equippedRelics || []).includes(r.id)}
+                                onClick={() => toggleArrayItem('equippedRelics', r.id)} />
+                        ))}
                     </div>
                 </Section>
 
@@ -454,6 +487,9 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                         ))}
                     </Section>
                 ))}
+
+                {/* Forge Augments (weapon + character) */}
+                <PlayerForgeAugments draft={draft} setDraft={setDraft} />
 
                 {/* Custom Field Editor */}
                 <CustomFieldEditor draft={draft} setDraft={setDraft} />
