@@ -15,6 +15,8 @@ function OmenXIcon({ className }) {
 
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
+    // wallet_address (lowercased) -> { tag, name, icon } for squad badge display.
+    const [squadByWallet, setSquadByWallet] = useState({});
     // Total unique ranked players in the period (capped at 100) — used as the
     // denominator for payout math so the displayed OMENX matches previewPayouts/distributeRewards.
     const [totalRankedPlayers, setTotalRankedPlayers] = useState(0);
@@ -259,9 +261,32 @@ export default function Leaderboard() {
                 if (allUnique.length >= 100) break;
             }
 
-            setScores(allUnique.slice(0, 50));
+            const topDisplayed = allUnique.slice(0, 50);
+            setScores(topDisplayed);
             setTotalRankedPlayers(allUnique.length); // up to 100 — used as payout denominator
             setLastUpdated(Date.now());
+
+            // Look up squad membership for the displayed players (best-effort, non-blocking).
+            // Some RunScore rows may not have wallet_address (older records) — those just won't show a squad.
+            try {
+                const wallets = [...new Set(topDisplayed.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
+                if (wallets.length > 0) {
+                    const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
+                    const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];
+                    const squads = squadIds.length > 0 ? await base44.entities.Squad.filter({ id: { $in: squadIds } }) : [];
+                    const squadMap = Object.fromEntries(squads.map(s => [s.id, s]));
+                    const result = {};
+                    for (const m of members) {
+                        const s = squadMap[m.squad_id];
+                        if (s) result[(m.wallet_address || '').toLowerCase()] = { tag: s.tag, name: s.name, icon: s.icon };
+                    }
+                    setSquadByWallet(result);
+                } else {
+                    setSquadByWallet({});
+                }
+            } catch (e) {
+                console.warn('[Leaderboard] squad lookup failed:', e?.message);
+            }
         } catch (error) {
             console.error('Failed to fetch leaderboard', error);
         }
@@ -436,6 +461,16 @@ export default function Leaderboard() {
                                                     })()}
                                                 </div>
                                                 <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5 flex items-center gap-2 flex-wrap">
+                                                    {(() => {
+                                                        const sq = squadByWallet[(score.wallet_address || '').toLowerCase()];
+                                                        if (!sq) return null;
+                                                        return (
+                                                            <span className="flex items-center gap-1 text-orange-300 bg-orange-950/40 border border-orange-700/40 px-1.5 py-0.5 rounded font-bold" title={sq.name}>
+                                                                {sq.icon && !sq.icon.startsWith('http') && <span>{sq.icon}</span>}
+                                                                [{sq.tag}]
+                                                            </span>
+                                                        );
+                                                    })()}
                                                     {char && (
                                                         <span className="flex items-center gap-1" style={{ color: char.color }}>
                                                             <span className="w-1.5 h-1.5 rounded-full" style={{ background: char.color, boxShadow: `0 0 4px ${char.color}` }}></span>
