@@ -489,6 +489,16 @@ export default function Game() {
     const handleUpgradeSelect = (upgrade) => {
         if (engineRef.current) {
             engineRef.current.applyUpgrade(upgrade);
+            // Brief grace period so the player has a moment to reposition before
+            // enemies start moving again. UpgradeSystem sets isPaused=true on level-up;
+            // keep it paused for 1.5s after the modal closes.
+            engineRef.current.isPaused = true;
+            setTimeout(() => {
+                if (engineRef.current && !engineRef.current.isGameOver && !engineRef.current.isVictory) {
+                    engineRef.current.lastTime = performance.now(); // prevent dt spike
+                    engineRef.current.isPaused = false;
+                }
+            }, 1500);
         }
         setLevelUpChoices(null);
     };
@@ -555,8 +565,15 @@ export default function Game() {
 
     const handleResume = () => {
         if (engineRef.current) {
-            engineRef.current.isPaused = false;
+            // Close the modal immediately, but keep the engine paused for 1.5s
+            // so the player has a beat to grab their joystick before action resumes.
             setIsPaused(false);
+            setTimeout(() => {
+                if (engineRef.current && !engineRef.current.isGameOver && !engineRef.current.isVictory) {
+                    engineRef.current.lastTime = performance.now(); // prevent dt spike
+                    engineRef.current.isPaused = false;
+                }
+            }, 1500);
         }
     };
 
