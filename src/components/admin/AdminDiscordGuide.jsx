@@ -42,7 +42,7 @@ Score is calculated **server-side** at the end of every run:
 
 🗓️ **Seasonal Leaderboard** (4-week cycles) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Seasonal stat upgrades reset at season end.
 
-♾️ **Endless Void Leaderboard** — Permanent legacy ranking, never resets. **NOT eligible for OMENX payouts.** Single endless run is capped at 5,000 Gold and 2,000 kills credited to your account.
+♾️ **Endless Void Leaderboard** — Permanent legacy ranking, never resets. **NOT eligible for OMENX payouts.** Credited Gold/kills scale with how long you survive (~720 Gold/min, ~240 kills/min) up to a hard cap of **18,000 Gold** and **6,000 kills** per run.
 
 💠 Real OMENX is paid directly to your wallet at the end of each cycle — no claiming, no clicking.`,
     },
