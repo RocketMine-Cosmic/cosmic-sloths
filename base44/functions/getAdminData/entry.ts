@@ -5,7 +5,21 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
+
+        // Short-circuit unauthenticated callers before hitting auth.me() — the SDK
+        // auto-logs a 401 to runtime logs every time auth.me() is called without a
+        // session, and WarpMenu pings this on every page load to check admin status.
+        // No auth header → no session → return 401 immediately.
+        const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+        if (!authHeader) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+        let me;
+        try {
+            me = await base44.auth.me();
+        } catch (authErr) {
+            // Stale/invalid session token — same silent 401 as missing auth.
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
         if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
         const wallet = me.wallet_address?.toLowerCase();
         if (!wallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
