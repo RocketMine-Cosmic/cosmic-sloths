@@ -80,9 +80,13 @@ export async function flushPendingScores() {
     if (flushing) return;
     flushing = true;
     try {
-        // First pass: pull any orphan snapshots (local + cloud) into the queue.
+        // First pass: pull any orphan snapshot from localStorage into the queue.
+        // NOTE: cloud-snapshot promotion is currently DISABLED — the previous
+        // implementation could double-credit runs because syncSave wasn't treating
+        // pendingRunSnapshot as server-owned, allowing the client to restore a
+        // snapshot that saveScore had already cleared. Local-only recovery is
+        // safe (snapshot lives in localStorage, cleared on read).
         promoteOrphanSnapshot();
-        await promoteCloudSnapshot();
 
         const raw = localStorage.getItem('pending_score_saves');
         if (!raw) return;

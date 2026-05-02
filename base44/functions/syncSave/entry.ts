@@ -263,6 +263,16 @@ Deno.serve(async (req) => {
         merged.forgeConvertedToday = existingData.forgeConvertedToday
             ? { ...existingData.forgeConvertedToday } : { date: '', count: 0 };
 
+        // --- 12b. SERVER-OWNED pendingRunSnapshot (cloud safety net for endless/raid runs) ---
+        // CRITICAL: client must NEVER write this. Only checkpointRun (write) and saveScore
+        // (delete-on-credit) may touch it. If the client could re-upload a stale snapshot,
+        // saveScore would re-credit the same run on every refresh.
+        if (existingData.pendingRunSnapshot) {
+            merged.pendingRunSnapshot = existingData.pendingRunSnapshot;
+        } else {
+            delete merged.pendingRunSnapshot;
+        }
+
         // --- 13. SERVER-OWNED bounty progress (Phase 3f) ---
         // Cloud writes are exclusive: saveScore (progress) + claimBounty (claimed/reward).
         // Client may rotate the bounty list locally on a new day; we accept the LIST

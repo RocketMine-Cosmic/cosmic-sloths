@@ -567,18 +567,12 @@ export class GameEngine {
             } catch {}
         }
 
-        // Cloud checkpoint fallback — every 5 minutes for endless/raid runs.
-        // Boss kills also trigger a checkpoint, but if a player dies before any boss
-        // they'd otherwise have no cloud safety net. Survives device wipes / reinstalls
-        // (localStorage doesn't). Fire-and-forget. ~12 writes/hr — trivial.
-        if (this.frameCount % (60 * 300) === 0 && this.frameCount > 0 && (this.arena.duration === Infinity || this.arena.id === 'world_boss_arena')) {
-            try {
-                const stats = this._runStats();
-                import('@/api/base44Client').then(({ base44 }) => {
-                    base44.functions.invoke('checkpointRun', { stats }).catch(() => {});
-                });
-            } catch {}
-        }
+        // Cloud checkpoint fallback — DISABLED. Was causing duplicate-credit bug
+        // (snapshot persisted in cloud, client would re-upload via syncSave after
+        // saveScore had already cleared it, re-crediting the same run on refresh).
+        // Will re-enable once syncSave reliably treats pendingRunSnapshot as
+        // server-owned AND the client save loop has been verified not to ever
+        // hold a stale copy of the snapshot.
 
         // Victory fires when the arena timer expires AND no boss is active AND the
         // post-boss grace window has elapsed. The grace window (set in EnemyAI on
