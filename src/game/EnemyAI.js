@@ -121,7 +121,7 @@ export function updateEnemies(engine, dt) {
                 // mixed up. Stagger the lines so they don't overlap.
                 const recap = [];
                 if (creditedFrags > 0) recap.push({ text: `+${creditedFrags} RELIC FRAGMENT${creditedFrags > 1 ? 'S' : ''}`, color: '#c084fc' });
-                if (isEndless && creditedGold > 0) recap.push({ text: `+${creditedGold.toLocaleString()} GOLD`, color: '#ffd700' });
+                if (creditedGold > 0) recap.push({ text: `+${creditedGold.toLocaleString()} GOLD`, color: '#ffd700' });
                 recap.forEach((line, idx) => {
                     engine.addDamageText(engine.player.x, engine.player.y - 110 - idx * 22, line.text, line.color, true);
                 });
