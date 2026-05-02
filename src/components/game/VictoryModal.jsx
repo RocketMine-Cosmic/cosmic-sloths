@@ -26,7 +26,7 @@ export default function VictoryModal({ stats }) {
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-8 min-h-0">
-                    <RunStatsBox stats={stats} accentClass="border-slate-700" />
+                    <RunStatsBox stats={stats} accentClass="border-slate-700" hideKilledBy />
                 </div>
 
                 <div className="p-4 sm:p-6 md:p-8 pt-2 md:pt-4 shrink-0">

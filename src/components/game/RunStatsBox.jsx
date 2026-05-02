@@ -5,7 +5,7 @@ const formatWeaponName = (id) => WEAPONS[id]?.name || id.replace(/([A-Z])/g, ' $
 
 // Shared scrollable stats box used by both GameOverModal and VictoryModal.
 // Shows headline stats + an extended stats section (scrollable).
-export default function RunStatsBox({ stats, accentClass = 'border-slate-700' }) {
+export default function RunStatsBox({ stats, accentClass = 'border-slate-700', hideKilledBy = false }) {
     const formatTime = (s) => {
         const m = Math.floor(s / 60);
         const sec = s % 60;
@@ -40,7 +40,7 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700' })
         <div className={`mb-6 md:mb-8 text-left bg-slate-800 p-4 md:p-6 rounded-lg border ${accentClass}`}>
             {/* Headline stats — always visible */}
             <div className="space-y-3 md:space-y-4">
-                {stats.killedBy && (
+                {!hideKilledBy && stats.killedBy && (
                     <div className="flex justify-between items-center bg-red-950/40 border border-red-500/40 rounded-lg px-3 py-2 -mt-1 mb-1">
                         <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-red-300 flex items-center gap-2">💀 Killed By</span>
                         <span className="text-red-200 font-bold text-sm md:text-base text-right truncate ml-2">{stats.killedBy}</span>
