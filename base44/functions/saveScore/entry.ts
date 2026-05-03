@@ -39,11 +39,14 @@ const ENDLESS_FRAGMENTS_CAP_PER_RUN = 30;
 // breaking the upgrade economy. Caps now scale with playtime so a 30-min legit
 // run isn't truncated like a 60s tampered one. Per-second budget × time + a small
 // floor for very short runs. Hard ceiling prevents infinite-AFK exploits.
-const ENDLESS_GOLD_PER_SEC = 12;        // ~720/min — fair for skilled play, well below tamper rates
+// Time-based endless gold (2026-05-03): client accrues 10 gold/sec × goldMult.
+// Server cap = 25/sec to accommodate stacked goldMult (VIP + character + talents + augments).
+// Hard ceiling 25k = 25 min × 1000g/min ceiling.
+const ENDLESS_GOLD_PER_SEC = 25;
 const ENDLESS_KILLS_PER_SEC = 4;        // ~240/min sustained
 const ENDLESS_GOLD_FLOOR = 1500;        // minimum cap for very short runs
 const ENDLESS_KILLS_FLOOR = 600;
-const ENDLESS_GOLD_HARD_CEILING = 18000;
+const ENDLESS_GOLD_HARD_CEILING = 25000;
 const ENDLESS_KILLS_HARD_CEILING = 6000;
 
 // Arena progression — must mirror game/Constants.js ARENAS order EXACTLY.

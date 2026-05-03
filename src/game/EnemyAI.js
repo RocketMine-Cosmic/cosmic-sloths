@@ -100,6 +100,9 @@ export function updateEnemies(engine, dt) {
                 if (engine.bossModifiers.unstoppable) extraGold += 1000;
                 if (engine.bossModifiers.regen) extraGold += 800;
 
+                // In endless, gold is purely time-based — boss kills don't credit gold.
+                if (isEndless) extraGold = 0;
+
                 let creditedGold = 0;
                 if (extraGold > 0) {
                     // Auto-credit boss gold directly to the run total instead of dropping

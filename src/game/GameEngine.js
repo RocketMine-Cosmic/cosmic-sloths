@@ -557,6 +557,20 @@ export class GameEngine {
             this.callbacks.onTimeChange(Math.floor(this.time));
         }
 
+        // Endless gold: time-based accrual only. Enemy/boss drops are suppressed
+        // (see EnemySpawner / EnemyAI). 10 gold/sec base × player.goldMult so
+        // character/talent/VIP multipliers still feel meaningful. Accumulator
+        // tracks fractional gold across frames so low rates accrue smoothly.
+        if (this.arena.duration === Infinity) {
+            this._endlessGoldAccum = (this._endlessGoldAccum || 0) + (10 * this.player.goldMult * dt);
+            if (this._endlessGoldAccum >= 1) {
+                const inc = Math.floor(this._endlessGoldAccum);
+                this._endlessGoldAccum -= inc;
+                this.gold += inc;
+                this.callbacks.onGoldChange(this.gold);
+            }
+        }
+
         // Periodic safety snapshot — protects against Android tab kills mid-run.
         // Every ~10s for endless/world-boss arenas, dump current stats to localStorage.
         // If the tab dies before gameOver(), next launch picks this up and queues it
