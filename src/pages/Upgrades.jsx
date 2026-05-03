@@ -686,6 +686,11 @@ export default function Upgrades({ isCarousel }) {
                         {isMastered && (
                             <p className="text-yellow-300 text-xs md:text-sm font-bold mt-2">✨ {weapon.masteryDesc}</p>
                         )}
+                        {isMastered && activeCategory !== 'permanent' && (
+                            <div className="mt-2 bg-cyan-950/30 border border-cyan-700/40 rounded-lg px-2.5 py-1.5 text-[10px] md:text-xs text-cyan-300 leading-snug">
+                                💡 You've mastered this weapon permanently. The <strong className="capitalize text-white">{activeCategory}</strong> upgrades below are a <strong className="text-white">temporary extra boost</strong> stacked on top — they reset when {activeCategory === 'weekly' ? 'the week ends' : 'the season ends'}.
+                            </div>
+                        )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                         {upgradeTypes.map(stat => {
