@@ -56,10 +56,10 @@ Three leaderboards. Real crypto rewards.
 ### ♾️ **Endless Void**
 - Infinitely scaling difficulty with boss fights every 3 minutes
 - Permanent legacy leaderboard — no resets
-- **Excluded from OMENX payouts.** Endless runs credit Gold/kills scaled by playtime (~720 Gold/min, ~240 kills/min) so longer runs earn proportionally more, with a hard ceiling of 18,000 Gold and 6,000 kills per run
+- **Excluded from OMENX payouts.** Endless runs credit Gold/kills scaled by playtime (~1,500 Gold/min, ~240 kills/min) so longer runs earn proportionally more, with a hard ceiling of 25,000 Gold and 6,000 kills per run
 
 ### 📊 **How Scores Work**
-Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier. Only your **highest score per period** counts. Sector multiplier ×1.0 → ×1.8 (Singularity), ×2.0 in Endless Void.
+Score = (Kills×10 + Level×100 + Time×5 + Gold×2 + Victory Bonus) × Sector Multiplier. Only your **highest score per period** counts. Sector multiplier ×1.0 → ×2.8 across **10 sectors** (Azure Expanse → Rainbow Rift), ×2.0 in Endless Void.
 
 ---
 
@@ -100,11 +100,14 @@ Difficulty changes enemy strength + how much XP and Gold you earn per run (which
 - **Hard** — +100% XP & Gold
 - **Cosmic** — +200% XP & Gold
 
-### ⚔️ **Leviathan Trials**
-Stack any of 3 boss modifiers before a run to make encounters **tougher & more rewarding**:
-- 🔴 **FURY** — Boss deals +50% damage
-- 🟠 **FRENZY** — Boss moves +50% faster
-- 🟣 **TITAN** — Boss has +100% HP
+### ⚔️ **Leviathan Trials / Cosmic Mutations**
+Stack any of 6 boss modifiers before a run — each makes the fight harder *and* boosts the rewards:
+- 🔴 **Leviathan's Fury** — bosses +50% damage → +500 boss Gold
+- 🛡️ **Thick Hide** — bosses +100% HP → +50% boss XP
+- 💨 **Frenzy** — bosses +50% speed → +1 Relic Fragment per boss kill
+- ⚡ **Bullet Hell** — bosses fire 2× projectiles → +30% total score
+- 💚 **Cellular Regeneration** — boss heals 1% HP/sec → +800 boss Gold
+- ⚓ **Unstoppable Force** — boss ignores slow & pushback → +1,000 boss Gold
 
 ---
 
@@ -188,7 +191,7 @@ Each tier = **+1% Damage** & **+1% Max HP** per run. Bonuses **stack** with all 
 Defeat enough of one enemy type? Unlock permanent **+2% to +10% damage** against that enemy forever.
 
 ### 🎮 **Character Mastery**
-Play a character repeatedly → Rank up through **5 tiers (Novice → Grandmaster)** for unique badges & permanent stat bonuses.
+Play a character repeatedly → Rank up through **7 tiers** (Cadet → Star Runner → Void Reaper → Nebula Warden → Cosmic Overlord → Tier 6 → Tier 7) for unique badges & permanent stat bonuses. **Tier 6 & 7 are unique per pilot** — they boost that character's signature ability (e.g. Pandypaws gets +50 HP & +3 Armor at T6, Glitch's phase-shift goes 15%→25% at T7, SkyByte unlocks HYPER BOOM).
 
 ---
 

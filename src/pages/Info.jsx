@@ -93,7 +93,7 @@ const TABS_CONTENT = {
                     Survive the full time limit of each sector to <strong className="text-green-400">win</strong>. As time progresses, enemies get stronger and more numerous. An optional <strong className="text-purple-400">Endless Void</strong> mode scales infinitely with boss fights every 3 minutes.
                 </p>
                 <div className="mt-3 bg-slate-900/40 rounded-lg p-3 border border-purple-700/50 text-xs text-slate-400">
-                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold, and credited Gold/kills <strong className="text-white">scale with how long you survive</strong> (~720 Gold/min, ~240 kills/min) up to a hard cap of <strong className="text-white">18,000 Gold</strong> and <strong className="text-white">6,000 kills</strong> per run. Endless runs are also <strong className="text-white">excluded from OMENX leaderboard payouts</strong>. Play <strong className="text-white">Sectors</strong> to farm Gold.
+                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold, and credited Gold/kills <strong className="text-white">scale with how long you survive</strong> (~1,500 Gold/min, ~240 kills/min) up to a hard cap of <strong className="text-white">25,000 Gold</strong> and <strong className="text-white">6,000 kills</strong> per run. Endless runs are also <strong className="text-white">excluded from OMENX leaderboard payouts</strong>. Play <strong className="text-white">Sectors</strong> to farm Gold.
                 </div>
             </SectionCard>
 
@@ -207,8 +207,8 @@ const TABS_CONTENT = {
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-amber-400 mb-2">📊 Character Mastery</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed mb-2">Playing a character repeatedly builds their <strong className="text-amber-400">Mastery</strong>. Defeat more enemies with a specific character to rank them through 5 tiers (Novice to Grandmaster), unlocking unique badges and permanent stat bonuses!</p>
-                        <p className="text-[10px] text-slate-500 italic">Track your character's kills and Mastery level on the character selection screen in the Lounge.</p>
+                        <p className="text-xs text-slate-400 leading-relaxed mb-2">Playing a character repeatedly builds their <strong className="text-amber-400">Mastery</strong>. Defeat enemies with a specific character to rank them through <strong className="text-white">7 tiers</strong> — Cadet → Star Runner (2k) → Void Reaper (5k) → Nebula Warden (10k) → Cosmic Overlord (25k) → Tier 6 (50k) → Tier 7 (100k). Each tier unlocks a permanent stat bonus, and Tier 6 & 7 are <strong className="text-white">unique per pilot</strong> — they boost that character's signature ability (e.g. Pandypaws gets +50 HP & +3 Armor, Glitch's phase-shift goes 15%→25%, SkyByte unlocks HYPER BOOM).</p>
+                        <p className="text-[10px] text-slate-500 italic">Track every pilot's progress on the dedicated Mastery page in-game.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -311,7 +311,7 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Credited Gold/kills scale with run time (~720 Gold/min, ~240 kills/min) up to 18,000 Gold and 6,000 kills per run.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Credited Gold/kills scale with run time (~1,500 Gold/min, ~240 kills/min) up to 25,000 Gold and 6,000 kills per run.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -321,10 +321,10 @@ const TABS_CONTENT = {
                     Your score is calculated server-side at the end of each run:
                 </p>
                 <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-xs text-center text-green-300 mb-3">
-                    Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier
+                    Score = (Kills×10 + Level×100 + Time×5 + Gold×2 + Victory Bonus) × Sector Multiplier
                 </div>
                 <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-                    The <strong className="text-green-300">Sector Multiplier</strong> grows the further you push: ×1.0 in Sector 1 (Station), +0.2 per sector up to ×1.8 in Singularity, then <strong className="text-purple-300">×2.0 in Endless Void</strong>. Beating the sector timer adds a flat <strong className="text-white">+5,000 Victory Bonus</strong>.
+                    The <strong className="text-green-300">Sector Multiplier</strong> grows the further you push: ×1.0 in Sector 1 (Azure Expanse), +0.2 per sector across <strong className="text-white">10 sectors</strong> up to ×2.8 in Rainbow Rift, with <strong className="text-purple-300">×2.0 in Endless Void</strong>. Beating the sector timer adds a flat <strong className="text-white">+5,000 Victory Bonus</strong>.
                 </p>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-slate-700 mb-3 leading-relaxed">
                     <strong className="text-white">Difficulty doesn't directly multiply score</strong> — instead, harder difficulties grant more XP & Gold per run, which feed into the formula above. Hard = +100% XP/Gold, Cosmic = +200% XP/Gold.
@@ -840,7 +840,7 @@ TABS_CONTENT.combat = (
                     Every time you level up mid-run, you pick 1 of 3 random upgrades. Each can be one of 4 rarities:
                 </p>
                 <div className="bg-slate-900/40 rounded-lg p-3 border border-emerald-700/50 text-xs text-slate-400 mb-4">
-                    <strong className="text-emerald-400">💡 Permanent Upgrades Bias:</strong> Only <strong className="text-white">permanent</strong> stat upgrades, talents and weapon upgrades from the <strong className="text-white">Upgrade Lounge</strong> appear <strong className="text-white">+15% more often per level invested</strong> in your in-run level-up choices. <span className="text-slate-500">Weekly and seasonal upgrades don't affect the bias.</span>
+                    <strong className="text-emerald-400">💡 Pool Bias points:</strong> Every <strong className="text-white">permanent</strong> stat, talent and weapon level you buy in the <strong className="text-white">Upgrade Lounge</strong> grants Pool Bias points (1 pt per level for the first 10, then 1 pt per 2 levels). Spend them on the <strong className="text-white">Loadouts</strong> page to make specific weapons or stats appear <strong className="text-white">+10% more often per point</strong> in your in-run level-up choices. <span className="text-slate-500">Weekly and seasonal upgrades don't grant points.</span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm text-center">
                     <div className="rounded-xl p-3 md:p-4 border border-slate-600 bg-slate-800/50 flex flex-col justify-center">

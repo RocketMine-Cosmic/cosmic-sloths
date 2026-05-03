@@ -22,7 +22,7 @@ Top-down auto-shooter where your weapons fire automatically — you move, dodge,
 
 Difficulty doesn't directly multiply your score — but more XP & Gold per run *feeds* the score formula, so harder = bigger numbers.
 
-🪐 **Sectors** — Station → Asteroid → Nebula → VoidRing → Singularity → Endless Void. Beat each sector with each pilot to unlock the next. Replay any unlocked sector freely — **dynamic difficulty** adapts spawns to your performance, no gold penalties.
+🪐 **Sectors** — 10 hand-crafted arenas: Azure Expanse → Mystic Cosmos → Ethereal Nebula → Crimson Void → Solar Storm → Emerald Galaxy → Shattered Core → Abyssal Vortex → Turquoise Drift → Rainbow Rift, plus the optional ♾️ Endless Void. Beat each sector with each pilot to unlock the next. Replay any unlocked sector freely — **dynamic difficulty** adapts spawns to your performance, no gold penalties.
 
 ✅ **Just sign in with OmenX to start.** Your save, wallet, and progression sync automatically.`,
     },
@@ -32,17 +32,17 @@ Difficulty doesn't directly multiply your score — but more XP & Gold per run *
 
 Score is calculated **server-side** at the end of every run:
 
-\`Score = (Kills×10 + Level×100 + Time×5 + Gold×5 + Victory Bonus) × Sector Multiplier\`
+\`Score = (Kills×10 + Level×100 + Time×5 + Gold×2 + Victory Bonus) × Sector Multiplier\`
 
 • **Victory Bonus:** flat +5,000 if you beat the timer
-• **Sector Multiplier:** ×1.0 (Station) → +0.2 per sector → ×1.8 (Singularity) → **×2.0 in Endless Void**
+• **Sector Multiplier:** ×1.0 (Azure Expanse) → +0.2 per sector across **10 sectors** → ×2.8 (Rainbow Rift) → **×2.0 in Endless Void**
 • Only your **highest score per period** counts on the leaderboard
 
 📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Weekly stat upgrades also reset.
 
 🗓️ **Seasonal Leaderboard** (4-week cycles) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Seasonal stat upgrades reset at season end.
 
-♾️ **Endless Void Leaderboard** — Permanent legacy ranking, never resets. **NOT eligible for OMENX payouts.** Credited Gold/kills scale with how long you survive (~720 Gold/min, ~240 kills/min) up to a hard cap of **18,000 Gold** and **6,000 kills** per run.
+♾️ **Endless Void Leaderboard** — Permanent legacy ranking, never resets. **NOT eligible for OMENX payouts.** Credited Gold/kills scale with how long you survive (~1,500 Gold/min, ~240 kills/min) up to a hard cap of **25,000 Gold** and **6,000 kills** per run.
 
 💠 Real OMENX is paid directly to your wallet at the end of each cycle — no claiming, no clicking.`,
     },
@@ -194,9 +194,17 @@ A massive boss with **shared global HP**. Every player's damage is permanently s
 
 ---
 
-⚡ **LEVIATHAN TRIALS** — Optional boss modifiers
+⚡ **LEVIATHAN TRIALS / COSMIC MUTATIONS** — Optional boss modifiers
 
-Activate before a run. Stack any of: **FURY** (boss +50% dmg) · **FRENZY** (+50% speed) · **TITAN** (+100% HP). Beating the boss with modifiers active grants bonus rewards.
+Activate before a run. Stack any of:
+• 🔴 **Leviathan's Fury** — bosses +50% damage → +500 boss Gold
+• 🛡️ **Thick Hide** — bosses +100% HP → +50% boss XP
+• 💨 **Frenzy** — bosses +50% speed → +1 Relic Fragment per boss kill
+• ⚡ **Bullet Hell** — bosses fire 2× projectiles → +30% total score
+• 💚 **Cellular Regeneration** — boss heals 1% HP/sec → +800 boss Gold
+• ⚓ **Unstoppable Force** — boss ignores slow & pushback → +1,000 boss Gold
+
+Stack as many as you want — bonuses combine.
 
 ---
 
