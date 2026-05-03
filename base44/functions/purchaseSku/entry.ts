@@ -535,10 +535,13 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[purchaseSku] Error:', error.message);
-        postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
-            title: '❌ purchaseSku failed',
-            description: `\`\`\`${(error.message || String(error)).slice(0, 1500)}\`\`\``,
-        });
+        // Skip noisy rate-limit alerts — they're routine and clutter the error channel.
+        if (!/rate limit/i.test(error?.message || '')) {
+            postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
+                title: '❌ purchaseSku failed',
+                description: `\`\`\`${(error.message || String(error)).slice(0, 1500)}\`\`\``,
+            });
+        }
         return Response.json({ error: 'Something went wrong with your purchase. Please try again.' }, { status: 500 });
     }
 });

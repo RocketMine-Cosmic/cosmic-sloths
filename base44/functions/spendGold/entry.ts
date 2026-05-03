@@ -398,7 +398,10 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, cost, saveData: updatedSave });
     } catch (error) {
         console.error('[spendGold]', error.message);
-        postDiscordError('❌ spendGold failed', error);
+        // Skip noisy rate-limit alerts — they're routine and clutter the error channel.
+        if (!/rate limit/i.test(error?.message || '')) {
+            postDiscordError('❌ spendGold failed', error);
+        }
         return Response.json({ error: 'Something went wrong with your purchase. Please try again.' }, { status: 500 });
     }
 });
