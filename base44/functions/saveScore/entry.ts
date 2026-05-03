@@ -84,16 +84,19 @@ function validateAndRecompute(scoreData) {
     if (level < 1 || level > MAX_LEVEL) {
         return { ok: false, reason: `level out of range: ${level}` };
     }
-    // For endless: skip the per-kill gold sanity check — endless has its own
+    // For endless AND raid: skip the per-kill gold sanity check — endless has its own
     // hard ceiling (ENDLESS_GOLD_HARD_CEILING) that already prevents tampering,
     // and boss drops can legitimately give large gold with few kills (early quit).
     // (Bug 2026-05-02: Texxy lost gold on early-quit endless runs — boss gold
     // exceeded kills*500 → entire run rejected → no save credited.)
+    // (Bug 2026-05-03: Mustard's raid runs were being rejected — pure boss-damage
+    // runs with 0 kills but boss gold drops kept failing this check too.)
     const isEndlessRun = scoreData.arena_id === 'endless';
+    const isRaidRun = scoreData.arena_id === 'world_boss_arena';
     if (gold < 0) {
         return { ok: false, reason: `gold negative: ${gold}` };
     }
-    if (!isEndlessRun && gold > Math.max(100, kills * MAX_GOLD_PER_KILL)) {
+    if (!isEndlessRun && !isRaidRun && gold > Math.max(100, kills * MAX_GOLD_PER_KILL)) {
         return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills` };
     }
     if (isEndlessRun && gold > ENDLESS_GOLD_HARD_CEILING * 2) {
