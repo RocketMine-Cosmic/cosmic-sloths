@@ -286,6 +286,20 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             s[key] = obj;
             break;
         }
+        case 'xp_buff': {
+            // grantInfo: { type: 'xp_buff' } — sets sessionBuffs.xpExpiry to now+60min using server clock.
+            // Reject if an existing buff is still active so players can't stack/double-buy.
+            if (skuId !== 'ingame-xp-buff') {
+                throw new Error(`This buff doesn't match the SKU. Please refresh and try again.`);
+            }
+            const now = Date.now();
+            const existing = Number(s.sessionBuffs?.xpExpiry || 0);
+            if (existing > now) {
+                throw new Error(`You already have an XP buff active.`);
+            }
+            s.sessionBuffs = { ...(s.sessionBuffs || {}), xpExpiry: now + 60 * 60 * 1000 };
+            break;
+        }
         case 'cosmetic': {
             // grantInfo: { type, slot: 'trail'|'kill'|'skin', cosmeticId, charId?, goldCost }
             const { slot, cosmeticId, charId, goldCost } = grantInfo;
