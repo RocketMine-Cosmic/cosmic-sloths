@@ -64,12 +64,14 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                     <span className="text-sm md:text-base text-slate-400">Total Damage</span>
                     <span className="text-orange-400 font-mono text-lg md:text-xl">{totalDamage.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                    <span className="text-sm md:text-base text-slate-400">
-                        Gold Credited{stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
-                    </span>
-                    <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
-                </div>
+                {stats.arenaId !== 'world_boss_arena' && (
+                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                        <span className="text-sm md:text-base text-slate-400">
+                            Gold Credited{stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                        </span>
+                        <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
+                    </div>
+                )}
                 {(stats.fragments || 0) > 0 && (
                     <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
                         <span className="text-sm md:text-base text-slate-400">

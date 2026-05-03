@@ -84,13 +84,12 @@ function validateAndRecompute(scoreData) {
     if (level < 1 || level > MAX_LEVEL) {
         return { ok: false, reason: `level out of range: ${level}` };
     }
-    // For endless AND raid: skip the per-kill gold sanity check — endless has its own
-    // hard ceiling (ENDLESS_GOLD_HARD_CEILING) that already prevents tampering,
-    // and boss drops can legitimately give large gold with few kills (early quit).
-    // (Bug 2026-05-02: Texxy lost gold on early-quit endless runs — boss gold
-    // exceeded kills*500 → entire run rejected → no save credited.)
-    // (Bug 2026-05-03: Mustard's raid runs were being rejected — pure boss-damage
-    // runs with 0 kills but boss gold drops kept failing this check too.)
+    // For endless AND raid: skip the per-kill gold sanity check.
+    // - Endless has its own hard ceiling (ENDLESS_GOLD_HARD_CEILING).
+    // - Raid runs are zeroed out below (no gold/kills credit), so the check is irrelevant.
+    // (Bug 2026-05-02: Texxy lost gold on early-quit endless runs.
+    //  Bug 2026-05-03: Mustard's raid runs were being rejected — pure boss-damage
+    //  runs with 0 kills but boss gold drops kept failing this check.)
     const isEndlessRun = scoreData.arena_id === 'endless';
     const isRaidRun = scoreData.arena_id === 'world_boss_arena';
     if (gold < 0) {
@@ -98,6 +97,13 @@ function validateAndRecompute(scoreData) {
     }
     if (!isEndlessRun && !isRaidRun && gold > Math.max(100, kills * MAX_GOLD_PER_KILL)) {
         return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills` };
+    }
+
+    // Raid runs are damage-contribution only — no gold or kill credit to PlayerSave.
+    // Players are rewarded via boss milestone claims (claimBossReward), not run gold.
+    if (isRaidRun) {
+        gold = 0;
+        kills = 0;
     }
     if (isEndlessRun && gold > ENDLESS_GOLD_HARD_CEILING * 2) {
         return { ok: false, reason: `endless gold absurd: ${gold}` };
