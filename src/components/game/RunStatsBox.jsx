@@ -55,7 +55,9 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                     <span className="text-cyan-400 font-mono text-lg md:text-xl">{stats.level}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-sm md:text-base text-slate-400">Enemies Defeated</span>
+                    <span className="text-sm md:text-base text-slate-400">
+                        Enemies Defeated{stats.endlessKillsCapped && <span className="text-[9px] text-amber-400 ml-1">(credited)</span>}
+                    </span>
                     <span className="text-white font-mono text-lg md:text-xl">{stats.kills} <span className="text-[10px] text-slate-500">({kpm}/min)</span></span>
                 </div>
                 <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
@@ -63,12 +65,16 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                     <span className="text-orange-400 font-mono text-lg md:text-xl">{totalDamage.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                    <span className="text-sm md:text-base text-slate-400">Gold Earned</span>
+                    <span className="text-sm md:text-base text-slate-400">
+                        Gold Credited{stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                    </span>
                     <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
                 </div>
                 {(stats.fragments || 0) > 0 && (
                     <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                        <span className="text-sm md:text-base text-slate-400">Relic Fragments</span>
+                        <span className="text-sm md:text-base text-slate-400">
+                            Relic Fragments{stats.fragmentsCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                        </span>
                         <span className="text-fuchsia-400 font-mono text-lg md:text-xl">+{stats.fragments}</span>
                     </div>
                 )}
@@ -183,9 +189,9 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                 </div>
             </div>
 
-            {(stats.endlessGoldCapped || stats.endlessKillsCapped) && (
-                <div className="text-[10px] md:text-xs text-amber-400/80 italic text-right mt-3">
-                    Endless mode caps applied to credited rewards
+            {(stats.endlessGoldCapped || stats.endlessKillsCapped || stats.fragmentsCapped) && (
+                <div className="mt-3 bg-amber-950/40 border border-amber-500/40 rounded-lg px-3 py-2 text-[10px] md:text-xs text-amber-300">
+                    <span className="font-bold">Endless mode caps applied.</span> Your raw run earned more, but rewards are capped per playtime to keep the economy fair. The values shown are what was actually credited to your save.
                 </div>
             )}
         </div>
