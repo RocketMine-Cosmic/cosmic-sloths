@@ -87,11 +87,40 @@ Deno.serve(async (req) => {
         let payments = [];
         let rewardPool = 0;
 
+        let staffPayments = [];
+
         if (period_type === 'weekly') {
             rewardPool = Math.floor(pool.total_spent * 0.20);
             const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: period_id }, '-score', 1000);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 100);
+
+            // Mirror distributeRewards.js — only weekly payouts include staff cuts.
+            // Staff % is configurable via AppConfig.staff_pct_per_wallet (default 2%),
+            // with optional per-wallet override on AdminWallet.payout_pct_override.
+            let STAFF_PCT_PER_WALLET = 0.02;
+            try {
+                const cfg = await base44.asServiceRole.entities.AppConfig.filter({ key: 'staff_pct_per_wallet' });
+                const v = Number(cfg[0]?.value?.pct);
+                if (isFinite(v) && v >= 0 && v <= 0.10) STAFF_PCT_PER_WALLET = v;
+            } catch {}
+            const adminWallets = await base44.asServiceRole.entities.AdminWallet.list();
+            const resolveStaffPct = (a) => {
+                const o = a.payout_pct_override;
+                if (o !== null && o !== undefined && isFinite(Number(o)) && Number(o) >= 0 && Number(o) <= 0.10) {
+                    return Number(o);
+                }
+                return STAFF_PCT_PER_WALLET;
+            };
+            staffPayments = adminWallets
+                .filter(a => a.wallet_address)
+                .map(a => ({
+                    wallet_address: a.wallet_address,
+                    amount: Math.floor(pool.total_spent * resolveStaffPct(a)),
+                    player_name: a.admin_name || a.wallet_address,
+                    pct: resolveStaffPct(a),
+                }))
+                .filter(p => p.amount >= 1);
         } else if (period_type === 'seasonal') {
             // Seasonal pool split: 30% to top players, 10% to Squad Wars Champions (separate fn).
             rewardPool = Math.floor(pool.total_spent * 0.30);
@@ -102,14 +131,21 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
 
+        const playerPayout = payments.reduce((s, p) => s + p.amount, 0);
+        const staffPayout = staffPayments.reduce((s, p) => s + p.amount, 0);
+
         return Response.json({
             period_id, period_type,
             total_spent: pool.total_spent,
             reward_pool: rewardPool,
             distributed: pool.distributed,
-            total_payout: payments.reduce((s, p) => s + p.amount, 0),
+            total_payout: playerPayout,
+            staff_payout: staffPayout,
+            grand_total: playerPayout + staffPayout,
             player_count: payments.length,
+            staff_count: staffPayments.length,
             payments,
+            staff_payments: staffPayments,
         });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

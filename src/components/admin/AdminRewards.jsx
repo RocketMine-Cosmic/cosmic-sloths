@@ -109,8 +109,10 @@ export default function AdminRewards({ walletAddress }) {
                             {[
                                 { label: 'Total Spent', value: `${previewData.total_spent?.toFixed(2)} OMENX`, color: 'text-white' },
                                 { label: 'Reward Pool', value: `${previewData.reward_pool?.toFixed(2)} OMENX`, color: 'text-sky-400' },
-                                { label: 'Total Payout', value: `${previewData.total_payout?.toFixed(2)} OMENX`, color: 'text-emerald-400' },
-                                { label: 'Recipients', value: previewData.player_count, color: 'text-white' },
+                                { label: 'Player Payout', value: `${previewData.total_payout?.toFixed(2)} OMENX`, color: 'text-emerald-400' },
+                                ...(previewData.staff_payout > 0 ? [{ label: 'Staff Payout', value: `${previewData.staff_payout?.toFixed(2)} OMENX`, color: 'text-amber-400' }] : []),
+                                ...(previewData.grand_total !== undefined ? [{ label: 'Grand Total', value: `${previewData.grand_total?.toFixed(2)} OMENX`, color: 'text-fuchsia-400' }] : []),
+                                { label: 'Recipients', value: `${previewData.player_count}${previewData.staff_count ? ` + ${previewData.staff_count} staff` : ''}`, color: 'text-white' },
                             ].map(s => (
                                 <div key={s.label} className="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
                                     <div className="text-[10px] text-slate-500 uppercase">{s.label}</div>
@@ -146,6 +148,34 @@ export default function AdminRewards({ walletAddress }) {
                                 </tbody>
                             </table>
                         </div>
+
+                        {(previewData.staff_payments || []).length > 0 && (
+                            <div className="mt-4">
+                                <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2">Staff Payouts</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
+                                            <tr>
+                                                <th className="p-2">Staff</th>
+                                                <th className="p-2">Wallet</th>
+                                                <th className="p-2 text-right">% of Pool</th>
+                                                <th className="p-2 text-right">Would Receive</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800/50">
+                                            {previewData.staff_payments.map(p => (
+                                                <tr key={p.wallet_address} className="hover:bg-slate-800/30">
+                                                    <td className="p-2 font-bold text-white">{p.player_name}</td>
+                                                    <td className="p-2 text-slate-500 font-mono text-[10px]">{p.wallet_address ? `${p.wallet_address.slice(0,6)}...${p.wallet_address.slice(-4)}` : '-'}</td>
+                                                    <td className="p-2 text-right font-mono text-slate-400">{((p.pct || 0) * 100).toFixed(2)}%</td>
+                                                    <td className="p-2 text-right font-mono font-bold text-amber-400">{p.amount.toFixed(2)} OMENX</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
