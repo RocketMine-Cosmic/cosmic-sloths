@@ -153,13 +153,13 @@ export function updateEnemies(engine, dt) {
                 e._novaWarning = null;
                 e._meteorWarning = null;
                 e.chargeDash = null;
-                // 5-second grace window after the boss dies — gives players time to
+                // 10-second grace window after the boss dies — gives players time to
                 // walk over and collect gold/relic-fragment drops before the victory
-                // modal pops. Applies to both endless AND normal sectors (Hugo bug
-                // 2026-05-02 — modal was triggering instantly on boss kill, locking
-                // players out of their drops).
-                engine.postBossGraceUntil = engine.time + 5;
-                engine.addDamageText(engine.player.x, engine.player.y - 80, `5s — COLLECT DROPS!`, '#22d3ee');
+                // modal pops. Applies to both endless AND normal sectors. Bumped from
+                // 5s → 10s after player feedback (2026-05-03) — 5s wasn't enough when
+                // the boss died on the far side of the screen and magnet range was low.
+                engine.postBossGraceUntil = engine.time + 10;
+                engine.addDamageText(engine.player.x, engine.player.y - 80, `10s — COLLECT DROPS!`, '#22d3ee');
             } else {
                 const isEndless = engine.arena.duration === Infinity;
                 if (!isEndless) {
