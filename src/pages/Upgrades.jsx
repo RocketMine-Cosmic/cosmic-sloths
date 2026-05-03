@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
 import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzzle } from 'lucide-react';
+import { getCurrentPeriodIds } from '../lib/periodIds';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -94,8 +95,10 @@ export default function Upgrades({ isCarousel }) {
         const updateTimer = () => {
             const now = new Date();
             if (activeCategory === 'weekly') {
-                const currentDay = now.getUTCDay(); // 0=Sun, 6=Sat
-                const daysUntilSunday = (7 - currentDay) % 7 || 7;
+                // Sunday is the LAST day of the ISO week (ends 23:59 UTC), not a new week.
+                // Old `(7 - currentDay) % 7 || 7` returned 7 on Sunday → showed "7d" instead of hours-left.
+                const currentDay = now.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+                const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
                 const endOfWeek = new Date(now);
                 endOfWeek.setUTCDate(now.getUTCDate() + daysUntilSunday);
                 endOfWeek.setUTCHours(23, 59, 0, 0);
@@ -106,12 +109,9 @@ export default function Upgrades({ isCarousel }) {
                 const minutesLeft = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000));
                 setTimeLeft(`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`);
             } else if (activeCategory === 'seasonal') {
-                // Mirror Leaderboard's ISO-8601 season-end calc exactly.
-                const year = now.getUTCFullYear();
-                const startOfYear = new Date(Date.UTC(year, 0, 1));
-                const startOfWeek = new Date(startOfYear);
-                startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-                const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
+                // Use canonical ISO 8601 calc (mirrors lib/periodIds.js + Leaderboard).
+                // Old hand-rolled formula produced the wrong week on Sundays.
+                const { isoWeek, year } = getCurrentPeriodIds();
                 const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
                 const lastWeekOfSeason = seasonNum * 4;
 
