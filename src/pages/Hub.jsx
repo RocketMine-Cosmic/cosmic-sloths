@@ -793,7 +793,7 @@ export default function Hub({ isCarousel }) {
                                                 </button>
                                                 {canLaunch && (
                                                     <div className="text-[8px] md:text-[10px] text-fuchsia-300/70 text-center tracking-wider uppercase font-bold leading-tight hidden md:block">
-                                                        Score & Mastery — Gold capped (~720/min, 18k max)
+                                                        Score & Mastery — Gold capped (~720/min, 10k max)
                                                     </div>
                                                 )}
                                             </div>

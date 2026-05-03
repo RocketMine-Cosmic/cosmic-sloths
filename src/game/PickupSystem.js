@@ -23,7 +23,10 @@ export function updatePickups(engine, dt) {
                 // Without this, players see their gold ticker keep climbing past 18k even though only
                 // 18k will be credited at run end — feels like the cap is "stealing" gold.
                 if (engine.arena?.duration === Infinity) {
-                    const cap = Math.min(18000, Math.max(1500, Math.floor((engine.time || 0) * 12)));
+                    // Endless gold cap MUST match server's ENDLESS_GOLD_HARD_CEILING (10k).
+                    // Otherwise HUD shows up to 18k but server only credits 10k — players
+                    // see "lost" gold at run end. 12 g/sec scaling = ~14 min to hit 10k.
+                    const cap = Math.min(10000, Math.max(1000, Math.floor((engine.time || 0) * 12)));
                     if (engine.gold > cap) engine.gold = cap;
                 }
                 engine.callbacks.onGoldChange(engine.gold);
