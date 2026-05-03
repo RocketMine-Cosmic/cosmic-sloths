@@ -607,26 +607,37 @@ export default function Hub({ isCarousel }) {
                                         </div>
                                         );
                                         })()}
-                                        {save.newGamePlusUnlocked && (
-                                            <div className="mt-3 flex items-center justify-center gap-2 bg-red-950/40 p-2 rounded-lg border border-red-500/30">
-                                                <input 
-                                                    type="checkbox" 
-                                                    id="ngplus" 
-                                                    checked={isNGPlus} 
-                                                    onChange={(e) => {
-                                                        SoundManager.playUIClick();
-                                                        setIsNGPlus(e.target.checked);
-                                                        const newSave = { ...save, isNGPlus: e.target.checked };
-                                                        SaveManager.save(newSave);
-                                                        setSave(newSave);
-                                                    }} 
-                                                    className="w-4 h-4 accent-red-500 cursor-pointer" 
-                                                />
-                                                <label htmlFor="ngplus" className="text-xs md:text-sm font-bold text-red-400 uppercase tracking-widest cursor-pointer drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">
-                                                    Activate New Game+
-                                                </label>
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            // NG+ unlock: every unlocked character must have unlocked every sector.
+                                            // (Previously gated by save.newGamePlusUnlocked — now computed live.)
+                                            const allArenaIds = ARENAS.map(a => a.id);
+                                            const unlockedChars = effectiveUnlockedCharacters || [];
+                                            const ngPlusReady = unlockedChars.length > 0 && unlockedChars.every(charId => {
+                                                const arenasForChar = save?.unlockedArenasByCharacter?.[charId] || ['station'];
+                                                return allArenaIds.every(aid => arenasForChar.includes(aid));
+                                            });
+                                            if (!ngPlusReady) return null;
+                                            return (
+                                                <div className="mt-3 flex items-center justify-center gap-2 bg-red-950/40 p-2 rounded-lg border border-red-500/30">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="ngplus"
+                                                        checked={isNGPlus}
+                                                        onChange={(e) => {
+                                                            SoundManager.playUIClick();
+                                                            setIsNGPlus(e.target.checked);
+                                                            const newSave = { ...save, isNGPlus: e.target.checked };
+                                                            SaveManager.save(newSave);
+                                                            setSave(newSave);
+                                                        }}
+                                                        className="w-4 h-4 accent-red-500 cursor-pointer"
+                                                    />
+                                                    <label htmlFor="ngplus" className="text-xs md:text-sm font-bold text-red-400 uppercase tracking-widest cursor-pointer drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">
+                                                        Activate New Game+
+                                                    </label>
+                                                </div>
+                                            );
+                                        })()}
                                         </div>
                                     </div>
                                 </div>
