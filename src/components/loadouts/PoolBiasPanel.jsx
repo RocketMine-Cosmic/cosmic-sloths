@@ -13,6 +13,8 @@ import {
     getAllocations,
     getSpentPoints,
     getRemainingPoints,
+    getPermanentLevel,
+    getLevelsUntilNextPoint,
 } from '@/lib/poolBias';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { base44 } from '@/api/base44Client';
@@ -54,6 +56,9 @@ export default function PoolBiasPanel({ save, setSave }) {
     const spent = getSpentPoints(save);
     const remaining = getRemainingPoints(save);
     const allocations = getAllocations(save);
+    const permLevel = getPermanentLevel(save);
+    const levelsToNext = getLevelsUntilNextPoint(save);
+    const isLateTier = permLevel >= POINTS_TIER_BREAKPOINT;
     const gold = save.gold || 0;
     const goldRespecCost = getGoldRespecCost(save);
     const canRespecGold = spent > 0 && gold >= goldRespecCost;
@@ -143,10 +148,17 @@ export default function PoolBiasPanel({ save, setSave }) {
                         then <span className="text-cyan-300 font-bold">1 pt every {LATE_LEVELS_PER_POINT} levels</span>. Each point = <span className="text-cyan-300 font-bold">+{Math.round(BIAS_PER_POINT * 100)}%</span> draw weight on that specific weapon or stat.
                     </p>
                 </div>
-                <div className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs shrink-0">
-                    <span className="text-slate-400">Available:</span>{' '}
-                    <span className="text-cyan-300 font-mono font-bold">{remaining}</span>
-                    <span className="text-slate-500"> / {total}</span>
+                <div className="flex flex-col gap-1 shrink-0">
+                    <div className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
+                        <span className="text-slate-400">Permanent Level:</span>{' '}
+                        <span className="text-fuchsia-300 font-mono font-bold">{permLevel}</span>
+                        <span className="text-slate-500"> · next pt in {levelsToNext} {levelsToNext === 1 ? 'level' : 'levels'}{isLateTier ? '' : ''}</span>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
+                        <span className="text-slate-400">Available:</span>{' '}
+                        <span className="text-cyan-300 font-mono font-bold">{remaining}</span>
+                        <span className="text-slate-500"> / {total}</span>
+                    </div>
                 </div>
             </div>
 

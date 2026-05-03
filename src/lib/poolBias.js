@@ -65,10 +65,9 @@ export function getBiasTargets() {
     return _cachedTargets;
 }
 
-// Total bias points granted from the player's permanent investments.
-// First POINTS_TIER_BREAKPOINT levels = 1 pt each.
-// After that, 1 pt per LATE_LEVELS_PER_POINT levels (anti-whale curve).
-export function getTotalBiasPoints(save) {
+// Sum of permanent upgrade levels across stats, weapons, and talents.
+// Exposed so the UI can show "Permanent Level" and progress-to-next-point.
+export function getPermanentLevel(save) {
     if (!save) return 0;
     let levels = 0;
     const stats = save.permanentUpgrades || {};
@@ -83,10 +82,26 @@ export function getTotalBiasPoints(save) {
         const list = talents[cId];
         if (Array.isArray(list)) levels += list.length;
     }
+    return levels;
+}
+
+// Total bias points granted from the player's permanent investments.
+// First POINTS_TIER_BREAKPOINT levels = 1 pt each.
+// After that, 1 pt per LATE_LEVELS_PER_POINT levels (anti-whale curve).
+export function getTotalBiasPoints(save) {
+    const levels = getPermanentLevel(save);
     const earlyPts = Math.min(levels, POINTS_TIER_BREAKPOINT);
     const lateLevels = Math.max(0, levels - POINTS_TIER_BREAKPOINT);
     const latePts = Math.floor(lateLevels / LATE_LEVELS_PER_POINT);
     return earlyPts + latePts;
+}
+
+// How many more permanent upgrade levels are needed to earn the next bias point.
+export function getLevelsUntilNextPoint(save) {
+    const levels = getPermanentLevel(save);
+    if (levels < POINTS_TIER_BREAKPOINT) return 1;
+    const lateLevels = levels - POINTS_TIER_BREAKPOINT;
+    return LATE_LEVELS_PER_POINT - (lateLevels % LATE_LEVELS_PER_POINT);
 }
 
 export function getAllocations(save) {
