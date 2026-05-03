@@ -74,9 +74,11 @@ export default function Leaderboard() {
         const updateTimer = () => {
             const now = new Date();
             if (view === 'weekly' || view === 'squads') {
-                // Count down to Sunday 23:59 UTC — last moment of the current week
-                const currentDay = now.getUTCDay(); // 0=Sun, 6=Sat
-                const daysUntilSunday = (7 - currentDay) % 7 || 7;
+                // Count down to Sunday 23:59 UTC — last moment of the current ISO week.
+                // ISO week ends on Sunday, so when today IS Sunday we want 0 days added,
+                // not 7 (the old `|| 7` bug rolled the timer forward an entire week).
+                const currentDay = now.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+                const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
                 const endOfWeek = new Date(now);
                 endOfWeek.setUTCDate(now.getUTCDate() + daysUntilSunday);
                 endOfWeek.setUTCHours(23, 59, 0, 0);
