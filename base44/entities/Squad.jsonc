@@ -21,6 +21,16 @@
       "type": "string",
       "description": "Squad emoji icon"
     },
+    "privacy": {
+      "type": "string",
+      "enum": [
+        "open",
+        "request",
+        "closed"
+      ],
+      "default": "open",
+      "description": "open = anyone can join instantly. request = leader/officers approve. closed = no new joins."
+    },
     "weekly_kills": {
       "type": "number",
       "default": 0
@@ -69,7 +79,7 @@
     },
     "last_daily_xp_award_date": {
       "type": "string",
-      "description": "Date (YYYY-MM-DD UTC) of the last daily-bounty XP bonus payout. Ensures the daily XP bump only fires once per day per squad regardless of how many members claim."
+      "description": "Date (YYYY-MM-DD UTC) of the last daily-bounty XP bonus payout."
     }
   },
   "required": [

@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
         const squad = await base44.asServiceRole.entities.Squad.create({
             name: squadName, tag, description: squadDesc || '',
             owner_wallet: walletAddress, icon: '🛡️',
+            privacy: 'open',
             weekly_kills: 0, current_week: today,
             daily_kills: 0, current_day: today,
             member_count: 1, xp: 0, level: 1

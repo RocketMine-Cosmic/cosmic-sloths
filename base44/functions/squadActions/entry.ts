@@ -70,8 +70,8 @@ function getTier(level, table) {
 }
 
 // Verify the caller is the leader of the given squad. Returns true if so,
-// otherwise false. Used to gate squad-management actions (kick, settings,
-// transfer leadership) so any random member can't mess with the squad.
+// otherwise false. Used to gate squad-management actions (settings, transfer
+// leadership, set ranks) so any random member can't mess with the squad.
 async function isCallerLeader(base44, walletAddress, squadId) {
     if (!walletAddress || !squadId) return false;
     const records = await base44.asServiceRole.entities.SquadMember.filter({
@@ -79,6 +79,18 @@ async function isCallerLeader(base44, walletAddress, squadId) {
         wallet_address: walletAddress,
     });
     return records.length > 0 && records[0].role === 'leader';
+}
+
+// Leader OR officer — used for moderation actions (kick members,
+// approve/deny join requests). Officers cannot touch other officers
+// or the leader.
+async function getCallerMember(base44, walletAddress, squadId) {
+    if (!walletAddress || !squadId) return null;
+    const records = await base44.asServiceRole.entities.SquadMember.filter({
+        squad_id: squadId,
+        wallet_address: walletAddress,
+    });
+    return records[0] || null;
 }
 
 // Grants gold/fragments directly to the player's cloud PlayerSave so the
@@ -148,6 +160,16 @@ Deno.serve(async (req) => {
             const existingMember = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
             if (existingMember.length > 0) {
                 return Response.json({ error: 'You\'re already in a squad. Leave it before joining another.' }, { status: 400 });
+            }
+
+            // Privacy gate: only `open` squads accept instant joins.
+            // `request` squads must use the requestJoin flow; `closed` squads block all joins.
+            const privacy = squad.privacy || 'open';
+            if (privacy === 'closed') {
+                return Response.json({ error: 'This squad is closed to new members.' }, { status: 403 });
+            }
+            if (privacy === 'request') {
+                return Response.json({ error: 'This squad is invite-only. Send a join request instead.', requiresRequest: true }, { status: 403 });
             }
 
             // Mark current period as already-claimed so the new member can't claim
@@ -225,16 +247,20 @@ Deno.serve(async (req) => {
             const { targetMemberId, squadId } = body;
             if (!targetMemberId || !squadId) return Response.json({ error: 'Couldn\'t kick this member — please refresh and try again.' }, { status: 400 });
 
-            // Only the leader can kick members.
-            if (!(await isCallerLeader(base44, walletAddress, squadId))) {
-                return Response.json({ error: 'Only the squad leader can kick members.' }, { status: 403 });
+            // Leader OR officer can kick. Officers can't kick the leader or other officers.
+            const caller = await getCallerMember(base44, walletAddress, squadId);
+            if (!caller || (caller.role !== 'leader' && caller.role !== 'officer')) {
+                return Response.json({ error: 'Only squad leaders and officers can kick members.' }, { status: 403 });
             }
 
-            // Don't let the leader kick themselves via this endpoint (use 'leave' for that).
+            // Validate target and rank-restriction.
             try {
                 const target = await base44.asServiceRole.entities.SquadMember.get(targetMemberId);
                 if (target && target.wallet_address === walletAddress) {
                     return Response.json({ error: 'Use "leave squad" to remove yourself.' }, { status: 400 });
+                }
+                if (target && caller.role === 'officer' && (target.role === 'leader' || target.role === 'officer')) {
+                    return Response.json({ error: 'Officers can\'t kick the leader or other officers.' }, { status: 403 });
                 }
             } catch {}
 
@@ -314,7 +340,7 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'saveSettings') {
-            const { squadId, name, tag, description, icon } = body;
+            const { squadId, name, tag, description, icon, privacy } = body;
             if (!squadId) return Response.json({ error: 'Couldn\'t save squad settings — please refresh and try again.' }, { status: 400 });
 
             // Only the leader can change squad settings.
@@ -322,13 +348,154 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'Only the squad leader can change squad settings.' }, { status: 403 });
             }
 
-            await base44.asServiceRole.entities.Squad.update(squadId, {
+            const patch = {
                 name: name?.trim(),
                 tag: tag?.trim().toUpperCase().substring(0, 4),
                 description: description?.trim() || '',
-                icon: icon || '🛡️'
-            });
+                icon: icon || '🛡️',
+            };
+            // Only update privacy when an allowed value is supplied.
+            if (privacy === 'open' || privacy === 'request' || privacy === 'closed') {
+                patch.privacy = privacy;
+            }
+            await base44.asServiceRole.entities.Squad.update(squadId, patch);
 
+            const updatedSquad = await base44.asServiceRole.entities.Squad.get(squadId);
+            return Response.json({ success: true, squad: updatedSquad });
+        }
+
+        // ----- Join Requests (privacy = 'request' flow) -----
+
+        if (action === 'requestJoin') {
+            const { squadId } = body;
+            if (!squadId) return Response.json({ error: 'Couldn\'t send your join request — please refresh and try again.' }, { status: 400 });
+
+            let squad;
+            try { squad = await base44.asServiceRole.entities.Squad.get(squadId); } catch {}
+            if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
+            if ((squad.privacy || 'open') !== 'request') {
+                return Response.json({ error: 'This squad doesn\'t accept join requests.' }, { status: 400 });
+            }
+            if ((squad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
+                return Response.json({ error: 'This squad is full.' }, { status: 400 });
+            }
+            const existingMember = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
+            if (existingMember.length > 0) {
+                return Response.json({ error: 'You\'re already in a squad. Leave it before requesting to join another.' }, { status: 400 });
+            }
+            // Reject duplicates: one pending request per (squad, wallet) max.
+            const existing = await base44.asServiceRole.entities.SquadJoinRequest.filter({
+                squad_id: squadId,
+                wallet_address: walletAddress.toLowerCase(),
+                status: 'pending',
+            });
+            if (existing.length > 0) {
+                return Response.json({ error: 'You already have a pending request to this squad.' }, { status: 409 });
+            }
+            const request = await base44.asServiceRole.entities.SquadJoinRequest.create({
+                squad_id: squadId,
+                wallet_address: walletAddress.toLowerCase(),
+                player_name: authoritativeName,
+                player_title: authoritativeTitle,
+                status: 'pending',
+            });
+            return Response.json({ success: true, request });
+        }
+
+        if (action === 'approveJoin' || action === 'denyJoin') {
+            const { requestId, squadId } = body;
+            if (!requestId || !squadId) return Response.json({ error: 'Couldn\'t process this request — please refresh and try again.' }, { status: 400 });
+
+            // Leader OR officer can approve/deny.
+            const caller = await getCallerMember(base44, walletAddress, squadId);
+            if (!caller || (caller.role !== 'leader' && caller.role !== 'officer')) {
+                return Response.json({ error: 'Only leaders and officers can manage join requests.' }, { status: 403 });
+            }
+
+            let request;
+            try { request = await base44.asServiceRole.entities.SquadJoinRequest.get(requestId); } catch {}
+            if (!request || request.squad_id !== squadId) {
+                return Response.json({ error: 'This join request no longer exists.' }, { status: 404 });
+            }
+            if (request.status !== 'pending') {
+                return Response.json({ error: 'This request has already been handled.' }, { status: 409 });
+            }
+
+            if (action === 'denyJoin') {
+                await base44.asServiceRole.entities.SquadJoinRequest.update(requestId, { status: 'denied' });
+                return Response.json({ success: true });
+            }
+
+            // Approve — mirror join logic but skip the privacy gate.
+            const squad = await base44.asServiceRole.entities.Squad.get(squadId);
+            if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
+            if ((squad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
+                return Response.json({ error: 'Your squad is full — kick someone first.' }, { status: 400 });
+            }
+            // Make sure the requester didn't already join another squad while waiting.
+            const existingMember = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: request.wallet_address });
+            if (existingMember.length > 0) {
+                await base44.asServiceRole.entities.SquadJoinRequest.update(requestId, { status: 'denied' });
+                return Response.json({ error: 'That pilot has already joined another squad.' }, { status: 409 });
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            const currentWeek = (() => {
+                const now = new Date();
+                const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+                const dayNum = tmp.getUTCDay() || 7;
+                tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+                const isoYear = tmp.getUTCFullYear();
+                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+                return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+            })();
+            await base44.asServiceRole.entities.SquadMember.create({
+                squad_id: squadId,
+                wallet_address: request.wallet_address,
+                player_name: request.player_name || 'Pilot',
+                player_title: request.player_title || '',
+                role: 'member',
+                last_payout_week: currentWeek,
+                last_daily_payout_date: today,
+            });
+            await base44.asServiceRole.entities.Squad.update(squadId, {
+                member_count: (squad.member_count || 0) + 1,
+            });
+            await base44.asServiceRole.entities.SquadJoinRequest.update(requestId, { status: 'approved' });
+            await base44.asServiceRole.entities.SquadMessage.create({
+                squad_id: squadId,
+                wallet_address: 'system',
+                player_name: 'SYSTEM',
+                content: `${request.player_name || 'A pilot'} has joined the squad!`,
+            });
+            return Response.json({ success: true });
+        }
+
+        // ----- Member Ranks (officer/member toggle) -----
+
+        if (action === 'setRank') {
+            const { targetMemberId, squadId, rank } = body;
+            if (!targetMemberId || !squadId || !rank) {
+                return Response.json({ error: 'Couldn\'t update rank — please refresh and try again.' }, { status: 400 });
+            }
+            if (rank !== 'officer' && rank !== 'member') {
+                return Response.json({ error: 'Invalid rank.' }, { status: 400 });
+            }
+            // Only the leader can promote/demote officers.
+            if (!(await isCallerLeader(base44, walletAddress, squadId))) {
+                return Response.json({ error: 'Only the squad leader can change member ranks.' }, { status: 403 });
+            }
+
+            let target;
+            try { target = await base44.asServiceRole.entities.SquadMember.get(targetMemberId); } catch {}
+            if (!target || target.squad_id !== squadId) {
+                return Response.json({ error: 'Target is not a member of this squad.' }, { status: 400 });
+            }
+            if (target.role === 'leader') {
+                return Response.json({ error: 'Use "transfer leadership" to change the leader.' }, { status: 400 });
+            }
+            await base44.asServiceRole.entities.SquadMember.update(targetMemberId, { role: rank });
             return Response.json({ success: true });
         }
 

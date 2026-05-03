@@ -8,7 +8,7 @@ import { sanitizePilotName } from '@/lib/sanitizePilotName';
 
 // Read-only profile card for any squad. Opens from the squad browser
 // (scouting before joining) and from the members tab (own squad view).
-export default function SquadProfileModal({ squadId, onClose, onJoin, canJoin, isFull, hideJoin }) {
+export default function SquadProfileModal({ squadId, onClose, onJoin, onRequestJoin, canJoin, isFull, hideJoin }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -150,17 +150,40 @@ export default function SquadProfileModal({ squadId, onClose, onJoin, canJoin, i
                             <button onClick={onClose} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-lg font-bold transition-colors text-sm">
                                 Close
                             </button>
-                            {canJoin && (
-                                <button
-                                    onClick={() => onJoin?.(squad.id)}
-                                    disabled={isFull}
-                                    className={`flex-1 py-2.5 rounded-lg font-bold transition-colors text-sm ${isFull
-                                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                        : 'bg-cyan-600 hover:bg-cyan-500 text-white'}`}
-                                >
-                                    {isFull ? 'Squad Full' : 'Join Squad'}
-                                </button>
-                            )}
+                            {canJoin && (() => {
+                                const privacy = squad.privacy || 'open';
+                                if (privacy === 'closed') {
+                                    return (
+                                        <button disabled className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-slate-700 text-slate-500 cursor-not-allowed">
+                                            Closed Squad
+                                        </button>
+                                    );
+                                }
+                                if (privacy === 'request') {
+                                    return (
+                                        <button
+                                            onClick={() => onRequestJoin?.(squad.id)}
+                                            disabled={isFull}
+                                            className={`flex-1 py-2.5 rounded-lg font-bold transition-colors text-sm ${isFull
+                                                ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                                : 'bg-amber-600 hover:bg-amber-500 text-white'}`}
+                                        >
+                                            {isFull ? 'Squad Full' : 'Request to Join'}
+                                        </button>
+                                    );
+                                }
+                                return (
+                                    <button
+                                        onClick={() => onJoin?.(squad.id)}
+                                        disabled={isFull}
+                                        className={`flex-1 py-2.5 rounded-lg font-bold transition-colors text-sm ${isFull
+                                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                            : 'bg-cyan-600 hover:bg-cyan-500 text-white'}`}
+                                    >
+                                        {isFull ? 'Squad Full' : 'Join Squad'}
+                                    </button>
+                                );
+                            })()}
                         </div>
                     )}
                 </motion.div>

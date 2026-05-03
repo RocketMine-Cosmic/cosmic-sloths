@@ -1,35 +1,30 @@
 {
-  "name": "SquadMember",
+  "name": "SquadJoinRequest",
   "type": "object",
   "properties": {
     "squad_id": {
-      "type": "string"
+      "type": "string",
+      "description": "Target squad"
     },
     "wallet_address": {
       "type": "string",
-      "description": "Wallet address of the member"
+      "description": "Requester wallet (lowercase)"
     },
     "player_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot of requester's pilot name"
     },
     "player_title": {
       "type": "string"
     },
-    "role": {
+    "status": {
       "type": "string",
       "enum": [
-        "leader",
-        "officer",
-        "member"
+        "pending",
+        "approved",
+        "denied"
       ],
-      "default": "member",
-      "description": "leader = full control. officer = can approve join requests and kick members. member = standard."
-    },
-    "last_payout_week": {
-      "type": "string"
-    },
-    "last_daily_payout_date": {
-      "type": "string"
+      "default": "pending"
     }
   },
   "required": [

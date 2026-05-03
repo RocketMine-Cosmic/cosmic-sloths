@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
-import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle, Swords, Globe } from 'lucide-react';
+import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle, Swords, Globe, Star, Lock, ShieldQuestion } from 'lucide-react';
 import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
+import JoinRequestsPanel from '../components/squads/JoinRequestsPanel';
+import PrivacySelector from '../components/squads/PrivacySelector';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { useToast } from "@/components/ui/use-toast";
@@ -97,6 +99,7 @@ export default function Squads({ isCarousel }) {
     const [editTag, setEditTag] = useState('');
     const [editDesc, setEditDesc] = useState('');
     const [editIcon, setEditIcon] = useState('🛡️');
+    const [editPrivacy, setEditPrivacy] = useState('open');
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [showSquadIconPicker, setShowSquadIconPicker] = useState(false);
 
@@ -199,6 +202,7 @@ export default function Squads({ isCarousel }) {
             setEditTag(mySquad.tag || '');
             setEditDesc(mySquad.description || '');
             setEditIcon(mySquad.icon || '🛡️');
+            setEditPrivacy(mySquad.privacy || 'open');
         }
     }, [mySquad]);
 
@@ -319,6 +323,12 @@ export default function Squads({ isCarousel }) {
                 playerTitle: (user?.data?.player_title || '').trim(),
             });
             if (!res.data?.success) {
+                // If the squad is invite-only, surface a helpful CTA — server returns
+                // requiresRequest:true so we can route the player to the request flow.
+                if (res.data?.requiresRequest) {
+                    toast({ title: "Invite-Only Squad", description: "Send a join request — the leader will review it." });
+                    return;
+                }
                 toast({ title: "Error", description: res.data?.error || "Failed to join squad." });
                 return;
             }
@@ -420,6 +430,58 @@ export default function Squads({ isCarousel }) {
     };
 
     const isLeader = myMemberRecord?.role === 'leader';
+    const isOfficer = myMemberRecord?.role === 'officer';
+    const canModerate = isLeader || isOfficer; // approve/deny join requests, kick
+
+    const handleRequestJoin = async (squadId) => {
+        if (!user) return;
+        try {
+            SoundManager.playUIClick();
+            const res = await base44.functions.invoke('squadActions', { action: 'requestJoin', squadId });
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to send request." });
+                return;
+            }
+            toast({ title: "Request Sent", description: "The squad's leaders will review your request." });
+        } catch (e) {
+            toast({ title: "Error", description: e?.message || "Failed to send request." });
+        }
+    };
+
+    const handleSetRank = async (member, rank) => {
+        if (!isLeader) return;
+        try {
+            SoundManager.playUIClick();
+            const res = await base44.functions.invoke('squadActions', {
+                action: 'setRank',
+                squadId: mySquad.id,
+                targetMemberId: member.id,
+                rank,
+            });
+            if (!res.data?.success) {
+                toast({ title: "Error", description: res.data?.error || "Failed to update rank." });
+                return;
+            }
+            setSquadMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: rank } : m));
+            toast({
+                title: rank === 'officer' ? 'Promoted to Officer' : 'Demoted to Member',
+                description: sanitizePilotName(member.player_name, member.wallet_address),
+            });
+        } catch (e) {
+            toast({ title: "Error", description: e?.message || "Failed." });
+        }
+    };
+
+    const reloadMembers = async () => {
+        try {
+            const res = await base44.functions.invoke('getSquadProfile', { squadId: mySquad.id });
+            if (res.data?.success) setSquadMembers(res.data.members);
+        } catch {}
+        try {
+            const updated = await base44.entities.Squad.get(mySquad.id);
+            if (updated) setMySquad(updated);
+        } catch {}
+    };
 
     const handleKickMember = async (member) => {
         if (!isLeader) return;
@@ -479,12 +541,13 @@ export default function Squads({ isCarousel }) {
                 tag: editTag.trim(),
                 description: editDesc.trim(),
                 icon: editIcon,
+                privacy: editPrivacy,
             });
             if (!res.data?.success) {
                 toast({ title: "Error", description: res.data?.error || "Failed to save settings." });
                 return;
             }
-            setMySquad(res.data.squad);
+            if (res.data.squad) setMySquad(res.data.squad);
             toast({ title: "Settings Saved", description: "Squad info has been updated." });
         } catch (e) {
             console.error(e);
@@ -660,10 +723,20 @@ export default function Squads({ isCarousel }) {
                                                             style={{ color: lvl.borderColor, borderColor: lvl.borderColor + '60' }}
                                                         >[{squad.tag}]</span>
                                                     </div>
-                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                                                             style={{ color: lvl.borderColor, background: lvl.glowColor }}
                                                         >Lv.{lvl.level} {lvl.name}</span>
+                                                        {squad.privacy === 'request' && (
+                                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-300 border border-amber-700/50 flex items-center gap-1">
+                                                                <ShieldQuestion className="w-2.5 h-2.5" /> Invite-Only
+                                                            </span>
+                                                        )}
+                                                        {squad.privacy === 'closed' && (
+                                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-700 flex items-center gap-1">
+                                                                <Lock className="w-2.5 h-2.5" /> Closed
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="text-xs text-slate-400 mt-1">{squad.description || 'No description'}</div>
                                                     <div className="text-xs text-slate-500 mt-0.5">
@@ -987,6 +1060,10 @@ export default function Squads({ isCarousel }) {
                                     >
                                         📊 View Full Squad Profile & Member Stats
                                     </button>
+                                    {/* Join request inbox — only visible to leaders + officers when squad is invite-only */}
+                                    {canModerate && mySquad.privacy === 'request' && (
+                                        <JoinRequestsPanel squadId={mySquad.id} onApproved={reloadMembers} />
+                                    )}
                                     {squadMembers.map(member => {
                                         const memberWallet = (member.wallet_address || '').toLowerCase();
                                         const myWallet = (user.wallet_address || '').toLowerCase();
@@ -1002,6 +1079,7 @@ export default function Squads({ isCarousel }) {
                                                     <div className="min-w-0">
                                                         <div className="font-bold text-white flex items-center gap-2 flex-wrap">
                                                             {member.role === 'leader' && <Crown className="w-3 h-3 text-yellow-400 shrink-0" />}
+                                                            {member.role === 'officer' && <Star className="w-3 h-3 text-cyan-400 shrink-0 fill-cyan-400" />}
                                                             <span className="truncate">{safeName}</span>
                                                             {member.player_title && <span className="text-[9px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider">{member.player_title}</span>}
                                                             {memberWallet === myWallet && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 rounded">YOU</span>}
@@ -1009,22 +1087,48 @@ export default function Squads({ isCarousel }) {
                                                         <div className="text-xs text-slate-400 capitalize">{member.role}</div>
                                                     </div>
                                                 </div>
-                                                {isLeader && memberWallet !== myWallet && (
-                                                    <div className="flex gap-2 shrink-0">
-                                                        <button
-                                                            onClick={() => handleTransferLeadership(member)}
-                                                            className="text-xs text-yellow-400 hover:text-yellow-300 bg-yellow-950/30 px-2 py-1 rounded border border-yellow-900/50 flex items-center gap-1"
-                                                            title="Transfer Leadership"
-                                                        >
-                                                            <Crown className="w-3 h-3" /> Promote
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleKickMember(member)}
-                                                            className="text-xs text-red-400 hover:text-red-300 bg-red-950/30 px-2 py-1 rounded border border-red-900/50 flex items-center gap-1"
-                                                            title="Kick Member"
-                                                        >
-                                                            <UserX className="w-3 h-3" /> Kick
-                                                        </button>
+                                                {memberWallet !== myWallet && (
+                                                    <div className="flex flex-wrap gap-2 shrink-0 justify-end">
+                                                        {/* Leader-only: transfer leadership + promote/demote officer */}
+                                                        {isLeader && member.role !== 'leader' && (
+                                                            member.role === 'officer' ? (
+                                                                <button
+                                                                    onClick={() => handleSetRank(member, 'member')}
+                                                                    className="text-xs text-slate-400 hover:text-white bg-slate-900/40 px-2 py-1 rounded border border-slate-700 flex items-center gap-1"
+                                                                    title="Demote to Member"
+                                                                >
+                                                                    <Star className="w-3 h-3" /> Demote
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleSetRank(member, 'officer')}
+                                                                    className="text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-900/50 flex items-center gap-1"
+                                                                    title="Promote to Officer"
+                                                                >
+                                                                    <Star className="w-3 h-3" /> Officer
+                                                                </button>
+                                                            )
+                                                        )}
+                                                        {isLeader && member.role !== 'leader' && (
+                                                            <button
+                                                                onClick={() => handleTransferLeadership(member)}
+                                                                className="text-xs text-yellow-400 hover:text-yellow-300 bg-yellow-950/30 px-2 py-1 rounded border border-yellow-900/50 flex items-center gap-1"
+                                                                title="Transfer Leadership"
+                                                            >
+                                                                <Crown className="w-3 h-3" /> Lead
+                                                            </button>
+                                                        )}
+                                                        {/* Leader can kick anyone (except self). Officers can kick non-officers / non-leaders. */}
+                                                        {((isLeader && member.role !== 'leader') ||
+                                                          (isOfficer && member.role === 'member')) && (
+                                                            <button
+                                                                onClick={() => handleKickMember(member)}
+                                                                className="text-xs text-red-400 hover:text-red-300 bg-red-950/30 px-2 py-1 rounded border border-red-900/50 flex items-center gap-1"
+                                                                title="Kick Member"
+                                                            >
+                                                                <UserX className="w-3 h-3" /> Kick
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -1082,6 +1186,12 @@ export default function Squads({ isCarousel }) {
                                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                                                                 style={{ color: lvl.borderColor, background: lvl.glowColor }}>Lv.{lvl.level} {lvl.name}</span>
                                                             <span className="text-[10px] text-slate-500"><Users className="w-3 h-3 inline mr-1" />{squad.member_count || 1}/{MAX_SQUAD_MEMBERS}</span>
+                                                            {squad.privacy === 'request' && (
+                                                                <span className="text-[10px] text-amber-300 font-bold flex items-center gap-1"><ShieldQuestion className="w-2.5 h-2.5" /> Invite-Only</span>
+                                                            )}
+                                                            {squad.privacy === 'closed' && (
+                                                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1"><Lock className="w-2.5 h-2.5" /> Closed</span>
+                                                            )}
                                                             {(squad.war_wins || 0) > 0 && <span className="text-[10px] text-amber-400 font-bold">🏆 {squad.war_wins}W</span>}
                                                         </div>
                                                     </div>
@@ -1139,6 +1249,7 @@ export default function Squads({ isCarousel }) {
                                                 placeholder="Squad description..."
                                             />
                                         </div>
+                                        <PrivacySelector value={editPrivacy} onChange={setEditPrivacy} />
                                         <button
                                             type="submit"
                                             disabled={isSavingSettings}
@@ -1177,6 +1288,7 @@ export default function Squads({ isCarousel }) {
                     isFull={isFull}
                     hideJoin={!browsing}
                     onJoin={(sid) => { setProfileSquadId(null); handleJoinSquad(sid); }}
+                    onRequestJoin={(sid) => { setProfileSquadId(null); handleRequestJoin(sid); }}
                 />
             );
         })()}

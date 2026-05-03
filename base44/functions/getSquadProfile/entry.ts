@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
                 tag: squad.tag,
                 description: squad.description || '',
                 icon: squad.icon || '',
+                privacy: squad.privacy || 'open',
                 xp: squad.xp || 0,
                 level: squad.level || 1,
                 weekly_kills: squad.weekly_kills || 0,
