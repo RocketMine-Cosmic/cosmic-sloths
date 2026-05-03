@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ARENAS } from '../../game/Constants';
@@ -6,6 +6,16 @@ import RunStatsBox from './RunStatsBox';
 
 export default function VictoryModal({ stats }) {
     const navigate = useNavigate();
+
+    // Safety timeout: never let the save spinner block the player forever.
+    // After 15s, unblock the buttons (run is queued for background retry).
+    const [timedOut, setTimedOut] = useState(false);
+    useEffect(() => {
+        if (stats.score || stats._saveFailed) return;
+        const t = setTimeout(() => setTimedOut(true), 15000);
+        return () => clearTimeout(t);
+    }, [stats.score, stats._saveFailed]);
+    const showButtons = !!stats.score || stats._saveFailed || timedOut;
 
     return (
         <div
@@ -30,15 +40,17 @@ export default function VictoryModal({ stats }) {
                 </div>
 
                 <div className="p-4 sm:p-6 md:p-8 pt-2 md:pt-4 shrink-0">
-                    {stats._saveFailed && (
+                    {(stats._saveFailed || timedOut) && (
                         <div className="mb-3 text-center text-[11px] md:text-xs text-amber-300 bg-amber-950/40 border border-amber-500/40 rounded-lg px-3 py-2">
                             {stats._authExpired
                                 ? '⚠ Your sign-in expired during this long run — the run is queued and will save automatically next time you launch the game.'
-                                : '⚠ Couldn\'t sync this run to the server — it\'s queued and will retry on next launch. Check your connection.'}
+                                : timedOut && !stats._saveFailed
+                                    ? '⚠ Save is taking longer than expected — the run is queued and will retry in the background. You can continue.'
+                                    : '⚠ Couldn\'t sync this run to the server — it\'s queued and will retry on next launch. Check your connection.'}
                         </div>
                     )}
                     {/* Wait until the server has saved this run before letting the player start a new one — otherwise the in-flight save could clobber the new run's progress. */}
-                    {!stats.score ? (
+                    {!showButtons ? (
                         <div className="text-center text-xs md:text-sm text-slate-400 italic flex items-center justify-center gap-2">
                             <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin inline-block" />
                             Saving run progress…
