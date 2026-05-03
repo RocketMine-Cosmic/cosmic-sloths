@@ -2,14 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
 // Returns the current ISO week id (Mon-based) for UTC, e.g. "2026-W18".
+// Must mirror lib/periodIds.js — proper ISO 8601, Mon-start, Sun 23:59 UTC end.
+// The previous Sun-start formula was off-by-one on Sundays, which made the admin
+// period dropdown show next week as "current" while the rest of the app used this week.
 export function getCurrentWeekId() {
     const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    return `${year}-W${String(isoWeek).padStart(2, '0')}`;
+    const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const dayNum = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+    const isoYear = tmp.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+    return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
 }
 
 // Derives the season id (4-week buckets) from a week id, e.g. "2026-W18" -> "2026-S5".
