@@ -164,6 +164,67 @@ function sanitiseEnemyKills(rawEnemyKills, capTotal) {
     return out;
 }
 
+// Daily Tasks — server-side definitions. Must mirror the labels in DailyTasksPanel.
+// All targets are tuned to be completable in 5–15 minutes of normal play.
+const DAILY_TASKS_DEFINITIONS = [
+    { id: 'dt_first_run',     desc: 'Complete 1 run',                target: 1,   rewardGold: 200, rewardFragments: 0, type: 'play' },
+    { id: 'dt_sector_sweep',  desc: 'Survive 60s in a single run',   target: 60,  rewardGold: 300, rewardFragments: 0, type: 'survive' },
+    { id: 'dt_kill_streak',   desc: 'Get 100 kills in one run',      target: 100, rewardGold: 250, rewardFragments: 1, type: 'killsRun' },
+    { id: 'dt_level_up',      desc: 'Reach level 10 in one run',     target: 10,  rewardGold: 400, rewardFragments: 0, type: 'level' },
+    { id: 'dt_diversity',     desc: 'Play 2 different characters',   target: 2,   rewardGold: 500, rewardFragments: 1, type: 'characters' },
+];
+
+// Ensure the dailyTasks container exists and is fresh for today (UTC).
+// If it's a new day, reset all tasks. Endless runs DO NOT reset/spawn tasks.
+function ensureDailyTasks(s) {
+    const today = new Date().toISOString().split('T')[0];
+    if (!s.dailyTasks || s.dailyTasks.date !== today) {
+        s.dailyTasks = {
+            date: today,
+            tasks: DAILY_TASKS_DEFINITIONS.map(d => ({ ...d, progress: 0, claimed: false })),
+            charactersPlayed: []
+        };
+    } else {
+        // Backfill any newly-added task definitions if a player's container is from an earlier today.
+        const existingIds = new Set((s.dailyTasks.tasks || []).map(t => t.id));
+        for (const def of DAILY_TASKS_DEFINITIONS) {
+            if (!existingIds.has(def.id)) {
+                s.dailyTasks.tasks.push({ ...def, progress: 0, claimed: false });
+            }
+        }
+        if (!Array.isArray(s.dailyTasks.charactersPlayed)) s.dailyTasks.charactersPlayed = [];
+    }
+}
+
+// Update daily task progress. Endless runs ARE counted (these are tiny/easy goals,
+// not currency-sensitive bounties — anti-farm matters less here and excluding them
+// would frustrate endless-only players).
+function updateDailyTaskProgress(s, run, charId) {
+    ensureDailyTasks(s);
+    // Track unique characters played today
+    if (charId && !s.dailyTasks.charactersPlayed.includes(charId)) {
+        s.dailyTasks.charactersPlayed.push(charId);
+    }
+    const charsCount = s.dailyTasks.charactersPlayed.length;
+
+    s.dailyTasks.tasks = s.dailyTasks.tasks.map(t => {
+        if (t.claimed) return t;
+        const updated = { ...t };
+        if (t.type === 'play') {
+            updated.progress = Math.min(t.target, Number(t.progress || 0) + 1);
+        } else if (t.type === 'survive') {
+            if (run.time > Number(t.progress || 0)) updated.progress = Math.min(t.target, Math.floor(run.time));
+        } else if (t.type === 'killsRun') {
+            if (run.kills > Number(t.progress || 0)) updated.progress = Math.min(t.target, run.kills);
+        } else if (t.type === 'level') {
+            if (run.level > Number(t.progress || 0)) updated.progress = Math.min(t.target, run.level);
+        } else if (t.type === 'characters') {
+            updated.progress = Math.min(t.target, charsCount);
+        }
+        return updated;
+    });
+}
+
 // Update bounty + daily mission progress in-place. Server is source of truth (Phase 3f).
 // Endless runs are EXCLUDED from gold + play bounty progress (anti-farm).
 function updateBountyProgress(s, run, isEndless) {
@@ -281,6 +342,9 @@ function applyRunToSave(save, run, isVictory, charId, isEndless) {
 
     // Bounty / daily mission progress (Phase 3f). Endless excluded from gold/play bounties.
     updateBountyProgress(s, run, isEndless);
+
+    // Daily Tasks progress — easy 5–15 min goals shown on Star Ops page.
+    updateDailyTaskProgress(s, run, charId);
 
     s.updated_at = Date.now();
     return { saveData: s, unlockedArena, grantedCharacter };
