@@ -76,11 +76,17 @@ async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
 // to play normally, they just don't enter the war league until they grow.
 const MIN_MEMBERS_FOR_WAR = 2;
 
+// Launch grace — Squad Wars went live on the weekend of week 2026-W18, so most
+// squads are still recruiting. For this week only we let solo squads in too so
+// nobody sits out the inaugural week. Reverts to MIN_MEMBERS_FOR_WAR after.
+const LAUNCH_GRACE_WEEKS = new Set(['2026-W18']);
+
 // Pair eligible squads for a given week. Idempotent — if a war already exists
 // for a squad in that week, we skip it.
 async function pairSquadsForWeek(base44, weekId) {
     const allSquads = await base44.asServiceRole.entities.Squad.list('-level', 500);
-    const eligible = allSquads.filter(s => (s.member_count || 0) >= MIN_MEMBERS_FOR_WAR);
+    const minMembers = LAUNCH_GRACE_WEEKS.has(weekId) ? 1 : MIN_MEMBERS_FOR_WAR;
+    const eligible = allSquads.filter(s => (s.member_count || 0) >= minMembers);
     if (eligible.length === 0) return { paired: 0, byes: 0 };
 
     // Find existing wars for this week so we don't double-pair
