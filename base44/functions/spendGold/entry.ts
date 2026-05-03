@@ -199,6 +199,17 @@ function computeCost(grantInfo, save) {
 // Validates the grant against current cloud save and returns updated save_data.
 // Throws on mismatch (already unlocked / wrong level / unknown ids).
 // NOTE: character-ownership for talents is checked separately (async) before calling this.
+// If the player's stored container is from a previous week/season, return a
+// fresh empty container instead of the stale one. Without this, the first
+// purchase after a reset fails with "save out of sync" because we'd compare
+// the new level=1 against last period's surviving levels.
+function rolloverContainer(obj, tier, periodIds) {
+    if (!obj) return {};
+    if (tier === 'weekly' && obj.weekId && obj.weekId !== periodIds.week_id) return {};
+    if (tier === 'seasonal' && obj.seasonId && obj.seasonId !== periodIds.season_id) return {};
+    return { ...obj };
+}
+
 function applyGrant(save, grantInfo, periodIds) {
     const s = { ...save };
     const { type } = grantInfo;
@@ -215,8 +226,10 @@ function applyGrant(save, grantInfo, periodIds) {
             const { tier, charId } = grantInfo;
             const key = tier === 'permanent' ? 'permanentTalents'
                       : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             obj[charId] = [];
+            if (tier === 'weekly') obj.weekId = periodIds.week_id;
+            if (tier === 'seasonal') obj.seasonId = periodIds.season_id;
             s[key] = obj;
             break;
         }
@@ -224,7 +237,7 @@ function applyGrant(save, grantInfo, periodIds) {
             const { tier, stat, level } = grantInfo;
             const key = tier === 'permanent' ? 'permanentUpgrades'
                       : tier === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             const currentLvl = Number(obj[stat] || 0);
             if (level !== currentLvl + 1) throw new Error(`Your save is out of sync. Please refresh and try again.`);
             obj[stat] = level;
@@ -237,7 +250,7 @@ function applyGrant(save, grantInfo, periodIds) {
             const { tier, weaponId, stat, level } = grantInfo;
             const key = tier === 'permanent' ? 'permanentWeaponUpgrades'
                       : tier === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             const weaponObj = { ...(obj[weaponId] || {}) };
             const currentLvl = Number(weaponObj[stat] || 0);
             if (level !== currentLvl + 1) throw new Error(`Your save is out of sync. Please refresh and try again.`);
@@ -252,7 +265,7 @@ function applyGrant(save, grantInfo, periodIds) {
             const { tier, charId, talentId } = grantInfo;
             const key = tier === 'permanent' ? 'permanentTalents'
                       : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             const charArr = Array.isArray(obj[charId]) ? [...obj[charId]] : [];
             if (charArr.includes(talentId)) throw new Error('You already own this talent.');
             // Enforce tier prerequisites scoped to THIS tree (permanent/weekly/seasonal):

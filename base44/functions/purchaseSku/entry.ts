@@ -179,6 +179,17 @@ const COSMETIC_SKU_COSTS = {
     'character-skins-advance':          20000,
 };
 
+// If the player's stored container is from a previous week/season, return a
+// fresh empty container instead of the stale one. Without this, the first
+// purchase after a reset fails — we'd compare new level=1 against last
+// period's surviving levels (or last period's already-owned talents).
+function rolloverContainer(obj, tier, periodIds) {
+    if (!obj) return {};
+    if (tier === 'weekly' && obj.weekId && obj.weekId !== periodIds.week_id) return {};
+    if (tier === 'seasonal' && obj.seasonId && obj.seasonId !== periodIds.season_id) return {};
+    return { ...obj };
+}
+
 // ---- Grant application ----
 // Applies grantInfo to the player's cloud PlayerSave atomically. Returns the
 // updated save_data. Validates that the SKU prefix matches the grant type so a
@@ -200,8 +211,10 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             }
             const key = tier === 'permanent' ? 'permanentTalents'
                       : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             obj[charId] = [];
+            if (tier === 'weekly') obj.weekId = periodIds.week_id;
+            if (tier === 'seasonal') obj.seasonId = periodIds.season_id;
             s[key] = obj;
             break;
         }
@@ -212,7 +225,7 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             if (skuPrefix !== expected) throw new Error(`This upgrade doesn't match your save. Please refresh and try again.`);
             const key = tier === 'permanent' ? 'permanentUpgrades'
                       : tier === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             const currentLvl = Number(obj[stat] || 0);
             // Level being purchased must be exactly currentLvl + 1
             if (level !== currentLvl + 1) {
@@ -232,7 +245,7 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             if (skuPrefix !== expected) throw new Error(`This upgrade doesn't match your save. Please refresh and try again.`);
             const key = tier === 'permanent' ? 'permanentWeaponUpgrades'
                       : tier === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             const weaponObj = { ...(obj[weaponId] || {}) };
             const currentLvl = Number(weaponObj[stat] || 0);
             if (level !== currentLvl + 1) {
@@ -257,7 +270,7 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             }
             const key = tier === 'permanent' ? 'permanentTalents'
                       : tier === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
-            const obj = { ...(s[key] || {}) };
+            const obj = rolloverContainer(s[key], tier, periodIds);
             const charArr = Array.isArray(obj[charId]) ? [...obj[charId]] : [];
             if (charArr.includes(talentId)) {
                 throw new Error('You already own this talent.');
