@@ -5,6 +5,45 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const MAX_SQUAD_MEMBERS = 5;
 
+// Daily squad XP awarded once per day (UTC) when ANY member first claims the daily bounty.
+// Scales with squad level so higher-tier squads still feel rewarded but progression
+// stays slow enough that weekly kills remain the primary XP driver. Tuned to give
+// a level-1 squad ~7 days to reach Drifters (5000 XP) on dailies alone, much less
+// with weekly kill XP added on top.
+const DAILY_SQUAD_XP_BY_LEVEL = [
+    500,   // Lv 1
+    700,   // Lv 2
+    900,   // Lv 3
+    1200,  // Lv 4
+    1500,  // Lv 5
+    1800,  // Lv 6
+    2000,  // Lv 7+
+];
+
+// MUST mirror game/SquadLevels.js. Used to recompute level when XP changes server-side.
+const SQUAD_LEVEL_THRESHOLDS = [
+    { level: 1, xpRequired: 0 },
+    { level: 2, xpRequired: 5000 },
+    { level: 3, xpRequired: 15000 },
+    { level: 4, xpRequired: 35000 },
+    { level: 5, xpRequired: 75000 },
+    { level: 6, xpRequired: 150000 },
+    { level: 7, xpRequired: 300000 },
+];
+
+function computeSquadLevel(xp) {
+    let lvl = 1;
+    for (const t of SQUAD_LEVEL_THRESHOLDS) {
+        if (xp >= t.xpRequired) lvl = t.level;
+    }
+    return lvl;
+}
+
+function getDailyXpForLevel(level) {
+    const idx = Math.max(0, Math.min(DAILY_SQUAD_XP_BY_LEVEL.length - 1, (level || 1) - 1));
+    return DAILY_SQUAD_XP_BY_LEVEL[idx];
+}
+
 // Server-authoritative bounty reward tables (must mirror pages/Squads.jsx for UI display)
 const WEEKLY_BOUNTY_TIERS = [
     { minLevel: 1, target: 2000,  gold: 500,   fragments: 1 },
@@ -340,11 +379,26 @@ Deno.serve(async (req) => {
             // Grant rewards to player's cloud PlayerSave
             const updatedTotals = await grantToPlayerSave(base44, walletAddress, tier.gold, tier.fragments);
 
+            // Award daily squad XP — ONCE per day, on the first member's daily claim.
+            // Gives squads a steady drip of progression between weekly resets.
+            let dailyXpAwarded = 0;
+            if (!isWeekly && squad.last_daily_xp_award_date !== periodId) {
+                dailyXpAwarded = getDailyXpForLevel(squad.level || 1);
+                const newXp = (squad.xp || 0) + dailyXpAwarded;
+                const newLevel = computeSquadLevel(newXp);
+                await base44.asServiceRole.entities.Squad.update(squadId, {
+                    xp: newXp,
+                    level: newLevel,
+                    last_daily_xp_award_date: periodId,
+                });
+            }
+
             return Response.json({
                 success: true,
                 reward: { gold: tier.gold, fragments: tier.fragments },
                 saveData: updatedTotals,
                 member: { ...member, [lastClaimedField]: periodId },
+                dailyXpAwarded,
             });
         }
 

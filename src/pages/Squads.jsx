@@ -546,7 +546,9 @@ export default function Squads({ isCarousel }) {
                 setMyMemberRecord(res.data.member);
                 const dGold = res.data.reward.gold;
                 const dFrag = res.data.reward.fragments;
-                toast({ title: "Daily Bounty Claimed!", description: `You received ${dGold.toLocaleString()} Gold${dFrag > 0 ? ` and ${dFrag} Relic Fragments` : ''}!` });
+                const dXp = res.data.dailyXpAwarded || 0;
+                const xpSuffix = dXp > 0 ? ` Squad earned ${dXp.toLocaleString()} XP!` : '';
+                toast({ title: "Daily Bounty Claimed!", description: `You received ${dGold.toLocaleString()} Gold${dFrag > 0 ? ` and ${dFrag} Relic Fragments` : ''}!${xpSuffix}` });
             } catch (e) {
                 console.error(e);
             }
@@ -804,6 +806,9 @@ export default function Squads({ isCarousel }) {
                                                     </span>
                                                 </div>
                                                 <div className="text-xs text-slate-300 mb-2">Defeat {dailyTier.target.toLocaleString()} enemies today.</div>
+                                                <div className="text-[10px] text-emerald-400 font-bold mb-2 flex items-center gap-1">
+                                                    ⚡ +{(mySquad.level >= 7 ? 2000 : [500,700,900,1200,1500,1800][Math.max(0, (mySquad.level || 1) - 1)]).toLocaleString()} Squad XP on first daily claim
+                                                </div>
                                                 <div className="flex gap-2 mb-3">
                                                     <div className="flex-1 bg-slate-800/60 rounded-lg p-2 text-center border border-slate-700 flex flex-col items-center">
                                                         <Coins className="w-4 h-4 fill-yellow-500 text-yellow-500 mb-1" />

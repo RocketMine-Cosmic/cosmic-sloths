@@ -66,6 +66,10 @@
       "type": "number",
       "default": 0,
       "description": "Current consecutive win streak (resets on loss/tie)"
+    },
+    "last_daily_xp_award_date": {
+      "type": "string",
+      "description": "Date (YYYY-MM-DD UTC) of the last daily-bounty XP bonus payout. Ensures the daily XP bump only fires once per day per squad regardless of how many members claim."
     }
   },
   "required": [
