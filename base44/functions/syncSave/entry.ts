@@ -220,19 +220,27 @@ Deno.serve(async (req) => {
         }
 
         // --- 6. SERVER-OWNED run-aggregate stats: cloud only (Phase 3c) ---
+        // Only LOG bumps when the client is actually stale. A non-stale client with
+        // a higher value is the benign "saveScore in flight" race (client banked
+        // earned gold/kills locally, cloud hasn't credited the run yet). Those rows
+        // were spamming SyncBlockLog and worrying staff (e.g. AnubisDominus 76k gold).
+        // The cloud value is still kept either way — only the audit log is suppressed.
         for (const key of SERVER_OWNED_RUN_STATS) {
             merged[key] = Number(existingData[key] || 0);
             const clientVal = Number(saveData[key] || 0);
-            if (clientVal > merged[key]) {
+            if (clientVal > merged[key] && clientIsStale) {
                 console.warn(`[syncSave] BLOCKED ${key} bump from ${walletLower}: client=${clientVal} cloud=${merged[key]}`);
                 recordBlock(key, clientVal, merged[key], 'run_stat_bump');
             }
         }
 
         // --- 7. Gold: SERVER-OWNED. Cloud only. Granted via spendGold/saveScore/claimBounty/claimDailyLogin etc. ---
+        // Same staleness filter as run stats above — non-stale client racing ahead
+        // is the saveScore-in-flight race and is benign. We keep the cloud value
+        // either way, but only audit-log when the client is genuinely behind.
         merged.gold = Number(existingData.gold || 0);
         const clientGold = Number(saveData.gold || 0);
-        if (clientGold > merged.gold) {
+        if (clientGold > merged.gold && clientIsStale) {
             console.warn(`[syncSave] BLOCKED gold bump from ${walletLower}: client=${clientGold} cloud=${merged.gold}`);
             recordBlock('gold', clientGold, merged.gold, 'gold_bump');
         }
