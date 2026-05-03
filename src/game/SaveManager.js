@@ -445,6 +445,19 @@ export const SaveManager = {
         if (!parsed.seasonalTalents || parsed.seasonalTalents.seasonId !== currentSeason) {
             parsed.seasonalTalents = { seasonId: currentSeason };
         }
+        // Persist the period rollover ONCE so subsequent load() calls don't keep
+        // re-doing the in-memory rollover work, and so the next syncSave doesn't
+        // race against a stale updated_at. Triggered by _needsArchiveSync flag
+        // set in the weekly/seasonal blocks above. Safe — only runs the first
+        // time load() detects a period mismatch in this browser session.
+        if (parsed._needsArchiveSync) {
+            try {
+                parsed.updated_at = Date.now();
+                localStorage.setItem('cosmic_sloth_save', JSON.stringify(parsed));
+            } catch (e) {
+                console.error('[SaveManager] Failed to persist period rollover:', e.message);
+            }
+        }
         if (!parsed.cosmetics) parsed.cosmetics = { trail: 'default' };
         if (!parsed.unlockedCosmetics) parsed.unlockedCosmetics = ['default'];
         if (parsed.maxTimeSurvived === undefined) parsed.maxTimeSurvived = 0;
