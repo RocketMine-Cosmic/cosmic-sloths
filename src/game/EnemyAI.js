@@ -102,21 +102,18 @@ export function updateEnemies(engine, dt) {
 
                 let creditedGold = 0;
                 if (extraGold > 0) {
-                    // In endless: auto-credit gold instead of dropping a pickup that lingers
-                    // visually long after the boss is gone (Hugo perceived these as
-                    // "non-boss" gold drops because regular enemies spawn around the pile
-                    // while the magnet pulls it in). Normal arenas keep the dropped pickup
-                    // so players can collect it as part of the post-boss reward moment.
-                    if (isEndless) {
-                        const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
-                        const finalGold = Math.floor(extraGold * engine.player.goldMult * nftGoldMult);
-                        engine.gold += finalGold;
-                        engine.callbacks.onGoldChange(engine.gold);
-                        creditedGold = finalGold;
-                        engine.addDamageText(e.x, e.y - 20, `+${finalGold.toLocaleString()} GOLD`, '#ffd700');
-                    } else {
-                        engine.pickups.push({ x: e.x + 10, y: e.y + 10, type: 'gold', value: extraGold, color: '#ffd700' });
-                    }
+                    // Auto-credit boss gold directly to the run total instead of dropping
+                    // a pickup the player must walk over. Players were missing the boss
+                    // gold pile when the boss died off-screen or when the victory modal
+                    // popped before they reached it (player feedback 2026-05-03). Applies
+                    // to BOTH endless and normal arenas. Only the boss's own gold pile
+                    // is auto-credited — regular enemy drops still spawn as pickups.
+                    const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
+                    const finalGold = Math.floor(extraGold * engine.player.goldMult * nftGoldMult);
+                    engine.gold += finalGold;
+                    engine.callbacks.onGoldChange(engine.gold);
+                    creditedGold = finalGold;
+                    engine.addDamageText(e.x, e.y - 20, `+${finalGold.toLocaleString()} GOLD`, '#ffd700');
                 }
 
                 engine.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
@@ -136,12 +133,10 @@ export function updateEnemies(engine, dt) {
 
                 // Boss-loot recap pinned to the PLAYER (always on-screen) so the player
                 // can never miss what they earned even if the boss died far off-screen.
-                // Endless: shows auto-credited gold + frags. Normal arenas: shows frags
-                // (gold is a pickup the player physically collects) — never both numbers
-                // mixed up. Stagger the lines so they don't overlap.
+                // Both gold + frags are auto-credited now, so always show both numbers.
                 const recap = [];
                 if (creditedFrags > 0) recap.push({ text: `+${creditedFrags} RELIC FRAGMENT${creditedFrags > 1 ? 'S' : ''}`, color: '#c084fc' });
-                if (isEndless && creditedGold > 0) recap.push({ text: `+${creditedGold.toLocaleString()} GOLD`, color: '#ffd700' });
+                if (creditedGold > 0) recap.push({ text: `+${creditedGold.toLocaleString()} GOLD`, color: '#ffd700' });
                 recap.forEach((line, idx) => {
                     engine.addDamageText(engine.player.x, engine.player.y - 110 - idx * 22, line.text, line.color, true);
                 });
@@ -153,13 +148,12 @@ export function updateEnemies(engine, dt) {
                 e._novaWarning = null;
                 e._meteorWarning = null;
                 e.chargeDash = null;
-                // 10-second grace window after the boss dies — gives players time to
-                // walk over and collect gold/relic-fragment drops before the victory
-                // modal pops. Applies to both endless AND normal sectors. Bumped from
-                // 5s → 10s after player feedback (2026-05-03) — 5s wasn't enough when
-                // the boss died on the far side of the screen and magnet range was low.
-                engine.postBossGraceUntil = engine.time + 10;
-                engine.addDamageText(engine.player.x, engine.player.y - 80, `10s — COLLECT DROPS!`, '#22d3ee');
+                // Brief 3s grace after the boss dies — boss gold + relic fragments are
+                // now auto-credited above, so this is just a visual beat for the
+                // explosion/recap text before the victory modal pops. (Was 10s and was
+                // crediting the whole sector's wave drops; now reverted to a small
+                // post-kill pause only.)
+                engine.postBossGraceUntil = engine.time + 3;
             } else {
                 const isEndless = engine.arena.duration === Infinity;
                 if (!isEndless) {

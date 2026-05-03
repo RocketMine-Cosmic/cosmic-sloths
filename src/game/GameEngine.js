@@ -575,22 +575,11 @@ export class GameEngine {
         // hold a stale copy of the snapshot.
 
         // Victory fires when the arena timer expires AND no boss is active AND the
-        // post-boss grace window has elapsed. The grace window (set in EnemyAI on
-        // boss death) gives players 10s to walk over and collect gold/relic drops
-        // before the modal interrupts them.
-        // For NON-boss sectors (index 0,2,4,6,8) there's no boss kill to trigger
-        // the grace, so we apply a separate timer-expiry grace of 10s here too —
-        // otherwise the modal pops the instant the timer hits zero and any final
-        // wave drops get cut off.
-        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory && !this.isBossActive) {
-            if (!this.endOfRunGraceUntil) {
-                this.endOfRunGraceUntil = this.time + 10;
-                this.addDamageText(this.player.x, this.player.y - 80, `10s — COLLECT DROPS!`, '#22d3ee');
-            }
-        }
+        // post-boss grace window has elapsed. Boss gold + relic fragments are now
+        // auto-credited at the moment the boss dies (see EnemyAI.js), so the grace
+        // is just a brief visual beat — no longer a critical pickup window.
         const inPostBossGrace = this.postBossGraceUntil && this.time < this.postBossGraceUntil;
-        const inEndOfRunGrace = this.endOfRunGraceUntil && this.time < this.endOfRunGraceUntil;
-        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory && !this.isBossActive && !inPostBossGrace && !inEndOfRunGrace) {
+        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory && !this.isBossActive && !inPostBossGrace) {
             this.victory();
             return;
         }
