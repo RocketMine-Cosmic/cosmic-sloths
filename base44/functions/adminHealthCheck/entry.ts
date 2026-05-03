@@ -13,15 +13,17 @@ Deno.serve(async (req) => {
         const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
+        // Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
         const now = new Date();
-        const year = now.getUTCFullYear();
-        const startOfYear = new Date(Date.UTC(year, 0, 1));
-        const startOfWeek = new Date(startOfYear);
-        startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-        const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-        const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
+        const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const dayNum = tmp.getUTCDay() || 7;
+        tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+        const isoYear = tmp.getUTCFullYear();
+        const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+        const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+        const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
         const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
-        const season_id = `${year}-S${seasonNum}`;
+        const season_id = `${isoYear}-S${seasonNum}`;
 
         const [pools, weekScores, squads, members, bosses, contributions] = await Promise.all([
             base44.asServiceRole.entities.TokenPool.filter({ distributed: false }),

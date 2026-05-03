@@ -30,14 +30,16 @@ const WAR_TIE_GOLD_PER_MEMBER = 1000;
 const WAR_TIE_FRAGMENTS_PER_MEMBER = 1;
 const WAR_LOSS_GOLD_PER_MEMBER = 500;
 
+// Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
 function getCurrentWeekId() {
     const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    return `${year}-W${String(isoWeek).padStart(2, '0')}`;
+    const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const dayNum = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+    const isoYear = tmp.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+    return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
 }
 
 function getPreviousWeekId(currentWeekId) {
