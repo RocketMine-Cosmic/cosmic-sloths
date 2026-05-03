@@ -33,6 +33,7 @@ const Titles = React.lazy(() => import('./pages/Titles'));
 const Loadouts = React.lazy(() => import('./pages/Loadouts'));
 const SquadWars = React.lazy(() => import('./pages/SquadWars'));
 const WarArchive = React.lazy(() => import('./pages/WarArchive'));
+const SquadLeaderDashboard = React.lazy(() => import('./pages/SquadLeaderDashboard'));
 import { initOmenX } from '@/lib/omenx';
 import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
@@ -40,6 +41,7 @@ import { SoundManager } from './game/SoundManager';
 import GamepadManager from './components/GamepadManager';
 import Base44AuthLinker from './components/Base44AuthLinker';
 import SyncStatusBanner from './components/SyncStatusBanner';
+import DailyGoalBanner from './components/squads/DailyGoalBanner';
 import FirstTimeSetupLoader from './components/FirstTimeSetupLoader';
 import SaveStatusIndicator from './components/SaveStatusIndicator';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
@@ -90,6 +92,7 @@ const MainApp = () => {
           <Route path="/loadouts" element={<Loadouts />} />
           <Route path="/squad-wars" element={<SquadWars />} />
           <Route path="/war-archive" element={<WarArchive />} />
+          <Route path="/squad-leader" element={<SquadLeaderDashboard />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </React.Suspense>
@@ -133,6 +136,7 @@ const MainApp = () => {
       <Route path="/loadouts" element={<Loadouts />} />
       <Route path="/squad-wars" element={<SquadWars />} />
       <Route path="/war-archive" element={<WarArchive />} />
+      <Route path="/squad-leader" element={<SquadLeaderDashboard />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </>
@@ -193,6 +197,7 @@ function App() {
           <GamepadManager />
           <Base44AuthLinker />
           <SyncStatusBanner />
+          <DailyGoalBanner />
           <FirstTimeSetupLoader />
           <SaveStatusIndicator />
           <Router>

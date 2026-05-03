@@ -634,6 +634,150 @@ Deno.serve(async (req) => {
             return Response.json({ success: true, squad: updatedSquad });
         }
 
+        // ----- Daily Goal (leader-set squad-wide goal that broadcasts a banner) -----
+
+        if (action === 'setDailyGoal') {
+            const { squadId, goalType, target, label, durationHours } = body;
+            if (!squadId || !label) {
+                return Response.json({ error: 'Couldn\'t set the goal — please refresh and try again.' }, { status: 400 });
+            }
+            // Only the squad leader can set a daily goal.
+            if (!(await isCallerLeader(base44, walletAddress, squadId))) {
+                return Response.json({ error: 'Only the squad leader can set a daily goal.' }, { status: 403 });
+            }
+            const safeType = (goalType === 'custom') ? 'custom' : 'kills';
+            const safeTarget = safeType === 'kills' ? Math.max(1, Math.min(100000, parseInt(target, 10) || 100)) : 0;
+            const hours = Math.max(1, Math.min(48, parseInt(durationHours, 10) || 24));
+            const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+
+            // Deactivate any previous active goal for this squad before creating the new one.
+            const existing = await base44.asServiceRole.entities.SquadDailyGoal.filter({ squad_id: squadId, is_active: true });
+            for (const g of existing) {
+                try { await base44.asServiceRole.entities.SquadDailyGoal.update(g.id, { is_active: false }); } catch {}
+            }
+
+            const goal = await base44.asServiceRole.entities.SquadDailyGoal.create({
+                squad_id: squadId,
+                goal_type: safeType,
+                target: safeTarget,
+                label: String(label).substring(0, 120),
+                set_by_wallet: walletAddress,
+                set_by_name: authoritativeName,
+                expires_at: expiresAt,
+                is_active: true,
+            });
+
+            // Drop a SYSTEM message into squad chat so members see it immediately.
+            try {
+                await base44.asServiceRole.entities.SquadMessage.create({
+                    squad_id: squadId,
+                    wallet_address: 'system',
+                    player_name: 'SYSTEM',
+                    content: `🎯 Daily goal set by ${authoritativeName}: ${goal.label}`,
+                });
+            } catch {}
+
+            return Response.json({ success: true, goal });
+        }
+
+        if (action === 'clearDailyGoal') {
+            const { squadId } = body;
+            if (!squadId) return Response.json({ error: 'Couldn\'t clear the goal — please refresh and try again.' }, { status: 400 });
+            if (!(await isCallerLeader(base44, walletAddress, squadId))) {
+                return Response.json({ error: 'Only the squad leader can clear the daily goal.' }, { status: 403 });
+            }
+            const active = await base44.asServiceRole.entities.SquadDailyGoal.filter({ squad_id: squadId, is_active: true });
+            for (const g of active) {
+                try { await base44.asServiceRole.entities.SquadDailyGoal.update(g.id, { is_active: false }); } catch {}
+            }
+            return Response.json({ success: true });
+        }
+
+        if (action === 'getDailyGoal') {
+            const { squadId } = body;
+            if (!squadId) return Response.json({ goal: null });
+            const active = await base44.asServiceRole.entities.SquadDailyGoal.filter({ squad_id: squadId, is_active: true }, '-created_date', 5);
+            // Auto-expire any goal past its deadline (cheap inline cleanup).
+            const now = Date.now();
+            let live = null;
+            for (const g of active) {
+                const exp = g.expires_at ? new Date(g.expires_at).getTime() : 0;
+                if (exp && exp < now) {
+                    try { await base44.asServiceRole.entities.SquadDailyGoal.update(g.id, { is_active: false }); } catch {}
+                } else if (!live) {
+                    live = g;
+                }
+            }
+            return Response.json({ goal: live });
+        }
+
+        // ----- Member Activity (leader dashboard contribution feed) -----
+
+        if (action === 'getMemberActivity') {
+            const { squadId } = body;
+            if (!squadId) return Response.json({ activity: [], members: [] });
+            // Verify caller is in this squad (any member can read; leader UI gates the page).
+            const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
+            const isInSquad = memberRecords.some(m => m.wallet_address?.toLowerCase() === walletAddress.toLowerCase());
+            if (!isInSquad) {
+                return Response.json({ error: 'You\'re not a member of this squad.' }, { status: 403 });
+            }
+
+            // Recent runs by every squad member in the past 7 days.
+            const wallets = memberRecords.map(m => m.wallet_address).filter(Boolean);
+            const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            const allRuns = [];
+            for (const w of wallets) {
+                try {
+                    const runs = await base44.asServiceRole.entities.RunScore.filter({ wallet_address: w }, '-created_date', 20);
+                    for (const r of runs) {
+                        const ts = new Date(r.created_date).getTime();
+                        if (ts >= sevenDaysAgo) allRuns.push(r);
+                    }
+                } catch {}
+            }
+            allRuns.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+            const activity = allRuns.slice(0, 50).map(r => ({
+                id: r.id,
+                wallet_address: r.wallet_address,
+                player_name: r.player_name,
+                kills: r.kills || 0,
+                score: r.score || 0,
+                level: r.level || 1,
+                time_survived: r.time_survived || 0,
+                character_id: r.character_id,
+                arena_id: r.arena_id,
+                created_date: r.created_date,
+            }));
+
+            // Per-member summary: total kills + last run timestamp (used for kick-inactive UI).
+            const summaryByWallet = {};
+            for (const m of memberRecords) {
+                const w = (m.wallet_address || '').toLowerCase();
+                summaryByWallet[w] = {
+                    member_id: m.id,
+                    wallet_address: m.wallet_address,
+                    player_name: m.player_name,
+                    role: m.role,
+                    runs_7d: 0,
+                    kills_7d: 0,
+                    last_run_at: null,
+                };
+            }
+            for (const r of allRuns) {
+                const w = (r.wallet_address || '').toLowerCase();
+                const s = summaryByWallet[w];
+                if (!s) continue;
+                s.runs_7d += 1;
+                s.kills_7d += (r.kills || 0);
+                const ts = new Date(r.created_date).getTime();
+                if (!s.last_run_at || ts > new Date(s.last_run_at).getTime()) s.last_run_at = r.created_date;
+            }
+            const members = Object.values(summaryByWallet);
+
+            return Response.json({ activity, members });
+        }
+
         return Response.json({ error: 'Couldn\'t process this request — please refresh and try again.' }, { status: 400 });
     } catch (error) {
         console.error('[squadActions]', error.message);
