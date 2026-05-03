@@ -66,6 +66,12 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                     <span className="text-sm md:text-base text-slate-400">Gold Earned</span>
                     <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
                 </div>
+                {(stats.fragments || 0) > 0 && (
+                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                        <span className="text-sm md:text-base text-slate-400">Relic Fragments</span>
+                        <span className="text-fuchsia-400 font-mono text-lg md:text-xl">+{stats.fragments}</span>
+                    </div>
+                )}
                 {stats.worldBossDamage > 0 && (
                     <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
                         <span className="text-sm md:text-base text-slate-400">Boss Damage Dealt</span>
