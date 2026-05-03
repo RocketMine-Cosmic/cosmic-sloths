@@ -40,6 +40,7 @@ export default function Titles({ isCarousel }) {
             const save = SaveManager.load();
             let bestScore = 0;
             let leviathanKills = 0;
+            let globalRaidDamage = 0;
 
             try {
                 if (omenxUser.walletAddress) {
@@ -47,6 +48,23 @@ export default function Titles({ isCarousel }) {
                     if (top.length) bestScore = top[0].score || 0;
                 }
             } catch {}
+
+            // Sum lifetime raid damage from GlobalBossContribution — single source of
+            // truth for raid-related titles (Raid Recruit / Trooper / Captain / etc).
+            // Was previously hardcoded to 0, so Texxy's 5.3M run never unlocked
+            // World Eater Bane (Texxy bug 2026-05-03).
+            try {
+                if (omenxUser.walletAddress) {
+                    const contributions = await base44.entities.GlobalBossContribution.filter(
+                        { user_id: omenxUser.walletAddress },
+                        '-created_date',
+                        500
+                    );
+                    globalRaidDamage = contributions.reduce((sum, c) => sum + (Number(c.damage) || 0), 0);
+                }
+            } catch (e) {
+                console.error('[Titles] Failed to fetch raid damage:', e.message);
+            }
 
             const enemyKills = save.enemyKills || {};
             leviathanKills = Object.keys(enemyKills)
@@ -86,7 +104,7 @@ export default function Titles({ isCarousel }) {
                 totalKills: save.totalKills || 0,
                 leviathanKills,
                 bestScore,
-                globalRaidDamage: 0,
+                globalRaidDamage,
                 gold: save.gold || 0,
                 totalGoldEarned: save.totalGoldEarned || 0,
                 maxLevelReached: save.maxLevelReached || 0,
