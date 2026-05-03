@@ -1,9 +1,40 @@
 // Projectile update logic extracted from GameEngine.
 // Handles player projectile movement, AoE, collisions, chains, and enemy projectiles.
 
+// Swept circle-vs-point hit test: returns true if the line segment from (px0,py0)
+// to (px,py) passes within `r` of point (ex,ey). Handles fast projectiles + moving
+// bosses where simple point-in-circle would miss between frames.
+// Uses squared distances throughout to skip the sqrt — same result, ~3× faster
+// in this hot path.
+function sweptHit(px0, py0, px, py, ex, ey, r) {
+    const r2 = r * r;
+    const dx = px - px0;
+    const dy = py - py0;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq < 0.0001) {
+        const ddx = px - ex, ddy = py - ey;
+        return ddx * ddx + ddy * ddy < r2;
+    }
+    // Project enemy onto segment, clamp t to [0,1].
+    let t = ((ex - px0) * dx + (ey - py0) * dy) / lenSq;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const cx = px0 + dx * t;
+    const cy = py0 + dy * t;
+    const ddx = ex - cx, ddy = ey - cy;
+    return ddx * ddx + ddy * ddy < r2;
+}
+
 export function updateProjectiles(engine, dt) {
     engine.projectiles = engine.projectiles.filter(p => {
         if (p.dead) return false;
+        // Capture pre-move position so collision checks can sweep the full path
+        // travelled this frame. Without this, a 500px/s projectile at 50ms dt
+        // (mobile lag spike or fleeing-boss frame) jumps 25px and can teleport
+        // PAST a boss that's also moving — players see the visual hit but the
+        // single-point collision check missed entirely.
+        const px0 = p.x;
+        const py0 = p.y;
         p.x += p.vx * dt;
         p.y += p.vy * dt;
         p.life -= dt;
@@ -57,8 +88,13 @@ export function updateProjectiles(engine, dt) {
                         {
                             candidates.forEach(e => {
                                 if (p.pierce <= 0) return;
-                                if (Math.abs(e.x - p.x) > e.radius + (p.radius || 5) || Math.abs(e.y - p.y) > e.radius + (p.radius || 5)) return;
-                                if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + (p.radius || 5)) {
+                                const hitR = e.radius + (p.radius || 5);
+                                // Cheap AABB reject using the swept bounding box (old → new pos).
+                                const minPx = Math.min(px0, p.x), maxPx = Math.max(px0, p.x);
+                                const minPy = Math.min(py0, p.y), maxPy = Math.max(py0, p.y);
+                                if (e.x < minPx - hitR || e.x > maxPx + hitR) return;
+                                if (e.y < minPy - hitR || e.y > maxPy + hitR) return;
+                                if (sweptHit(px0, py0, p.x, p.y, e.x, e.y, hitR)) {
                                     if (e.id === 'boss_supernova') {
                                         p.pierce = 0;
                                         p.dead = true;
