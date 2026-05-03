@@ -77,9 +77,10 @@ async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
 const MIN_MEMBERS_FOR_WAR = 2;
 
 // Launch grace — Squad Wars went live on the weekend of week 2026-W18, so most
-// squads are still recruiting. For this week only we let solo squads in too so
-// nobody sits out the inaugural week. Reverts to MIN_MEMBERS_FOR_WAR after.
-const LAUNCH_GRACE_WEEKS = new Set(['2026-W18']);
+// squads are still recruiting. For the inaugural pairing week (W19, paired
+// Monday 2026-05-04) we let solo squads in too so nobody sits out. Reverts
+// to MIN_MEMBERS_FOR_WAR after that.
+const LAUNCH_GRACE_WEEKS = new Set(['2026-W19']);
 
 // Pair eligible squads for a given week. Idempotent — if a war already exists
 // for a squad in that week, we skip it.
