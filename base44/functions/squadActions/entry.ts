@@ -177,30 +177,18 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'This squad is invite-only. Send a join request instead.', requiresRequest: true }, { status: 403 });
             }
 
-            // Mark current period as already-claimed so the new member can't claim
-            // bounties earned by the squad before they joined. They'll be eligible
-            // for the NEXT daily/weekly bounty once the period rolls over.
-            // Use canonical ISO 8601 (Mon-start, Sun 23:59 UTC end). The previous
-            // formula was Sunday-based and rolled W19 over a day early.
-            const today = new Date().toISOString().split('T')[0];
-            const currentWeek = (() => {
-                const now = new Date();
-                const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-                const dayNum = tmp.getUTCDay() || 7;
-                tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
-                const isoYear = tmp.getUTCFullYear();
-                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
-                const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
-                return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
-            })();
+            // Leave bounty stamps empty so new members can claim the current
+            // period's daily/weekly bounty if the squad has hit the threshold.
+            // (Previously we pre-stamped both fields, which made every joiner see
+            // "already claimed" until the next rollover — Texxy bug 2026-05-03.)
             const member = await base44.asServiceRole.entities.SquadMember.create({
                 squad_id: squadId,
                 wallet_address: walletAddress,
                 player_name: playerName || 'Pilot',
                 player_title: playerTitle || '',
                 role: 'member',
-                last_payout_week: currentWeek,
-                last_daily_payout_date: today
+                last_payout_week: '',
+                last_daily_payout_date: ''
             });
 
             // Set member count from actual row count (race-safe — re-counts after the
@@ -443,25 +431,15 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'That pilot has already joined another squad.' }, { status: 409 });
             }
 
-            const today = new Date().toISOString().split('T')[0];
-            const currentWeek = (() => {
-                const now = new Date();
-                const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-                const dayNum = tmp.getUTCDay() || 7;
-                tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
-                const isoYear = tmp.getUTCFullYear();
-                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
-                const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
-                return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
-            })();
+            // Leave bounty stamps empty (see direct-join comment above).
             await base44.asServiceRole.entities.SquadMember.create({
                 squad_id: squadId,
                 wallet_address: request.wallet_address,
                 player_name: request.player_name || 'Pilot',
                 player_title: request.player_title || '',
                 role: 'member',
-                last_payout_week: currentWeek,
-                last_daily_payout_date: today,
+                last_payout_week: '',
+                last_daily_payout_date: '',
             });
             // Set member count from actual rows (race-safe).
             const verifiedApproveMembers = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
