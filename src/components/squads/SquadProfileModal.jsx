@@ -6,6 +6,46 @@ import { base44 } from '@/api/base44Client';
 import { getSquadLevel, getNextSquadLevel, getSquadXpProgress } from '../../game/SquadLevels';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
 
+// Module-level cache shared across all SquadProfileModal instances.
+// Re-opening the same squad within CACHE_TTL_MS skips the backend call entirely,
+// which is what was causing rate-limit storms when players rapidly clicked
+// between squad cards in the browser. In-flight requests are deduped via the
+// pending map so simultaneous opens of the same squad share one network call.
+const CACHE_TTL_MS = 30_000;
+const profileCache = new Map(); // squadId -> { data, expires }
+const pendingFetches = new Map(); // squadId -> Promise
+
+async function fetchSquadProfile(squadId) {
+    const cached = profileCache.get(squadId);
+    if (cached && cached.expires > Date.now()) return cached.data;
+    if (pendingFetches.has(squadId)) return pendingFetches.get(squadId);
+
+    const p = (async () => {
+        // Up to 3 attempts with backoff for transient 429s — invisible to the user.
+        let lastErr = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                const res = await base44.functions.invoke('getSquadProfile', { squadId });
+                if (res.data?.success) {
+                    profileCache.set(squadId, { data: res.data, expires: Date.now() + CACHE_TTL_MS });
+                    return res.data;
+                }
+                throw new Error(res.data?.error || 'Failed to load squad profile.');
+            } catch (e) {
+                lastErr = e;
+                const status = e?.response?.status;
+                // Only retry on transient errors (rate limit, 5xx). Other errors fail fast.
+                if (status !== 429 && (!status || status < 500)) break;
+                await new Promise(r => setTimeout(r, 400 * (attempt + 1) + Math.random() * 200));
+            }
+        }
+        throw lastErr || new Error('Failed to load squad profile.');
+    })();
+
+    pendingFetches.set(squadId, p);
+    try { return await p; } finally { pendingFetches.delete(squadId); }
+}
+
 // Read-only profile card for any squad. Opens from the squad browser
 // (scouting before joining) and from the members tab (own squad view).
 export default function SquadProfileModal({ squadId, onClose, onJoin, onRequestJoin, canJoin, isFull, hideJoin }) {
@@ -17,18 +57,23 @@ export default function SquadProfileModal({ squadId, onClose, onJoin, onRequestJ
         if (!squadId) return;
         let cancelled = false;
         (async () => {
+            // Show cached data instantly; only show spinner on fresh loads.
+            const cached = profileCache.get(squadId);
+            if (cached && cached.expires > Date.now()) {
+                setData(cached.data);
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             setError('');
             try {
-                const res = await base44.functions.invoke('getSquadProfile', { squadId });
-                if (cancelled) return;
-                if (res.data?.success) setData(res.data);
-                else setError(res.data?.error || 'Failed to load squad profile.');
+                const result = await fetchSquadProfile(squadId);
+                if (!cancelled) setData(result);
             } catch (e) {
-                // Prefer the server's `error` field over axios's generic "Request failed with status code 500".
-                const serverMsg = e?.response?.data?.error;
-                const status = e?.response?.status;
-                if (!cancelled) setError(serverMsg || (status === 429 ? 'Too many requests — please wait a moment and try again.' : 'Failed to load squad profile.'));
+                if (!cancelled) {
+                    const serverMsg = e?.response?.data?.error;
+                    setError(serverMsg || e?.message || 'Failed to load squad profile.');
+                }
             }
             if (!cancelled) setLoading(false);
         })();
