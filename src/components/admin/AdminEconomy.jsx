@@ -17,8 +17,12 @@ export default function AdminEconomy({ walletAddress }) {
         { id: 'all',        label: 'All Time' },
     ];
 
+    // Use UTC for all range math so admin timezone doesn't shift the week boundary.
+    // Spend logs are stamped with UTC week_id; without this, an admin in BST at 00:30
+    // sees an empty "This Week" because their local Monday has rolled over but UTC
+    // is still Sunday (W18). All comparisons stay in UTC end-to-end.
     const getDateRange = (p) => {
-        const now = moment();
+        const now = moment.utc();
         if (p === 'today')      return [now.clone().startOf('day'), now.clone().endOf('day')];
         if (p === 'this_week')  return [now.clone().startOf('isoWeek'), now.clone().endOf('isoWeek')];
         if (p === 'last_week')  return [now.clone().subtract(1, 'week').startOf('isoWeek'), now.clone().subtract(1, 'week').endOf('isoWeek')];
@@ -42,7 +46,7 @@ export default function AdminEconomy({ walletAddress }) {
     const q = search.trim().toLowerCase();
     const filteredLogs = (spendLogs || []).filter(log => {
         if (start) {
-            const d = moment(log.created_date);
+            const d = moment.utc(log.created_date);
             if (!d.isSameOrAfter(start) || !d.isSameOrBefore(end)) return false;
         }
         if (q) {
