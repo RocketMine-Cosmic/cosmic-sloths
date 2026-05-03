@@ -74,7 +74,7 @@ async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
 // to dodge larger opponents and farm easy bye-week / lopsided wins. Roster of 3+ is
 // the floor for "real" squad activity. Pairing skips smaller squads — they still get
 // to play normally, they just don't enter the war league until they grow.
-const MIN_MEMBERS_FOR_WAR = 3;
+const MIN_MEMBERS_FOR_WAR = 2;
 
 // Pair eligible squads for a given week. Idempotent — if a war already exists
 // for a squad in that week, we skip it.
