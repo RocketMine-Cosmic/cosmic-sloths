@@ -43,7 +43,10 @@ Deno.serve(async (req) => {
             return Response.json({ pools });
         }
         if (type === 'logs') {
-            const logs = await base44.asServiceRole.entities.TokenSpendLog.list('-created_date', 50);
+            // Pull a wide window so client-side date filters (This Week / This Month)
+            // don't silently drop entries when there's a busy day. 50 was way too tight —
+            // a single active morning would push the rest of the week off the list.
+            const logs = await base44.asServiceRole.entities.TokenSpendLog.list('-created_date', 2000);
             return Response.json({ logs });
         }
         if (type === 'payouts') {
