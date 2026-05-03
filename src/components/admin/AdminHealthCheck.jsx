@@ -2,18 +2,12 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
+// Use the canonical ISO 8601 helper (Mon-start, Sun 23:59 UTC end). The previous
+// local Sun-start formula made this card show next week's id a day early on Sundays.
+import { getCurrentWeekId, getCurrentSeasonId } from './useAvailablePeriods';
 
 function getCurrentPeriodIds() {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
-    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
-    const season_id = `${year}-S${seasonNum}`;
-    return { week_id, season_id };
+    return { week_id: getCurrentWeekId(), season_id: getCurrentSeasonId() };
 }
 
 function StatusRow({ label, status, value, detail }) {

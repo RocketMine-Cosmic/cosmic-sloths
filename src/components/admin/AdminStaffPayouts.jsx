@@ -3,18 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Coins } from 'lucide-react';
 import moment from 'moment';
+// Use the canonical ISO 8601 helper (Mon-start, Sun 23:59 UTC end). The previous
+// local Sun-start formula made this card show next week's id a day early on Sundays.
+import { getCurrentWeekId } from './useAvailablePeriods';
 
 const FALLBACK_STAFF_PCT = 0.02; // matches distributeRewards.js fallback
-
-function getCurrentWeekId() {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    return `${year}-W${String(isoWeek).padStart(2, '0')}`;
-}
 
 // Shows what each staff member is on track to earn from the current weekly OMENX pool.
 // Each admin wallet receives 2% of total weekly spend (set in distributeRewards.js → STAFF_PCT_PER_WALLET).
