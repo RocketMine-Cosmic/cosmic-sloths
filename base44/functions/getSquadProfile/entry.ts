@@ -135,6 +135,12 @@ Deno.serve(async (req) => {
         });
     } catch (error) {
         console.error('[getSquadProfile]', error.message);
-        return Response.json({ error: error.message || 'Internal error' }, { status: 500 });
+        // Pass through rate-limit responses with the right status + a clear message
+        // so the modal shows "Too many requests" instead of a confusing 500.
+        const msg = error.message || '';
+        if (/rate limit/i.test(msg) || error.status === 429) {
+            return Response.json({ error: 'Too many requests — please wait a moment and try again.' }, { status: 429 });
+        }
+        return Response.json({ error: 'Couldn\'t load this squad\'s profile. Please try again.' }, { status: 500 });
     }
 });

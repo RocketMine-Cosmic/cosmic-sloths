@@ -25,7 +25,10 @@ export default function SquadProfileModal({ squadId, onClose, onJoin, onRequestJ
                 if (res.data?.success) setData(res.data);
                 else setError(res.data?.error || 'Failed to load squad profile.');
             } catch (e) {
-                if (!cancelled) setError(e?.message || 'Failed to load squad profile.');
+                // Prefer the server's `error` field over axios's generic "Request failed with status code 500".
+                const serverMsg = e?.response?.data?.error;
+                const status = e?.response?.status;
+                if (!cancelled) setError(serverMsg || (status === 429 ? 'Too many requests — please wait a moment and try again.' : 'Failed to load squad profile.'));
             }
             if (!cancelled) setLoading(false);
         })();
