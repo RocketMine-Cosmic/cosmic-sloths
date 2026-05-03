@@ -6,10 +6,10 @@ function OmenXIcon({ className }) {
 }
 
 // Endless-mode reward caps — must mirror functions/saveScore.js EXACTLY.
-// Cap = clamp(time_seconds * 25, 1500, 25000). Anything above this isn't credited.
-const ENDLESS_GOLD_PER_SEC = 25;
-const ENDLESS_GOLD_FLOOR = 1500;
-const ENDLESS_GOLD_HARD_CEILING = 25000;
+// Cap = clamp(time_seconds * 12, 1000, 10000). Anything above this isn't credited.
+const ENDLESS_GOLD_PER_SEC = 12;
+const ENDLESS_GOLD_FLOOR = 1000;
+const ENDLESS_GOLD_HARD_CEILING = 10000;
 const computeEndlessGoldCap = (timeSec) =>
     Math.min(ENDLESS_GOLD_HARD_CEILING, Math.max(ENDLESS_GOLD_FLOOR, Math.floor((timeSec || 0) * ENDLESS_GOLD_PER_SEC)));
 

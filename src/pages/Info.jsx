@@ -311,7 +311,7 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Credited Gold/kills scale with run time (~1,500 Gold/min, ~240 kills/min) up to 25,000 Gold and 6,000 kills per run.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Credited Gold/kills scale with run time (~720 Gold/min, ~240 kills/min) up to 10,000 Gold and 6,000 kills per run.</p>
                     </div>
                 </div>
             </SectionCard>
