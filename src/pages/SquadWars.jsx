@@ -165,6 +165,9 @@ export default function SquadWars({ isCarousel }) {
                         <div className="text-[10px] md:text-xs text-amber-300/80 mt-1 font-bold">
                             ⚠ Endless Void kills do NOT count toward Squad Wars — play sectors to earn war kills.
                         </div>
+                        <div className="text-[10px] md:text-xs text-amber-300/80 font-bold">
+                            ⚠ Minimum of 2 players required for eligibility.
+                        </div>
                         <button onClick={() => { SoundManager.playUIClick(); navigate('/war-archive'); }}
                             className="mt-2 inline-flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-600/40 px-2 py-1 rounded transition-colors">
                             <Crown className="w-3 h-3" /> View full War Archive →
@@ -220,6 +223,7 @@ export default function SquadWars({ isCarousel }) {
                                         <Swords className="w-12 h-12 mx-auto mb-3 text-slate-600" />
                                         <div className="text-lg font-bold text-white mb-1">No War This Week</div>
                                         <p className="text-sm">Squads are paired every Monday at 00:05 UTC. Check back soon!</p>
+                                        <p className="text-xs text-amber-300/80 mt-3 font-bold">⚠ Minimum of 2 players required for eligibility.</p>
                                     </div>
                                 )
                             )}
