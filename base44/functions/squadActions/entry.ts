@@ -154,7 +154,12 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
             }
             if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
-            if ((squad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
+            // CRITICAL: Use actual SquadMember row count, not cached member_count.
+            // Two simultaneous joins on a 4/5 squad both read member_count=4 from
+            // the squad row → both pass the guard → squad ends up with 6 actual
+            // members but counter stuck at 5 (Hugo bug 2026-05-03 — Anubian Legion).
+            const currentMembers = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
+            if (currentMembers.length >= MAX_SQUAD_MEMBERS) {
                 return Response.json({ error: 'This squad is full.' }, { status: 400 });
             }
             const existingMember = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
@@ -198,11 +203,11 @@ Deno.serve(async (req) => {
                 last_daily_payout_date: today
             });
 
-            // Increment member count. Some SDK versions don't return the full record
-            // from .update(), so re-fetch to guarantee the client gets a complete squad
-            // object (this was causing "join" to silently leave the UI on the squad list).
+            // Set member count from actual row count (race-safe — re-counts after the
+            // create above so concurrent joins both end up with the correct total).
+            const verifiedMembers = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
             await base44.asServiceRole.entities.Squad.update(squadId, {
-                member_count: (squad.member_count || 0) + 1
+                member_count: verifiedMembers.length
             });
             const updatedSquad = await base44.asServiceRole.entities.Squad.get(squadId);
 
@@ -223,14 +228,13 @@ Deno.serve(async (req) => {
 
             await base44.asServiceRole.entities.SquadMember.delete(memberId);
 
-            // Decrement member count
+            // Reconcile member count from actual rows (race-safe — also self-heals
+            // any squads with stale member_count from past concurrent joins).
             try {
-                const squad = await base44.asServiceRole.entities.Squad.get(squadId);
-                if (squad) {
-                    await base44.asServiceRole.entities.Squad.update(squadId, {
-                        member_count: Math.max(0, (squad.member_count || 1) - 1)
-                    });
-                }
+                const remaining = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
+                await base44.asServiceRole.entities.Squad.update(squadId, {
+                    member_count: remaining.length
+                });
             } catch {}
 
             await base44.asServiceRole.entities.SquadMessage.create({
@@ -266,14 +270,12 @@ Deno.serve(async (req) => {
 
             await base44.asServiceRole.entities.SquadMember.delete(targetMemberId);
 
-            // Decrement member count
+            // Reconcile member count from actual rows (race-safe + self-healing).
             try {
-                const squad = await base44.asServiceRole.entities.Squad.get(squadId);
-                if (squad) {
-                    await base44.asServiceRole.entities.Squad.update(squadId, {
-                        member_count: Math.max(0, (squad.member_count || 1) - 1)
-                    });
-                }
+                const remaining = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
+                await base44.asServiceRole.entities.Squad.update(squadId, {
+                    member_count: remaining.length
+                });
             } catch {}
 
             return Response.json({ success: true });
@@ -429,7 +431,9 @@ Deno.serve(async (req) => {
             // Approve — mirror join logic but skip the privacy gate.
             const squad = await base44.asServiceRole.entities.Squad.get(squadId);
             if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
-            if ((squad.member_count || 0) >= MAX_SQUAD_MEMBERS) {
+            // Race-safe cap check: use actual SquadMember row count, not cached member_count.
+            const currentApproveMembers = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
+            if (currentApproveMembers.length >= MAX_SQUAD_MEMBERS) {
                 return Response.json({ error: 'Your squad is full — kick someone first.' }, { status: 400 });
             }
             // Make sure the requester didn't already join another squad while waiting.
@@ -459,8 +463,10 @@ Deno.serve(async (req) => {
                 last_payout_week: currentWeek,
                 last_daily_payout_date: today,
             });
+            // Set member count from actual rows (race-safe).
+            const verifiedApproveMembers = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
             await base44.asServiceRole.entities.Squad.update(squadId, {
-                member_count: (squad.member_count || 0) + 1,
+                member_count: verifiedApproveMembers.length,
             });
             await base44.asServiceRole.entities.SquadJoinRequest.update(requestId, { status: 'approved' });
             await base44.asServiceRole.entities.SquadMessage.create({
