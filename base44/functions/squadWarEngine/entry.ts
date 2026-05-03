@@ -69,11 +69,18 @@ async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
     return { gold: saveData.gold, relicFragments: saveData.relicFragments || 0 };
 }
 
+// Minimum members required for a squad to be entered into Squad Wars matchmaking.
+// Prevents abuse where a leader sits at 2 members with stacked stats / closed privacy
+// to dodge larger opponents and farm easy bye-week / lopsided wins. Roster of 3+ is
+// the floor for "real" squad activity. Pairing skips smaller squads — they still get
+// to play normally, they just don't enter the war league until they grow.
+const MIN_MEMBERS_FOR_WAR = 3;
+
 // Pair eligible squads for a given week. Idempotent — if a war already exists
-// for a squad in that week, we skip it. Squads with at least 1 member are eligible.
+// for a squad in that week, we skip it.
 async function pairSquadsForWeek(base44, weekId) {
     const allSquads = await base44.asServiceRole.entities.Squad.list('-level', 500);
-    const eligible = allSquads.filter(s => (s.member_count || 0) >= 1);
+    const eligible = allSquads.filter(s => (s.member_count || 0) >= MIN_MEMBERS_FOR_WAR);
     if (eligible.length === 0) return { paired: 0, byes: 0 };
 
     // Find existing wars for this week so we don't double-pair
