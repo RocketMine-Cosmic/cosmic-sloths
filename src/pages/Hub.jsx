@@ -653,19 +653,29 @@ export default function Hub({ isCarousel }) {
                                         if (hasXpBuff || buffPurchasing) return; // prevent double-buy while one is in flight or already active
                                         SoundManager.playUIClick();
                                         confirmBuffPurchase(10, '+50% XP Buff (60 min)', async () => {
+                                            // Re-check inside the async callback — guards against double-tap
+                                            // on the confirm modal queuing two purchases (Texxy bug 2026-05-03).
+                                            if (buffPurchasing) return;
                                             setBuffPurchasing(true);
                                             try {
-                                                const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
-                                                const week_id = moment().format('YYYY-[W]ww');
-                                                const seasonNum = Math.floor(moment().week() / 4) + 1;
-                                                const season_id = `${moment().format('YYYY')}-S${seasonNum}`;
-                                                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData?.walletAddress, week_id, season_id, amount: 10 });
-                                                if (!res.data?.success) { toast({ title: 'Purchase Failed', description: res.data?.error || 'Try again.' }); return; }
-                                                const newSave = { ...SaveManager.load() };
-                                                newSave.sessionBuffs = newSave.sessionBuffs || {};
-                                                newSave.sessionBuffs.xpExpiry = currentTime + 60 * 60 * 1000;
-                                                SaveManager.save(newSave);
-                                                setSave(newSave);
+                                                // Server-authoritative: purchaseSku grants the buff using the
+                                                // server clock and rejects if one is already active. Client
+                                                // never sets xpExpiry directly anymore.
+                                                const res = await base44.functions.invoke('purchaseSku', {
+                                                    skuId: IN_GAME_SKUS.xpSession,
+                                                    quantity: 1,
+                                                    grantInfo: { type: 'xp_buff' },
+                                                });
+                                                if (!res.data?.success) {
+                                                    toast({ title: 'Purchase Failed', description: res.data?.error || 'Try again.' });
+                                                    return;
+                                                }
+                                                // Adopt server-returned saveData (authoritative xpExpiry from server clock)
+                                                if (res.data.saveData) {
+                                                    const merged = { ...SaveManager.load(), ...res.data.saveData };
+                                                    SaveManager.save(merged);
+                                                    setSave(merged);
+                                                }
                                                 refreshBalance();
                                                 toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
                                             } finally {

@@ -266,6 +266,12 @@ Deno.serve(async (req) => {
         merged.forgeConvertedToday = existingData.forgeConvertedToday
             ? { ...existingData.forgeConvertedToday } : { date: '', count: 0 };
 
+        // --- 12a. SERVER-OWNED sessionBuffs (xpExpiry only) — granted via purchaseSku ---
+        // Cloud is truth. Client cannot extend or set xpExpiry via syncSave (was the
+        // double-buy exploit: clearing localStorage made xpExpiry=0, second buy went
+        // through. Texxy bug 2026-05-03).
+        merged.sessionBuffs = existingData.sessionBuffs ? { ...existingData.sessionBuffs } : {};
+
         // --- 12b. SERVER-OWNED pendingRunSnapshot (cloud safety net for endless/raid runs) ---
         // CRITICAL: client must NEVER write this. Only checkpointRun (write) and saveScore
         // (delete-on-credit) may touch it. If the client could re-upload a stale snapshot,
