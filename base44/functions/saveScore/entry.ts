@@ -374,6 +374,49 @@ Deno.serve(async (req) => {
 
         const isVictory = !!scoreData.is_victory;
         const charId = scoreData.character_id || 'neobyte';
+
+        // Idempotency guard — protect against duplicate submissions caused by:
+        //  • client refreshing mid-save (browser/proxy retries the in-flight POST),
+        //  • flushPendingScores re-queuing a run whose first save actually succeeded,
+        //  • double-tap on a "Try Again" button before the first save returned.
+        // If an identical run (same wallet + time + kills + level + character) was
+        // recorded in the last 2 minutes, treat THIS call as a no-op and return the
+        // existing score data. PlayerSave is NOT credited again.
+        try {
+            const recentRuns = await base44.asServiceRole.entities.RunScore.filter(
+                { wallet_address: walletAddress },
+                '-created_date',
+                10
+            );
+            const cutoff = Date.now() - 2 * 60 * 1000;
+            const dup = recentRuns.find(r => {
+                const createdMs = new Date(r.created_date).getTime();
+                return createdMs >= cutoff
+                    && Number(r.time_survived) === Number(validation.time)
+                    && Number(r.kills) === Number(validation.kills)
+                    && Number(r.level) === Number(validation.level)
+                    && r.character_id === charId
+                    && r.arena_id === scoreData.arena_id;
+            });
+            if (dup) {
+                console.warn(`[saveScore] DUPLICATE blocked for ${walletAddress}: matches RunScore ${dup.id} created ${dup.created_date}. No re-credit.`);
+                // Return success with the original run's data so the client modal
+                // unblocks normally — but flag it so the UI can hint at it if needed.
+                return Response.json({
+                    success: true,
+                    score: dup.score,
+                    saveData: typeof saveData === 'string' ? JSON.parse(saveData) : saveData,
+                    grantedCharacter: null,
+                    unlockedArena: null,
+                    goldCredited: 0,
+                    killsCredited: 0,
+                    fragmentsCredited: 0,
+                    duplicateBlocked: true,
+                });
+            }
+        } catch (dupErr) {
+            console.error('[saveScore] dup-check failed (proceeding):', dupErr.message);
+        }
         // Cap enemyKills total to the (possibly capped) ledger kills to keep aggregates consistent.
         const sanitisedEnemyKills = sanitiseEnemyKills(scoreData.enemyKills, validation.killsForLedger);
 
