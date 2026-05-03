@@ -3,18 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Gift, Eye, Send, Trophy } from 'lucide-react';
 import moment from 'moment';
+import { getCurrentWeekId, getCurrentSeasonId } from './useAvailablePeriods';
 
+// Canonical ISO 8601 (Mon-start, Sun 23:59 UTC end) — must match the rest of the app.
+// The previous local calc here used a Sun-start formula that returned the wrong week
+// on Sundays (e.g. labeled W19 as "current" while the real current week was W18).
 function getCurrentPeriodIds() {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    const week_id = `${year}-W${String(isoWeek).padStart(2, '0')}`;
-    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
-    const season_id = `${year}-S${seasonNum}`;
-    return { week_id, season_id };
+    return { week_id: getCurrentWeekId(), season_id: getCurrentSeasonId() };
 }
 
 export default function AdminRewards({ walletAddress }) {
