@@ -52,10 +52,12 @@ export function updatePickups(engine, dt) {
                 engine.shake(1.0);
             } else if (p.type === 'magnet_power') {
                 SFXManager.playMagnetPickup();
+                // Flag every XP/gold pickup so the magnet block below pulls them in
+                // smoothly over ~0.5s instead of teleporting them in one frame
+                // (which used to look like "everything just disappeared in a flash").
                 engine.pickups.forEach(otherP => {
                     if (otherP.type === 'xp' || otherP.type === 'gold') {
-                        otherP.x = engine.player.x;
-                        otherP.y = engine.player.y;
+                        otherP.magnetSweep = true;
                     }
                 });
                 engine.addDamageText(engine.player.x, engine.player.y - 60, `MAGNETIC SURGE`, '#0000ff');
@@ -70,10 +72,13 @@ export function updatePickups(engine, dt) {
             }
             return false;
         }
-        if (dist < engine.player.magnetRange) {
+        if (p.magnetSweep || dist < engine.player.magnetRange) {
             if (p.type !== 'nuke') {
                 const playerMaxSpeed = engine.player.speed * (engine.player.speedMult || 1) * 60;
-                const speed = Math.max(800, playerMaxSpeed * 2) * dt;
+                // Magnet-sweep pickups travel ~3x faster so a screen-full collects
+                // in ~0.4–0.6s — visible vacuum effect, not an instant flash.
+                const baseSpeed = Math.max(800, playerMaxSpeed * 2);
+                const speed = (p.magnetSweep ? baseSpeed * 3 : baseSpeed) * dt;
                 p.x += ((engine.player.x - p.x) / dist) * speed;
                 p.y += ((engine.player.y - p.y) / dist) * speed;
             }
