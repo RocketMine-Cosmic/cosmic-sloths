@@ -294,7 +294,7 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'claimWeekly' || action === 'claimDaily') {
-            const { memberId, squadId, currentWeek, currentDay } = body;
+            const { memberId, squadId } = body;
             if (!memberId || !squadId) return Response.json({ error: 'Couldn\'t claim your bounty — please refresh and try again.' }, { status: 400 });
 
             // Load member + squad to validate
@@ -307,8 +307,20 @@ Deno.serve(async (req) => {
             if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
 
             const isWeekly = action === 'claimWeekly';
-            const periodId = isWeekly ? currentWeek : currentDay;
-            if (!periodId) return Response.json({ error: 'Couldn\'t claim your bounty — please refresh and try again.' }, { status: 400 });
+            // Server-authoritative period IDs — IGNORE client values (stale tabs were
+            // submitting W19 instead of W18 on Sundays, booking phantom claims).
+            const periodId = isWeekly
+                ? (() => {
+                    const now = new Date();
+                    const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+                    const dayNum = tmp.getUTCDay() || 7;
+                    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+                    const isoYear = tmp.getUTCFullYear();
+                    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                    const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+                    return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+                })()
+                : new Date().toISOString().split('T')[0];
             const lastClaimedField = isWeekly ? 'last_payout_week' : 'last_daily_payout_date';
             const killsField = isWeekly ? 'weekly_kills' : 'daily_kills';
             const tier = getTier(squad.level || 1, isWeekly ? WEEKLY_BOUNTY_TIERS : DAILY_BOUNTY_TIERS);
@@ -337,13 +349,15 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'resetPeriods') {
-            // Restricted to ONLY the period-reset fields. Previously trusted the client's
-            // `updateData` blob, which let any caller bump weekly_kills, level, etc.
-            const { squadId, updateData } = body;
-            if (!squadId || !updateData) return Response.json({ error: 'Couldn\'t update squad — please refresh and try again.' }, { status: 400 });
+            // Server-authoritative period rollover. We IGNORE the client's `current_week`
+            // and `current_day` values (stale browser tabs with the old buggy formula were
+            // pushing W19 here on Sundays, wiping kills mid-week). Server computes the
+            // canonical ISO week + today's UTC date and only resets if the squad is
+            // genuinely on a stale period.
+            const { squadId } = body;
+            if (!squadId) return Response.json({ error: 'Couldn\'t update squad — please refresh and try again.' }, { status: 400 });
 
-            // Verify caller is actually a member of this squad (any role is fine — daily/weekly
-            // reset triggers naturally on the client whoever opens the page first).
+            // Verify caller is a member of this squad.
             const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({
                 squad_id: squadId,
                 wallet_address: walletAddress
@@ -352,27 +366,51 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'You\'re not a member of this squad.' }, { status: 403 });
             }
 
-            // Only allow the legitimate period-reset fields. Anything else is silently dropped.
-            const ALLOWED_FIELDS = new Set(['daily_kills', 'current_day', 'weekly_kills', 'current_week']);
+            // Canonical ISO 8601 week (Mon-start, Sun 23:59 UTC end).
+            const canonicalWeek = (() => {
+                const now = new Date();
+                const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+                const dayNum = tmp.getUTCDay() || 7;
+                tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+                const isoYear = tmp.getUTCFullYear();
+                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+                return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+            })();
+            const canonicalDay = new Date().toISOString().split('T')[0];
+
+            const squad = await base44.asServiceRole.entities.Squad.get(squadId);
+            if (!squad) return Response.json({ error: 'Squad not found.' }, { status: 404 });
+
             const safePatch = {};
-            for (const [k, v] of Object.entries(updateData)) {
-                if (!ALLOWED_FIELDS.has(k)) continue;
-                // Kill counters MUST be reset to 0. Date/week strings pass through as-is.
-                if (k === 'daily_kills' || k === 'weekly_kills') {
-                    if (Number(v) !== 0) continue;
-                    safePatch[k] = 0;
-                } else {
-                    safePatch[k] = v;
-                }
+            // Weekly rollover: only if the squad's stored week is BEHIND the canonical week.
+            // Roll prior weekly_kills into XP, then zero weekly_kills and stamp canonical week.
+            if (squad.current_week && squad.current_week < canonicalWeek) {
+                safePatch.current_week = canonicalWeek;
+                safePatch.weekly_kills = 0;
+                safePatch.xp = (squad.xp || 0) + (squad.weekly_kills || 0);
+            } else if (squad.current_week !== canonicalWeek) {
+                // Squad is stamped with a FUTURE week (corrupted by the old buggy client).
+                // Heal it without wiping kills — those kills were earned in the real current week.
+                safePatch.current_week = canonicalWeek;
+            }
+
+            // Daily rollover: only when stored day is behind today.
+            if (squad.current_day && squad.current_day < canonicalDay) {
+                safePatch.current_day = canonicalDay;
+                safePatch.daily_kills = 0;
+            } else if (squad.current_day !== canonicalDay) {
+                safePatch.current_day = canonicalDay;
             }
 
             if (Object.keys(safePatch).length === 0) {
-                return Response.json({ error: 'No valid reset fields supplied.' }, { status: 400 });
+                // Nothing to reset — squad is already on the canonical period.
+                return Response.json({ success: true, squad });
             }
 
             await base44.asServiceRole.entities.Squad.update(squadId, safePatch);
-
-            return Response.json({ success: true });
+            const updatedSquad = await base44.asServiceRole.entities.Squad.get(squadId);
+            return Response.json({ success: true, squad: updatedSquad });
         }
 
         return Response.json({ error: 'Couldn\'t process this request — please refresh and try again.' }, { status: 400 });
