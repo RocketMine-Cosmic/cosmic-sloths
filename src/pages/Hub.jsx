@@ -107,8 +107,12 @@ export default function Hub({ isCarousel }) {
     }, [nfts]);
 
     // Merge save's cloud-authoritative unlockedCharacters with NFT unlocks (UI only).
+    // ALWAYS force-include 'neobyte' — it's the universal starter every player owns.
+    // Without this fallback, a brand new player whose cloud save returns
+    // unlockedCharacters: [] would see NeoByte as locked, blocking the LAUNCH button
+    // even though the local default seeded it correctly (Texxy/Zebrina bug 2026-05-03).
     const effectiveUnlockedCharacters = React.useMemo(() => {
-        return [...new Set([...(save.unlockedCharacters || []), ...nftUnlockedChars])];
+        return [...new Set(['neobyte', ...(save.unlockedCharacters || []), ...nftUnlockedChars])];
     }, [save.unlockedCharacters, nftUnlockedChars]);
 
     const { user: omenxUser } = useOmenXUser();
