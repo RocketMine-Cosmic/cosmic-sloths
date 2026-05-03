@@ -68,19 +68,8 @@ Deno.serve(async (req) => {
             return delta > max ? delta : max;
         }, 0);
 
-        // Alert #economy-alerts when fresh-client blocks reveal a meaningful gold loss
-        if (maxBlockedGold >= 5000) {
-            postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xf59e0b, {
-                title: '🪙 Gold audit flagged a loss',
-                fields: [
-                    { name: 'Player', value: save?.player_name || saveData?.player_name || '(unknown)', inline: true },
-                    { name: 'Suggested refund', value: `${maxBlockedGold.toLocaleString()} gold`, inline: true },
-                    { name: 'Wallet', value: `\`${walletLower}\``, inline: false },
-                    { name: 'Current cloud gold', value: Number(saveData?.gold || 0).toLocaleString(), inline: true },
-                    { name: 'Blocked syncs (gold)', value: String(goldBlocks.length), inline: true },
-                ],
-            });
-        }
+        // Gold-loss Discord alert disabled per request — was too noisy.
+        // The suggestedGoldRefund is still returned in the response for admin triage.
 
         return Response.json({
             wallet: walletLower,
