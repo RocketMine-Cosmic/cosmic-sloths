@@ -114,15 +114,18 @@ Deno.serve(async (req) => {
             // Mark current period as already-claimed so the new member can't claim
             // bounties earned by the squad before they joined. They'll be eligible
             // for the NEXT daily/weekly bounty once the period rolls over.
+            // Use canonical ISO 8601 (Mon-start, Sun 23:59 UTC end). The previous
+            // formula was Sunday-based and rolled W19 over a day early.
             const today = new Date().toISOString().split('T')[0];
             const currentWeek = (() => {
-                const d = new Date();
-                const year = d.getUTCFullYear();
-                const startOfYear = new Date(Date.UTC(year, 0, 1));
-                const startOfWeek = new Date(startOfYear);
-                startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-                const isoWeek = Math.ceil(((d - startOfWeek) / 86400000 + 1) / 7);
-                return `${year}-W${String(isoWeek).padStart(2, '0')}`;
+                const now = new Date();
+                const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+                const dayNum = tmp.getUTCDay() || 7;
+                tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+                const isoYear = tmp.getUTCFullYear();
+                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+                return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
             })();
             const member = await base44.asServiceRole.entities.SquadMember.create({
                 squad_id: squadId,

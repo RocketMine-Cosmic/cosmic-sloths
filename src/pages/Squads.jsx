@@ -14,6 +14,7 @@ import OmenXGate from '../components/game/OmenXGate';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import SquadProfileModal from '../components/squads/SquadProfileModal';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
+import { getCurrentPeriodIds } from '@/lib/periodIds';
 
 // System messages contain player names baked into the content string
 // (e.g. "William Luce has joined the squad!"). Pre-privacy-fix rows may have
@@ -99,7 +100,9 @@ export default function Squads({ isCarousel }) {
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [showSquadIconPicker, setShowSquadIconPicker] = useState(false);
 
-    const getCurrentWeek = () => moment().format('YYYY-[W]ww');
+    // Use canonical ISO 8601 week (Mon-start, Sun 23:59 UTC end). moment's `ww` token is
+    // locale-week (Sun-start in en-US) which rolled W19 over a day early on Sundays.
+    const getCurrentWeek = () => getCurrentPeriodIds().week_id;
 
     useEffect(() => {
          const loadUserAndSquad = async () => {
