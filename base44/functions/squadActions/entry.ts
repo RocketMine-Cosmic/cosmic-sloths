@@ -44,24 +44,26 @@ function getDailyXpForLevel(level) {
     return DAILY_SQUAD_XP_BY_LEVEL[idx];
 }
 
-// Server-authoritative bounty reward tables (must mirror pages/Squads.jsx for UI display)
+// Server-authoritative bounty reward tables (must mirror pages/Squads.jsx for UI display).
+// Rewards are PER-MEMBER (each member claims their own once per period). Halved from
+// previous values to keep total squad payout roughly constant after the policy change.
 const WEEKLY_BOUNTY_TIERS = [
-    { minLevel: 1, target: 2000,  gold: 500,   fragments: 1 },
-    { minLevel: 2, target: 5000,  gold: 1200,  fragments: 2 },
-    { minLevel: 3, target: 10000, gold: 2500,  fragments: 3 },
-    { minLevel: 4, target: 18000, gold: 4000,  fragments: 4 },
-    { minLevel: 5, target: 30000, gold: 6500,  fragments: 5 },
-    { minLevel: 6, target: 50000, gold: 10000, fragments: 7 },
-    { minLevel: 7, target: 75000, gold: 15000, fragments: 10 },
+    { minLevel: 1, target: 2000,  gold: 250,  fragments: 1 },
+    { minLevel: 2, target: 5000,  gold: 600,  fragments: 1 },
+    { minLevel: 3, target: 10000, gold: 1250, fragments: 2 },
+    { minLevel: 4, target: 18000, gold: 2000, fragments: 2 },
+    { minLevel: 5, target: 30000, gold: 3250, fragments: 3 },
+    { minLevel: 6, target: 50000, gold: 5000, fragments: 4 },
+    { minLevel: 7, target: 75000, gold: 7500, fragments: 5 },
 ];
 const DAILY_BOUNTY_TIERS = [
-    { minLevel: 1, target: 300,   gold: 150,  fragments: 0 },
-    { minLevel: 2, target: 800,   gold: 300,  fragments: 0 },
-    { minLevel: 3, target: 1500,  gold: 600,  fragments: 1 },
-    { minLevel: 4, target: 2500,  gold: 1000, fragments: 1 },
-    { minLevel: 5, target: 4500,  gold: 1500, fragments: 2 },
-    { minLevel: 6, target: 7500,  gold: 2500, fragments: 2 },
-    { minLevel: 7, target: 12000, gold: 4000, fragments: 3 },
+    { minLevel: 1, target: 300,   gold: 75,   fragments: 0 },
+    { minLevel: 2, target: 800,   gold: 150,  fragments: 0 },
+    { minLevel: 3, target: 1500,  gold: 300,  fragments: 0 },
+    { minLevel: 4, target: 2500,  gold: 500,  fragments: 1 },
+    { minLevel: 5, target: 4500,  gold: 750,  fragments: 1 },
+    { minLevel: 6, target: 7500,  gold: 1250, fragments: 1 },
+    { minLevel: 7, target: 12000, gold: 2000, fragments: 2 },
 ];
 function getTier(level, table) {
     let tier = table[0];

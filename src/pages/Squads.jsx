@@ -31,25 +31,27 @@ function sanitizeSystemMessage(content) {
 
 const MAX_SQUAD_MEMBERS = 5;
 
-// Bounty tiers scale with squad level
+// Bounty tiers scale with squad level. Rewards are PER-MEMBER — every member
+// claims independently once per period when the squad hits the target.
+// (MUST mirror functions/squadActions WEEKLY_BOUNTY_TIERS / DAILY_BOUNTY_TIERS.)
 const BOUNTY_TIERS = [
-    { minLevel: 1, target: 2000,  gold: 500,   fragments: 1, label: 'Rookie Bounty' },
-    { minLevel: 2, target: 5000,  gold: 1200,  fragments: 2, label: 'Drifter Bounty' },
-    { minLevel: 3, target: 10000, gold: 2500,  fragments: 3, label: 'Hunter Bounty' },
-    { minLevel: 4, target: 18000, gold: 4000,  fragments: 4, label: 'Vanguard Bounty' },
-    { minLevel: 5, target: 30000, gold: 6500,  fragments: 5, label: 'Reaper Bounty' },
-    { minLevel: 6, target: 50000, gold: 10000, fragments: 7, label: 'Legend Bounty' },
-    { minLevel: 7, target: 75000, gold: 15000, fragments: 10, label: 'Cosmic Bounty' },
+    { minLevel: 1, target: 2000,  gold: 250,  fragments: 1, label: 'Rookie Bounty' },
+    { minLevel: 2, target: 5000,  gold: 600,  fragments: 1, label: 'Drifter Bounty' },
+    { minLevel: 3, target: 10000, gold: 1250, fragments: 2, label: 'Hunter Bounty' },
+    { minLevel: 4, target: 18000, gold: 2000, fragments: 2, label: 'Vanguard Bounty' },
+    { minLevel: 5, target: 30000, gold: 3250, fragments: 3, label: 'Reaper Bounty' },
+    { minLevel: 6, target: 50000, gold: 5000, fragments: 4, label: 'Legend Bounty' },
+    { minLevel: 7, target: 75000, gold: 7500, fragments: 5, label: 'Cosmic Bounty' },
 ];
 
 const DAILY_BOUNTY_TIERS = [
-    { minLevel: 1, target: 300,  gold: 150,   fragments: 0, label: 'Daily Patrol' },
-    { minLevel: 2, target: 800,  gold: 300,   fragments: 0, label: 'Daily Sweep' },
-    { minLevel: 3, target: 1500, gold: 600,   fragments: 1, label: 'Daily Hunt' },
-    { minLevel: 4, target: 2500, gold: 1000,  fragments: 1, label: 'Daily Purge' },
-    { minLevel: 5, target: 4500, gold: 1500,  fragments: 2, label: 'Daily Assault' },
-    { minLevel: 6, target: 7500, gold: 2500,  fragments: 2, label: 'Daily Crusade' },
-    { minLevel: 7, target: 12000, gold: 4000, fragments: 3, label: 'Daily Annihilation' },
+    { minLevel: 1, target: 300,   gold: 75,   fragments: 0, label: 'Daily Patrol' },
+    { minLevel: 2, target: 800,   gold: 150,  fragments: 0, label: 'Daily Sweep' },
+    { minLevel: 3, target: 1500,  gold: 300,  fragments: 0, label: 'Daily Hunt' },
+    { minLevel: 4, target: 2500,  gold: 500,  fragments: 1, label: 'Daily Purge' },
+    { minLevel: 5, target: 4500,  gold: 750,  fragments: 1, label: 'Daily Assault' },
+    { minLevel: 6, target: 7500,  gold: 1250, fragments: 1, label: 'Daily Crusade' },
+    { minLevel: 7, target: 12000, gold: 2000, fragments: 2, label: 'Daily Annihilation' },
 ];
 
 function getBountyTier(level) {
