@@ -53,14 +53,25 @@ export default function Titles({ isCarousel }) {
             // truth for raid-related titles (Raid Recruit / Trooper / Captain / etc).
             // Was previously hardcoded to 0, so Texxy's 5.3M run never unlocked
             // World Eater Bane (Texxy bug 2026-05-03).
+            // submitBossDamage stores user_id as the raw wallet (lowercased by the
+            // Base44 user record). Try BOTH cases so legacy records with mixed-case
+            // wallets are still picked up.
             try {
                 if (omenxUser.walletAddress) {
-                    const contributions = await base44.entities.GlobalBossContribution.filter(
-                        { user_id: omenxUser.walletAddress },
-                        '-created_date',
-                        500
-                    );
-                    globalRaidDamage = contributions.reduce((sum, c) => sum + (Number(c.damage) || 0), 0);
+                    const wallet = omenxUser.walletAddress;
+                    const walletLower = wallet.toLowerCase();
+                    const queries = wallet === walletLower
+                        ? [{ user_id: walletLower }]
+                        : [{ user_id: walletLower }, { user_id: wallet }];
+                    const seen = new Set();
+                    for (const q of queries) {
+                        const rows = await base44.entities.GlobalBossContribution.filter(q, '-created_date', 500);
+                        for (const c of rows) {
+                            if (seen.has(c.id)) continue;
+                            seen.add(c.id);
+                            globalRaidDamage += Number(c.damage) || 0;
+                        }
+                    }
                 }
             } catch (e) {
                 console.error('[Titles] Failed to fetch raid damage:', e.message);
