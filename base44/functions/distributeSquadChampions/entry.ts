@@ -231,8 +231,33 @@ Deno.serve(async (req) => {
         }
 
         // Default to previous completed season
+        // Track whether the caller specified period_id (manual run) vs auto-defaulted (cron run).
+        // The 4-week cron isn't anchored to season boundaries, so we MUST guard against it
+        // firing mid-season — otherwise it'd target a long-ago season that's already paid
+        // and just no-op every time, which is harmless but noisy. The proper guard:
+        // only run on automation if the current ISO week is the FIRST week of a new season
+        // (i.e. previous season just ended at last Sun 23:59 UTC).
+        const explicitPeriod = !!period_id;
         if (!period_id) period_id = getPreviousSeasonId();
         if (!period_id) return Response.json({ error: 'Could not determine season id' }, { status: 400 });
+
+        // Season-end anchor guard (only enforced for automated runs without explicit period_id).
+        // Seasons are 4 ISO weeks. Season N covers weeks [(N-1)*4 + 1 .. N*4]. After Sun 23:59 UTC
+        // of week N*4, the new season starts. So this fn should ONLY pay out when the current
+        // ISO week is the FIRST week of a new season — i.e. (currentIsoWeek - 1) % 4 === 0.
+        if (!explicitPeriod) {
+            const { isoWeek } = getCurrentPeriodIds();
+            const isFirstWeekOfSeason = ((isoWeek - 1) % 4) === 0;
+            if (!isFirstWeekOfSeason) {
+                return Response.json({
+                    success: true,
+                    mode,
+                    skipped: 'not season-end',
+                    reason: `Current ISO week ${isoWeek} is not the first week of a season (must satisfy (week-1) % 4 === 0). Champions payout only fires when the previous season has just closed.`,
+                    period_id,
+                });
+            }
+        }
 
         // Look up the seasonal pool
         const pools = await db.entities.TokenPool.filter({ period_id, period_type: 'seasonal' });
