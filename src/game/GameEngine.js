@@ -1044,7 +1044,10 @@ export class GameEngine {
         this.isVictory = true;
         SFXManager.playVictory();
         try { localStorage.removeItem('pending_run_snapshot'); } catch {}
-        this.callbacks.onVictory(this._runStats({ arenaId: this.arena.id }));
+        // Strip killedBy on victory — the player WON, so showing "killed by X" in
+        // the victory modal is misleading. Belt-and-braces: VictoryModal already
+        // passes hideKilledBy, but this guarantees no UI path can leak it.
+        this.callbacks.onVictory(this._runStats({ arenaId: this.arena.id, killedBy: null }));
     }
 
     draw() {
