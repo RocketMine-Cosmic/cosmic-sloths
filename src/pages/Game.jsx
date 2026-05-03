@@ -333,6 +333,23 @@ export default function Game() {
                 stats.worldBossName = worldBossName;
                 // Score is recomputed server-side; show 0 until response arrives.
                 stats.score = 0;
+                // Pre-cap endless mode gold/kills for the modal so the values shown
+                // match the in-game HUD immediately (HUD shows capped values via
+                // UIOverlay's displayGold). Server recomputes these definitively
+                // and overwrites once the save response lands.
+                if (stats.arenaId === 'endless' || isEndless) {
+                    const t = stats.time || 0;
+                    const goldCap = Math.min(25000, Math.max(1500, Math.floor(t * 25)));
+                    const killsCap = Math.min(6000, Math.max(600, Math.floor(t * 4)));
+                    if (stats.gold > goldCap) {
+                        stats.endlessGoldCapped = true;
+                        stats.gold = goldCap;
+                    }
+                    if (stats.kills > killsCap) {
+                        stats.endlessKillsCapped = true;
+                        stats.kills = killsCap;
+                    }
+                }
                 setGameOverStats(stats);
                 // Server validates run, applies aggregates to PlayerSave, returns updated save.
                 saveScore(stats, false).then((res) => {
@@ -391,6 +408,20 @@ export default function Game() {
                 stats.worldBossId = worldBossId;
                 stats.worldBossName = worldBossName;
                 stats.score = 0;
+                // Pre-cap endless gold/kills so the modal matches the HUD immediately.
+                if (stats.arenaId === 'endless' || isEndless) {
+                    const t = stats.time || 0;
+                    const goldCap = Math.min(25000, Math.max(1500, Math.floor(t * 25)));
+                    const killsCap = Math.min(6000, Math.max(600, Math.floor(t * 4)));
+                    if (stats.gold > goldCap) {
+                        stats.endlessGoldCapped = true;
+                        stats.gold = goldCap;
+                    }
+                    if (stats.kills > killsCap) {
+                        stats.endlessKillsCapped = true;
+                        stats.kills = killsCap;
+                    }
+                }
                 setVictoryStats(stats);
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
                 saveScore(stats, true).then((res) => {
