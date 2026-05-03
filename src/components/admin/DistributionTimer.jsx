@@ -15,12 +15,15 @@ export default function DistributionTimer() {
 
             // Seasonal: figure out which ISO week ends the current 4-week season,
             // then fire on the Monday after that week at 23:00 UTC.
-            // Must mirror lib/periodIds.js: seasonNum = floor((isoWeek - 1) / 4) + 1.
-            const year = utcNow.getUTCFullYear();
-            const startOfYear = new Date(Date.UTC(year, 0, 1));
-            const startOfWeek1 = new Date(startOfYear);
-            startOfWeek1.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-            const isoWeek = Math.ceil(((utcNow - startOfWeek1) / 86400000 + 1) / 7);
+            // Must mirror lib/periodIds.js (proper ISO 8601, Mon-start, Sun-end UTC) —
+            // the previous Sun-start formula was off-by-one on Sundays which made the
+            // seasonal countdown read a full week short.
+            const tmp = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), utcNow.getUTCDate()));
+            const dayNum = tmp.getUTCDay() || 7;
+            tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+            const isoYear = tmp.getUTCFullYear();
+            const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+            const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
             const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
             const lastWeekOfSeason = seasonNum * 4; // e.g. season 5 → week 20
             const weeksUntilSeasonEnd = lastWeekOfSeason - isoWeek;
