@@ -45,8 +45,18 @@ export default function AdminOverview({ walletAddress, canViewFinance = false })
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <StatCard label="Total Players" value={ext?.totalPlayers ?? '...'} color="text-cyan-400" />
-                <StatCard label="Total Scores" value={ext?.totalScores ?? '...'} color="text-purple-400" />
+                <StatCard
+                    label="Recent Players"
+                    value={ext ? `${ext.totalPlayers}${ext.playersCapped ? '+' : ''}` : '...'}
+                    color="text-cyan-400"
+                    sub={ext?.playersCapped ? 'Sampled (latest 1000)' : null}
+                />
+                <StatCard
+                    label="Recent Scores"
+                    value={ext ? `${ext.totalScores}${ext.scoresCapped ? '+' : ''}` : '...'}
+                    color="text-purple-400"
+                    sub={ext?.scoresCapped ? 'Sampled (latest 1000)' : null}
+                />
                 {canViewFinance ? (
                     <>
                         <StatCard label="This Week Spent" value={`${weeklySpent.toFixed(1)} OMENX`} color="text-red-400" />

@@ -15,58 +15,38 @@ Deno.serve(async (req) => {
         const { type, query, period, squadId } = await req.json();
 
         if (type === 'overview') {
-            // Page through all records to get accurate totals.
-            // IMPORTANT: Base44's list()/filter() pagination is unreliable — it can return
-            // the same records on subsequent pages, causing inflated counts (e.g. 520
-            // real rows being counted as 10,499). We dedupe by `id` and stop as soon
-            // as a page contains zero new records.
-            const fetchAll = async (entity, sort, useFilter = false) => {
-                const seen = new Set();
-                const all = [];
-                let page = 1;
-                const PAGE = 500;
-                while (true) {
-                    const batch = useFilter
-                        ? await entity.filter({}, sort, PAGE, page)
-                        : await entity.list(sort, PAGE, page);
-                    if (!batch || batch.length === 0) break;
-                    let newCount = 0;
-                    for (const row of batch) {
-                        if (row.id && !seen.has(row.id)) {
-                            seen.add(row.id);
-                            all.push(row);
-                            newCount++;
-                        }
-                    }
-                    if (newCount === 0) break; // page returned only duplicates → end of data
-                    if (batch.length < PAGE) break;
-                    page++;
-                    if (page > 50) break;
-                }
-                return all;
-            };
-            const [scores, saves] = await Promise.all([
-                fetchAll(base44.asServiceRole.entities.RunScore, '-created_date'),
-                // PlayerSave has restrictive read RLS — use filter({}) which the service role
-                // bypasses correctly, list() returns empty under RLS.
-                fetchAll(base44.asServiceRole.entities.PlayerSave, '-created_date', true),
+            // Fast path — only sample what's needed for the dashboard cards/chart.
+            // Previously this paginated the ENTIRE RunScore + PlayerSave tables (up to
+            // 25k rows each) on every Overview load, taking 10-30+ seconds and timing
+            // out under load. The Overview only needs:
+            //   - Approximate player + score counts (cards)
+            //   - Top characters bar chart (last ~1000 runs is plenty representative)
+            // Exact totals are exposed via the dedicated Health/Audit tabs if needed.
+            const SAMPLE = 1000;
+            const [scoresSample, savesSample] = await Promise.all([
+                base44.asServiceRole.entities.RunScore.list('-created_date', SAMPLE),
+                base44.asServiceRole.entities.PlayerSave.filter({}, '-created_date', SAMPLE),
             ]);
 
-            const totalPlayers = saves.length;
-            const totalScores = scores.length;
+            // Counts: report the sample size and flag if it hit the cap (so the UI
+            // can render "1000+" instead of an exact number).
+            const totalScores = scoresSample.length;
+            const totalPlayers = savesSample.length;
+            const scoresCapped = scoresSample.length >= SAMPLE;
+            const playersCapped = savesSample.length >= SAMPLE;
 
             const charCounts = {};
-            scores.forEach(s => {
+            for (const s of scoresSample) {
                 if (s.character_id) {
                     charCounts[s.character_id] = (charCounts[s.character_id] || 0) + 1;
                 }
-            });
+            }
             const topCharacters = Object.entries(charCounts)
                 .map(([character_id, count]) => ({ character_id, count }))
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 8);
 
-            return Response.json({ totalPlayers, totalScores, topCharacters });
+            return Response.json({ totalPlayers, totalScores, scoresCapped, playersCapped, topCharacters });
         }
 
         if (type === 'scores') {
