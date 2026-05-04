@@ -37,6 +37,7 @@ import AdminGrantPanel from '../components/admin/AdminGrantPanel';
 import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
 import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
 import AdminStaffPayouts from '../components/admin/AdminStaffPayouts';
+import AdminStaffPayoutBackfill from '../components/admin/AdminStaffPayoutBackfill';
 import MyStaffIncomeCard from '../components/admin/MyStaffIncomeCard';
 import AdminSquadChampions from '../components/admin/AdminSquadChampions';
 import AdminTabNav from '../components/admin/AdminTabNav';
@@ -292,6 +293,7 @@ export default function AdminDashboard() {
                     <AdminStaffPayoutConfig isOwner={isEmergencyKey || (callerPerms || []).includes('owner')} />
                     <AdminStaffPayoutOverrides isOwner={isEmergencyKey || (callerPerms || []).includes('owner')} />
                     <AdminStaffPayouts canViewFinance={canViewFinance} />
+                    {(isEmergencyKey || (callerPerms || []).includes('owner')) && <AdminStaffPayoutBackfill />}
                     <AdminManagers walletAddress={adminWallet} />
                 </div>
             );
