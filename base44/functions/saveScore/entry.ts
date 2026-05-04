@@ -160,6 +160,30 @@ function validateAndRecompute(scoreData) {
     };
 }
 
+// 429-aware retry helper for Base44 entity calls. Base44 rate-limits aggressively
+// during peak (saveScore + spendGold + getSquadProfile + getAdminData all share
+// the same bucket). Without this, an endless run that 429s on PlayerSave.update
+// or RunScore.create returns 500 → flushPendingScores re-queues it → loop.
+// Retries 3× with exponential backoff (300ms → 700ms → 1500ms + jitter).
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[saveScore] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 // Sanitise per-enemy kill counts: cap to validated total kills.
 function sanitiseEnemyKills(rawEnemyKills, capTotal) {
     if (!rawEnemyKills || typeof rawEnemyKills !== 'object') return {};
@@ -393,11 +417,16 @@ Deno.serve(async (req) => {
         // If an identical run (same wallet + time + kills + level + character) was
         // recorded in the last 2 minutes, treat THIS call as a no-op and return the
         // existing score data. PlayerSave is NOT credited again.
+        let duplicateBlocked = false;
+        let duplicateScore = 0;
         try {
-            const recentRuns = await base44.asServiceRole.entities.RunScore.filter(
-                { wallet_address: walletAddress },
-                '-created_date',
-                10
+            const recentRuns = await with429Retry(
+                () => base44.asServiceRole.entities.RunScore.filter(
+                    { wallet_address: walletAddress },
+                    '-created_date',
+                    10
+                ),
+                'dup-check'
             );
             const cutoff = Date.now() - 2 * 60 * 1000;
             const dup = recentRuns.find(r => {
@@ -411,19 +440,12 @@ Deno.serve(async (req) => {
             });
             if (dup) {
                 console.warn(`[saveScore] DUPLICATE blocked for ${walletAddress}: matches RunScore ${dup.id} created ${dup.created_date}. No re-credit.`);
-                // Return success with the original run's data so the client modal
-                // unblocks normally — but flag it so the UI can hint at it if needed.
-                return Response.json({
-                    success: true,
-                    score: dup.score,
-                    saveData: typeof saveData === 'string' ? JSON.parse(saveData) : saveData,
-                    grantedCharacter: null,
-                    unlockedArena: null,
-                    goldCredited: 0,
-                    killsCredited: 0,
-                    fragmentsCredited: 0,
-                    duplicateBlocked: true,
-                });
+                // Defer the response until AFTER we load the player's current save
+                // (line 441 below). Previous code referenced `saveData` here, before
+                // it was declared, causing a ReferenceError → 500 → flushPendingScores
+                // re-queued the run forever (Texxy/Hugo bug 2026-05-04).
+                duplicateBlocked = true;
+                duplicateScore = dup.score;
             }
         } catch (dupErr) {
             console.error('[saveScore] dup-check failed (proceeding):', dupErr.message);
@@ -433,7 +455,10 @@ Deno.serve(async (req) => {
 
         // Apply run to PlayerSave (server-authoritative aggregation)
         const walletLower = walletAddress.toLowerCase();
-        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+        const records = await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower }),
+            'PlayerSave.filter'
+        );
         if (records.length === 0) {
             return Response.json({ error: 'We couldn\'t find your save. Please refresh and try again.' }, { status: 400 });
         }
@@ -441,6 +466,22 @@ Deno.serve(async (req) => {
         const saveData = typeof saveRecord.save_data === 'string'
             ? JSON.parse(saveRecord.save_data)
             : saveRecord.save_data;
+
+        // Now that saveData is loaded, we can safely return the duplicate-blocked
+        // response (was the source of the ReferenceError → infinite re-queue loop).
+        if (duplicateBlocked) {
+            return Response.json({
+                success: true,
+                score: duplicateScore,
+                saveData,
+                grantedCharacter: null,
+                unlockedArena: null,
+                goldCredited: 0,
+                killsCredited: 0,
+                fragmentsCredited: 0,
+                duplicateBlocked: true,
+            });
+        }
 
         const { saveData: updatedSave, unlockedArena, grantedCharacter } = applyRunToSave(saveData, {
             kills: validation.killsForLedger,
@@ -459,10 +500,13 @@ Deno.serve(async (req) => {
             delete updatedSave.pendingRunSnapshot;
         }
 
-        await base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
-            save_data: updatedSave,
-            updated_at: Date.now()
-        });
+        await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
+                save_data: updatedSave,
+                updated_at: Date.now()
+            }),
+            'PlayerSave.update'
+        );
 
         // Build RunScore record
         const { week_id, season_id } = getCurrentPeriodIds();
@@ -491,7 +535,10 @@ Deno.serve(async (req) => {
         };
 
         try {
-            await base44.asServiceRole.entities.RunScore.create(runScore);
+            await with429Retry(
+                () => base44.asServiceRole.entities.RunScore.create(runScore),
+                'RunScore.create'
+            );
         } catch (err) {
             console.error('[saveScore] RunScore save failed:', err.message);
             // Save was already applied; return success with warning
