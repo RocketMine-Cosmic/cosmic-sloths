@@ -17,12 +17,10 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
-// 2M cap — most legit raid runs land between 200k-1.5M damage. 2M generously
-// covers fully-upgraded top-tier players. Old 5M cap was being hit *exactly* by
-// multiple players per run (telltale tamper signal — a real run rarely lands on
-// a round 5,000,000.0 figure), so they were stacking 3+ capped runs per day to
-// blast through high-level bosses. 2M slows that to a more reasonable rate.
-const MAX_DAMAGE_PER_SUBMISSION = 2_000_000;
+// 5M cap — fully-upgraded top-tier players legitimately push 1-3M per raid run,
+// so 500k was clipping real damage. 5M still blocks tampered clients from one-shotting
+// high-level bosses (Lv.7 = 3.2M HP, Lv.8 = 6.4M) and milestone-farming via inflation.
+const MAX_DAMAGE_PER_SUBMISSION = 5_000_000;
 const BOSS_BASE_HP = 50000;
 
 Deno.serve(async (req) => {
