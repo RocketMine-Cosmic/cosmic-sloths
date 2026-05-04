@@ -611,7 +611,7 @@ export const SaveManager = {
             SaveManager.syncToBackend();
             pendingSync = false;
           }
-        }, 3000); // Debounce to 3 seconds — short enough to limit free-currency loss on tab close, long enough to coalesce bursts
+        }, 8000); // Debounce to 8 seconds — coalesces bursts of in-game saves (gold pickups, kills) into one network call. visibilitychange + game-end paths still force an immediate sync, so nothing is lost on tab close.
       }
     } catch (e) {
       console.error('[SaveManager] Save error:', e.message);

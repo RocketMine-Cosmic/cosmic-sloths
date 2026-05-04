@@ -21,6 +21,7 @@ export default function SquadWars({ isCarousel }) {
 
     const [activeTab, setActiveTab] = useState('myWar'); // 'myWar' | 'roster' | 'champions' | 'raid' | 'history'
     const [mySquadId, setMySquadId] = useState(null);
+    const [squadCheckDone, setSquadCheckDone] = useState(false); // gate loadData until membership lookup completes
     const [myWar, setMyWar] = useState(null);
     const [weekId, setWeekId] = useState('');
     const [roster, setRoster] = useState([]);
@@ -33,7 +34,7 @@ export default function SquadWars({ isCarousel }) {
     useEffect(() => {
         const rawWallet = omenxUser?.wallet_address || omenxUser?.walletAddress || omenxUser?.data?.wallet_address || '';
         if (!rawWallet) {
-            setLoading(false);
+            setSquadCheckDone(true); // no wallet = no squad, allow loadData to run
             return;
         }
         (async () => {
@@ -47,6 +48,8 @@ export default function SquadWars({ isCarousel }) {
                 if (members.length > 0) setMySquadId(members[0].squad_id);
             } catch (e) {
                 console.error('[SquadWars] Failed to load membership:', e);
+            } finally {
+                setSquadCheckDone(true);
             }
         })();
     }, [omenxUser]);
@@ -78,7 +81,10 @@ export default function SquadWars({ isCarousel }) {
         setLoading(false);
     }, [mySquadId]);
 
-    useEffect(() => { loadData(); }, [loadData]);
+    // Wait for the squad membership check to finish before fetching war data,
+    // so we don't fire one round-trip with mySquadId=null and another a moment
+    // later with the real id (was doubling squadWarEngine traffic per page open).
+    useEffect(() => { if (squadCheckDone) loadData(); }, [squadCheckDone, loadData]);
 
     // Real-time updates: subscribe to SquadWar changes
     useEffect(() => {
