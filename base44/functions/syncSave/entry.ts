@@ -75,16 +75,46 @@ const periodMismatch = (a, b, idKey) => {
     return a[idKey] !== b[idKey];
 };
 
+// Canonical UTC ISO 8601 week / season — must mirror lib/periodIds.js + saveScore.
+function getCurrentPeriodIds() {
+    const now = new Date();
+    const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const dayNum = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+    const isoYear = tmp.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+    const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+    const season_id = `${isoYear}-S${seasonNum}`;
+    return { week_id, season_id };
+}
+
 // Period roll: cloud is the source of truth for periodic upgrade containers.
-// We NEVER let a client-side period mismatch reset cloud levels — that bug
-// wiped CRYBEL's seasonal upgrades on 2026-05-01 (client had a stale seasonId
-// from before purchases landed → "newer" id heuristic returned an empty object
-// and clobbered freshly-paid `damage:1, magnet:1`). The cloud period is bumped
-// only by purchaseSku / spendGold / claimBounty when those grants apply.
-function resolvePeriodicUpgradeContainer(cloudVal, clientVal, idKey) {
+// We NEVER let a CLIENT-SIDE period mismatch reset cloud levels — that bug
+// wiped CRYBEL's seasonal upgrades on 2026-05-01.
+//
+// However, if the SERVER detects the cloud's container is stamped with a
+// stale period (e.g. weekId='2026-W18' but current week is W19), we MUST roll
+// it forward — otherwise players keep their last week's free upgrades active
+// indefinitely until they make a purchase that triggers purchaseSku's rollover
+// (Texxy bug 2026-05-04). The roll zeroes all numeric values, drops nested
+// per-weapon/per-character objects, and stamps the current period id.
+// `archive` collects the prior period's container so we can persist it into
+// weeklyUpgradeHistory / seasonalUpgradeHistory for stat-tracking.
+function resolvePeriodicUpgradeContainer(cloudVal, clientVal, idKey, currentPeriodId, archive) {
     const c = cloudVal || {};
     if (!idKey) return c; // permanent: cloud wins, no period
-    // Cloud always wins. Client cannot reset, advance, or modify periodic upgrades via syncSave.
+
+    const cloudPeriodId = c[idKey];
+    // If cloud is on a stale period, roll forward server-side.
+    if (cloudPeriodId && currentPeriodId && cloudPeriodId !== currentPeriodId) {
+        // Archive the prior container so admins / stats can still see what was earned.
+        if (archive && typeof archive === 'object') {
+            archive[cloudPeriodId] = c;
+        }
+        return { [idKey]: currentPeriodId };
+    }
     return c;
 }
 
@@ -180,12 +210,26 @@ Deno.serve(async (req) => {
             }
         }
 
+        // Compute current period ids ONCE so all rollover checks below use the same values.
+        const { week_id: currentWeek, season_id: currentSeason } = getCurrentPeriodIds();
+        // Archive buckets for any periods we roll forward this request.
+        const weeklyArchive = { ...(existingData.weeklyUpgradeHistory || {}) };
+        const seasonalArchive = { ...(existingData.seasonalUpgradeHistory || {}) };
+        let didRollPeriod = false;
+        const wasOnStalePeriod = (key, idKey, expectedId) => {
+            const c = existingData[key];
+            return c && c[idKey] && c[idKey] !== expectedId;
+        };
+
         // --- 2. SERVER-OWNED upgrade level objects: cloud only (with period roll) ---
         for (const key of SERVER_OWNED_UPGRADE_OBJECTS) {
             const idKey = key === 'permanentUpgrades' ? null
                 : key === 'weeklyUpgrades' ? 'weekId'
                 : 'seasonId';
-            merged[key] = resolvePeriodicUpgradeContainer(existingData[key], saveData[key], idKey);
+            const periodId = idKey === 'weekId' ? currentWeek : idKey === 'seasonId' ? currentSeason : null;
+            const archive = idKey === 'weekId' ? weeklyArchive : idKey === 'seasonId' ? seasonalArchive : null;
+            if (idKey && wasOnStalePeriod(key, idKey, periodId)) didRollPeriod = true;
+            merged[key] = resolvePeriodicUpgradeContainer(existingData[key], saveData[key], idKey, periodId, archive);
             // Log injection attempt
             const cloudObj = existingData[key] || {};
             const clientObj = saveData[key] || {};
@@ -203,7 +247,10 @@ Deno.serve(async (req) => {
             const idKey = key === 'permanentWeaponUpgrades' ? null
                 : key === 'weeklyWeaponUpgrades' ? 'weekId'
                 : 'seasonId';
-            merged[key] = resolvePeriodicUpgradeContainer(existingData[key], saveData[key], idKey);
+            const periodId = idKey === 'weekId' ? currentWeek : idKey === 'seasonId' ? currentSeason : null;
+            const archive = idKey === 'weekId' ? weeklyArchive : idKey === 'seasonId' ? seasonalArchive : null;
+            if (idKey && wasOnStalePeriod(key, idKey, periodId)) didRollPeriod = true;
+            merged[key] = resolvePeriodicUpgradeContainer(existingData[key], saveData[key], idKey, periodId, archive);
         }
 
         // --- 4. SERVER-OWNED talents: cloud only (with period roll) ---
@@ -211,7 +258,17 @@ Deno.serve(async (req) => {
             const idKey = key === 'permanentTalents' ? null
                 : key === 'weeklyTalents' ? 'weekId'
                 : 'seasonId';
-            merged[key] = resolvePeriodicUpgradeContainer(existingData[key], saveData[key], idKey);
+            const periodId = idKey === 'weekId' ? currentWeek : idKey === 'seasonId' ? currentSeason : null;
+            const archive = idKey === 'weekId' ? weeklyArchive : idKey === 'seasonId' ? seasonalArchive : null;
+            if (idKey && wasOnStalePeriod(key, idKey, periodId)) didRollPeriod = true;
+            merged[key] = resolvePeriodicUpgradeContainer(existingData[key], saveData[key], idKey, periodId, archive);
+        }
+
+        // Persist archives if we rolled anything forward this request.
+        if (didRollPeriod) {
+            merged.weeklyUpgradeHistory = weeklyArchive;
+            merged.seasonalUpgradeHistory = seasonalArchive;
+            console.log(`[syncSave] Rolled stale period(s) for ${walletLower} → week=${currentWeek} season=${currentSeason}`);
         }
 
         // --- 5. SERVER-OWNED number maps (relicLevels): cloud only ---

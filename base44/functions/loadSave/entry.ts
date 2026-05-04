@@ -2,6 +2,62 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Loads the player save for the currently-authenticated Base44 user,
 // using the wallet_address linked on their User record.
+//
+// Also opportunistically rolls stale weekly/seasonal upgrade containers
+// forward to the current period (zeroing values, archiving prior period).
+// This is the same logic as syncSave's resolvePeriodicUpgradeContainer —
+// we run it here too so players self-heal on page load instead of needing
+// to wait for a sync round-trip (Texxy bug 2026-05-04 — players who hadn't
+// purchased anything in the new week kept last week's upgrades active).
+
+function getCurrentPeriodIds() {
+    const now = new Date();
+    const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const dayNum = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+    const isoYear = tmp.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+    const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+    const season_id = `${isoYear}-S${seasonNum}`;
+    return { week_id, season_id };
+}
+
+const WEEKLY_KEYS = ['weeklyUpgrades', 'weeklyWeaponUpgrades', 'weeklyTalents'];
+const SEASONAL_KEYS = ['seasonalUpgrades', 'seasonalWeaponUpgrades', 'seasonalTalents'];
+
+function rollStalePeriods(saveData) {
+    if (!saveData || typeof saveData !== 'object') return { saveData, rolled: false };
+    const { week_id: currentWeek, season_id: currentSeason } = getCurrentPeriodIds();
+    let rolled = false;
+    const weeklyArchive = { ...(saveData.weeklyUpgradeHistory || {}) };
+    const seasonalArchive = { ...(saveData.seasonalUpgradeHistory || {}) };
+
+    for (const key of WEEKLY_KEYS) {
+        const c = saveData[key];
+        if (c && c.weekId && c.weekId !== currentWeek) {
+            weeklyArchive[c.weekId] = c;
+            saveData[key] = { weekId: currentWeek };
+            rolled = true;
+        }
+    }
+    for (const key of SEASONAL_KEYS) {
+        const c = saveData[key];
+        if (c && c.seasonId && c.seasonId !== currentSeason) {
+            seasonalArchive[c.seasonId] = c;
+            saveData[key] = { seasonId: currentSeason };
+            rolled = true;
+        }
+    }
+
+    if (rolled) {
+        saveData.weeklyUpgradeHistory = weeklyArchive;
+        saveData.seasonalUpgradeHistory = seasonalArchive;
+        saveData.updated_at = Date.now();
+    }
+    return { saveData, rolled };
+}
 
 Deno.serve(async (req) => {
     try {
@@ -29,6 +85,21 @@ Deno.serve(async (req) => {
             if (saveData && typeof saveData === 'object') {
                 if (!saveData.player_name && row.player_name) {
                     saveData = { ...saveData, player_name: row.player_name };
+                }
+
+                // Roll stale weekly/seasonal containers forward and persist if changed.
+                const { saveData: rolledData, rolled } = rollStalePeriods(saveData);
+                saveData = rolledData;
+                if (rolled) {
+                    try {
+                        await base44.asServiceRole.entities.PlayerSave.update(row.id, {
+                            save_data: saveData,
+                            updated_at: saveData.updated_at,
+                        });
+                        console.log(`[loadSave] Rolled stale period(s) for ${wallet}`);
+                    } catch (e) {
+                        console.error('[loadSave] Persist rollover failed (non-fatal):', e.message);
+                    }
                 }
             }
         }
