@@ -196,11 +196,22 @@ export default function Squads({ isCarousel }) {
          };
          loadUserAndSquad();
 
-         // Re-fetch data if auth data changes (e.g., pilot name updated in Profile)
+         // Only re-fetch if the WALLET itself changes (e.g., user switched accounts).
+         // Pre-fix: any write to omenx_auth_data (every save sync, every profile
+         // edit, every cloud merge) re-ran the full squad load + resetPeriods round-trip,
+         // hammering squadActions with 429s. Profile name/title edits get picked up
+         // through the omenxUser dependency on this effect anyway.
+         let lastWallet = (omenxUser?.wallet_address || omenxUser?.walletAddress || '').toLowerCase();
          const handleStorageChange = (e) => {
-             if (e.key === 'omenx_auth_data' || e.key === null) {
-                 loadUserAndSquad(); // Refresh when auth data changes
-             }
+             if (e.key !== 'omenx_auth_data') return;
+             try {
+                 const next = JSON.parse(e.newValue || '{}');
+                 const nextWallet = (next?.walletAddress || '').toLowerCase();
+                 if (nextWallet && nextWallet !== lastWallet) {
+                     lastWallet = nextWallet;
+                     loadUserAndSquad();
+                 }
+             } catch {}
          };
          window.addEventListener('storage', handleStorageChange);
          return () => window.removeEventListener('storage', handleStorageChange);
