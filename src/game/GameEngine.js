@@ -599,12 +599,26 @@ export class GameEngine {
             } catch {}
         }
 
-        // Cloud checkpoint fallback — DISABLED. Was causing duplicate-credit bug
-        // (snapshot persisted in cloud, client would re-upload via syncSave after
-        // saveScore had already cleared it, re-crediting the same run on refresh).
-        // Will re-enable once syncSave reliably treats pendingRunSnapshot as
-        // server-owned AND the client save loop has been verified not to ever
-        // hold a stale copy of the snapshot.
+        // Cloud checkpoint — every ~2 min during endless/raid runs, push current
+        // stats to PlayerSave.pendingRunSnapshot so a tab kill / device wipe / cache
+        // clear / 25-min endless that loses session can still recover the run on
+        // next launch (flushPendingScores promotes the cloud snapshot into the
+        // saveScore queue). Safe because: syncSave treats pendingRunSnapshot as
+        // server-owned (client cannot re-upload a stale snapshot), and saveScore
+        // clears the field as soon as it credits a recovered run. Only fires
+        // after the run has meaningful progress (≥30s, ≥5 kills) so a tester
+        // alt-tabbing in the first few seconds doesn't spam writes.
+        if (this.frameCount % 7200 === 0
+            && (this.arena.duration === Infinity || this.arena.id === 'world_boss_arena')
+            && (this.kills || 0) >= 5
+            && (this.time || 0) >= 30) {
+            try {
+                import('@/api/base44Client').then(({ base44 }) => {
+                    base44.functions.invoke('checkpointRun', { stats: this._runStats() })
+                        .catch(err => console.warn('[checkpointRun]', err?.message));
+                });
+            } catch {}
+        }
 
         // Victory fires when the arena timer expires AND no boss is active AND the
         // post-boss grace window has elapsed. Boss gold + relic fragments are now
