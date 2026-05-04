@@ -1,7 +1,13 @@
-import { createClient, createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
-const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
+// Service-role db client — set inside the request handler from
+// createClientFromRequest(req).asServiceRole. Module-level let so the helper
+// functions further down can use it without threading through every call.
+// CRITICAL: previously used `createClient({ appId })` which is unauthenticated
+// and CANNOT read AdminWallet (admin-only RLS). That silently returned [] →
+// staff payouts never fired. Now uses asServiceRole which bypasses RLS.
+let db = null;
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
@@ -12,9 +18,13 @@ Deno.serve(async (req) => {
         const body = await req.json();
         const { adminKey } = body;
 
+        const base44 = createClientFromRequest(req);
+        // Always use service-role for entity reads/writes inside this function —
+        // we read AdminWallet (admin-only RLS) and write PayoutLog (admin-only).
+        db = base44.asServiceRole;
+
         // Auth: emergency admin key (used by automation/cron), OR Base44 session + 'distribute_rewards' permission.
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            const base44 = createClientFromRequest(req);
             const me = await base44.auth.me();
             if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
             const callerWallet = me.wallet_address?.toLowerCase();
