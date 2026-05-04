@@ -29,29 +29,38 @@ const DEFAULT_PERKS = {
 export class NFTPerkManager {
   static perks = { ...DEFAULT_PERKS };
 
-  // Get bonuses for a specific character when used in a run
+  // Get bonuses for a specific character when used in a run.
+  // If a player owns multiple NFTs for the same character (duplicates of any
+  // rarity), only the HIGHEST rarity one is applied — perks DO NOT stack.
+  // This keeps things fair: owning 3× Legendary NeoByte gives the same perk
+  // as owning 1× Legendary NeoByte.
   static getCharacterPerks(characterId, nftData) {
     const perks = { ...DEFAULT_PERKS };
 
     if (!nftData || !Array.isArray(nftData)) return perks;
 
-    // Find if this character is in the NFT collection
-    const nftForChar = nftData.find(nft => 
-      (nft.metadata?.name || '').toLowerCase() === characterId.toLowerCase()
-    );
+    // Rarity priority — higher index = stronger.
+    const rarityRank = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
-    if (nftForChar && nftForChar.metadata?.attributes) {
-      // Extract rarity from attributes
-      const rarityAttr = nftForChar.metadata.attributes.find(
-        attr => attr.trait_type === 'rarity'
-      );
+    // Collect ALL NFTs matching this character, then pick the best rarity.
+    let bestRarity = null;
+    let bestRank = -1;
+    for (const nft of nftData) {
+      if ((nft.metadata?.name || '').toLowerCase() !== characterId.toLowerCase()) continue;
+      const rarityAttr = nft.metadata?.attributes?.find(a => a.trait_type === 'rarity');
       const rarity = rarityAttr?.value?.toLowerCase();
-
-      if (rarity && RARITY_PERKS[rarity]) {
-        const rarityPerks = RARITY_PERKS[rarity];
-        perks.goldMultiplier = rarityPerks.goldMult;
-        perks.relicFragmentMultiplier = rarityPerks.relicMult;
+      if (!rarity || !RARITY_PERKS[rarity]) continue;
+      const rank = rarityRank.indexOf(rarity);
+      if (rank > bestRank) {
+        bestRank = rank;
+        bestRarity = rarity;
       }
+    }
+
+    if (bestRarity) {
+      const rarityPerks = RARITY_PERKS[bestRarity];
+      perks.goldMultiplier = rarityPerks.goldMult;
+      perks.relicFragmentMultiplier = rarityPerks.relicMult;
     }
 
     return perks;
