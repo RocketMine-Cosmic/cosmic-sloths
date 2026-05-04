@@ -24,11 +24,16 @@ export default function AdminRewards({ walletAddress }) {
     const [previewError, setPreviewError] = useState('');
     const { week_id: currentWeekId, season_id: currentSeasonId } = getCurrentPeriodIds();
 
-    // Load all pools for the dropdowns
+    // Load all pools for the dropdowns. Share the cache key + staleTime with
+    // useAvailablePeriods so a single admin-dashboard mount doesn't fire this
+    // call 3-4× in parallel and trip the Base44 rate limiter (429), which
+    // would leave dropdowns empty (Hugo bug 2026-05-04 — couldn't see W18
+    // even though the pool existed, because the parallel call 429'd).
     const { data: allPools = [] } = useQuery({
-        queryKey: ['allPools', walletAddress],
+        queryKey: ['adminPoolsForPeriods', walletAddress],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
-        enabled: !!walletAddress
+        enabled: !!walletAddress,
+        staleTime: 60_000,
     });
 
     // Build dropdown options: undistributed pools + current period always present

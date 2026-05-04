@@ -36,10 +36,14 @@ export default function AdminEconomy({ walletAddress }) {
         enabled: !!walletAddress
     });
 
+    // Share cache key + staleTime with useAvailablePeriods/AdminRewards — was firing
+    // a duplicate parallel call on dashboard mount, contributing to 429 rate-limit
+    // errors that left period dropdowns empty.
     const { data: pools, isLoading: poolsLoading } = useQuery({
-        queryKey: ['adminPools', walletAddress],
+        queryKey: ['adminPoolsForPeriods', walletAddress],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
-        enabled: !!walletAddress
+        enabled: !!walletAddress,
+        staleTime: 60_000,
     });
 
     const [start, end] = getDateRange(preset);
