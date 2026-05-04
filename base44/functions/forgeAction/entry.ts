@@ -32,9 +32,17 @@ const VALID_CHAR_IDS = new Set([
     'codebreaker','dataphantom','neonvortex','synthbeats','skybyte'
 ]);
 
+// Base weapons + evolved/synergy weapons. The Forge UI lets players upgrade
+// any weapon they can equip in a run, including evolutions like Orbital Defense
+// Network. Pre-fix this list only had the 9 base weapons, so every player on
+// an evolved weapon hit "Invalid weaponId" → 400 (Texxy 2026-05-04).
 const VALID_WEAPON_IDS = new Set([
+    // base
     'neoBlaster','napBeam','vineWhip','slothSwarm','napalm',
-    'novaPulse','shieldBubble','bouncingBlade','toxicCloud'
+    'novaPulse','shieldBubble','bouncingBlade','toxicCloud',
+    // evolved / synergy
+    'orbitalDefense','supernovaBeam','aegisMatrix','quantumCollapse',
+    'hellfire','vampiricLash','buzzsawSwarm',
 ]);
 
 function getToday() {
