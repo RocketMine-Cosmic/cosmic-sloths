@@ -76,8 +76,35 @@ Deno.serve(async (req) => {
         results.GlobalBossContribution    = await deleteAll('GlobalBossContribution');
         results.GlobalBossEvent           = await deleteAll('GlobalBossEvent');
 
+        // Bump the wipe epoch — every client checks this on launch via loadSave
+        // and clears its local save + pending queue + cached profile fields when
+        // it sees a newer epoch than its stored one. Without this marker, returning
+        // players' stale localStorage caches re-poison the fresh database on first
+        // sync (Texxy/Hugo recurring bug — endless runs "playing up after every reset").
+        const epoch = Date.now();
+        try {
+            const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
+            if (existing.length > 0) {
+                await base44.asServiceRole.entities.AppConfig.update(existing[0].id, {
+                    value: { epoch },
+                    updated_by: callerWallet,
+                    notes: `Bumped by resetAllPlayerData @ ${new Date(epoch).toISOString()}`,
+                });
+            } else {
+                await base44.asServiceRole.entities.AppConfig.create({
+                    key: 'wipe_epoch',
+                    value: { epoch },
+                    updated_by: callerWallet,
+                    notes: `Initial wipe epoch — set by resetAllPlayerData @ ${new Date(epoch).toISOString()}`,
+                });
+            }
+            console.log(`[resetAllPlayerData] Bumped wipe_epoch → ${epoch}`);
+        } catch (err) {
+            console.error('[resetAllPlayerData] Failed to bump wipe_epoch (clients won\'t auto-clear):', err.message);
+        }
+
         console.log('[resetAllPlayerData] Complete:', JSON.stringify(results));
-        return Response.json({ success: true, deleted: results });
+        return Response.json({ success: true, deleted: results, wipeEpoch: epoch });
 
     } catch (error) {
         console.error('[resetAllPlayerData]', error.message);

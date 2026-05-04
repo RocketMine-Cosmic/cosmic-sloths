@@ -59,16 +59,28 @@ function rollStalePeriods(saveData) {
     return { saveData, rolled };
 }
 
+// Read the global wipe epoch (set by resetAllPlayerData / fullWipeIncludingUsers).
+// Clients pass this back on next launch to detect "cloud was reset" and clear
+// stale local caches. Cached for the duration of one request.
+async function readWipeEpoch(base44) {
+    try {
+        const rows = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
+        return Number(rows?.[0]?.value?.epoch || 0);
+    } catch {
+        return 0;
+    }
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
-        if (!me) return Response.json({ saveData: null });
+        if (!me) return Response.json({ saveData: null, wipeEpoch: 0 });
 
         const wallet = me.wallet_address;
         if (!wallet) {
             console.log('[loadSave] User has no linked wallet yet');
-            return Response.json({ saveData: null });
+            return Response.json({ saveData: null, wipeEpoch: await readWipeEpoch(base44) });
         }
 
         const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: wallet.toLowerCase() });
@@ -104,10 +116,11 @@ Deno.serve(async (req) => {
             }
         }
 
-        console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData);
-        return Response.json({ saveData });
+        const wipeEpoch = await readWipeEpoch(base44);
+        console.log('[loadSave] Loaded for wallet:', wallet, '- found:', !!saveData, 'wipeEpoch:', wipeEpoch);
+        return Response.json({ saveData, wipeEpoch });
     } catch (error) {
         console.error('[loadSave]', error.message);
-        return Response.json({ saveData: null });
+        return Response.json({ saveData: null, wipeEpoch: 0 });
     }
 });

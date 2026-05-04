@@ -122,7 +122,45 @@ export const SaveManager = {
 
         const res = await base44.functions.invoke('loadSave', {});
         const response = res.data;
-        
+
+        // ---- Wipe-epoch check ----
+        // The server bumps a global "wipe_epoch" timestamp every time
+        // resetAllPlayerData / fullWipeIncludingUsers runs. If the cloud's epoch is
+        // newer than what we last saw, the cloud was reset since this client's
+        // localStorage was written. We MUST clear local caches before merging,
+        // otherwise stale pre-wipe aggregates get re-uploaded by the next syncSave
+        // and re-poison the fresh database (every reset would silently bring back
+        // returning players' old gold/kills/unlocks).
+        try {
+            const cloudEpoch = Number(response?.wipeEpoch || 0);
+            const localEpoch = Number(localStorage.getItem('wipe_epoch_seen') || 0);
+            if (cloudEpoch > 0 && cloudEpoch > localEpoch) {
+                console.warn(`[SaveManager] WIPE EPOCH bump detected (cloud=${cloudEpoch} local=${localEpoch}) — clearing stale local caches`);
+                // Drop the stale local save and any queued runs from before the wipe.
+                localStorage.removeItem('cosmic_sloth_save');
+                localStorage.removeItem('pending_score_saves');
+                localStorage.removeItem('cosmic_sloth_run_snapshot');
+                // Also reset cached profile fields on omenx_auth_data (player_title /
+                // player_name / pilot_icon) — these would otherwise stick around
+                // even though the cloud has no record of them.
+                try {
+                    const auth = JSON.parse(localStorage.getItem('omenx_auth_data') || 'null');
+                    if (auth && typeof auth === 'object') {
+                        delete auth.player_title;
+                        delete auth.player_name;
+                        delete auth.pilot_icon;
+                        localStorage.setItem('omenx_auth_data', JSON.stringify(auth));
+                    }
+                } catch {}
+                localStorage.setItem('wipe_epoch_seen', String(cloudEpoch));
+            } else if (cloudEpoch > 0 && localEpoch === 0) {
+                // First time we've seen any epoch — record it without wiping.
+                localStorage.setItem('wipe_epoch_seen', String(cloudEpoch));
+            }
+        } catch (e) {
+            console.error('[SaveManager] wipe-epoch check failed (non-fatal):', e.message);
+        }
+
         if (response?.saveData) {
           const cloudSave = response.saveData;
           const localSave = localStorage.getItem('cosmic_sloth_save');

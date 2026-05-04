@@ -125,8 +125,32 @@ Deno.serve(async (req) => {
         results.User_deleted = userDeleted;
         results.User_skipped_admins = userSkipped;
 
+        // Bump wipe epoch — clients use this to detect "the cloud was reset since
+        // I last loaded" and clear their stale localStorage / pending queues.
+        const epoch = Date.now();
+        try {
+            const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
+            if (existing.length > 0) {
+                await base44.asServiceRole.entities.AppConfig.update(existing[0].id, {
+                    value: { epoch },
+                    updated_by: callerWallet,
+                    notes: `Bumped by fullWipeIncludingUsers @ ${new Date(epoch).toISOString()}`,
+                });
+            } else {
+                await base44.asServiceRole.entities.AppConfig.create({
+                    key: 'wipe_epoch',
+                    value: { epoch },
+                    updated_by: callerWallet,
+                    notes: `Initial wipe epoch — set by fullWipeIncludingUsers @ ${new Date(epoch).toISOString()}`,
+                });
+            }
+            console.log(`[fullWipeIncludingUsers] Bumped wipe_epoch → ${epoch}`);
+        } catch (err) {
+            console.error('[fullWipeIncludingUsers] Failed to bump wipe_epoch:', err.message);
+        }
+
         console.log('[fullWipeIncludingUsers] Complete:', JSON.stringify(results));
-        return Response.json({ success: true, deleted: results });
+        return Response.json({ success: true, deleted: results, wipeEpoch: epoch });
 
     } catch (error) {
         console.error('[fullWipeIncludingUsers]', error.message);
