@@ -127,30 +127,52 @@ Deno.serve(async (req) => {
 
         // Bump wipe epoch — clients use this to detect "the cloud was reset since
         // I last loaded" and clear their stale localStorage / pending queues.
+        // Retried + verified — see resetAllPlayerData for rationale.
         const epoch = Date.now();
-        try {
-            const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
-            if (existing.length > 0) {
-                await base44.asServiceRole.entities.AppConfig.update(existing[0].id, {
-                    value: { epoch },
-                    updated_by: callerWallet,
-                    notes: `Bumped by fullWipeIncludingUsers @ ${new Date(epoch).toISOString()}`,
-                });
-            } else {
-                await base44.asServiceRole.entities.AppConfig.create({
-                    key: 'wipe_epoch',
-                    value: { epoch },
-                    updated_by: callerWallet,
-                    notes: `Initial wipe epoch — set by fullWipeIncludingUsers @ ${new Date(epoch).toISOString()}`,
-                });
+        let epochWritten = false;
+        let epochError = null;
+        for (let attempt = 0; attempt < 3 && !epochWritten; attempt++) {
+            if (attempt > 0) await sleep(1500);
+            try {
+                const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
+                if (existing.length > 0) {
+                    await base44.asServiceRole.entities.AppConfig.update(existing[0].id, {
+                        value: { epoch },
+                        updated_by: callerWallet,
+                        notes: `Bumped by fullWipeIncludingUsers @ ${new Date(epoch).toISOString()}`,
+                    });
+                } else {
+                    await base44.asServiceRole.entities.AppConfig.create({
+                        key: 'wipe_epoch',
+                        value: { epoch },
+                        updated_by: callerWallet,
+                        notes: `Initial wipe epoch — set by fullWipeIncludingUsers @ ${new Date(epoch).toISOString()}`,
+                    });
+                }
+                const verify = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
+                if (verify.length > 0 && Number(verify[0].value?.epoch) === epoch) {
+                    epochWritten = true;
+                    console.log(`[fullWipeIncludingUsers] ✅ Bumped wipe_epoch → ${epoch} (verified, attempt ${attempt + 1})`);
+                } else {
+                    epochError = `Verify mismatch: cloud=${verify[0]?.value?.epoch} wanted=${epoch}`;
+                }
+            } catch (err) {
+                epochError = err.message;
+                console.warn(`[fullWipeIncludingUsers] wipe_epoch attempt ${attempt + 1}/3 failed:`, err.message);
             }
-            console.log(`[fullWipeIncludingUsers] Bumped wipe_epoch → ${epoch}`);
-        } catch (err) {
-            console.error('[fullWipeIncludingUsers] Failed to bump wipe_epoch:', err.message);
+        }
+        if (!epochWritten) {
+            console.error('[fullWipeIncludingUsers] ❌ FAILED to bump wipe_epoch after 3 retries — clients WILL NOT auto-clear stale caches:', epochError);
         }
 
         console.log('[fullWipeIncludingUsers] Complete:', JSON.stringify(results));
-        return Response.json({ success: true, deleted: results, wipeEpoch: epoch });
+        return Response.json({
+            success: true,
+            deleted: results,
+            wipeEpoch: epoch,
+            wipeEpochWritten: epochWritten,
+            wipeEpochError: epochWritten ? null : epochError,
+        });
 
     } catch (error) {
         console.error('[fullWipeIncludingUsers]', error.message);

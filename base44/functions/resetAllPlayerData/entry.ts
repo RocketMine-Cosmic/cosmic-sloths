@@ -81,30 +81,55 @@ Deno.serve(async (req) => {
         // it sees a newer epoch than its stored one. Without this marker, returning
         // players' stale localStorage caches re-poison the fresh database on first
         // sync (Texxy/Hugo recurring bug — endless runs "playing up after every reset").
+        //
+        // CRITICAL: this is the ONLY mechanism that protects clients post-reset, so
+        // we retry up to 3 times AND verify the write landed before returning success.
         const epoch = Date.now();
-        try {
-            const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
-            if (existing.length > 0) {
-                await base44.asServiceRole.entities.AppConfig.update(existing[0].id, {
-                    value: { epoch },
-                    updated_by: callerWallet,
-                    notes: `Bumped by resetAllPlayerData @ ${new Date(epoch).toISOString()}`,
-                });
-            } else {
-                await base44.asServiceRole.entities.AppConfig.create({
-                    key: 'wipe_epoch',
-                    value: { epoch },
-                    updated_by: callerWallet,
-                    notes: `Initial wipe epoch — set by resetAllPlayerData @ ${new Date(epoch).toISOString()}`,
-                });
+        let epochWritten = false;
+        let epochError = null;
+        for (let attempt = 0; attempt < 3 && !epochWritten; attempt++) {
+            if (attempt > 0) await sleep(1500);
+            try {
+                const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
+                if (existing.length > 0) {
+                    await base44.asServiceRole.entities.AppConfig.update(existing[0].id, {
+                        value: { epoch },
+                        updated_by: callerWallet,
+                        notes: `Bumped by resetAllPlayerData @ ${new Date(epoch).toISOString()}`,
+                    });
+                } else {
+                    await base44.asServiceRole.entities.AppConfig.create({
+                        key: 'wipe_epoch',
+                        value: { epoch },
+                        updated_by: callerWallet,
+                        notes: `Initial wipe epoch — set by resetAllPlayerData @ ${new Date(epoch).toISOString()}`,
+                    });
+                }
+                // Verify the write actually landed at the value we just sent.
+                const verify = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
+                if (verify.length > 0 && Number(verify[0].value?.epoch) === epoch) {
+                    epochWritten = true;
+                    console.log(`[resetAllPlayerData] ✅ Bumped wipe_epoch → ${epoch} (verified, attempt ${attempt + 1})`);
+                } else {
+                    epochError = `Verify mismatch: cloud=${verify[0]?.value?.epoch} wanted=${epoch}`;
+                }
+            } catch (err) {
+                epochError = err.message;
+                console.warn(`[resetAllPlayerData] wipe_epoch attempt ${attempt + 1}/3 failed:`, err.message);
             }
-            console.log(`[resetAllPlayerData] Bumped wipe_epoch → ${epoch}`);
-        } catch (err) {
-            console.error('[resetAllPlayerData] Failed to bump wipe_epoch (clients won\'t auto-clear):', err.message);
+        }
+        if (!epochWritten) {
+            console.error('[resetAllPlayerData] ❌ FAILED to bump wipe_epoch after 3 retries — clients WILL NOT auto-clear stale caches:', epochError);
         }
 
         console.log('[resetAllPlayerData] Complete:', JSON.stringify(results));
-        return Response.json({ success: true, deleted: results, wipeEpoch: epoch });
+        return Response.json({
+            success: true,
+            deleted: results,
+            wipeEpoch: epoch,
+            wipeEpochWritten: epochWritten,
+            wipeEpochError: epochWritten ? null : epochError,
+        });
 
     } catch (error) {
         console.error('[resetAllPlayerData]', error.message);
