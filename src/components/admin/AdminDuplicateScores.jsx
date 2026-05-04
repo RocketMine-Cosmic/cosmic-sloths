@@ -5,6 +5,7 @@ import { AlertTriangle, Trash2 } from 'lucide-react';
 import moment from 'moment';
 import ConfirmDialog from './ConfirmDialog';
 import { useAvailablePeriods, getCurrentWeekId } from './useAvailablePeriods';
+import { arenaLabel } from '@/lib/arenaLabels';
 
 async function autoSnapshot(notes) {
     try {
@@ -135,7 +136,7 @@ export default function AdminDuplicateScores({ walletAddress }) {
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <span className={`text-[10px] font-bold ${i === 0 ? 'text-emerald-400' : 'text-slate-500'}`}>{i === 0 ? '👑 BEST' : `#${i+1}`}</span>
                                             <span className="text-xs font-mono text-white">{s.score.toLocaleString()}</span>
-                                            <span className="text-[10px] text-slate-500 font-mono">{s.arena_id || '—'}</span>
+                                            <span className="text-[10px] text-slate-500" title={s.arena_id || ''}>{arenaLabel(s.arena_id)}</span>
                                             <span className="text-[10px] text-slate-500">{moment(s.created_date).format('MMM D HH:mm')}</span>
                                         </div>
                                         {i > 0 && (
@@ -164,9 +165,9 @@ export default function AdminDuplicateScores({ walletAddress }) {
                     : `Permanently delete this score for ${confirmState?.score?.player_name}? A snapshot will be taken first.`}
                 items={confirmState?.kind === 'group'
                     ? [...(confirmState.group || [])].sort((a, b) => b.score - a.score).slice(1)
-                        .map(s => `${s.score.toLocaleString()} pts · ${s.arena_id || '—'} · ${moment(s.created_date).format('MMM D HH:mm')}`)
+                        .map(s => `${s.score.toLocaleString()} pts · ${arenaLabel(s.arena_id)} · ${moment(s.created_date).format('MMM D HH:mm')}`)
                     : confirmState?.score
-                        ? [`${confirmState.score.score.toLocaleString()} pts · ${confirmState.score.arena_id || '—'} · ${confirmState.score.week_id}`]
+                        ? [`${confirmState.score.score.toLocaleString()} pts · ${arenaLabel(confirmState.score.arena_id)} · ${confirmState.score.week_id}`]
                         : []}
                 confirmLabel="Delete"
             />

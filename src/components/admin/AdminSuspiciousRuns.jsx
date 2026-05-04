@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Trash2, RefreshCw } from 'lucide-react';
 import moment from 'moment';
 import ConfirmDialog from './ConfirmDialog';
+import { arenaLabel } from '@/lib/arenaLabels';
 
 // Heuristic detector for impossible runs (kills/sec, level/time, etc).
 // Backend handles the math; this just renders flagged results and lets staff
@@ -74,7 +75,7 @@ export default function AdminSuspiciousRuns({ walletAddress }) {
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="font-bold text-white text-sm">{r.player_name}</span>
                                         <span className="text-cyan-400 font-mono text-xs">{(r.score || 0).toLocaleString()} pts</span>
-                                        <span className="text-[10px] text-slate-500">{r.character_id || '—'} · {r.arena_id || '—'}</span>
+                                        <span className="text-[10px] text-slate-500" title={r.arena_id || ''}>{r.character_id || '—'} · {arenaLabel(r.arena_id)}</span>
                                         <span className="text-[10px] text-slate-500 font-mono">{r.week_id}</span>
                                     </div>
                                     <div className="text-[10px] text-slate-400 mt-1">

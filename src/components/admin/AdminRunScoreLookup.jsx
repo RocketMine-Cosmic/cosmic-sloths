@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Trophy, AlertCircle } from 'lucide-react';
 import PlayerSearchInput from './PlayerSearchInput';
 import moment from 'moment';
+import { arenaLabel } from '@/lib/arenaLabels';
 
 // Lets staff look up a player's full RunScore history (most recent first) so
 // they can verify or diagnose individual runs when something goes wrong
@@ -92,7 +93,7 @@ export default function AdminRunScoreLookup() {
                                                 <td className="px-2 py-1.5 text-slate-300 whitespace-nowrap">{moment(r.created_date).format('MMM D, HH:mm')}</td>
                                                 <td className="px-2 py-1.5 font-mono font-bold text-cyan-300">{(r.score || 0).toLocaleString()}</td>
                                                 <td className="px-2 py-1.5 text-slate-300">{r.character_id || '—'}</td>
-                                                <td className="px-2 py-1.5 text-slate-300">{r.arena_id || '—'}</td>
+                                                <td className="px-2 py-1.5 text-slate-300" title={r.arena_id || ''}>{arenaLabel(r.arena_id)}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{r.kills || 0}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{r.level || 0}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{Math.floor(r.time_survived || 0)}s</td>

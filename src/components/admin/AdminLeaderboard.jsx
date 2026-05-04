@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
+import { arenaLabel } from '@/lib/arenaLabels';
 
 export default function AdminLeaderboard({ walletAddress }) {
     const [period, setPeriod] = useState('weekly');
@@ -85,7 +86,7 @@ export default function AdminLeaderboard({ walletAddress }) {
                                         {s.wallet_address ? `${s.wallet_address.slice(0, 6)}...${s.wallet_address.slice(-4)}` : '-'}
                                     </td>
                                     <td className="p-2 text-slate-300">{s.character_id || '-'}</td>
-                                    <td className="p-2 text-slate-300">{s.arena_id || '-'}</td>
+                                    <td className="p-2 text-slate-300" title={s.arena_id || ''}>{arenaLabel(s.arena_id)}</td>
                                     <td className="p-2 text-right font-mono font-bold text-yellow-400">{(s.score || 0).toLocaleString()}</td>
                                     <td className="p-2 text-right font-mono text-slate-300">{s.kills || 0}</td>
                                     <td className="p-2 text-right font-mono text-slate-300">{Math.floor((s.time_survived || 0) / 60)}:{String((s.time_survived || 0) % 60).padStart(2,'0')}</td>
