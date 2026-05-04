@@ -13,10 +13,24 @@ export const omenx = new OmenXGameSDK({
   onAuth: (authData) => {
     console.log('[OmenX] ✓ onAuth triggered with:', authData);
     try {
-      localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+      // Merge — preserve user's profile customizations across re-auth.
+      // The OAuth payload doesn't include player_title / pilot_icon / player_name,
+      // so a naive overwrite wipes the equipped title every time auth refreshes,
+      // making titles appear "stuck" reverting to blank/old values.
+      let preserved = {};
+      try {
+        const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+        if (existing && typeof existing === 'object') {
+          if (existing.player_title !== undefined) preserved.player_title = existing.player_title;
+          if (existing.pilot_icon !== undefined) preserved.pilot_icon = existing.pilot_icon;
+          if (existing.player_name !== undefined) preserved.player_name = existing.player_name;
+        }
+      } catch {}
+      const merged = { ...authData, ...preserved };
+      localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'omenx_auth_data',
-        newValue: JSON.stringify(authData),
+        newValue: JSON.stringify(merged),
         storageArea: localStorage,
       }));
     } catch (e) {

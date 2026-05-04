@@ -159,10 +159,28 @@ function App() {
       if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.accessToken) {
         console.log('[OmenX] Received auth from parent iframe');
         try {
-          localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+          // CRITICAL: merge — never overwrite. The parent payload only contains
+          // OAuth fields (walletAddress, accessToken, username...). It does NOT
+          // contain the user's profile customizations (player_title, pilot_icon,
+          // player_name). If we overwrite, those local edits get wiped every
+          // time the parent re-posts auth — and the title appears "stuck" because
+          // the next save flow restores it from the cloud, only for the next
+          // postMessage to wipe it again. Preserve our local profile fields.
+          let preserved = {};
+          try {
+            const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+            if (existing && typeof existing === 'object') {
+              if (existing.player_title !== undefined) preserved.player_title = existing.player_title;
+              if (existing.pilot_icon !== undefined) preserved.pilot_icon = existing.pilot_icon;
+              if (existing.player_name !== undefined) preserved.player_name = existing.player_name;
+            }
+          } catch {}
+          // Parent's authData wins for OAuth fields; our preserved profile fields layer on top.
+          const merged = { ...authData, ...preserved };
+          localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'omenx_auth_data',
-            newValue: JSON.stringify(authData),
+            newValue: JSON.stringify(merged),
             storageArea: localStorage,
           }));
         } catch (e) {}
