@@ -508,10 +508,22 @@ export default function Game() {
                 const engine = engineRef.current;
                 // Mirror the server's score formula EXACTLY (functions/saveScore.js).
                 // Any divergence here causes the HUD to show one number and the leaderboard
-                // to record a different one — Hugo bug 2026-04-30 (bullet_hell mismatch).
-                const arenaIndex = ARENAS.findIndex(a => a.id === engine.arena?.id);
-                const isEndlessRun = engine.arena?.duration === Infinity;
-                const arenaMultiplier = isEndlessRun ? 2.0 : 1.0 + (Math.max(0, arenaIndex) * 0.2);
+                // to record a different one — Hugo bug 2026-04-30 (bullet_hell mismatch),
+                // raid-arena 2× mismatch 2026-05-04 (HUD treated raid as endless via the
+                // duration===Infinity check — server gave it 1.0×).
+                // Hardcoded list MUST match saveScore.js ARENA_ORDER exactly.
+                const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension'];
+                const arenaId = engine.arena?.id;
+                let arenaMultiplier;
+                if (arenaId === 'endless') {
+                    arenaMultiplier = 2.0;
+                } else {
+                    const idx = ARENA_ORDER.indexOf(arenaId);
+                    arenaMultiplier = 1.0 + (Math.max(0, idx) * 0.2);
+                }
+                // Server also adds +5000 victory bonus, but is_victory only fires at the
+                // very final tick — the modal shows the server's authoritative value, so
+                // omitting it from the live HUD is intentional (less than 1s of skew).
                 const baseScore = engine.kills * 10 + engine.level * 100 + engine.time * 5 + engine.gold * 2;
                 const liveScore = Math.floor(baseScore * arenaMultiplier);
 
