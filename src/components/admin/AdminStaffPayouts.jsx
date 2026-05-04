@@ -15,21 +15,27 @@ const FALLBACK_STAFF_PCT = 0.02; // matches distributeRewards.js fallback
 export default function AdminStaffPayouts({ canViewFinance }) {
     const currentWeekId = getCurrentWeekId();
 
+    // Share unified cache keys with the rest of the admin dashboard so panels
+    // mounted on the same tab don't each fire their own pools/payouts/wallets fetch.
     const { data: admins = [], isLoading: adminsLoading } = useQuery({
         queryKey: ['adminWalletsList'],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'adminWallets' }).then(r => r.data?.records || []),
+        staleTime: 60_000,
     });
 
     const { data: pools = [], isLoading: poolsLoading } = useQuery({
-        queryKey: ['adminPoolsForStaff'],
+        queryKey: ['adminPoolsForPeriods'],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
         enabled: canViewFinance,
+        staleTime: 60_000,
     });
 
     const { data: payouts = [] } = useQuery({
-        queryKey: ['staffPayoutHistory'],
-        queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts' }).then(r => (r.data?.payouts || []).filter(p => p.period_type === 'staff_weekly')),
+        queryKey: ['adminPayouts'],
+        queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts' }).then(r => r.data?.payouts || []),
         enabled: canViewFinance,
+        staleTime: 60_000,
+        select: (rows) => rows.filter(p => p.period_type === 'staff_weekly'),
     });
 
     // Live staff % from AppConfig (any admin can read; falls back to 0.02 if missing)

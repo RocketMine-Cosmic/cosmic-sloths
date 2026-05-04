@@ -284,9 +284,23 @@ export const SaveManager = {
       for (const k of SERVER_OWNED) delete payload[k];
 
       const { base44 } = await import('@/api/base44Client');
-      const res = await base44.functions.invoke('syncSave', {
-        saveData: payload,
-      });
+      // 429-aware retry: if Base44 rate-limits us, back off briefly and try
+      // ONCE more before giving up. Avoids "syncFailed" banners flashing for
+      // players when the dashboard or another admin is hammering the API.
+      let res;
+      try {
+        res = await base44.functions.invoke('syncSave', { saveData: payload });
+      } catch (err) {
+        const status = err?.status || err?.response?.status;
+        const msg = String(err?.message || '').toLowerCase();
+        const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+        if (is429) {
+          await new Promise(r => setTimeout(r, 1500 + Math.random() * 1000));
+          res = await base44.functions.invoke('syncSave', { saveData: payload });
+        } else {
+          throw err;
+        }
+      }
       if (res.data?.error) {
         console.warn('[SaveManager] Sync failed:', res.data.error);
         syncRetries++;

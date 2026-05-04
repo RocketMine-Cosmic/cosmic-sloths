@@ -50,10 +50,13 @@ export default function AdminRewards({ walletAddress }) {
 
     const getPeriodOptions = (type) => type === 'weekly' ? weeklyOptions : seasonalOptions;
 
+    // Unified payouts cache (also used by AdminStaffPayouts) — prevents two parallel
+    // fetches firing on dashboard mount.
     const { data: payoutLogs } = useQuery({
-        queryKey: ['payoutLogs', walletAddress],
+        queryKey: ['adminPayouts'],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'payouts' }).then(r => r.data?.payouts || []),
-        enabled: !!walletAddress
+        enabled: !!walletAddress,
+        staleTime: 60_000,
     });
 
     const handlePreview = async () => {

@@ -21,11 +21,14 @@ const ACTION_COLORS = {
 };
 
 export default function RecentChanges() {
+  // Polled at 60s (was 10s — that was 6 reads/min per admin sitting on Overview,
+  // contributing to the dashboard's 429 bursts). Audit log doesn't need real-time.
   const { data: changes } = useQuery({
     queryKey: ['adminChangesLog'],
     queryFn: () => base44.entities.AdminChangesLog.list('-created_date', 20),
     enabled: true,
-    refetchInterval: 10000,
+    refetchInterval: 60000,
+    staleTime: 30_000,
   });
 
   return (
