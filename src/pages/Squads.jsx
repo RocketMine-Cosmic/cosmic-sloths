@@ -157,6 +157,14 @@ export default function Squads({ isCarousel }) {
                          }
 
                          if (needsUpdate) {
+                             // Spread the thundering herd at midnight UTC: every active player's
+                             // client hits resetPeriods + squadWarEngine + getSquadRaidLeaderboard
+                             // simultaneously when the week rolls over, triggering 429 rate-limits
+                             // across the board (Hugo bug 2026-05-04 ~00:35 BST). A small random
+                             // jitter (0–45s) staggers the calls so they don't all stampede at once.
+                             // The server is authoritative anyway — kills won't be lost.
+                             const jitterMs = Math.floor(Math.random() * 45000);
+                             await new Promise(r => setTimeout(r, jitterMs));
                              const res = await base44.functions.invoke('squadActions', {
                                  action: 'resetPeriods',
                                  squadId: squad.id,
