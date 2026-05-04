@@ -410,7 +410,7 @@ export default function GlobalRaid({ isCarousel }) {
                                                 <span className="text-slate-500 w-6 md:w-8 inline-block">#{idx + 1}</span> {sanitizePilotName(c.player_name, c.id)}
                                             </span>
                                             <span className="text-yellow-400 font-mono font-bold text-xs md:text-sm">
-                                                {c.damage.toLocaleString()} DMG
+                                                {Math.floor(c.damage).toLocaleString()} DMG
                                             </span>
                                         </div>
                                     ))}
