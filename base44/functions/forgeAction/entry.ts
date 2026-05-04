@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Server-authoritative Forge: handles Gold→Fragment conversion AND augment crafting.
 // Locks starFragments, forgeWeaponAugments, forgeCharAugments, forgeConvertedToday cloud-only.
-// 2026-05-04: added evolved weapon ids to VALID_WEAPON_IDS (Texxy 400 fix).
+// 2026-05-04: added evolved weapon ids to VALID_WEAPON_IDS (Texxy 400 fix). v2
 
 const GOLD_PER_FRAGMENT = 10000;
 const DAILY_CONVERT_CAP = 30;
