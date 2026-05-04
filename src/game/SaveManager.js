@@ -299,7 +299,26 @@ export const SaveManager = {
         // Adopt server-merged save + new timestamp so we don't keep looking "stale"
         // on subsequent syncs (was causing infinite sync loop pre-fix).
         if (res.data?.saveData && res.data?.updated_at) {
-          const merged = { ...res.data.saveData, updated_at: res.data.updated_at };
+          // CRITICAL: re-read local just before clobbering. While the sync was
+          // in flight (debounced ~3s + network ~500ms), the user may have made
+          // more local edits (cosmetic swap, settings change, audio prefs). If
+          // the local copy is NEWER than the payload we sent, those edits would
+          // be silently lost when we overwrite with the server's older view.
+          // Instead, layer the cloud-owned fields on top of the freshest local
+          // state so player-owned edits survive the rebound.
+          let freshLocal = null;
+          try { freshLocal = JSON.parse(localStorage.getItem('cosmic_sloth_save') || 'null'); } catch {}
+          const localTs = Number(freshLocal?.updated_at || 0);
+          const sentTs = Number(parsed.updated_at || 0);
+          let merged;
+          if (freshLocal && localTs > sentTs) {
+            // Local moved on after we sent — keep local as base, only adopt
+            // server-owned fields from cloud. Bump timestamp to cloud's so the
+            // next sync isn't flagged stale.
+            merged = { ...freshLocal, ...res.data.saveData, updated_at: res.data.updated_at };
+          } else {
+            merged = { ...res.data.saveData, updated_at: res.data.updated_at };
+          }
           localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
           window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
         }
