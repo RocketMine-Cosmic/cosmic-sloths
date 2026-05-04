@@ -98,7 +98,12 @@ export async function flushPendingScores() {
         }
 
         const remaining = [];
-        for (const entry of queue) {
+        for (let i = 0; i < queue.length; i++) {
+            const entry = queue[i];
+            // Pace queued saves — firing N back-to-back saveScore calls
+            // (each of which makes ~5 Base44 SDK calls internally) was a
+            // reliable way to trigger 429s. 800ms between entries is plenty.
+            if (i > 0) await new Promise(r => setTimeout(r, 800));
             try {
                 await base44.functions.invoke('saveScore', entry.payload);
                 console.log('[flushPendingScores] Recovered queued run from', new Date(entry.queuedAt).toISOString(), entry.reason ? `(${entry.reason})` : '');

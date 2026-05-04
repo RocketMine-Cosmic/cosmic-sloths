@@ -323,13 +323,16 @@ export function subscribePlayerData(fn) {
     return () => { listeners.delete(fn); };
 }
 
-// Force a balance refresh (used after purchases). Debounced 2s.
+// Force a balance refresh (used after purchases). Debounced 6s — coalesces
+// rapid-fire purchase bursts (player buying 5 upgrades in 10s was firing 5
+// separate forced fetches, blowing past the 5-min TTL and contributing to
+// 429s on the upstream OMENX balance API + Base44 SDK).
 export function refreshBalance() {
     if (refreshBalanceTimer) return;
     refreshBalanceTimer = setTimeout(() => {
         refreshBalanceTimer = null;
         fetchBalance(true);
-    }, 2000);
+    }, 6000);
 }
 
 // Manual VIP refresh — Profile page button. Returns next cooldown end.
