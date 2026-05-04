@@ -561,37 +561,48 @@ Deno.serve(async (req) => {
             const today = new Date().toISOString().split('T')[0];
             const killsToAdd = validation.killsForLedger;
             try {
-                const squad = await base44.asServiceRole.entities.Squad.get(squadIdToUpdate);
-                const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
-                // Only update the fields we're changing — spreading the full entity
-                // (with id/created_date/etc.) was causing the update to fail silently.
-                await base44.asServiceRole.entities.Squad.update(squadIdToUpdate, {
-                    weekly_kills: (squad.weekly_kills || 0) + killsToAdd,
-                    daily_kills: dailyKillsReset + killsToAdd,
-                    current_day: today
-                });
-                console.log(`[saveScore] Squad ${squadIdToUpdate} +${killsToAdd} kills (weekly=${(squad.weekly_kills || 0) + killsToAdd}, daily=${dailyKillsReset + killsToAdd})`);
+                // Parallelize the two reads (Squad.get + SquadWar.filter) — they're
+                // independent and previously ran sequentially, doubling the latency
+                // window during which other requests pile up against the rate limit.
+                // Endless runs skip the war read entirely (anti-farm — wars aren't
+                // credited from endless mode anyway).
+                const skipWar = validation.isEndless;
+                const [squad, activeWars] = await Promise.all([
+                    base44.asServiceRole.entities.Squad.get(squadIdToUpdate),
+                    skipWar
+                        ? Promise.resolve([])
+                        : base44.asServiceRole.entities.SquadWar.filter({ week_id, is_resolved: false }).catch(err => {
+                            console.error('[saveScore] SquadWar fetch failed:', err.message);
+                            return [];
+                        }),
+                ]);
 
-                // ---- Squad Wars: also credit kills to the active war (if any) ----
-                // Endless runs are EXCLUDED from squad war credit (anti-farm) — players
-                // can grind endless indefinitely, which would otherwise let one squad
-                // dominate wars without engaging with sector content.
-                if (!validation.isEndless) {
-                    try {
-                        const activeWars = await base44.asServiceRole.entities.SquadWar.filter({ week_id, is_resolved: false });
-                        const myWar = activeWars.find(w => w.squad_a_id === squadIdToUpdate || w.squad_b_id === squadIdToUpdate);
-                        if (myWar) {
-                            const isSideA = myWar.squad_a_id === squadIdToUpdate;
-                            const patch = isSideA
-                                ? { kills_a: (myWar.kills_a || 0) + killsToAdd }
-                                : { kills_b: (myWar.kills_b || 0) + killsToAdd };
-                            await base44.asServiceRole.entities.SquadWar.update(myWar.id, patch);
-                            console.log(`[saveScore] War ${myWar.id} +${killsToAdd} kills to side ${isSideA ? 'A' : 'B'}`);
-                        }
-                    } catch (warErr) {
-                        console.error('[saveScore] SquadWar update failed:', warErr.message);
-                    }
+                const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
+                const myWar = skipWar ? null : activeWars.find(w => w.squad_a_id === squadIdToUpdate || w.squad_b_id === squadIdToUpdate);
+
+                // Parallelize the two writes too — Squad.update and SquadWar.update
+                // touch different rows and don't depend on each other.
+                const writes = [
+                    base44.asServiceRole.entities.Squad.update(squadIdToUpdate, {
+                        weekly_kills: (squad.weekly_kills || 0) + killsToAdd,
+                        daily_kills: dailyKillsReset + killsToAdd,
+                        current_day: today,
+                    }),
+                ];
+                if (myWar) {
+                    const isSideA = myWar.squad_a_id === squadIdToUpdate;
+                    const patch = isSideA
+                        ? { kills_a: (myWar.kills_a || 0) + killsToAdd }
+                        : { kills_b: (myWar.kills_b || 0) + killsToAdd };
+                    writes.push(
+                        base44.asServiceRole.entities.SquadWar.update(myWar.id, patch).catch(warErr => {
+                            console.error('[saveScore] SquadWar update failed:', warErr.message);
+                        })
+                    );
                 }
+                await Promise.all(writes);
+
+                console.log(`[saveScore] Squad ${squadIdToUpdate} +${killsToAdd} kills (weekly=${(squad.weekly_kills || 0) + killsToAdd}, daily=${dailyKillsReset + killsToAdd})${myWar ? ` + War ${myWar.id}` : ''}`);
             } catch (err) {
                 console.error('[saveScore] Squad update failed:', err.message);
             }
