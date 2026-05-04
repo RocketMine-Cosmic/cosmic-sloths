@@ -242,13 +242,21 @@ export class GameEngine {
             titleBuff: titleBuff && Object.keys(titleBuff).length ? titleBuff : null
         };
         
-        const sessionBuffs = save.sessionBuffs || {};
-        const now = Date.now();
-        const hasXpBuff = sessionBuffs.xpExpiry > now;
+        // Session XP buff (purchased via "+50% XP" SKU). xpExpiry is a server-clock
+        // ms timestamp set by purchaseSku. We snapshot the expiry here AND re-check
+        // every frame so the buff naturally drops off mid-run if it expires (rather
+        // than staying applied for the whole run because we only checked at startup).
+        this.xpBuffExpiry = Number(save.sessionBuffs?.xpExpiry || 0);
+        const hasXpBuff = this.xpBuffExpiry > Date.now();
         const xpBuffMultiplier = hasXpBuff ? 1.5 : 1.0;
-
-        this.player.goldMult = ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0) + adminMult) * this.difficulty.goldMult * sectorPenalty;
-        this.player.xpMult = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult) * this.difficulty.xpMult * xpBuffMultiplier;
+        // Cache the no-buff baseline so we can toggle the multiplier on/off cleanly
+        // when the buff expires mid-run (see update() below).
+        this._xpMultBase = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult) * this.difficulty.xpMult;
+        this.player.xpMult = this._xpMultBase * xpBuffMultiplier;
+        this.player.xpBuffActive = hasXpBuff;
+        if (hasXpBuff) {
+            console.log('[GameEngine] +50% XP buff ACTIVE — expires in', Math.floor((this.xpBuffExpiry - Date.now()) / 1000), 'seconds');
+        }
 
         if (hasAug('dat_ghost')) {
             this.player.iFrames = 5.0;
@@ -555,6 +563,16 @@ export class GameEngine {
         
         if (this.frameCount % 30 === 0) {
             this.callbacks.onTimeChange(Math.floor(this.time));
+        }
+
+        // XP buff expiry check — drops the +50% multiplier mid-run if it ran out.
+        // Ticks once per second (frame % 60) so we don't recompute every frame.
+        if (this.xpBuffExpiry && this.frameCount % 60 === 0) {
+            const stillActive = this.xpBuffExpiry > Date.now();
+            if (this.player.xpBuffActive !== stillActive) {
+                this.player.xpBuffActive = stillActive;
+                this.player.xpMult = this._xpMultBase * (stillActive ? 1.5 : 1.0);
+            }
         }
 
         // Endless gold: time-based accrual only. Enemy/boss drops are suppressed

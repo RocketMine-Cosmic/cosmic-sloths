@@ -24,7 +24,7 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, boss = null, onPause, onSquadUltimate }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate }) {
     // Collapse loadout list by default on mobile so the pause button + top row stay visible.
     // Players can tap the HP bar to expand and review their build.
     const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
@@ -206,14 +206,21 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
 
             {/* Bottom: XP Bar — centered, leaving room for the floating ULT buttons on the right */}
             <div className="mt-auto pointer-events-auto w-full mb-2 md:mb-4 flex justify-center px-2 md:px-0">
-                <div className="bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border border-cyan-500/30 w-full max-w-2xl">
-                    <div className="flex justify-between items-end mb-1">
-                        <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider">LVL {level}</span>
+                <div className={`bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border w-full max-w-2xl transition-colors ${xpBuffActive ? 'border-emerald-400/60 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 'border-cyan-500/30'}`}>
+                    <div className="flex justify-between items-end mb-1 gap-2">
+                        <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider flex items-center gap-2">
+                            LVL {level}
+                            {xpBuffActive && (
+                                <span className="text-[9px] md:text-[10px] bg-emerald-950/80 border border-emerald-400/60 text-emerald-300 px-1.5 py-0.5 rounded font-black tracking-widest uppercase animate-pulse">
+                                    ✨ +50% XP
+                                </span>
+                            )}
+                        </span>
                         <span className="text-[10px] md:text-xs font-bold text-cyan-200/50 font-mono">{Math.floor(xp)} <span className="text-slate-600">/ {xpRequired} XP</span></span>
                     </div>
                     <div className="w-full bg-slate-950 h-1.5 md:h-2 rounded-full overflow-hidden border border-slate-800">
                         <div 
-                            className="h-full transition-all duration-200 bg-gradient-to-r from-cyan-600 to-cyan-300" 
+                            className={`h-full transition-all duration-200 bg-gradient-to-r ${xpBuffActive ? 'from-emerald-500 via-cyan-400 to-emerald-300' : 'from-cyan-600 to-cyan-300'}`}
                             style={{ width: `${Math.min(100, (xp / xpRequired) * 100)}%` }}
                         />
                     </div>

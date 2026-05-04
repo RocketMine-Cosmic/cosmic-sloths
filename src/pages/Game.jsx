@@ -535,7 +535,9 @@ export default function Game() {
                     dps,
                     boss,
                     kills: engine.kills || 0,
-                    totalDamage: Math.floor(engine.totalDamageDealt || 0)
+                    totalDamage: Math.floor(engine.totalDamageDealt || 0),
+                    xpBuffActive: !!engine.player?.xpBuffActive,
+                    xpBuffExpiry: engine.xpBuffExpiry || 0,
                 }));
             }
         }, 100);
