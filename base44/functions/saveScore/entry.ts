@@ -107,9 +107,11 @@ function validateAndRecompute(scoreData) {
         gold = 0;
         kills = 0;
     }
-    if (isEndlessRun && gold > ENDLESS_GOLD_HARD_CEILING * 2) {
-        return { ok: false, reason: `endless gold absurd: ${gold}` };
-    }
+    // No upper "absurd" gold rejection for endless. Legitimate 25-min runs with
+    // stacked Synthbeats + VIP10 + mastery + augments + relic gold mult can produce
+    // 100k+ raw gold. The endless ledger cap below clamps to ENDLESS_GOLD_HARD_CEILING
+    // anyway, so the only effect of rejecting was deleting Texxy's longest runs
+    // (Texxy bug 2026-05-04 — 25-min run, raw gold=176385). Score still uses raw gold.
 
     // Endless economy nerf: cap gold + kills credited from endless runs.
     // Score uses uncapped values; ledger/aggregates use capped values.
