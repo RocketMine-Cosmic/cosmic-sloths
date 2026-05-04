@@ -1,4 +1,4 @@
-import { createClient, createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Distributes the Squad Wars Champions Pool (5% of seasonal OMENX) to top 3 squads
 // of a season. Idempotent — safe to call repeatedly. Real-money path; every payout
@@ -13,7 +13,14 @@ import { createClient, createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //   - period_id defaults to the previous completed season
 //   - mode defaults to 'preview' (read-only, computes ranking + payout list)
 
-const db = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
+// Service-role db client — set inside the request handler from
+// createClientFromRequest(req).asServiceRole. Module-level `let` so the helper
+// functions further down can use it without threading through every call.
+// CRITICAL: previously used `createClient({ appId })` which is unauthenticated
+// and CANNOT read AdminWallet (admin-only RLS) → every admin caller got
+// "Forbidden — not an admin" (Texxy/Hugo bug 2026-05-04, mirrors the
+// distributeRewards fix).
+let db = null;
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
@@ -214,10 +221,13 @@ Deno.serve(async (req) => {
         const { adminKey, mode = 'preview' } = body;
         let { period_id } = body;
 
-        // Auth check
+        // Auth check — always use service-role for entity reads/writes inside this fn
+        // (we read AdminWallet which has admin-only RLS, and write PayoutLog/Roster).
+        const base44 = createClientFromRequest(req);
+        db = base44.asServiceRole;
+
         let callerWallet = 'EMERGENCY_KEY';
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            const base44 = createClientFromRequest(req);
             const me = await base44.auth.me();
             if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
             callerWallet = me.wallet_address?.toLowerCase();
