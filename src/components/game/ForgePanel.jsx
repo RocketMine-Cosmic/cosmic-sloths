@@ -231,7 +231,7 @@ export default function ForgePanel({ save, setSave }) {
                         <p className="text-slate-400 text-sm mb-4">
                             Convert excess Gold into Star Fragments 🌟 used to permanently forge weapon upgrades and character augments.<br/>
                             <span className="text-yellow-400 font-bold">Rate: {GOLD_PER_FRAGMENT.toLocaleString()} Gold = 1 🌟</span>
-                            <span className="ml-3 text-slate-500">Daily cap: {DAILY_CONVERT_CAP} fragments</span>
+                            <span className="ml-3 text-slate-500">Daily cap: {DAILY_CONVERT_CAP} fragments · resets at <span className="text-slate-300 font-bold">00:00 UTC</span></span>
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
