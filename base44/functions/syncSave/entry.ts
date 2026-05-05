@@ -1,5 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// 429-aware retry wrapper. Base44's per-app rate limit fires across all funcs
+// during peak — without this, a single 429 on PlayerSave.filter or .update
+// would 500 the whole sync, and the client's debounced re-sync 30s later
+// would push a stale save (overwriting any server-credited progress in between).
+// Retries: 300ms → 700ms → 1500ms + jitter. Identical to saveScore/forgeAction.
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[syncSave] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 // Syncs the player save for the currently-authenticated Base44 user.
 // Wallet is read from User.wallet_address (linked at login). No OmenX token needed.
 //
@@ -137,16 +160,22 @@ Deno.serve(async (req) => {
             saveData.pilotName = `Pilot_${walletLower.slice(-6).toUpperCase()}`;
         }
 
-        const existing = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+        const existing = await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower }),
+            'PlayerSave.filter'
+        );
 
         // --- New player: just save what they sent. No grants to protect yet. ---
         if (existing.length === 0) {
-            const result = await base44.asServiceRole.entities.PlayerSave.create({
-                wallet_address: walletLower,
-                player_name: saveData.player_name || saveData.pilotName || '',
-                save_data: saveData,
-                updated_at: Date.now()
-            });
+            const result = await with429Retry(
+                () => base44.asServiceRole.entities.PlayerSave.create({
+                    wallet_address: walletLower,
+                    player_name: saveData.player_name || saveData.pilotName || '',
+                    save_data: saveData,
+                    updated_at: Date.now()
+                }),
+                'PlayerSave.create'
+            );
             return Response.json({ success: true, saveId: result.id });
         }
 
@@ -383,12 +412,15 @@ Deno.serve(async (req) => {
         // reads a consistent value.
         merged.player_name = preservedName;
 
-        await base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
-            wallet_address: walletLower,
-            player_name: preservedName,
-            save_data: merged,
-            updated_at: newTs
-        });
+        await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
+                wallet_address: walletLower,
+                player_name: preservedName,
+                save_data: merged,
+                updated_at: newTs
+            }),
+            'PlayerSave.update'
+        );
 
         // Audit log: persist any blocks so admins can review/refund. Non-fatal —
         // a logging failure must never affect the sync itself.

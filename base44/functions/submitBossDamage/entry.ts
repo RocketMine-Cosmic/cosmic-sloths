@@ -1,5 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// 429-aware retry wrapper — protects raid contributions from being silently lost
+// when Base44's per-app rate limit fires during peak (e.g. when many raiders
+// submit damage at once). Without this, the boss HP update or contribution row
+// can 500 mid-sequence and the player's damage drops on the floor.
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[submitBossDamage] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
 
 // Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
@@ -53,9 +75,15 @@ Deno.serve(async (req) => {
         // Look up squad membership so contributions can be aggregated for the squad raid leaderboard
         let squadInfo = { squad_id: '', squad_name: '', squad_tag: '', squad_icon: '' };
         try {
-            const memberRecords = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
+            const memberRecords = await with429Retry(
+                () => base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress }),
+                'SquadMember.filter'
+            );
             if (memberRecords.length > 0) {
-                const sq = await base44.asServiceRole.entities.Squad.get(memberRecords[0].squad_id);
+                const sq = await with429Retry(
+                    () => base44.asServiceRole.entities.Squad.get(memberRecords[0].squad_id),
+                    'Squad.get'
+                );
                 if (sq) {
                     squadInfo = {
                         squad_id: sq.id,
@@ -71,27 +99,33 @@ Deno.serve(async (req) => {
 
         // Create GlobalBossEvent (live activity feed)
         try {
-            await base44.asServiceRole.entities.GlobalBossEvent.create({
-                week_id,
-                player_name: displayName,
-                event_type: 'damage',
-                damage: clampedDamage,
-                message: `${displayName} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`
-            });
+            await with429Retry(
+                () => base44.asServiceRole.entities.GlobalBossEvent.create({
+                    week_id,
+                    player_name: displayName,
+                    event_type: 'damage',
+                    damage: clampedDamage,
+                    message: `${displayName} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`
+                }),
+                'GlobalBossEvent.create'
+            );
         } catch (e) {
             console.error('[submitBossDamage] Event creation failed:', e.message);
         }
 
         // Create GlobalBossContribution (per-run contribution log used for reward claims)
         try {
-            await base44.asServiceRole.entities.GlobalBossContribution.create({
-                week_id,
-                user_id: walletAddress,
-                player_name: displayName,
-                damage: clampedDamage,
-                claimed: false,
-                ...squadInfo,
-            });
+            await with429Retry(
+                () => base44.asServiceRole.entities.GlobalBossContribution.create({
+                    week_id,
+                    user_id: walletAddress,
+                    player_name: displayName,
+                    damage: clampedDamage,
+                    claimed: false,
+                    ...squadInfo,
+                }),
+                'GlobalBossContribution.create'
+            );
         } catch (e) {
             console.error('[submitBossDamage] Contribution failed:', e.message);
         }
@@ -100,7 +134,10 @@ Deno.serve(async (req) => {
         // (HP scales with level so each tier is harder than the last).
         let bossUpdate = null;
         try {
-            const bossRecords = await base44.asServiceRole.entities.GlobalBoss.filter({ week_id });
+            const bossRecords = await with429Retry(
+                () => base44.asServiceRole.entities.GlobalBoss.filter({ week_id }),
+                'GlobalBoss.filter'
+            );
             if (bossRecords.length > 0) {
                 const boss = bossRecords[0];
                 let newHp = (boss.current_hp || 0) - clampedDamage;
@@ -130,11 +167,14 @@ Deno.serve(async (req) => {
                     }
                 }
 
-                bossUpdate = await base44.asServiceRole.entities.GlobalBoss.update(boss.id, {
-                    current_hp: newHp,
-                    max_hp: newMaxHp,
-                    level: newLevel,
-                });
+                bossUpdate = await with429Retry(
+                    () => base44.asServiceRole.entities.GlobalBoss.update(boss.id, {
+                        current_hp: newHp,
+                        max_hp: newMaxHp,
+                        level: newLevel,
+                    }),
+                    'GlobalBoss.update'
+                );
 
                 if (leveledUp) {
                     console.log('[submitBossDamage] Boss leveled up to', newLevel, 'new HP:', newMaxHp);

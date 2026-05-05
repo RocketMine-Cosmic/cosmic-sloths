@@ -1,5 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// 429-aware retry wrapper — read-only, but high-volume page loads were 500-ing
+// during peak and breaking the raid UI. Retries make the read resilient.
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[getSquadRaidLeaderboard] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 // Auth: Base44 session (any authenticated user can view).
 // Aggregates GlobalBossContribution by squad_id for the current (or specified) week.
 // Returns top squads ranked by total damage to the world boss.
@@ -30,8 +50,9 @@ Deno.serve(async (req) => {
         let all = [];
         let skip = 0;
         for (let i = 0; i < 20; i++) { // cap at 10k contributions per week
-            const page = await base44.asServiceRole.entities.GlobalBossContribution.list(
-                '-created_date', PAGE, skip
+            const page = await with429Retry(
+                () => base44.asServiceRole.entities.GlobalBossContribution.list('-created_date', PAGE, skip),
+                'GlobalBossContribution.list'
             );
             const filtered = page.filter(c => c.week_id === weekId);
             all = all.concat(filtered);
@@ -52,9 +73,15 @@ Deno.serve(async (req) => {
             const wallets = Array.from(walletsNeedingLookup);
             for (const wallet of wallets) {
                 try {
-                    const members = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: wallet });
+                    const members = await with429Retry(
+                        () => base44.asServiceRole.entities.SquadMember.filter({ wallet_address: wallet }),
+                        'SquadMember.filter'
+                    );
                     if (members.length > 0) {
-                        const sq = await base44.asServiceRole.entities.Squad.get(members[0].squad_id);
+                        const sq = await with429Retry(
+                            () => base44.asServiceRole.entities.Squad.get(members[0].squad_id),
+                            'Squad.get'
+                        );
                         if (sq) {
                             walletToSquad.set(wallet, {
                                 squad_id: sq.id,

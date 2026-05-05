@@ -1,5 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// 429-aware retry wrapper — protects gold deductions and grants from being lost
+// when Base44 hits its rate limit. The PlayerSave write is the critical step:
+// if filter or update 500s, the player's gold is debited locally (UI optimism)
+// but the cloud save is unchanged → next sync wipes the purchase. This retry
+// loop ensures the read-deduct-write cycle completes even under heavy load.
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[spendGold] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 // Discord error webhook (fire-and-forget).
 async function postDiscordError(title, error) {
     const url = Deno.env.get('DISCORD_ERROR_WEBHOOK');
@@ -326,7 +349,10 @@ Deno.serve(async (req) => {
         }
 
         // Load current save (needed before computing cost for pool_respec).
-        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
+        const records = await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() }),
+            'PlayerSave.filter'
+        );
         if (records.length === 0) {
             return Response.json({ error: 'We couldn\'t find your save. Please play a run first to create one.' }, { status: 400 });
         }
@@ -373,10 +399,13 @@ Deno.serve(async (req) => {
         updatedSave.gold = currentGold - cost;
 
         // Persist
-        await base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
-            save_data: updatedSave,
-            updated_at: Date.now()
-        });
+        await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
+                save_data: updatedSave,
+                updated_at: Date.now()
+            }),
+            'PlayerSave.update'
+        );
 
         // Audit log — never block the purchase if logging fails.
         try {

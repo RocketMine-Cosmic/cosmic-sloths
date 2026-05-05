@@ -2,19 +2,40 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
 
+// 429-aware retry for individual entity ops. Per-row failure no longer just
+// drops the row — we retry up to 3× before giving up. This eliminated the
+// "30/117 RunScore updates failed" we saw during peak hours.
+async function with429Retry(fn) {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 // Helper: update all records matching wallet_address with the given patch.
 // Sequential with a tiny delay to avoid hitting the Base44 per-second rate limit
 // (Hugo bug 2026-05-03: parallel updates of 700+ TokenSpendLog rows triggered 429s
 // that left the rest of the sync — including the PlayerSave write — half-applied,
 // which is why the player's chosen name kept "resetting" on reload).
+// Each update now retries on 429 (was previously dropping silently).
 async function bulkUpdateByWallet(entity, walletAddress, patch, label, cap = 500) {
     try {
-        const records = await entity.filter({ wallet_address: walletAddress });
+        const records = await with429Retry(() => entity.filter({ wallet_address: walletAddress }));
         if (records.length === 0) return;
         const slice = records.slice(0, cap);
         let failed = 0;
         for (const r of slice) {
-            try { await entity.update(r.id, patch); }
+            try { await with429Retry(() => entity.update(r.id, patch)); }
             catch { failed++; }
             // 25 rps ceiling — well under Base44's limit
             await new Promise(res => setTimeout(res, 40));
@@ -43,7 +64,7 @@ Deno.serve(async (req) => {
 
         // 1. Update PlayerSave — create if missing (new users who haven't played yet
         // can still set a name/title/icon on the profile page).
-        const saves = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress });
+        const saves = await with429Retry(() => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress }));
         if (saves.length === 0) {
             const seedData = { updated_at: Date.now() };
             if (newName !== undefined) seedData.player_name = newName;
@@ -55,7 +76,7 @@ Deno.serve(async (req) => {
                 updated_at: Date.now(),
             };
             if (newName !== undefined) createPayload.player_name = newName;
-            await base44.asServiceRole.entities.PlayerSave.create(createPayload);
+            await with429Retry(() => base44.asServiceRole.entities.PlayerSave.create(createPayload));
         } else {
             const save = saves[0];
             const existingSaveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
@@ -66,7 +87,7 @@ Deno.serve(async (req) => {
 
             const updatePayload = { save_data: mergedData };
             if (newName !== undefined) updatePayload.player_name = newName;
-            await base44.asServiceRole.entities.PlayerSave.update(save.id, updatePayload);
+            await with429Retry(() => base44.asServiceRole.entities.PlayerSave.update(save.id, updatePayload));
         }
 
         // 2. Update related records in parallel — only patch fields that were provided.

@@ -1,5 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// 429-aware retry wrapper — Squad Wars reads/writes were 500-ing during peak,
+// which was particularly nasty for `claimWinBonus` (the gold/fragment grant
+// could fail mid-flight, leaving the war marked claimed but the player unpaid).
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[squadWarEngine] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 async function postDiscordSquadWars(payload) {
     const url = Deno.env.get('DISCORD_SQUADWARS_WEBHOOK');
     if (!url) return;
@@ -55,17 +76,23 @@ function getPreviousWeekId(currentWeekId) {
 
 async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
     const walletLower = walletAddress.toLowerCase();
-    const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+    const records = await with429Retry(
+        () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower }),
+        'PlayerSave.filter'
+    );
     if (records.length === 0) throw new Error('PlayerSave not found');
     const record = records[0];
     const saveData = typeof record.save_data === 'string' ? JSON.parse(record.save_data) : record.save_data;
     saveData.gold = (saveData.gold || 0) + gold;
     if (fragments > 0) saveData.relicFragments = (saveData.relicFragments || 0) + fragments;
     saveData.updated_at = Date.now();
-    await base44.asServiceRole.entities.PlayerSave.update(record.id, {
-        save_data: saveData,
-        updated_at: Date.now()
-    });
+    await with429Retry(
+        () => base44.asServiceRole.entities.PlayerSave.update(record.id, {
+            save_data: saveData,
+            updated_at: Date.now()
+        }),
+        'PlayerSave.update'
+    );
     return { gold: saveData.gold, relicFragments: saveData.relicFragments || 0 };
 }
 
