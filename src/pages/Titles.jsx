@@ -115,12 +115,20 @@ export default function Titles({ isCarousel }) {
             // `unlockedCosmetics`, skins in `unlockedSkins`, kill effects in
             // `unlockedKillEffects`. Counting only the first array meant players
             // with paid skins/kill-effects couldn't unlock Trendsetter / Fashionista
-            // / Stylist titles. Sum all three (default trail is a freebie so it's
-            // already in `unlockedCosmetics` — no double-count risk).
+            // / Stylist titles.
+            //
+            // Defaults are automatic (free) and not stored in any unlocked array —
+            // but every player implicitly owns them, so they should count toward
+            // the cosmetic-collection milestones. We add:
+            //   +1 for the 'none' kill effect (free, never written to save)
+            //   +N for each character's <id>_default skin (one per character the
+            //       player has unlocked, including NFT-granted ones)
             const totalUnlockedCosmetics =
                 (save.unlockedCosmetics?.length || 0) +
                 (save.unlockedSkins?.length || 0) +
-                (save.unlockedKillEffects?.length || 0);
+                (save.unlockedKillEffects?.length || 0) +
+                1 + // default 'none' kill effect (always implicitly owned)
+                owned.size; // one default skin per unlocked character (NFT-aware)
 
             setStats({
                 totalKills: save.totalKills || 0,
