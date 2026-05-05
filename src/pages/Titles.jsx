@@ -111,6 +111,17 @@ export default function Titles({ isCarousel }) {
                 });
             }
 
+            // Cosmetics are stored across THREE separate save arrays — trails in
+            // `unlockedCosmetics`, skins in `unlockedSkins`, kill effects in
+            // `unlockedKillEffects`. Counting only the first array meant players
+            // with paid skins/kill-effects couldn't unlock Trendsetter / Fashionista
+            // / Stylist titles. Sum all three (default trail is a freebie so it's
+            // already in `unlockedCosmetics` — no double-count risk).
+            const totalUnlockedCosmetics =
+                (save.unlockedCosmetics?.length || 0) +
+                (save.unlockedSkins?.length || 0) +
+                (save.unlockedKillEffects?.length || 0);
+
             setStats({
                 totalKills: save.totalKills || 0,
                 leviathanKills,
@@ -121,7 +132,7 @@ export default function Titles({ isCarousel }) {
                 maxLevelReached: save.maxLevelReached || 0,
                 maxTimeSurvived: save.maxTimeSurvived || 0,
                 unlockedCharactersCount: owned.size,
-                totalUnlockedCosmetics: save.unlockedCosmetics?.length || 0,
+                totalUnlockedCosmetics,
                 totalUnlockedTalents,
             });
         })();
