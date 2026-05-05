@@ -111,24 +111,28 @@ export default function Titles({ isCarousel }) {
                 });
             }
 
-            // Cosmetics are stored across THREE separate save arrays — trails in
-            // `unlockedCosmetics`, skins in `unlockedSkins`, kill effects in
-            // `unlockedKillEffects`. Counting only the first array meant players
-            // with paid skins/kill-effects couldn't unlock Trendsetter / Fashionista
-            // / Stylist titles.
-            //
-            // Defaults are automatic (free) and not stored in any unlocked array —
-            // but every player implicitly owns them, so they should count toward
-            // the cosmetic-collection milestones. We add:
-            //   +1 for the 'none' kill effect (free, never written to save)
-            //   +N for each character's <id>_default skin (one per character the
-            //       player has unlocked, including NFT-granted ones)
-            const totalUnlockedCosmetics =
-                (save.unlockedCosmetics?.length || 0) +
-                (save.unlockedSkins?.length || 0) +
-                (save.unlockedKillEffects?.length || 0) +
-                1 + // default 'none' kill effect (always implicitly owned)
-                owned.size; // one default skin per unlocked character (NFT-aware)
+            // Count unique cosmetics across every source so paid items are credited
+            // even when the unlocked* arrays got out of sync with the equipped map.
+            // Sources:
+            //   - unlockedCosmetics (trails, includes 'default')
+            //   - unlockedSkins, unlockedKillEffects (purchased)
+            //   - cosmetics.skins values + cosmetics.killEffect (currently equipped —
+            //     reliable proof of ownership; e.g. Anubis has paid skins equipped
+            //     even though unlockedSkins is empty)
+            //   - implicit defaults: 'none' kill effect + one <id>_default skin per
+            //     unlocked character (free, never written to save)
+            const cosmeticIds = new Set();
+            (save.unlockedCosmetics || []).forEach(id => cosmeticIds.add(`trail:${id}`));
+            (save.unlockedSkins || []).forEach(id => cosmeticIds.add(`skin:${id}`));
+            (save.unlockedKillEffects || []).forEach(id => cosmeticIds.add(`kill:${id}`));
+            const equippedSkins = save.cosmetics?.skins || {};
+            Object.values(equippedSkins).forEach(id => { if (id) cosmeticIds.add(`skin:${id}`); });
+            const equippedKill = save.cosmetics?.killEffect;
+            if (equippedKill) cosmeticIds.add(`kill:${equippedKill}`);
+            // Implicit defaults every player owns
+            cosmeticIds.add(`kill:none`);
+            owned.forEach(charId => cosmeticIds.add(`skin:${charId}_default`));
+            const totalUnlockedCosmetics = cosmeticIds.size;
 
             setStats({
                 totalKills: save.totalKills || 0,
