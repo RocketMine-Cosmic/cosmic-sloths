@@ -659,6 +659,13 @@ export default function Hub({ isCarousel }) {
                                                 }
                                                 refreshBalance();
                                                 toast({ title: "Buff Activated", description: `+50% XP for 60 minutes!` });
+                                            } catch (err) {
+                                                // base44.functions.invoke throws on non-2xx responses (e.g. 400 "buff already active",
+                                                // 401, 500). Without this catch the error was silent — toast never showed and the
+                                                // button just snapped back to "Buy" with no feedback (Anubis bug 2026-05-05).
+                                                const serverMsg = err?.response?.data?.error || err?.data?.error || err?.message || 'Try again.';
+                                                console.error('[XP Buff] purchase failed:', serverMsg, err);
+                                                toast({ title: 'Purchase Failed', description: serverMsg });
                                             } finally {
                                                 setBuffPurchasing(false);
                                             }
