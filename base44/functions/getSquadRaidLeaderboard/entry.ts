@@ -24,6 +24,36 @@ async function with429Retry(fn, label = 'op') {
 // Aggregates GlobalBossContribution by squad_id for the current (or specified) week.
 // Returns top squads ranked by total damage to the world boss.
 
+// Per-week 30s cache. Raid pages poll this every ~10s from every viewer, and the
+// underlying aggregation (paginated contribution scan + per-wallet squad backfill)
+// is one of the heaviest reads in the app. A 30s cache cuts repeat work by ~95%
+// during raid windows with at most 30s of staleness on the displayed rankings —
+// imperceptible on a weekly leaderboard.
+// Lives in module scope (warm-instance only); cold starts simply skip the cache.
+const LEADERBOARD_CACHE_TTL_MS = 30_000;
+const leaderboardCache = new Map(); // weekId → { ts, payload }
+
+function getCachedLeaderboard(weekId) {
+    const entry = leaderboardCache.get(weekId);
+    if (!entry) return null;
+    if (Date.now() - entry.ts > LEADERBOARD_CACHE_TTL_MS) {
+        leaderboardCache.delete(weekId);
+        return null;
+    }
+    return entry.payload;
+}
+
+function setCachedLeaderboard(weekId, payload) {
+    leaderboardCache.set(weekId, { ts: Date.now(), payload });
+    // Bound the map — at most a handful of week ids should ever live here.
+    if (leaderboardCache.size > 50) {
+        const cutoff = Date.now() - LEADERBOARD_CACHE_TTL_MS;
+        for (const [k, v] of leaderboardCache) {
+            if (v.ts < cutoff) leaderboardCache.delete(k);
+        }
+    }
+}
+
 // Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
 function getCurrentWeekId() {
     const now = new Date();
@@ -44,6 +74,12 @@ Deno.serve(async (req) => {
 
         const body = await req.json().catch(() => ({}));
         const weekId = body.weekId || getCurrentWeekId();
+
+        // 30s cache check — return cached payload for repeat polls within the window.
+        const cached = getCachedLeaderboard(weekId);
+        if (cached) {
+            return Response.json(cached);
+        }
 
         // Pull all contributions for this week. Page in case there's a lot.
         const PAGE = 500;
@@ -133,7 +169,9 @@ Deno.serve(async (req) => {
             .sort((a, b) => b.total_damage - a.total_damage)
             .slice(0, 50);
 
-        return Response.json({ success: true, weekId, ranking });
+        const payload = { success: true, weekId, ranking };
+        setCachedLeaderboard(weekId, payload);
+        return Response.json(payload);
     } catch (error) {
         console.error('[getSquadRaidLeaderboard]', error.message);
         return Response.json({ error: 'Couldn\'t load the raid leaderboard. Please try again.' }, { status: 500 });
