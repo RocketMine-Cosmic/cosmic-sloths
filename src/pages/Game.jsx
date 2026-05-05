@@ -116,6 +116,7 @@ export default function Game() {
 
         const initGame = async () => {
             const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+            // NG+ removed — ignore any legacy isNGPlus state passed via navigation.
             
             // CRITICAL: Initialize SaveManager first to load cloud save + merge upgrades
             await SaveManager.initialize();
@@ -467,7 +468,7 @@ export default function Game() {
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }
-        }, isEndless, worldBossId, worldBossName, startingWeaponId, location.state?.isNGPlus || false);
+        }, isEndless, worldBossId, worldBossName, startingWeaponId);
         
         engineRef.current = engine;
         
@@ -669,9 +670,9 @@ export default function Game() {
     const handleRestart = () => {
         const engine = engineRef.current;
         if (!engine) return;
-        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, isNGPlus } = location.state || {};
+        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || {};
         navigate('/game', {
-            state: { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, isNGPlus, _retry: Date.now() },
+            state: { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, _retry: Date.now() },
             replace: true,
         });
     };

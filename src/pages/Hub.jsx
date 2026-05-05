@@ -49,8 +49,6 @@ export default function Hub({ isCarousel }) {
         lastSelectedArena: initialSave?.lastSelectedArena,
         lastSelectedDifficulty: initialSave?.lastSelectedDifficulty,
         lastSelectedWeapon: initialSave?.lastSelectedWeapon,
-        isNGPlus: initialSave?.isNGPlus ?? false,
-        newGamePlusUnlocked: initialSave?.newGamePlusUnlocked,
         hasSetProfileName: initialSave?.hasSetProfileName,
         bounties: initialSave?.bounties,
         maxTimeSurvived: initialSave?.maxTimeSurvived ?? 0,
@@ -165,7 +163,6 @@ export default function Hub({ isCarousel }) {
     const [selectedArena, setSelectedArena] = useState(save.lastSelectedArena || 'station');
     const [selectedDifficulty, setSelectedDifficulty] = useState(save.lastSelectedDifficulty || 'normal');
     const [selectedWeapon, setSelectedWeapon] = useState(save.lastSelectedWeapon || 'neoBlaster');
-    const [isNGPlus, setIsNGPlus] = useState(save.isNGPlus || false);
     const [charTab, setCharTab] = useState('loadout');
     const { toast } = useToast();
     const { omenxBalance } = useCurrency();
@@ -258,7 +255,7 @@ export default function Hub({ isCarousel }) {
                 })
                 .catch(() => {}); // non-blocking, game will handle failure
         }
-        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isNGPlus: isNGPlus, isEndless: mode === 'endless' } });
+        navigate('/game', { state: { characterId: selectedChar, arenaId: selectedArena, difficultyId: selectedDifficulty, startingWeaponId: selectedWeapon, isEndless: mode === 'endless' } });
     };
 
     const startGame = () => checkAndLaunch('normal');
@@ -610,37 +607,6 @@ export default function Hub({ isCarousel }) {
                                             </div>
                                         </div>
                                         );
-                                        })()}
-                                        {(() => {
-                                            // NG+ unlock: every unlocked character must have unlocked every sector.
-                                            // (Previously gated by save.newGamePlusUnlocked — now computed live.)
-                                            const allArenaIds = ARENAS.map(a => a.id);
-                                            const unlockedChars = effectiveUnlockedCharacters || [];
-                                            const ngPlusReady = unlockedChars.length > 0 && unlockedChars.every(charId => {
-                                                const arenasForChar = save?.unlockedArenasByCharacter?.[charId] || ['station'];
-                                                return allArenaIds.every(aid => arenasForChar.includes(aid));
-                                            });
-                                            if (!ngPlusReady) return null;
-                                            return (
-                                                <div className="mt-3 flex items-center justify-center gap-2 bg-red-950/40 p-2 rounded-lg border border-red-500/30">
-                                                    <input
-                                                        type="checkbox"
-                                                        id="ngplus"
-                                                        checked={isNGPlus}
-                                                        onChange={(e) => {
-                                                            SoundManager.playUIClick();
-                                                            setIsNGPlus(e.target.checked);
-                                                            const newSave = { ...save, isNGPlus: e.target.checked };
-                                                            SaveManager.save(newSave);
-                                                            setSave(newSave);
-                                                        }}
-                                                        className="w-4 h-4 accent-red-500 cursor-pointer"
-                                                    />
-                                                    <label htmlFor="ngplus" className="text-xs md:text-sm font-bold text-red-400 uppercase tracking-widest cursor-pointer drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">
-                                                        Activate New Game+
-                                                    </label>
-                                                </div>
-                                            );
                                         })()}
                                         </div>
                                     </div>

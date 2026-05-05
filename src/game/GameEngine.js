@@ -13,24 +13,15 @@ import { levelUp as levelUpLogic, generateChoices as generateChoicesLogic, apply
 import { updateCharacterMechanics } from './CharacterMechanics';
 
 export class GameEngine {
-    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null, isNGPlus = false) {
+    constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.callbacks = callbacks;
         this.characterId = characterId;
         this.save = save;
-        this.isNGPlus = isNGPlus;
         this.worldBossId = worldBossId || 'world_boss_0';
         this.worldBossName = worldBossName || 'The World Eater';
         this.difficulty = { ...(DIFFICULTIES.find(d => d.id === difficultyId) || DIFFICULTIES[0]) };
-        
-        if (this.isNGPlus) {
-            this.difficulty.enemyHpMult *= 3.0;
-            this.difficulty.enemyDmgMult *= 2.0;
-            this.difficulty.goldMult *= 1.5;
-            this.difficulty.xpMult *= 1.5;
-            this.difficulty.speedMult = (this.difficulty.speedMult || 1.0) * 1.2;
-        }
         
         const saveStats = save.permanentUpgrades || {};
         const weeklyStats = save.weeklyUpgrades || {};
