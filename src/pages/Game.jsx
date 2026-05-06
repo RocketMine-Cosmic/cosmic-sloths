@@ -339,8 +339,13 @@ export default function Game() {
                 // UIOverlay's displayGold). Server recomputes these definitively
                 // and overwrites once the save response lands.
                 if (stats.arenaId === 'endless' || isEndless) {
+                    // MUST mirror saveScore.js endless caps EXACTLY:
+                    // ENDLESS_GOLD_PER_SEC=12, floor=1000, ceiling=10000
+                    // ENDLESS_KILLS_PER_SEC=4, floor=600, ceiling=6000
+                    // Old values (25/1500/25000) caused a brief flash of "obscene"
+                    // gold in the modal before the server reply trimmed it back.
                     const t = stats.time || 0;
-                    const goldCap = Math.min(25000, Math.max(1500, Math.floor(t * 25)));
+                    const goldCap = Math.min(10000, Math.max(1000, Math.floor(t * 12)));
                     const killsCap = Math.min(6000, Math.max(600, Math.floor(t * 4)));
                     if (stats.gold > goldCap) {
                         stats.endlessGoldCapped = true;
@@ -410,9 +415,10 @@ export default function Game() {
                 stats.worldBossName = worldBossName;
                 stats.score = 0;
                 // Pre-cap endless gold/kills so the modal matches the HUD immediately.
+                // MUST mirror saveScore.js: gold=time×12 (1000–10000), kills=time×4 (600–6000).
                 if (stats.arenaId === 'endless' || isEndless) {
                     const t = stats.time || 0;
-                    const goldCap = Math.min(25000, Math.max(1500, Math.floor(t * 25)));
+                    const goldCap = Math.min(10000, Math.max(1000, Math.floor(t * 12)));
                     const killsCap = Math.min(6000, Math.max(600, Math.floor(t * 4)));
                     if (stats.gold > goldCap) {
                         stats.endlessGoldCapped = true;
