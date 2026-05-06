@@ -93,10 +93,17 @@ Deno.serve(async (req) => {
 
         // Paginate through all eligible runs in the period (single -score 1000
         // query misses mid-tier players when whales eat hundreds of slots).
+        // Reduce-as-we-go: keep only each player's best run to bound memory.
+        // Stop early once we go N consecutive pages without seeing any new
+        // player — every player's BEST run lives near the top of the sort,
+        // so once the new-player rate hits zero we have everyone. Avoids
+        // paginating tens of thousands of redundant rows (rate-limit safe).
         const fetchEligibleScores = async (filterKey) => {
             const PAGE = 1000;
-            const MAX_PAGES = 10;
-            const all = [];
+            const MAX_PAGES = 50;
+            const STALL_PAGES = 3;
+            const bestByPlayer = new Map();
+            let stallCount = 0;
             for (let page = 1; page <= MAX_PAGES; page++) {
                 const batch = await base44.asServiceRole.entities.RunScore.filter(
                     { ...filterKey, arena_id: { $nin: ['endless', 'world_boss_arena'] } },
@@ -105,10 +112,21 @@ Deno.serve(async (req) => {
                     page,
                 );
                 if (!batch || batch.length === 0) break;
-                all.push(...batch);
+                const sizeBefore = bestByPlayer.size;
+                for (const r of batch) {
+                    const key = (r.wallet_address || '').toLowerCase();
+                    if (!key) continue;
+                    const existing = bestByPlayer.get(key);
+                    if (!existing || (r.score || 0) > (existing.score || 0)) {
+                        bestByPlayer.set(key, r);
+                    }
+                }
+                if (bestByPlayer.size === sizeBefore) stallCount++;
+                else stallCount = 0;
+                if (stallCount >= STALL_PAGES) break;
                 if (batch.length < PAGE) break;
             }
-            return all;
+            return Array.from(bestByPlayer.values()).sort((a, b) => (b.score || 0) - (a.score || 0));
         };
 
         if (period_type === 'weekly') {

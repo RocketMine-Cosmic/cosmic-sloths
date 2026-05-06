@@ -84,13 +84,21 @@ Deno.serve(async (req) => {
                 baseFilter = eligibleArena;
             }
 
-            // Paginate by score desc, accumulating best-per-player.
+            // Paginate by score desc, accumulating best-per-player. Stop
+            // early once we go N consecutive pages without seeing any new
+            // player — every player's BEST run lives near the top of the
+            // sort, so once the new-player rate hits zero we have everyone.
+            // This avoids paginating tens of thousands of redundant rows
+            // (which trips the SDK rate limit on busy seasonal periods).
             const PAGE = 1000;
-            const MAX_PAGES = 10;
+            const MAX_PAGES = 50;
+            const STALL_PAGES = 3;
             const bestByPlayer = new Map();
+            let stallCount = 0;
             for (let page = 1; page <= MAX_PAGES; page++) {
                 const batch = await base44.asServiceRole.entities.RunScore.filter(baseFilter, '-score', PAGE, page);
                 if (!batch || batch.length === 0) break;
+                const sizeBefore = bestByPlayer.size;
                 for (const s of batch) {
                     const key = (s.wallet_address || s.user_id || '').toLowerCase();
                     if (!key) continue;
@@ -99,6 +107,9 @@ Deno.serve(async (req) => {
                         bestByPlayer.set(key, s);
                     }
                 }
+                if (bestByPlayer.size === sizeBefore) stallCount++;
+                else stallCount = 0;
+                if (stallCount >= STALL_PAGES) break;
                 if (batch.length < PAGE) break;
             }
             const ranked = Array.from(bestByPlayer.values()).sort((a, b) => (b.score || 0) - (a.score || 0));

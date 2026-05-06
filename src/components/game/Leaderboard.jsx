@@ -250,17 +250,20 @@ export default function Leaderboard() {
             }
 
             // Paginate by score desc, accumulating each player's BEST run.
-            // A single -score 1000 query is not enough for seasonal: 4 weeks of
-            // runs (~3000+) means a few whales eat hundreds of slots and the best
-            // runs of mid-tier players get hidden past row 1000, collapsing
-            // visible player count from ~50 to ~32. Pagination ensures every
-            // unique player who has a leaderboard-eligible run shows up.
+            // Stop early once we go N consecutive pages without seeing any
+            // new player — every player's BEST run lives near the top of the
+            // sort, so once the new-player rate hits zero we have everyone.
+            // Avoids paginating tens of thousands of redundant rows from
+            // whales who grind 100+ runs (rate-limit safe).
             const PAGE = 1000;
-            const MAX_PAGES = 5;
+            const MAX_PAGES = 50;
+            const STALL_PAGES = 3;
             const bestByUser = new Map();
+            let stallCount = 0;
             for (let page = 1; page <= MAX_PAGES; page++) {
                 const batch = await base44.entities.RunScore.filter(filter, '-score', PAGE, page);
                 if (!batch || batch.length === 0) break;
+                const sizeBefore = bestByUser.size;
                 for (const score of batch) {
                     const key = score.user_id || score.wallet_address;
                     if (!key) continue;
@@ -269,6 +272,9 @@ export default function Leaderboard() {
                         bestByUser.set(key, score);
                     }
                 }
+                if (bestByUser.size === sizeBefore) stallCount++;
+                else stallCount = 0;
+                if (stallCount >= STALL_PAGES) break;
                 if (batch.length < PAGE) break;
             }
             const allUnique = Array.from(bestByUser.values())
