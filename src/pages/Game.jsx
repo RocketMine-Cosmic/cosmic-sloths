@@ -530,15 +530,19 @@ export default function Game() {
                 }
                 // Endless caps — must mirror saveScore.js (ENDLESS_GOLD_PER_SEC=12,
                 // ENDLESS_KILLS_PER_SEC=4, hard ceilings 10000/6000, floors 1000/600).
-                // Without clamping, the HUD shows uncapped kills/gold/score that don't
-                // match the end-of-run settlement or leaderboard (Hugo bug 2026-05-06).
+                // The caps apply to PlayerSave aggregation (ledger), NOT to score.
+                // The server's score formula uses RAW kills+gold, so the HUD must too —
+                // otherwise the HUD score under-reports vs the end-of-run modal.
+                // (Capped values are still used for the displayed kill/gold tiles via
+                // UIOverlay.displayGold and `kills: killsForScore` below — those are
+                // the wallet-credited numbers and must stay capped.)
                 const isEndlessHud = arenaId === 'endless';
-                let killsForScore = engine.kills;
-                let goldForScore = engine.gold;
+                const killsForScore = engine.kills; // RAW for score formula
+                const goldForScore = engine.gold;   // RAW for score formula
+                let killsForDisplay = engine.kills;
                 if (isEndlessHud) {
                     const t = engine.time || 0;
-                    killsForScore = Math.min(engine.kills, Math.min(6000, Math.max(600, Math.floor(t * 4))));
-                    goldForScore = Math.min(engine.gold, Math.min(10000, Math.max(1000, Math.floor(t * 12))));
+                    killsForDisplay = Math.min(engine.kills, Math.min(6000, Math.max(600, Math.floor(t * 4))));
                 }
                 // Server also adds +5000 victory bonus, but is_victory only fires at the
                 // very final tick — the modal shows the server's authoritative value, so
@@ -586,10 +590,10 @@ export default function Game() {
                     score: liveScore,
                     dps,
                     boss,
-                    // Use capped kills in endless mode so the HUD matches the end-of-run
-                    // settlement and leaderboard (saveScore caps endless kills/gold).
-                    kills: killsForScore || 0,
-                    killsCapped: isEndlessHud && engine.kills > killsForScore,
+                    // Display the capped (wallet-credited) kill count — score formula
+                    // uses RAW kills above; this tile shows what gets banked.
+                    kills: killsForDisplay || 0,
+                    killsCapped: isEndlessHud && engine.kills > killsForDisplay,
                     totalDamage: Math.floor(engine.totalDamageDealt || 0),
                     xpBuffActive: !!engine.player?.xpBuffActive,
                     xpBuffExpiry: engine.xpBuffExpiry || 0,
