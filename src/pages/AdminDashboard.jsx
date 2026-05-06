@@ -269,6 +269,7 @@ export default function AdminDashboard() {
                 </div>
             );
             case 'grant':       return <AdminGrantPanel walletAddress={adminWallet} />;
+            case 'nft_refresh': return <AdminRefreshPlayerNFTs />;
             case 'squads':      return <AdminSquads walletAddress={adminWallet} />;
             case 'raid':        return <AdminRaid walletAddress={adminWallet} />;
             case 'economy':     return <AdminEconomy walletAddress={adminWallet} />;
