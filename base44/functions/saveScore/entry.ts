@@ -541,40 +541,6 @@ Deno.serve(async (req) => {
                 () => base44.asServiceRole.entities.RunScore.create(runScore),
                 'RunScore.create'
             );
-
-            // Prune low-scoring runs — only a player's TOP 5 runs per bucket are
-            // ever needed (leaderboard uses each player's best, the rest are
-            // historical noise). Keeping every run was bloating the table to
-            // tens of thousands of rows per week and forcing leaderboard /
-            // payout / admin queries to paginate through huge stalls.
-            //
-            // Buckets:
-            //   • Weekly normal runs:   (wallet, week_id, arena ∉ endless/raid) → keep top 5
-            //   • Endless runs:         (wallet, arena_id='endless')            → keep top 5 (no week — legacy leaderboard)
-            //   • World boss arena:     never pruned (contribution log)
-            try {
-                const isRaidRun = scoreData.arena_id === 'world_boss_arena';
-                if (!isRaidRun) {
-                    const bucketFilter = validation.isEndless
-                        ? { wallet_address: walletAddress, arena_id: 'endless' }
-                        : { wallet_address: walletAddress, week_id, arena_id: { $nin: ['endless', 'world_boss_arena'] } };
-                    const bucketRuns = await with429Retry(
-                        () => base44.asServiceRole.entities.RunScore.filter(bucketFilter, '-score', 50),
-                        'RunScore.prune-fetch'
-                    );
-                    if (bucketRuns.length > 5) {
-                        const toDelete = bucketRuns.slice(5);
-                        await Promise.all(toDelete.map(r =>
-                            base44.asServiceRole.entities.RunScore.delete(r.id).catch(e => {
-                                console.warn(`[saveScore] prune delete failed for ${r.id}:`, e.message);
-                            })
-                        ));
-                        console.log(`[saveScore] pruned ${toDelete.length} low-scoring runs for ${walletAddress} (bucket=${validation.isEndless ? 'endless' : `weekly:${week_id}`})`);
-                    }
-                }
-            } catch (pruneErr) {
-                console.warn('[saveScore] prune step failed (non-fatal):', pruneErr.message);
-            }
         } catch (err) {
             console.error('[saveScore] RunScore save failed:', err.message);
             // Save was already applied; return success with warning

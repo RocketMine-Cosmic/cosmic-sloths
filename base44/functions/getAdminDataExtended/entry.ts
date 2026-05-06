@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'scores') {
+            let allScores = await base44.asServiceRole.entities.RunScore.list('-score', 200);
             // Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
             const computeIsoWeek = () => {
                 const now = new Date();
@@ -61,52 +62,17 @@ Deno.serve(async (req) => {
                 const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
                 return { isoYear, isoWeek };
             };
-
-            // Filter by week/season at the DB level AND exclude endless + raid runs
-            // (those have their own leaderboards / are contribution-only).
-            //
-            // CRITICAL: a single -score 1000 query is NOT enough for seasonal — a
-            // 4-week season has ~3000+ runs and a few whales eat hundreds of slots
-            // each, hiding the best runs of mid-tier players past row 1000.
-            // Paginate through ALL runs in the period and keep each player's best.
-            const eligibleArena = { arena_id: { $nin: ['endless', 'world_boss_arena'] } };
-            let baseFilter;
             if (period === 'weekly') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
-                baseFilter = { week_id, ...eligibleArena };
+                allScores = allScores.filter(s => s.week_id === week_id);
             } else if (period === 'seasonal') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
                 const season_id = `${isoYear}-S${seasonNum}`;
-                baseFilter = { season_id, ...eligibleArena };
-            } else {
-                baseFilter = eligibleArena;
+                allScores = allScores.filter(s => s.season_id === season_id);
             }
-
-            // Paginate fully — must mirror previewPayouts/distributeRewards
-            // exactly so the admin leaderboard count matches the payout count.
-            // Stall-detect was bailing early when whales owned the top 1000s
-            // and mid-tier players' best runs sat further down the list.
-            const PAGE = 1000;
-            const MAX_PAGES = 50;
-            const bestByPlayer = new Map();
-            for (let page = 1; page <= MAX_PAGES; page++) {
-                const batch = await base44.asServiceRole.entities.RunScore.filter(baseFilter, '-score', PAGE, page);
-                if (!batch || batch.length === 0) break;
-                for (const s of batch) {
-                    const key = (s.wallet_address || s.user_id || '').toLowerCase();
-                    if (!key) continue;
-                    const existing = bestByPlayer.get(key);
-                    if (!existing || (s.score || 0) > (existing.score || 0)) {
-                        bestByPlayer.set(key, s);
-                    }
-                }
-                if (batch.length < PAGE) break;
-                await new Promise(r => setTimeout(r, 150));
-            }
-            const ranked = Array.from(bestByPlayer.values()).sort((a, b) => (b.score || 0) - (a.score || 0));
-            return Response.json({ scores: ranked.slice(0, 100) });
+            return Response.json({ scores: allScores.slice(0, 200) });
         }
 
         if (type === 'playerSearch') {

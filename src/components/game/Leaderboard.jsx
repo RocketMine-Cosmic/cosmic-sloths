@@ -227,19 +227,8 @@ export default function Leaderboard() {
         try {
             const { week_id, season_id } = getCurrentPeriodIds();
 
-            // CRITICAL: filter at the DB level by arena to exclude endless + raid runs
-            // from weekly/seasonal/all_time queries. Otherwise the top-1000-by-score
-            // fetch is dominated by endless runs (×2.0 score multiplier, 30-min runs),
-            // pushing real leaderboard runs off the result and collapsing the visible
-            // player count from 100 down to 27. Endless tab uses arena_id='endless'.
-            // Raid runs (world_boss_arena) are also excluded — they're contribution-only.
-            let filter;
-            if (view === 'weekly') filter = { week_id, arena_id: { $nin: ['endless', 'world_boss_arena'] } };
-            else if (view === 'seasonal') filter = { season_id, arena_id: { $nin: ['endless', 'world_boss_arena'] } };
-            else if (view === 'endless') filter = { arena_id: 'endless' };
-            else if (view === 'all_time') filter = { arena_id: { $nin: ['endless', 'world_boss_arena'] } };
-            else filter = {};
-
+            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless' } : {};
+            
             if (view === 'squads') {
                 const squadsData = await base44.entities.Squad.filter({ current_week: week_id }, '-weekly_kills', 50);
                 setScores(squadsData);
@@ -249,48 +238,40 @@ export default function Leaderboard() {
                 return;
             }
 
-            // Paginate fully — must mirror previewPayouts/getAdminDataExtended
-            // exactly so the public leaderboard count matches the payout count.
-            // Stall-detect was bailing early when whales owned the top 1000s
-            // and mid-tier players' best runs sat further down the list (e.g.
-            // Texxy's 870k W19 run was hidden because 3 consecutive pages of
-            // whale duplicates triggered the stall before reaching it).
-            const PAGE = 1000;
-            const MAX_PAGES = 50;
-            const bestByUser = new Map();
-            for (let page = 1; page <= MAX_PAGES; page++) {
-                const batch = await base44.entities.RunScore.filter(filter, '-score', PAGE, page);
-                if (!batch || batch.length === 0) break;
-                for (const score of batch) {
-                    const key = score.user_id || score.wallet_address;
-                    if (!key) continue;
-                    const existing = bestByUser.get(key);
-                    if (!existing || (score.score || 0) > (existing.score || 0)) {
-                        bestByUser.set(key, score);
-                    }
-                }
-                if (batch.length < PAGE) break;
-                await new Promise(r => setTimeout(r, 150));
-            }
-            const allUnique = Array.from(bestByUser.values())
-                .sort((a, b) => (b.score || 0) - (a.score || 0))
-                .slice(0, 100);
+            // Fetch enough scores to mirror the backend's ranked pool (capped at 100 unique).
+            // 1000 fetched is the same ceiling as previewPayouts/distributeRewards.
+            const data = await base44.entities.RunScore.filter(filter, '-score', 1000);
 
             if (view === 'squads') {
                 setCurrentPool(0);
             }
             // Pool fetch is now handled by useQuery hook above
 
-            // Display the full ranked pool (up to 100) — matches the payout cap so
-            // every player who earns OMENX is visible on the public leaderboard.
-            setScores(allUnique);
+            // Deduplicate by user_id (wallet_address is masked by RLS) — count up to
+            // 100 unique players for payout math, but only display the top 50.
+            const allUnique = [];
+            const seenUserIds = new Set();
+
+            for (const score of data) {
+                if (view !== 'endless' && score.arena_id === 'endless') continue;
+
+                const userId = score.user_id;
+                if (userId && seenUserIds.has(userId)) continue;
+                if (userId) seenUserIds.add(userId);
+                allUnique.push(score);
+
+                if (allUnique.length >= 100) break;
+            }
+
+            const topDisplayed = allUnique.slice(0, 50);
+            setScores(topDisplayed);
             setTotalRankedPlayers(allUnique.length); // up to 100 — used as payout denominator
             setLastUpdated(Date.now());
 
             // Look up squad membership for the displayed players (best-effort, non-blocking).
             // Some RunScore rows may not have wallet_address (older records) — those just won't show a squad.
             try {
-                const wallets = [...new Set(allUnique.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
+                const wallets = [...new Set(topDisplayed.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
                 if (wallets.length > 0) {
                     const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
                     const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];

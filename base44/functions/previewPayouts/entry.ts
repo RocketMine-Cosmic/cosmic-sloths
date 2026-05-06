@@ -29,23 +29,21 @@ function getSeasonalRewardPercentage(rank) {
 }
 
 function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
-    // Reduce to each player's BEST run, then sort by score and slice to maxRank.
-    // Previously this took the first N rows of the input (which was already
-    // sorted by score globally) — but with a paginated input that contained the
-    // best run for every player, picking each player's best is robust to ordering.
-    const bestByPlayer = new Map();
+    const uniqueScores = [];
+    const seenWallets = new Set();
+    const seenUserIds = new Set();
+
     for (const score of scores) {
+        if (uniqueScores.length >= maxRank) break;
         const wallet = score.wallet_address;
+        const userId = score.user_id;
         if (!wallet) continue;
-        const key = wallet.toLowerCase();
-        const existing = bestByPlayer.get(key);
-        if (!existing || (score.score || 0) > (existing.score || 0)) {
-            bestByPlayer.set(key, score);
-        }
+        if (seenWallets.has(wallet)) continue;
+        if (userId && seenUserIds.has(userId)) continue;
+        seenWallets.add(wallet);
+        if (userId) seenUserIds.add(userId);
+        uniqueScores.push(score);
     }
-    const uniqueScores = Array.from(bestByPlayer.values())
-        .sort((a, b) => (b.score || 0) - (a.score || 0))
-        .slice(0, maxRank);
 
     let totalPct = 0;
     for (let i = 0; i < uniqueScores.length; i++) totalPct += getPercentageFn(i + 1);
@@ -91,48 +89,10 @@ Deno.serve(async (req) => {
 
         let staffPayments = [];
 
-        // Paginate through all eligible runs in the period (single -score 1000
-        // query misses mid-tier players when whales eat hundreds of slots).
-        // Reduce-as-we-go: keep only each player's best run to bound memory.
-        // Stop early once we go N consecutive pages without seeing any new
-        // player — every player's BEST run lives near the top of the sort,
-        // so once the new-player rate hits zero we have everyone. Avoids
-        // paginating tens of thousands of redundant rows (rate-limit safe).
-        // Paginate fully — admin preview/payout MUST find every ranked player
-        // (mid-tier players' best runs can sit far down the global -score list
-        // when whales own the top 1000s). Stall-detect at 3 pages was bailing
-        // early and missing players. We still cap at MAX_PAGES as a safety
-        // belt, and stop on a short page (true end of data).
-        const fetchEligibleScores = async (filterKey) => {
-            const PAGE = 1000;
-            const MAX_PAGES = 50;
-            const bestByPlayer = new Map();
-            for (let page = 1; page <= MAX_PAGES; page++) {
-                const batch = await base44.asServiceRole.entities.RunScore.filter(
-                    { ...filterKey, arena_id: { $nin: ['endless', 'world_boss_arena'] } },
-                    '-score',
-                    PAGE,
-                    page,
-                );
-                if (!batch || batch.length === 0) break;
-                for (const r of batch) {
-                    const key = (r.wallet_address || '').toLowerCase();
-                    if (!key) continue;
-                    const existing = bestByPlayer.get(key);
-                    if (!existing || (r.score || 0) > (existing.score || 0)) {
-                        bestByPlayer.set(key, r);
-                    }
-                }
-                if (batch.length < PAGE) break;
-                // Tiny pacing between pages to stay under SDK rate limit.
-                await new Promise(r => setTimeout(r, 150));
-            }
-            return Array.from(bestByPlayer.values()).sort((a, b) => (b.score || 0) - (a.score || 0));
-        };
-
         if (period_type === 'weekly') {
             rewardPool = Math.floor(pool.total_spent * 0.20);
-            const scores = await fetchEligibleScores({ week_id: period_id });
+            const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: period_id }, '-score', 1000);
+            const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 100);
 
             // Mirror distributeRewards.js — only weekly payouts include staff cuts.
@@ -164,7 +124,8 @@ Deno.serve(async (req) => {
         } else if (period_type === 'seasonal') {
             // Seasonal pool split: 30% to top players, 10% to Squad Wars Champions (separate fn).
             rewardPool = Math.floor(pool.total_spent * 0.30);
-            const scores = await fetchEligibleScores({ season_id: period_id });
+            const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: period_id }, '-score', 1000);
+            const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 100);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
