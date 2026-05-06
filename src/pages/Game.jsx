@@ -543,8 +543,29 @@ export default function Game() {
                 // Server also adds +5000 victory bonus, but is_victory only fires at the
                 // very final tick — the modal shows the server's authoritative value, so
                 // omitting it from the live HUD is intentional (less than 1s of skew).
-                const baseScore = killsForScore * 10 + engine.level * 100 + engine.time * 5 + goldForScore * 2;
-                const liveScore = Math.floor(baseScore * arenaMultiplier);
+                //
+                // CRITICAL: gold's contribution to the score is capped at kills×150 by
+                // the server (see saveScore.js goldScoreCap). Without mirroring that cap
+                // here, whales with stacked gold mults see a wildly inflated HUD score
+                // that gets clipped on submit — players reasonably interpret the gap as
+                // "the game stole my points". Mirror the cap so HUD = server.
+                // S6+ drops gold from the score entirely (server logic auto-flips at the
+                // season boundary). Mirror that too via period detection so the HUD
+                // doesn't keep showing gold contribution after the rollover.
+                const { season_id: hudSeasonId } = getCurrentPeriodIds();
+                const isS6OrLater = hudSeasonId !== '2026-S5';
+                let goldScoreContribution;
+                if (isS6OrLater) {
+                    goldScoreContribution = 0;
+                } else {
+                    const goldScoreCap = killsForScore * 150;
+                    goldScoreContribution = Math.min(goldForScore, goldScoreCap) * 2;
+                }
+                const baseScore = killsForScore * 10 + engine.level * 100 + engine.time * 5 + goldScoreContribution;
+                // Server also enforces a 2.5M hard ceiling — mirror it so the HUD never
+                // shows a score the leaderboard will refuse to record.
+                const SCORE_HARD_CEILING = 2_500_000;
+                const liveScore = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore * arenaMultiplier));
 
                 // Rolling 10s window so post-boss/late upgrades show up in the HUD immediately.
                 const dps = engine.getRollingDps ? Math.floor(engine.getRollingDps()) : 0;
