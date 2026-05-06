@@ -263,15 +263,16 @@ export default function Leaderboard() {
                 if (allUnique.length >= 100) break;
             }
 
-            const topDisplayed = allUnique.slice(0, 50);
-            setScores(topDisplayed);
+            // Display the full ranked pool (up to 100) — matches the payout cap so
+            // every player who earns OMENX is visible on the public leaderboard.
+            setScores(allUnique);
             setTotalRankedPlayers(allUnique.length); // up to 100 — used as payout denominator
             setLastUpdated(Date.now());
 
             // Look up squad membership for the displayed players (best-effort, non-blocking).
             // Some RunScore rows may not have wallet_address (older records) — those just won't show a squad.
             try {
-                const wallets = [...new Set(topDisplayed.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
+                const wallets = [...new Set(allUnique.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
                 if (wallets.length > 0) {
                     const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
                     const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];
