@@ -152,12 +152,20 @@ function validateAndRecompute(scoreData) {
 
     const arenaMult = getArenaMultiplier(scoreData.arena_id);
     const isVictory = !!scoreData.is_victory;
-    // Score formula — reduced gold weight from ×5 to ×2 (balance pass 2026-05-02).
-    // Whales with stacked gold multipliers (Synthbeats + mastery + talents + augments + VIP)
-    // were earning 3-4× the gold of fresh players, which dominated leaderboard scores
-    // and made the gap between top and mid-tier players unreachable. Skill-based
-    // contributions (kills, time, level, victory) now matter more than character optimisation.
-    const baseScore = kills * 10 + level * 100 + time * 5 + gold * 2 + (isVictory ? 5000 : 0);
+    // Score formula — gold contribution is now capped relative to kills.
+    // History: gold weight was ×5, then ×2 (2026-05-02), and gold cap raised to
+    // 50000+kills×2000 (very loose). Tijckers still hit 1.36M on a 7:35 sector 10
+    // run (231k gold × 2 = 95% of base score). Root cause: stacked goldMult
+    // (Synthbeats 1.5× + talents + relic + NFT + VIP + pool bias ≈ 4×) made
+    // gold-from-drops scale far faster than skill stats — making gold the only
+    // thing that mattered for high scores. Fix: cap gold's score contribution
+    // to ~5g/kill equivalent (kills × 50). Whales still benefit from gold-mult
+    // builds for the in-game economy, but their LEADERBOARD score is now
+    // bounded by skill (kills × 50 + their normal kill/time/level scoring).
+    // Endless and raid runs already have their own caps, so this is sectors-only effective.
+    const goldScoreCap = kills * 50;
+    const goldForScore = Math.min(gold, goldScoreCap);
+    const baseScore = kills * 10 + level * 100 + time * 5 + goldForScore * 2 + (isVictory ? 5000 : 0);
     // Hard score ceiling — last-line backstop against any validator gap that lets
     // a tampered run slip through with absurd numbers (e.g. gold validator allows
     // 50k + kills × 2k, which on a 10k-kill run permits a 112M score). Realistic
