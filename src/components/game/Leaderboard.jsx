@@ -227,8 +227,19 @@ export default function Leaderboard() {
         try {
             const { week_id, season_id } = getCurrentPeriodIds();
 
-            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless' } : {};
-            
+            // CRITICAL: filter at the DB level by arena to exclude endless + raid runs
+            // from weekly/seasonal/all_time queries. Otherwise the top-1000-by-score
+            // fetch is dominated by endless runs (×2.0 score multiplier, 30-min runs),
+            // pushing real leaderboard runs off the result and collapsing the visible
+            // player count from 100 down to 27. Endless tab uses arena_id='endless'.
+            // Raid runs (world_boss_arena) are also excluded — they're contribution-only.
+            let filter;
+            if (view === 'weekly') filter = { week_id, arena_id: { $nin: ['endless', 'world_boss_arena'] } };
+            else if (view === 'seasonal') filter = { season_id, arena_id: { $nin: ['endless', 'world_boss_arena'] } };
+            else if (view === 'endless') filter = { arena_id: 'endless' };
+            else if (view === 'all_time') filter = { arena_id: { $nin: ['endless', 'world_boss_arena'] } };
+            else filter = {};
+
             if (view === 'squads') {
                 const squadsData = await base44.entities.Squad.filter({ current_week: week_id }, '-weekly_kills', 50);
                 setScores(squadsData);
@@ -253,8 +264,7 @@ export default function Leaderboard() {
             const seenUserIds = new Set();
 
             for (const score of data) {
-                if (view !== 'endless' && score.arena_id === 'endless') continue;
-
+                // Endless + raid runs already excluded at the DB level for non-endless views.
                 const userId = score.user_id;
                 if (userId && seenUserIds.has(userId)) continue;
                 if (userId) seenUserIds.add(userId);

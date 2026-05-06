@@ -62,24 +62,21 @@ Deno.serve(async (req) => {
                 return { isoYear, isoWeek };
             };
 
-            // CRITICAL: filter by week/season AT THE DATABASE LEVEL, then sort by score.
-            // Old version pulled the global top 200 by score, then filtered to the
-            // current period — which dropped most rows for seasonal queries (a season
-            // spans 4 weeks of runs, so the global top 200 only contained ~25-30 from
-            // the current season). Result: leaderboard showed 27 instead of 100.
-            // Each player's best score per period is what counts for ranking, so we
-            // pull a generous 1000 rows by score (covers ties and dupes), then dedupe
-            // by wallet keeping the highest score, and slice to 100.
+            // Filter by week/season at the DB level AND exclude endless + raid runs
+            // (those have their own leaderboards / are contribution-only). Without
+            // this exclusion, endless runs (×2.0 score multiplier) dominate the top
+            // 1000 and crowd out normal-mode runs, collapsing the visible count.
+            const eligibleArena = { arena_id: { $nin: ['endless', 'world_boss_arena'] } };
             let allScores;
             if (period === 'weekly') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
-                allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id }, '-score', 1000);
+                allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id, ...eligibleArena }, '-score', 1000);
             } else if (period === 'seasonal') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
                 const season_id = `${isoYear}-S${seasonNum}`;
-                allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id }, '-score', 1000);
+                allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id, ...eligibleArena }, '-score', 1000);
             } else {
                 allScores = await base44.asServiceRole.entities.RunScore.list('-score', 1000);
             }
