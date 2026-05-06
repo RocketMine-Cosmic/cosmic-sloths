@@ -245,12 +245,39 @@ export function ensureNftsFetched() {
 
 let storageListenerAttached = false;
 
+// Admin-triggered NFT cache invalidation. When an admin force-refreshes a player's
+// NFTs server-side, the player's PlayerSave gets stamped with `_nftRefreshNonce`.
+// On next save load (cloud merge), this nonce ends up in localStorage. Compare
+// against the last-seen marker — if it differs, wipe the NFT cache + cooldown
+// so the very next page that reads NFTs pulls fresh data from OmenX.
+function checkNftRefreshNonce() {
+    try {
+        const save = JSON.parse(localStorage.getItem('cosmic_sloth_save') || 'null');
+        const cloudNonce = save?._nftRefreshNonce;
+        if (!cloudNonce) return;
+        const lastSeen = Number(loadJSON('omenx_nft_refresh_nonce_seen') || 0);
+        if (cloudNonce > lastSeen) {
+            console.log(`[playerDataCache] NFT refresh nonce bumped (${lastSeen} → ${cloudNonce}) — wiping local NFT cache`);
+            lastNftFetchAt = 0;
+            try {
+                localStorage.removeItem('omenx_nft_cache');
+                localStorage.removeItem('omenx_nft_data');
+                localStorage.removeItem('omenx_nft_cache_wallet');
+            } catch {}
+            saveJSON('omenx_nft_refresh_nonce_seen', cloudNonce);
+            // Trigger an immediate fresh fetch so the cache rehydrates with current data.
+            fetchNfts();
+        }
+    } catch {}
+}
+
 export function subscribePlayerData(fn) {
     listeners.add(fn);
     if (cachedData !== null) fn(cachedData);
 
     if (listeners.size === 1) {
         loadUserDataLocal();
+        checkNftRefreshNonce();   // pick up admin-triggered refreshes from cloud save
         fetchPlayerData();        // TTL-gated initial fetch
         attachVisibilityListener(); // 5-min loop while tab is visible
     }
@@ -317,6 +344,11 @@ export function subscribePlayerData(fn) {
         // any subsequent page that subscribes (otherwise they get stale data
         // from cachedData.user that was set at boot).
         window.addEventListener('omenxUserUpdated', () => loadUserDataLocal(true));
+
+        // Whenever SaveManager merges in fresh cloud save data, check for an
+        // admin-triggered NFT refresh nonce. This catches the case where the
+        // player is actively in-app when an admin force-refreshes their NFTs.
+        window.addEventListener('saveUpdated', () => checkNftRefreshNonce());
 
     }
 

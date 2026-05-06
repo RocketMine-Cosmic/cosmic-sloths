@@ -34,6 +34,7 @@ import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
 import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
 import AdminGoldAudit from '../components/admin/AdminGoldAudit';
 import AdminGrantPanel from '../components/admin/AdminGrantPanel';
+import AdminRefreshPlayerNFTs from '../components/admin/AdminRefreshPlayerNFTs';
 import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
 import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
 import AdminStaffPayouts from '../components/admin/AdminStaffPayouts';
@@ -66,6 +67,7 @@ const TAB_GROUPS = [
         tabs: [
             { id: 'players',   label: 'Players',      icon: Users,         perm: 'edit_players' },
             { id: 'grant',     label: '🎁 Grant',      icon: Gift,          perm: 'edit_players' },
+            { id: 'nft_refresh', label: '✨ NFT Refresh', icon: Gift,        perm: 'edit_players' },
             { id: 'goldaudit', label: '🪙 Gold Audit', icon: Coins,         perm: 'edit_players' },
             { id: 'blacklist', label: '🚫 Blacklist', icon: AlertTriangle, perm: 'manage_blacklist' },
         ],
