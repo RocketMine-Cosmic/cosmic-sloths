@@ -17,7 +17,7 @@ export default function Leaderboard() {
     const [scores, setScores] = useState([]);
     // wallet_address (lowercased) -> { tag, name, icon } for squad badge display.
     const [squadByWallet, setSquadByWallet] = useState({});
-    // Total unique ranked players in the period (capped at 100) — used as the
+    // Total unique ranked players in the period (capped at 45) — used as the
     // denominator for payout math so the displayed OMENX matches previewPayouts/distributeRewards.
     const [totalRankedPlayers, setTotalRankedPlayers] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ export default function Leaderboard() {
     const [timeLeft, setTimeLeft] = useState('');
     const [currentPool, setCurrentPool] = useState(0);
 
-    // Must match functions/distributeRewards.js — payouts capped at top 100.
+    // Must match functions/distributeRewards.js — payouts capped at top 45.
     const getWeeklyRewardPercentage = (rank) => {
         if (rank === 1) return 0.10;
         if (rank === 2) return 0.08;
@@ -33,8 +33,7 @@ export default function Leaderboard() {
         if (rank >= 4 && rank <= 10) return 0.04;
         if (rank >= 11 && rank <= 20) return 0.03;
         if (rank >= 21 && rank <= 30) return 0.018;
-        if (rank >= 31 && rank <= 50) return 0.012;
-        if (rank >= 51 && rank <= 100) return 0.008;
+        if (rank >= 31 && rank <= 45) return 0.012;
         return 0;
     };
 
@@ -46,18 +45,16 @@ export default function Leaderboard() {
         if (rank >= 11 && rank <= 20) return 0.025;
         if (rank >= 21 && rank <= 30) return 0.02;
         if (rank >= 31 && rank <= 40) return 0.015;
-        if (rank >= 41 && rank <= 60) return 0.010;
-        if (rank >= 61 && rank <= 100) return 0.006;
+        if (rank >= 41 && rank <= 45) return 0.010;
         return 0;
     };
 
     // Calculate actual payout amount (mirrors backend distributeRewards/previewPayouts EXACTLY).
-    // Backend caps at 100 ranked players and sums percentages over uniqueScores.length (capped at 100),
-    // so we must use the SAME denominator here — using only the top 50 we display would inflate
-    // each player's slice of the pie and show numbers that don't match the admin preview.
+    // Backend caps at 45 ranked players and sums percentages over uniqueScores.length (capped at 45),
+    // so we must use the SAME denominator here.
     const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier, totalRankedPlayers) => {
         const rewardPool = Math.floor(pool * poolMultiplier);
-        const cappedTotal = Math.min(100, totalRankedPlayers);
+        const cappedTotal = Math.min(45, totalRankedPlayers);
         if (cappedTotal === 0) return 0;
 
         let totalPct = 0;
@@ -238,8 +235,7 @@ export default function Leaderboard() {
                 return;
             }
 
-            // Fetch enough scores to mirror the backend's ranked pool (capped at 100 unique).
-            // 1000 fetched is the same ceiling as previewPayouts/distributeRewards.
+            // Fetch enough scores to mirror the backend's ranked pool (capped at 45 unique).
             const data = await base44.entities.RunScore.filter(filter, '-score', 1000);
 
             if (view === 'squads') {
@@ -248,7 +244,7 @@ export default function Leaderboard() {
             // Pool fetch is now handled by useQuery hook above
 
             // Deduplicate by user_id (wallet_address is masked by RLS) — count up to
-            // 100 unique players for payout math, but only display the top 50.
+            // 45 unique players for payout math AND display.
             const allUnique = [];
             const seenUserIds = new Set();
 
@@ -260,18 +256,17 @@ export default function Leaderboard() {
                 if (userId) seenUserIds.add(userId);
                 allUnique.push(score);
 
-                if (allUnique.length >= 100) break;
+                if (allUnique.length >= 45) break;
             }
 
-            const topDisplayed = allUnique.slice(0, 50);
-            setScores(topDisplayed);
-            setTotalRankedPlayers(allUnique.length); // up to 100 — used as payout denominator
+            setScores(allUnique);
+            setTotalRankedPlayers(allUnique.length); // up to 45 — used as payout denominator
             setLastUpdated(Date.now());
 
             // Look up squad membership for the displayed players (best-effort, non-blocking).
             // Some RunScore rows may not have wallet_address (older records) — those just won't show a squad.
             try {
-                const wallets = [...new Set(topDisplayed.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
+                const wallets = [...new Set(allUnique.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
                 if (wallets.length > 0) {
                     const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
                     const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];
