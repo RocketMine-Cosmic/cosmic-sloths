@@ -1,26 +1,45 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// One-off / on-demand cleanup. Reduces RunScore table size by keeping only each
-// player's TOP 5 runs per bucket:
+// Batched RunScore cleanup. Keeps each player's TOP 5 runs per bucket:
 //   • Weekly normal runs:  (wallet, week_id, arena ∉ endless/raid) → top 5
-//   • Endless runs:        (wallet, arena_id='endless')            → top 5 (no week)
-//   • World boss arena:    never pruned (contribution log)
+//   • Endless runs:        (wallet, arena_id='endless')            → top 5
+//   • World boss arena:    never pruned (raid contribution log)
 //
-// Modes:
-//   { dryRun: true }        — preview deletion counts only
-//   { dryRun: false }       — actually delete
-//   { weekId: '2026-W18' }  — restrict to a specific week's normal runs (endless still scoped globally)
+// Driven by the client in small batches. Modes:
+//   { mode: 'list_wallets', cursor }            → return wallets from a slice of the table
+//   { mode: 'prune_one', wallet, dryRun }       → process one wallet
 //
 // Auth: emergency admin key OR Base44 session + 'owner' permission.
+
+// 429-aware retry helper.
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 4) throw err;
+            const backoff = 800 * Math.pow(2, attempt) + Math.random() * 400;
+            console.warn(`[pruneRunScores] ${label} 429 — retry ${attempt + 1}/4 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
 
 Deno.serve(async (req) => {
     try {
         const body = await req.json().catch(() => ({}));
-        const { adminKey, dryRun = true, weekId = null } = body;
+        const { adminKey, mode = 'prune_one', wallet = null, dryRun = false, cursor = 0 } = body;
 
         const base44 = createClientFromRequest(req);
         const db = base44.asServiceRole;
 
+        // Auth
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
             const me = await base44.auth.me();
             if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -34,83 +53,135 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Page through ALL relevant runs once, group in-memory, then prune per group.
-        const PAGE = 1000;
-        const MAX_PAGES = 200;
-        const all = [];
-        const baseFilter = weekId
-            ? { week_id: weekId }
-            : {}; // global — endless runs (no week) included
-        for (let page = 1; page <= MAX_PAGES; page++) {
-            const batch = await db.entities.RunScore.filter(baseFilter, '-created_date', PAGE, page);
-            if (!batch || batch.length === 0) break;
-            all.push(...batch);
-            if (batch.length < PAGE) break;
-            // Throttle slightly between pages — table scans of tens of thousands
-            // of rows otherwise trip the SDK rate limiter mid-scan.
-            await new Promise(r => setTimeout(r, 250));
-        }
-
-        // Group: key = wallet + bucket
-        // bucket = `endless` | `weekly:${week_id}` | skip raid
-        const groups = new Map();
-        for (const r of all) {
-            const wallet = (r.wallet_address || '').toLowerCase();
-            if (!wallet) continue;
-            if (r.arena_id === 'world_boss_arena') continue; // raid contribution log — keep all
-            const bucket = r.arena_id === 'endless' ? 'endless' : `weekly:${r.week_id || 'unknown'}`;
-            const key = `${wallet}|${bucket}`;
-            if (!groups.has(key)) groups.set(key, []);
-            groups.get(key).push(r);
-        }
-
-        const idsToDelete = [];
-        let bucketsAffected = 0;
-        let runsScanned = all.length;
-        for (const [_key, runs] of groups) {
-            if (runs.length <= 5) continue;
-            runs.sort((a, b) => (b.score || 0) - (a.score || 0));
-            const excess = runs.slice(5);
-            for (const r of excess) idsToDelete.push(r.id);
-            bucketsAffected++;
-        }
-
-        if (dryRun) {
+        // ── Mode: list_wallets ────────────────────────────────────────
+        // Walks a slice of the RunScore table (PAGES_PER_CALL pages) and returns
+        // wallet addresses found. Client repeats with returned cursor until done=true.
+        if (mode === 'list_wallets') {
+            const PAGE = 500;
+            const PAGES_PER_CALL = 4; // ~2k rows per call — safely under rate limit
+            const wallets = new Set();
+            let runsScanned = 0;
+            let done = false;
+            let nextCursor = cursor;
+            const startPage = Math.max(1, cursor + 1);
+            for (let i = 0; i < PAGES_PER_CALL; i++) {
+                const page = startPage + i;
+                const batch = await with429Retry(
+                    () => db.entities.RunScore.filter({}, '-created_date', PAGE, page),
+                    `list page ${page}`
+                );
+                if (!batch || batch.length === 0) { done = true; break; }
+                runsScanned += batch.length;
+                for (const r of batch) {
+                    const w = (r.wallet_address || '').toLowerCase();
+                    if (w) wallets.add(w);
+                }
+                nextCursor = page;
+                if (batch.length < PAGE) { done = true; break; }
+                // Throttle between pages.
+                await new Promise(r => setTimeout(r, 500));
+            }
             return Response.json({
-                dryRun: true,
-                weekId,
+                wallets: [...wallets].sort(),
                 runsScanned,
-                bucketsTotal: groups.size,
-                bucketsAffected,
-                runsToDelete: idsToDelete.length,
+                cursor: nextCursor,
+                done,
             });
         }
 
-        // Delete in chunks to keep Base44 happy.
-        const CHUNK = 25;
-        let deleted = 0;
-        let failed = 0;
-        for (let i = 0; i < idsToDelete.length; i += CHUNK) {
-            const chunk = idsToDelete.slice(i, i + CHUNK);
-            const results = await Promise.all(chunk.map(id =>
-                db.entities.RunScore.delete(id).then(() => true).catch(e => {
-                    console.warn(`[pruneRunScores] delete ${id} failed:`, e.message);
-                    return false;
-                })
-            ));
-            deleted += results.filter(Boolean).length;
-            failed += results.filter(r => !r).length;
+        // ── Mode: prune_one ───────────────────────────────────────────
+        // Process one wallet: fetch all their runs, group into buckets,
+        // delete anything beyond top-5 per bucket.
+        if (mode === 'prune_one') {
+            if (!wallet) return Response.json({ error: 'wallet required for prune_one' }, { status: 400 });
+            const walletLower = wallet.toLowerCase();
+
+            const PAGE = 500;
+            const all = [];
+            for (let page = 1; page <= 20; page++) {
+                const batch = await with429Retry(
+                    () => db.entities.RunScore.filter({ wallet_address: walletLower }, '-score', PAGE, page),
+                    `prune fetch ${walletLower.slice(0,8)} p${page}`
+                );
+                if (!batch || batch.length === 0) break;
+                all.push(...batch);
+                if (batch.length < PAGE) break;
+            }
+            // Some legacy rows store wallet_address with original casing.
+            if (all.length === 0 && wallet !== walletLower) {
+                for (let page = 1; page <= 20; page++) {
+                    const batch = await with429Retry(
+                        () => db.entities.RunScore.filter({ wallet_address: wallet }, '-score', PAGE, page),
+                        `prune fetch (cased) p${page}`
+                    );
+                    if (!batch || batch.length === 0) break;
+                    all.push(...batch);
+                    if (batch.length < PAGE) break;
+                }
+            }
+
+            // Group, drop world_boss_arena entirely.
+            const groups = new Map();
+            for (const r of all) {
+                if (r.arena_id === 'world_boss_arena') continue;
+                const bucket = r.arena_id === 'endless' ? 'endless' : `weekly:${r.week_id || 'unknown'}`;
+                if (!groups.has(bucket)) groups.set(bucket, []);
+                groups.get(bucket).push(r);
+            }
+
+            const idsToDelete = [];
+            const bucketStats = [];
+            for (const [bucket, runs] of groups) {
+                runs.sort((a, b) => (b.score || 0) - (a.score || 0));
+                const excess = runs.length > 5 ? runs.slice(5) : [];
+                bucketStats.push({ bucket, total: runs.length, kept: Math.min(5, runs.length), pruned: excess.length });
+                for (const r of excess) idsToDelete.push(r.id);
+            }
+
+            if (dryRun) {
+                return Response.json({
+                    wallet: walletLower,
+                    runsScanned: all.length,
+                    bucketStats,
+                    runsToDelete: idsToDelete.length,
+                    dryRun: true,
+                });
+            }
+
+            // Delete in small chunks with retry. 404 = already gone (saveScore
+            // also prunes), treat as success.
+            const CHUNK = 8;
+            let deleted = 0;
+            let failed = 0;
+            for (let i = 0; i < idsToDelete.length; i += CHUNK) {
+                const chunk = idsToDelete.slice(i, i + CHUNK);
+                const results = await Promise.all(chunk.map(id =>
+                    with429Retry(() => db.entities.RunScore.delete(id), `delete ${id}`)
+                        .then(() => true)
+                        .catch(e => {
+                            const status = e?.status || e?.response?.status;
+                            const msg = String(e?.message || '');
+                            if (status === 404 || msg.includes('404') || msg.toLowerCase().includes('not found')) return true;
+                            console.warn(`[pruneRunScores] delete ${id} failed:`, msg);
+                            return false;
+                        })
+                ));
+                deleted += results.filter(Boolean).length;
+                failed += results.filter(r => !r).length;
+                if (i + CHUNK < idsToDelete.length) await new Promise(r => setTimeout(r, 250));
+            }
+
+            return Response.json({
+                wallet: walletLower,
+                runsScanned: all.length,
+                bucketStats,
+                deleted,
+                failed,
+                dryRun: false,
+            });
         }
 
-        return Response.json({
-            dryRun: false,
-            weekId,
-            runsScanned,
-            bucketsTotal: groups.size,
-            bucketsAffected,
-            deleted,
-            failed,
-        });
+        return Response.json({ error: 'Unknown mode' }, { status: 400 });
     } catch (error) {
         console.error('[pruneRunScores]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
