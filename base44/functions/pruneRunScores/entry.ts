@@ -96,28 +96,48 @@ Deno.serve(async (req) => {
             if (!wallet) return Response.json({ error: 'wallet required for prune_one' }, { status: 400 });
             const walletLower = wallet.toLowerCase();
 
+            // CRITICAL: RunScore.wallet_address is stored with ORIGINAL casing
+            // (saveScore writes me.wallet_address directly, not lowercased).
+            // Filtering by walletLower returned 0 rows for any mixed-case wallet,
+            // and the fallback path was unreachable (wallet === walletLower since
+            // list_wallets returns lowercased wallets). The prune then sliced
+            // "top 5" from an incomplete/empty result and deleted real high scores.
+            //
+            // Fix: fetch with BOTH casings and merge by id. Safe because Base44
+            // entity filters are case-sensitive on string fields.
             const PAGE = 500;
-            const all = [];
-            for (let page = 1; page <= 20; page++) {
-                const batch = await with429Retry(
-                    () => db.entities.RunScore.filter({ wallet_address: walletLower }, '-score', PAGE, page),
-                    `prune fetch ${walletLower.slice(0,8)} p${page}`
-                );
-                if (!batch || batch.length === 0) break;
-                all.push(...batch);
-                if (batch.length < PAGE) break;
-            }
-            // Some legacy rows store wallet_address with original casing.
-            if (all.length === 0 && wallet !== walletLower) {
+            const allMap = new Map();
+            const fetchAll = async (filterValue, label) => {
                 for (let page = 1; page <= 20; page++) {
                     const batch = await with429Retry(
-                        () => db.entities.RunScore.filter({ wallet_address: wallet }, '-score', PAGE, page),
-                        `prune fetch (cased) p${page}`
+                        () => db.entities.RunScore.filter({ wallet_address: filterValue }, '-score', PAGE, page),
+                        label + ` p${page}`
                     );
                     if (!batch || batch.length === 0) break;
-                    all.push(...batch);
+                    for (const r of batch) allMap.set(r.id, r);
                     if (batch.length < PAGE) break;
                 }
+            };
+            await fetchAll(walletLower, `prune fetch lc ${walletLower.slice(0,8)}`);
+            if (wallet !== walletLower) {
+                await fetchAll(wallet, `prune fetch orig ${walletLower.slice(0,8)}`);
+            }
+            const all = Array.from(allMap.values());
+
+            // SAFETY: if the wallet appeared in list_wallets but we found 0 rows,
+            // something is wrong (case mismatch we can't resolve, RLS, etc.).
+            // REFUSE to delete — better to skip than delete the wrong rows.
+            if (all.length === 0) {
+                console.warn(`[pruneRunScores] ${walletLower}: 0 runs fetched — refusing to prune`);
+                return Response.json({
+                    wallet: walletLower,
+                    runsScanned: 0,
+                    bucketStats: [],
+                    deleted: 0,
+                    failed: 0,
+                    skipped: 'no runs found — refused to prune (possible case mismatch)',
+                    dryRun,
+                });
             }
 
             // Group, drop world_boss_arena entirely.
@@ -134,7 +154,31 @@ Deno.serve(async (req) => {
             for (const [bucket, runs] of groups) {
                 runs.sort((a, b) => (b.score || 0) - (a.score || 0));
                 const excess = runs.length > 5 ? runs.slice(5) : [];
-                bucketStats.push({ bucket, total: runs.length, kept: Math.min(5, runs.length), pruned: excess.length });
+                const topKeptScore = runs[0]?.score || 0;
+                const lowestKeptScore = runs[Math.min(4, runs.length - 1)]?.score || 0;
+                const highestPrunedScore = excess[0]?.score || 0;
+                bucketStats.push({
+                    bucket,
+                    total: runs.length,
+                    kept: Math.min(5, runs.length),
+                    pruned: excess.length,
+                    topKeptScore,
+                    lowestKeptScore,
+                    highestPrunedScore,
+                });
+                // Sanity: highest pruned score must be < lowest kept score.
+                if (excess.length > 0 && highestPrunedScore > lowestKeptScore) {
+                    console.error(`[pruneRunScores] SANITY FAIL ${walletLower} ${bucket}: pruning ${highestPrunedScore} but keeping ${lowestKeptScore} — REFUSING`);
+                    return Response.json({
+                        wallet: walletLower,
+                        runsScanned: all.length,
+                        bucketStats,
+                        deleted: 0,
+                        failed: 0,
+                        skipped: `sanity check failed in bucket ${bucket}`,
+                        dryRun,
+                    });
+                }
                 for (const r of excess) idsToDelete.push(r.id);
             }
 
