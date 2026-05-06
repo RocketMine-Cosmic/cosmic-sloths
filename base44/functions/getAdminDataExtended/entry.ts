@@ -50,7 +50,6 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'scores') {
-            let allScores = await base44.asServiceRole.entities.RunScore.list('-score', 200);
             // Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
             const computeIsoWeek = () => {
                 const now = new Date();
@@ -62,17 +61,43 @@ Deno.serve(async (req) => {
                 const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
                 return { isoYear, isoWeek };
             };
+
+            // CRITICAL: filter by week/season AT THE DATABASE LEVEL, then sort by score.
+            // Old version pulled the global top 200 by score, then filtered to the
+            // current period — which dropped most rows for seasonal queries (a season
+            // spans 4 weeks of runs, so the global top 200 only contained ~25-30 from
+            // the current season). Result: leaderboard showed 27 instead of 100.
+            // Each player's best score per period is what counts for ranking, so we
+            // pull a generous 1000 rows by score (covers ties and dupes), then dedupe
+            // by wallet keeping the highest score, and slice to 100.
+            let allScores;
             if (period === 'weekly') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
-                allScores = allScores.filter(s => s.week_id === week_id);
+                allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id }, '-score', 1000);
             } else if (period === 'seasonal') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
                 const season_id = `${isoYear}-S${seasonNum}`;
-                allScores = allScores.filter(s => s.season_id === season_id);
+                allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id }, '-score', 1000);
+            } else {
+                allScores = await base44.asServiceRole.entities.RunScore.list('-score', 1000);
             }
-            return Response.json({ scores: allScores.slice(0, 200) });
+
+            // Dedupe: keep only each wallet's highest-scoring run for the period
+            // (matches how player-facing leaderboards rank). Falls back to user_id
+            // if wallet_address is missing on legacy rows.
+            const bestByPlayer = new Map();
+            for (const s of allScores) {
+                const key = (s.wallet_address || s.user_id || '').toLowerCase();
+                if (!key) continue;
+                const existing = bestByPlayer.get(key);
+                if (!existing || (s.score || 0) > (existing.score || 0)) {
+                    bestByPlayer.set(key, s);
+                }
+            }
+            const ranked = Array.from(bestByPlayer.values()).sort((a, b) => (b.score || 0) - (a.score || 0));
+            return Response.json({ scores: ranked.slice(0, 100) });
         }
 
         if (type === 'playerSearch') {
