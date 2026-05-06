@@ -49,6 +49,12 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
     const displayGold = isEndless ? Math.min(gold, endlessCap) : gold;
     const goldCapped = isEndless && gold >= endlessCap;
 
+    // Non-endless rejection warning: server rejects runs where gold > 50k + (kills × 2000).
+    // Show a warning badge when the player is within 10% of the limit so they know
+    // before the run ends. Endless has its own MAX badge above; this is for normal sectors.
+    const nonEndlessGoldCap = !isEndless ? 50000 + (kills * 2000) : Infinity;
+    const goldOverLimit = !isEndless && gold > nonEndlessGoldCap * 0.9;
+
     return (
         <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
             <div className="flex justify-between items-start gap-1 md:gap-4">
@@ -154,9 +160,11 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                                 {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
                             </div>
                         </div>
-                        <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-amber-500/30 flex flex-col justify-center text-right">
+                        <div className={`bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border ${goldOverLimit ? 'border-red-500/60 animate-pulse' : 'border-amber-500/30'} flex flex-col justify-center text-right`}>
                             <div className="text-[8px] md:text-xs font-black tracking-widest text-amber-500/80 uppercase mb-0.5 flex items-center justify-end gap-1">
-                                GOLD {goldCapped && <span className="text-[7px] md:text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded border border-amber-500/40">MAX</span>}
+                                GOLD
+                                {goldCapped && <span className="text-[7px] md:text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded border border-amber-500/40">MAX</span>}
+                                {goldOverLimit && <span className="text-[7px] md:text-[9px] bg-red-500/30 text-red-200 px-1 rounded border border-red-500/60" title="Run is over the per-kill gold limit and may be rejected on submit. Get more kills to raise the cap.">OVER</span>}
                             </div>
                             <div className="text-amber-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
                                 <CircleDollarSign className="w-3 h-3 md:w-4 md:h-4" /> {displayGold}

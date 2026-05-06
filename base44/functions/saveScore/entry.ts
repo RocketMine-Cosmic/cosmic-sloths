@@ -23,7 +23,13 @@ function getCurrentPeriodIds() {
 
 // Sanity caps (loose) — runs exceeding these are rejected as tampered
 const MAX_KILLS_PER_SEC = 200;
-const MAX_GOLD_PER_KILL = 500;
+// Non-endless gold sanity: baseline 50k + 2000g/kill. Old check (500g/kill) was
+// rejecting legitimate stacked-multiplier runs (Synthbeats + VIP10 + relic gold +
+// augments + boss auto-credit pools), e.g. a sector with 2 boss kills auto-credits
+// 1000g × ~5× multiplier × 2 = 10k from 2 kills alone. New formula leaves comfortable
+// headroom for whales while still catching obvious tampering (1.4M gold in 7min etc).
+const MAX_GOLD_BASELINE = 50000;
+const MAX_GOLD_PER_KILL = 2000;
 const MAX_LEVEL = 500;
 const MAX_TIME_SEC = 60 * 60; // 60 minutes
 const MIN_TIME_SEC = 1;       // No instant runs
@@ -97,8 +103,8 @@ function validateAndRecompute(scoreData) {
     if (gold < 0) {
         return { ok: false, reason: `gold negative: ${gold}` };
     }
-    if (!isEndlessRun && !isRaidRun && gold > Math.max(100, kills * MAX_GOLD_PER_KILL)) {
-        return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills` };
+    if (!isEndlessRun && !isRaidRun && gold > MAX_GOLD_BASELINE + (kills * MAX_GOLD_PER_KILL)) {
+        return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills (cap=${MAX_GOLD_BASELINE + kills * MAX_GOLD_PER_KILL})` };
     }
 
     // Raid runs are damage-contribution only — no gold or kill credit to PlayerSave.
