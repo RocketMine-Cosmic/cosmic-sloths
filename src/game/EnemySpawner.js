@@ -92,7 +92,21 @@ export function spawnEnemies(engine, dt) {
     const progress = engine.arena.duration === Infinity ? engine.time / 300 : Math.min(1, engine.time / engine.arena.duration);
     const effectiveProgress = Math.min(1, progress);
     const dynamicRate = engine.envModifiers.enemySpawnRate * (engine.dynamicDifficulty?.spawnRateMult || 1.0);
-    const spawnRate = Math.max(0.05, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
+    let spawnRate = Math.max(0.05, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
+
+    // End-of-run grace: in the final 30 seconds of a sector run, ramp spawn rate down
+    // so players can't farm kills/gold by hugging the timer. Endless skips this (no end).
+    // For non-boss sectors there's nothing else to slow the wave; for boss sectors the
+    // boss spawn at duration-30 already returns early via isBossActive — this is a no-op there.
+    if (engine.arena.duration !== Infinity) {
+        const timeLeft = engine.arena.duration - engine.time;
+        if (timeLeft < 30) {
+            // Ramp from 1× at 30s left → 6× spawn interval (≈ 1/6 spawn rate) at 0s left.
+            const taper = Math.max(0, timeLeft / 30); // 1 → 0
+            const slowdown = 1 + (1 - taper) * 5;     // 1 → 6
+            spawnRate = spawnRate * slowdown;
+        }
+    }
 
     if (Math.random() < dt / spawnRate) {
         const angle = Math.random() * Math.PI * 2;
