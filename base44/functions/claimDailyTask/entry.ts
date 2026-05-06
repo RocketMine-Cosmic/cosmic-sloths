@@ -27,6 +27,13 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'No daily tasks available — play a run to refresh.' }, { status: 400 });
         }
 
+        // Block claims against stale (yesterday's) tasks. The reset happens
+        // server-side on next run completion in saveScore.ensureDailyTasks().
+        const todayUTC = new Date().toISOString().split('T')[0];
+        if (saveData.dailyTasks.date && saveData.dailyTasks.date !== todayUTC) {
+            return Response.json({ error: 'These tasks are from yesterday — play a run to refresh today\'s tasks.' }, { status: 400 });
+        }
+
         const task = saveData.dailyTasks.tasks.find(t => t.id === taskId);
         if (!task) return Response.json({ error: 'This task is no longer available.' }, { status: 404 });
 

@@ -9,14 +9,25 @@ export default function DailyTasksPanel({ save, setSave }) {
     const { toast } = useToast();
     const [claiming, setClaiming] = useState(null); // taskId | null
 
-    const tasks = save.dailyTasks?.tasks || [];
+    // If the stored dailyTasks are from an earlier UTC day, treat the panel as
+    // empty and prompt the player to play a run — saveScore will rebuild the
+    // tasks fresh for today on next run completion. Without this, players saw
+    // yesterday's progress (and "DONE" claimed badges) bleed into the new day.
+    const todayUTC = new Date().toISOString().split('T')[0];
+    const storedDate = save.dailyTasks?.date;
+    const isStale = storedDate && storedDate !== todayUTC;
+    const tasks = isStale ? [] : (save.dailyTasks?.tasks || []);
     if (tasks.length === 0) {
         return (
             <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)] rounded-xl p-3 md:p-4 mt-2 md:mt-4">
                 <h3 className="text-xl font-bold text-emerald-400 mb-2 flex items-center gap-2">
                     <Zap className="w-5 h-5" /> Daily Tasks
                 </h3>
-                <p className="text-xs text-slate-500 italic">Play a run to unlock today's daily tasks.</p>
+                <p className="text-xs text-slate-500 italic">
+                    {isStale
+                        ? "New day! Play a run to unlock today's fresh daily tasks."
+                        : "Play a run to unlock today's daily tasks."}
+                </p>
             </div>
         );
     }
