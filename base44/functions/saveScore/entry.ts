@@ -152,19 +152,29 @@ function validateAndRecompute(scoreData) {
 
     const arenaMult = getArenaMultiplier(scoreData.arena_id);
     const isVictory = !!scoreData.is_victory;
-    // Score formula — gold contribution capped relative to kills.
+    // Score formula — gold contribution capped relative to kills DURING S5,
+    // then DROPPED ENTIRELY from S6 onward (planned 2026-05-06).
     // History: gold weight was ×5, then ×2 (2026-05-02), and gold cap raised to
     // 50000+kills×2000 (very loose). Tijckers still hit 1.36M on a 7:35 sector 10
     // run (231k gold × 2 = 95% of base score). Root cause: stacked goldMult
     // (Synthbeats 1.5× + talents + relic + NFT + VIP + pool bias ≈ 4×) made
-    // gold-from-drops scale far faster than skill stats. Fix: cap gold's score
-    // contribution at 150g per kill — leaves comfortable headroom for legit gold
-    // builds (Synthbeats normally averages ~80–120g/kill at peak stacking) while
-    // clipping only the runaway top end. Endless + raid have their own caps,
-    // so this is effectively sectors-only.
-    const goldScoreCap = kills * 150;
-    const goldForScore = Math.min(gold, goldScoreCap);
-    const baseScore = kills * 10 + level * 100 + time * 5 + goldForScore * 2 + (isVictory ? 5000 : 0);
+    // gold-from-drops scale far faster than skill stats. Mid-S5 fix: cap gold's
+    // score contribution at 150g per kill. Permanent S6+ fix: remove gold from
+    // the score formula entirely so leaderboards reflect skill (kills/time/level/
+    // victory) only. Gold remains 100% an in-game economy currency for upgrades,
+    // cosmetics, and forge — just no longer pads leaderboard scores. Endless +
+    // raid already have their own caps, so the change effectively only matters
+    // in sectors. Auto-flips at the W20→W21 boundary (Mon May 25 2026 00:00 UTC).
+    const { week_id: _runWeek, season_id: runSeasonId } = getCurrentPeriodIds();
+    const isS6OrLater = runSeasonId !== '2026-S5';
+    let goldScoreContribution;
+    if (isS6OrLater) {
+        goldScoreContribution = 0;
+    } else {
+        const goldScoreCap = kills * 150;
+        goldScoreContribution = Math.min(gold, goldScoreCap) * 2;
+    }
+    const baseScore = kills * 10 + level * 100 + time * 5 + goldScoreContribution + (isVictory ? 5000 : 0);
     // Hard score ceiling — last-line backstop against any validator gap that lets
     // a tampered run slip through with absurd numbers (e.g. gold validator allows
     // 50k + kills × 2k, which on a 10k-kill run permits a 112M score). Realistic
