@@ -164,8 +164,14 @@ Deno.serve(async (req) => {
             if (currentMembers.length >= MAX_SQUAD_MEMBERS) {
                 return Response.json({ error: 'This squad is full.' }, { status: 400 });
             }
-            const existingMember = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress });
-            if (existingMember.length > 0) {
+            // Case-insensitive existing-membership check (covers both the legacy
+            // mixed-case and the new lowercase storage formats).
+            const walletLower = walletAddress.toLowerCase();
+            const existingByLower = await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletLower });
+            const existingByOriginal = walletAddress !== walletLower
+                ? await base44.asServiceRole.entities.SquadMember.filter({ wallet_address: walletAddress })
+                : [];
+            if (existingByLower.length > 0 || existingByOriginal.length > 0) {
                 return Response.json({ error: 'You\'re already in a squad. Leave it before joining another.' }, { status: 400 });
             }
 
@@ -183,9 +189,11 @@ Deno.serve(async (req) => {
             // period's daily/weekly bounty if the squad has hit the threshold.
             // (Previously we pre-stamped both fields, which made every joiner see
             // "already claimed" until the next rollover — Texxy bug 2026-05-03.)
+            // Always store wallet lowercase — keeps claim/kick/transfer comparisons
+            // consistent across direct-join and approveJoin paths.
             const member = await base44.asServiceRole.entities.SquadMember.create({
                 squad_id: squadId,
-                wallet_address: walletAddress,
+                wallet_address: walletLower,
                 player_name: playerName || 'Pilot',
                 player_title: playerTitle || '',
                 role: 'member',
@@ -492,7 +500,14 @@ Deno.serve(async (req) => {
             // Load member + squad to validate
             const member = await base44.asServiceRole.entities.SquadMember.get(memberId);
             if (!member) return Response.json({ error: 'You\'re no longer a member of this squad.' }, { status: 404 });
-            if (member.wallet_address !== walletAddress) return Response.json({ error: 'You can only claim your own rewards.' }, { status: 403 });
+            // Case-insensitive wallet comparison — older SquadMember rows were created
+            // with mixed-case wallets via the direct-join path while newer rows from
+            // approveJoin are lowercase. A strict === check made every member with a
+            // mismatched casing hit "You can only claim your own rewards" and silently
+            // fail to claim daily/weekly squad bounties (Hugo bug 2026-05-06).
+            if ((member.wallet_address || '').toLowerCase() !== (walletAddress || '').toLowerCase()) {
+                return Response.json({ error: 'You can only claim your own rewards.' }, { status: 403 });
+            }
             if (member.squad_id !== squadId) return Response.json({ error: 'You\'re not a member of this squad.' }, { status: 400 });
 
             const squad = await base44.asServiceRole.entities.Squad.get(squadId);
