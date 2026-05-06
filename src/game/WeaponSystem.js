@@ -573,6 +573,28 @@ export function fireWeaponLogic(engine, w) {
             weaponId: 'shieldBubble',
             type: 'aegis_matrix'
         });
+        // Retaliation missiles — described in WEAPONS.aegisMatrix.desc but were never
+        // implemented. Fires homing-style missiles at the nearest enemies in range
+        // (bug reported by Hugo 2026-05-06). Count scales with weapon level.
+        const missileCount = 4 + Math.floor(w.level / 2);
+        const targets = engine.enemies
+            .map(e => ({ e, d: Math.hypot(e.x - engine.player.x, e.y - engine.player.y) }))
+            .filter(t => t.d < 600 * area)
+            .sort((a, b) => a.d - b.d)
+            .slice(0, missileCount);
+        for (let i = 0; i < missileCount; i++) {
+            const target = targets[i % Math.max(1, targets.length)];
+            const a = target
+                ? Math.atan2(target.e.y - engine.player.y, target.e.x - engine.player.x)
+                : (Math.PI * 2 / missileCount) * i;
+            engine.projectiles.push({
+                x: engine.player.x, y: engine.player.y,
+                vx: Math.cos(a) * 350 * engine.player.projSpeedMult,
+                vy: Math.sin(a) * 350 * engine.player.projSpeedMult,
+                radius: 6, damage: dmg * 0.6, pierce: 1, life: 2.0,
+                color: '#00ff88', type: 'missile', weaponId: 'shieldBubble'
+            });
+        }
     }
     else if (w.id === 'bouncingBlade') {
         const count = isMastered ? 3 : 1;
