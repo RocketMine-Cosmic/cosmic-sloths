@@ -45,6 +45,7 @@ import AdminTabNav from '../components/admin/AdminTabNav';
 import AdminStaffPayoutConfig from '../components/admin/AdminStaffPayoutConfig';
 import AdminStaffPayoutOverrides from '../components/admin/AdminStaffPayoutOverrides';
 import AdminBalance from '../components/admin/AdminBalance';
+import AdminCleanupTopScores from '../components/admin/AdminCleanupTopScores';
 
 const TAB_GROUPS = [
     {
@@ -289,6 +290,7 @@ export default function AdminDashboard() {
             );
             case 'cleanup':     return (
                 <div className="space-y-4">
+                    <AdminCleanupTopScores walletAddress={adminWallet} />
                     <AdminBackfillNames />
                     <AdminOrphanedData walletAddress={adminWallet} />
                 </div>
