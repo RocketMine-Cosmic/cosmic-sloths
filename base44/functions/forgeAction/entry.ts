@@ -35,6 +35,20 @@ const WEAPON_AUGMENT_COSTS = {
     cd_1:     3,  cd_2:     8,  cd_3:     20,
 };
 
+// Tier prereqs — tier 2 of each branch needs tier 1 of the SAME branch on the
+// SAME weapon, tier 3 needs tier 2. Mirrors the talents prereq pattern in
+// purchaseSku.js. Without this, a player could skip straight to tier 3 (Hugo
+// bug 2026-05-06: paying for tier 1 on one weapon was wrongly opening tier 2
+// on every weapon since there was no per-weapon tier check at all).
+const WEAPON_AUGMENT_PREREQS = {
+    damage_2: 'damage_1',
+    damage_3: 'damage_2',
+    area_2:   'area_1',
+    area_3:   'area_2',
+    cd_2:     'cd_1',
+    cd_3:     'cd_2',
+};
+
 // Mirrors CHAR_AUGMENTS in components/game/ForgePanel — flat id→cost map.
 const CHAR_AUGMENT_COSTS = {
     neo_crit: 5, neo_chain: 15, neo_surge: 30,
@@ -47,6 +61,22 @@ const CHAR_AUGMENT_COSTS = {
     neo_range: 5, neo_pierce: 15, neo_rail: 30,
     syn_gold: 5, syn_beat: 15, syn_amp: 30,
     sky_speed: 5, sky_twin: 15, sky_ace: 30,
+};
+
+// Per-character augment tier prereqs — tier 2 needs tier 1 of the SAME character.
+// Same Hugo bug (2026-05-06) — paying first tier on one operative was opening
+// tier 2 for ALL operatives because there was no per-character ownership check.
+const CHAR_AUGMENT_PREREQS = {
+    neo_chain:    'neo_crit',     neo_surge:    'neo_chain',
+    pan_stomp:    'pan_armor',    pan_fortress: 'pan_stomp',
+    nova_chain:   'nova_aoe',     nova_nuke:    'nova_chain',
+    glt_corrupt:  'glt_phase',    glt_copy:     'glt_corrupt',
+    holo_speed:   'holo_regen',   holo_revive:  'holo_speed',
+    code_hack:    'code_xp',      code_virus:   'code_hack',
+    dat_drain:    'dat_ghost',    dat_shade:    'dat_drain',
+    neo_pierce:   'neo_range',    neo_rail:     'neo_pierce',
+    syn_beat:     'syn_gold',     syn_amp:      'syn_beat',
+    sky_twin:     'sky_speed',    sky_ace:      'sky_twin',
 };
 
 const VALID_CHAR_IDS = new Set([
@@ -176,6 +206,11 @@ Deno.serve(async (req) => {
             if (owned.includes(augmentId)) {
                 return Response.json({ error: 'Augment already owned' }, { status: 400 });
             }
+            // Tier gating — must own the previous tier of the same branch on this weapon.
+            const wPrereq = WEAPON_AUGMENT_PREREQS[augmentId];
+            if (wPrereq && !owned.includes(wPrereq)) {
+                return Response.json({ error: 'You need to forge the previous tier first.' }, { status: 400 });
+            }
             const fragments = Number(save.starFragments || 0);
             if (fragments < cost) {
                 return Response.json({ error: `Not enough Star Fragments (need ${cost}, have ${fragments})` }, { status: 400 });
@@ -204,6 +239,11 @@ Deno.serve(async (req) => {
             const owned = save.forgeCharAugments?.[charId] || [];
             if (owned.includes(augmentId)) {
                 return Response.json({ error: 'Augment already owned' }, { status: 400 });
+            }
+            // Tier gating — must own the previous tier on THIS character.
+            const cPrereq = CHAR_AUGMENT_PREREQS[augmentId];
+            if (cPrereq && !owned.includes(cPrereq)) {
+                return Response.json({ error: 'You need to forge the previous tier first.' }, { status: 400 });
             }
             const fragments = Number(save.starFragments || 0);
             if (fragments < cost) {

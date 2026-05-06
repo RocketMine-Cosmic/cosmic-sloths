@@ -668,8 +668,12 @@ export function fireWeaponLogic(engine, w) {
         if (engine.player.charAugments?.includes('neo_chain') && !p.isAoe && p.pierce !== undefined) p.chainCount = 1;
     }
     
-    // sky_twin: Twin Laser Array - Always fires dual lasers along with any weapon
-    if (engine.player.charAugments?.includes('sky_twin') && Math.random() < 0.5) {
+    // sky_twin: Twin Laser Array — fires every shot (was 50% RNG so it felt invisible —
+    // Hugo bug 2026-05-06). Renders as TWO parallel lasers offset perpendicular to the
+    // shot direction so they're clearly visible side-by-side. SYNERGY: if blaster is
+    // mastered, fires 3 pairs (= 6 shots total) in a spread, matching blaster mastery's
+    // 3-shot pattern.
+    if (engine.player.charAugments?.includes('sky_twin')) {
         let nearest = null;
         let minDist = Infinity;
         engine.enemies.forEach(e => {
@@ -678,12 +682,25 @@ export function fireWeaponLogic(engine, w) {
         });
         if (nearest) {
             const angle = Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x);
-            engine.projectiles.push({
-                x: engine.player.x, y: engine.player.y,
-                vx: Math.cos(angle) * 400 * engine.player.projSpeedMult,
-                vy: Math.sin(angle) * 400 * engine.player.projSpeedMult,
-                radius: 4 * area, damage: dmg * 0.5, pierce: 2, life: 2, color: '#00D4FF', type: 'dual_laser', isMastered: false, weaponId: 'twinLaser'
-            });
+            // 6-shot fan if blaster is mastered, otherwise 1 pair.
+            const blasterMastered = getWeaponStatsAndMastery(engine.save, 'neoBlaster').isMastered;
+            const pairCount = blasterMastered ? 3 : 1;
+            const offset = 14; // perpendicular spacing — visibly side-by-side
+            for (let i = 0; i < pairCount; i++) {
+                const a = pairCount > 1 ? angle + (i - 1) * 0.18 : angle;
+                const px = Math.cos(a + Math.PI / 2) * offset;
+                const py = Math.sin(a + Math.PI / 2) * offset;
+                for (const sign of [-1, 1]) {
+                    engine.projectiles.push({
+                        x: engine.player.x + px * sign,
+                        y: engine.player.y + py * sign,
+                        vx: Math.cos(a) * 450 * engine.player.projSpeedMult,
+                        vy: Math.sin(a) * 450 * engine.player.projSpeedMult,
+                        radius: 4 * area, damage: dmg * 0.45, pierce: 2, life: 1.6,
+                        color: '#00D4FF', type: 'dual_laser', isMastered: blasterMastered, weaponId: 'twinLaser'
+                    });
+                }
+            }
         }
     }
 }

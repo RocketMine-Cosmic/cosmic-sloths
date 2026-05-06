@@ -486,17 +486,42 @@ export const getCharacterMastery = (kills, characterId = null) => {
     return { current, next, unlockedTiers };
 };
 
+// Evolved/synergy weapons inherit mastery from their parent base weapon — without this
+// players who grind 5/5/5 to master Plasma Whip lose the mastery bonus the second their
+// weapon evolves into Vampiric Lash mid-run (Hugo feedback 2026-05-06). Maps each
+// derived weapon to the base whose mastery should carry over.
+const EVOLUTION_PARENT = {
+    // Direct evolutions (from EVOLUTIONS array)
+    supernovaBeam:  'napBeam',
+    vampiricLash:   'vineWhip',
+    orbitalDefense: 'slothSwarm',
+    hellfire:       'napalm',
+    quantumCollapse:'novaPulse',
+    aegisMatrix:    'shieldBubble',
+    buzzsawSwarm:   'bouncingBlade',
+    // Synergies — inherit from the first listed weapon (matches existing flavour).
+    burningBarrier: 'napalm',
+    laserNova:      'napBeam',
+    thornySwarm:    'vineWhip',
+    orbitalLasers:  'napBeam',
+    seismicWhip:    'vineWhip',
+    flamingLash:    'napalm',
+    venomLash:      'toxicCloud',
+};
+
 export const getWeaponStatsAndMastery = (save, wId) => {
     if (!save) return { dmgMult: 1, areaMult: 1, cdMult: 1, isMastered: false };
-    const perm = save.permanentWeaponUpgrades?.[wId] || {};
-    const week = save.weeklyWeaponUpgrades?.[wId] || {};
-    const season = save.seasonalWeaponUpgrades?.[wId] || {};
+    // For evolved/synergy weapons, look up upgrades + mastery on the parent base weapon.
+    const lookupId = EVOLUTION_PARENT[wId] || wId;
+    const perm = save.permanentWeaponUpgrades?.[lookupId] || {};
+    const week = save.weeklyWeaponUpgrades?.[lookupId] || {};
+    const season = save.seasonalWeaponUpgrades?.[lookupId] || {};
     
     const dmgUpgradeLevel = (perm.damage || 0) + (week.damage || 0) + (season.damage || 0);
     const areaUpgradeLevel = (perm.area || 0) + (week.area || 0) + (season.area || 0);
     const cdUpgradeLevel = (perm.cooldown || 0) + (week.cooldown || 0) + (season.cooldown || 0);
     
-    const forgeAugments = save.forgeWeaponAugments?.[wId] || [];
+    const forgeAugments = save.forgeWeaponAugments?.[lookupId] || [];
     let forgeDmg = 0;
     if (forgeAugments.includes('damage_1')) forgeDmg += 0.15;
     if (forgeAugments.includes('damage_2')) forgeDmg += 0.35;

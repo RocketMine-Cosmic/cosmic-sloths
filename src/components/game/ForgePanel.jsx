@@ -71,7 +71,7 @@ const CHAR_AUGMENTS = {
     ],
     skybyte:     [
         { id: 'sky_speed',   name: 'Afterburners',          desc: '+15% movement speed permanently',       cost: 5,  rarity: 'Common' },
-        { id: 'sky_twin',    name: 'Twin Laser Array',      desc: 'Always fires dual lasers',              cost: 15, rarity: 'Rare'   },
+        { id: 'sky_twin',    name: 'Twin Laser Array',      desc: 'Fires twin parallel lasers every shot. With mastered Blaster: 6-shot fan.', cost: 15, rarity: 'Rare'   },
         { id: 'sky_ace',     name: 'Ace Maneuver',          desc: 'Briefly become invincible on level up', cost: 30, rarity: 'Epic'   },
     ],
 };
@@ -80,6 +80,26 @@ const RARITY_COLORS = {
     Common: 'text-slate-300 border-slate-500',
     Rare:   'text-blue-400 border-blue-500',
     Epic:   'text-purple-400 border-purple-500',
+};
+
+// Tier prereqs — must mirror server (functions/forgeAction). Tier 2 needs tier 1
+// on the SAME weapon; tier 3 needs tier 2. Same per-character for char augments.
+const WEAPON_AUGMENT_PREREQS = {
+    damage_2: 'damage_1', damage_3: 'damage_2',
+    area_2:   'area_1',   area_3:   'area_2',
+    cd_2:     'cd_1',     cd_3:     'cd_2',
+};
+const CHAR_AUGMENT_PREREQS = {
+    neo_chain: 'neo_crit',   neo_surge: 'neo_chain',
+    pan_stomp: 'pan_armor',  pan_fortress: 'pan_stomp',
+    nova_chain: 'nova_aoe',  nova_nuke: 'nova_chain',
+    glt_corrupt: 'glt_phase',glt_copy: 'glt_corrupt',
+    holo_speed: 'holo_regen',holo_revive: 'holo_speed',
+    code_hack: 'code_xp',    code_virus: 'code_hack',
+    dat_drain: 'dat_ghost',  dat_shade: 'dat_drain',
+    neo_pierce: 'neo_range', neo_rail: 'neo_pierce',
+    syn_beat: 'syn_gold',    syn_amp: 'syn_beat',
+    sky_twin: 'sky_speed',   sky_ace: 'sky_twin',
 };
 
 const RARITY_BG = {
@@ -319,19 +339,24 @@ export default function ForgePanel({ save, setSave }) {
                             const owned = save.forgeWeaponAugments?.[selectedWeaponId] || [];
                             const isOwned = owned.includes(aug.id);
                             const canAfford = fragments >= aug.cost;
+                            const prereqId = WEAPON_AUGMENT_PREREQS[aug.id];
+                            const isLocked = prereqId && !owned.includes(prereqId);
+                            const prereqName = prereqId ? WEAPON_AUGMENTS.find(a => a.id === prereqId)?.name : null;
                             const Icon = aug.weaponStat === 'damage' ? Zap : aug.weaponStat === 'area' ? Sparkles : Timer;
                             return (
-                                <div key={aug.id} className={`rounded-xl border-2 p-3 flex flex-col gap-2 ${isOwned ? 'border-yellow-500 bg-yellow-950/30' : `${RARITY_COLORS[aug.rarity].split(' ')[1]} ${RARITY_BG[aug.rarity]}`}`}>
+                                <div key={aug.id} className={`rounded-xl border-2 p-3 flex flex-col gap-2 ${isOwned ? 'border-yellow-500 bg-yellow-950/30' : isLocked ? 'border-slate-800 bg-slate-950/40 opacity-60' : `${RARITY_COLORS[aug.rarity].split(' ')[1]} ${RARITY_BG[aug.rarity]}`}`}>
                                     <div className="flex items-center gap-2">
-                                        <Icon className={`w-4 h-4 shrink-0 ${isOwned ? 'text-yellow-400' : RARITY_COLORS[aug.rarity].split(' ')[0]}`} />
+                                        <Icon className={`w-4 h-4 shrink-0 ${isOwned ? 'text-yellow-400' : isLocked ? 'text-slate-600' : RARITY_COLORS[aug.rarity].split(' ')[0]}`} />
                                         <div>
-                                            <div className={`font-bold text-sm leading-tight ${isOwned ? 'text-yellow-300' : 'text-white'}`}>{aug.name}</div>
+                                            <div className={`font-bold text-sm leading-tight ${isOwned ? 'text-yellow-300' : isLocked ? 'text-slate-500' : 'text-white'}`}>{aug.name}</div>
                                             <div className={`text-[10px] font-bold uppercase ${RARITY_COLORS[aug.rarity].split(' ')[0]}`}>{aug.rarity}</div>
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-300 flex-1">{aug.desc}</p>
                                     {isOwned ? (
                                         <div className="text-xs font-bold text-yellow-400 text-center bg-yellow-900/30 py-1.5 rounded-lg border border-yellow-500/50">✓ FORGED</div>
+                                    ) : isLocked ? (
+                                        <div className="text-[11px] font-bold text-slate-500 text-center bg-slate-900/60 py-1.5 rounded-lg border border-slate-800">🔒 Forge {prereqName} first</div>
                                     ) : (
                                         <button
                                             onClick={() => handleForgeWeaponAugment(aug)}
@@ -381,15 +406,20 @@ export default function ForgePanel({ save, setSave }) {
                             const owned = save.forgeCharAugments?.[currentCharId] || [];
                             const isOwned = owned.includes(aug.id);
                             const canAfford = fragments >= aug.cost;
+                            const prereqId = CHAR_AUGMENT_PREREQS[aug.id];
+                            const isLocked = prereqId && !owned.includes(prereqId);
+                            const prereqName = prereqId ? (CHAR_AUGMENTS[currentCharId] || []).find(a => a.id === prereqId)?.name : null;
                             return (
-                                <div key={aug.id} className={`rounded-xl border-2 p-3 flex flex-col gap-2 ${isOwned ? 'border-yellow-500 bg-yellow-950/30' : `${RARITY_COLORS[aug.rarity].split(' ')[1]} ${RARITY_BG[aug.rarity]}`}`}>
+                                <div key={aug.id} className={`rounded-xl border-2 p-3 flex flex-col gap-2 ${isOwned ? 'border-yellow-500 bg-yellow-950/30' : isLocked ? 'border-slate-800 bg-slate-950/40 opacity-60' : `${RARITY_COLORS[aug.rarity].split(' ')[1]} ${RARITY_BG[aug.rarity]}`}`}>
                                     <div>
-                                        <div className={`font-bold text-sm leading-tight ${isOwned ? 'text-yellow-300' : 'text-white'}`}>{aug.name}</div>
+                                        <div className={`font-bold text-sm leading-tight ${isOwned ? 'text-yellow-300' : isLocked ? 'text-slate-500' : 'text-white'}`}>{aug.name}</div>
                                         <div className={`text-[10px] font-bold uppercase ${RARITY_COLORS[aug.rarity].split(' ')[0]}`}>{aug.rarity}</div>
                                     </div>
                                     <p className="text-xs text-slate-300 flex-1">{aug.desc}</p>
                                     {isOwned ? (
                                         <div className="text-xs font-bold text-yellow-400 text-center bg-yellow-900/30 py-1.5 rounded-lg border border-yellow-500/50">✓ AUGMENTED</div>
+                                    ) : isLocked ? (
+                                        <div className="text-[11px] font-bold text-slate-500 text-center bg-slate-900/60 py-1.5 rounded-lg border border-slate-800">🔒 Forge {prereqName} first</div>
                                     ) : (
                                         <button
                                             onClick={() => handleForgeCharAugment(currentCharId, aug)}
