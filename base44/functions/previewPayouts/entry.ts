@@ -29,21 +29,23 @@ function getSeasonalRewardPercentage(rank) {
 }
 
 function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
-    const uniqueScores = [];
-    const seenWallets = new Set();
-    const seenUserIds = new Set();
-
+    // Reduce to each player's BEST run, then sort by score and slice to maxRank.
+    // Previously this took the first N rows of the input (which was already
+    // sorted by score globally) — but with a paginated input that contained the
+    // best run for every player, picking each player's best is robust to ordering.
+    const bestByPlayer = new Map();
     for (const score of scores) {
-        if (uniqueScores.length >= maxRank) break;
         const wallet = score.wallet_address;
-        const userId = score.user_id;
         if (!wallet) continue;
-        if (seenWallets.has(wallet)) continue;
-        if (userId && seenUserIds.has(userId)) continue;
-        seenWallets.add(wallet);
-        if (userId) seenUserIds.add(userId);
-        uniqueScores.push(score);
+        const key = wallet.toLowerCase();
+        const existing = bestByPlayer.get(key);
+        if (!existing || (score.score || 0) > (existing.score || 0)) {
+            bestByPlayer.set(key, score);
+        }
     }
+    const uniqueScores = Array.from(bestByPlayer.values())
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .slice(0, maxRank);
 
     let totalPct = 0;
     for (let i = 0; i < uniqueScores.length; i++) totalPct += getPercentageFn(i + 1);
@@ -89,10 +91,29 @@ Deno.serve(async (req) => {
 
         let staffPayments = [];
 
+        // Paginate through all eligible runs in the period (single -score 1000
+        // query misses mid-tier players when whales eat hundreds of slots).
+        const fetchEligibleScores = async (filterKey) => {
+            const PAGE = 1000;
+            const MAX_PAGES = 10;
+            const all = [];
+            for (let page = 1; page <= MAX_PAGES; page++) {
+                const batch = await base44.asServiceRole.entities.RunScore.filter(
+                    { ...filterKey, arena_id: { $nin: ['endless', 'world_boss_arena'] } },
+                    '-score',
+                    PAGE,
+                    page,
+                );
+                if (!batch || batch.length === 0) break;
+                all.push(...batch);
+                if (batch.length < PAGE) break;
+            }
+            return all;
+        };
+
         if (period_type === 'weekly') {
             rewardPool = Math.floor(pool.total_spent * 0.20);
-            const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: period_id }, '-score', 1000);
-            const scores = allScores.filter(s => s.arena_id !== 'endless');
+            const scores = await fetchEligibleScores({ week_id: period_id });
             payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 100);
 
             // Mirror distributeRewards.js — only weekly payouts include staff cuts.
@@ -124,8 +145,7 @@ Deno.serve(async (req) => {
         } else if (period_type === 'seasonal') {
             // Seasonal pool split: 30% to top players, 10% to Squad Wars Champions (separate fn).
             rewardPool = Math.floor(pool.total_spent * 0.30);
-            const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: period_id }, '-score', 1000);
-            const scores = allScores.filter(s => s.arena_id !== 'endless');
+            const scores = await fetchEligibleScores({ season_id: period_id });
             payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 100);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });

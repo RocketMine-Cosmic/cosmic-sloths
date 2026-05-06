@@ -249,29 +249,36 @@ export default function Leaderboard() {
                 return;
             }
 
-            // Fetch enough scores to mirror the backend's ranked pool (capped at 100 unique).
-            // 1000 fetched is the same ceiling as previewPayouts/distributeRewards.
-            const data = await base44.entities.RunScore.filter(filter, '-score', 1000);
+            // Paginate by score desc, accumulating each player's BEST run.
+            // A single -score 1000 query is not enough for seasonal: 4 weeks of
+            // runs (~3000+) means a few whales eat hundreds of slots and the best
+            // runs of mid-tier players get hidden past row 1000, collapsing
+            // visible player count from ~50 to ~32. Pagination ensures every
+            // unique player who has a leaderboard-eligible run shows up.
+            const PAGE = 1000;
+            const MAX_PAGES = 5;
+            const bestByUser = new Map();
+            for (let page = 1; page <= MAX_PAGES; page++) {
+                const batch = await base44.entities.RunScore.filter(filter, '-score', PAGE, page);
+                if (!batch || batch.length === 0) break;
+                for (const score of batch) {
+                    const key = score.user_id || score.wallet_address;
+                    if (!key) continue;
+                    const existing = bestByUser.get(key);
+                    if (!existing || (score.score || 0) > (existing.score || 0)) {
+                        bestByUser.set(key, score);
+                    }
+                }
+                if (batch.length < PAGE) break;
+            }
+            const allUnique = Array.from(bestByUser.values())
+                .sort((a, b) => (b.score || 0) - (a.score || 0))
+                .slice(0, 100);
 
             if (view === 'squads') {
                 setCurrentPool(0);
             }
             // Pool fetch is now handled by useQuery hook above
-
-            // Deduplicate by user_id (wallet_address is masked by RLS) — count up to
-            // 100 unique players for payout math, but only display the top 50.
-            const allUnique = [];
-            const seenUserIds = new Set();
-
-            for (const score of data) {
-                // Endless + raid runs already excluded at the DB level for non-endless views.
-                const userId = score.user_id;
-                if (userId && seenUserIds.has(userId)) continue;
-                if (userId) seenUserIds.add(userId);
-                allUnique.push(score);
-
-                if (allUnique.length >= 100) break;
-            }
 
             // Display the full ranked pool (up to 100) — matches the payout cap so
             // every player who earns OMENX is visible on the public leaderboard.

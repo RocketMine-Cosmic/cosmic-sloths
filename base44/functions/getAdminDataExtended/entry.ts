@@ -63,35 +63,43 @@ Deno.serve(async (req) => {
             };
 
             // Filter by week/season at the DB level AND exclude endless + raid runs
-            // (those have their own leaderboards / are contribution-only). Without
-            // this exclusion, endless runs (×2.0 score multiplier) dominate the top
-            // 1000 and crowd out normal-mode runs, collapsing the visible count.
+            // (those have their own leaderboards / are contribution-only).
+            //
+            // CRITICAL: a single -score 1000 query is NOT enough for seasonal — a
+            // 4-week season has ~3000+ runs and a few whales eat hundreds of slots
+            // each, hiding the best runs of mid-tier players past row 1000.
+            // Paginate through ALL runs in the period and keep each player's best.
             const eligibleArena = { arena_id: { $nin: ['endless', 'world_boss_arena'] } };
-            let allScores;
+            let baseFilter;
             if (period === 'weekly') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
-                allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id, ...eligibleArena }, '-score', 1000);
+                baseFilter = { week_id, ...eligibleArena };
             } else if (period === 'seasonal') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
                 const season_id = `${isoYear}-S${seasonNum}`;
-                allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id, ...eligibleArena }, '-score', 1000);
+                baseFilter = { season_id, ...eligibleArena };
             } else {
-                allScores = await base44.asServiceRole.entities.RunScore.list('-score', 1000);
+                baseFilter = eligibleArena;
             }
 
-            // Dedupe: keep only each wallet's highest-scoring run for the period
-            // (matches how player-facing leaderboards rank). Falls back to user_id
-            // if wallet_address is missing on legacy rows.
+            // Paginate by score desc, accumulating best-per-player.
+            const PAGE = 1000;
+            const MAX_PAGES = 10;
             const bestByPlayer = new Map();
-            for (const s of allScores) {
-                const key = (s.wallet_address || s.user_id || '').toLowerCase();
-                if (!key) continue;
-                const existing = bestByPlayer.get(key);
-                if (!existing || (s.score || 0) > (existing.score || 0)) {
-                    bestByPlayer.set(key, s);
+            for (let page = 1; page <= MAX_PAGES; page++) {
+                const batch = await base44.asServiceRole.entities.RunScore.filter(baseFilter, '-score', PAGE, page);
+                if (!batch || batch.length === 0) break;
+                for (const s of batch) {
+                    const key = (s.wallet_address || s.user_id || '').toLowerCase();
+                    if (!key) continue;
+                    const existing = bestByPlayer.get(key);
+                    if (!existing || (s.score || 0) > (existing.score || 0)) {
+                        bestByPlayer.set(key, s);
+                    }
                 }
+                if (batch.length < PAGE) break;
             }
             const ranked = Array.from(bestByPlayer.values()).sort((a, b) => (b.score || 0) - (a.score || 0));
             return Response.json({ scores: ranked.slice(0, 100) });
