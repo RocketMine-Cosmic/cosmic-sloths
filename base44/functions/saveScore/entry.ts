@@ -158,7 +158,13 @@ function validateAndRecompute(scoreData) {
     // and made the gap between top and mid-tier players unreachable. Skill-based
     // contributions (kills, time, level, victory) now matter more than character optimisation.
     const baseScore = kills * 10 + level * 100 + time * 5 + gold * 2 + (isVictory ? 5000 : 0);
-    const score = Math.floor(baseScore * arenaMult);
+    // Hard score ceiling — last-line backstop against any validator gap that lets
+    // a tampered run slip through with absurd numbers (e.g. gold validator allows
+    // 50k + kills × 2k, which on a 10k-kill run permits a 112M score). Realistic
+    // maxed legit run on sector 10 victory peaks at ~1.4M, so 2.5M leaves
+    // comfortable headroom for future content (more sectors, harder difficulties).
+    const SCORE_HARD_CEILING = 2_500_000;
+    const score = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore * arenaMult));
 
     return {
         ok: true, score,
