@@ -77,8 +77,8 @@ export default function NFTDashboard({ isCarousel }) {
                         <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">View your NFTs and exclusive perks.</p>
                         <div className="mt-2 md:mt-3">
                             <RefreshOmenXDataButton
-                                label="Refresh NFTs"
-                                title="Refresh NFT inventory from OmenX"
+                                label="Sync NFTs & Rarity"
+                                title="Pull the latest NFT inventory and rarity changes from OmenX"
                                 onRefresh={refreshNFTs}
                                 getCooldownEnd={getNFTCooldownEnd}
                             />
