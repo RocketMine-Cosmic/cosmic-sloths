@@ -127,6 +127,12 @@ export function updateEnemies(engine, dt) {
 
                 engine.addDamageText(e.x, e.y - 20, `BOSS DEFEATED!`, '#ffff00');
                 engine.isBossActive = false;
+                // In sectors, killing the boss ends the level (mobs stop spawning,
+                // brief grace for VFX/loot recap, then victory triggers via the
+                // engine update loop). Endless skips this — bosses keep cycling.
+                if (engine.arena.duration !== Infinity && engine.arena.id !== 'world_boss_arena') {
+                    engine.sectorBossDefeated = true;
+                }
 
                 // Endless / raid: persist a cloud checkpoint so this boss kill's
                 // progress survives even a device wipe / app reinstall. Fire-and-forget,

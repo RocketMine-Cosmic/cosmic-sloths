@@ -618,12 +618,18 @@ export class GameEngine {
             } catch {}
         }
 
-        // Victory fires when the arena timer expires AND no boss is active AND the
-        // post-boss grace window has elapsed. Boss gold + relic fragments are now
-        // auto-credited at the moment the boss dies (see EnemyAI.js), so the grace
-        // is just a brief visual beat — no longer a critical pickup window.
+        // Victory triggers:
+        //  • Sectors: as soon as the boss is defeated (after a brief 3s grace for VFX
+        //    and the loot recap text). Killing the boss ENDS the level — mobs no
+        //    longer spawn during the grace (see EnemySpawner). The arena timer is
+        //    only a fallback in case the player somehow runs out the clock without
+        //    the boss spawning (shouldn't happen but defensive).
+        //  • Endless / world boss arena: never trigger from this branch (duration is
+        //    Infinity for endless, and world boss is its own thing).
         const inPostBossGrace = this.postBossGraceUntil && this.time < this.postBossGraceUntil;
-        if (this.time >= this.arena.duration && !this.isGameOver && !this.isVictory && !this.isBossActive && !inPostBossGrace) {
+        const sectorBossDone = this.sectorBossDefeated && !inPostBossGrace;
+        const timerExpired = this.time >= this.arena.duration && !this.isBossActive && !inPostBossGrace;
+        if ((sectorBossDone || timerExpired) && !this.isGameOver && !this.isVictory) {
             this.victory();
             return;
         }

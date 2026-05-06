@@ -88,6 +88,11 @@ export function spawnEnemies(engine, dt) {
     }
 
     if (engine.isBossActive) return;
+    // Sector boss has been defeated — stop spawning mobs entirely (the run is
+    // about to end via the victory check). Was previously letting mobs keep
+    // spawning during the 3s post-boss grace, which players could exploit for
+    // extra kills/gold/score after the boss was already down.
+    if (engine.sectorBossDefeated) return;
 
     const progress = engine.arena.duration === Infinity ? engine.time / 300 : Math.min(1, engine.time / engine.arena.duration);
     const effectiveProgress = Math.min(1, progress);
