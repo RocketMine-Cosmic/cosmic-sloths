@@ -43,6 +43,7 @@ import AdminSquadChampions from '../components/admin/AdminSquadChampions';
 import AdminTabNav from '../components/admin/AdminTabNav';
 import AdminStaffPayoutConfig from '../components/admin/AdminStaffPayoutConfig';
 import AdminStaffPayoutOverrides from '../components/admin/AdminStaffPayoutOverrides';
+import AdminBalance from '../components/admin/AdminBalance';
 
 const TAB_GROUPS = [
     {
@@ -50,6 +51,7 @@ const TAB_GROUPS = [
         label: '📊 Insights',
         tabs: [
             { id: 'overview',    label: 'Overview',         icon: BarChart3, perm: 'view_data' },
+            { id: 'balance',     label: '⚖️ Balance',        icon: BarChart3, perm: 'view_data' },
             { id: 'health',      label: '🩺 Health',        icon: BarChart3, perm: 'view_data' },
             { id: 'leaderboard', label: 'Leaderboard',      icon: Trophy,    perm: 'view_data' },
             { id: 'squads',      label: 'Squads',           icon: Shield,    perm: 'view_data' },
@@ -255,6 +257,7 @@ export default function AdminDashboard() {
     const renderActiveTab = () => {
         switch (activeTab) {
             case 'overview':    return <AdminOverview walletAddress={adminWallet} canViewFinance={canViewFinance} />;
+            case 'balance':     return <AdminBalance walletAddress={adminWallet} />;
             case 'health':      return <AdminHealthCheck walletAddress={adminWallet} />;
             case 'leaderboard': return <AdminLeaderboard walletAddress={adminWallet} />;
             case 'players':     return (
