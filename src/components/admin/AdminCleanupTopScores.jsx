@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Sparkles, AlertTriangle } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
@@ -7,6 +7,12 @@ import { useAvailablePeriods, getCurrentWeekId } from './useAvailablePeriods';
 // One-click cleanup: keeps each player's top N scores per (week, mode) and
 // archives the rest. Always runs a dry-run first so you can see what it
 // will do before committing. Always takes a backup snapshot before executing.
+//
+// Execution is batched (50 deletes per call, ~750ms pause between batches)
+// so we don't trip rate limits when the queue is large (4k+).
+
+const BATCH_SIZE = 50;
+const PAUSE_MS = 750;
 
 async function autoSnapshot(notes) {
     try {
@@ -17,6 +23,8 @@ async function autoSnapshot(notes) {
     } catch (e) { console.warn('[autoSnapshot]', e.message); }
 }
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 export default function AdminCleanupTopScores({ walletAddress }) {
     const [keepN, setKeepN] = useState(1);
     const [period, setPeriod] = useState('all');
@@ -26,9 +34,11 @@ export default function AdminCleanupTopScores({ walletAddress }) {
     const [error, setError] = useState('');
     const [msg, setMsg] = useState('');
     const [confirm, setConfirm] = useState(false);
+    const [progress, setProgress] = useState(null); // { processed, total, succeeded, failed }
+    const cancelRef = useRef(false);
 
     const runDry = async () => {
-        setBusy(true); setError(''); setMsg(''); setDryResult(null);
+        setBusy(true); setError(''); setMsg(''); setDryResult(null); setProgress(null);
         try {
             const res = await base44.functions.invoke('cleanupKeepTopScoresPerPlayer', {
                 keepN, periodFilter: period, dryRun: true,
@@ -42,18 +52,60 @@ export default function AdminCleanupTopScores({ walletAddress }) {
 
     const execute = async () => {
         setBusy(true); setError(''); setMsg('');
+        cancelRef.current = false;
         try {
             await autoSnapshot(`pre-cleanup-keep-top-${keepN} period=${period}`);
-            const res = await base44.functions.invoke('cleanupKeepTopScoresPerPlayer', {
-                keepN, periodFilter: period, dryRun: false,
-                adminKey: sessionStorage.getItem('admin_key') || undefined,
-            });
-            if (res.data?.error) throw new Error(res.data.error);
-            setMsg(`✓ Archived ${res.data.succeeded} duplicate score(s). ${res.data.failed > 0 ? `(${res.data.failed} failed)` : ''} Restorable for 7 days via Recently Deleted Scores.`);
-            setDryResult(null);
+
+            let offset = 0;
+            let totalSucceeded = 0;
+            let totalFailed = 0;
+            let total = dryResult?.totalToDelete || 0;
+            setProgress({ processed: 0, total, succeeded: 0, failed: 0 });
+
+            // Chain batched calls until the function reports isFinalBatch.
+            // The server recomputes the queue each call (stable sort by id) so
+            // an offset-based cursor stays consistent even as rows get deleted.
+            // After each batch, the next call sees a smaller queue, so offset
+            // is effectively reset to 0 and we just keep slicing the first batch.
+            for (;;) {
+                if (cancelRef.current) {
+                    setMsg(`⏸ Stopped. Archived ${totalSucceeded} so far. Run again to continue.`);
+                    break;
+                }
+                const res = await base44.functions.invoke('cleanupKeepTopScoresPerPlayer', {
+                    keepN, periodFilter: period, dryRun: false,
+                    batchSize: BATCH_SIZE, offset: 0, // server requeues each call, so offset=0 always works
+                    adminKey: sessionStorage.getItem('admin_key') || undefined,
+                });
+                if (res.data?.error) throw new Error(res.data.error);
+
+                totalSucceeded += res.data.batchSucceeded || 0;
+                totalFailed += res.data.batchFailed || 0;
+                total = res.data.totalToDelete + totalSucceeded; // original total
+                setProgress({
+                    processed: totalSucceeded + totalFailed,
+                    total,
+                    succeeded: totalSucceeded,
+                    failed: totalFailed,
+                });
+
+                if (res.data.isFinalBatch || res.data.batchSucceeded === 0) {
+                    setMsg(`✓ Archived ${totalSucceeded} duplicate score(s). ${totalFailed > 0 ? `(${totalFailed} failed)` : ''} Restorable for 7 days via Recently Deleted Scores.`);
+                    setDryResult(null);
+                    break;
+                }
+
+                await sleep(PAUSE_MS);
+            }
         } catch (e) { setError(e.message); }
         setBusy(false); setConfirm(false);
     };
+
+    const stop = () => { cancelRef.current = true; };
+
+    const pct = progress && progress.total > 0
+        ? Math.min(100, Math.round((progress.processed / progress.total) * 100))
+        : 0;
 
     return (
         <div className="bg-[#0b0416]/80 border border-cyan-900/50 rounded-xl p-4">
@@ -63,6 +115,7 @@ export default function AdminCleanupTopScores({ walletAddress }) {
             <div className="text-xs text-slate-400 mb-4 leading-relaxed">
                 Keeps each player's TOP <span className="text-cyan-300 font-bold">{keepN}</span> score(s) per (week × mode) and archives the rest. Modes are tracked separately ({"\u2068"}Normal vs Endless{"\u2069"}).
                 <span className="text-amber-400"> Use this if the leaderboard is missing players</span> — duplicate runs from a few accounts can push real players out of the top 100. Archived rows are recoverable for 7 days.
+                <span className="block mt-1 text-slate-500">Runs in batches of {BATCH_SIZE} with a {PAUSE_MS}ms pause to stay under rate limits.</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
@@ -86,20 +139,43 @@ export default function AdminCleanupTopScores({ walletAddress }) {
             <div className="flex gap-2 flex-wrap">
                 <button onClick={runDry} disabled={busy}
                     className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white px-4 py-1.5 rounded font-bold text-sm">
-                    {busy && !confirm ? '…' : 'Preview (Dry-Run)'}
+                    {busy && !progress ? '…' : 'Preview (Dry-Run)'}
                 </button>
-                {dryResult && dryResult.totalToDelete > 0 && (
+                {dryResult && dryResult.totalToDelete > 0 && !busy && (
                     <button onClick={() => setConfirm(true)} disabled={busy}
                         className="bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-4 py-1.5 rounded font-bold text-sm flex items-center gap-2">
                         <AlertTriangle size={14} /> Execute Cleanup ({dryResult.totalToDelete.toLocaleString()})
                     </button>
                 )}
+                {busy && progress && (
+                    <button onClick={stop}
+                        className="bg-amber-700 hover:bg-amber-600 text-white px-4 py-1.5 rounded font-bold text-sm">
+                        ⏸ Stop
+                    </button>
+                )}
             </div>
+
+            {progress && (
+                <div className="mt-3 bg-slate-900/60 border border-cyan-700/40 rounded-lg p-3">
+                    <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                        <span className="text-slate-400">
+                            <span className="text-cyan-300 font-bold">{progress.succeeded.toLocaleString()}</span>
+                            <span className="text-slate-600"> / </span>
+                            <span>{progress.total.toLocaleString()}</span>
+                            {progress.failed > 0 && <span className="text-red-400 ml-2">({progress.failed} failed)</span>}
+                        </span>
+                        <span className="text-cyan-300 font-bold">{pct}%</span>
+                    </div>
+                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-300" style={{ width: `${pct}%` }} />
+                    </div>
+                </div>
+            )}
 
             {error && <div className="mt-3 text-sm font-mono text-red-400">✗ {error}</div>}
             {msg && <div className="mt-3 text-sm font-mono text-emerald-400">{msg}</div>}
 
-            {dryResult && (
+            {dryResult && !busy && (
                 <div className="mt-4 bg-slate-900/60 border border-cyan-700/40 rounded-lg p-3 space-y-3">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                         <Stat label="Scanned" value={dryResult.scanned.toLocaleString()} />
@@ -138,7 +214,7 @@ export default function AdminCleanupTopScores({ walletAddress }) {
                 onConfirm={execute}
                 busy={busy}
                 title="Execute leaderboard cleanup"
-                description={dryResult ? `Will archive ${dryResult.totalToDelete.toLocaleString()} duplicate score(s) across ${dryResult.uniquePlayersAffected} player(s), keeping the top ${keepN} per player per (week × mode). A backup snapshot will be taken first. Archived rows are restorable for 7 days.` : ''}
+                description={dryResult ? `Will archive ${dryResult.totalToDelete.toLocaleString()} duplicate score(s) across ${dryResult.uniquePlayersAffected} player(s) in batches of ${BATCH_SIZE}, keeping the top ${keepN} per player per (week × mode). A backup snapshot will be taken first. Archived rows are restorable for 7 days. You can stop at any time.` : ''}
                 confirmLabel="Execute"
             />
         </div>
