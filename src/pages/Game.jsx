@@ -522,10 +522,22 @@ export default function Game() {
                     const idx = ARENA_ORDER.indexOf(arenaId);
                     arenaMultiplier = 1.0 + (Math.max(0, idx) * 0.2);
                 }
+                // Endless caps — must mirror saveScore.js (ENDLESS_GOLD_PER_SEC=12,
+                // ENDLESS_KILLS_PER_SEC=4, hard ceilings 10000/6000, floors 1000/600).
+                // Without clamping, the HUD shows uncapped kills/gold/score that don't
+                // match the end-of-run settlement or leaderboard (Hugo bug 2026-05-06).
+                const isEndlessHud = arenaId === 'endless';
+                let killsForScore = engine.kills;
+                let goldForScore = engine.gold;
+                if (isEndlessHud) {
+                    const t = engine.time || 0;
+                    killsForScore = Math.min(engine.kills, Math.min(6000, Math.max(600, Math.floor(t * 4))));
+                    goldForScore = Math.min(engine.gold, Math.min(10000, Math.max(1000, Math.floor(t * 12))));
+                }
                 // Server also adds +5000 victory bonus, but is_victory only fires at the
                 // very final tick — the modal shows the server's authoritative value, so
                 // omitting it from the live HUD is intentional (less than 1s of skew).
-                const baseScore = engine.kills * 10 + engine.level * 100 + engine.time * 5 + engine.gold * 2;
+                const baseScore = killsForScore * 10 + engine.level * 100 + engine.time * 5 + goldForScore * 2;
                 const liveScore = Math.floor(baseScore * arenaMultiplier);
 
                 // Rolling 10s window so post-boss/late upgrades show up in the HUD immediately.
@@ -547,7 +559,10 @@ export default function Game() {
                     score: liveScore,
                     dps,
                     boss,
-                    kills: engine.kills || 0,
+                    // Use capped kills in endless mode so the HUD matches the end-of-run
+                    // settlement and leaderboard (saveScore caps endless kills/gold).
+                    kills: killsForScore || 0,
+                    killsCapped: isEndlessHud && engine.kills > killsForScore,
                     totalDamage: Math.floor(engine.totalDamageDealt || 0),
                     xpBuffActive: !!engine.player?.xpBuffActive,
                     xpBuffExpiry: engine.xpBuffExpiry || 0,

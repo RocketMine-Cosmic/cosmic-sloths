@@ -24,7 +24,7 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate }) {
     // Collapse loadout list by default on mobile so the pause button + top row stay visible.
     // Players can tap the HP bar to expand and review their build.
     const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
@@ -119,8 +119,9 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     <div className="text-[9px] md:text-xs font-bold text-orange-400 font-mono mt-0.5" title="Damage per second">
                         DPS: {dps.toLocaleString()}
                     </div>
-                    <div className="text-[9px] md:text-xs font-bold text-red-300 font-mono mt-0.5" title="Enemies defeated this run">
-                        KILLS: {kills.toLocaleString()}
+                    <div className="text-[9px] md:text-xs font-bold text-red-300 font-mono mt-0.5 flex items-center justify-center gap-1" title="Enemies defeated this run (endless mode caps credited kills)">
+                        <span>KILLS: {kills.toLocaleString()}</span>
+                        {killsCapped && <span className="text-[7px] md:text-[9px] bg-red-500/20 text-red-300 px-1 rounded border border-red-500/40">MAX</span>}
                     </div>
 
                     {boss && boss.maxHp > 0 && (
