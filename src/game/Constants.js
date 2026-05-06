@@ -517,9 +517,14 @@ export const getWeaponStatsAndMastery = (save, wId) => {
     const week = save.weeklyWeaponUpgrades?.[lookupId] || {};
     const season = save.seasonalWeaponUpgrades?.[lookupId] || {};
     
-    const dmgUpgradeLevel = (perm.damage || 0) + (week.damage || 0) + (season.damage || 0);
-    const areaUpgradeLevel = (perm.area || 0) + (week.area || 0) + (season.area || 0);
-    const cdUpgradeLevel = (perm.cooldown || 0) + (week.cooldown || 0) + (season.cooldown || 0);
+    // Diminishing returns when all 3 period tiers stack — must mirror GameEngine.STACK_FACTOR.
+    // Stops 5/5/5/5/5/5/5/5/5 whales from getting a flat 15-level stack on every weapon
+    // stat (the same exploit that produced 1.4M gold runs). Mastery check below still
+    // requires permanent 5/5/5 only — so the long-term grind reward is unchanged.
+    const STACK_FACTOR = 0.66;
+    const dmgUpgradeLevel = (perm.damage || 0) + ((week.damage || 0) + (season.damage || 0)) * STACK_FACTOR;
+    const areaUpgradeLevel = (perm.area || 0) + ((week.area || 0) + (season.area || 0)) * STACK_FACTOR;
+    const cdUpgradeLevel = (perm.cooldown || 0) + ((week.cooldown || 0) + (season.cooldown || 0)) * STACK_FACTOR;
     
     const forgeAugments = save.forgeWeaponAugments?.[lookupId] || [];
     let forgeDmg = 0;

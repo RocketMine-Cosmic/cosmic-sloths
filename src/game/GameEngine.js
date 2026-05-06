@@ -27,10 +27,17 @@ export class GameEngine {
         const weeklyStats = save.weeklyUpgrades || {};
         const seasonalStats = save.seasonalUpgrades || {};
         
+        // Diminishing returns when all 3 period tiers (perm + weekly + seasonal) are stacked.
+        // Whales with everything maxed at 5/5/5 used to get a full 15 levels of stacked
+        // bonuses on every stat — that produced 1.4M-gold runs and broke the leaderboard.
+        // Now: weekly+seasonal contributions are scaled by 0.66× when stacked on top of
+        // permanent. Solo period upgrades still feel full-value; only the triple-max stack
+        // is curbed (~30% nerf to the ceiling).
+        const STACK_FACTOR = 0.66;
         const getStatBonus = (stat) => {
             const perm = (saveStats[stat] || 0);
-            const week = (weeklyStats[stat] || 0);
-            const season = (seasonalStats[stat] || 0);
+            const week = (weeklyStats[stat] || 0) * STACK_FACTOR;
+            const season = (seasonalStats[stat] || 0) * STACK_FACTOR;
             
             if (stat === 'health') return (perm * 5) + (week * 10) + (season * 20);
             if (stat === 'speed') return (perm * 0.02) + (week * 0.05) + (season * 0.1);
