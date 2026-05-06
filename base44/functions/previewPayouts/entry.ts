@@ -98,12 +98,15 @@ Deno.serve(async (req) => {
         // player — every player's BEST run lives near the top of the sort,
         // so once the new-player rate hits zero we have everyone. Avoids
         // paginating tens of thousands of redundant rows (rate-limit safe).
+        // Paginate fully — admin preview/payout MUST find every ranked player
+        // (mid-tier players' best runs can sit far down the global -score list
+        // when whales own the top 1000s). Stall-detect at 3 pages was bailing
+        // early and missing players. We still cap at MAX_PAGES as a safety
+        // belt, and stop on a short page (true end of data).
         const fetchEligibleScores = async (filterKey) => {
             const PAGE = 1000;
             const MAX_PAGES = 50;
-            const STALL_PAGES = 3;
             const bestByPlayer = new Map();
-            let stallCount = 0;
             for (let page = 1; page <= MAX_PAGES; page++) {
                 const batch = await base44.asServiceRole.entities.RunScore.filter(
                     { ...filterKey, arena_id: { $nin: ['endless', 'world_boss_arena'] } },
@@ -112,7 +115,6 @@ Deno.serve(async (req) => {
                     page,
                 );
                 if (!batch || batch.length === 0) break;
-                const sizeBefore = bestByPlayer.size;
                 for (const r of batch) {
                     const key = (r.wallet_address || '').toLowerCase();
                     if (!key) continue;
@@ -121,10 +123,9 @@ Deno.serve(async (req) => {
                         bestByPlayer.set(key, r);
                     }
                 }
-                if (bestByPlayer.size === sizeBefore) stallCount++;
-                else stallCount = 0;
-                if (stallCount >= STALL_PAGES) break;
                 if (batch.length < PAGE) break;
+                // Tiny pacing between pages to stay under SDK rate limit.
+                await new Promise(r => setTimeout(r, 150));
             }
             return Array.from(bestByPlayer.values()).sort((a, b) => (b.score || 0) - (a.score || 0));
         };
