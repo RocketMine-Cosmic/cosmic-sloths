@@ -69,11 +69,14 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
             sourceCount++;
         });
 
-        // 2. Permanent stat upgrades (each level translates to a flat bonus)
+        // 2. Permanent stat upgrades (each level translates to a flat bonus).
+        // Diminishing returns when stacking weekly+seasonal on top of permanent —
+        // MUST mirror GameEngine's STACK_FACTOR (0.66) so the build preview matches
+        // what the engine actually applies in-run.
+        const STACK_FACTOR = 0.66;
         const sumLevels = (key) =>
             (save.permanentUpgrades?.[key] || 0) +
-            (save.weeklyUpgrades?.[key] || 0) +
-            (save.seasonalUpgrades?.[key] || 0);
+            ((save.weeklyUpgrades?.[key] || 0) + (save.seasonalUpgrades?.[key] || 0)) * STACK_FACTOR;
 
         const dmgLvl = sumLevels('damage');
         const spdLvl = sumLevels('speed');
