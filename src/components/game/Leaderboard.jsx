@@ -249,21 +249,18 @@ export default function Leaderboard() {
                 return;
             }
 
-            // Paginate by score desc, accumulating each player's BEST run.
-            // Stop early once we go N consecutive pages without seeing any
-            // new player — every player's BEST run lives near the top of the
-            // sort, so once the new-player rate hits zero we have everyone.
-            // Avoids paginating tens of thousands of redundant rows from
-            // whales who grind 100+ runs (rate-limit safe).
+            // Paginate fully — must mirror previewPayouts/getAdminDataExtended
+            // exactly so the public leaderboard count matches the payout count.
+            // Stall-detect was bailing early when whales owned the top 1000s
+            // and mid-tier players' best runs sat further down the list (e.g.
+            // Texxy's 870k W19 run was hidden because 3 consecutive pages of
+            // whale duplicates triggered the stall before reaching it).
             const PAGE = 1000;
             const MAX_PAGES = 50;
-            const STALL_PAGES = 3;
             const bestByUser = new Map();
-            let stallCount = 0;
             for (let page = 1; page <= MAX_PAGES; page++) {
                 const batch = await base44.entities.RunScore.filter(filter, '-score', PAGE, page);
                 if (!batch || batch.length === 0) break;
-                const sizeBefore = bestByUser.size;
                 for (const score of batch) {
                     const key = score.user_id || score.wallet_address;
                     if (!key) continue;
@@ -272,10 +269,8 @@ export default function Leaderboard() {
                         bestByUser.set(key, score);
                     }
                 }
-                if (bestByUser.size === sizeBefore) stallCount++;
-                else stallCount = 0;
-                if (stallCount >= STALL_PAGES) break;
                 if (batch.length < PAGE) break;
+                await new Promise(r => setTimeout(r, 150));
             }
             const allUnique = Array.from(bestByUser.values())
                 .sort((a, b) => (b.score || 0) - (a.score || 0))
