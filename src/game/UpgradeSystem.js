@@ -124,6 +124,7 @@ export function generateChoices(engine) {
     for (let i = 0; i < 3; i++) {
         if (pool.length === 0) break;
         const baseUpgrade = weightedPickAndRemove(pool, weights);
+        if (!baseUpgrade) break;
 
         const rarity = getRarity();
         const uniqueName = `${engine.player.name}'s ${baseUpgrade.name}`;
@@ -158,6 +159,22 @@ export function generateChoices(engine) {
             desc: newDesc,
             value: newValue,
             rarity: rarity.name
+        });
+    }
+
+    // Pool exhausted (max passives + all weapons owned + banished). Without this
+    // the modal renders blank and the player gets stuck (Hugo bug 2026-05-06).
+    // Fill remaining slots with a consolation "+25 Max HP" pick so the player
+    // can always click something and resume the run.
+    while (choices.length < 3) {
+        choices.push({
+            id: 'consolation_hp',
+            name: 'Emergency Repair Kit',
+            desc: '+25 Max HP (no upgrades left in pool)',
+            type: 'passive',
+            stat: 'maxHp',
+            value: 25,
+            rarity: 'Common',
         });
     }
     return choices;
