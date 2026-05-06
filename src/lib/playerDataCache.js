@@ -13,7 +13,7 @@ import { base44 } from '@/api/base44Client';
 
 const BALANCE_TTL = 5 * 60 * 1000;           // 5 min — refetched only while tab is visible
 const VIP_COOLDOWN = 24 * 60 * 60 * 1000;    // 24 h
-const NFT_COOLDOWN = 12 * 60 * 60 * 1000;    // 12 h — protect upstream NFT API costs
+const NFT_COOLDOWN = 5 * 60 * 1000;          // 5 min — short enough for users who just minted/transferred NFTs to refresh
 
 // ── Persistence helpers ──────────────────────────────────
 function loadJSON(key) {
