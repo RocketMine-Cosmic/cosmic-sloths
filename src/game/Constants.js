@@ -517,11 +517,15 @@ export const getWeaponStatsAndMastery = (save, wId) => {
     const week = save.weeklyWeaponUpgrades?.[lookupId] || {};
     const season = save.seasonalWeaponUpgrades?.[lookupId] || {};
     
-    // Diminishing returns when all 3 period tiers stack — must mirror GameEngine.STACK_FACTOR.
-    // Stops 5/5/5/5/5/5/5/5/5 whales from getting a flat 15-level stack on every weapon
-    // stat (the same exploit that produced 1.4M gold runs). Mastery check below still
-    // requires permanent 5/5/5 only — so the long-term grind reward is unchanged.
-    const STACK_FACTOR = 0.66;
+    // Diminishing returns when all 3 period tiers stack. Tightened from 0.66 → 0.5
+    // (2026-05-06) after Tijckers' 249k-gold 3:31 run revealed weapon mastery was still
+    // the dominant DPS amplifier — triple-maxed weapons reached ~4.7× DPS vs ~3.3× for
+    // permanent-only, letting whales clear 13 bosses in 3:31 (vs 4-5 designed). At 0.5,
+    // triple-stack peaks at ~3.5× — much closer to permanent-only, so weekly/seasonal
+    // are still meaningful boosts but no longer compound into runaway DPS.
+    // Permanent-only progression is unchanged (still 2.5× damage at perm 5/5/5).
+    // Mastery check below still requires permanent 5/5/5 only.
+    const STACK_FACTOR = 0.5;
     const dmgUpgradeLevel = (perm.damage || 0) + ((week.damage || 0) + (season.damage || 0)) * STACK_FACTOR;
     const areaUpgradeLevel = (perm.area || 0) + ((week.area || 0) + (season.area || 0)) * STACK_FACTOR;
     const cdUpgradeLevel = (perm.cooldown || 0) + ((week.cooldown || 0) + (season.cooldown || 0)) * STACK_FACTOR;
