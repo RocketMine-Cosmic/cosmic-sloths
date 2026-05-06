@@ -108,6 +108,12 @@ export default function Squads({ isCarousel }) {
     // Use canonical ISO 8601 week (Mon-start, Sun 23:59 UTC end). moment's `ww` token is
     // locale-week (Sun-start in en-US) which rolled W19 over a day early on Sundays.
     const getCurrentWeek = () => getCurrentPeriodIds().week_id;
+    // UTC-day for daily-bounty comparisons. Server stamps last_daily_payout_date using
+    // UTC (`new Date().toISOString().split('T')[0]`), so the client MUST compare against
+    // the same UTC day — otherwise non-UTC players see stale "already claimed" state
+    // (or worse, the CLAIM button reappears prematurely and the server rejects with
+    // "already claimed" giving a confusing error toast). Hugo bug 2026-05-06.
+    const getCurrentDayUTC = () => new Date().toISOString().split('T')[0];
 
     useEffect(() => {
          const loadUserAndSquad = async () => {
@@ -134,7 +140,7 @@ export default function Squads({ isCarousel }) {
 
                          // Check weekly/daily reset
                          const currentWeek = getCurrentWeek();
-                         const currentDay = moment().format('YYYY-MM-DD');
+                         const currentDay = getCurrentDayUTC();
                          let needsUpdate = false;
                          const updateData = {};
                          let updatedSquad = squad;
@@ -608,7 +614,7 @@ export default function Squads({ isCarousel }) {
 
     const handleClaimDaily = async () => {
         if (!mySquad || !myMemberRecord) return;
-        const currentDay = moment().format('YYYY-MM-DD');
+        const currentDay = getCurrentDayUTC();
         const tier = getDailyBountyTier(mySquad.level || 1);
 
         if ((mySquad.daily_kills || 0) >= tier.target && myMemberRecord.last_daily_payout_date !== currentDay) {
@@ -792,7 +798,7 @@ export default function Squads({ isCarousel }) {
                             const dailyTier = getDailyBountyTier(mySquad.level || 1);
                             const dailyKills = mySquad.daily_kills || 0;
                             const isDailyComplete = dailyKills >= dailyTier.target;
-                            const isDailyClaimed = myMemberRecord?.last_daily_payout_date === moment().format('YYYY-MM-DD');
+                            const isDailyClaimed = myMemberRecord?.last_daily_payout_date === getCurrentDayUTC();
                             return (
                                 <>
                                 {/* MOBILE compact strip */}
