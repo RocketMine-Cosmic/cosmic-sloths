@@ -51,37 +51,50 @@ export default function AdminCleanupTopScores({ walletAddress }) {
     };
 
     const execute = async () => {
+        // Close the confirm dialog immediately so the long-running loop is visible
+        // (progress bar lives on the panel, not the modal). busy stays true until
+        // the loop finishes so the buttons remain locked.
+        setConfirm(false);
         setBusy(true); setError(''); setMsg('');
         cancelRef.current = false;
         try {
             await autoSnapshot(`pre-cleanup-keep-top-${keepN} period=${period}`);
 
-            let offset = 0;
             let totalSucceeded = 0;
             let totalFailed = 0;
-            let total = dryResult?.totalToDelete || 0;
-            setProgress({ processed: 0, total, succeeded: 0, failed: 0 });
+            const initialTotal = dryResult?.totalToDelete || 0;
+            setProgress({ processed: 0, total: initialTotal, succeeded: 0, failed: 0 });
 
-            // Chain batched calls until the function reports isFinalBatch.
-            // The server recomputes the queue each call (stable sort by id) so
-            // an offset-based cursor stays consistent even as rows get deleted.
-            // After each batch, the next call sees a smaller queue, so offset
-            // is effectively reset to 0 and we just keep slicing the first batch.
-            for (;;) {
+            // Loop: each server call recomputes the remaining queue, slices the
+            // first BATCH_SIZE rows, archives them, and returns. We keep calling
+            // until either the queue is empty (batchSucceeded===0 + batchFailed===0)
+            // or the user hits Stop.
+            // Hard cap at 200 iterations (= 10,000 rows) as a safety net.
+            let iterations = 0;
+            const MAX_ITERS = 200;
+            while (iterations < MAX_ITERS) {
+                iterations++;
                 if (cancelRef.current) {
                     setMsg(`⏸ Stopped. Archived ${totalSucceeded} so far. Run again to continue.`);
-                    break;
+                    return;
                 }
                 const res = await base44.functions.invoke('cleanupKeepTopScoresPerPlayer', {
                     keepN, periodFilter: period, dryRun: false,
-                    batchSize: BATCH_SIZE, offset: 0, // server requeues each call, so offset=0 always works
+                    batchSize: BATCH_SIZE, offset: 0,
                     adminKey: sessionStorage.getItem('admin_key') || undefined,
                 });
                 if (res.data?.error) throw new Error(res.data.error);
 
-                totalSucceeded += res.data.batchSucceeded || 0;
-                totalFailed += res.data.batchFailed || 0;
-                total = res.data.totalToDelete + totalSucceeded; // original total
+                const batchSucceeded = res.data.batchSucceeded || 0;
+                const batchFailed = res.data.batchFailed || 0;
+                totalSucceeded += batchSucceeded;
+                totalFailed += batchFailed;
+
+                // The "total" we display is the larger of: what we knew at start,
+                // or what we've already processed (so the bar never goes backwards
+                // even if new scores got submitted during the run).
+                const remaining = res.data.totalToDelete || 0;
+                const total = Math.max(initialTotal, totalSucceeded + totalFailed + remaining);
                 setProgress({
                     processed: totalSucceeded + totalFailed,
                     total,
@@ -89,16 +102,21 @@ export default function AdminCleanupTopScores({ walletAddress }) {
                     failed: totalFailed,
                 });
 
-                if (res.data.isFinalBatch || res.data.batchSucceeded === 0) {
-                    setMsg(`✓ Archived ${totalSucceeded} duplicate score(s). ${totalFailed > 0 ? `(${totalFailed} failed)` : ''} Restorable for 7 days via Recently Deleted Scores.`);
+                // Done when this batch did nothing (queue is empty).
+                if (batchSucceeded === 0 && batchFailed === 0) {
+                    setMsg(`✓ Archived ${totalSucceeded.toLocaleString()} duplicate score(s).${totalFailed > 0 ? ` (${totalFailed} failed)` : ''} Restorable for 7 days via Recently Deleted Scores.`);
                     setDryResult(null);
-                    break;
+                    return;
                 }
 
                 await sleep(PAUSE_MS);
             }
-        } catch (e) { setError(e.message); }
-        setBusy(false); setConfirm(false);
+            setMsg(`✓ Archived ${totalSucceeded.toLocaleString()} so far. Hit the safety cap — run again to continue.`);
+        } catch (e) {
+            setError(e.message || 'Cleanup failed');
+        } finally {
+            setBusy(false);
+        }
     };
 
     const stop = () => { cancelRef.current = true; };
