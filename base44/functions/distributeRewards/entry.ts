@@ -135,14 +135,14 @@ function getWeeklyRewardPercentage(rank) {
  }
 
  function getSeasonalRewardPercentage(rank) {
-     if (rank === 1) return 0.08;
-     if (rank === 2) return 0.06;
-     if (rank === 3) return 0.05;
-     if (rank >= 4 && rank <= 10) return 0.03;
-     if (rank >= 11 && rank <= 20) return 0.025;
-     if (rank >= 21 && rank <= 30) return 0.02;
-     if (rank >= 31 && rank <= 40) return 0.015;
-     if (rank >= 41 && rank <= 45) return 0.010;
+     if (rank === 1) return 0.10;
+     if (rank === 2) return 0.075;
+     if (rank === 3) return 0.06;
+     if (rank >= 4 && rank <= 10) return 0.032;
+     if (rank >= 11 && rank <= 20) return 0.022;
+     if (rank >= 21 && rank <= 30) return 0.015;
+     if (rank >= 31 && rank <= 40) return 0.009;
+     if (rank >= 41 && rank <= 45) return 0.007;
      return 0;
  }
 
