@@ -6,7 +6,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ALL_PERMISSIONS = [
     'view_data', 'view_finance', 'edit_players', 'delete_scores', 'manage_blacklist',
-    'distribute_rewards', 'manage_raid', 'manage_admins', 'wipe_data',
+    'distribute_rewards', 'manage_raid', 'manage_admins', 'manage_maintenance', 'wipe_data',
     'refund_omenx', 'refund_single', 'manage_backups', 'moderate_chat', 'owner'
 ];
 
