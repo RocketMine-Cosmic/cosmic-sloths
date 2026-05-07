@@ -197,17 +197,21 @@ Sector victory bonuses (exponential):
 
 **Why A over C:** Option C is too punishing for mid-progression players (anyone not yet clearing Sector 10 has no top-leaderboard path). The leaderboard needs to be aspirational, not gatekept.
 
-### Recommended tweak to Option A
+### Recalibrated tweak to Option A (player-anchor scaled)
+
+**Why this revision:** initial Option A landed top scores around 95k. S5 players are anchored to ~1M peak scores, so dropping by 10× feels punishing — even though the *ratios* (skill > grind) are correct. Solution: scale all terms ~10× so projected Sector 10 victory lands around 900k–1M. The relative balance between kills/level/sector/victory/endless is **preserved exactly** — only the absolute numbers move.
+
 ```diff
 - killsScore  = kills * 10
-+ killsScore  = kills * 12
++ killsScore  = kills * 120         // ~10× scale, keeps "skill kills matter" feel
 - levelScore  = level * level * 8
-+ levelScore  = level * level * 10
++ levelScore  = level * level * 100 // late-level skill remains the headline
 - sectorScore = sectorIndex * 500
-+ sectorScore = sectorIndex * 800       // sector progression more visible
-  victoryBonus = victory ? sectorIndex * 1500 : 0
++ sectorScore = sectorIndex * 8000  // sector progression now visibly meaningful
+- victoryBonus = victory ? sectorIndex * 1500 : 0
++ victoryBonus = victory ? sectorIndex * 15000 : 0  // boss-killing scales with sector
 - endlessScore = floor(time / 60) * 800
-+ endlessScore = floor(time / 60) * 1000  // endless slightly more rewarding
++ endlessScore = floor(time / 60) * 10000  // endless competitive with sector victory
 ```
 
 ### Final proposed S6 formula
@@ -216,31 +220,34 @@ const SECTOR_INDEX = ARENA_ORDER.indexOf(arena_id);  // 0..9, -1 for endless/rai
 const isEndless = arena_id === 'endless';
 const isRaid = arena_id === 'world_boss_arena';
 
-const killsScore = kills * 12;
-const levelScore = level * level * 10;
-const sectorScore = (isEndless || isRaid) ? 0 : SECTOR_INDEX * 800;
-const victoryBonus = (isVictory && !isEndless && !isRaid) ? SECTOR_INDEX * 1500 : 0;
-const endlessScore = isEndless ? Math.floor(time / 60) * 1000 : 0;
+const killsScore = kills * 120;
+const levelScore = level * level * 100;
+const sectorScore = (isEndless || isRaid) ? 0 : SECTOR_INDEX * 8000;
+const victoryBonus = (isVictory && !isEndless && !isRaid) ? SECTOR_INDEX * 15000 : 0;
+const endlessScore = isEndless ? Math.floor(time / 60) * 10000 : 0;
 
 const base = killsScore + levelScore + sectorScore + victoryBonus + endlessScore;
 const difficultyMult = { easy: 0.7, normal: 1.0, hard: 1.5, cosmic: 2.0 }[difficulty] || 1.0;
 const score = Math.min(SCORE_HARD_CEILING, Math.floor(base * difficultyMult));
-const SCORE_HARD_CEILING = 500_000;  // dropped from 2.5M
+const SCORE_HARD_CEILING = 2_500_000;  // keep S5 ceiling — leaves headroom on Cosmic
 ```
 
-### Projected leaderboard top of S6 (Cosmic difficulty)
+### Projected leaderboard top of S6 (Cosmic difficulty, 2.0×)
 | Run type | Score |
 |---|---|
-| Sector 10 cosmic victory, 8 min, 600 kills, lvl 32 | **~75,000** |
-| Sector 10 cosmic victory + run-time skill bonus (lvl 35, 800k) | **~95,000** |
-| Endless cosmic 25 min, 1500 kills, lvl 35 | **~90,000** |
-| Sector 5 cosmic victory, 6 min, 400 kills | **~32,000** |
-| Tijckers-style farm | **~38,000** (still respectable, but no longer dominant) |
+| Sector 1 victory, 4 min, 200 kills, lvl 15 | 24k + 22.5k + 0 + 0 = 46.5k × 2.0 = **~93,000** |
+| Sector 5 cosmic victory, 6 min, 400 kills, lvl 22 | 48k + 48.4k + 32k + 60k = 188k × 2.0 = **~376,000** |
+| Sector 10 cosmic victory, 8 min, 600 kills, lvl 32 | 72k + 102k + 72k + 135k = 381k × 2.0 = **~762,000** |
+| Sector 10 cosmic victory, 8 min, 800 kills, lvl 35 | 96k + 122.5k + 72k + 135k = 425.5k × 2.0 = **~851,000** |
+| Sector 10 cosmic perfect, 9 min, 900 kills, lvl 38 | 108k + 144.4k + 72k + 135k = 459.4k × 2.0 = **~919,000** |
+| Endless cosmic 25 min, 1500 kills, lvl 35 | 180k + 122.5k + 0 + 250k = 552.5k × 2.0 = **~1,105,000** |
+| Tijckers-style 7:35 farm, 800 kills, lvl 28, no victory | 96k + 78.4k + 72k + 0 = 246.4k × 2.0 = **~493,000** |
 
-✅ Top of board is realistic high-level Sector 10 mastery
-✅ Endless competitive at 90k — tight competition
-✅ Old farm builds stay in the 30–40k range
-✅ Hard ceiling 500k = ~5× max realistic, leaves headroom for future content
+✅ Top of board feels familiar (~900k–1M, just like S5)
+✅ Sector 10 victory is the gold standard for sector runs (~850k–920k)
+✅ Long, well-played endless is competitive at the very top (~1.1M) — endurance + skill rewarded, no infinite ceiling abuse
+✅ Tijckers's farm scores ~500k — still respectable for the effort, but Sector 10 victories beat it
+✅ Hard ceiling 2.5M preserved — leaves comfortable headroom for future content (NG+, Cosmic Sector 11+, etc.)
 
 ---
 
