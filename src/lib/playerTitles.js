@@ -230,6 +230,9 @@ export const PLAYER_TITLES = [
     { id: 'Ascended', label: 'Ascended', tier: 'mythic', buff: { damageMult: 0.06, xpMult: 0.06, hpMult: 0.06 },
       describe: () => 'Reach level 70 in a single run.',
       isUnlocked: (s) => s.maxLevelReached >= 70 },
+    { id: 'Completionist', label: 'Completionist', tier: 'legendary', buff: { damageMult: 0.05, hpMult: 0.05, goldMult: 0.05 },
+      describe: () => 'Unlock all 10 characters.',
+      isUnlocked: (s) => s.unlockedCharactersCount >= 10 },
 ];
 
 // Look up a title's tier-styling by id. Returns starter styling for unknown ids.
