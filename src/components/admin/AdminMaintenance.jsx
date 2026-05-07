@@ -114,15 +114,38 @@ export default function AdminMaintenance() {
             {ok && <div className="text-xs text-emerald-300 flex items-center gap-1.5"><CheckCircle2 size={12} /> {ok}</div>}
             {err && <div className="text-xs text-red-400 flex items-center gap-1.5"><AlertTriangle size={12} /> {err}</div>}
 
-            <div className="border-t border-slate-800 pt-3 text-[11px] text-slate-400 leading-relaxed">
-                <div className="font-bold text-slate-300 mb-1">📋 S6 rollout schedule (May 25, 00:00 UTC)</div>
-                <div className="space-y-0.5 font-mono">
-                    <div><span className="text-amber-300">23:00 UTC Sun May 24</span> — SOFT auto-on ✅</div>
-                    <div><span className="text-red-300">23:40 UTC Sun May 24</span> — HARD auto-on ✅</div>
-                    <div><span className="text-emerald-300">~00:05 UTC</span> — <span className="text-emerald-300 font-bold">YOU manually flip OFF</span> after verifying rollover is healthy</div>
+            <div className="border-t border-slate-800 pt-3 text-[11px] text-slate-400 leading-relaxed space-y-3">
+                <div>
+                    <div className="font-bold text-slate-300 mb-1">📖 What each mode does</div>
+                    <div className="space-y-1 pl-1">
+                        <div><span className="text-emerald-300 font-bold">OFF</span> — Normal play. Nothing shown to players.</div>
+                        <div><span className="text-amber-300 font-bold">SOFT</span> — Yellow warning banner at top of every page. Game still fully playable. Use to give players a heads-up before downtime.</div>
+                        <div><span className="text-red-300 font-bold">HARD</span> — Full-screen overlay blocks <span className="font-mono">/game</span>. Players are bumped to /hub if they're already in a run. Squads, chat, leaderboards, profile all stay accessible.</div>
+                    </div>
                 </div>
-                <div className="mt-2 italic text-amber-400">
-                    ⚠️ OFF is manual on purpose — if something breaks at rollover the gate stays HARD until you clear it.
+
+                <div>
+                    <div className="font-bold text-slate-300 mb-1">🛠 Common scenarios</div>
+                    <div className="space-y-1 pl-1">
+                        <div><span className="text-slate-200 font-bold">Planned rollout / season swap:</span> SOFT 1hr before → HARD 15–20min before → deploy → manually flip OFF after verifying.</div>
+                        <div><span className="text-slate-200 font-bold">Incident / something on fire:</span> Flip HARD immediately to stop new runs from being affected, fix the issue, flip OFF when healthy.</div>
+                        <div><span className="text-slate-200 font-bold">Economy / scoring exploit found:</span> HARD blocks /game so no more bad scores get submitted while you patch.</div>
+                        <div><span className="text-slate-200 font-bold">Brief notice (no downtime needed):</span> SOFT with a custom message — e.g. "Leaderboard payouts running, expect minor lag".</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div className="font-bold text-slate-300 mb-1">✍️ Tips</div>
+                    <div className="space-y-1 pl-1">
+                        <div>• Always set a clear player-facing message before flipping — vague banners cause more support tickets than no banner.</div>
+                        <div>• Use the SOFT/HARD presets as a starting point and edit from there.</div>
+                        <div>• Banner/overlay polls every 30s — players see changes within ~30s without refreshing.</div>
+                        <div>• Reads fail-open: if the backend hiccups, the gate defaults to OFF (better than locking everyone out).</div>
+                    </div>
+                </div>
+
+                <div className="italic text-amber-400 border-t border-slate-800 pt-2">
+                    ⚠️ OFF is always manual — there's no auto-revert. If you flip HARD and walk away, it stays HARD until someone clears it. This is intentional: better stuck-closed than stuck-broken.
                 </div>
             </div>
         </div>
