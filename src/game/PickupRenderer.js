@@ -156,34 +156,47 @@ export function drawPickups(ctx, pickups, time) {
             const bounce = Math.sin(time * 6 + p.x) * 4;
             ctx.translate(0, bounce);
 
+            // Magnets used to blend into the dark space background — players (Anubis 2026-05-07)
+            // reported losing them on screen. Bumped glow size, added a pulsing outer ring,
+            // and scaled the icon up ~30% so they read clearly through busy combat.
+            const pulse = 1 + Math.sin(time * 6) * 0.15;
+
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
-            grad.addColorStop(0, 'rgba(80, 130, 255, 0.7)');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 42);
+            grad.addColorStop(0, 'rgba(120, 170, 255, 0.95)');
+            grad.addColorStop(0.5, 'rgba(80, 130, 255, 0.6)');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(0, 0, 30, 0, Math.PI * 2);
+            ctx.arc(0, 0, 42, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.globalCompositeOperation = 'source-over';
 
-            // Horseshoe magnet — red top, blue bottom
-            ctx.lineWidth = 5;
+            // Pulsing cyan outer ring — high-contrast against any background
+            ctx.strokeStyle = '#60a5fa';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 18 * pulse, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Horseshoe magnet — red top, blue bottom (scaled ~1.3×)
+            ctx.lineWidth = 6;
             ctx.lineCap = 'butt';
             ctx.strokeStyle = '#dc2626';
             ctx.beginPath();
-            ctx.arc(0, 2, 9, Math.PI, Math.PI * 1.5);
+            ctx.arc(0, 2, 12, Math.PI, Math.PI * 1.5);
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(0, 2, 9, Math.PI * 1.5, 0);
+            ctx.arc(0, 2, 12, Math.PI * 1.5, 0);
             ctx.stroke();
 
             ctx.strokeStyle = '#2563eb';
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 6;
             // Pole tips
             ctx.beginPath();
-            ctx.moveTo(-9, 2); ctx.lineTo(-9, 10);
-            ctx.moveTo(9, 2); ctx.lineTo(9, 10);
+            ctx.moveTo(-12, 2); ctx.lineTo(-12, 12);
+            ctx.moveTo(12, 2); ctx.lineTo(12, 12);
             ctx.stroke();
 
         } else if (p.type === 'shield_power') {
