@@ -28,6 +28,62 @@ async function with429Retry(fn, label = 'op') {
 const GOLD_PER_FRAGMENT = 10000;
 const DAILY_CONVERT_CAP = 30;
 
+// S6 Phase 3b — Forge Lottery ("Mystery Forge").
+// 5,000 gold per pull → grants ONE random unlocked weapon augment (T1/T2/T3) for the
+// chosen weapon, weighted 60/30/10. Tier prereqs are still enforced server-side, so
+// a T2/T3 roll downgrades to the next-needed tier in that branch (e.g. rolling area_3
+// when you only own area_1 grants area_2). If every augment on the weapon is already
+// owned, the call refunds with an error. S6+ only — pre-rollover returns 403.
+const MYSTERY_FORGE_GOLD_COST = 5000;
+// Locked design decision (per master plan §5b): T1 60% / T2 30% / T3 10%.
+const MYSTERY_TIER_WEIGHTS = [
+    { tier: 1, weight: 60 },
+    { tier: 2, weight: 30 },
+    { tier: 3, weight: 10 },
+];
+const MYSTERY_BRANCHES = ['damage', 'area', 'cd'];
+
+// Proper ISO 8601 — mirrors lib/periodIds.js for the S6 gate + audit log fields.
+function getCurrentPeriodIds() {
+    const now = new Date();
+    const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const dayNum = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+    const isoYear = tmp.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+    const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+    const season_id = `${isoYear}-S${seasonNum}`;
+    return { week_id, season_id };
+}
+
+function pickWeightedTier() {
+    const total = MYSTERY_TIER_WEIGHTS.reduce((s, t) => s + t.weight, 0);
+    let r = Math.random() * total;
+    for (const t of MYSTERY_TIER_WEIGHTS) {
+        r -= t.weight;
+        if (r <= 0) return t.tier;
+    }
+    return MYSTERY_TIER_WEIGHTS[0].tier;
+}
+
+// Resolves what augment to actually grant, given a rolled (branch, tier) and what
+// the player already owns on this weapon. If the rolled tier is too high (prereq
+// missing), step down to the next-needed tier in the same branch. Returns null
+// only if the entire branch is already maxed out.
+function resolveGrantedAugment(branch, rolledTier, ownedSet) {
+    for (let t = rolledTier; t >= 1; t--) {
+        const augId = `${branch}_${t}`;
+        if (ownedSet.has(augId)) continue;
+        // Check prereq is met — if not, this isn't the augment to grant; keep stepping down.
+        const prereq = WEAPON_AUGMENT_PREREQS[augId];
+        if (prereq && !ownedSet.has(prereq)) continue;
+        return augId;
+    }
+    return null;
+}
+
 // Mirrors WEAPON_AUGMENTS in components/game/ForgePanel
 const WEAPON_AUGMENT_COSTS = {
     damage_1: 3,  damage_2: 8,  damage_3: 20,
@@ -255,6 +311,80 @@ Deno.serve(async (req) => {
                 ...(save.forgeCharAugments || {}),
                 [charId]: [...owned, augmentId],
             };
+        } else if (action === 'mysteryForge') {
+            // S6+ gate — pre-rollover unavailable.
+            const { season_id, week_id } = getCurrentPeriodIds();
+            if (season_id === '2026-S5') {
+                return Response.json({ error: 'Mystery Forge unlocks in Season 6.' }, { status: 403 });
+            }
+            const weaponId = payload?.weaponId;
+            if (!VALID_WEAPON_IDS.has(weaponId)) {
+                return Response.json({ error: 'Invalid weaponId' }, { status: 400 });
+            }
+            const gold = Number(save.gold || 0);
+            if (gold < MYSTERY_FORGE_GOLD_COST) {
+                return Response.json({
+                    error: `Not enough gold — Mystery Forge costs ${MYSTERY_FORGE_GOLD_COST.toLocaleString()} (you have ${gold.toLocaleString()}).`
+                }, { status: 400 });
+            }
+
+            const ownedArr = save.forgeWeaponAugments?.[weaponId] || [];
+            const owned = new Set(ownedArr);
+            // If every augment on this weapon is already forged, no point rolling.
+            const allOwned = MYSTERY_BRANCHES.every(b => [1, 2, 3].every(t => owned.has(`${b}_${t}`)));
+            if (allOwned) {
+                return Response.json({ error: 'This weapon has every augment forged — nothing left to roll.' }, { status: 400 });
+            }
+
+            // Roll branch (uniform among branches that still have something to grant)
+            // + tier (weighted). If the rolled (branch, tier) can't grant anything
+            // (whole branch maxed), pick a different branch.
+            const branchPool = MYSTERY_BRANCHES.filter(b => ![1, 2, 3].every(t => owned.has(`${b}_${t}`)));
+            const branch = branchPool[Math.floor(Math.random() * branchPool.length)];
+            const rolledTier = pickWeightedTier();
+            const grantedAugId = resolveGrantedAugment(branch, rolledTier, owned);
+            if (!grantedAugId) {
+                // Fallback shouldn't trigger (branchPool guarantees at least one ungranted).
+                return Response.json({ error: 'Couldn\'t pick a reward — please try again.' }, { status: 500 });
+            }
+
+            // Apply: deduct gold, append augment.
+            updated.gold = gold - MYSTERY_FORGE_GOLD_COST;
+            updated.forgeWeaponAugments = {
+                ...(save.forgeWeaponAugments || {}),
+                [weaponId]: [...ownedArr, grantedAugId],
+            };
+
+            // Audit log — same shape as spendGold uses.
+            try {
+                await base44.asServiceRole.entities.GoldSpendLog.create({
+                    wallet_address: walletLower,
+                    player_name: saveRecord.player_name || updated.player_name || '',
+                    amount: MYSTERY_FORGE_GOLD_COST,
+                    balance_before: gold,
+                    balance_after: updated.gold,
+                    grant_info: { type: 'mystery_forge', weaponId, rolledTier, granted: grantedAugId },
+                    week_id,
+                    season_id,
+                });
+            } catch {}
+
+            // Persist + return early so we can include the roll result in the response
+            // without leaking the helper field into the saved object.
+            updated.updated_at = Date.now();
+            await with429Retry(
+                () => base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
+                    save_data: updated,
+                    updated_at: Date.now()
+                }),
+                'PlayerSave.update'
+            );
+            console.log(`[forgeAction] ${walletLower} mysteryForge ${weaponId} → ${grantedAugId} (rolled T${rolledTier})`);
+            return Response.json({
+                success: true,
+                saveData: updated,
+                mysteryResult: { weaponId, rolledTier, granted: grantedAugId, cost: MYSTERY_FORGE_GOLD_COST },
+            });
         } else {
             return Response.json({ error: 'Unknown action' }, { status: 400 });
         }

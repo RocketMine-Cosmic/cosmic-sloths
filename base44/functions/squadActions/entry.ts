@@ -779,6 +779,201 @@ Deno.serve(async (req) => {
             return Response.json({ activity, members });
         }
 
+        // ----- S6 Squad Treasury (Phase 3c) -----
+        // Members donate gold to a shared squad pool. Once the pool reaches a tier
+        // threshold, the leader can ACTIVATE a buff for the upcoming war week.
+        // Active buffs apply during the week tracked by `active_buff_week_id` and
+        // are read by the engine + war scoring (additive bonuses, no stacking).
+        // Hard-gated to S6+ via period check — pre-rollover both actions return 403.
+        if (action === 'donateTreasury' || action === 'activateBuff' || action === 'getTreasury') {
+            const isS6 = (() => {
+                const now = new Date();
+                const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+                const dayNum = tmp.getUTCDay() || 7;
+                tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+                const isoYear = tmp.getUTCFullYear();
+                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+                const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
+                return `${isoYear}-S${seasonNum}` !== '2026-S5';
+            })();
+            if (!isS6) {
+                return Response.json({ error: 'Squad Treasury unlocks in Season 6.' }, { status: 403 });
+            }
+
+            // Tier table — locked per master plan §5c. Costs are CUMULATIVE thresholds
+            // (treasury must hold ≥ this amount to activate). Activation drains exactly
+            // the cost from the pool. Buffs last one full ISO week.
+            const TREASURY_TIERS = {
+                bronze:   { cost: 25_000,    label: 'Bronze' },
+                silver:   { cost: 100_000,   label: 'Silver' },
+                gold:     { cost: 500_000,   label: 'Gold' },
+                platinum: { cost: 2_000_000, label: 'Platinum' },
+            };
+
+            const { squadId } = body;
+            if (!squadId) return Response.json({ error: 'Couldn\'t access squad treasury — please refresh.' }, { status: 400 });
+
+            // Caller must be a squad member.
+            const caller = await getCallerMember(base44, walletAddress, squadId);
+            if (!caller) {
+                return Response.json({ error: 'You\'re not a member of this squad.' }, { status: 403 });
+            }
+
+            const squad = await base44.asServiceRole.entities.Squad.get(squadId);
+            if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
+
+            // Server-canonical current ISO week — shared by both actions.
+            const currentWeekId = (() => {
+                const now = new Date();
+                const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+                const dayNum = tmp.getUTCDay() || 7;
+                tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+                const isoYear = tmp.getUTCFullYear();
+                const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+                const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+                return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+            })();
+
+            // Lazy expiry — if the active buff is from a past week, treat it as cleared.
+            const liveBuffTier = (squad.active_buff_week_id === currentWeekId) ? (squad.active_buff_tier || '') : '';
+
+            if (action === 'getTreasury') {
+                return Response.json({
+                    treasury_gold: squad.treasury_gold || 0,
+                    treasury_total_donated: squad.treasury_total_donated || 0,
+                    active_buff_tier: liveBuffTier,
+                    active_buff_week_id: liveBuffTier ? squad.active_buff_week_id : '',
+                    current_week_id: currentWeekId,
+                });
+            }
+
+            if (action === 'donateTreasury') {
+                const amount = Math.max(1, Math.floor(Number(body.amount) || 0));
+                if (amount <= 0) return Response.json({ error: 'Donation must be greater than zero.' }, { status: 400 });
+                // Hard upper bound to prevent runaway typos / cheaters from emptying their save in one click.
+                if (amount > 10_000_000) {
+                    return Response.json({ error: 'Donation exceeds the per-action limit (10,000,000).' }, { status: 400 });
+                }
+
+                // Deduct from donor's PlayerSave (server-authoritative).
+                const walletLower = walletAddress.toLowerCase();
+                const saveRecords = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+                if (saveRecords.length === 0) {
+                    return Response.json({ error: 'Your save couldn\'t be found.' }, { status: 400 });
+                }
+                const saveRecord = saveRecords[0];
+                const saveData = typeof saveRecord.save_data === 'string' ? JSON.parse(saveRecord.save_data) : saveRecord.save_data;
+                const playerGold = Number(saveData.gold || 0);
+                if (playerGold < amount) {
+                    return Response.json({
+                        error: `Not enough gold — you need ${amount.toLocaleString()} but have ${playerGold.toLocaleString()}.`
+                    }, { status: 400 });
+                }
+
+                const updatedSave = { ...saveData, gold: playerGold - amount, updated_at: Date.now() };
+                await base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
+                    save_data: updatedSave,
+                    updated_at: Date.now(),
+                });
+
+                const newTreasury = (squad.treasury_gold || 0) + amount;
+                const newTotal = (squad.treasury_total_donated || 0) + amount;
+                await base44.asServiceRole.entities.Squad.update(squadId, {
+                    treasury_gold: newTreasury,
+                    treasury_total_donated: newTotal,
+                });
+
+                // System message in squad chat for transparency.
+                try {
+                    await base44.asServiceRole.entities.SquadMessage.create({
+                        squad_id: squadId,
+                        wallet_address: 'system',
+                        player_name: 'SYSTEM',
+                        content: `💰 ${authoritativeName} donated ${amount.toLocaleString()} gold to the treasury.`,
+                    });
+                } catch {}
+
+                // Audit log so admin gold-audit picks up treasury donations.
+                try {
+                    await base44.asServiceRole.entities.GoldSpendLog.create({
+                        wallet_address: walletLower,
+                        player_name: authoritativeName,
+                        amount,
+                        balance_before: playerGold,
+                        balance_after: updatedSave.gold,
+                        grant_info: { type: 'squad_treasury_donation', squadId },
+                        week_id: currentWeekId,
+                        season_id: '',
+                    });
+                } catch {}
+
+                return Response.json({
+                    success: true,
+                    treasury_gold: newTreasury,
+                    treasury_total_donated: newTotal,
+                    saveData: { gold: updatedSave.gold },
+                });
+            }
+
+            if (action === 'activateBuff') {
+                // Only the leader (or officers) can spend the treasury.
+                if (caller.role !== 'leader' && caller.role !== 'officer') {
+                    return Response.json({ error: 'Only the squad leader or officers can activate treasury buffs.' }, { status: 403 });
+                }
+                const tierKey = body.tier;
+                const tier = TREASURY_TIERS[tierKey];
+                if (!tier) return Response.json({ error: 'Invalid buff tier.' }, { status: 400 });
+
+                if (liveBuffTier) {
+                    return Response.json({ error: 'A buff is already active for this week.' }, { status: 409 });
+                }
+
+                const treasury = squad.treasury_gold || 0;
+                if (treasury < tier.cost) {
+                    return Response.json({
+                        error: `Treasury holds ${treasury.toLocaleString()} — needs ${tier.cost.toLocaleString()} for ${tier.label}.`
+                    }, { status: 400 });
+                }
+
+                // Buff applies to NEXT week (per master plan §5c locked decision —
+                // donations made during week N apply to all of week N+1's wars).
+                // We compute next ISO week from currentWeekId.
+                const nextWeekId = (() => {
+                    const m = currentWeekId.match(/^(\d{4})-W(\d{2})$/);
+                    if (!m) return currentWeekId; // shouldn't happen; safe fallback
+                    const year = parseInt(m[1], 10);
+                    const wk = parseInt(m[2], 10);
+                    // Assume <=52 weeks per ISO year for simplicity. Edge week 53 still
+                    // works — overflow rolls into year+1 W01 below.
+                    if (wk >= 52) return `${year + 1}-W01`;
+                    return `${year}-W${String(wk + 1).padStart(2, '0')}`;
+                })();
+
+                await base44.asServiceRole.entities.Squad.update(squadId, {
+                    treasury_gold: treasury - tier.cost,
+                    active_buff_tier: tierKey,
+                    active_buff_week_id: nextWeekId,
+                });
+
+                try {
+                    await base44.asServiceRole.entities.SquadMessage.create({
+                        squad_id: squadId,
+                        wallet_address: 'system',
+                        player_name: 'SYSTEM',
+                        content: `⭐ ${authoritativeName} activated a ${tier.label} treasury buff for ${nextWeekId}!`,
+                    });
+                } catch {}
+
+                return Response.json({
+                    success: true,
+                    treasury_gold: treasury - tier.cost,
+                    active_buff_tier: tierKey,
+                    active_buff_week_id: nextWeekId,
+                });
+            }
+        }
+
         return Response.json({ error: 'Couldn\'t process this request — please refresh and try again.' }, { status: 400 });
     } catch (error) {
         console.error('[squadActions]', error.message);

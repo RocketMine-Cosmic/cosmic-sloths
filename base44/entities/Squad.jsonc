@@ -80,6 +80,32 @@
     "last_daily_xp_award_date": {
       "type": "string",
       "description": "Date (YYYY-MM-DD UTC) of the last daily-bounty XP bonus payout."
+    },
+    "treasury_gold": {
+      "type": "number",
+      "default": 0,
+      "description": "S6 Squad Treasury \u2014 gold pool donated by members. Spent to activate weekly squad-wide buffs."
+    },
+    "treasury_total_donated": {
+      "type": "number",
+      "default": 0,
+      "description": "Lifetime gold donated to this treasury (display only \u2014 not consumed by buffs)."
+    },
+    "active_buff_tier": {
+      "type": "string",
+      "enum": [
+        "",
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "default": "",
+      "description": "Currently activated treasury buff tier. Resets weekly when active_buff_week_id != current week."
+    },
+    "active_buff_week_id": {
+      "type": "string",
+      "description": "ISO week id (e.g. 2026-W22) the active buff applies to. Buff is ignored once we're past this week."
     }
   },
   "required": [
