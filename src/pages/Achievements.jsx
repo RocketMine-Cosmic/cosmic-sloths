@@ -24,7 +24,28 @@ export default function Achievements() {
     const totalGoldEarned = save.totalGoldEarned || 0;
     const maxLevelReached = save.maxLevelReached || 0;
     const totalUnlockedCosmetics = save.unlockedCosmetics?.length || 0;
-    const totalUnlockedTalents = Object.values(save.unlockedTalents || {}).reduce((acc, arr) => acc + arr.length, 0);
+    // Count talents across permanent/weekly/seasonal containers (current schema)
+    // plus the legacy `unlockedTalents` field. Each container is { charId: [talentIds] }
+    // with a `weekId`/`seasonId` key we must skip. Dedupe by `${charId}:${talentId}` so
+    // the same talent picked in two periods doesn't double-count. (Texxy bug 2026-05-07:
+    // talents_15 / talents_30 achievements never firing because they only read the
+    // empty legacy field.)
+    const totalUnlockedTalents = (() => {
+        const keys = new Set();
+        const add = (container, skipKey) => {
+            if (!container || typeof container !== 'object') return;
+            for (const charId of Object.keys(container)) {
+                if (charId === skipKey) continue;
+                const arr = container[charId];
+                if (Array.isArray(arr)) arr.forEach(t => keys.add(`${charId}:${t}`));
+            }
+        };
+        add(save.permanentTalents, null);
+        add(save.weeklyTalents, 'weekId');
+        add(save.seasonalTalents, 'seasonId');
+        add(save.unlockedTalents, null); // legacy fallback
+        return keys.size;
+    })();
 
     const achievements = [
         // Survival
