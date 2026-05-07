@@ -8,10 +8,10 @@ import { useCurrency } from '@/lib/CurrencyContext';
 import { computeBuildStats } from '@/lib/buildStats';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
-import BuildStatRow from '../components/build/BuildStatRow.jsx';
-import BuildWeaponCard from '../components/build/BuildWeaponCard.jsx';
-import BuildTalentList from '../components/build/BuildTalentList.jsx';
-import BuildSynergiesPanel from '../components/build/BuildSynergiesPanel.jsx';
+import BuildStatRow from '../components/build/BuildStatRow';
+import BuildWeaponCard from '../components/build/BuildWeaponCard';
+import BuildTalentList from '../components/build/BuildTalentList';
+import BuildSynergiesPanel from '../components/build/BuildSynergiesPanel';
 
 // Standalone build viewer — pick a character, see their stacked progression
 // across upgrades / talents / forge / mastery / relics, the per-weapon investment,
