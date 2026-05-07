@@ -99,6 +99,12 @@ export function spawnEnemies(engine, dt) {
     const dynamicRate = engine.envModifiers.enemySpawnRate * (engine.dynamicDifficulty?.spawnRateMult || 1.0);
     let spawnRate = Math.max(0.05, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
 
+    // Post-nuke spawn boost — halve the spawn interval (≈ 2× rate) for ~3s after a nuke
+    // so the wiped field repopulates fast. Set in PickupSystem when a nuke is collected.
+    if (engine.postNukeSpawnBoostUntil && engine.time < engine.postNukeSpawnBoostUntil) {
+        spawnRate *= 0.5;
+    }
+
     // End-of-run grace: in the final 30 seconds of a sector run, ramp spawn rate down
     // so players can't farm kills/gold by hugging the timer. Endless skips this (no end).
     // For non-boss sectors there's nothing else to slow the wave; for boss sectors the
