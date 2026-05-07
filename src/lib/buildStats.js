@@ -160,14 +160,25 @@ export function computeBuildStats(save, charId) {
     });
 }
 
-// Format a stat value for display.
+// Format a stat value for display. For pct (multiplier) stats, show BOTH the
+// raw multiplier (×1.45) and the % form so players can plug it straight into
+// weapon math: finalDamage = weaponBase × damageMult, finalCD = weaponCD × cooldownMult.
 export function fmtStatValue(value, kind) {
-    if (kind === 'pct') return `${Math.round(value * 100)}%`;
+    if (kind === 'pct') return `×${Number(value).toFixed(2)}`;
     if (kind === 'flat1') return Number(value).toFixed(1);
     return Math.round(Number(value)).toString();
 }
 
-// Format a delta (signed) for a source row.
+// Secondary display — the % form of a multiplier (e.g. "+45%" / "-15%" relative to 1.00).
+export function fmtStatPctDelta(value, kind) {
+    if (kind !== 'pct') return null;
+    const pct = (value - 1) * 100;
+    const sign = pct >= 0 ? '+' : '';
+    return `${sign}${pct.toFixed(0)}%`;
+}
+
+// Format a delta (signed) for a source row. For pct stats this is the
+// additive contribution, e.g. +0.15 → "+15%".
 export function fmtStatDelta(value, kind) {
     const sign = value >= 0 ? '+' : '';
     if (kind === 'pct')  return `${sign}${(value * 100).toFixed(0)}%`;
