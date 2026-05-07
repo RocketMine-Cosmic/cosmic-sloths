@@ -183,21 +183,19 @@ function validateAndRecompute(scoreData) {
         const goldScoreCap = kills * 200;
         goldScoreContribution = Math.min(gold, goldScoreCap) * 1.5;
     }
-    // Mid-S5 hotfix v4 (2026-05-07, after Texxy's "340k boss bonus too dominant" complaint):
-    //  • kills: ×30 → ×45 (skill weight bumped — should out-pace victory bonus)
-    //  • level: level² × 10 → level² × 15 (quadratic, late-game progression rewarded harder)
-    //  • victory bonus: 25k + sectorIdx × 35k → 20k + sectorIdx × 22k
-    //    (sector 10 victory = 218k — was 340k. Still meaningful, no longer dominant.)
-    // Goal: skill terms (kills + level + time + gold) ≈ victory bonus on a sector-10 run,
-    // so a *better-played* run actually scores higher than a barely-survived one.
-    // Net Texxy (789k, lvl 35, 7:09, 55k gold, sector 10 victory): ~1.0M (was 1.29M)
-    // Net Anubis (700k, lvl 34, 7:23, 14k gold, sector 10 victory): ~810k
-    // Net peak (1000k, lvl 42, 9min, 25k gold, sector 10 victory): ~920k
+    // Mid-S5 hotfix v5 (2026-05-07, target: sector 10 victory ≈ 800-900k):
+    //  • kills ×45, level² × 15 (unchanged — skill weight stays high)
+    //  • victory bonus: 20k + sectorIdx × 22k → 15k + sectorIdx × 16k
+    //    (sector 10 victory = 159k bonus — meaningful but not dominant)
+    // Net Texxy (789k, lvl 35, 7:09, 55k gold, sector 10 victory): ~836k ✅
+    // Net Anubis (700k, lvl 34, 7:23, 14k gold, sector 10 victory): ~647k
+    // Net peak (1000k, lvl 42, 9min, 25k gold, sector 10 victory): ~758k
+    // Net sector 1 victory (300k, lvl 18, 4min, 5k gold): ~42k
     // Existing S5 leaderboard entries are untouched (recalc applies to new runs only).
     const sectorIdxForBonus = scoreData.arena_id === 'endless' || scoreData.arena_id === 'world_boss_arena'
         ? 0
         : Math.max(0, ARENA_ORDER.indexOf(scoreData.arena_id));
-    const victoryBonus = isVictory ? (20000 + sectorIdxForBonus * 22000) : 0;
+    const victoryBonus = isVictory ? (15000 + sectorIdxForBonus * 16000) : 0;
     const baseScore = kills * 45 + level * level * 15 + time * 5 + goldScoreContribution + victoryBonus;
     // Hard score ceiling — last-line backstop against any validator gap that lets
     // a tampered run slip through with absurd numbers (e.g. gold validator allows
