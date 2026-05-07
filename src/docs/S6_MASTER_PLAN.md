@@ -298,18 +298,16 @@ If any metric drifts, hotfix the *specific* lever (no need to revert the whole p
 
 ---
 
-## 8. Open decisions for you
+## 8. Locked decisions (2026-05-07)
 
-Before code starts:
+1. **Endless time-decay** — ✅ Curve approved as designed (1.0× for first 10 min → 0.25× floor at 40+ min).
+2. **Prestige cost** — ✅ **Flat 1.5M per relic, same for every relic.** No tiered pricing — fairness for all players over whale-friendly economics. (Casual players prestige at their own pace; whales don't get cheaper paths through "casual" relics.)
+3. **Forge lottery** — ✅ 60% T1 / 30% T2 / 10% T3 drop weights approved.
+4. **Squad treasury buffs** — ✅ **Buffs last 1 full week (= one war cycle).** Donations made during week N apply to all of week N+1's wars and run gold drops, then expire and reset.
+5. **Existing gold piles** — ✅ **Grandfathered in.** Players keep every gold piece earned in S5. They earned it; we don't claw it back. (Whales who stockpiled early just get a head-start on prestige relics, which is fine — the sinks are deep enough to absorb it.)
+6. **Sink rollout pace** — ✅ **All three sinks ship simultaneously at S6 launch (May 25).** No staggered rollout — players need the full sink package available from day 1 so the cap-removal doesn't outpace the absorption capacity.
 
-1. **Endless time-decay** — like the curve, or want to discuss alternatives (per-kill cap, soft-cap formula)?
-2. **Prestige cost** — 1.5M per relic feels right for whales, brutal for casuals. Should casual-tier relics (e.g. Cosmic Dice) cost less to prestige than meta-tier (Midas Core)?
-3. **Forge lottery** — drop-rate weights OK at 60/30/10, or adjust?
-4. **Squad treasury buffs** — duration "one war cycle" vs "one full week"?
-5. **Existing gold piles** — some players have 5M+ gold banked from S5. Reset, freeze, or grandfather in?
-6. **Sink rollout pace** — all three at S6 launch, or stagger (prestige at launch, lottery week 2, treasury week 3) to spread monitoring load?
-
-Lock these and I'll start Phase 1.
+All open decisions resolved. Ready for Phase 1 implementation.
 
 ---
 
