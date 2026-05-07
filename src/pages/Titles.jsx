@@ -211,7 +211,7 @@ export default function Titles({ isCarousel }) {
             let lastErr = null;
             for (let attempt = 1; attempt <= 3; attempt++) {
                 try {
-                    const res = await base44.functions.invoke('syncProfileName', { newTitle: titleId });
+                    const res = await base44.functions.invoke('syncProfileName', { newTitle: titleId, titleOnly: true });
                     if (res?.data?.error) throw new Error(res.data.error);
                     synced = true;
                     break;

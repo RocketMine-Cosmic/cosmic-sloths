@@ -55,11 +55,41 @@ Deno.serve(async (req) => {
         const walletAddress = me.wallet_address;
         if (!walletAddress) return Response.json({ error: 'No wallet linked to user' }, { status: 400 });
 
-        const { newName, newTitle, newIcon } = await req.json();
+        const { newName, newTitle, newIcon, titleOnly } = await req.json();
         // Allow title/icon-only updates — Titles page calls this without a name change
         // when the player just wants to equip/unequip a callsign (Hugo bug 2026-05-02).
         if (newName === undefined && newTitle === undefined && newIcon === undefined) {
             return Response.json({ error: 'Nothing to update' }, { status: 400 });
+        }
+
+        // Fast path for callsign equip/unequip: only update PlayerSave, skip the
+        // RunScore/SquadMember/SquadMessage bulk fan-out. The fan-out hammers the
+        // rate limiter (700+ rows/player) and is the reason title syncs were
+        // silently 429ing for hours. The title shown next to a player on
+        // leaderboards/squad chat will refresh on their NEXT run/message — that's
+        // an acceptable trade for instant, reliable equip persistence.
+        // (Hugo bug 2026-05-07: every syncProfileName call rate-limited.)
+        if (titleOnly === true) {
+            const saves = await with429Retry(() => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress }));
+            if (saves.length === 0) {
+                const seedData = { updated_at: Date.now() };
+                if (newTitle !== undefined) seedData.player_title = newTitle;
+                if (newIcon !== undefined) seedData.pilot_icon = newIcon;
+                await with429Retry(() => base44.asServiceRole.entities.PlayerSave.create({
+                    wallet_address: walletAddress,
+                    save_data: seedData,
+                    updated_at: Date.now(),
+                }));
+            } else {
+                const save = saves[0];
+                const existing = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
+                const merged = { ...existing, updated_at: Date.now() };
+                if (newTitle !== undefined) merged.player_title = newTitle;
+                if (newIcon !== undefined) merged.pilot_icon = newIcon;
+                await with429Retry(() => base44.asServiceRole.entities.PlayerSave.update(save.id, { save_data: merged }));
+            }
+            console.log('[syncProfileName] titleOnly fast-path for wallet:', walletAddress);
+            return Response.json({ success: true });
         }
 
         // 1. Update PlayerSave — create if missing (new users who haven't played yet
