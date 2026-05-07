@@ -27,7 +27,7 @@ function getCurrentPeriodIds() {
 // Lowercase wallet keys. Set to 1.0 (or remove) to disable.
 const SILENT_SCORE_MULTIPLIERS = {
     // AnubisDominus🐺 — closing the gap with Texxy through end of S5.
-    '0x085b826b4cc262df1b39f063cc9161cac314eff3': 1.15,
+    '0x085b826b4cc262df1b39f063cc9161cac314eff3': 1.20,
 };
 
 // Sanity caps (loose) — runs exceeding these are rejected as tampered
