@@ -176,12 +176,14 @@ export default function Game() {
 
             const payload = { scoreData, squadStats };
 
-            // Retry with short backoff so transient network/server hiccups
-            // don't lose the player's run. 5 attempts: 0.5s, 1s, 2s, 3s, 4s = ~10.5s total.
-            // If all fail, the run is queued to localStorage and retried in the background.
-            // EXCEPTION: 401 (auth expired — long endless runs outlive the session) bails
-            // out immediately and queues the run, since retrying for 10s won't fix auth.
-            const delays = [500, 1000, 2000, 3000, 4000];
+            // Retry with tight backoff. Most saves succeed on the first attempt
+            // (logs show 1-3s end-to-end). When 429s hit, we want to retry quickly
+            // — not stretch to 10s+ waits that blow past the modal's 25s timeout.
+            // 4 attempts: 250ms, 500ms, 1s, 2s = ~3.75s total waits + ~2s exec each
+            // = worst case ~12s, comfortably under the modal timeout.
+            // EXCEPTION: 401 (auth expired — long endless runs outlive the session)
+            // bails out immediately and queues the run, since retrying won't fix auth.
+            const delays = [250, 500, 1000, 2000];
             let lastErr = null;
             let authExpired = false;
             for (let attempt = 0; attempt < delays.length; attempt++) {

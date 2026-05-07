@@ -7,15 +7,19 @@ export default function GameOverModal({ stats }) {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Safety timeout: if the save spinner has been showing for 15s with no
-    // server response, unblock the buttons so the player can never get stuck.
-    // Game.jsx's saveScore retry will already have queued the run for
-    // background recovery on next launch.
+    // Two-stage timeout to give the client retry loop room to succeed:
+    //  - "slow" (8s): switch the spinner to "Still saving… taking longer than usual"
+    //    but keep waiting (don't unblock buttons yet — most slow saves still succeed).
+    //  - "timedOut" (25s): unblock buttons + show the "queued for retry" banner.
+    //    By 25s the client's 4-retry loop has fully finished, so this only fires when
+    //    the save genuinely failed (or the function/network hung).
+    const [slow, setSlow] = useState(false);
     const [timedOut, setTimedOut] = useState(false);
     useEffect(() => {
         if (stats._serverConfirmed || stats._saveFailed) return;
-        const t = setTimeout(() => setTimedOut(true), 15000);
-        return () => clearTimeout(t);
+        const slowT = setTimeout(() => setSlow(true), 8000);
+        const finalT = setTimeout(() => setTimedOut(true), 25000);
+        return () => { clearTimeout(slowT); clearTimeout(finalT); };
     }, [stats._serverConfirmed, stats._saveFailed]);
     const showButtons = !!stats._serverConfirmed || stats._saveFailed || timedOut;
 
@@ -55,7 +59,7 @@ export default function GameOverModal({ stats }) {
                     {!showButtons ? (
                         <div className="text-center text-xs md:text-sm text-slate-400 italic flex items-center justify-center gap-2">
                             <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin inline-block" />
-                            Saving run progress…
+                            {slow ? 'Still saving… taking longer than usual' : 'Saving run progress…'}
                         </div>
                     ) : (
                         (() => {

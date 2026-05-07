@@ -7,13 +7,17 @@ import RunStatsBox from './RunStatsBox';
 export default function VictoryModal({ stats }) {
     const navigate = useNavigate();
 
-    // Safety timeout: never let the save spinner block the player forever.
-    // After 15s, unblock the buttons (run is queued for background retry).
+    // Two-stage timeout (matches GameOverModal) — 8s = "still saving" hint,
+    // 25s = give up + show "queued for retry". The client's 4-retry loop finishes
+    // by ~12s worst case, so 25s is comfortable headroom that only trips on
+    // genuine network/server hangs.
+    const [slow, setSlow] = useState(false);
     const [timedOut, setTimedOut] = useState(false);
     useEffect(() => {
         if (stats._serverConfirmed || stats._saveFailed) return;
-        const t = setTimeout(() => setTimedOut(true), 15000);
-        return () => clearTimeout(t);
+        const slowT = setTimeout(() => setSlow(true), 8000);
+        const finalT = setTimeout(() => setTimedOut(true), 25000);
+        return () => { clearTimeout(slowT); clearTimeout(finalT); };
     }, [stats._serverConfirmed, stats._saveFailed]);
     const showButtons = !!stats._serverConfirmed || stats._saveFailed || timedOut;
 
@@ -53,7 +57,7 @@ export default function VictoryModal({ stats }) {
                     {!showButtons ? (
                         <div className="text-center text-xs md:text-sm text-slate-400 italic flex items-center justify-center gap-2">
                             <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin inline-block" />
-                            Saving run progress…
+                            {slow ? 'Still saving… taking longer than usual' : 'Saving run progress…'}
                         </div>
                     ) : (
                         (() => {
