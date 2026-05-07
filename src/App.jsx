@@ -173,6 +173,10 @@ function App() {
               if (existing.player_title !== undefined) preserved.player_title = existing.player_title;
               if (existing.pilot_icon !== undefined) preserved.pilot_icon = existing.pilot_icon;
               if (existing.player_name !== undefined) preserved.player_name = existing.player_name;
+              // Preserve the pending-sync flag too so a parent re-post mid-equip
+              // doesn't drop it (would make SaveManager.initialize on next boot
+              // overwrite the unsynced local title with a stale cloud value).
+              if (existing._titlePendingSync !== undefined) preserved._titlePendingSync = existing._titlePendingSync;
             }
           } catch {}
           // Parent's authData wins for OAuth fields; our preserved profile fields layer on top.

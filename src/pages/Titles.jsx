@@ -193,14 +193,37 @@ export default function Titles({ isCarousel }) {
         setSaving(true);
         SoundManager.playUIClick();
         try {
-            // Always sync to cloud — local IndexedDB write isn't enough; without this
-            // call the title is lost on next session/cross-device load (Hugo 2026-05-02).
-            await updateOmenXUser({ player_title: titleId });
+            // Local write first so the UI feels instant + survives a tab refresh
+            // even if the cloud sync below fails. Mark a pending-sync flag so
+            // SaveManager's cloud-restore on next load won't overwrite the new
+            // title with a stale cloud value (root cause of "title doesn't persist"
+            // — the cloud syncProfileName call failing silently while SaveManager
+            // happily restored the old cloud value back into local on next boot).
+            await updateOmenXUser({ player_title: titleId, _titlePendingSync: true });
             setEquippedTitle(titleId);
-            try {
-                await base44.functions.invoke('syncProfileName', { newTitle: titleId });
-            } catch (e) {
-                console.error('[Titles] sync failed', e);
+            // Retry up to 3× — title sync is the most fragile profile call and
+            // failing silently was leaving cloud + local out of sync (Hugo 2026-05-07).
+            let synced = false;
+            let lastErr = null;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const res = await base44.functions.invoke('syncProfileName', { newTitle: titleId });
+                    if (res?.data?.error) throw new Error(res.data.error);
+                    synced = true;
+                    break;
+                } catch (e) {
+                    lastErr = e;
+                    if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 600));
+                }
+            }
+            if (synced) {
+                // Cloud has the new title — clear the pending flag so future loads
+                // can safely use the cloud value as the source of truth again.
+                await updateOmenXUser({ _titlePendingSync: false });
+            } else {
+                console.error('[Titles] sync failed after 3 attempts', lastErr?.message);
+                // Leave _titlePendingSync=true so the local value wins on next boot.
+                // SaveManager will detect the flag and skip the title restore branch.
             }
         } finally {
             setSaving(false);

@@ -173,7 +173,12 @@ export const SaveManager = {
             const auth = JSON.parse(localStorage.getItem('omenx_auth_data') || 'null');
             if (auth) {
               let changed = false;
-              if (cloudData.player_title !== undefined && auth.player_title !== cloudData.player_title) {
+              // Skip the title restore if the user just equipped a title that hasn't
+              // synced to cloud yet — otherwise we'd overwrite the freshly-equipped
+              // local value with the stale cloud value, making the title appear to
+              // "not persist" (root cause Hugo 2026-05-07).
+              const titleSyncPending = !!auth._titlePendingSync;
+              if (!titleSyncPending && cloudData.player_title !== undefined && auth.player_title !== cloudData.player_title) {
                 auth.player_title = cloudData.player_title; changed = true;
               }
               if (cloudData.player_name && auth.player_name !== cloudData.player_name) {
