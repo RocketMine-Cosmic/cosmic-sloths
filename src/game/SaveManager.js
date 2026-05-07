@@ -376,6 +376,27 @@ export const SaveManager = {
           } else {
             merged = { ...res.data.saveData, updated_at: res.data.updated_at };
           }
+          // CRITICAL: client-owned UI prefs must always win over the cloud copy
+          // returned by syncSave. Even when the round-trip lands AFTER the user
+          // just toggled a jukebox track / SFX category / equipped relic, the
+          // server's response carries the OLDER value (it was generated before
+          // the toggle). Without this guard, the cloud value silently overwrites
+          // the fresh local toggle and the setting "doesn't stick" (Hugo bug
+          // 2026-05-07: jukebox prefs reverting). syncSave already accepts the
+          // client value server-side, so freshLocal is the truth here.
+          const CLIENT_OWNED_OVERRIDES = [
+            'jukeboxPrefs', 'sfxCategories',
+            'equippedRelics', 'cosmetics', 'loadoutPresets',
+            'lastSelectedChar', 'lastSelectedArena', 'lastSelectedDifficulty', 'lastSelectedWeapon',
+            'poolBias', 'bossModifiers', 'isNGPlus', 'welcomeSeen',
+          ];
+          if (freshLocal) {
+            for (const key of CLIENT_OWNED_OVERRIDES) {
+              if (freshLocal[key] !== undefined) {
+                merged[key] = freshLocal[key];
+              }
+            }
+          }
           localStorage.setItem('cosmic_sloth_save', JSON.stringify(merged));
           window.dispatchEvent(new CustomEvent('saveUpdated', { detail: merged }));
         }
