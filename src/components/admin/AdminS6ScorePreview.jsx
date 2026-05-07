@@ -164,6 +164,28 @@ export default function AdminS6ScorePreview({ walletAddress }) {
         const s5CharDist = top10ByChar(byS5);
         const s6CharDist = top10ByChar(byS6);
 
+        // Per-character kills/sec efficiency — the "is this char mechanically
+        // dominant or just popular?" check. Aggregates median + max kills/sec
+        // across all dedup'd best runs per character (excluding 0-time rows).
+        const efficiencyByChar = (() => {
+            const buckets = {};
+            for (const s of enriched) {
+                const t = s.time_survived || 0;
+                if (t < 30) continue; // skip very short runs (noise)
+                const c = s.character_id || 'unknown';
+                const kps = (s.kills || 0) / t;
+                if (!buckets[c]) buckets[c] = [];
+                buckets[c].push(kps);
+            }
+            return Object.entries(buckets).map(([char, list]) => {
+                list.sort((a, b) => a - b);
+                const median = list[Math.floor(list.length / 2)] || 0;
+                const max = list[list.length - 1] || 0;
+                const avg = list.reduce((s, v) => s + v, 0) / list.length;
+                return { char, median, max, avg, runs: list.length };
+            }).sort((a, b) => b.median - a.median);
+        })();
+
         // Endless vs sector dominance
         const top10Mode = (list) => {
             const top = list.slice(0, 10);
@@ -180,6 +202,7 @@ export default function AdminS6ScorePreview({ walletAddress }) {
             ranked, totalPlayers, climbers, fallers, unchanged,
             newTop10, droppedFromTop10,
             s5CharDist, s6CharDist, s5ModeDist, s6ModeDist,
+            efficiencyByChar,
             byS5,
         };
     }, [rawScores, mode]);
@@ -299,6 +322,44 @@ export default function AdminS6ScorePreview({ walletAddress }) {
                         </div>
                     </div>
 
+                    {/* Per-character mechanical efficiency — "is this char dominant or just popular?" */}
+                    {comparison.efficiencyByChar.length > 0 && (
+                        <div className="bg-slate-900/60 rounded-lg border border-slate-700 p-3">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 flex items-center justify-between">
+                                <span>⚡ Kills/sec Efficiency by Character</span>
+                                <span className="text-slate-600 normal-case tracking-normal">Higher = mechanically stronger · &lt;30s runs excluded</span>
+                            </div>
+                            <table className="w-full text-xs">
+                                <thead className="text-slate-500 border-b border-slate-800">
+                                    <tr>
+                                        <th className="text-left p-1.5 font-bold">Character</th>
+                                        <th className="text-right p-1.5 font-bold">Runs</th>
+                                        <th className="text-right p-1.5 font-bold">Median k/s</th>
+                                        <th className="text-right p-1.5 font-bold">Avg k/s</th>
+                                        <th className="text-right p-1.5 font-bold">Max k/s</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800/40">
+                                    {comparison.efficiencyByChar.map((e, i) => (
+                                        <tr key={e.char} className={i === 0 ? 'bg-emerald-950/20' : ''}>
+                                            <td className="p-1.5 capitalize text-slate-300 font-bold">
+                                                {i === 0 && <span className="text-emerald-400 mr-1">⚡</span>}
+                                                {e.char}
+                                            </td>
+                                            <td className="p-1.5 text-right font-mono text-slate-500">{e.runs}</td>
+                                            <td className="p-1.5 text-right font-mono text-purple-300 font-bold">{e.median.toFixed(2)}</td>
+                                            <td className="p-1.5 text-right font-mono text-slate-400">{e.avg.toFixed(2)}</td>
+                                            <td className="p-1.5 text-right font-mono text-slate-400">{e.max.toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="text-[10px] text-slate-500 italic mt-2">
+                                If SynthBeats and Codebreaker have similar median k/s, SynthBeats just looks dominant because more people play it. If SynthBeats k/s is significantly higher, the character itself is over-tuned.
+                            </div>
+                        </div>
+                    )}
+
                     {/* New top 10 entrants + dropouts */}
                     {(comparison.newTop10.length > 0 || comparison.droppedFromTop10.length > 0) && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -347,11 +408,13 @@ export default function AdminS6ScorePreview({ walletAddress }) {
                                     <th className="p-2 text-right">Kills</th>
                                     <th className="p-2 text-right">Lvl</th>
                                     <th className="p-2 text-right">Time</th>
+                                    <th className="p-2 text-right">k/s</th>
                                     <th className="p-2 text-right text-fuchsia-300">S5 Score</th>
                                     <th className="p-2 text-right text-purple-300">S6 Score</th>
                                     <th className="p-2 text-center">Δ Rank</th>
                                 </tr>
                             </thead>
+                            {/* k/s column inserted after Time */}
                             <tbody className="divide-y divide-slate-800/50">
                                 {comparison.ranked.map(r => (
                                     <tr key={r.id} className="hover:bg-slate-800/30 transition-colors">
@@ -365,6 +428,7 @@ export default function AdminS6ScorePreview({ walletAddress }) {
                                         <td className="p-2 text-right font-mono text-slate-300">{r.kills || 0}</td>
                                         <td className="p-2 text-right font-mono text-slate-300">{r.level || 1}</td>
                                         <td className="p-2 text-right font-mono text-slate-300">{Math.floor((r.time_survived || 0) / 60)}:{String((r.time_survived || 0) % 60).padStart(2, '0')}</td>
+                                        <td className="p-2 text-right font-mono text-cyan-300">{((r.time_survived || 0) > 0 ? ((r.kills || 0) / r.time_survived) : 0).toFixed(2)}</td>
                                         <td className="p-2 text-right font-mono text-fuchsia-300">{(r._s5Stored || 0).toLocaleString()}</td>
                                         <td className="p-2 text-right font-mono font-bold text-purple-300">{(r._s6 || 0).toLocaleString()}</td>
                                         <td className="p-2 text-center"><DeltaBadge delta={r._delta} /></td>
