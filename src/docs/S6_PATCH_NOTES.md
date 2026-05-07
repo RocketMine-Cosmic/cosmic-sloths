@@ -31,7 +31,7 @@ Score now scales with sector depth and victory, not run length.
 • Gold no longer counts toward score
 • Endless score is time-capped (~10k per minute survived)
 
-**Why:** Endless runs were minting leaderboard score linearly with time, which made multi-hour runs viable for top placement. The new formula makes sector clears the highest-value scoring path so leaderboard rank reflects skill ceiling, not session length.
+**Why:** Endless score scaled linearly with time, so longer runs always beat shorter ones regardless of skill. The new formula makes sector clears the highest-value scoring path so leaderboard rank reflects skill ceiling, not session length.
 ```
 
 ---
@@ -155,4 +155,3 @@ S5 final leaderboard rewards + Squad Champions payouts distribute as normal.
 S6 launch day: new formula + caps removed + 3 new sinks live immediately.
 
 Feedback in `#s6-feedback` after launch — first 2 weeks we're monitoring closely for hotfixes.
-`
