@@ -71,6 +71,12 @@ export default function MaintenanceGate() {
                 <p className="text-xs text-slate-400 italic">
                     The page will refresh automatically when the rollover is complete.
                 </p>
+                <a
+                    href="/admin"
+                    className="mt-4 inline-block text-[10px] text-slate-600 hover:text-slate-400 uppercase tracking-widest"
+                >
+                    admin
+                </a>
             </div>
         </div>
     );
