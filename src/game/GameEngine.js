@@ -11,6 +11,7 @@ import { updateEnemies as updateEnemiesLogic } from './EnemyAI';
 import { updatePickups as updatePickupsLogic } from './PickupSystem';
 import { levelUp as levelUpLogic, generateChoices as generateChoicesLogic, applyUpgrade as applyUpgradeLogic, checkSynergies as checkSynergiesLogic, checkEvolutions as checkEvolutionsLogic } from './UpgradeSystem';
 import { updateCharacterMechanics } from './CharacterMechanics';
+import { isS6OrLater } from '@/lib/seasonGate';
 
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
@@ -22,6 +23,17 @@ export class GameEngine {
         this.worldBossId = worldBossId || 'world_boss_0';
         this.worldBossName = worldBossName || 'The World Eater';
         this.difficulty = { ...(DIFFICULTIES.find(d => d.id === difficultyId) || DIFFICULTIES[0]) };
+
+        // S6+ balance levers (per docs/S6_MASTER_PLAN.md). Auto-flips at the
+        // W20→W21 rollover (Mon May 25 2026 00:00 UTC). S5 keeps legacy values.
+        this._isS6 = isS6OrLater();
+
+        // L3 — Cosmic difficulty 3.0× → 2.0× gold/XP. Cuts the dominant
+        // difficulty stacker without touching enemy HP/dmg (still 2.5×).
+        if (this._isS6 && this.difficulty.id === 'cosmic') {
+            this.difficulty.goldMult = 2.0;
+            this.difficulty.xpMult = 2.0;
+        }
         
         const saveStats = save.permanentUpgrades || {};
         const weeklyStats = save.weeklyUpgrades || {};
@@ -52,19 +64,29 @@ export class GameEngine {
         const permTalents = save.permanentTalents?.[characterId] || [];
         const weekTalents = save.weeklyTalents?.[characterId] || [];
         const seasonTalents = save.seasonalTalents?.[characterId] || [];
-        const charTalents = [...new Set([...permTalents, ...weekTalents, ...seasonTalents])];
         const talentsData = CHARACTER_TALENTS[characterId] || [];
-        
+
         let talentBonus = {
             maxHp: 0, speedMult: 0, damageMult: 0, magnetRange: 0, regen: 0, armor: 0, areaMult: 0, cooldownMult: 0, projSpeedMult: 0, goldMult: 0, xpMult: 0, luck: 0
         };
 
-        charTalents.forEach(tId => {
+        // S6+ L1: weekly/seasonal talent contributions scaled by 0.66× when NOT
+        // already covered by the permanent tier. Permanent stays full value.
+        // S5 legacy: same talent ID across all three tiers still only applies once
+        // (Set-style dedup) — preserved exactly via the seenIds short-circuit below.
+        const TALENT_STACK_FACTOR = this._isS6 ? 0.66 : 1.0;
+        const applyTalent = (tId, factor, seenIds) => {
+            if (seenIds.has(tId)) return;
+            seenIds.add(tId);
             const t = talentsData.find(td => td.id === tId);
-            if (t) {
-                talentBonus[t.stat] = (talentBonus[t.stat] || 0) + t.value;
-            }
-        });
+            if (t) talentBonus[t.stat] = (talentBonus[t.stat] || 0) + (t.value * factor);
+        };
+        const seenIds = new Set();
+        // Permanent first → always 1.0×, takes precedence (Set dedup parity).
+        permTalents.forEach(id => applyTalent(id, 1.0, seenIds));
+        // Weekly + seasonal — full value on S5 (parity), 0.66× on S6+.
+        weekTalents.forEach(id => applyTalent(id, TALENT_STACK_FACTOR, seenIds));
+        seasonTalents.forEach(id => applyTalent(id, TALENT_STACK_FACTOR, seenIds));
 
         const charKills = save.characterKills?.[characterId] || 0;
         const mastery = getCharacterMastery(charKills, characterId);
@@ -225,7 +247,11 @@ export class GameEngine {
             areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0) + augBonus.areaMult + (titleBuff.areaMult || 0) + adminMult,
             cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0) + (titleBuff.cooldownMult || 0),
             projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0) + (relicBonus.projSpeedMult || 0),
-            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0) + adminMult) * this.difficulty.goldMult * sectorPenalty,
+            // S6+ L2: NFT gold multiplier folded into player.goldMult ADDITIVELY
+            // instead of multiplied at pickup time. (`save.nftGoldMultiplier` is e.g.
+            // 1.1 for +10% — convert to additive 0.1 when present.) PickupSystem
+            // skips the multiplicative pickup-time bonus on S6+ to match.
+            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0) + adminMult + (this._isS6 ? Math.max(0, (save.nftGoldMultiplier || 1) - 1) : 0)) * this.difficulty.goldMult * sectorPenalty,
             xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult) * this.difficulty.xpMult,
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0) + (titleBuff.luck || 0) + adminMult,
             critBonus: augBonus.critBonus + (titleBuff.critBonus || 0),

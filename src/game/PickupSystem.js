@@ -1,5 +1,11 @@
 // Pickup collection + magnet logic extracted from GameEngine.
 import { SFXManager } from './SFXManager';
+import { isS6OrLater } from '@/lib/seasonGate';
+
+// Cache once per module load — `getCurrentPeriodIds` is cheap but called on
+// every gold pickup adds up. Cached value is fine since the rollover only
+// happens at the W20→W21 boundary; nobody is mid-run at exactly Sun 23:59 UTC.
+const _IS_S6 = isS6OrLater();
 
 export function updatePickups(engine, dt) {
     engine.pickups = engine.pickups.filter(p => {
@@ -15,22 +21,38 @@ export function updatePickups(engine, dt) {
                 if (engine.xp >= engine.xpRequired && !engine.isPaused) engine.levelUp();
             } else if (p.type === 'gold') {
                 const nftGoldMult = engine.save.nftGoldMultiplier || 1.0;
-                const finalGold = Math.floor(p.value * engine.player.goldMult * nftGoldMult);
+                // S6+ L2: NFT mult is already folded ADDITIVELY into player.goldMult
+                // at engine init, so skip the multiplicative bonus here. S5 keeps the
+                // legacy multiplicative stack so existing balance is unchanged.
+                const nftFactor = _IS_S6 ? 1.0 : nftGoldMult;
+
+                // S6+ L9: Endless time-decay curve. First 10 min = full value,
+                // then linear decay to 0.25× floor at 40 min. Replaces the old hard
+                // ceiling — gold keeps flowing but tapers naturally so 4-hour AFK
+                // runs don't mint piles of gold while skilled long runs still earn.
+                let timeFactor = 1.0;
+                if (_IS_S6 && engine.arena?.duration === Infinity) {
+                    const t = engine.time || 0;
+                    if (t > 600) {
+                        timeFactor = Math.max(0.25, 1.0 - (t - 600) / 1800);
+                    }
+                }
+
+                const finalGold = Math.floor(p.value * engine.player.goldMult * nftFactor * timeFactor);
                 SFXManager.playGoldPickup(finalGold);
                 engine.gold += finalGold;
-                // Endless mode: cap the in-game gold counter at the same value saveScore credits
-                // (clamp(time*12, 1500, 18000)) so the HUD, the engine, and the awarded gold all match.
-                // Without this, players see their gold ticker keep climbing past 18k even though only
-                // 18k will be credited at run end — feels like the cap is "stealing" gold.
-                if (engine.arena?.duration === Infinity) {
-                    // Endless gold cap MUST match server's ENDLESS_GOLD_HARD_CEILING (10k).
-                    // Otherwise HUD shows up to 18k but server only credits 10k — players
-                    // see "lost" gold at run end. 12 g/sec scaling = ~14 min to hit 10k.
+                // S5 endless gold ceiling — clamps the in-game counter to match
+                // saveScore's ENDLESS_GOLD_HARD_CEILING (10k). S6 drops this cap
+                // (saveScore also drops it on S6+ per Phase 1). The L9 time-decay
+                // above replaces the hard ceiling for S6.
+                if (!_IS_S6 && engine.arena?.duration === Infinity) {
                     const cap = Math.min(10000, Math.max(1000, Math.floor((engine.time || 0) * 12)));
                     if (engine.gold > cap) engine.gold = cap;
                 }
                 engine.callbacks.onGoldChange(engine.gold);
-                if (nftGoldMult > 1.0 && Math.random() < 0.1) {
+                // S5 only — the floating "+NFT %" notification was tied to the
+                // multiplicative bonus. On S6 the bonus is silently folded in.
+                if (!_IS_S6 && nftGoldMult > 1.0 && Math.random() < 0.1) {
                     engine.addDamageText(engine.player.x, engine.player.y - 50, `NFT +${Math.round((nftGoldMult - 1) * 100)}% GOLD`, '#f59e0b');
                 }
             } else if (p.type === 'fragment') {

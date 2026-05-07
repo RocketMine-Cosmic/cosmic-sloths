@@ -3,6 +3,10 @@
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
 import { updateBossAbilities } from './BossSystem';
+import { isS6OrLater } from '@/lib/seasonGate';
+
+// Cached at module load — see PickupSystem for rationale.
+const _IS_S6 = isS6OrLater();
 
 export function updateEnemies(engine, dt) {
     for (let i = engine.enemies.length - 1; i >= 0; i--) {
@@ -112,13 +116,15 @@ export function updateEnemies(engine, dt) {
                     // to BOTH endless and normal arenas. Only the boss's own gold pile
                     // is auto-credited — regular enemy drops still spawn as pickups.
                     const nftGoldMult = engine.save?.nftGoldMultiplier || 1.0;
+                    // L2 (S6+): NFT mult already folded into player.goldMult — skip.
+                    const nftFactor = _IS_S6 ? 1.0 : nftGoldMult;
                     // Cap boss-credit gold at 3000 per kill. Without this, whales with stacked
                     // multipliers (Synthbeats + maxed gold talents + relic + NFT + cosmic difficulty
                     // + pool bias) earned 10–15k per boss × 13 bosses = 140k+ from bosses alone in
                     // a single 3:30 run, breaking the leaderboard economy. Normal players cap out
                     // at ~2750 (base 1000 + fury 500 + unstoppable 1000 + 1.1× nft) so this only
                     // bites runaway whale stacks. (Balance pass 2026-05-06 — Tijckers 249k run.)
-                    const finalGold = Math.min(3000, Math.floor(extraGold * engine.player.goldMult * nftGoldMult));
+                    const finalGold = Math.min(3000, Math.floor(extraGold * engine.player.goldMult * nftFactor));
                     engine.gold += finalGold;
                     engine.callbacks.onGoldChange(engine.gold);
                     creditedGold = finalGold;
