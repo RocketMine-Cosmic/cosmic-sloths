@@ -34,11 +34,6 @@ export default function LeaderboardPoolBanner({ view, periodId, totalSpent, time
                 <span className={`text-3xl md:text-4xl font-black tabular-nums ${numColor}`}>{playerPool.toLocaleString()}</span>
                 <span className={`text-xs ${subColor} font-bold uppercase tracking-wider`}>OMENX</span>
             </div>
-            {timeLeft && (
-                <div className={`mt-2 text-xs font-bold ${subColor}`}>
-                    Distributes in: <span className={numColor}>{timeLeft}</span>
-                </div>
-            )}
             <p className={`text-[10px] ${subColor}/70 mt-2 leading-snug`}>
                 Every OMENX spent increases the pool.
             </p>
