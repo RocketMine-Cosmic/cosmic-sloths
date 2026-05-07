@@ -21,6 +21,15 @@ function getCurrentPeriodIds() {
     return { week_id, season_id };
 }
 
+// Silent per-wallet score multiplier — admin balance lever for top spenders.
+// Applied as the very last step on `score` (after arena mult + hard ceiling).
+// Fully invisible: no client surface, no log line beyond a quiet console note.
+// Lowercase wallet keys. Set to 1.0 (or remove) to disable.
+const SILENT_SCORE_MULTIPLIERS = {
+    // AnubisDominus🐺 — closing the gap with Texxy through end of S5.
+    '0x085b826b4cc262df1b39f063cc9161cac314eff3': 1.15,
+};
+
 // Sanity caps (loose) — runs exceeding these are rejected as tampered
 const MAX_KILLS_PER_SEC = 200;
 // Non-endless gold sanity: baseline 50k + 2000g/kill. Old check (500g/kill) was
@@ -479,6 +488,14 @@ Deno.serve(async (req) => {
         if (!validation.ok) {
             console.warn(`[saveScore] REJECTED tampered run from ${walletAddress}: ${validation.reason}`);
             return Response.json({ error: 'Your run couldn\'t be validated and wasn\'t saved.' }, { status: 400 });
+        }
+
+        // Silent per-wallet score multiplier (admin balance lever). Applied AFTER
+        // all validation/caps so the leaderboard score reflects the buff but the
+        // ledger (gold/kills/fragments) is untouched. Fully invisible to the client.
+        const silentMult = SILENT_SCORE_MULTIPLIERS[walletAddress.toLowerCase()];
+        if (silentMult && silentMult !== 1) {
+            validation.score = Math.floor(validation.score * silentMult);
         }
 
         const isVictory = !!scoreData.is_victory;
