@@ -100,24 +100,80 @@ Deno.serve(async (req) => {
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
 
-        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                payments: [{
-                    walletAddress: target,
-                    amount: String(refundAmount),
-                    player_name: playerName,
-                }],
-                gameId: GAME_ID,
-                gameName: GAME_NAME,
-                note: `single-player refund: ${reason.slice(0, 200)}`,
-            }),
-        });
-        const result = await response.json();
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${JSON.stringify(result).slice(0, 500)}`);
+        // 30s timeout per attempt + one auto-retry on timeout/504/502/503.
+        // Tijckers refund 2026-05-07: gateway returned 504 because the OMENX API hung;
+        // staff didn't know if the payment had actually gone through. Retry safely
+        // recovers transient gateway hiccups; a persistent failure surfaces a clear
+        // "verify on OMENX before retrying" warning to the caller.
+        const sendOnce = async () => {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 30000);
+            try {
+                const r = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                    body: JSON.stringify({
+                        payments: [{
+                            walletAddress: target,
+                            amount: String(refundAmount),
+                            player_name: playerName,
+                        }],
+                        gameId: GAME_ID,
+                        gameName: GAME_NAME,
+                        note: `single-player refund: ${reason.slice(0, 200)}`,
+                    }),
+                    signal: ctrl.signal,
+                });
+                return r;
+            } finally {
+                clearTimeout(timer);
+            }
+        };
+
+        let response;
+        let attemptError = null;
+        try {
+            response = await sendOnce();
+            if (response.status === 502 || response.status === 503 || response.status === 504) {
+                console.warn(`[refundSinglePlayer] Got ${response.status} on first attempt — retrying once`);
+                await new Promise(r => setTimeout(r, 1500));
+                response = await sendOnce();
+            }
+        } catch (err) {
+            attemptError = err;
+            const isTimeout = err?.name === 'AbortError' || /timeout|abort/i.test(err?.message || '');
+            if (isTimeout) {
+                console.warn(`[refundSinglePlayer] First attempt timed out — retrying once`);
+                await new Promise(r => setTimeout(r, 1500));
+                try {
+                    response = await sendOnce();
+                    attemptError = null;
+                } catch (err2) {
+                    attemptError = err2;
+                }
+            }
         }
+
+        if (!response || !response.ok) {
+            // Both attempts failed (or one timed out + one returned bad status). The
+            // payment status is UNKNOWN — could have processed silently or failed entirely.
+            const status = response?.status;
+            const detail = response ? `HTTP ${status}` : (attemptError?.message || 'network error');
+            const msg = `Payment status UNKNOWN — verify on OMENX dev portal before retrying. (${detail})`;
+            postDiscord('DISCORD_ECONOMY_WEBHOOK', 0xef4444, {
+                title: '⚠️ Single-player refund — UNKNOWN STATUS',
+                description: 'Both attempts failed or timed out. Verify whether the payment actually went through before retrying.',
+                fields: [
+                    { name: 'Player', value: playerName, inline: true },
+                    { name: 'Amount', value: `${refundAmount.toLocaleString()} OMENX`, inline: true },
+                    { name: 'Wallet', value: `\`${target}\``, inline: false },
+                    { name: 'Failure', value: detail, inline: false },
+                    { name: 'Triggered by', value: callerLabel, inline: false },
+                ],
+            });
+            return Response.json({ error: msg, statusUnknown: true }, { status: 504 });
+        }
+        const result = await response.json();
         const txId = result?.transactionId || result?.txHash || '';
 
         // --- Audit log ---

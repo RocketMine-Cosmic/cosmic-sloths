@@ -63,10 +63,29 @@ export default function AdminRefundSingle() {
                 reason: reason.trim(),
                 adminKey: sessionStorage.getItem('admin_key') || undefined,
             });
+            // Server marks 504/timeout responses with statusUnknown=true so staff
+            // know the payment may have silently succeeded — verify on dev portal
+            // before retrying. (Tijckers refund 2026-05-07 — gateway timeout, no
+            // way to tell if it went through.)
+            if (res.data?.statusUnknown) {
+                setErr(`⚠️ ${res.data.error}`);
+                setSending(false);
+                return;
+            }
             if (res.data?.error) throw new Error(res.data.error);
             setResult(res.data);
             setConfirming(false);
-        } catch (e) { setErr(e.message); }
+        } catch (e) {
+            // Axios surfaces the server's status in e.response — if 504 came back,
+            // treat as "unknown status" rather than a generic failure.
+            const status = e?.response?.status;
+            const serverMsg = e?.response?.data?.error || e.message;
+            if (status === 504 || /status code 504|timeout/i.test(e.message || '')) {
+                setErr(`⚠️ ${serverMsg || 'Payment status UNKNOWN — verify on OMENX dev portal before retrying.'}`);
+            } else {
+                setErr(serverMsg);
+            }
+        }
         setSending(false);
     };
 
