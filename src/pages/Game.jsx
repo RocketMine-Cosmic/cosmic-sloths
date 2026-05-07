@@ -346,6 +346,10 @@ export default function Game() {
                 // Server validates run, applies aggregates to PlayerSave, returns updated save.
                 saveScore(stats, false).then((res) => {
                     if (res?.success) {
+                        // Server confirmed — safe to clear the local recovery snapshot.
+                        // (Engine.gameOver() no longer clears it preemptively — see fix
+                        // 2026-05-07 for Anubis's lost endless run.)
+                        try { localStorage.removeItem('pending_run_snapshot'); } catch {}
                         // Apply server-truthful save (includes gold/kills/bounty progress + relicFragments).
                         // Preserve client-owned fields that saveScore doesn't touch — otherwise the
                         // server response would wipe any UI prefs / cosmetics the player edited
@@ -411,6 +415,8 @@ export default function Game() {
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
                 saveScore(stats, true).then((res) => {
                     if (res?.success) {
+                        // Server confirmed — safe to clear the local recovery snapshot.
+                        try { localStorage.removeItem('pending_run_snapshot'); } catch {}
                         // Server now credits relicFragments — preserve only cosmicTokens + client-owned UI prefs.
                         // (Same protection as the game-over path — see comment there.)
                         if (res.saveData) {

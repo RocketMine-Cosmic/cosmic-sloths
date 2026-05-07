@@ -1083,17 +1083,18 @@ export class GameEngine {
         this.isGameOver = true;
         if (this.save) { this.save.enemyKills = this.enemyKills; SaveManager.save(this.save); }
         SFXManager.playGameOver();
-        // SYNCHRONOUSLY clear the safety snapshot BEFORE saveScore is invoked.
-        // (Was using async dynamic import — the import could land after a hot-reload
-        // / refresh, leaving the snapshot intact, which flushPendingScores then
-        // re-queued as a "lost" run, double-crediting on next launch.)
-        try { localStorage.removeItem('pending_run_snapshot'); } catch {}
+        // DO NOT clear the safety snapshot here — if the player navigates away
+        // before saveScore returns (back button, force-close, lock screen), the
+        // request is cancelled and the run would be lost. The snapshot is the
+        // recovery net, so we keep it until saveScore CONFIRMS success in Game.jsx
+        // (which clears it via clearRunSnapshot()). saveScore's dup-check (last
+        // 2 minutes) prevents double-crediting if a hot-reload re-queues it.
         this.callbacks.onGameOver(this._runStats());
     }
     victory() {
         this.isVictory = true;
         SFXManager.playVictory();
-        try { localStorage.removeItem('pending_run_snapshot'); } catch {}
+        // Same as gameOver — keep snapshot until saveScore confirms success.
         // Strip killedBy on victory — the player WON, so showing "killed by X" in
         // the victory modal is misleading. Belt-and-braces: VictoryModal already
         // passes hideKilledBy, but this guarantees no UI path can leak it.
