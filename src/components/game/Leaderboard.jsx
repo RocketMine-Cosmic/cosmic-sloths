@@ -320,7 +320,6 @@ export default function Leaderboard() {
                             </div>
                         )}
                     </div>
-                    {timeLeft && <div className="text-sm text-cyan-400 mt-1 font-bold">Resets in: {timeLeft}</div>}
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <button 
