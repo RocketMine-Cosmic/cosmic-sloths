@@ -140,7 +140,7 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                     <h3 className="text-amber-300 font-black text-lg uppercase tracking-widest mb-1">Squad Treasury</h3>
                     <p className="text-slate-400 text-sm mb-3">Unlocks <span className="text-amber-300 font-bold">Mon May 18 · 00:00 UTC</span></p>
                     <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                        Squad members donate gold to a shared pool. Spend it for weekly squad-wide buffs — XP, gold drops, ultimates, and boss damage.
+                        Squad members donate gold to a shared pool. Spend it for weekly squad-wide buffs — XP, gold drops, and boss damage.
                     </p>
                 </div>
             </div>
