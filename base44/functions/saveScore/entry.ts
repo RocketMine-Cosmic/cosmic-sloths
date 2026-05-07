@@ -180,18 +180,20 @@ function validateAndRecompute(scoreData) {
         const goldScoreCap = kills * 150;
         goldScoreContribution = Math.min(gold, goldScoreCap) * 2;
     }
-    // Mid-S5 hotfix (2026-05-07, after Anubis sector-10-victory complaint):
-    //  • kills weight: 10 → 15 (a 700-kill skilled run was only scoring 7k vs gold's 28k — backwards)
-    //  • level weight: 100 → 150 (lvl 34 only contributed 3.4k — too low for a maxed-out run)
-    //  • victory bonus: flat 5000 → 5000 + sectorIdx × 1500 (beating sector 10 must score
-    //    meaningfully more than sector 1; old flat bonus made all victories feel equal)
-    // Net effect: a sector 10 victory ~140% of old score; a Tijckers-style farm (no victory)
-    // gets only a small kill/level bump and stays in the same range. Existing S5 leaderboard
-    // entries are untouched (recalc only applies to new runs from this point forward).
+    // Mid-S5 hotfix v2 (2026-05-07, after Anubis sector-10-victory complaint):
+    //  • kills weight: 10 → 15
+    //  • level weight: 100 → 150
+    //  • victory bonus: flat 5000 → 15000 + sectorIdx × 25000 (sector 1 = 15k, sector 10 = 240k).
+    //    A maxed sector 10 victory is the apex achievement of S5 — it should score in the
+    //    ~800k range, not 128k. Old flat 5k bonus meant gold contribution dwarfed the
+    //    "you beat the final boss" reward, which is backwards.
+    // Net effect: sector-10 victory now ~6× old; sector 1 victory ~3× old (still rewarding
+    // for new players); Tijckers-style farm runs (no victory) get only a small kill/level
+    // bump and stay in their current range. Existing S5 leaderboard entries are untouched.
     const sectorIdxForBonus = scoreData.arena_id === 'endless' || scoreData.arena_id === 'world_boss_arena'
         ? 0
         : Math.max(0, ARENA_ORDER.indexOf(scoreData.arena_id));
-    const victoryBonus = isVictory ? (5000 + sectorIdxForBonus * 1500) : 0;
+    const victoryBonus = isVictory ? (15000 + sectorIdxForBonus * 25000) : 0;
     const baseScore = kills * 15 + level * 150 + time * 5 + goldScoreContribution + victoryBonus;
     // Hard score ceiling — last-line backstop against any validator gap that lets
     // a tampered run slip through with absurd numbers (e.g. gold validator allows
