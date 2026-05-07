@@ -17,6 +17,7 @@ import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
+import CharacterStatPills from '../components/game/CharacterStatPills';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
@@ -377,13 +378,7 @@ export default function Hub({ isCarousel }) {
                                                                         <p className="text-[10px] md:text-xs text-slate-300 mb-1 max-w-[80%] leading-tight">
                                                                             {char.desc}
                                                                         </p>
-                                                                        <div className="flex flex-wrap gap-1.5 md:gap-2 text-[9px] md:text-[10px] mb-1 bg-[#0b0416]/80 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-cyan-500/30 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
-                                                                            <span className="text-slate-300">HP: <span className={char.hp > CHARACTERS[0].hp ? 'text-green-400 font-bold' : char.hp < CHARACTERS[0].hp ? 'text-red-400 font-bold' : 'text-white'}>{char.hp}{char.hp > CHARACTERS[0].hp ? '↑' : char.hp < CHARACTERS[0].hp ? '↓' : ''}</span></span>
-                                                                            <span className="text-slate-300">SPD: <span className={char.speed > CHARACTERS[0].speed ? 'text-green-400 font-bold' : char.speed < CHARACTERS[0].speed ? 'text-red-400 font-bold' : 'text-white'}>{char.speed}{char.speed > CHARACTERS[0].speed ? '↑' : char.speed < CHARACTERS[0].speed ? '↓' : ''}</span></span>
-                                                                            <span className="text-slate-300">ARM: <span className={char.armor > CHARACTERS[0].armor ? 'text-green-400 font-bold' : char.armor < CHARACTERS[0].armor ? 'text-red-400 font-bold' : 'text-white'}>{char.armor}{char.armor > CHARACTERS[0].armor ? '↑' : char.armor < CHARACTERS[0].armor ? '↓' : ''}</span></span>
-                                                                            <span className="text-slate-300">DMG: <span className={char.damageMult > CHARACTERS[0].damageMult ? 'text-green-400 font-bold' : char.damageMult < CHARACTERS[0].damageMult ? 'text-red-400 font-bold' : 'text-white'}>{Math.round(char.damageMult * 100)}%{char.damageMult > CHARACTERS[0].damageMult ? '↑' : char.damageMult < CHARACTERS[0].damageMult ? '↓' : ''}</span></span>
-                                                                            <span className="text-slate-300">CD: <span className={char.cooldownMult < CHARACTERS[0].cooldownMult ? 'text-green-400 font-bold' : char.cooldownMult > CHARACTERS[0].cooldownMult ? 'text-red-400 font-bold' : 'text-white'}>{Math.round(char.cooldownMult * 100)}%{char.cooldownMult < CHARACTERS[0].cooldownMult ? '↑' : char.cooldownMult > CHARACTERS[0].cooldownMult ? '↓' : ''}</span></span>
-                                                                        </div>
+                                                                        <CharacterStatPills char={char} baseline={CHARACTERS[0]} />
                                                                     </>
                                                                 ) : (
                                                                     <div className="w-full pr-4 flex flex-col gap-2 relative z-50">
