@@ -250,6 +250,34 @@ Deno.serve(async (req) => {
             merged.sfxCategories = saveData.sfxCategories;
         }
 
+        // Player-equipped CHOICES: always trust the latest client write.
+        // The stale-client merge order above (`{...saveData, ...existingData}`)
+        // was making freshly-equipped relics, cosmetics, loadout slots, and last-
+        // selected character/arena/difficulty silently revert to whatever the
+        // cloud last had — because saveScore writes to PlayerSave during runs,
+        // bumping cloud's updated_at past the client's, which then "wins" stale.
+        // These fields are CLIENT-OWNED choices (the inventory they reference is
+        // still server-validated — equipping a relic you don't own can't grant it,
+        // because unlockedRelics is server-owned above and consumers filter by it).
+        // (Hugo bug 2026-05-07: relics, callsigns, cosmetics not sticking.)
+        const CLIENT_OWNED_EQUIP_FIELDS = [
+            'equippedRelics',           // Which relics are slotted in the loadout
+            'cosmetics',                // Equipped trail + per-character skins
+            'loadoutPresets',           // Saved loadout slot configurations
+            'lastSelectedChar',         // Last char picked in Sloth Lounge
+            'lastSelectedArena',        // Last arena picked
+            'lastSelectedDifficulty',   // Last difficulty picked
+            'poolBias',                 // Loadout pool bias (level-up roll weights)
+            'bossModifiers',            // Player-toggled boss modifiers
+            'isNGPlus',                 // NG+ mode toggle (unlock check happens engine-side)
+            'welcomeSeen',              // Onboarding tour seen flag
+        ];
+        for (const key of CLIENT_OWNED_EQUIP_FIELDS) {
+            if (saveData[key] !== undefined) {
+                merged[key] = saveData[key];
+            }
+        }
+
         // Collect anti-cheat blocks for audit logging at the end. Each entry becomes
         // a SyncBlockLog row so admins can review and refund false-positives.
         const blocks = [];
