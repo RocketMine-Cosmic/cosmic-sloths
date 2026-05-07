@@ -1,6 +1,6 @@
 // Scheduler-only flipper for the maintenance gate. Used by two one-time
 // automations to turn SOFT on at 23:00 UTC and HARD on at 23:40 UTC the night
-// of the S6 rollover (Sun May 24, 2026). Turning OFF stays manual — we never
+// of the S6 rollover (Sun May 17, 2026). Turning OFF stays manual — we never
 // auto-revert because if rollover breaks the operator needs to stay locked
 // until they manually clear it.
 //

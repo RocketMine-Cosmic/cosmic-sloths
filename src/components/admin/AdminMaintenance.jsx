@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
 
 // Three-state maintenance toggle — manual flip only, no automation.
-// Recommended flow for S6 rollover (May 25, 00:00 UTC):
+// Recommended flow for S6 rollover (May 18, 00:00 UTC):
 //   23:00 UTC — flip SOFT (1hr warning banner)
 //   23:40 UTC — flip HARD (20min before, blocks /game)
 //   ~00:05 UTC, AFTER you've verified rollover is healthy — flip OFF
