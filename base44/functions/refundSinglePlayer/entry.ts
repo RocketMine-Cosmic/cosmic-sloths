@@ -101,26 +101,28 @@ Deno.serve(async (req) => {
         if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
 
         // 30s timeout per attempt + one auto-retry on timeout/504/502/503.
-        // Tijckers refund 2026-05-07: gateway returned 504 because the OMENX API hung;
-        // staff didn't know if the payment had actually gone through. Retry safely
-        // recovers transient gateway hiccups; a persistent failure surfaces a clear
-        // "verify on OMENX before retrying" warning to the caller.
+        // Switched to single-grant endpoint (POST /v1/game-rewards/grant) for solo
+        // refunds — batch endpoint was hanging the gateway on 1-payment requests
+        // (Tijckers 2026-05-07, returned 504 with no way to tell if it processed).
+        // Single-grant has a lighter pipeline and amount is sent in wei (18 decimals).
+        const amountWei = (BigInt(refundAmount) * 1000000000000000000n).toString();
         const sendOnce = async () => {
             const ctrl = new AbortController();
             const timer = setTimeout(() => ctrl.abort(), 30000);
             try {
-                const r = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                const r = await fetch(`${apiBaseUrl}/v1/game-rewards/grant`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                     body: JSON.stringify({
-                        payments: [{
-                            walletAddress: target,
-                            amount: String(refundAmount),
-                            player_name: playerName,
-                        }],
+                        walletAddress: target,
+                        amount: amountWei,
                         gameId: GAME_ID,
                         gameName: GAME_NAME,
-                        note: `single-player refund: ${reason.slice(0, 200)}`,
+                        metadata: {
+                            type: 'single_player_refund',
+                            playerName,
+                            reason: reason.slice(0, 200),
+                        },
                     }),
                     signal: ctrl.signal,
                 });
