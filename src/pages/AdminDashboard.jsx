@@ -91,7 +91,7 @@ const TAB_GROUPS = [
             { id: 'raid',    label: 'Global Raid', icon: Skull, perm: 'manage_raid' },
             { id: 'rewards', label: 'Rewards',     icon: Gift,  perm: 'distribute_rewards' },
             { id: 'champions', label: '👑 Squad Champions', icon: Trophy, perm: 'distribute_rewards' },
-            { id: 'maintenance', label: '🔧 Maintenance', icon: AlertTriangle, perm: 'owner' },
+            { id: 'maintenance', label: '🔧 Maintenance', icon: AlertTriangle, perm: 'manage_maintenance' },
             { id: 'skus',    label: 'SKUs',        icon: Gift,  perm: 'view_data' },
             { id: 'content', label: 'Content',     icon: Database, perm: 'view_data' },
         ],
