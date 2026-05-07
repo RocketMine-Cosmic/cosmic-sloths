@@ -22,25 +22,6 @@ export default function LeaderboardPoolBanner({ view, periodId, totalSpent, time
     const chipBg = isWeekly ? 'bg-cyan-500/30 text-cyan-100' : 'bg-purple-500/30 text-purple-100';
     const label = isWeekly ? 'Weekly Player Pool' : 'Seasonal Player Pool';
 
-    // Top splits — mirrors distributeRewards.js percentages so players can see the breakdown.
-    const splits = isWeekly
-        ? [
-            { rank: '🥇 1st', pct: 10 },
-            { rank: '🥈 2nd', pct: 8 },
-            { rank: '🥉 3rd', pct: 6 },
-            { rank: '#4–10', pct: 4 },
-            { rank: '#11–20', pct: 3 },
-            { rank: '#21–45', pct: '1.2–1.8' },
-        ]
-        : [
-            { rank: '🥇 1st', pct: 10 },
-            { rank: '🥈 2nd', pct: 7.5 },
-            { rank: '🥉 3rd', pct: 6 },
-            { rank: '#4–10', pct: 3.2 },
-            { rank: '#11–20', pct: 2.2 },
-            { rank: '#21–45', pct: '0.7–1.5' },
-        ];
-
     return (
         <div className={`bg-gradient-to-r ${accent} border-2 rounded-xl p-4 mb-4`}>
             <div className="flex items-center gap-3 mb-2 flex-wrap">
@@ -52,22 +33,12 @@ export default function LeaderboardPoolBanner({ view, periodId, totalSpent, time
                 <OmenXIcon className="w-7 h-7" />
                 <span className={`text-3xl md:text-4xl font-black tabular-nums ${numColor}`}>{playerPool.toLocaleString()}</span>
                 <span className={`text-xs ${subColor} font-bold uppercase tracking-wider`}>OMENX</span>
-                <span className={`text-[10px] ${subColor}/80 ml-2`}>
-                    {isWeekly ? '20%' : '30%'} of {(totalSpent || 0).toLocaleString()} OMENX spent
-                </span>
             </div>
             {timeLeft && (
                 <div className={`mt-2 text-xs font-bold ${subColor}`}>
                     Distributes in: <span className={numColor}>{timeLeft}</span>
                 </div>
             )}
-            <div className="mt-3 flex flex-wrap gap-1.5">
-                {splits.map(s => (
-                    <span key={s.rank} className={`text-[10px] ${chipBg} rounded px-2 py-0.5 font-bold tabular-nums`}>
-                        {s.rank}: {s.pct}%
-                    </span>
-                ))}
-            </div>
             <p className={`text-[10px] ${subColor}/70 mt-2 leading-snug`}>
                 Pool grows in real time as players spend OMENX this {isWeekly ? 'week' : 'season'}. Top 45 ranked players share the pool. Paid directly to wallets at period end.
             </p>
