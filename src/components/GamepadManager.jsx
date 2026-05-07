@@ -7,6 +7,20 @@ export default function GamepadManager() {
         let isGamepadActive = false;
         let cursorX = window.innerWidth / 2;
         let cursorY = window.innerHeight / 2;
+        // When the app is embedded in an iframe without a `gamepad` permissions
+        // policy (e.g. the Omen website), `navigator.getGamepads()` throws a
+        // SecurityError. We disable polling permanently once we hit that — the
+        // policy can't change at runtime, so retrying is pointless.
+        let gamepadAccessBlocked = false;
+        const safeGetGamepads = () => {
+            if (gamepadAccessBlocked) return [];
+            try {
+                return navigator.getGamepads ? navigator.getGamepads() : [];
+            } catch {
+                gamepadAccessBlocked = true;
+                return [];
+            }
+        };
 
         // Expose a global flag the GameEngine can check before calling
         // navigator.getGamepads() each frame — that call is surprisingly
@@ -14,13 +28,13 @@ export default function GamepadManager() {
         // want to pay for it 60×/sec when no gamepad is plugged in.
         const onGamepadConnected = () => { window.__gamepadConnected = true; };
         const onGamepadDisconnected = () => {
-            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            const pads = safeGetGamepads();
             const anyConnected = Array.from(pads).some(g => g && g.connected);
             window.__gamepadConnected = anyConnected;
         };
         // Pre-seed in case a gamepad was already connected before mount.
         if (typeof navigator !== 'undefined' && navigator.getGamepads) {
-            const pads = navigator.getGamepads();
+            const pads = safeGetGamepads();
             window.__gamepadConnected = Array.from(pads).some(g => g && g.connected);
         }
         window.addEventListener('gamepadconnected', onGamepadConnected);
@@ -183,8 +197,8 @@ export default function GamepadManager() {
             const modalOpen = document.querySelector('.z-50') !== null;
             const uiActive = !inGame || modalOpen;
 
-            if (typeof navigator !== 'undefined' && navigator.getGamepads) {
-                const gamepads = navigator.getGamepads();
+            if (typeof navigator !== 'undefined' && navigator.getGamepads && !gamepadAccessBlocked) {
+                const gamepads = safeGetGamepads();
                 const gp = gamepads.find(g => g && g.connected);
                 
                 if (gp) {
