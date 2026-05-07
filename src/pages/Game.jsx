@@ -542,7 +542,8 @@ export default function Game() {
                 if (isS6OrLater) {
                     goldScoreContribution = 0;
                 } else {
-                    const goldScoreCap = killsForScore * 150;
+                    // S5 gold cap raised to 250g/kill (mirror saveScore.js).
+                    const goldScoreCap = killsForScore * 250;
                     goldScoreContribution = Math.min(goldForScore, goldScoreCap) * 2;
                 }
                 // Mid-S5 hotfix v3 (2026-05-07): kills ×30, level² ×10. Mirrors saveScore.js.

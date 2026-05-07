@@ -177,7 +177,10 @@ function validateAndRecompute(scoreData) {
     if (isS6OrLater) {
         goldScoreContribution = 0;
     } else {
-        const goldScoreCap = kills * 150;
+        // S5 gold cap: 250g/kill (was 150 — too harsh on farm builds that built
+        // around the gold meta this whole season). Farmers can still hit ~900-950k
+        // on a peak run, victory runs still top at ~1.2M. Cap goes to 0 in S6.
+        const goldScoreCap = kills * 250;
         goldScoreContribution = Math.min(gold, goldScoreCap) * 2;
     }
     // Mid-S5 hotfix v3 (2026-05-07, target: sector 10 victory ≈ 1.0–1.2M):
