@@ -71,10 +71,24 @@ export default function WarpMenu({ currentIndex, onWarp, currentLabel }) {
     }, [open]);
 
     // Check admin status once on mount — silently fails for non-admins (403).
+    // Caches the result in sessionStorage so subsequent page loads in the same
+    // tab show the Staff section instantly without re-pinging the server.
     useEffect(() => {
+        // Fast path: trust this-tab cache.
+        if (sessionStorage.getItem('warp_is_admin') === '1') {
+            setIsAdmin(true);
+            return;
+        }
         let cancelled = false;
-        base44.functions.invoke('getAdminData', { type: 'adminWallets' })
-            .then(res => { if (!cancelled && !res.data?.error) setIsAdmin(true); })
+        // Lightweight boolean check (no 200-row admin list fetch).
+        base44.functions.invoke('getAdminData', { type: 'isAdmin' })
+            .then(res => {
+                if (cancelled) return;
+                if (res.data?.isAdmin) {
+                    setIsAdmin(true);
+                    try { sessionStorage.setItem('warp_is_admin', '1'); } catch {}
+                }
+            })
             .catch(() => {});
         return () => { cancelled = true; };
     }, []);

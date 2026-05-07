@@ -57,6 +57,12 @@ Deno.serve(async (req) => {
             const records = await base44.asServiceRole.entities.AdminWallet.list('-created_date', 200);
             return Response.json({ records });
         }
+        // Tiny boolean check — used by WarpMenu on every page load to decide if
+        // it should show the Staff section. Skips the heavy 200-row list fetch
+        // (the AdminWallet lookup at line 27 already proved admin status).
+        if (type === 'isAdmin') {
+            return Response.json({ isAdmin: true, permissions: perms });
+        }
         // Staff-safe: any admin can see their own projected weekly OMENX income
         // (the current week's total_spent + the live staff pct). Does NOT expose
         // logs, payouts, or all-time totals.
