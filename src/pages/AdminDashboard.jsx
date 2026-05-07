@@ -46,6 +46,7 @@ import AdminStaffPayoutConfig from '../components/admin/AdminStaffPayoutConfig';
 import AdminStaffPayoutOverrides from '../components/admin/AdminStaffPayoutOverrides';
 import AdminBalance from '../components/admin/AdminBalance';
 import AdminCleanupTopScores from '../components/admin/AdminCleanupTopScores';
+import AdminS6ScorePreview from '../components/admin/AdminS6ScorePreview';
 
 const TAB_GROUPS = [
     {
@@ -56,6 +57,7 @@ const TAB_GROUPS = [
             { id: 'balance',     label: '⚖️ Balance',        icon: BarChart3, perm: 'view_data' },
             { id: 'health',      label: '🩺 Health',        icon: BarChart3, perm: 'view_data' },
             { id: 'leaderboard', label: 'Leaderboard',      icon: Trophy,    perm: 'view_data' },
+            { id: 's6_preview',  label: '📈 S6 Preview',    icon: Trophy,    perm: 'view_data' },
             { id: 'squads',      label: 'Squads',           icon: Shield,    perm: 'view_data' },
             { id: 'economy',     label: 'Economy',          icon: Coins,     perm: 'view_finance' },
             { id: 'changelog',   label: '📋 Audit Log',     icon: Database,  perm: 'view_data' },
@@ -263,6 +265,7 @@ export default function AdminDashboard() {
             case 'balance':     return <AdminBalance walletAddress={adminWallet} />;
             case 'health':      return <AdminHealthCheck walletAddress={adminWallet} />;
             case 'leaderboard': return <AdminLeaderboard walletAddress={adminWallet} />;
+            case 's6_preview':  return <AdminS6ScorePreview walletAddress={adminWallet} />;
             case 'players':     return (
                 <div className="space-y-4">
                     <AdminPlayers walletAddress={adminWallet} />
