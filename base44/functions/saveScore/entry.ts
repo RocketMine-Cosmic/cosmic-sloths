@@ -627,6 +627,11 @@ Deno.serve(async (req) => {
             time_survived: validation.time,
             level: validation.level,
             kills: validation.kills,
+            // Gold tracking — `earned` is the raw client-reported value, `credited`
+            // is what we actually applied to PlayerSave (may be lower for endless caps).
+            // Lets the Gold Audit admin tool show per-run gold history.
+            gold_earned: validation.gold,
+            gold_credited: validation.goldForLedger,
             character_id: charId,
             arena_id: scoreData.arena_id,
             week_id,

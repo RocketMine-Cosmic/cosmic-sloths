@@ -80,7 +80,9 @@ Deno.serve(async (req) => {
             playerName: save?.player_name || saveData?.player_name || saveData?.pilotName || null,
             recentRuns: scores.slice(0, 20).map(s => ({
                 created: s.created_date, score: s.score, kills: s.kills,
-                level: s.level, time: s.time_survived, arena: s.arena_id
+                level: s.level, time: s.time_survived, arena: s.arena_id,
+                gold_earned: s.gold_earned ?? null,
+                gold_credited: s.gold_credited ?? null,
             })),
             recentOmenxSpends: spends.slice(0, 20).map(s => ({
                 created: s.created_date, amount: s.amount, week: s.week_id

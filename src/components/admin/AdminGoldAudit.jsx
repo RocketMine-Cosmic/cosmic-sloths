@@ -198,20 +198,34 @@ export default function AdminGoldAudit() {
                                             <th className="text-right p-2">Kills</th>
                                             <th className="text-right p-2">Lvl</th>
                                             <th className="text-right p-2">Time</th>
+                                            <th className="text-right p-2" title="Raw gold the client reported">Earned</th>
+                                            <th className="text-right p-2" title="Gold actually credited after server caps">Credited</th>
                                             <th className="text-left p-2">Arena</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {audit.recentRuns.map((r, i) => (
-                                            <tr key={i} className="border-t border-slate-800/60">
-                                                <td className="p-2 text-slate-500">{utcRelativeTime(r.created)}</td>
-                                                <td className="p-2 text-right text-cyan-400 font-mono">{r.score?.toLocaleString()}</td>
-                                                <td className="p-2 text-right text-slate-300 font-mono">{r.kills}</td>
-                                                <td className="p-2 text-right text-slate-300 font-mono">{r.level}</td>
-                                                <td className="p-2 text-right text-slate-300 font-mono">{r.time}s</td>
-                                                <td className="p-2 text-slate-400">{arenaLabel(r.arena)}</td>
-                                            </tr>
-                                        ))}
+                                        {audit.recentRuns.map((r, i) => {
+                                            const earned = r.gold_earned;
+                                            const credited = r.gold_credited;
+                                            const capped = earned != null && credited != null && credited < earned;
+                                            return (
+                                                <tr key={i} className="border-t border-slate-800/60">
+                                                    <td className="p-2 text-slate-500">{utcRelativeTime(r.created)}</td>
+                                                    <td className="p-2 text-right text-cyan-400 font-mono">{r.score?.toLocaleString()}</td>
+                                                    <td className="p-2 text-right text-slate-300 font-mono">{r.kills}</td>
+                                                    <td className="p-2 text-right text-slate-300 font-mono">{r.level}</td>
+                                                    <td className="p-2 text-right text-slate-300 font-mono">{r.time}s</td>
+                                                    <td className="p-2 text-right text-yellow-400 font-mono">
+                                                        {earned != null ? earned.toLocaleString() : <span className="text-slate-600">—</span>}
+                                                    </td>
+                                                    <td className={`p-2 text-right font-mono ${capped ? 'text-red-400' : 'text-yellow-300'}`} title={capped ? 'Capped — credited less than earned' : ''}>
+                                                        {credited != null ? credited.toLocaleString() : <span className="text-slate-600">—</span>}
+                                                        {capped && <span className="ml-1 text-[9px]">⚠</span>}
+                                                    </td>
+                                                    <td className="p-2 text-slate-400">{arenaLabel(r.arena)}</td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

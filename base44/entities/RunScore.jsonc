@@ -50,6 +50,14 @@
       "type": "number",
       "description": "Enemies defeated"
     },
+    "gold_earned": {
+      "type": "number",
+      "description": "Raw gold the client reported for this run (pre-cap)"
+    },
+    "gold_credited": {
+      "type": "number",
+      "description": "Gold actually credited to PlayerSave after server caps"
+    },
     "character_id": {
       "type": "string",
       "description": "Character used"
