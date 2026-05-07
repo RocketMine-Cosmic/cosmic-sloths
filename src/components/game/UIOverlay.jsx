@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Pause, Heart, CircleDollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import { isS6OrLater } from '@/lib/seasonGate';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -42,18 +43,25 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
         return `${m}:${sec.toString().padStart(2, '0')}`;
     };
 
-    // In endless mode, gold credited to the wallet is capped by playtime (see saveScore.js).
-    // The HUD must show what the player will ACTUALLY get, not the raw earned amount.
+    // S6+ removes endless gold caps AND the non-endless gold-per-kill rejection cap
+    // entirely (see functions/saveScore.js — !isS6OrLater gates around both checks).
+    // The HUD must mirror that, otherwise S6 players see "MAX"/"OVER" badges that
+    // never trigger any actual server clamping. Pre-S6 keeps the legacy display.
+    const _isS6 = isS6OrLater();
     const isEndless = duration === Infinity;
-    const endlessCap = isEndless ? computeEndlessGoldCap(time) : Infinity;
-    const displayGold = isEndless ? Math.min(gold, endlessCap) : gold;
-    const goldCapped = isEndless && gold >= endlessCap;
+    const endlessCap = (!_isS6 && isEndless) ? computeEndlessGoldCap(time) : Infinity;
+    const displayGold = (!_isS6 && isEndless) ? Math.min(gold, endlessCap) : gold;
+    const goldCapped = !_isS6 && isEndless && gold >= endlessCap;
 
     // Non-endless rejection warning: server rejects runs where gold > 50k + (kills × 2000).
     // Show a warning badge when the player is within 10% of the limit so they know
     // before the run ends. Endless has its own MAX badge above; this is for normal sectors.
-    const nonEndlessGoldCap = !isEndless ? 50000 + (kills * 2000) : Infinity;
-    const goldOverLimit = !isEndless && gold > nonEndlessGoldCap * 0.9;
+    // S6+: server no longer rejects on this rule, so suppress the badge entirely.
+    const nonEndlessGoldCap = (!_isS6 && !isEndless) ? 50000 + (kills * 2000) : Infinity;
+    const goldOverLimit = !_isS6 && !isEndless && gold > nonEndlessGoldCap * 0.9;
+    // Kills cap badge — same story. S6 server no longer caps kills, so the
+    // "MAX" pip on the kills tile would be a lie. Pass-through prop only matters on S5.
+    const showKillsCapped = !_isS6 && killsCapped;
 
     return (
         <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
@@ -127,7 +135,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     </div>
                     <div className="text-[9px] md:text-xs font-bold text-red-300 font-mono mt-0.5 flex items-center justify-center gap-1" title="Enemies defeated this run (endless mode caps credited kills)">
                         <span>KILLS: {kills.toLocaleString()}</span>
-                        {killsCapped && <span className="text-[7px] md:text-[9px] bg-red-500/20 text-red-300 px-1 rounded border border-red-500/40">MAX</span>}
+                        {showKillsCapped && <span className="text-[7px] md:text-[9px] bg-red-500/20 text-red-300 px-1 rounded border border-red-500/40">MAX</span>}
                     </div>
 
                     {boss && boss.maxHp > 0 && (

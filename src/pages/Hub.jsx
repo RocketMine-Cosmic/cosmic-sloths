@@ -10,6 +10,7 @@ import { useCurrency } from '@/lib/CurrencyContext';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
+import { isS6OrLater } from '@/lib/seasonGate';
 import BountiesPanel from '../components/game/BountiesPanel';
 import BuildSummary from '../components/game/BuildSummary';
 import { Skull, Crosshair, Zap, Shield, Star } from 'lucide-react';
@@ -770,7 +771,7 @@ export default function Hub({ isCarousel }) {
                                                 </button>
                                                 {canLaunch && (
                                                     <div className="text-[8px] md:text-[10px] text-fuchsia-300/70 text-center tracking-wider uppercase font-bold leading-tight hidden md:block">
-                                                        Score & Mastery — Gold capped (~720/min, 10k max)
+                                                        {isS6OrLater() ? 'Score, Mastery & Uncapped Rewards' : 'Score & Mastery — Gold capped (~720/min, 10k max)'}
                                                     </div>
                                                 )}
                                             </div>

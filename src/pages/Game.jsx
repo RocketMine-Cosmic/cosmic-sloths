@@ -526,7 +526,11 @@ export default function Game() {
                 const killsForScore = engine.kills; // RAW for score formula
                 const goldForScore = engine.gold;   // RAW for score formula
                 let killsForDisplay = engine.kills;
-                if (isEndlessHud) {
+                // S5 only: clamp displayed kills to the server's endless ledger cap so
+                // the HUD shows what'll actually be banked. S6 removed the cap entirely
+                // — display the raw value (matches the no-MAX-pip behavior in UIOverlay).
+                const _hudIsS5 = getCurrentPeriodIds().season_id === '2026-S5';
+                if (_hudIsS5 && isEndlessHud) {
                     const t = engine.time || 0;
                     killsForDisplay = Math.min(engine.kills, Math.min(6000, Math.max(600, Math.floor(t * 4))));
                 }
@@ -582,7 +586,8 @@ export default function Game() {
                     // Display the capped (wallet-credited) kill count — score formula
                     // uses RAW kills above; this tile shows what gets banked.
                     kills: killsForDisplay || 0,
-                    killsCapped: isEndlessHud && engine.kills > killsForDisplay,
+                    // S5 only — S6 server doesn't cap kills, so suppress the badge trigger.
+                    killsCapped: _hudIsS5 && isEndlessHud && engine.kills > killsForDisplay,
                     totalDamage: Math.floor(engine.totalDamageDealt || 0),
                     xpBuffActive: !!engine.player?.xpBuffActive,
                     xpBuffExpiry: engine.xpBuffExpiry || 0,
