@@ -104,8 +104,7 @@ Deno.serve(async (req) => {
         // Switched to single-grant endpoint (POST /v1/game-rewards/grant) for solo
         // refunds — batch endpoint was hanging the gateway on 1-payment requests
         // (Tijckers 2026-05-07, returned 504 with no way to tell if it processed).
-        // Single-grant has a lighter pipeline and amount is sent in wei (18 decimals).
-        const amountWei = (BigInt(refundAmount) * 1000000000000000000n).toString();
+        // Single-grant has a lighter pipeline.
         const sendOnce = async () => {
             const ctrl = new AbortController();
             const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -115,7 +114,7 @@ Deno.serve(async (req) => {
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                     body: JSON.stringify({
                         walletAddress: target,
-                        amount: amountWei,
+                        amount: String(refundAmount),
                         gameId: GAME_ID,
                         gameName: GAME_NAME,
                         metadata: {
