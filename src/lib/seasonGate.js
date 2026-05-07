@@ -1,6 +1,6 @@
 // Single source of truth for "are we on S6 or later?" — used by client-side
 // gameplay code to switch between S5 (legacy) and S6+ (rebalanced) behaviour
-// at the W20→W21 rollover (Mon May 25 2026 00:00 UTC). MUST agree with the
+// at the W20→W21 rollover (Mon May 18 2026 00:00 UTC). MUST agree with the
 // server-side check in functions/saveScore.js (`runSeasonId !== '2026-S5'`).
 //
 // Used by: GameEngine.js, PickupSystem.js, pages/Game.js (HUD score mirror).

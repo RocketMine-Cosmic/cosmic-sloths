@@ -1,6 +1,6 @@
 # S6 Score Formula — Design Doc
 
-**Author:** Base44  •  **Date:** 2026-05-06  •  **Target:** Season 6 (Mon May 25 2026 00:00 UTC)
+**Author:** Base44  •  **Date:** 2026-05-06  •  **Target:** Season 6 (Mon May 18 2026 00:00 UTC)
 
 ---
 
@@ -254,7 +254,7 @@ const SCORE_HARD_CEILING = 2_500_000;  // keep S5 ceiling — leaves headroom on
 ## 6. Migration plan
 
 1. **Pre-S6 (this week):** Lock in formula choice. I'll prepare the `validateAndRecompute()` patch but gate it on `season_id !== '2026-S5'` exactly like the current gold-removal gate.
-2. **S6 launch (May 25 00:00 UTC):** Formula auto-flips. Old S5 leaderboard preserved as-is (immutable history).
+2. **S6 launch (May 18 00:00 UTC):** Formula auto-flips. Old S5 leaderboard preserved as-is (immutable history).
 3. **S6 week 1:** Monitor top-10 daily. If a single player/build dominates, hotfix the relevant term.
 4. **S6 week 2:** Publish a "scoring explained" tooltip in-game so players understand why their score is what it is.
 

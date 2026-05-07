@@ -232,7 +232,7 @@ function validateAndRecompute(scoreData) {
         score = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore));
     } else {
         // ====================================================================
-        // S5 SCORE FORMULA (legacy — frozen until 2026-05-25 W21 rollover)
+        // S5 SCORE FORMULA (legacy — frozen until 2026-05-18 W21 rollover)
         // ====================================================================
         const arenaMult = getArenaMultiplier(scoreData.arena_id);
         // S5 gold cap: 200g/kill × 1.5 multiplier.

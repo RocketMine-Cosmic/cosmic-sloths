@@ -1,6 +1,6 @@
 # S6 Master Plan — Cap-Free, Skill-First, Gold-Balanced
 
-**Author:** Base44  •  **Date:** 2026-05-07  •  **Target:** Season 6 (starts Mon May 25 2026 00:00 UTC)
+**Author:** Base44  •  **Date:** 2026-05-07  •  **Target:** Season 6 (starts Mon May 18 2026 00:00 UTC)
 
 This doc is the **unified plan** that pulls together the three S6 design docs:
 - `S6_SCORE_FORMULA.md` — the new score formula (Option A, scaled to ~1M peak)
@@ -80,7 +80,7 @@ So a whale finishes the entire economy in **week 1**. After that they have nothi
 
 Replaces the "minimum viable" recommendation in `S6_BALANCE_AUDIT.md` §4. With cap removal in scope, we need the full balance package, not the minimum.
 
-### Ship by May 25 (S6 launch)
+### Ship by May 18 (S6 launch)
 
 **Score & validation:**
 - ✅ Option A score formula (scaled — ~1M peak Sector 10 victory)
@@ -271,7 +271,7 @@ Order of implementation (each blocks the next):
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Total estimated work:** ~10 dev-days. Tight but achievable by May 25.
+**Total estimated work:** ~10 dev-days. Tight but achievable by May 18.
 
 ---
 
@@ -305,7 +305,7 @@ If any metric drifts, hotfix the *specific* lever (no need to revert the whole p
 3. **Forge lottery** — ✅ 60% T1 / 30% T2 / 10% T3 drop weights approved.
 4. **Squad treasury buffs** — ✅ **Buffs last 1 full week (= one war cycle).** Donations made during week N apply to all of week N+1's wars and run gold drops, then expire and reset.
 5. **Existing gold piles** — ✅ **Grandfathered in.** Players keep every gold piece earned in S5. They earned it; we don't claw it back. (Whales who stockpiled early just get a head-start on prestige relics, which is fine — the sinks are deep enough to absorb it.)
-6. **Sink rollout pace** — ✅ **All three sinks ship simultaneously at S6 launch (May 25).** No staggered rollout — players need the full sink package available from day 1 so the cap-removal doesn't outpace the absorption capacity.
+6. **Sink rollout pace** — ✅ **All three sinks ship simultaneously at S6 launch (May 18).** No staggered rollout — players need the full sink package available from day 1 so the cap-removal doesn't outpace the absorption capacity.
 
 All open decisions resolved. Ready for Phase 1 implementation.
 

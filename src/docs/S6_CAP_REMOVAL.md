@@ -1,6 +1,6 @@
 # S6 Cap Removal — Design Doc
 
-**Author:** Base44  •  **Date:** 2026-05-07  •  **Target:** Season 6 (starts Mon May 25 2026 00:00 UTC)
+**Author:** Base44  •  **Date:** 2026-05-07  •  **Target:** Season 6 (starts Mon May 18 2026 00:00 UTC)
 
 ---
 
@@ -210,7 +210,7 @@ When you say "ship S6 cap removal", these files change:
 ## 6. Migration plan
 
 1. **Pre-S6 (this week):** Lock in cap-removal scope. I'll prepare the patch to `saveScore.js` + the 5 client files, gated on `season_id !== '2026-S5'` (same gate as gold-removal).
-2. **S6 launch (May 25 00:00 UTC):** Caps auto-flip off. Old S5 runs untouched.
+2. **S6 launch (May 18 00:00 UTC):** Caps auto-flip off. Old S5 runs untouched.
 3. **S6 week 1:** Monitor admin dashboard for outlier runs. The score formula is the safety net — if a player posts a 5M score it'll be obvious in `AdminSuspiciousRuns`.
 4. **S6 week 2:** Remove the now-dead cap constants entirely (currently they'd still exist in `saveScore.js` even though un-used inside the S6 branch). Final cleanup pass.
 
