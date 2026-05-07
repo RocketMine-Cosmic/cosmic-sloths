@@ -8,6 +8,7 @@ import { getCurrentPeriodIds } from '../../lib/periodIds';
 import { useIsIdle } from '@/hooks/useIsIdle';
 import { getTitleStyle } from '@/lib/playerTitles';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
+import LeaderboardPoolBanner from './LeaderboardPoolBanner';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -358,6 +359,14 @@ export default function Leaderboard() {
 
             <div className="flex-1 bg-[#0b0416]/40 rounded-xl overflow-hidden border-0 flex flex-col">
                 <div className="flex-1 overflow-y-auto p-2 md:p-4">
+                    {(view === 'weekly' || view === 'seasonal') && (
+                        <LeaderboardPoolBanner
+                            view={view}
+                            periodId={view === 'weekly' ? week_id : season_id}
+                            totalSpent={currentPool}
+                            timeLeft={timeLeft}
+                        />
+                    )}
                     <div className="space-y-3">
                     {loading ? (
                         <div className="flex justify-center items-center h-32">
