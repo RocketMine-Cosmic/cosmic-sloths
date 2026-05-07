@@ -14,11 +14,11 @@ Edit freely — these are drafts. No specific player names referenced.
 🌌 **SEASON 6: THE GREAT REBALANCE**
 Goes live **Monday, May 25 • 00:00 UTC**
 
-After watching the leaderboard get dominated by 30+ minute endless grinds, we're shipping the biggest scoring change since launch.
+The biggest scoring change since launch is here. Sector runs are now the **undisputed path to leaderboard rewards** — and the leaderboard is what pays out OMENX.
 
 **TL;DR:**
-🎯 Skill > grind
-💰 Gold flows freer
+🎯 Sector clears = top scores = OMENX rewards
+💰 Gold caps removed
 🛒 New things to spend it on
 
 Full breakdown across the next few posts. Read them all before S6 drops — a lot is changing. ⬇️
@@ -33,26 +33,25 @@ GLHF, pilots. 🚀
 ## 📢 POST 2 — New Score Formula
 
 ```
-⚖️ **NEW SCORE FORMULA**
+⚖️ **NEW SCORE FORMULA — SECTORS RULE**
 
-The old formula rewarded **how long you survived**.
-The new one rewards **how deep you push**.
+Sector runs are what reward OMENX. The new formula makes sure sector clears are also what tops the leaderboard.
 
 **What changes:**
-🎯 Sector victories are now the #1 path to top scores
-⏱️ Endless mode is **time-capped** (~10k score per minute)
+🏆 Sector victories are now the **#1 path to top scores** — multiplier scales with depth (Sector 10 victory ≈ 1M score peak)
+🎯 Sector clears reward **progression**, not just survival time
 💰 Gold no longer counts toward score *at all*
-🏆 Sector multiplier scales with depth (Sector 10 victory ≈ 1M score peak)
+⏱️ Endless mode still works for fun, mastery & farming — but is no longer the leaderboard meta
 
-**Before vs After (real W19 data):**
+**The shift:**
 ```
-33-min Endless:    2,500,000  →    330,000
-Sector 10 Victory:   270,000  →  1,000,000
+Old meta:  grind a long endless run for raw score
+New meta:  push deeper into sectors, clear them, win
 ```
 
-Same skill. Same player. Score now rewards **progression**, not **duration**. 🚀
+If you want OMENX rewards, you want sector wins. The score formula now reflects that. 🚀
 
-The leaderboard composition will shift — endless-grind specialists drop, sector-clearers rise. That's the goal.
+Endless remains a great mastery/gold farm — just don't expect it to top the rewards leaderboard anymore.
 ```
 
 ---
@@ -62,28 +61,26 @@ The leaderboard composition will shift — endless-grind specialists drop, secto
 ```
 🪙 **GOLD CAPS REMOVED**
 
+Sector runs now mint gold freely with no per-run ceiling. Cosmic Sector 10 clears finally pay what they should.
+
 **Goodbye to:**
-❌ "GOLD CAPPED" warning
-❌ 10,000 gold endless ceiling
-❌ 30-fragment per-run cap
+❌ "GOLD CAPPED" warning mid-run
+❌ Hard fragment cap per run
 ❌ HUD vs server score mismatches
 
-**Hello to free-flowing gold... with one twist:** ⬇️
-
-🌅 **Endless Time-Decay**
-The longer your endless run, the less each gold pickup is worth:
+**For endless farming specifically:**
+Gold drops naturally taper after 10 minutes to discourage AFK runs:
 
 ```
 0–10 min:   1.0× (full value)
 15 min:     0.83×
 25 min:     0.50×
-40 min+:    0.25× (floor)
+40 min+:    0.25× (floor — never zero)
 ```
 
-Skilled long runs still pay out.
-4-hour AFK farms? Not anymore. 🛌❌
+Sector runs are unaffected by this curve — they always pay full value.
 
-This replaces hard caps with a smooth curve — gold just naturally tapers, no surprise warnings.
+Skilled long endless runs still earn. 4-hour AFK farms don't. 🛌❌
 ```
 
 ---
@@ -248,7 +245,7 @@ GLHF. See you in Season 6. 🚀🌌
 ```
 🌌 **S6 launches May 25 • 00:00 UTC**
 
-⚖️ Score = depth, not duration
+🏆 Sector clears = top scores = OMENX rewards
 🪙 Gold caps removed
 💎 Prestige Relics (new sink)
 🎰 Mystery Forge (new sink)
