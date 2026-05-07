@@ -183,24 +183,22 @@ function validateAndRecompute(scoreData) {
         const goldScoreCap = kills * 200;
         goldScoreContribution = Math.min(gold, goldScoreCap) * 1.5;
     }
-    // Mid-S5 hotfix v3 (2026-05-07, target: sector 10 victory ≈ 1.0–1.2M):
-    //  • kills: ×10 → ×30 (skill weight tripled)
-    //  • level: ×100 linear → level² × 10 (quadratic — lvl 40 = 16k vs lvl 20 = 4k,
-    //    so reaching the late game matters way more than grinding low levels)
-    //  • victory bonus: flat 5k → 25,000 + sectorIdx × 35,000
-    //    sector 1 victory = 25k bonus, sector 10 victory = 340k bonus.
-    //    The whole point of leaderboards is rewarding sector progression and the
-    //    final boss kill — old flat 5k bonus meant "earn lots of gold" outweighed
-    //    "beat the final boss", which was backwards.
-    // Net peak (1000k, lvl 42, 9min, sector 10 victory): ~1.22M
-    // Anubis-style (700k, lvl 34, 7:23, sector 10 victory): ~1.13M
-    // Tijckers-style farm (800k, lvl 28, no victory, gold-capped): ~218k (was 1.36M)
+    // Mid-S5 hotfix v4 (2026-05-07, after Texxy's "340k boss bonus too dominant" complaint):
+    //  • kills: ×30 → ×45 (skill weight bumped — should out-pace victory bonus)
+    //  • level: level² × 10 → level² × 15 (quadratic, late-game progression rewarded harder)
+    //  • victory bonus: 25k + sectorIdx × 35k → 20k + sectorIdx × 22k
+    //    (sector 10 victory = 218k — was 340k. Still meaningful, no longer dominant.)
+    // Goal: skill terms (kills + level + time + gold) ≈ victory bonus on a sector-10 run,
+    // so a *better-played* run actually scores higher than a barely-survived one.
+    // Net Texxy (789k, lvl 35, 7:09, 55k gold, sector 10 victory): ~1.0M (was 1.29M)
+    // Net Anubis (700k, lvl 34, 7:23, 14k gold, sector 10 victory): ~810k
+    // Net peak (1000k, lvl 42, 9min, 25k gold, sector 10 victory): ~920k
     // Existing S5 leaderboard entries are untouched (recalc applies to new runs only).
     const sectorIdxForBonus = scoreData.arena_id === 'endless' || scoreData.arena_id === 'world_boss_arena'
         ? 0
         : Math.max(0, ARENA_ORDER.indexOf(scoreData.arena_id));
-    const victoryBonus = isVictory ? (25000 + sectorIdxForBonus * 35000) : 0;
-    const baseScore = kills * 30 + level * level * 10 + time * 5 + goldScoreContribution + victoryBonus;
+    const victoryBonus = isVictory ? (20000 + sectorIdxForBonus * 22000) : 0;
+    const baseScore = kills * 45 + level * level * 15 + time * 5 + goldScoreContribution + victoryBonus;
     // Hard score ceiling — last-line backstop against any validator gap that lets
     // a tampered run slip through with absurd numbers (e.g. gold validator allows
     // 50k + kills × 2k, which on a 10k-kill run permits a 112M score). Realistic
