@@ -47,6 +47,7 @@ import AdminStaffPayoutOverrides from '../components/admin/AdminStaffPayoutOverr
 import AdminBalance from '../components/admin/AdminBalance';
 import AdminCleanupTopScores from '../components/admin/AdminCleanupTopScores';
 import AdminS6ScorePreview from '../components/admin/AdminS6ScorePreview';
+import AdminMaintenance from '../components/admin/AdminMaintenance';
 
 const TAB_GROUPS = [
     {
@@ -90,6 +91,7 @@ const TAB_GROUPS = [
             { id: 'raid',    label: 'Global Raid', icon: Skull, perm: 'manage_raid' },
             { id: 'rewards', label: 'Rewards',     icon: Gift,  perm: 'distribute_rewards' },
             { id: 'champions', label: '👑 Squad Champions', icon: Trophy, perm: 'distribute_rewards' },
+            { id: 'maintenance', label: '🔧 Maintenance', icon: AlertTriangle, perm: 'owner' },
             { id: 'skus',    label: 'SKUs',        icon: Gift,  perm: 'view_data' },
             { id: 'content', label: 'Content',     icon: Database, perm: 'view_data' },
         ],
@@ -281,6 +283,7 @@ export default function AdminDashboard() {
             case 'chat':        return <AdminSquadChatModeration walletAddress={adminWallet} />;
             case 'rewards':     return <AdminRewards walletAddress={adminWallet} />;
             case 'champions':   return <AdminSquadChampions walletAddress={adminWallet} />;
+            case 'maintenance': return <AdminMaintenance />;
             case 'skus':        return <AdminSkus walletAddress={adminWallet} />;
             case 'content':     return <AdminContent />;
             case 'duplicates':  return (
