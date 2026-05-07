@@ -39,9 +39,6 @@ export default function LeaderboardPoolBanner({ view, periodId, totalSpent, time
                     Distributes in: <span className={numColor}>{timeLeft}</span>
                 </div>
             )}
-            <p className={`text-[10px] ${subColor}/70 mt-2 leading-snug`}>
-                Pool grows in real time as players spend OMENX this {isWeekly ? 'week' : 'season'}. Top 45 ranked players share the pool. Paid directly to wallets at period end.
-            </p>
         </div>
     );
 }
