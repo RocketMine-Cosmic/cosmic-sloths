@@ -67,6 +67,10 @@ const ENDLESS_KILLS_FLOOR = 600;
 const ENDLESS_GOLD_HARD_CEILING = 10000;
 const ENDLESS_KILLS_HARD_CEILING = 6000;
 
+// Hard score ceiling — last-line backstop. Maxed legit S5/S6 sector 10 + endless
+// peaks land around 1M, so 2.5M leaves comfortable headroom for future content.
+const SCORE_HARD_CEILING = 2_500_000;
+
 // Arena progression — must mirror game/Constants.js ARENAS order EXACTLY.
 // Bug 2026-05-01 (Crybel): old order had stale ids ('voidring', 'singularity')
 // and was missing 5 arenas, so beating Ethereal Nebula / Crimson Void didn't unlock the next sector.
@@ -103,25 +107,32 @@ function getArenaMultiplier(arenaId) {
 }
 
 function validateAndRecompute(scoreData) {
+    const { week_id: _runWeek, season_id: runSeasonId } = getCurrentPeriodIds();
+    const isS6OrLater = runSeasonId !== '2026-S5';
+
+    // S6 Phase 1: time max raised from 60 → 120 min, eliminates the false-reject
+    // on legit 60+ min endless runs. S5 keeps the original 60 min cap.
+    const timeMax = isS6OrLater ? 2 * 60 * 60 : MAX_TIME_SEC;
+
     let time = Number(scoreData.time_survived) || 0;
     let kills = Number(scoreData.kills) || 0;
     const level = Number(scoreData.level) || 1;
     let gold = Number(scoreData.gold) || 0;
     let fragments = Math.max(0, Math.floor(Number(scoreData.fragments) || 0));
 
-    if (time < MIN_TIME_SEC || time > MAX_TIME_SEC) {
+    if (time < MIN_TIME_SEC || time > timeMax) {
         return { ok: false, reason: `time out of range: ${time}` };
     }
 
-    // Sector clamp: the engine's run timer keeps ticking past arena duration while
-    // the final boss is still alive (victory only fires on boss death). That tail
-    // was inflating time_survived (e.g. dimension recorded 535s instead of 450s),
-    // boosting score's time component AND letting gold/kills accrue past intended
-    // run end. Clamp to the arena's stated duration so leaderboards reflect runs
-    // that actually fit within the sector budget. Endless / raid are exempt.
-    const arenaDuration = ARENA_DURATIONS[scoreData.arena_id];
-    if (arenaDuration && time > arenaDuration) {
-        time = arenaDuration;
+    // Arena-duration clamp — S5 only. S6 removes it entirely (per S6_CAP_REMOVAL):
+    // the score formula no longer rewards `time * 5`, so a few seconds of post-boss
+    // tail can't inflate score, and the cap was confusing players whose recorded
+    // time didn't match what they saw on the run timer.
+    if (!isS6OrLater) {
+        const arenaDuration = ARENA_DURATIONS[scoreData.arena_id];
+        if (arenaDuration && time > arenaDuration) {
+            time = arenaDuration;
+        }
     }
     if (kills < 0 || kills > Math.ceil(time * MAX_KILLS_PER_SEC)) {
         return { ok: false, reason: `kills out of range: ${kills} for ${time}s` };
@@ -129,18 +140,15 @@ function validateAndRecompute(scoreData) {
     if (level < 1 || level > MAX_LEVEL) {
         return { ok: false, reason: `level out of range: ${level}` };
     }
-    // For endless AND raid: skip the per-kill gold sanity check.
-    // - Endless has its own hard ceiling (ENDLESS_GOLD_HARD_CEILING).
-    // - Raid runs are zeroed out below (no gold/kills credit), so the check is irrelevant.
-    // (Bug 2026-05-02: Texxy lost gold on early-quit endless runs.
-    //  Bug 2026-05-03: Mustard's raid runs were being rejected — pure boss-damage
-    //  runs with 0 kills but boss gold drops kept failing this check.)
     const isEndlessRun = scoreData.arena_id === 'endless';
     const isRaidRun = scoreData.arena_id === 'world_boss_arena';
     if (gold < 0) {
         return { ok: false, reason: `gold negative: ${gold}` };
     }
-    if (!isEndlessRun && !isRaidRun && gold > MAX_GOLD_BASELINE + (kills * MAX_GOLD_PER_KILL)) {
+    // Non-endless gold sanity rejection — S5 only. S6 drops the cap entirely
+    // (RLS already prevents client tampering of RunScore, and the score formula
+    // doesn't reward gold so there's no leaderboard exploit pathway).
+    if (!isS6OrLater && !isEndlessRun && !isRaidRun && gold > MAX_GOLD_BASELINE + (kills * MAX_GOLD_PER_KILL)) {
         return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills (cap=${MAX_GOLD_BASELINE + kills * MAX_GOLD_PER_KILL})` };
     }
 
@@ -150,20 +158,17 @@ function validateAndRecompute(scoreData) {
         gold = 0;
         kills = 0;
     }
-    // No upper "absurd" gold rejection for endless. Legitimate 25-min runs with
-    // stacked Synthbeats + VIP10 + mastery + augments + relic gold mult can produce
-    // 100k+ raw gold. The endless ledger cap below clamps to ENDLESS_GOLD_HARD_CEILING
-    // anyway, so the only effect of rejecting was deleting Texxy's longest runs
-    // (Texxy bug 2026-05-04 — 25-min run, raw gold=176385). Score still uses raw gold.
 
-    // Endless economy nerf: cap gold + kills credited from endless runs.
-    // Score uses uncapped values; ledger/aggregates use capped values.
+    // Endless ledger caps — S5 only. S6 removes them entirely (per S6_CAP_REMOVAL):
+    // the multiplier rebalance (L1/L2/L3) + new gold sinks (prestige relics, forge
+    // lottery, squad treasury) absorb the extra gold flow. HUD ↔ server now match
+    // exactly, so the "GOLD CAPPED" warnings disappear too.
     const isEndless = scoreData.arena_id === 'endless';
     let goldForLedger = gold;
     let killsForLedger = kills;
     let endlessGoldCapped = false;
     let endlessKillsCapped = false;
-    if (isEndless) {
+    if (!isS6OrLater && isEndless) {
         const goldCap = Math.min(ENDLESS_GOLD_HARD_CEILING, Math.max(ENDLESS_GOLD_FLOOR, Math.floor(time * ENDLESS_GOLD_PER_SEC)));
         const killsCap = Math.min(ENDLESS_KILLS_HARD_CEILING, Math.max(ENDLESS_KILLS_FLOOR, Math.floor(time * ENDLESS_KILLS_PER_SEC)));
         if (gold > goldCap) {
@@ -176,70 +181,72 @@ function validateAndRecompute(scoreData) {
         }
     }
 
-    // Cap relic fragments per-run by playtime (generic anti-tamper) and a hard
-    // ceiling for endless runs. Anything beyond is silently clamped (never reject
-    // the run — players have legitimately lost too many of these already).
-    const fragmentsTimeCap = Math.max(5, Math.ceil(time * MAX_FRAGMENTS_PER_SEC) + 2);
-    let fragmentsForLedger = Math.min(fragments, fragmentsTimeCap);
-    let fragmentsCapped = fragmentsForLedger < fragments;
-    if (isEndless && fragmentsForLedger > ENDLESS_FRAGMENTS_CAP_PER_RUN) {
-        fragmentsForLedger = ENDLESS_FRAGMENTS_CAP_PER_RUN;
-        fragmentsCapped = true;
+    // Fragment caps — S5 only. S6 removes both the per-second cap and the
+    // per-run endless ceiling (legit fragment drop rate is bounded by the
+    // PickupSystem's drop chance, which is itself anti-tamper).
+    let fragmentsForLedger = fragments;
+    let fragmentsCapped = false;
+    if (!isS6OrLater) {
+        const fragmentsTimeCap = Math.max(5, Math.ceil(time * MAX_FRAGMENTS_PER_SEC) + 2);
+        fragmentsForLedger = Math.min(fragments, fragmentsTimeCap);
+        fragmentsCapped = fragmentsForLedger < fragments;
+        if (isEndless && fragmentsForLedger > ENDLESS_FRAGMENTS_CAP_PER_RUN) {
+            fragmentsForLedger = ENDLESS_FRAGMENTS_CAP_PER_RUN;
+            fragmentsCapped = true;
+        }
     }
 
-    const arenaMult = getArenaMultiplier(scoreData.arena_id);
     const isVictory = !!scoreData.is_victory;
-    // Score formula — gold contribution capped relative to kills DURING S5,
-    // then DROPPED ENTIRELY from S6 onward (planned 2026-05-06).
-    // History: gold weight was ×5, then ×2 (2026-05-02), and gold cap raised to
-    // 50000+kills×2000 (very loose). Tijckers still hit 1.36M on a 7:35 sector 10
-    // run (231k gold × 2 = 95% of base score). Root cause: stacked goldMult
-    // (Synthbeats 1.5× + talents + relic + NFT + VIP + pool bias ≈ 4×) made
-    // gold-from-drops scale far faster than skill stats. Mid-S5 fix: cap gold's
-    // score contribution at 150g per kill. Permanent S6+ fix: remove gold from
-    // the score formula entirely so leaderboards reflect skill (kills/time/level/
-    // victory) only. Gold remains 100% an in-game economy currency for upgrades,
-    // cosmetics, and forge — just no longer pads leaderboard scores. Endless +
-    // raid already have their own caps, so the change effectively only matters
-    // in sectors. Auto-flips at the W20→W21 boundary (Mon May 25 2026 00:00 UTC).
-    const { week_id: _runWeek, season_id: runSeasonId } = getCurrentPeriodIds();
-    const isS6OrLater = runSeasonId !== '2026-S5';
-    let goldScoreContribution;
-    if (isS6OrLater) {
-        goldScoreContribution = 0;
-    } else {
-        // S5 gold cap: 200g/kill × 1.5 multiplier (was 250 × 2 — Texxy hit 1.5M
-        // farming, too high). Farm builds now cap ~750-900k (still respectable for
-        // the gold meta they invested in), victory runs still top ~1.2M. Cap → 0 in S6.
-        const goldScoreCap = kills * 200;
-        goldScoreContribution = Math.min(gold, goldScoreCap) * 1.5;
-    }
-    // Mid-S5 hotfix v5 (2026-05-07, target: sector 10 victory ≈ 800-900k):
-    //  • kills ×45, level² × 15 (unchanged — skill weight stays high)
-    //  • victory bonus: 20k + sectorIdx × 22k → 15k + sectorIdx × 16k
-    //    (sector 10 victory = 159k bonus — meaningful but not dominant)
-    // Net Texxy (789k, lvl 35, 7:09, 55k gold, sector 10 victory): ~836k ✅
-    // Net Anubis (700k, lvl 34, 7:23, 14k gold, sector 10 victory): ~647k
-    // Net peak (1000k, lvl 42, 9min, 25k gold, sector 10 victory): ~758k
-    // Net sector 1 victory (300k, lvl 18, 4min, 5k gold): ~42k
-    // Existing S5 leaderboard entries are untouched (recalc applies to new runs only).
-    const sectorIdxForBonus = scoreData.arena_id === 'endless' || scoreData.arena_id === 'world_boss_arena'
+    const sectorIdxForBonus = isEndless || isRaidRun
         ? 0
         : Math.max(0, ARENA_ORDER.indexOf(scoreData.arena_id));
-    const victoryBonus = isVictory ? (15000 + sectorIdxForBonus * 16000) : 0;
-    const baseScore = kills * 45 + level * level * 15 + time * 5 + goldScoreContribution + victoryBonus;
-    // Hard score ceiling — last-line backstop against any validator gap that lets
-    // a tampered run slip through with absurd numbers (e.g. gold validator allows
-    // 50k + kills × 2k, which on a 10k-kill run permits a 112M score). Realistic
-    // maxed legit run on sector 10 victory peaks at ~1.4M, so 2.5M leaves
-    // comfortable headroom for future content (more sectors, harder difficulties).
-    const SCORE_HARD_CEILING = 2_500_000;
-    const score = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore * arenaMult));
+
+    let score;
+    if (isS6OrLater) {
+        // ====================================================================
+        // S6 SCORE FORMULA — Option A (player-anchor scaled, ~1M peak)
+        // Per docs/S6_SCORE_FORMULA.md §5 (locked 2026-05-07).
+        //
+        //   killsScore  = kills × 120
+        //   levelScore  = level² × 100
+        //   sectorScore = sectorIdx × 8000   (sectors only)
+        //   victoryBonus = sectorIdx × 15000 (sectors only, on victory)
+        //   endlessScore = floor(time / 60) × 10000  (endless only)
+        //
+        // No gold contribution. No arena multiplier (sector progression is the
+        // multiplier, baked into sectorScore + victoryBonus). No difficulty
+        // multiplier in Phase 1 — client doesn't ship difficulty yet, plumbing
+        // can be added later if needed (Cosmic players still earn more naturally
+        // via more kills / higher level from harder enemies).
+        //
+        // Projected peaks (no difficultyMult): Sector 10 victory ~430k, long
+        // endless 25-min ~550k, raw kills/level potential up to ~1M. Comfortably
+        // under the 2.5M ceiling.
+        // ====================================================================
+        const killsScore = kills * 120;
+        const levelScore = level * level * 100;
+        const sectorScore = (isEndless || isRaidRun) ? 0 : sectorIdxForBonus * 8000;
+        const victoryBonus = (isVictory && !isEndless && !isRaidRun) ? sectorIdxForBonus * 15000 : 0;
+        const endlessScore = isEndless ? Math.floor(time / 60) * 10000 : 0;
+        const baseScore = killsScore + levelScore + sectorScore + victoryBonus + endlessScore;
+        score = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore));
+    } else {
+        // ====================================================================
+        // S5 SCORE FORMULA (legacy — frozen until 2026-05-25 W21 rollover)
+        // ====================================================================
+        const arenaMult = getArenaMultiplier(scoreData.arena_id);
+        // S5 gold cap: 200g/kill × 1.5 multiplier.
+        const goldScoreCap = kills * 200;
+        const goldScoreContribution = Math.min(gold, goldScoreCap) * 1.5;
+        const victoryBonus = isVictory ? (15000 + sectorIdxForBonus * 16000) : 0;
+        const baseScore = kills * 45 + level * level * 15 + time * 5 + goldScoreContribution + victoryBonus;
+        score = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore * arenaMult));
+    }
 
     return {
         ok: true, score,
         kills, time, level, gold, fragments, // raw values (for score / leaderboard display)
-        goldForLedger, killsForLedger, fragmentsForLedger, // capped values (for PlayerSave aggregation)
+        goldForLedger, killsForLedger, fragmentsForLedger, // ledger values (= raw in S6)
         endlessGoldCapped, endlessKillsCapped, fragmentsCapped, isEndless
     };
 }
