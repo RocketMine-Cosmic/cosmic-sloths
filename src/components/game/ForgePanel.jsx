@@ -5,6 +5,7 @@ import { SoundManager } from '../../game/SoundManager';
 import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star, Coins, Hexagon } from 'lucide-react';
 import { useCurrency } from '@/lib/CurrencyContext';
+import MysteryForgeCard from './MysteryForgeCard';
 
 const GOLD_PER_FRAGMENT = 10000;
 const DAILY_CONVERT_CAP = 30; // max fragments from conversion per day
@@ -308,6 +309,12 @@ export default function ForgePanel({ save, setSave }) {
                             <li>🌟 Augments carry over forever — they never reset with weekly/seasonal upgrades</li>
                         </ul>
                     </div>
+
+                    {/* S6 Phase 3b — Mystery Forge gold sink. Component handles its own
+                        S5/S6 gating + roll UI. Slotted here so it lives alongside the
+                        existing Convert flow (related "spend gold for forge progress"
+                        action). */}
+                    <MysteryForgeCard save={save} setSave={setSave} />
                 </div>
             )}
 

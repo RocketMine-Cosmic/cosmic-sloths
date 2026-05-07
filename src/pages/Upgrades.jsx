@@ -21,6 +21,7 @@ import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import ForgePanel from '../components/game/ForgePanel';
 import TalentRespecModal from '../components/game/TalentRespecModal';
+import RelicPrestigeBadge from '../components/game/RelicPrestigeBadge';
 import StatPips, { SmallStatPips } from '../components/game/StatPips';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
@@ -1055,6 +1056,8 @@ export default function Upgrades({ isCarousel }) {
                                             MAXIMUM LEVEL REACHED
                                         </div>
                                     )}
+                                    {/* S6 Phase 3a — Prestige (only renders for L5 relics; auto-hides otherwise). */}
+                                    <RelicPrestigeBadge relic={relic} save={save} setSave={setSave} />
                                 </div>
                             </div>
                         )
