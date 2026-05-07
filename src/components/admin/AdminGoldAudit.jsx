@@ -4,6 +4,20 @@ import { Coins, AlertCircle, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import moment from 'moment';
 import PlayerSearchInput from './PlayerSearchInput';
 import ConfirmDialog from './ConfirmDialog';
+import { arenaLabel } from '@/lib/arenaLabels';
+
+// Render relative time using UTC as the reference clock.
+// Hugo's bug report: device clock skew was making the "When" column show
+// "in 4 hours" for runs that just happened. moment().fromNow() uses the
+// device's local Date.now(), so a misconfigured device produces nonsense.
+// Fix: compute the delta in UTC ms and clamp future timestamps to "just now".
+function utcRelativeTime(iso) {
+    if (!iso) return '—';
+    const t = moment.utc(iso);
+    const now = moment.utc();
+    if (t.isAfter(now)) return 'just now'; // clamp clock skew
+    return t.from(now);
+}
 
 // Admin tool: look up any player's gold history, see blocked sync attempts,
 // and refund gold in one click.
@@ -104,7 +118,7 @@ export default function AdminGoldAudit() {
                         <SummaryCell label="Total Kills" value={audit.currentTotalKills?.toLocaleString() || '0'} />
                         <SummaryCell
                             label="Last Sync"
-                            value={audit.lastSync ? moment(audit.lastSync).fromNow() : '—'}
+                            value={audit.lastSync ? utcRelativeTime(audit.lastSync) : '—'}
                             small
                         />
                     </div>
@@ -146,7 +160,7 @@ export default function AdminGoldAudit() {
                                     <tbody>
                                         {audit.blockedSyncs.map((b, i) => (
                                             <tr key={i} className="border-t border-slate-800/60">
-                                                <td className="p-2 text-slate-500 font-mono">{moment(b.created).fromNow()}</td>
+                                                <td className="p-2 text-slate-500 font-mono">{utcRelativeTime(b.created)}</td>
                                                 <td className="p-2 text-white font-bold">{b.field}</td>
                                                 <td className="p-2 text-right text-slate-300 font-mono">{b.client_value?.toLocaleString()}</td>
                                                 <td className="p-2 text-right text-slate-400 font-mono">{b.cloud_value?.toLocaleString()}</td>
@@ -190,12 +204,12 @@ export default function AdminGoldAudit() {
                                     <tbody>
                                         {audit.recentRuns.map((r, i) => (
                                             <tr key={i} className="border-t border-slate-800/60">
-                                                <td className="p-2 text-slate-500">{moment(r.created).fromNow()}</td>
+                                                <td className="p-2 text-slate-500">{utcRelativeTime(r.created)}</td>
                                                 <td className="p-2 text-right text-cyan-400 font-mono">{r.score?.toLocaleString()}</td>
                                                 <td className="p-2 text-right text-slate-300 font-mono">{r.kills}</td>
                                                 <td className="p-2 text-right text-slate-300 font-mono">{r.level}</td>
                                                 <td className="p-2 text-right text-slate-300 font-mono">{r.time}s</td>
-                                                <td className="p-2 text-slate-400">{r.arena}</td>
+                                                <td className="p-2 text-slate-400">{arenaLabel(r.arena)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
