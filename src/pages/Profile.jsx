@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { maskWallet } from '@/lib/maskWallet';
 import { getOmenXUser, updateOmenXUser } from '@/lib/omenxUser';
-import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon, BookOpen } from 'lucide-react';
+import { Pencil, Check, X, ArrowLeft, Trophy, Crosshair, Users, Gift, Hexagon, BookOpen, BarChart3 } from 'lucide-react';
 import EmojiPicker, { PILOT_ICONS } from '../components/game/EmojiPicker';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
@@ -415,6 +415,23 @@ export default function Profile({ isCarousel }) {
                                 No VIP level detected. Earn VIP status on OmenX to unlock in-game bonuses.
                             </div>
                         )}
+                    </div>
+
+                    {/* Build Stats — standalone deep-dive viewer */}
+                    <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-fuchsia-500/30 rounded-xl md:rounded-2xl p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-[0_0_30px_rgba(217,70,239,0.10)]">
+                        <div className="flex items-center gap-3">
+                            <BarChart3 className="w-5 h-5 text-fuchsia-400 shrink-0" />
+                            <div>
+                                <div className="font-bold text-white text-sm">Build Stats</div>
+                                <div className="text-xs text-slate-400">See how your upgrades, talents, mastery, relics, and forge augments stack — per character.</div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => { SoundManager.playUIClick(); navigate('/build'); }}
+                            className="bg-fuchsia-900/50 hover:bg-fuchsia-800/70 text-fuchsia-300 border border-fuchsia-700/60 px-3 py-1.5 rounded-lg font-bold text-xs transition-colors w-full sm:w-auto"
+                        >
+                            View Full Build →
+                        </button>
                     </div>
 
                     {/* Replay Welcome Tour */}
