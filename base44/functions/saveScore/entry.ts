@@ -62,6 +62,16 @@ const ENDLESS_KILLS_HARD_CEILING = 6000;
 // and was missing 5 arenas, so beating Ethereal Nebula / Crimson Void didn't unlock the next sector.
 const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension'];
 
+// Arena durations (seconds) — must mirror game/Constants.js ARENAS.duration EXACTLY.
+// Used to clamp time_survived on sector runs: the engine's `this.time` keeps ticking
+// past the arena duration while the final boss is still alive (victory only fires when
+// the boss dies). That post-duration tail was inflating time, gold accrual, and score.
+// Endless (Infinity) and raid (world_boss_arena) are not clamped — they have no duration.
+const ARENA_DURATIONS = {
+    station: 180, asteroid: 210, nebula: 240, void: 270, plasma: 300,
+    crystal: 330, moon: 360, blackhole: 390, mothership: 420, dimension: 450,
+};
+
 // Character unlock kill milestones — must mirror game/CharacterUnlocks.js.
 // 10 milestones to cover all 10 characters (1 starter at 0 + 9 unlockable).
 // Spacing keeps the early-game cadence (first unlock at 2k stays accessible to
@@ -83,7 +93,7 @@ function getArenaMultiplier(arenaId) {
 }
 
 function validateAndRecompute(scoreData) {
-    const time = Number(scoreData.time_survived) || 0;
+    let time = Number(scoreData.time_survived) || 0;
     let kills = Number(scoreData.kills) || 0;
     const level = Number(scoreData.level) || 1;
     let gold = Number(scoreData.gold) || 0;
@@ -91,6 +101,17 @@ function validateAndRecompute(scoreData) {
 
     if (time < MIN_TIME_SEC || time > MAX_TIME_SEC) {
         return { ok: false, reason: `time out of range: ${time}` };
+    }
+
+    // Sector clamp: the engine's run timer keeps ticking past arena duration while
+    // the final boss is still alive (victory only fires on boss death). That tail
+    // was inflating time_survived (e.g. dimension recorded 535s instead of 450s),
+    // boosting score's time component AND letting gold/kills accrue past intended
+    // run end. Clamp to the arena's stated duration so leaderboards reflect runs
+    // that actually fit within the sector budget. Endless / raid are exempt.
+    const arenaDuration = ARENA_DURATIONS[scoreData.arena_id];
+    if (arenaDuration && time > arenaDuration) {
+        time = arenaDuration;
     }
     if (kills < 0 || kills > Math.ceil(time * MAX_KILLS_PER_SEC)) {
         return { ok: false, reason: `kills out of range: ${kills} for ${time}s` };
