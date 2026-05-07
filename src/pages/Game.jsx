@@ -542,9 +542,9 @@ export default function Game() {
                 if (isS6OrLater) {
                     goldScoreContribution = 0;
                 } else {
-                    // S5 gold cap raised to 250g/kill (mirror saveScore.js).
-                    const goldScoreCap = killsForScore * 250;
-                    goldScoreContribution = Math.min(goldForScore, goldScoreCap) * 2;
+                    // S5 gold cap: 200g/kill × 1.5 (mirror saveScore.js).
+                    const goldScoreCap = killsForScore * 200;
+                    goldScoreContribution = Math.min(goldForScore, goldScoreCap) * 1.5;
                 }
                 // Mid-S5 hotfix v3 (2026-05-07): kills ×30, level² ×10. Mirrors saveScore.js.
                 // Victory bonus is omitted from the live HUD (only added on final tick by server).
