@@ -46,17 +46,10 @@ Score now scales with sector depth and victory, not run length.
 • 30-fragment per-run cap
 • "GOLD CAPPED" HUD warning
 
-**Added — endless gold time-decay:**
-```
-0–10 min:   1.0×
-15 min:     0.83×
-25 min:     0.50×
-40 min+:    0.25× (floor)
-```
+**Added — endless gold tapering past 10 minutes:**
+After the first 10 minutes of an endless run, gold drop value gradually decays so very long AFK-style runs can't mint unlimited gold. Sector runs are unaffected.
 
-Sector runs are unaffected — full value always.
-
-**Why:** The caps were a blunt tool to stop AFK endless farms. The time-decay curve does the same job without surprise warnings, and lets sector runs finally pay what they should.
+**Why:** The hard caps were a blunt tool. Tapering replaces them so sector runs finally pay full value end-to-end, without surprise mid-run warnings.
 ```
 
 ---
@@ -127,18 +120,24 @@ Donations made during week N apply to week N+1's wars. Buffs reset weekly.
 
 ---
 
-## 📢 POST 8 — What Isn't Changing
+## 📢 POST 8 — What Resets, What Doesn't
 
 ```
-🛡️ **UNCHANGED**
+🛡️ **SEASON ROLLOVER**
 
-• Your S5 gold stays — every piece kept
-• All unlocks, characters, cosmetics, NFT perks, talents, relics, weapons, mastery
-• Squad XP, war wins, member rosters, treasury balances
-• Daily/weekly bounties
-• OMENX balances, VIP levels, NFT ownership
+**Resets at S6 (same as every season):**
+• Leaderboard
+• Weekly upgrades
+• Seasonal upgrades
 
-Only the leaderboard period resets — same as every season turnover.
+**Kept:**
+• All gold earned in S5
+• Unlocked characters, cosmetics, weapons, mastery
+• Permanent upgrades, talents, relics
+• Squad XP, war record, member rosters, treasury
+• Daily/weekly bounty progress
+
+This is a normal seasonal rollover — nothing extra is being wiped.
 ```
 
 ---
@@ -156,4 +155,4 @@ S5 final leaderboard rewards + Squad Champions payouts distribute as normal.
 S6 launch day: new formula + caps removed + 3 new sinks live immediately.
 
 Feedback in `#s6-feedback` after launch — first 2 weeks we're monitoring closely for hotfixes.
-``
+`
