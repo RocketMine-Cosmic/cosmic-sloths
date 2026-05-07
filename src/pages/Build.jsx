@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, BarChart3, Sword, Sparkles, Zap, Award, Star } from 'lucide-react';
-import { CHARACTERS, WEAPONS, CHARACTER_MASTERY_LEVELS, getCharacterMastery } from '../game/Constants';
+import { ArrowLeft, ChevronLeft, ChevronRight, BarChart3, Sparkles, Zap, Award, Star } from 'lucide-react';
+import { CHARACTERS, CHARACTER_MASTERY_LEVELS, CHARACTER_TALENTS, getCharacterMastery } from '../game/Constants';
 import { SaveManager } from '../game/SaveManager';
 import { SoundManager } from '../game/SoundManager';
 import { useCurrency } from '@/lib/CurrencyContext';
@@ -9,9 +9,7 @@ import { computeBuildStats } from '@/lib/buildStats';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import BuildStatRow from '../components/build/BuildStatRow';
-import BuildWeaponCard from '../components/build/BuildWeaponCard';
-import BuildTalentList from '../components/build/BuildTalentList';
-import BuildSynergiesPanel from '../components/build/BuildSynergiesPanel';
+import BuildTheorycrafter from '../components/build/BuildTheorycrafter';
 
 // Standalone build viewer — pick a character, see their stacked progression
 // across upgrades / talents / forge / mastery / relics, the per-weapon investment,
@@ -48,9 +46,6 @@ export default function Build() {
     const mastery = getCharacterMastery(charKills, currentCharId);
 
     const stats = useMemo(() => computeBuildStats(save, currentCharId), [save, currentCharId]);
-
-    // Base weapons only — synergies/evolutions are derived in BuildSynergiesPanel.
-    const baseWeapons = useMemo(() => Object.values(WEAPONS).filter(w => !w.isSynergy && !w.isEvolution), []);
 
     // Forge character augments
     const charAugments = save.forgeCharAugments?.[currentCharId] || [];
@@ -136,6 +131,9 @@ export default function Build() {
                         </div>
                     </section>
 
+                    {/* Theorycrafter — interactive what-if loadout */}
+                    <BuildTheorycrafter save={save} charStats={stats} />
+
                     {/* Mastery summary */}
                     <section className="bg-[#0b0416]/60 backdrop-blur-xl border border-amber-500/30 rounded-xl p-4 shadow-[0_0_30px_rgba(245,158,11,0.10)]">
                         <div className="flex items-center gap-2 mb-3">
@@ -185,37 +183,32 @@ export default function Build() {
                         </section>
                     )}
 
-                    {/* Talents */}
+                    {/* Talents — simple owned list per character */}
                     <section className="bg-[#0b0416]/60 backdrop-blur-xl border border-fuchsia-500/30 rounded-xl p-4 shadow-[0_0_30px_rgba(217,70,239,0.10)]">
                         <div className="flex items-center gap-2 mb-3">
                             <Sparkles className="w-5 h-5 text-fuchsia-400" />
                             <h2 className="text-base md:text-lg font-bold text-fuchsia-300 uppercase tracking-widest">Talents</h2>
                         </div>
-                        <BuildTalentList save={save} charId={currentCharId} />
-                    </section>
-
-                    {/* Weapons */}
-                    <section className="bg-[#0b0416]/60 backdrop-blur-xl border border-cyan-700/30 rounded-xl p-4 shadow-[0_0_30px_rgba(6,182,212,0.08)]">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Sword className="w-5 h-5 text-cyan-400" />
-                            <h2 className="text-base md:text-lg font-bold text-cyan-300 uppercase tracking-widest">Weapon Investment</h2>
-                            <span className="text-[10px] text-slate-500 italic ml-auto">applies regardless of character</span>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {baseWeapons.map(w => <BuildWeaponCard key={w.id} save={save} weaponId={w.id} charId={currentCharId} />)}
-                        </div>
-                    </section>
-
-                    {/* Synergies + Evolutions */}
-                    <section className="bg-[#0b0416]/60 backdrop-blur-xl border border-pink-500/30 rounded-xl p-4 shadow-[0_0_30px_rgba(236,72,153,0.10)]">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Zap className="w-5 h-5 text-pink-400" />
-                            <h2 className="text-base md:text-lg font-bold text-pink-300 uppercase tracking-widest">Synergies & Evolutions</h2>
-                        </div>
-                        <p className="text-[11px] text-slate-500 mb-3 italic leading-snug">
-                            Combos formed in-run. Marked rows are ones you've already discovered.
-                        </p>
-                        <BuildSynergiesPanel save={save} />
+                        {(() => {
+                            const owned = new Set([
+                                ...((save.permanentTalents?.[currentCharId]) || []),
+                                ...((save.unlockedTalents?.[currentCharId]) || []),
+                            ]);
+                            const talents = CHARACTER_TALENTS[currentCharId] || [];
+                            if (owned.size === 0) {
+                                return <div className="text-xs text-slate-500 italic text-center py-4">No talents picked yet for {currentChar.name}.</div>;
+                            }
+                            return (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                                    {talents.filter(t => owned.has(t.id)).map(t => (
+                                        <div key={t.id} className="bg-fuchsia-950/20 border border-fuchsia-700/40 rounded px-2 py-1.5">
+                                            <div className="text-xs font-bold text-fuchsia-200">{t.name}</div>
+                                            <div className="text-[10px] text-slate-400">{t.desc}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </section>
                 </div>
             </div>
