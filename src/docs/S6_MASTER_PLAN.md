@@ -202,9 +202,11 @@ Three sinks, ranked by build cost ÷ economic absorption:
 | Treasury level | Cost | Buff (next war only) |
 |---|---|---|
 | Bronze | 25k | +5% squad XP from kills |
-| Silver | 100k | +10% squad XP, +5% gold drops in war runs |
-| Gold | 500k | +20% squad XP, +10% gold drops, +1 squad-ult charge |
-| Platinum | 2M | +30% squad XP, +15% gold drops, +1 ult, +5% boss damage |
+| Silver | 100k | +10% squad XP, +5% gold drops |
+| Gold | 500k | +20% squad XP, +10% gold drops, +3% boss damage |
+| Platinum | 2M | +30% squad XP, +15% gold drops, +8% boss damage |
+
+> **Note:** Earlier drafts of this spec included "+1 squad ult charge" on Gold/Platinum tiers. Removed pre-launch (2026-05-07) — squad ults are an OmenX/NFT-tier mechanic and there's no per-run charge counter wired up to enforce limits. Boss damage is a cleaner, easily-measured bonus that doesn't cannibalise NFT perks. Squad war kill weight was also considered and rejected as too leaderboard-distorting.
 
 - Squads of whales pool their gold — social pressure to contribute
 - Buffs are time-limited (one war cycle), so the sink **resets weekly**

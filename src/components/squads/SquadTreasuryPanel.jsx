@@ -12,8 +12,8 @@ import { isS6OrLater } from '@/lib/seasonGate';
 const TREASURY_TIERS = [
     { key: 'bronze',   cost: 25_000,    label: 'Bronze',   color: 'from-orange-700 to-amber-800', border: 'border-orange-600/60', text: 'text-orange-300', desc: '+5% squad XP from kills' },
     { key: 'silver',   cost: 100_000,   label: 'Silver',   color: 'from-slate-500 to-slate-400', border: 'border-slate-400/60', text: 'text-slate-200', desc: '+10% XP, +5% gold drops' },
-    { key: 'gold',     cost: 500_000,   label: 'Gold',     color: 'from-yellow-600 to-amber-500', border: 'border-yellow-500/60', text: 'text-yellow-300', desc: '+20% XP, +10% gold, +1 squad ult' },
-    { key: 'platinum', cost: 2_000_000, label: 'Platinum', color: 'from-cyan-400 to-fuchsia-400', border: 'border-cyan-400/60', text: 'text-cyan-200', desc: '+30% XP, +15% gold, +1 ult, +5% boss dmg' },
+    { key: 'gold',     cost: 500_000,   label: 'Gold',     color: 'from-yellow-600 to-amber-500', border: 'border-yellow-500/60', text: 'text-yellow-300', desc: '+20% XP, +10% gold, +3% boss dmg' },
+    { key: 'platinum', cost: 2_000_000, label: 'Platinum', color: 'from-cyan-400 to-fuchsia-400', border: 'border-cyan-400/60', text: 'text-cyan-200', desc: '+30% XP, +15% gold, +8% boss dmg' },
 ];
 
 const QUICK_AMOUNTS = [1000, 5000, 25_000, 100_000];

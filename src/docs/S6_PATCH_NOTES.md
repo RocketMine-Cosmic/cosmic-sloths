@@ -109,9 +109,9 @@ You always get something. Direct-buy path remains available.
 Members donate gold to a shared squad pool. Leaders/officers spend it on weekly buffs:
 
 🥉 Bronze — 25k → +5% squad XP
-🥈 Silver — 100k → +10% XP, +5% war gold
-🥇 Gold — 500k → +20% XP, +10% gold, +1 squad ult
-💎 Platinum — 2M → +30% XP, +15% gold, +1 ult, +5% boss damage
+🥈 Silver — 100k → +10% XP, +5% gold drops
+🥇 Gold — 500k → +20% XP, +10% gold, +3% boss damage
+💎 Platinum — 2M → +30% XP, +15% gold, +8% boss damage
 
 Donations made during week N apply to week N+1's wars. Buffs reset weekly.
 
