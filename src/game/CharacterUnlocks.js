@@ -3,12 +3,19 @@
 
 import { CHARACTERS } from './Constants';
 
+// 10 milestones — must mirror functions/saveScore.js KILL_MILESTONES.
+// Covers all 10 characters (1 starter + 9 random unlocks across the roster).
 const KILL_MILESTONES = [
   { kills: 0, id: 'neobyte' },      // starter
   { kills: 2000 },                    // random unlock
   { kills: 5000 },                    // random unlock
   { kills: 10000 },                   // random unlock
   { kills: 20000 },                   // random unlock
+  { kills: 35000 },                   // random unlock
+  { kills: 55000 },                   // random unlock
+  { kills: 80000 },                   // random unlock
+  { kills: 115000 },                  // random unlock
+  { kills: 160000 },                  // random unlock — full roster
 ];
 
 export class CharacterUnlockManager {

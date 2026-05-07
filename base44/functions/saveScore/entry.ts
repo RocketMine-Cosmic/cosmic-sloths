@@ -63,7 +63,13 @@ const ENDLESS_KILLS_HARD_CEILING = 6000;
 const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension'];
 
 // Character unlock kill milestones — must mirror game/CharacterUnlocks.js.
-const KILL_MILESTONES = [0, 2000, 5000, 10000, 20000];
+// 10 milestones to cover all 10 characters (1 starter at 0 + 9 unlockable).
+// Spacing keeps the early-game cadence (first unlock at 2k stays accessible to
+// new players) and stretches the later ones so the full roster is a long-term
+// goal rather than something a heavy player completes in a weekend.
+// (Old list capped at 20k kills, which only unlocked 5 of the 10 characters
+//  via milestones — leaving the other 5 strandable behind admin grants only.)
+const KILL_MILESTONES = [0, 2000, 5000, 10000, 20000, 35000, 55000, 80000, 115000, 160000];
 // Full character roster — must mirror game/Constants.js CHARACTERS ids.
 const ALL_CHARACTER_IDS = [
     'neobyte', 'pandypaws', 'novabyte', 'glitch', 'holodrift',
