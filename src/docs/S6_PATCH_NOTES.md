@@ -2,16 +2,16 @@
 
 Each section is under 2,000 characters so it fits a single Discord message. Edit freely.
 
-**Goes live:** Monday, May 25 • 00:00 UTC
+**Goes live:** Monday, May 18 • 00:00 UTC
 
 ---
 
 ## 📢 POST 1 — Headline
 
 ```
-🌌 **SEASON 6 — May 25, 00:00 UTC**
+🌌 **SEASON 6 — May 18, 00:00 UTC**
 
-S5 ends Sunday May 24, 23:59 UTC. Final S5 leaderboard rewards distribute as normal. S6 starts fresh.
+S5 ends Sunday May 17, 23:59 UTC. Final S5 leaderboard rewards distribute as normal. S6 starts fresh.
 
 Changes below — read them all before launch.
 ```
@@ -147,8 +147,8 @@ This is a normal seasonal rollover — nothing extra is being wiped.
 ```
 🗓️ **SCHEDULE**
 
-S5 ends:    Sunday May 24, 23:59 UTC
-S6 begins:  Monday May 25, 00:00 UTC
+S5 ends:    Sunday May 17, 23:59 UTC
+S6 begins:  Monday May 18, 00:00 UTC
 
 S5 final leaderboard rewards + Squad Champions payouts distribute as normal.
 
