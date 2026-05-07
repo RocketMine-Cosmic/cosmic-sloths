@@ -97,8 +97,20 @@ export default function AdminS6ScorePreview({ walletAddress }) {
             return true;
         });
 
+        // Dedupe to each player's single best stored S5 score (matches how the
+        // live leaderboard displays — one row per wallet). Without this, a single
+        // player with 30 submitted runs eats 30 of the 100 visible slots.
+        const bestByWallet = new Map();
+        for (const s of filtered) {
+            const key = (s.wallet_address || s.user_id || s.id || '').toLowerCase();
+            if (!key) continue;
+            const prev = bestByWallet.get(key);
+            if (!prev || (s.score || 0) > (prev.score || 0)) bestByWallet.set(key, s);
+        }
+        const deduped = Array.from(bestByWallet.values());
+
         // Compute both scores per row
-        const enriched = filtered.map(s => {
+        const enriched = deduped.map(s => {
             const args = {
                 kills: s.kills || 0,
                 level: s.level || 1,
