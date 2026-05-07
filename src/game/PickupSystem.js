@@ -53,10 +53,11 @@ export function updatePickups(engine, dt) {
                 });
                 engine.addDamageText(engine.player.x, engine.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
                 engine.shake(1.0);
-                // Post-nuke spawn boost: for the next 3 seconds enemies spawn at ~2× rate
-                // so the empty field repopulates quickly. Spawn distance + enemy strength
-                // are unchanged — safe for new players, satisfying for veterans.
-                engine.postNukeSpawnBoostUntil = (engine.time || 0) + 3.0;
+                // Post-nuke spawn boost: for the next 5 seconds enemies spawn at ~2× rate
+                // so the empty field repopulates quickly (enemies spawn off-screen and need
+                // time to close the distance). Spawn distance + enemy strength are unchanged
+                // — safe for new players, satisfying for veterans.
+                engine.postNukeSpawnBoostUntil = (engine.time || 0) + 5.0;
             } else if (p.type === 'magnet_power') {
                 SFXManager.playMagnetPickup();
                 // Flag every XP/gold pickup so the magnet block below pulls them in
