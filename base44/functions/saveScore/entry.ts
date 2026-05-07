@@ -180,7 +180,19 @@ function validateAndRecompute(scoreData) {
         const goldScoreCap = kills * 150;
         goldScoreContribution = Math.min(gold, goldScoreCap) * 2;
     }
-    const baseScore = kills * 10 + level * 100 + time * 5 + goldScoreContribution + (isVictory ? 5000 : 0);
+    // Mid-S5 hotfix (2026-05-07, after Anubis sector-10-victory complaint):
+    //  • kills weight: 10 → 15 (a 700-kill skilled run was only scoring 7k vs gold's 28k — backwards)
+    //  • level weight: 100 → 150 (lvl 34 only contributed 3.4k — too low for a maxed-out run)
+    //  • victory bonus: flat 5000 → 5000 + sectorIdx × 1500 (beating sector 10 must score
+    //    meaningfully more than sector 1; old flat bonus made all victories feel equal)
+    // Net effect: a sector 10 victory ~140% of old score; a Tijckers-style farm (no victory)
+    // gets only a small kill/level bump and stays in the same range. Existing S5 leaderboard
+    // entries are untouched (recalc only applies to new runs from this point forward).
+    const sectorIdxForBonus = scoreData.arena_id === 'endless' || scoreData.arena_id === 'world_boss_arena'
+        ? 0
+        : Math.max(0, ARENA_ORDER.indexOf(scoreData.arena_id));
+    const victoryBonus = isVictory ? (5000 + sectorIdxForBonus * 1500) : 0;
+    const baseScore = kills * 15 + level * 150 + time * 5 + goldScoreContribution + victoryBonus;
     // Hard score ceiling — last-line backstop against any validator gap that lets
     // a tampered run slip through with absurd numbers (e.g. gold validator allows
     // 50k + kills × 2k, which on a 10k-kill run permits a 112M score). Realistic

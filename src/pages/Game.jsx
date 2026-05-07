@@ -545,7 +545,9 @@ export default function Game() {
                     const goldScoreCap = killsForScore * 150;
                     goldScoreContribution = Math.min(goldForScore, goldScoreCap) * 2;
                 }
-                const baseScore = killsForScore * 10 + engine.level * 100 + engine.time * 5 + goldScoreContribution;
+                // Mid-S5 hotfix (2026-05-07): kills 10→15, level 100→150 to mirror saveScore.js.
+                // Victory bonus is omitted from the live HUD (only added on final tick by server).
+                const baseScore = killsForScore * 15 + engine.level * 150 + engine.time * 5 + goldScoreContribution;
                 // Server also enforces a 2.5M hard ceiling — mirror it so the HUD never
                 // shows a score the leaderboard will refuse to record.
                 const SCORE_HARD_CEILING = 2_500_000;
