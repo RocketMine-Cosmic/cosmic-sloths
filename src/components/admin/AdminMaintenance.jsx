@@ -115,14 +115,14 @@ export default function AdminMaintenance() {
             {err && <div className="text-xs text-red-400 flex items-center gap-1.5"><AlertTriangle size={12} /> {err}</div>}
 
             <div className="border-t border-slate-800 pt-3 text-[11px] text-slate-400 leading-relaxed">
-                <div className="font-bold text-slate-300 mb-1">📋 Suggested S6 timing (May 25, 00:00 UTC)</div>
+                <div className="font-bold text-slate-300 mb-1">📋 S6 rollout schedule (May 25, 00:00 UTC)</div>
                 <div className="space-y-0.5 font-mono">
-                    <div><span className="text-amber-300">23:00 UTC</span> — flip SOFT (1hr warning banner)</div>
-                    <div><span className="text-red-300">23:40 UTC</span> — flip HARD (20min, blocks /game)</div>
-                    <div><span className="text-emerald-300">~00:05 UTC</span> — verify rollover OK, flip OFF</div>
+                    <div><span className="text-amber-300">23:00 UTC Sun May 24</span> — SOFT auto-on ✅</div>
+                    <div><span className="text-red-300">23:40 UTC Sun May 24</span> — HARD auto-on ✅</div>
+                    <div><span className="text-emerald-300">~00:05 UTC</span> — <span className="text-emerald-300 font-bold">YOU manually flip OFF</span> after verifying rollover is healthy</div>
                 </div>
-                <div className="mt-2 italic text-slate-500">
-                    No timer/auto-revert — if something breaks you stay in HARD until you say otherwise.
+                <div className="mt-2 italic text-amber-400">
+                    ⚠️ OFF is manual on purpose — if something breaks at rollover the gate stays HARD until you clear it.
                 </div>
             </div>
         </div>
