@@ -12,13 +12,12 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
         return `${m}:${sec.toString().padStart(2, '0')}`;
     };
 
-    // When the save didn't make it to the server, the values shown are the
-    // CLIENT'S raw view — not what the server will actually credit. Server
-    // applies endless gold/kill caps + relic-fragment caps on its end, so the
-    // numbers here may be higher than what eventually banks. Show a "pending
-    // sync" label and hide the "(capped)" badges (they're stale pre-cap flags
-    // from the client and will be re-applied server-side on retry).
-    const savePending = !!(stats._saveFailed || stats.score === 0 || stats.score == null);
+    // The server is the sole source of truth for credited gold/kills/fragments/score.
+    // Until the saveScore response lands, those rows show a spinner placeholder
+    // instead of fake client-side numbers (was the source of the "+3528 gold (capped)"
+    // bug where the modal lied about what was actually banked).
+    const serverConfirmed = !!stats._serverConfirmed;
+    const saveFailed = !!stats._saveFailed;
 
     const totalDamage = Math.floor(stats.totalDamageDealt || 0);
     const dps = stats.time > 0 ? Math.floor(totalDamage / stats.time) : 0;
@@ -64,7 +63,7 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-sm md:text-base text-slate-400">
-                        Enemies Defeated{!savePending && stats.endlessKillsCapped && <span className="text-[9px] text-amber-400 ml-1">(credited)</span>}
+                        Enemies Defeated{serverConfirmed && stats.endlessKillsCapped && <span className="text-[9px] text-amber-400 ml-1">(credited)</span>}
                     </span>
                     <span className="text-white font-mono text-lg md:text-xl">{stats.kills} <span className="text-[10px] text-slate-500">({kpm}/min)</span></span>
                 </div>
@@ -75,37 +74,47 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                 {stats.arenaId !== 'world_boss_arena' && (
                     <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
                         <span className="text-sm md:text-base text-slate-400">
-                            {savePending ? 'Gold Earned' : 'Gold Credited'}
-                            {savePending
-                                ? <span className="text-[9px] text-amber-400 ml-1">(pending sync)</span>
-                                : stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                            Gold Credited
+                            {serverConfirmed && stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
                         </span>
-                        <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
+                        {serverConfirmed ? (
+                            <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
+                        ) : saveFailed ? (
+                            <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                        ) : (
+                            <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
+                        )}
                     </div>
                 )}
-                {(stats.fragments || 0) > 0 && (
-                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                        <span className="text-sm md:text-base text-slate-400">
-                            Relic Fragments
-                            {savePending
-                                ? <span className="text-[9px] text-amber-400 ml-1">(pending sync)</span>
-                                : stats.fragmentsCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
-                        </span>
-                        <span className="text-fuchsia-400 font-mono text-lg md:text-xl">+{stats.fragments}</span>
-                    </div>
-                )}
+                <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                    <span className="text-sm md:text-base text-slate-400">
+                        Relic Fragments
+                        {serverConfirmed && stats.fragmentsCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                    </span>
+                    {serverConfirmed ? (
+                        <span className="text-fuchsia-400 font-mono text-lg md:text-xl">+{stats.fragments || 0}</span>
+                    ) : saveFailed ? (
+                        <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                    ) : (
+                        <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
+                    )}
+                </div>
                 {stats.worldBossDamage > 0 && (
                     <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
                         <span className="text-sm md:text-base text-slate-400">Boss Damage Dealt</span>
                         <span className="text-red-500 font-mono text-xl md:text-2xl font-bold">{Math.floor(stats.worldBossDamage).toLocaleString()}</span>
                     </div>
                 )}
-                {stats.score != null && (
-                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                        <span className="text-sm md:text-base text-slate-400">Score Submitted</span>
+                <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                    <span className="text-sm md:text-base text-slate-400">Score Submitted</span>
+                    {serverConfirmed && stats.score != null ? (
                         <span className="text-cyan-400 font-mono text-xl md:text-2xl font-bold">{stats.score.toLocaleString()}</span>
-                    </div>
-                )}
+                    ) : saveFailed ? (
+                        <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                    ) : (
+                        <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
+                    )}
+                </div>
             </div>
 
             {/* Extended stats — scrollable */}
@@ -205,14 +214,9 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                 </div>
             </div>
 
-            {!savePending && (stats.endlessGoldCapped || stats.endlessKillsCapped || stats.fragmentsCapped) && (
+            {serverConfirmed && (stats.endlessGoldCapped || stats.endlessKillsCapped || stats.fragmentsCapped) && (
                 <div className="mt-3 bg-amber-950/40 border border-amber-500/40 rounded-lg px-3 py-2 text-[10px] md:text-xs text-amber-300">
                     <span className="font-bold">Endless mode caps applied.</span> Your raw run earned more, but rewards are capped per playtime to keep the economy fair. The values shown are what was actually credited to your save.
-                </div>
-            )}
-            {savePending && (
-                <div className="mt-3 bg-amber-950/40 border border-amber-500/40 rounded-lg px-3 py-2 text-[10px] md:text-xs text-amber-300">
-                    <span className="font-bold">Pending sync.</span> The values above are your raw run totals — final credited amounts are computed and capped server-side when your run syncs (next launch if retries failed).
                 </div>
             )}
         </div>

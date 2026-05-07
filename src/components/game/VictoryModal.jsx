@@ -11,11 +11,11 @@ export default function VictoryModal({ stats }) {
     // After 15s, unblock the buttons (run is queued for background retry).
     const [timedOut, setTimedOut] = useState(false);
     useEffect(() => {
-        if (stats.score || stats._saveFailed) return;
+        if (stats._serverConfirmed || stats._saveFailed) return;
         const t = setTimeout(() => setTimedOut(true), 15000);
         return () => clearTimeout(t);
-    }, [stats.score, stats._saveFailed]);
-    const showButtons = !!stats.score || stats._saveFailed || timedOut;
+    }, [stats._serverConfirmed, stats._saveFailed]);
+    const showButtons = !!stats._serverConfirmed || stats._saveFailed || timedOut;
 
     return (
         <div

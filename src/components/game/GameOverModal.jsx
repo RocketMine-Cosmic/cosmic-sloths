@@ -8,16 +8,16 @@ export default function GameOverModal({ stats }) {
     const location = useLocation();
 
     // Safety timeout: if the save spinner has been showing for 15s with no
-    // score response, unblock the buttons so the player can never get stuck.
+    // server response, unblock the buttons so the player can never get stuck.
     // Game.jsx's saveScore retry will already have queued the run for
     // background recovery on next launch.
     const [timedOut, setTimedOut] = useState(false);
     useEffect(() => {
-        if (stats.score || stats._saveFailed) return;
+        if (stats._serverConfirmed || stats._saveFailed) return;
         const t = setTimeout(() => setTimedOut(true), 15000);
         return () => clearTimeout(t);
-    }, [stats.score, stats._saveFailed]);
-    const showButtons = !!stats.score || stats._saveFailed || timedOut;
+    }, [stats._serverConfirmed, stats._saveFailed]);
+    const showButtons = !!stats._serverConfirmed || stats._saveFailed || timedOut;
 
     return (
         <div

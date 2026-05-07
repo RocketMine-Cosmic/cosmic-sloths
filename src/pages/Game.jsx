@@ -332,30 +332,14 @@ export default function Game() {
                 stats.startingWeaponId = startingWeaponId;
                 stats.worldBossId = worldBossId;
                 stats.worldBossName = worldBossName;
-                // Score is recomputed server-side; show 0 until response arrives.
-                stats.score = 0;
-                // Pre-cap endless mode gold/kills for the modal so the values shown
-                // match the in-game HUD immediately (HUD shows capped values via
-                // UIOverlay's displayGold). Server recomputes these definitively
-                // and overwrites once the save response lands.
-                if (stats.arenaId === 'endless' || isEndless) {
-                    // MUST mirror saveScore.js endless caps EXACTLY:
-                    // ENDLESS_GOLD_PER_SEC=12, floor=1000, ceiling=10000
-                    // ENDLESS_KILLS_PER_SEC=4, floor=600, ceiling=6000
-                    // Old values (25/1500/25000) caused a brief flash of "obscene"
-                    // gold in the modal before the server reply trimmed it back.
-                    const t = stats.time || 0;
-                    const goldCap = Math.min(10000, Math.max(1000, Math.floor(t * 12)));
-                    const killsCap = Math.min(6000, Math.max(600, Math.floor(t * 4)));
-                    if (stats.gold > goldCap) {
-                        stats.endlessGoldCapped = true;
-                        stats.gold = goldCap;
-                    }
-                    if (stats.kills > killsCap) {
-                        stats.endlessKillsCapped = true;
-                        stats.kills = killsCap;
-                    }
-                }
+                // Server is the SOLE source of truth for credited gold/kills/fragments/score.
+                // We DO NOT pre-fill these on the modal — instead the modal shows a spinner
+                // for those rows until the server response lands (or shows "queued for retry"
+                // if it times out). This prevents the historical bug where the modal showed
+                // "+3528 gold (capped)" but the save had timed out and the actual credited
+                // amount was unknown. Time/Level/Kills/Damage are unambiguous (just what
+                // happened in the run, no server caps apply) and remain visible immediately.
+                stats.score = null;
                 setGameOverStats(stats);
                 // Server validates run, applies aggregates to PlayerSave, returns updated save.
                 saveScore(stats, false).then((res) => {
@@ -385,20 +369,24 @@ export default function Game() {
                         }
                         setGameOverStats(s => ({
                             ...s,
+                            _serverConfirmed: true,
                             score: res.score,
                             unlockedCharacter: res.grantedCharacter || null,
-                            // Show server-credited values (endless mode caps gold/kills)
-                            gold: res.goldCredited ?? s.gold,
+                            // Server-credited values are now authoritative.
+                            gold: res.goldCredited ?? 0,
                             kills: res.killsCredited ?? s.kills,
+                            fragments: res.fragmentsCredited ?? s.fragments,
                             endlessGoldCapped: res.endlessGoldCapped,
                             endlessKillsCapped: res.endlessKillsCapped,
+                            fragmentsCapped: res.fragmentsCapped,
                         }));
                     }
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
-                    // Unblock the modal so the player isn't stuck on the spinner forever.
-                    // Show their client-side estimate so the buttons render and they can continue.
-                    setGameOverStats(s => ({ ...s, score: s.score || 1, _saveFailed: true, _authExpired: !!err?._authExpired }));
+                    // Unblock the modal so the player can continue. Do NOT fill in
+                    // gold/fragments/score — the modal will show "queued for retry"
+                    // for those rows instead of fake numbers.
+                    setGameOverStats(s => ({ ...s, _saveFailed: true, _authExpired: !!err?._authExpired }));
                 });
                 
                 if (stats.worldBossDamage > 0) {
@@ -413,22 +401,10 @@ export default function Game() {
                 stats.startingWeaponId = startingWeaponId;
                 stats.worldBossId = worldBossId;
                 stats.worldBossName = worldBossName;
-                stats.score = 0;
-                // Pre-cap endless gold/kills so the modal matches the HUD immediately.
-                // MUST mirror saveScore.js: gold=time×12 (1000–10000), kills=time×4 (600–6000).
-                if (stats.arenaId === 'endless' || isEndless) {
-                    const t = stats.time || 0;
-                    const goldCap = Math.min(10000, Math.max(1000, Math.floor(t * 12)));
-                    const killsCap = Math.min(6000, Math.max(600, Math.floor(t * 4)));
-                    if (stats.gold > goldCap) {
-                        stats.endlessGoldCapped = true;
-                        stats.gold = goldCap;
-                    }
-                    if (stats.kills > killsCap) {
-                        stats.endlessKillsCapped = true;
-                        stats.kills = killsCap;
-                    }
-                }
+                // Same as game-over — server is sole source of truth for credited
+                // gold/kills/fragments/score. Modal shows spinner for those rows
+                // until response lands.
+                stats.score = null;
                 setVictoryStats(stats);
                 // Server validates run, applies aggregates + arena unlock + char milestone, returns updated save.
                 saveScore(stats, true).then((res) => {
@@ -454,18 +430,20 @@ export default function Game() {
                         }
                         setVictoryStats(s => ({
                             ...s,
+                            _serverConfirmed: true,
                             score: res.score,
                             unlockedCharacter: res.grantedCharacter || null,
-                            gold: res.goldCredited ?? s.gold,
+                            gold: res.goldCredited ?? 0,
                             kills: res.killsCredited ?? s.kills,
+                            fragments: res.fragmentsCredited ?? s.fragments,
                             endlessGoldCapped: res.endlessGoldCapped,
                             endlessKillsCapped: res.endlessKillsCapped,
+                            fragmentsCapped: res.fragmentsCapped,
                         }));
                     }
                 }).catch(err => {
                     console.error('[Game] saveScore failed:', err);
-                    // Unblock the modal so the player isn't stuck on the spinner forever.
-                    setVictoryStats(s => ({ ...s, score: s.score || 1, _saveFailed: true, _authExpired: !!err?._authExpired }));
+                    setVictoryStats(s => ({ ...s, _saveFailed: true, _authExpired: !!err?._authExpired }));
                 });
                 
                 if (stats.worldBossDamage > 0) {
