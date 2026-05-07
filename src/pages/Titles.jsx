@@ -192,6 +192,10 @@ export default function Titles({ isCarousel }) {
         if (saving) return;
         setSaving(true);
         SoundManager.playUIClick();
+        // Dispatch the same lifecycle events SaveManager uses, so the bottom-right
+        // SaveStatusIndicator shows "Syncing… → Saved" when equipping a callsign.
+        // Without this, players couldn't tell if the equip persisted (Hugo 2026-05-07).
+        window.dispatchEvent(new CustomEvent('saveSyncStart'));
         try {
             // Local write first so the UI feels instant + survives a tab refresh
             // even if the cloud sync below fails. Mark a pending-sync flag so
@@ -220,10 +224,12 @@ export default function Titles({ isCarousel }) {
                 // Cloud has the new title — clear the pending flag so future loads
                 // can safely use the cloud value as the source of truth again.
                 await updateOmenXUser({ _titlePendingSync: false });
+                window.dispatchEvent(new CustomEvent('saveSyncSuccess'));
             } else {
                 console.error('[Titles] sync failed after 3 attempts', lastErr?.message);
                 // Leave _titlePendingSync=true so the local value wins on next boot.
                 // SaveManager will detect the flag and skip the title restore branch.
+                window.dispatchEvent(new CustomEvent('syncFailed', { detail: { reason: 'title_sync_failed' } }));
             }
         } finally {
             setSaving(false);
