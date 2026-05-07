@@ -8,10 +8,10 @@ import { useCurrency } from '@/lib/CurrencyContext';
 import { computeBuildStats } from '@/lib/buildStats';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
-import BuildStatRow from '../components/build/BuildStatRow.jsx';
-import BuildWeaponCard from '../components/build/BuildWeaponCard.jsx';
-import BuildTalentList from '../components/build/BuildTalentList.jsx';
-import BuildSynergiesPanel from '../components/build/BuildSynergiesPanel.jsx';
+import BuildStatRow from '../components/build/BuildStatRow';
+import BuildWeaponCard from '../components/build/BuildWeaponCard';
+import BuildTalentList from '../components/build/BuildTalentList';
+import BuildSynergiesPanel from '../components/build/BuildSynergiesPanel';
 
 // Standalone build viewer — pick a character, see their stacked progression
 // across upgrades / talents / forge / mastery / relics, the per-weapon investment,
@@ -202,7 +202,7 @@ export default function Build() {
                             <span className="text-[10px] text-slate-500 italic ml-auto">applies regardless of character</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {baseWeapons.map(w => <BuildWeaponCard key={w.id} save={save} weaponId={w.id} />)}
+                            {baseWeapons.map(w => <BuildWeaponCard key={w.id} save={save} weaponId={w.id} charId={currentCharId} />)}
                         </div>
                     </section>
 
