@@ -13,6 +13,14 @@ export default function AdminMaintenance() {
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState('');
     const [ok, setOk] = useState('');
+    // Two-tap confirm — first click arms a mode, second click within 5s commits.
+    // Prevents accidental SOFT/HARD/OFF flips during a busy admin session.
+    const [armed, setArmed] = useState(null); // 'off' | 'soft' | 'hard' | null
+    useEffect(() => {
+        if (!armed) return;
+        const t = setTimeout(() => setArmed(null), 5000);
+        return () => clearTimeout(t);
+    }, [armed]);
 
     const refresh = async () => {
         try {
@@ -26,7 +34,20 @@ export default function AdminMaintenance() {
 
     useEffect(() => { refresh(); }, []);
 
-    const setMode = async (mode) => {
+    const handleModeClick = (mode) => {
+        // No-op if it's already the current mode (nothing to confirm).
+        if (mode === current.mode) return;
+        // First click: arm. Second click on the same mode: commit.
+        if (armed !== mode) {
+            setArmed(mode);
+            setErr(''); setOk('');
+            return;
+        }
+        setArmed(null);
+        commitMode(mode);
+    };
+
+    const commitMode = async (mode) => {
         setBusy(true); setErr(''); setOk('');
         try {
             const res = await base44.functions.invoke('setMaintenanceMode', { mode, message: draftMessage });
@@ -97,19 +118,31 @@ export default function AdminMaintenance() {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-                <button onClick={() => setMode('off')} disabled={busy}
-                    className="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white px-3 py-2.5 rounded font-black text-xs uppercase tracking-widest">
-                    ✓ OFF
-                </button>
-                <button onClick={() => setMode('soft')} disabled={busy}
-                    className="bg-amber-700 hover:bg-amber-600 disabled:opacity-40 text-white px-3 py-2.5 rounded font-black text-xs uppercase tracking-widest">
-                    ⚠️ SOFT
-                </button>
-                <button onClick={() => setMode('hard')} disabled={busy}
-                    className="bg-red-700 hover:bg-red-600 disabled:opacity-40 text-white px-3 py-2.5 rounded font-black text-xs uppercase tracking-widest">
-                    🔒 HARD
-                </button>
+                {[
+                    { mode: 'off',  label: '✓ OFF',     base: 'bg-emerald-700 hover:bg-emerald-600', armed: 'bg-emerald-500 ring-2 ring-emerald-300 animate-pulse' },
+                    { mode: 'soft', label: '⚠️ SOFT',   base: 'bg-amber-700 hover:bg-amber-600',     armed: 'bg-amber-500 ring-2 ring-amber-300 animate-pulse' },
+                    { mode: 'hard', label: '🔒 HARD',   base: 'bg-red-700 hover:bg-red-600',         armed: 'bg-red-500 ring-2 ring-red-300 animate-pulse' },
+                ].map(b => {
+                    const isCurrent = current.mode === b.mode;
+                    const isArmed = armed === b.mode;
+                    return (
+                        <button
+                            key={b.mode}
+                            onClick={() => handleModeClick(b.mode)}
+                            disabled={busy || isCurrent}
+                            className={`${isArmed ? b.armed : b.base} disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-2.5 rounded font-black text-xs uppercase tracking-widest transition-all`}
+                            title={isCurrent ? 'Already active' : isArmed ? 'Tap again to confirm' : `Set ${b.mode.toUpperCase()}`}
+                        >
+                            {isCurrent ? `${b.label} (active)` : isArmed ? `Confirm ${b.mode.toUpperCase()}?` : b.label}
+                        </button>
+                    );
+                })}
             </div>
+            {armed && (
+                <div className="text-[11px] text-amber-300 flex items-center gap-1.5">
+                    <AlertTriangle size={12} /> Tap <span className="font-black">{armed.toUpperCase()}</span> again within 5s to confirm, or wait to cancel.
+                </div>
+            )}
 
             {ok && <div className="text-xs text-emerald-300 flex items-center gap-1.5"><CheckCircle2 size={12} /> {ok}</div>}
             {err && <div className="text-xs text-red-400 flex items-center gap-1.5"><AlertTriangle size={12} /> {err}</div>}
