@@ -726,6 +726,12 @@ Deno.serve(async (req) => {
             goldCredited: validation.goldForLedger,
             killsCredited: validation.killsForLedger,
             fragmentsCredited: validation.fragmentsForLedger,
+            // Server-validated time (may be clamped to arena duration on S5 sectors —
+            // engine's this.time keeps ticking past arena duration during the final boss
+            // fight). Returning this so the end-of-run modal matches the leaderboard
+            // exactly. Without it, the modal showed engine.time (e.g. 7:51) while the
+            // RunScore stored the clamped value (7:30), confusing leaderboard #1 players.
+            timeSurvived: validation.time,
             endlessGoldCapped: !!validation.endlessGoldCapped,
             endlessKillsCapped: !!validation.endlessKillsCapped,
             fragmentsCapped: !!validation.fragmentsCapped,

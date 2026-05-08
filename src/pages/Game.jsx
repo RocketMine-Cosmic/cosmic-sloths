@@ -382,6 +382,9 @@ export default function Game() {
                             gold: res.goldCredited ?? 0,
                             kills: res.killsCredited ?? s.kills,
                             fragments: res.fragmentsCredited ?? s.fragments,
+                            // Adopt the server's validated time so the modal matches the
+                            // leaderboard exactly (server may clamp to arena duration on S5).
+                            time: res.timeSurvived ?? s.time,
                             endlessGoldCapped: res.endlessGoldCapped,
                             endlessKillsCapped: res.endlessKillsCapped,
                             fragmentsCapped: res.fragmentsCapped,
@@ -444,6 +447,9 @@ export default function Game() {
                             gold: res.goldCredited ?? 0,
                             kills: res.killsCredited ?? s.kills,
                             fragments: res.fragmentsCredited ?? s.fragments,
+                            // Adopt the server's validated time so the modal matches the
+                            // leaderboard exactly (server may clamp to arena duration on S5).
+                            time: res.timeSurvived ?? s.time,
                             endlessGoldCapped: res.endlessGoldCapped,
                             endlessKillsCapped: res.endlessKillsCapped,
                             fragmentsCapped: res.fragmentsCapped,
