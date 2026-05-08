@@ -14,11 +14,31 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // next day's run.
 
 const KEEP_N = 5;
-const BATCH_SIZE = 50;
-const PAUSE_MS = 750;
-const MAX_ITERATIONS = 200;
+const BATCH_SIZE = 100;
+const PAUSE_MS = 1500;
+const MAX_ITERATIONS = 100;
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// 429-aware retry — same pattern as cleanupKeepTopScoresPerPlayer. Without this,
+// a single rate-limit response from the SDK takes down the whole scheduled run.
+async function with429Retry(fn, label = 'sdk') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (e) {
+            const msg = String(e?.message || '').toLowerCase();
+            const status = e?.status || e?.response?.status;
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            lastErr = e;
+            if (!is429 || attempt === 3) throw e;
+            const delay = 600 * Math.pow(2, attempt) + Math.random() * 400;
+            console.warn(`[scheduledCleanupTopScores] ${label} 429 — retry ${attempt + 1}/3 in ${Math.round(delay)}ms`);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    throw lastErr;
+}
 
 Deno.serve(async (req) => {
     try {
@@ -32,7 +52,10 @@ Deno.serve(async (req) => {
         const pageSize = 500;
         let skip = 0;
         for (;;) {
-            const page = await db.entities.RunScore.filter({}, '-score', pageSize, skip);
+            const page = await with429Retry(
+                () => db.entities.RunScore.filter({}, '-score', pageSize, skip),
+                `RunScore.filter(skip=${skip})`
+            );
             allScores.push(...page);
             if (page.length < pageSize) break;
             skip += pageSize;
@@ -67,28 +90,38 @@ Deno.serve(async (req) => {
         const cap = Math.min(toDelete.length, MAX_ITERATIONS * BATCH_SIZE);
         for (let i = 0; i < cap; i += BATCH_SIZE) {
             const slice = toDelete.slice(i, i + BATCH_SIZE);
-            for (const s of slice) {
+            for (let j = 0; j < slice.length; j++) {
+                const s = slice[j];
+                // Tiny pause every 5 rows to spread load — 100 sequential SDK calls
+                // in <1s otherwise trip the rate limiter even with retries.
+                if (j > 0 && j % 5 === 0) await sleep(250);
                 try {
-                    await db.entities.DeletedRunScore.create({
-                        original_id: s.id,
-                        user_id: s.user_id,
-                        wallet_address: s.wallet_address,
-                        player_name: s.player_name,
-                        player_title: s.player_title,
-                        pilot_icon: s.pilot_icon,
-                        score: s.score,
-                        time_survived: s.time_survived,
-                        level: s.level,
-                        kills: s.kills,
-                        character_id: s.character_id,
-                        arena_id: s.arena_id,
-                        week_id: s.week_id,
-                        season_id: s.season_id,
-                        original_created_date: s.created_date,
-                        deleted_by: 'SCHEDULED',
-                        delete_reason: `scheduled_cleanup keep_top_${KEEP_N}`,
-                    });
-                    await db.entities.RunScore.delete(s.id);
+                    await with429Retry(
+                        () => db.entities.DeletedRunScore.create({
+                            original_id: s.id,
+                            user_id: s.user_id,
+                            wallet_address: s.wallet_address,
+                            player_name: s.player_name,
+                            player_title: s.player_title,
+                            pilot_icon: s.pilot_icon,
+                            score: s.score,
+                            time_survived: s.time_survived,
+                            level: s.level,
+                            kills: s.kills,
+                            character_id: s.character_id,
+                            arena_id: s.arena_id,
+                            week_id: s.week_id,
+                            season_id: s.season_id,
+                            original_created_date: s.created_date,
+                            deleted_by: 'SCHEDULED',
+                            delete_reason: `scheduled_cleanup keep_top_${KEEP_N}`,
+                        }),
+                        'DeletedRunScore.create'
+                    );
+                    await with429Retry(
+                        () => db.entities.RunScore.delete(s.id),
+                        'RunScore.delete'
+                    );
                     totalSucceeded++;
                 } catch (e) {
                     console.error('[scheduledCleanupTopScores] failed for', s.id, ':', e.message);
