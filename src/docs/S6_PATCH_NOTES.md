@@ -76,10 +76,10 @@ After the first 10 minutes of an endless run, gold drop value gradually decays s
 Once a relic hits Level 5, you can prestige it.
 
 • 5 prestige tiers (PL1 → PL5)
-• 1.5M gold to fully prestige a relic
-• +5% relic effect per tier
+• Each tier costs **1.5M gold + 100 relic fragments**
+• +5% relic effect per tier (max +25% at PL5)
 
-**Why:** A long-term gold sink for L5-relic owners that doesn't affect leaderboard balance.
+**Why:** A long-term gold sink for L5-relic owners that also drains accumulated relic fragment piles. Doesn't affect leaderboard balance.
 ```
 
 ---
@@ -89,14 +89,18 @@ Once a relic hits Level 5, you can prestige it.
 ```
 🎰 **MYSTERY FORGE**
 
-5,000 gold per pull → random augment:
+Pull cost — pay with **either**:
+• 5,000 gold, **or**
+• 50 relic fragments
+
+Each pull → random weapon augment:
 • 60% T1
 • 30% T2
 • 10% T3
 
 You always get something. Direct-buy path remains available.
 
-**Why:** Optional gold sink. RNG path for players who want to gamble; direct-buy stays for players who want certainty.
+**Why:** Optional sink with two currencies — gamble gold, or burn off fragment stockpiles. Direct-buy stays for players who want certainty.
 ```
 
 ---
