@@ -13,7 +13,12 @@ export function updatePickups(engine, dt) {
             engine.addParticle(p.x, p.y, p.color, 1, 'glow', 0.3);
         }
         const dist = Math.hypot(engine.player.x - p.x, engine.player.y - p.y);
-        if (dist < engine.player.radius + 10) {
+        // Power-up pickups (nuke/magnet/shield/reroll) get a more generous pickup
+        // radius — they're rare and high-value, so brushing past one shouldn't miss it.
+        // Standard XP/gold/fragment use the tight radius so the magnet feels deliberate.
+        const POWERUP_TYPES = { nuke: 1, magnet_power: 1, shield_power: 1, reroll: 1 };
+        const pickupRadius = POWERUP_TYPES[p.type] ? engine.player.radius + 30 : engine.player.radius + 10;
+        if (dist < pickupRadius) {
             engine.particleManager.createPickup(p.x, p.y, p.color);
             if (p.type === 'xp') {
                 SFXManager.playPickup(p.value);
