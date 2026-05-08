@@ -61,11 +61,15 @@ const ENDLESS_FRAGMENTS_CAP_PER_RUN = 30;
 // so endless feels like a chill grind, not a primary gold farm.
 // Hard ceiling 10k = ~14 min × ~720 g/min ceiling.
 const ENDLESS_GOLD_PER_SEC = 12;
-const ENDLESS_KILLS_PER_SEC = 4;        // ~240/min sustained (kills cap unchanged)
+// Endless kills cap raised 2026-05-08 — old 6k ceiling capped peak score around
+// ~5M, making the 10M leaderboard target unreachable in endless. New 12k ceiling
+// + 5/sec rate puts realistic peak at ~8.5M, leaving 10M as a legendary chase
+// target. Gold cap is intentionally untouched (wallets unaffected).
+const ENDLESS_KILLS_PER_SEC = 5;        // ~300/min sustained
 const ENDLESS_GOLD_FLOOR = 1000;        // minimum cap for very short runs
 const ENDLESS_KILLS_FLOOR = 600;
 const ENDLESS_GOLD_HARD_CEILING = 10000;
-const ENDLESS_KILLS_HARD_CEILING = 6000;
+const ENDLESS_KILLS_HARD_CEILING = 12000;
 
 // Hard score ceiling — last-line backstop. Long S5 endless runs (Tijckers 33min,
 // Waeoo 19min) were both clipping the previous 2.5M ceiling, so we raised it to
