@@ -2,77 +2,60 @@ import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
-import { WEAPONS } from '../../game/Constants';
-import { ChevronLeft, ChevronRight, Sparkles, Coins, Dices, Lock, Puzzle } from 'lucide-react';
+import { Sparkles, Coins, Dices, Lock, Star } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
+import { ASTRAL_STATS, getAstralPullCost, formatAstralValue } from '@/lib/astralLab';
 
-// S6 Phase 3b — Mystery Forge UI. Costs 5,000 gold OR 50 relic fragments per pull,
-// grants a random weapon augment (T1 60% / T2 30% / T3 10%) for the chosen weapon.
-// Server downgrades the rolled tier if prereqs aren't met (e.g. rolling T3 with
-// no T2 owned grants T2 instead). Hard-gated to S6+ via the same seasonGate the
-// engine + saveScore use. Fragment alt-payment added 2026-05-08.
-const MYSTERY_FORGE_GOLD_COST = 5000;
-const MYSTERY_FORGE_FRAGMENT_COST = 50;
-const BRANCH_LABEL = { damage: 'Damage', area: 'Area', cd: 'Cooldown' };
-const TIER_LABEL  = { 1: 'Tier I',  2: 'Tier II', 3: 'Tier III' };
-const TIER_COLOR  = {
-    1: 'text-slate-200 bg-slate-800 border-slate-600',
-    2: 'text-blue-200 bg-blue-950/60 border-blue-500',
-    3: 'text-purple-200 bg-purple-950/60 border-purple-500',
-};
+// S6 Astral Lab — endgame gold sink (replaces the old Mystery Forge augment-lottery).
+// Each pull = random small permanent stat buff. Cost ramps per pull (20k × 1.4^N).
+// Per-stat hard cap. Pure RNG. Folds into existing player stat multipliers — so
+// hitting the existing player.damageMult cap (4.0) means further astral damage pulls
+// stop providing benefit (intentional whale prestige diminishing-returns curve).
+// Component name kept as MysteryForgeCard so existing ForgePanel slot just works.
 
 export default function MysteryForgeCard({ save, setSave }) {
     const isS6 = isS6OrLater();
-    const baseWeapons = useMemo(() => Object.values(WEAPONS).filter(w => !w.isSynergy), []);
-    const [weaponIdx, setWeaponIdx] = useState(0);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [lastRoll, setLastRoll] = useState(null);
-    // 'gold' or 'fragments' — defaults to fragments when player has enough,
-    // since the whole point of the alt-currency is to drain fragment piles.
-    const [paymentMode, setPaymentMode] = useState('gold');
 
-    const weapon = baseWeapons[weaponIdx];
-    const ownedAugs = save.forgeWeaponAugments?.[weapon.id] || [];
-    const allOwned = ['damage', 'area', 'cd'].every(b => [1,2,3].every(t => ownedAugs.includes(`${b}_${t}`)));
-    const hasGold = (save.gold || 0) >= MYSTERY_FORGE_GOLD_COST;
-    const hasFragments = (save.relicFragments || 0) >= MYSTERY_FORGE_FRAGMENT_COST;
-    const canAfford = paymentMode === 'fragments' ? hasFragments : hasGold;
+    const buffs = save.astralBuffs || {};
+    const pullCount = save.astralPullCount || 0;
+    const cost = useMemo(() => getAstralPullCost(pullCount), [pullCount]);
+    const hasGold = (save.gold || 0) >= cost;
 
-    const cycleWeapon = (dir) => {
-        SoundManager.playUIClick();
-        setWeaponIdx(i => (i + dir + baseWeapons.length) % baseWeapons.length);
-        setLastRoll(null);
-        setError(null);
-    };
+    // Are all stats fully capped?
+    const allCapped = useMemo(() => ASTRAL_STATS.every(s => {
+        const cur = buffs[s.id] || 0;
+        return s.invert ? cur <= s.cap : cur >= s.cap;
+    }), [buffs]);
 
     const handlePull = async () => {
-        if (busy || !canAfford || allOwned) return;
+        if (busy || !hasGold || allCapped) return;
         SoundManager.playUIClick();
         setBusy(true);
         setError(null);
         try {
             const res = await base44.functions.invoke('forgeAction', {
-                action: 'mysteryForge',
-                payload: { weaponId: weapon.id, paymentMode },
+                action: 'astralPull',
+                payload: {},
             });
             if (!res.data?.success) {
-                setError(res.data?.error || 'Roll failed');
+                setError(res.data?.error || 'Pull failed');
                 return;
             }
-            // Server returns full saveData — apply locally.
             if (res.data.saveData) {
                 const s = SaveManager.load();
                 s.gold = res.data.saveData.gold ?? s.gold;
-                s.relicFragments = res.data.saveData.relicFragments ?? s.relicFragments;
-                s.forgeWeaponAugments = res.data.saveData.forgeWeaponAugments ?? s.forgeWeaponAugments;
+                s.astralBuffs = res.data.saveData.astralBuffs ?? s.astralBuffs;
+                s.astralPullCount = res.data.saveData.astralPullCount ?? s.astralPullCount;
                 SaveManager.save(s);
                 setSave(s);
             }
-            setLastRoll(res.data.mysteryResult);
+            setLastRoll(res.data.astralResult);
             SoundManager.playLevelUp();
         } catch (e) {
-            const msg = e?.response?.data?.error || e.message || 'Roll failed';
+            const msg = e?.response?.data?.error || e.message || 'Pull failed';
             setError(msg);
         } finally {
             setBusy(false);
@@ -84,10 +67,10 @@ export default function MysteryForgeCard({ save, setSave }) {
             <div className="bg-slate-900/60 rounded-xl border border-slate-700 p-4 mt-4">
                 <div className="flex items-center gap-2 text-slate-400 mb-1">
                     <Lock className="w-4 h-4" />
-                    <span className="font-bold text-xs uppercase tracking-widest">Mystery Forge</span>
+                    <span className="font-bold text-xs uppercase tracking-widest">Astral Lab</span>
                     <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-700 px-1.5 py-0.5 rounded font-bold">S6 PREVIEW</span>
                 </div>
-                <p className="text-xs text-slate-500">Unlocks May 18 — gamble 5,000 gold or 50 relic fragments for a random weapon augment.</p>
+                <p className="text-xs text-slate-500">Endgame gold sink — unlocks May 18. Pour gold into the lab to pull random permanent stat buffs.</p>
             </div>
         );
     }
@@ -96,81 +79,62 @@ export default function MysteryForgeCard({ save, setSave }) {
         <div className="bg-gradient-to-br from-purple-950/40 via-slate-900/80 to-fuchsia-950/30 rounded-xl border-2 border-purple-500/40 p-3 md:p-4 mt-4 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                    <Dices className="w-5 h-5 text-purple-300" />
-                    <h3 className="font-black text-sm md:text-base text-purple-200 uppercase tracking-widest">Mystery Forge</h3>
-                    <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-500/50 px-1.5 py-0.5 rounded font-bold">NEW</span>
+                    <Star className="w-5 h-5 text-purple-300 fill-purple-400" />
+                    <h3 className="font-black text-sm md:text-base text-purple-200 uppercase tracking-widest">Astral Lab</h3>
+                    <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-500/50 px-1.5 py-0.5 rounded font-bold">ENDGAME</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="flex items-center gap-1 bg-yellow-950/50 border border-yellow-700/50 px-2 py-1 rounded">
-                        <Coins className="w-3 h-3 text-yellow-400 fill-yellow-500" />
-                        <span className="text-[11px] font-bold text-yellow-300">{(save.gold || 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 bg-fuchsia-950/50 border border-fuchsia-700/50 px-2 py-1 rounded">
-                        <Puzzle className="w-3 h-3 text-fuchsia-400 fill-fuchsia-500" />
-                        <span className="text-[11px] font-bold text-fuchsia-300">{(save.relicFragments || 0).toLocaleString()}</span>
-                    </div>
+                <div className="flex items-center gap-1 bg-yellow-950/50 border border-yellow-700/50 px-2 py-1 rounded">
+                    <Coins className="w-3 h-3 text-yellow-400 fill-yellow-500" />
+                    <span className="text-[11px] font-bold text-yellow-300">{(save.gold || 0).toLocaleString()}</span>
                 </div>
             </div>
 
-            <p className="text-[11px] md:text-xs text-slate-300 mb-2 leading-snug">
-                Roll a random augment for the selected weapon — pay with gold OR relic fragments.
+            <p className="text-[11px] md:text-xs text-slate-300 mb-3 leading-snug">
+                Pour gold into the lab for a <span className="text-purple-300 font-bold">random</span> permanent stat buff.
+                Each pull costs more than the last. Each stat has a hard cap.
                 <span className="block text-[10px] text-slate-400 mt-0.5">
-                    Tier I <span className="text-slate-200 font-bold">60%</span> · Tier II <span className="text-blue-300 font-bold">30%</span> · Tier III <span className="text-purple-300 font-bold">10%</span>
+                    Already-capped stats are skipped — but you still pay full price for whatever does roll.
                 </span>
             </p>
 
-            {/* Payment mode toggle */}
-            <div className="flex gap-1.5 mb-3">
-                <button
-                    onClick={() => { SoundManager.playUIClick(); setPaymentMode('gold'); }}
-                    className={`flex-1 py-1.5 rounded-md text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
-                        paymentMode === 'gold'
-                            ? 'bg-yellow-900/60 border border-yellow-500 text-yellow-200 shadow-[0_0_10px_rgba(234,179,8,0.25)]'
-                            : 'bg-slate-900/60 border border-slate-700 text-slate-400 hover:text-yellow-300 hover:border-yellow-700'
-                    }`}
-                >
-                    <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    {MYSTERY_FORGE_GOLD_COST.toLocaleString()} Gold
-                </button>
-                <button
-                    onClick={() => { SoundManager.playUIClick(); setPaymentMode('fragments'); }}
-                    className={`flex-1 py-1.5 rounded-md text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
-                        paymentMode === 'fragments'
-                            ? 'bg-fuchsia-900/60 border border-fuchsia-500 text-fuchsia-200 shadow-[0_0_10px_rgba(217,70,239,0.25)]'
-                            : 'bg-slate-900/60 border border-slate-700 text-slate-400 hover:text-fuchsia-300 hover:border-fuchsia-700'
-                    }`}
-                >
-                    <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />
-                    {MYSTERY_FORGE_FRAGMENT_COST} Frags
-                </button>
-            </div>
-
-            {/* Weapon selector */}
-            <div className="flex items-center justify-between bg-slate-900/80 p-1.5 rounded-lg border border-slate-700 mb-3">
-                <button onClick={() => cycleWeapon(-1)} className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white">
-                    <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="text-center min-w-0 px-2">
-                    <div className="font-bold text-purple-200 text-sm truncate">{weapon.name}</div>
-                    <div className="text-[9px] text-slate-500 font-mono">{ownedAugs.length}/9 augments</div>
-                </div>
-                <button onClick={() => cycleWeapon(1)} className="p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white">
-                    <ChevronRight className="w-5 h-5" />
-                </button>
-            </div>
-
-            {/* Roll result */}
-            {lastRoll && lastRoll.weaponId === weapon.id && (
-                <div className={`mb-3 p-2.5 rounded-lg border-2 ${TIER_COLOR[lastRoll.rolledTier]} flex items-center gap-2 animate-in fade-in slide-in-from-top-1`}>
-                    <Sparkles className="w-4 h-4 shrink-0" />
+            {/* Roll result banner */}
+            {lastRoll && (
+                <div className="mb-3 p-2.5 rounded-lg border-2 border-purple-500 bg-purple-950/60 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                    <Sparkles className="w-4 h-4 shrink-0 text-purple-200" />
                     <div className="flex-1 min-w-0">
-                        <div className="text-[10px] uppercase tracking-widest font-bold opacity-80">{TIER_LABEL[lastRoll.rolledTier]} rolled — granted</div>
-                        <div className="font-bold text-xs md:text-sm truncate">
-                            {BRANCH_LABEL[lastRoll.granted.split('_')[0]]} {TIER_LABEL[lastRoll.granted.split('_')[1]]}
+                        <div className="text-[10px] uppercase tracking-widest font-bold opacity-80 text-purple-200">Pull #{pullCount} — granted</div>
+                        <div className="font-bold text-xs md:text-sm text-purple-100">
+                            {(ASTRAL_STATS.find(s => s.id === lastRoll.rolledStat)?.label) || lastRoll.rolledStat}{' '}
+                            <span className="text-purple-300">{formatAstralValue(ASTRAL_STATS.find(s => s.id === lastRoll.rolledStat), lastRoll.delta)}</span>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Stat caps grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 mb-3">
+                {ASTRAL_STATS.map(s => {
+                    const cur = buffs[s.id] || 0;
+                    const isCap = s.invert ? cur <= s.cap : cur >= s.cap;
+                    const pct = s.invert ? (cur / s.cap) : (cur / s.cap);
+                    const pctClamped = Math.max(0, Math.min(1, pct));
+                    return (
+                        <div key={s.id} className={`rounded-md border p-1.5 ${isCap ? 'bg-purple-950/60 border-purple-500' : 'bg-slate-900/60 border-slate-700'}`}>
+                            <div className="flex items-center justify-between gap-1">
+                                <span className="text-[10px] font-bold text-slate-300 truncate">{s.label}</span>
+                                {isCap && <span className="text-[8px] font-bold text-purple-300 uppercase">MAX</span>}
+                            </div>
+                            <div className="text-[11px] font-mono font-bold text-purple-200 leading-tight">
+                                {formatAstralValue(s, cur)}
+                                <span className="text-slate-500"> / {formatAstralValue(s, s.cap)}</span>
+                            </div>
+                            <div className="h-1 bg-slate-800 rounded-full overflow-hidden mt-1">
+                                <div className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-400" style={{ width: `${pctClamped * 100}%` }} />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
 
             {error && (
                 <div className="mb-3 text-[11px] text-red-300 bg-red-950/40 border border-red-700/50 px-2 py-1.5 rounded">
@@ -180,34 +144,28 @@ export default function MysteryForgeCard({ save, setSave }) {
 
             <button
                 onClick={handlePull}
-                disabled={busy || !canAfford || allOwned}
+                disabled={busy || !hasGold || allCapped}
                 className={`w-full py-2.5 rounded-lg font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all ${
-                    allOwned
+                    allCapped
                         ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                        : !canAfford || busy
+                        : !hasGold || busy
                             ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                             : 'bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] active:scale-95'
                 }`}
             >
-                {allOwned ? '✓ All augments forged' : busy ? 'Rolling…' : (
+                {allCapped ? '✓ All stats fully maxed' : busy ? 'Pulling…' : (
                     <>
-                        <Dices className="w-4 h-4" /> Roll
+                        <Dices className="w-4 h-4" /> Pull #{pullCount + 1}
                         <span className="flex items-center gap-1 bg-black/30 px-2 py-0.5 rounded text-xs">
-                            {paymentMode === 'fragments' ? (
-                                <>
-                                    <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />
-                                    {MYSTERY_FORGE_FRAGMENT_COST}
-                                </>
-                            ) : (
-                                <>
-                                    <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                    {MYSTERY_FORGE_GOLD_COST.toLocaleString()}
-                                </>
-                            )}
+                            <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            {cost.toLocaleString()}
                         </span>
                     </>
                 )}
             </button>
+            <div className="text-center text-[9px] text-slate-500 mt-1.5 font-mono">
+                Total pulls: {pullCount} · Next pull: {cost.toLocaleString()}g · After: {getAstralPullCost(pullCount + 1).toLocaleString()}g
+            </div>
         </div>
     );
 }

@@ -125,6 +125,19 @@ export class GameEngine {
             maxHp: 0, speedMult: 0, damageMult: 0, magnetRange: 0, regen: 0, armor: 0, areaMult: 0, cooldownMult: 0, projSpeedMult: 0, goldMult: 0, xpMult: 0, luck: 0
         };
 
+        // S6 Astral Lab — permanent stat buffs purchased via gold-only RNG pulls
+        // (see functions/forgeAction.js + components/game/MysteryForgeCard.jsx).
+        // Folded into talentBonus so the existing player.* caps still clamp them
+        // (e.g. damageMult cap of 4.0 means whales who hit the cap via talents+
+        // mastery+relics see no benefit from astral damage pulls — by design).
+        // S5 ignores astralBuffs entirely (gated server-side, but defensive here too).
+        if (this._isS6 && save.astralBuffs && typeof save.astralBuffs === 'object') {
+            for (const [k, v] of Object.entries(save.astralBuffs)) {
+                if (typeof v !== 'number' || !isFinite(v)) continue;
+                talentBonus[k] = (talentBonus[k] || 0) + v;
+            }
+        }
+
         const charAugments = save.forgeCharAugments?.[characterId] || [];
         const hasAug = (id) => charAugments.includes(id);
         const augBonus = {

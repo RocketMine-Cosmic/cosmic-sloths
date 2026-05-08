@@ -85,12 +85,16 @@ Once a relic hits Level 5, you can prestige it.
 • Each tier: **1.5M gold + 100 relic fragments**
 • +5% relic effect per tier (max +25% at PL5)
 
-🎰 **MYSTERY FORGE**
-Pull cost — pay with **either**:
-• 5,000 gold, or
-• 50 relic fragments
+🌌 **ASTRAL LAB** *(replaces the Mystery Forge)*
+A new endgame gold sink for whales sitting on millions. Each pull grants a **small permanent stat buff** at random:
+• Damage / Area / Projectile Speed → +2% per pull (max +20%)
+• Cooldown → -1% per pull (max -10%)
+• Move Speed → +1% per pull (max +10%)
+• HP Regen / Magnet Range / Max HP → flat bonus per pull
 
-Each pull → random weapon augment (60% T1 / 30% T2 / 10% T3). You always get something. Direct-buy path remains.
+Cost: **20,000 gold for the first pull, +40% each subsequent pull** (20k → 28k → 39k → 55k → 77k → 108k…). After ~10 pulls you've capped roughly 1/3 of one stat. Fully maxing every stat costs **30M+ gold**.
+
+Pure RNG which stat lands. Already-capped stats are skipped. Bonuses feed into your existing stat multipliers — so if you're already near a hard cap (e.g. damage 4.0×), additional damage pulls won't push you past it. Designed as a deep prestige curve for the highest-grinding players.
 
 🏛️ **SQUAD TREASURY**
 Members donate gold to a shared squad pool. Leaders/officers spend it on weekly buffs:
@@ -101,7 +105,6 @@ Members donate gold to a shared squad pool. Leaders/officers spend it on weekly 
 
 Donations made in week N apply to week N+1's wars. Buffs reset weekly.
 
-**Why these sinks:** Prestige is a long-term gold + fragment dump for L5-relic owners. Mystery Forge is an optional RNG sink that also burns fragment piles. Treasury is a recurring sink that scales with squad size. None affect individual run scores or leaderboard balance.
+**Why these sinks:** Prestige is a long-term gold + fragment dump for L5-relic owners. Astral Lab targets whales specifically — the cost curve and per-stat caps mean only deep-endgame players engage with it, and bonuses don't bypass the existing stat ceilings. Treasury is a recurring sink that scales with squad size. None affect leaderboard balance directly.
 
 Feedback in `#s6-feedback` after launch — first 2 weeks we're monitoring closely for hotfixes.
-`

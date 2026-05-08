@@ -39,6 +39,35 @@ const MYSTERY_FORGE_GOLD_COST = 5000;
 // players sitting on dead fragment piles have a fun outlet without inflating
 // the gold economy. See docs/S6_MASTER_PLAN.md §5b.
 const MYSTERY_FORGE_FRAGMENT_COST = 50;
+
+// ============================================================================
+// Astral Lab (S6 endgame gold sink — Texxy proposal 2026-05-08)
+// MUST mirror lib/astralLab.js. Each pull rolls a random stat buff at small
+// per-pull magnitude, with a per-stat hard cap. Cost ramps each pull.
+// ============================================================================
+const ASTRAL_BASE_COST = 20000;
+const ASTRAL_COST_GROWTH = 1.4;
+function getAstralPullCost(pullCount) {
+    return Math.floor(ASTRAL_BASE_COST * Math.pow(ASTRAL_COST_GROWTH, pullCount));
+}
+const ASTRAL_STATS = [
+    { id: 'damageMult',    perPull: 0.02,  cap: 0.20 },
+    { id: 'areaMult',      perPull: 0.02,  cap: 0.20 },
+    { id: 'cooldownMult',  perPull: -0.01, cap: -0.10, invert: true },
+    { id: 'speedMult',     perPull: 0.01,  cap: 0.10 },
+    { id: 'projSpeedMult', perPull: 0.02,  cap: 0.20 },
+    { id: 'regen',         perPull: 0.1,   cap: 1.0 },
+    { id: 'magnetRange',   perPull: 5,     cap: 50 },
+    { id: 'maxHp',         perPull: 5,     cap: 50 },
+];
+function rollAstralStat(buffs) {
+    const eligible = ASTRAL_STATS.filter(s => {
+        const cur = buffs?.[s.id] || 0;
+        return s.invert ? cur > s.cap : cur < s.cap;
+    });
+    if (eligible.length === 0) return null;
+    return eligible[Math.floor(Math.random() * eligible.length)];
+}
 // Locked design decision (per master plan §5b): T1 60% / T2 30% / T3 10%.
 const MYSTERY_TIER_WEIGHTS = [
     { tier: 1, weight: 60 },
@@ -411,6 +440,84 @@ Deno.serve(async (req) => {
                     granted: grantedAugId,
                     cost: paymentMode === 'fragments' ? MYSTERY_FORGE_FRAGMENT_COST : MYSTERY_FORGE_GOLD_COST,
                     paymentMode,
+                },
+            });
+        } else if (action === 'astralPull') {
+            // S6+ gate
+            const { season_id, week_id } = getCurrentPeriodIds();
+            if (season_id === '2026-S5') {
+                return Response.json({ error: 'Astral Lab unlocks in Season 6.' }, { status: 403 });
+            }
+
+            const buffs = save.astralBuffs && typeof save.astralBuffs === 'object' ? { ...save.astralBuffs } : {};
+            const pullCount = Math.max(0, Math.floor(Number(save.astralPullCount) || 0));
+            const cost = getAstralPullCost(pullCount);
+            const gold = Number(save.gold || 0);
+
+            if (gold < cost) {
+                return Response.json({
+                    error: `Not enough gold — next pull costs ${cost.toLocaleString()} (you have ${gold.toLocaleString()}).`
+                }, { status: 400 });
+            }
+
+            // Roll a random uncapped stat. Block the pull if every stat is maxed.
+            const rolled = rollAstralStat(buffs);
+            if (!rolled) {
+                return Response.json({ error: 'All Astral stats are fully maxed — nothing left to roll.' }, { status: 400 });
+            }
+
+            const before = buffs[rolled.id] || 0;
+            // Clamp at cap so the last pull lands cleanly even if perPull would overshoot.
+            let after;
+            if (rolled.invert) {
+                after = Math.max(rolled.cap, before + rolled.perPull);
+            } else {
+                after = Math.min(rolled.cap, before + rolled.perPull);
+            }
+            const actualDelta = after - before;
+            buffs[rolled.id] = after;
+
+            updated.gold = gold - cost;
+            updated.astralBuffs = buffs;
+            updated.astralPullCount = pullCount + 1;
+
+            try {
+                await base44.asServiceRole.entities.GoldSpendLog.create({
+                    wallet_address: walletLower,
+                    player_name: saveRecord.player_name || updated.player_name || '',
+                    amount: cost,
+                    balance_before: gold,
+                    balance_after: updated.gold,
+                    grant_info: {
+                        type: 'astral_pull',
+                        pullNumber: pullCount + 1,
+                        rolledStat: rolled.id,
+                        delta: actualDelta,
+                        newTotal: after,
+                    },
+                    week_id,
+                    season_id,
+                });
+            } catch {}
+
+            updated.updated_at = Date.now();
+            await with429Retry(
+                () => base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
+                    save_data: updated,
+                    updated_at: Date.now()
+                }),
+                'PlayerSave.update'
+            );
+            console.log(`[forgeAction] ${walletLower} astralPull #${pullCount + 1} → ${rolled.id} ${actualDelta > 0 ? '+' : ''}${actualDelta} (paid ${cost}g)`);
+            return Response.json({
+                success: true,
+                saveData: updated,
+                astralResult: {
+                    rolledStat: rolled.id,
+                    delta: actualDelta,
+                    newTotal: after,
+                    cost,
+                    nextCost: getAstralPullCost(pullCount + 1),
                 },
             });
         } else {
