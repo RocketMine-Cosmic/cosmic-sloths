@@ -14,6 +14,7 @@ export const IN_GAME_SKUS = {
     squadUltimateFull: 'ingame-squad-ult-full', // 10 OMENX — full-power clone
     revive:        'ingame-revive',
     xpSession:     'ingame-xp-buff',
+    biasRespec:    'bias-respec', // ~10 OMENX — clears all allocated pool-bias points
 };
 
 // Stat upgrade SKUs — keyed by tier and level

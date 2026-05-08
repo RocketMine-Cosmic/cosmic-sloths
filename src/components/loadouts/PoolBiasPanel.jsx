@@ -111,20 +111,25 @@ export default function PoolBiasPanel({ save, setSave }) {
         try {
             const user = getOmenXUserSync();
             const playerName = user?.player_name || user?.full_name || 'Pilot';
+            // Server-authoritative: charges OMENX via the dedicated 'bias-respec' SKU
+            // AND clears poolBiasAllocations atomically (see purchaseSku grant).
             const res = await base44.functions.invoke('purchaseSku', {
-                skuId: IN_GAME_SKUS.xpSession, // 10 OMENX
+                skuId: IN_GAME_SKUS.biasRespec,
                 quantity: 1,
                 playerName,
+                grantInfo: { type: 'pool_respec' },
             });
-            if (res?.data?.success === false) {
+            if (res?.data?.success === false || res?.data?.error) {
                 throw new Error(res?.data?.error || 'Purchase failed');
             }
-            const newSave = { ...save, poolBiasAllocations: {} };
+            // Adopt server truth — saveData has cleared allocations.
+            const sd = res.data?.saveData || {};
+            const newSave = {
+                ...save,
+                poolBiasAllocations: sd.poolBiasAllocations || {},
+            };
             SaveManager.save(newSave);
             setSave(newSave);
-            // Force immediate cloud sync so the cleared allocations don't get lost
-            // if the user closes the tab before the debounce fires.
-            SaveManager.syncToBackendImmediate();
             refreshBalance();
         } catch (e) {
             setRespecError(e?.message || 'Respec failed');

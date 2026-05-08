@@ -300,6 +300,16 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             s.sessionBuffs = { ...(s.sessionBuffs || {}), xpExpiry: now + 60 * 60 * 1000 };
             break;
         }
+        case 'pool_respec': {
+            // grantInfo: { type: 'pool_respec' } — clears all pool-bias allocations.
+            // Bound to the dedicated 'bias-respec' OMENX SKU so the server can verify
+            // payment intent matches the grant (no piggy-backing on other SKUs).
+            if (skuId !== 'bias-respec') {
+                throw new Error(`This respec doesn't match the SKU. Please refresh and try again.`);
+            }
+            s.poolBiasAllocations = {};
+            break;
+        }
         case 'cosmetic': {
             // grantInfo: { type, slot: 'trail'|'kill'|'skin', cosmeticId, charId?, goldCost }
             const { slot, cosmeticId, charId, goldCost } = grantInfo;
