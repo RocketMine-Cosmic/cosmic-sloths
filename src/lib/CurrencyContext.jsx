@@ -31,40 +31,78 @@ export const CurrencyProvider = ({ children }) => {
     return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
   }, []);
 
-  // Local profile edits (title, name, icon) are written via updateOmenXUser to
-  // localStorage/IndexedDB and emit `omenxUserUpdated`. The playerDataCache only
-  // refreshes from the API so we merge those local fields into omenxUser here
-  // so equipped titles etc. show up immediately across pages.
+  // Profile fields (player_name / player_title / pilot_icon) live in
+  // cosmic_sloth_save.profile (Option A, 2026-05-08). Any change to the save —
+  // either local edit (Profile/Titles page) or cloud load (SaveManager.initialize)
+  // — flows through saveUpdated. We re-project the profile fields onto omenxUser
+  // here so consumers see the latest values without needing their own listeners.
+  // The legacy `omenxUserUpdated` event is kept for instant in-flight feedback
+  // (updateOmenXUser fires it before the save round-trip completes).
   useEffect(() => {
-    const handleUserUpdated = (e) => {
-      const updates = e.detail || {};
+    const reproject = (saveData) => {
+      const profile = saveData?.profile || {};
       setOmenxUser(prev => {
-        // If omenxUser hasn't loaded yet, build a minimal record from the
-        // update payload so the title (or whatever changed) isn't lost.
-        const base = prev || {
-          walletAddress: updates.walletAddress,
-          username: updates.username || '',
-          full_name: updates.player_name || updates.username || 'Player',
-          player_name: updates.player_name || updates.username || 'Player',
-          pilot_icon: updates.pilot_icon || '🦥',
-          data: {},
-        };
+        if (!prev) return prev; // wait for the first cache load to seed wallet/etc.
         return {
-          ...base,
-          player_name: updates.player_name ?? base.player_name,
-          pilot_icon: updates.pilot_icon ?? base.pilot_icon,
+          ...prev,
+          player_name: profile.player_name ?? prev.player_name,
+          pilot_icon: profile.pilot_icon ?? prev.pilot_icon,
           data: {
-            ...(base.data || {}),
-            player_name: updates.player_name ?? base.data?.player_name,
-            player_title: updates.player_title !== undefined ? updates.player_title : base.data?.player_title,
-            pilot_icon: updates.pilot_icon ?? base.data?.pilot_icon,
+            ...(prev.data || {}),
+            player_name: profile.player_name ?? prev.data?.player_name,
+            player_title: profile.player_title !== undefined ? profile.player_title : prev.data?.player_title,
+            pilot_icon: profile.pilot_icon ?? prev.data?.pilot_icon,
           },
         };
       });
     };
+    const handleSaveUpdated = (e) => reproject(e.detail);
+    const handleUserUpdated = (e) => {
+      // updates is the new profile slice — fold it in directly.
+      const u = e.detail || {};
+      setOmenxUser(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          player_name: u.player_name ?? prev.player_name,
+          pilot_icon: u.pilot_icon ?? prev.pilot_icon,
+          data: {
+            ...(prev.data || {}),
+            player_name: u.player_name ?? prev.data?.player_name,
+            player_title: u.player_title !== undefined ? u.player_title : prev.data?.player_title,
+            pilot_icon: u.pilot_icon ?? prev.data?.pilot_icon,
+          },
+        };
+      });
+    };
+    window.addEventListener('saveUpdated', handleSaveUpdated);
     window.addEventListener('omenxUserUpdated', handleUserUpdated);
-    return () => window.removeEventListener('omenxUserUpdated', handleUserUpdated);
+    return () => {
+      window.removeEventListener('saveUpdated', handleSaveUpdated);
+      window.removeEventListener('omenxUserUpdated', handleUserUpdated);
+    };
   }, []);
+
+  // Initial seed: when omenxUser arrives from playerDataCache (with wallet/username
+  // but no profile), immediately project the current save.profile onto it so
+  // equipped title / pilot icon show up on first paint instead of after the
+  // first edit.
+  useEffect(() => {
+    if (!omenxUser || omenxUser.data?.player_title !== undefined) return;
+    const profile = save?.profile || {};
+    if (!profile.player_name && !profile.player_title && !profile.pilot_icon) return;
+    setOmenxUser(prev => prev ? ({
+      ...prev,
+      player_name: profile.player_name ?? prev.player_name,
+      pilot_icon: profile.pilot_icon ?? prev.pilot_icon,
+      data: {
+        ...(prev.data || {}),
+        player_name: profile.player_name ?? prev.data?.player_name,
+        player_title: profile.player_title ?? '',
+        pilot_icon: profile.pilot_icon ?? prev.data?.pilot_icon,
+      },
+    }) : prev);
+  }, [omenxUser, save]);
 
   return (
     <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, nfts, omenxUser }}>

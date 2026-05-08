@@ -271,6 +271,7 @@ Deno.serve(async (req) => {
             'bossModifiers',            // Player-toggled boss modifiers
             'isNGPlus',                 // NG+ mode toggle (unlock check happens engine-side)
             'welcomeSeen',              // Onboarding tour seen flag
+            'profile',                  // {player_name, player_title, pilot_icon} — single source of truth
         ];
         for (const key of CLIENT_OWNED_EQUIP_FIELDS) {
             if (saveData[key] !== undefined) {
@@ -467,18 +468,31 @@ Deno.serve(async (req) => {
         const newTs = Date.now();
         merged.updated_at = newTs;
 
-        // PRIVACY/AUTHORITY: player_name on PlayerSave is the source of truth for
-        // every leaderboard display. The client must NEVER overwrite it via syncSave —
-        // that path is reserved for the explicit Profile-page flow (`syncProfileName`)
-        // which also cascades the new name to RunScore / SquadMember / etc.
-        // syncSave preserves whatever the cloud already had to prevent stale local
-        // state (e.g. an old `pilotName` field carrying the OAuth full_name) from
-        // leaking back into the database and onto the leaderboard.
-        const cloudName = (existing[0].player_name || existingData.player_name || existingData.pilotName || '').trim();
-        const preservedName = cloudName || merged.player_name || merged.pilotName || '';
-        // Mirror the preserved name back into save_data so the next saveScore call
-        // reads a consistent value.
-        merged.player_name = preservedName;
+        // PROFILE: server-authoritative profile lives in save_data.profile (Option A,
+        // 2026-05-08). Client writes its chosen name/title/icon there via the standard
+        // SaveManager.save → syncSave flow. We mirror the name to the top-level
+        // PlayerSave.player_name column so admin search by name still works, and
+        // emit the value back into save_data.player_name as a legacy alias.
+        // The mirrorProfileFanOut entity automation handles propagating the change
+        // to RunScore / SquadMember / SquadMessage asynchronously.
+        const profileFromClient = (merged.profile && typeof merged.profile === 'object') ? merged.profile : null;
+        const profileFromCloud = (existingData.profile && typeof existingData.profile === 'object') ? existingData.profile : null;
+        // Prefer client's profile (already set above via CLIENT_OWNED_EQUIP_FIELDS),
+        // fall back to cloud, then to legacy top-level fields.
+        const finalProfile = profileFromClient
+            || profileFromCloud
+            || {
+                player_name: existingData.player_name || existingData.pilotName || '',
+                player_title: existingData.player_title || '',
+                pilot_icon: existingData.pilot_icon || '',
+            };
+        merged.profile = finalProfile;
+        // Legacy aliases (used by older code paths still reading these fields).
+        // The single source of truth is `profile` — these are mirrors only.
+        merged.player_name = finalProfile.player_name || existing[0].player_name || '';
+        merged.player_title = finalProfile.player_title || '';
+        merged.pilot_icon = finalProfile.pilot_icon || '';
+        const preservedName = merged.player_name;
 
         await with429Retry(
             () => base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {

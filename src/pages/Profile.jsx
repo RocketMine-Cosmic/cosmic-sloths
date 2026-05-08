@@ -127,43 +127,22 @@ export default function Profile({ isCarousel }) {
         return () => window.removeEventListener('saveUpdated', handleSaveUpdated);
     }, [omenxUser]);
 
+    // Profile edits (Option A, 2026-05-08): single writer is updateOmenXUser →
+    // SaveManager.save → syncSave. Server-side mirrorProfileFanOut automation
+    // handles propagation to RunScore / SquadMember / SquadMessage. No more
+    // syncProfileName call, no more retry loops, no more pending-sync flags.
     const handleSaveIcon = async (icon) => {
         await updateOmenXUser({ pilot_icon: icon });
-        setUser(prev => ({ ...prev, data: { ...prev?.data, pilot_icon: icon } }));
-        // Sync to DB — Base44 session auth, no token needed
-        const currentName = user?.player_name || user?.data?.player_name || '';
-        if (currentName) {
-            base44.functions.invoke('syncProfileName', {
-                newName: currentName,
-                newIcon: icon,
-            }).catch(e => console.error('[Profile] icon sync failed', e));
-        }
+        setUser(prev => ({ ...prev, pilot_icon: icon, data: { ...prev?.data, pilot_icon: icon } }));
     };
 
     const handleSaveName = async () => {
-         if (!newName.trim()) return;
-         const updatedName = newName.trim();
-         await updateOmenXUser({ player_name: updatedName });
-         setUser(prev => ({ ...prev, player_name: updatedName, data: { ...prev?.data, player_name: updatedName } }));
-         setIsEditingName(false);
-         // Update local game save FIRST (with fresh updated_at via SaveManager.save) so
-         // the subsequent syncSave call sends a non-stale timestamp + the new name,
-         // instead of the server's anti-stale guard reverting it to the old cloud name.
-         const localSave = SaveManager.load();
-         localSave.pilotName = updatedName;
-         localSave.player_name = updatedName;
-         SaveManager.save(localSave);
-         // Sync to DB via syncProfileName (Base44 session auth)
-         base44.functions.invoke('syncProfileName', {
-             newName: updatedName,
-         }).catch(e => console.error('[Profile] name sync failed', e));
-         // Sync name to localStorage for other pages (e.g., Squads) to read
-         const authData = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-         authData.player_name = updatedName;
-         localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
-         // Dispatch storage event so Squads page knows data changed
-         window.dispatchEvent(new StorageEvent('storage', { key: 'omenx_auth_data' }));
-     };
+        if (!newName.trim()) return;
+        const updatedName = newName.trim();
+        await updateOmenXUser({ player_name: updatedName });
+        setUser(prev => ({ ...prev, player_name: updatedName, data: { ...prev?.data, player_name: updatedName } }));
+        setIsEditingName(false);
+    };
 
 
 

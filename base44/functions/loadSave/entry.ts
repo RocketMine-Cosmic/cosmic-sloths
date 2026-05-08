@@ -99,6 +99,24 @@ Deno.serve(async (req) => {
                     saveData = { ...saveData, player_name: row.player_name };
                 }
 
+                // Server-side profile migration (Option A, 2026-05-08):
+                // Lift legacy top-level player_name / player_title / pilot_icon
+                // into save_data.profile so the new client reads from a single
+                // canonical location. Idempotent — only sets fields that aren't
+                // already present in save_data.profile.
+                if (!saveData.profile || typeof saveData.profile !== 'object') {
+                    saveData.profile = {};
+                }
+                if (!saveData.profile.player_name) {
+                    saveData.profile.player_name = saveData.player_name || row.player_name || '';
+                }
+                if (!saveData.profile.player_title) {
+                    saveData.profile.player_title = saveData.player_title || '';
+                }
+                if (!saveData.profile.pilot_icon) {
+                    saveData.profile.pilot_icon = saveData.pilot_icon || '';
+                }
+
                 // Roll stale weekly/seasonal containers forward and persist if changed.
                 const { saveData: rolledData, rolled } = rollStalePeriods(saveData);
                 saveData = rolledData;

@@ -154,34 +154,17 @@ function App() {
     bindFlushListeners();
     // CurrencyProvider subscription will handle centralized fetch
 
-    // Listen for auth data pushed from parent page (when embedded on Omen website)
+    // Listen for auth data pushed from parent page (when embedded on Omen website).
+    // omenx_auth_data is OAuth-only after Option A migration (2026-05-08) — profile
+    // fields live in cosmic_sloth_save.profile. Simple merge with whatever was there
+    // (e.g. tokens we may have refreshed locally).
     const onParentMessage = (event) => {
       const { type, authData } = event.data || {};
       if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.accessToken) {
         console.log('[OmenX] Received auth from parent iframe');
         try {
-          // CRITICAL: merge — never overwrite. The parent payload only contains
-          // OAuth fields (walletAddress, accessToken, username...). It does NOT
-          // contain the user's profile customizations (player_title, pilot_icon,
-          // player_name). If we overwrite, those local edits get wiped every
-          // time the parent re-posts auth — and the title appears "stuck" because
-          // the next save flow restores it from the cloud, only for the next
-          // postMessage to wipe it again. Preserve our local profile fields.
-          let preserved = {};
-          try {
-            const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-            if (existing && typeof existing === 'object') {
-              if (existing.player_title !== undefined) preserved.player_title = existing.player_title;
-              if (existing.pilot_icon !== undefined) preserved.pilot_icon = existing.pilot_icon;
-              if (existing.player_name !== undefined) preserved.player_name = existing.player_name;
-              // Preserve the pending-sync flag too so a parent re-post mid-equip
-              // doesn't drop it (would make SaveManager.initialize on next boot
-              // overwrite the unsynced local title with a stale cloud value).
-              if (existing._titlePendingSync !== undefined) preserved._titlePendingSync = existing._titlePendingSync;
-            }
-          } catch {}
-          // Parent's authData wins for OAuth fields; our preserved profile fields layer on top.
-          const merged = { ...authData, ...preserved };
+          const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
+          const merged = { ...existing, ...authData };
           localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'omenx_auth_data',

@@ -23,6 +23,38 @@ export const SaveManager = {
     SaveManager._initialized = true;
     console.log('[SaveManager] Initialize called');
 
+    // ---- One-time profile migration (Option A, 2026-05-08) ----
+    // Lift legacy profile fields (player_name / player_title / pilot_icon) out of
+    // omenx_auth_data into save.profile so the new code path has a single
+    // canonical store. Idempotent — if save.profile already exists, do nothing.
+    try {
+      const auth = JSON.parse(localStorage.getItem('omenx_auth_data') || 'null');
+      const save = JSON.parse(localStorage.getItem('cosmic_sloth_save') || 'null');
+      if (auth && save && (!save.profile || typeof save.profile !== 'object')) {
+        const lifted = {
+          player_name: auth.player_name || save.player_name || '',
+          player_title: auth.player_title || save.player_title || '',
+          pilot_icon: auth.pilot_icon || save.pilot_icon || '🦥',
+        };
+        if (lifted.player_name || lifted.player_title || lifted.pilot_icon) {
+          save.profile = lifted;
+          save.updated_at = Date.now();
+          localStorage.setItem('cosmic_sloth_save', JSON.stringify(save));
+          console.log('[SaveManager] Migrated profile fields to save.profile:', lifted);
+        }
+        // Strip from auth — pure OAuth from now on. Safe even if the migration above didn't run
+        // (auth may already be clean); .delete is idempotent.
+        delete auth.player_name;
+        delete auth.player_title;
+        delete auth.pilot_icon;
+        delete auth.pilotName;
+        delete auth._titlePendingSync;
+        localStorage.setItem('omenx_auth_data', JSON.stringify(auth));
+      }
+    } catch (e) {
+      console.warn('[SaveManager] profile migration skipped:', e.message);
+    }
+
     // Global visibility-change listener — fires on tab hide, mobile background,
     // navigation away. Browser keeps the page alive long enough for the async
     // fetch to complete (unlike beforeunload). One listener covers all pages.
@@ -166,37 +198,9 @@ export const SaveManager = {
           const localSave = localStorage.getItem('cosmic_sloth_save');
           const cloudData = typeof cloudSave === 'string' ? JSON.parse(cloudSave) : cloudSave;
 
-          // Restore profile fields (player_title / player_name / pilot_icon) from cloud save
-          // back into omenx_auth_data — these live there for fast sync access by useOmenXUser,
-          // but get wiped on a cache clear and would otherwise be lost until next edit.
-          try {
-            const auth = JSON.parse(localStorage.getItem('omenx_auth_data') || 'null');
-            if (auth) {
-              let changed = false;
-              // Skip the title restore if the user just equipped a title that hasn't
-              // synced to cloud yet — otherwise we'd overwrite the freshly-equipped
-              // local value with the stale cloud value, making the title appear to
-              // "not persist" (root cause Hugo 2026-05-07).
-              const titleSyncPending = !!auth._titlePendingSync;
-              if (!titleSyncPending && cloudData.player_title !== undefined && auth.player_title !== cloudData.player_title) {
-                auth.player_title = cloudData.player_title; changed = true;
-              }
-              if (cloudData.player_name && auth.player_name !== cloudData.player_name) {
-                auth.player_name = cloudData.player_name; changed = true;
-              }
-              if (cloudData.pilot_icon && auth.pilot_icon !== cloudData.pilot_icon) {
-                auth.pilot_icon = cloudData.pilot_icon; changed = true;
-              }
-              if (changed) {
-                localStorage.setItem('omenx_auth_data', JSON.stringify(auth));
-                try {
-                  const { saveAuthToIndexedDB } = await import('@/lib/indexedDbAuth');
-                  await saveAuthToIndexedDB(auth);
-                } catch {}
-                window.dispatchEvent(new CustomEvent('omenxUserUpdated', { detail: auth }));
-              }
-            }
-          } catch (e) { console.warn('[SaveManager] Profile restore failed:', e.message); }
+          // Profile fields now live in cloudData.profile (Option A). They flow into
+          // localStorage.cosmic_sloth_save via the merge below — no separate restore
+          // needed. omenx_auth_data is OAuth-only from this point forward.
           
           // Apply cloud-synced audio preferences (jukebox + SFX categories) so they
           // follow the user across devices/browsers. Local edits stream back via the
