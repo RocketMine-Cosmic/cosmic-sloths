@@ -612,13 +612,41 @@ export default function Game() {
         }
     }, [omenxBalance]);
 
-    const purchaseSku = async (skuId, quantity = 1) => {
+    const purchaseSku = async (skuId, quantity = 1, grantInfo = null) => {
         if (!skuId) return;
         const user = getOmenXUserSync();
         const playerName = user?.player_name || user?.full_name || 'Pilot';
-        return base44.functions.invoke('purchaseSku', { skuId, quantity, playerName })
+        return base44.functions.invoke('purchaseSku', { skuId, quantity, playerName, grantInfo })
             .then(r => r.data)
             .catch(e => console.error('[Game purchaseSku] failed:', e?.message));
+    };
+
+    // Pause-menu handler — buys a 60-minute +50% XP session buff and applies the
+    // expiry to the running engine so the multiplier flips back on immediately.
+    // Server is the source of truth for the timestamp (clock skew safety).
+    const handleXpBuff = () => {
+        const XP_COST = 10;
+        const engine = engineRef.current;
+        if (!engine) return;
+        const buffActive = engine.xpBuffExpiry > Date.now();
+        if (buffActive) return; // server also rejects, but no point firing the modal
+        if ((omenxBalance ?? 0) < XP_COST) return;
+        confirmPurchase(XP_COST, '+50% XP Buff (1 hour)', () => {
+            // Optimistic apply — engine flips to 1.5× XP immediately so the rest
+            // of the run benefits while the OMENX charge settles in the background.
+            const optimisticExpiry = Date.now() + 60 * 60 * 1000;
+            engine.xpBuffExpiry = optimisticExpiry;
+            engine.player.xpBuffActive = true;
+            engine.player.xpMult = engine._xpMultBase * 1.5;
+            // Reconcile with server timestamp once the purchase confirms.
+            purchaseSku(IN_GAME_SKUS.xpSession, 1, { type: 'xp_buff' }).then(res => {
+                if (res?.saveData?.sessionBuffs?.xpExpiry) {
+                    engine.xpBuffExpiry = Number(res.saveData.sessionBuffs.xpExpiry);
+                    SaveManager.save({ ...SaveManager.load(), sessionBuffs: res.saveData.sessionBuffs });
+                }
+            });
+            refreshBalance();
+        });
     };
 
     const handleUpgradeSelect = (upgrade) => {
@@ -861,6 +889,9 @@ export default function Game() {
                     onRestart={handleRestart}
                     onHideHud={() => { setHudHidden(true); }}
                     engineRef={engineRef}
+                    onBuyXpBuff={handleXpBuff}
+                    omenxBalance={omenxBalance ?? 0}
+                    xpBuffExpiry={gameState.xpBuffExpiry || 0}
                 />
             )}
 

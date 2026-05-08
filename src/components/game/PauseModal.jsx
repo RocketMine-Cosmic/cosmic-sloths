@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import PlayerStatsPanel from './PlayerStatsPanel';
 
-export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef }) {
+const XP_BUFF_COST = 10;
+
+export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef, onBuyXpBuff, omenxBalance = 0, xpBuffExpiry = 0 }) {
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
     const [showStats, setShowStats] = useState(false);
+    // Live tick so the "X:XX left" countdown updates while the menu is open.
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => {
+        const t = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(t);
+    }, []);
+
+    const buffActive = xpBuffExpiry > now;
+    const buffMinsLeft = buffActive ? Math.max(0, Math.ceil((xpBuffExpiry - now) / 60000)) : 0;
+    const canAfford = omenxBalance >= XP_BUFF_COST;
 
     return (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -40,6 +53,25 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                     >
                         Settings
                     </button>
+                    {onBuyXpBuff && (
+                        buffActive ? (
+                            <div className="w-full bg-emerald-950/50 border-2 border-emerald-500/60 rounded-lg px-4 py-3 flex items-center justify-center gap-2 text-emerald-300">
+                                <Sparkles className="w-4 h-4" />
+                                <span className="font-bold text-sm md:text-base">+50% XP active — {buffMinsLeft}m left</span>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={onBuyXpBuff}
+                                disabled={!canAfford}
+                                className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-bold text-base md:text-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
+                                title={canAfford ? 'Apply +50% XP for 1 hour' : `Need ${XP_BUFF_COST} OMENX`}
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                +50% XP (1h)
+                                <span className="bg-black/30 px-2 py-0.5 rounded text-xs font-mono">{XP_BUFF_COST} OMENX</span>
+                            </button>
+                        )
+                    )}
                     {onHideHud && (
                         <button
                             onClick={onHideHud}
