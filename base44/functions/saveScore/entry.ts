@@ -67,9 +67,12 @@ const ENDLESS_KILLS_FLOOR = 600;
 const ENDLESS_GOLD_HARD_CEILING = 10000;
 const ENDLESS_KILLS_HARD_CEILING = 6000;
 
-// Hard score ceiling — last-line backstop. Maxed legit S5/S6 sector 10 + endless
-// peaks land around 1M, so 2.5M leaves comfortable headroom for future content.
-const SCORE_HARD_CEILING = 2_500_000;
+// Hard score ceiling — last-line backstop. Long S5 endless runs (Tijckers 33min,
+// Waeoo 19min) were both clipping the previous 2.5M ceiling, so we raised it to
+// 10M to leave the leaderboard chase open for the final 10 days of S5. S6's new
+// formula caps endless naturally at ~10k/min and peaks ~1M overall, so 10M
+// remains a meaningful tampering backstop without constraining legit play.
+const SCORE_HARD_CEILING = 10_000_000;
 
 // Arena progression — must mirror game/Constants.js ARENAS order EXACTLY.
 // Bug 2026-05-01 (Crybel): old order had stale ids ('voidring', 'singularity')
