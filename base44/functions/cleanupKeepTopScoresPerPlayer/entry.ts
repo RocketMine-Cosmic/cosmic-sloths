@@ -128,7 +128,12 @@ Deno.serve(async (req) => {
         const slice = toDelete.slice(startOffset, startOffset + batch);
         let succeeded = 0;
         const failures = [];
-        for (const s of slice) {
+        for (let i = 0; i < slice.length; i++) {
+            const s = slice[i];
+            // Tiny pause every few rows to spread load — without this, 50 sequential
+            // creates + 50 deletes blast the SDK with 100 calls in <1s and trip
+            // the rate limiter even with retries.
+            if (i > 0 && i % 5 === 0) await new Promise(r => setTimeout(r, 250));
             try {
                 await with429Retry(
                     () => base44.asServiceRole.entities.DeletedRunScore.create({

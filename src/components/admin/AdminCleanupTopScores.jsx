@@ -8,11 +8,13 @@ import { useAvailablePeriods, getCurrentWeekId } from './useAvailablePeriods';
 // archives the rest. Always runs a dry-run first so you can see what it
 // will do before committing. Always takes a backup snapshot before executing.
 //
-// Execution is batched (50 deletes per call, ~750ms pause between batches)
-// so we don't trip rate limits when the queue is large (4k+).
+// Execution is batched (100 deletes per call, ~1500ms pause between batches)
+// so we don't trip rate limits when the queue is large (4k+). Each batch
+// re-scans the full RunScore table (cheaper than client tracking offsets)
+// so larger batches mean fewer scans = less rate-limit pressure.
 
-const BATCH_SIZE = 50;
-const PAUSE_MS = 750;
+const BATCH_SIZE = 100;
+const PAUSE_MS = 1500;
 
 async function autoSnapshot(notes) {
     try {
