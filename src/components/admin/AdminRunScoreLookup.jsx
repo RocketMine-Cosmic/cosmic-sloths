@@ -84,6 +84,7 @@ export default function AdminRunScoreLookup() {
                                             <th className="text-right px-2 py-2">Kills</th>
                                             <th className="text-right px-2 py-2">Lvl</th>
                                             <th className="text-right px-2 py-2">Time</th>
+                                            <th className="text-right px-2 py-2">Gold</th>
                                             <th className="text-left px-2 py-2">Week</th>
                                         </tr>
                                     </thead>
@@ -97,6 +98,19 @@ export default function AdminRunScoreLookup() {
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{r.kills || 0}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{r.level || 0}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{Math.floor(r.time_survived || 0)}s</td>
+                                                {(() => {
+                                                    const credited = Number(r.gold_credited ?? 0);
+                                                    const earned = Number(r.gold_earned ?? credited);
+                                                    const capped = earned > credited;
+                                                    return (
+                                                        <td
+                                                            className={`px-2 py-1.5 text-right font-mono ${capped ? 'text-amber-300' : 'text-yellow-300'}`}
+                                                            title={capped ? `Earned ${earned.toLocaleString()} → capped to ${credited.toLocaleString()}` : `Credited ${credited.toLocaleString()}`}
+                                                        >
+                                                            {credited.toLocaleString()}{capped && <span className="text-amber-500 ml-1">⚠</span>}
+                                                        </td>
+                                                    );
+                                                })()}
                                                 <td className="px-2 py-1.5 text-slate-500 font-mono">{r.week_id || '—'}</td>
                                             </tr>
                                         ))}
