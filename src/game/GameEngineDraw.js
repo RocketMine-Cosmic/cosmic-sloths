@@ -72,11 +72,7 @@ export function renderGame() {
     const camX = this.camera.x;
     const camY = this.camera.y;
 
-    // Two-pass pickup rendering. Gold/XP/fragment go down here BEFORE projectiles
-    // and weapon AoE — they're high-volume and shouldn't sit on top of effects.
-    // Power-ups (nuke/magnet/shield/reroll) render in a second pass below, AFTER
-    // particles + AoE, so they stay visible through Aegis/Hellfire/etc.
-    drawPickups(this.ctx, this.pickups, this.time, 'standard');
+    drawPickups(this.ctx, this.pickups, this.time);
 
     if (this.characterPickup) {
         this.ctx.fillStyle = this.characterPickup.color;
@@ -379,10 +375,6 @@ export function renderGame() {
     }
 
     this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
-
-    // Top-layer power-up pickups — drawn AFTER particles + AoE pools so nuke /
-    // magnet / shield / reroll stay visible through weapon visual effects.
-    drawPickups(this.ctx, this.pickups, this.time, 'powerups');
 
     const viewMinX = camX - 150;
     const viewMaxX = camX + vWidth + 150;

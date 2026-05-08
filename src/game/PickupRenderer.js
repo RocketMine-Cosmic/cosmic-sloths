@@ -10,19 +10,8 @@ const IS_DESKTOP = typeof window !== 'undefined'
 // pickups to read more clearly on bigger screens.
 const PICKUP_SCALE = IS_DESKTOP ? 1.5 : 1.15;
 
-// Power-up pickups render in a separate pass ABOVE weapon AoE/particles so they
-// stay visible through busy combat (Aegis, Hellfire, Quantum Collapse pools etc.).
-// Gold/XP/fragment stay in the bottom pass so they don't litter the screen on top
-// of everything. See GameEngineDraw.js for the two-pass invocation.
-const POWERUP_TYPES = new Set(['nuke', 'magnet_power', 'shield_power', 'reroll']);
-
-export function drawPickups(ctx, pickups, time, layer = 'all') {
-    const filtered = layer === 'all'
-        ? pickups
-        : layer === 'powerups'
-            ? pickups.filter(p => POWERUP_TYPES.has(p.type) || p.icon)
-            : pickups.filter(p => !POWERUP_TYPES.has(p.type) && !p.icon);
-    const sorted = [...filtered].sort((a, b) => {
+export function drawPickups(ctx, pickups, time) {
+    const sorted = [...pickups].sort((a, b) => {
         const order = { gold: 0, reroll: 1, xp: 2 };
         return (order[a.type] ?? 1) - (order[b.type] ?? 1);
     });
