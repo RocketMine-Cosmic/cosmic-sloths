@@ -165,23 +165,33 @@ Three sinks, ranked by build cost ÷ economic absorption:
 
 ### 5a. 🥇 Prestige Relics (high absorb, medium cost)
 
-**Concept:** once a relic hits L5, you can "prestige" it for **2x its level-5 cost** to unlock a **+1 prestige tier** (PL1 → PL5, each adding +5% to the relic's effect).
+**Concept:** once a relic hits L5, you can "prestige" it for **gold + relic fragments** to unlock a **+1 prestige tier** (PL1 → PL5, each adding +5% to the relic's effect).
 
-| Tier | Total gold cost | Effect at end |
-|---|---|---|
-| L1–L5 (existing) | ~150k | Midas Core +50% gold |
-| **PL1–PL5** (new) | +1.5M (per relic) | Midas Core +75% gold |
+| Tier | Gold cost | Fragment cost | Effect at end |
+|---|---|---|---|
+| L1–L5 (existing) | ~150k | (used to craft + level) | Midas Core +50% gold |
+| **PL1–PL5** (new) | +1.5M (per relic) | **+500 (per relic)** | Midas Core +75% gold |
 
-- 5 relics × 1.5M = **7.5M gold sink** for the full prestige set
+**Why fragments are part of the prestige cost (added 2026-05-08):**
+Audit of top stockpiles showed L5-relic players sitting on **300–600+ unspent fragments** with literally nothing to spend them on (all 5 relics maxed, fragments only buy crafting + leveling + in-run rerolls). Adding a fragment cost to prestige drains those dead piles into a meaningful goal.
+
+- 100 fragments per prestige tier × 5 tiers = 500 fragments per relic fully prestiged
+- Top whales (~600 fragments) can fully prestige *one* relic from the pile, then go back to earning fragments organically
+- Newer players with smaller piles (~50–100) can dip into PL1 immediately without feeling locked out
+- Fragments are still grandfathered (no clawback) — they just become prestige progress
+
+**Sink absorption:**
+- Gold: 5 relics × 1.5M = **7.5M gold sink** for the full prestige set
+- Fragments: 5 relics × 500 = **2,500 fragments** for the full set (~4× the largest current pile)
 - Every relic, not just the meta ones (unlike forge augments)
 - Unlocks slowly — even a whale with 60k/run takes 10 weeks to fully prestige one relic
 - Bonus is meaningful (+5% per tier) but not gamebreaking — a whale who skips prestige still loses to a similarly-skilled non-prestige player on the leaderboard (because score doesn't care about gold)
 
-**Build cost:** ~2 days (relic data extension, UI, server-side gold spend, save migration)
+**Build cost:** ~2 days (relic data extension, UI, server-side gold + fragment spend, save migration)
 
 ### 5b. 🥈 Forge Lottery Re-rolls (medium absorb, low cost)
 
-**Concept:** the forge currently lets players **buy** specific augments. Add a "**Mystery Forge**" button that costs **5,000 gold** and grants a **random T1/T2/T3 augment** weighted by tier rarity. Players keep re-rolling until they get the augment they want.
+**Concept:** the forge currently lets players **buy** specific augments. Add a "**Mystery Forge**" button that costs **5,000 gold OR 50 relic fragments** and grants a **random T1/T2/T3 augment** weighted by tier rarity. Players keep re-rolling until they get the augment they want.
 
 | Outcome | Probability | Player value |
 |---|---|---|
@@ -189,9 +199,13 @@ Three sinks, ranked by build cost ÷ economic absorption:
 | T2 augment | 30% | Good outcome |
 | T3 augment | 10% | Jackpot |
 
-- Average roll cost to get a specific T3 = ~50k gold
+**Dual-currency rationale (added 2026-05-08):**
+Letting fragments buy lottery pulls gives stockpilers an outlet that doesn't inflate the gold economy you just rebalanced. A whale with 600 fragments can do 12 free pulls; once that pile is gone, they're back to paying gold like everyone else. Conversion ratio (50 frags = 5,000 gold = 1 pull) is intentionally fragment-favorable to encourage drainage.
+
+- Average roll cost to get a specific T3 = ~50k gold OR ~500 fragments
 - Compulsive sink — players keep pulling for the rare drop
 - Unlike the existing direct-buy path, this is a **gamble** (with capped downside — they always get *something*)
+- Fragment payment route ensures even players who already maxed prestige have somewhere to spend leftover frags
 
 **Build cost:** ~1 day (one new function, one button, weighted-random helper already exists in `forgeAction`)
 
@@ -306,7 +320,7 @@ If any metric drifts, hotfix the *specific* lever (no need to revert the whole p
 2. **Prestige cost** — ✅ **Flat 1.5M per relic, same for every relic.** No tiered pricing — fairness for all players over whale-friendly economics. (Casual players prestige at their own pace; whales don't get cheaper paths through "casual" relics.)
 3. **Forge lottery** — ✅ 60% T1 / 30% T2 / 10% T3 drop weights approved.
 4. **Squad treasury buffs** — ✅ **Buffs last 1 full week (= one war cycle).** Donations made during week N apply to all of week N+1's wars and run gold drops, then expire and reset.
-5. **Existing gold piles** — ✅ **Grandfathered in.** Players keep every gold piece earned in S5. They earned it; we don't claw it back. (Whales who stockpiled early just get a head-start on prestige relics, which is fine — the sinks are deep enough to absorb it.)
+5. **Existing gold + fragment piles** — ✅ **Grandfathered in.** Players keep every gold piece AND every relic fragment earned in S5. They earned it; we don't claw it back. (Whales who stockpiled early just get a head-start on prestige relics, which is fine — the sinks are deep enough to absorb it.) Fragments specifically are addressed by Prestige (gold + frag cost, §5a) and Lottery (gold OR frag cost, §5b) — both added 2026-05-08 after audit revealed L5-relic players sitting on 300–600+ dead fragments.
 6. **Sink rollout pace** — ✅ **All three sinks ship simultaneously at S6 launch (May 18).** No staggered rollout — players need the full sink package available from day 1 so the cap-removal doesn't outpace the absorption capacity.
 
 All open decisions resolved. Ready for Phase 1 implementation.
