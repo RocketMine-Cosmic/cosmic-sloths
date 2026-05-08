@@ -45,8 +45,11 @@ export default function MaintenanceGate() {
     if (state.mode === 'off') return null;
 
     if (state.mode === 'soft') {
+        // Bottom-anchored so it doesn't overlap the WarpMenu / top nav, and
+        // pointer-events-none so it never blocks clicks on whatever sits behind
+        // it (the banner itself has no interactive elements).
         return (
-            <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-600/95 text-white text-center text-xs md:text-sm font-bold px-3 py-2 shadow-lg flex items-center justify-center gap-2 backdrop-blur-sm">
+            <div className="fixed bottom-0 left-0 right-0 z-[9999] bg-amber-600/95 text-white text-center text-xs md:text-sm font-bold px-3 py-2 shadow-lg flex items-center justify-center gap-2 backdrop-blur-sm pointer-events-none">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span className="truncate">{state.message || 'Season 6 rollout coming soon — finish your run before launch.'}</span>
             </div>
