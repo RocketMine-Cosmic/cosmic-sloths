@@ -35,6 +35,10 @@ const DAILY_CONVERT_CAP = 30;
 // when you only own area_1 grants area_2). If every augment on the weapon is already
 // owned, the call refunds with an error. S6+ only — pre-rollover returns 403.
 const MYSTERY_FORGE_GOLD_COST = 5000;
+// 2026-05-08 — fragments accepted as alt-payment (50 frags = 1 pull) so
+// players sitting on dead fragment piles have a fun outlet without inflating
+// the gold economy. See docs/S6_MASTER_PLAN.md §5b.
+const MYSTERY_FORGE_FRAGMENT_COST = 50;
 // Locked design decision (per master plan §5b): T1 60% / T2 30% / T3 10%.
 const MYSTERY_TIER_WEIGHTS = [
     { tier: 1, weight: 60 },
@@ -321,10 +325,18 @@ Deno.serve(async (req) => {
             if (!VALID_WEAPON_IDS.has(weaponId)) {
                 return Response.json({ error: 'Invalid weaponId' }, { status: 400 });
             }
+            // Accept either 'gold' (default) or 'fragments' as payment.
+            const paymentMode = payload?.paymentMode === 'fragments' ? 'fragments' : 'gold';
             const gold = Number(save.gold || 0);
-            if (gold < MYSTERY_FORGE_GOLD_COST) {
+            const fragments = Number(save.relicFragments || 0);
+            if (paymentMode === 'gold' && gold < MYSTERY_FORGE_GOLD_COST) {
                 return Response.json({
                     error: `Not enough gold — Mystery Forge costs ${MYSTERY_FORGE_GOLD_COST.toLocaleString()} (you have ${gold.toLocaleString()}).`
+                }, { status: 400 });
+            }
+            if (paymentMode === 'fragments' && fragments < MYSTERY_FORGE_FRAGMENT_COST) {
+                return Response.json({
+                    error: `Not enough relic fragments — Mystery Forge costs ${MYSTERY_FORGE_FRAGMENT_COST} (you have ${fragments}).`
                 }, { status: 400 });
             }
 
@@ -348,26 +360,33 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'Couldn\'t pick a reward — please try again.' }, { status: 500 });
             }
 
-            // Apply: deduct gold, append augment.
-            updated.gold = gold - MYSTERY_FORGE_GOLD_COST;
+            // Apply: deduct chosen currency, append augment.
+            if (paymentMode === 'fragments') {
+                updated.relicFragments = fragments - MYSTERY_FORGE_FRAGMENT_COST;
+            } else {
+                updated.gold = gold - MYSTERY_FORGE_GOLD_COST;
+            }
             updated.forgeWeaponAugments = {
                 ...(save.forgeWeaponAugments || {}),
                 [weaponId]: [...ownedArr, grantedAugId],
             };
 
-            // Audit log — same shape as spendGold uses.
-            try {
-                await base44.asServiceRole.entities.GoldSpendLog.create({
-                    wallet_address: walletLower,
-                    player_name: saveRecord.player_name || updated.player_name || '',
-                    amount: MYSTERY_FORGE_GOLD_COST,
-                    balance_before: gold,
-                    balance_after: updated.gold,
-                    grant_info: { type: 'mystery_forge', weaponId, rolledTier, granted: grantedAugId },
-                    week_id,
-                    season_id,
-                });
-            } catch {}
+            // Audit log — only logged for gold payments since GoldSpendLog tracks gold flow.
+            // Fragment payments are still tracked via the PlayerSave update + console log.
+            if (paymentMode === 'gold') {
+                try {
+                    await base44.asServiceRole.entities.GoldSpendLog.create({
+                        wallet_address: walletLower,
+                        player_name: saveRecord.player_name || updated.player_name || '',
+                        amount: MYSTERY_FORGE_GOLD_COST,
+                        balance_before: gold,
+                        balance_after: updated.gold,
+                        grant_info: { type: 'mystery_forge', weaponId, rolledTier, granted: grantedAugId, paymentMode: 'gold' },
+                        week_id,
+                        season_id,
+                    });
+                } catch {}
+            }
 
             // Persist + return early so we can include the roll result in the response
             // without leaking the helper field into the saved object.
@@ -379,11 +398,20 @@ Deno.serve(async (req) => {
                 }),
                 'PlayerSave.update'
             );
-            console.log(`[forgeAction] ${walletLower} mysteryForge ${weaponId} → ${grantedAugId} (rolled T${rolledTier})`);
+            const costStr = paymentMode === 'fragments'
+                ? `${MYSTERY_FORGE_FRAGMENT_COST} frags`
+                : `${MYSTERY_FORGE_GOLD_COST} gold`;
+            console.log(`[forgeAction] ${walletLower} mysteryForge ${weaponId} → ${grantedAugId} (rolled T${rolledTier}, paid ${costStr})`);
             return Response.json({
                 success: true,
                 saveData: updated,
-                mysteryResult: { weaponId, rolledTier, granted: grantedAugId, cost: MYSTERY_FORGE_GOLD_COST },
+                mysteryResult: {
+                    weaponId,
+                    rolledTier,
+                    granted: grantedAugId,
+                    cost: paymentMode === 'fragments' ? MYSTERY_FORGE_FRAGMENT_COST : MYSTERY_FORGE_GOLD_COST,
+                    paymentMode,
+                },
             });
         } else {
             return Response.json({ error: 'Unknown action' }, { status: 400 });

@@ -38,6 +38,10 @@ const VALID_RELIC_IDS = new Set([
 ]);
 
 const PRESTIGE_GOLD_COST = 1_500_000;
+// 2026-05-08 — added fragment cost to drain existing relicFragment piles.
+// Audit showed L5-relic players sitting on 300–600+ unspent fragments with
+// nothing to spend them on. See docs/S6_MASTER_PLAN.md §5a.
+const PRESTIGE_FRAGMENT_COST = 100;
 const PRESTIGE_MAX = 5;
 
 async function with429Retry(fn, label = 'op') {
@@ -110,10 +114,17 @@ Deno.serve(async (req) => {
                 error: `Not enough gold — you need ${PRESTIGE_GOLD_COST.toLocaleString()} but have ${gold.toLocaleString()}.`
             }, { status: 400 });
         }
+        const fragments = Number(save.relicFragments || 0);
+        if (fragments < PRESTIGE_FRAGMENT_COST) {
+            return Response.json({
+                error: `Not enough relic fragments — you need ${PRESTIGE_FRAGMENT_COST} but have ${fragments}.`
+            }, { status: 400 });
+        }
 
         // Apply
         const updated = { ...save };
         updated.gold = gold - PRESTIGE_GOLD_COST;
+        updated.relicFragments = fragments - PRESTIGE_FRAGMENT_COST;
         prestige[relicId] = currentPrestige + 1;
         updated.relicPrestige = prestige;
         updated.updated_at = Date.now();
@@ -135,17 +146,18 @@ Deno.serve(async (req) => {
                 amount: PRESTIGE_GOLD_COST,
                 balance_before: gold,
                 balance_after: updated.gold,
-                grant_info: { type: 'relic_prestige', relicId, newPrestige: prestige[relicId] },
+                grant_info: { type: 'relic_prestige', relicId, newPrestige: prestige[relicId], fragmentCost: PRESTIGE_FRAGMENT_COST },
                 week_id,
                 season_id,
             });
         } catch {}
 
-        console.log(`[prestigeRelic] ${walletLower} prestiged ${relicId} → PL${prestige[relicId]} (-${PRESTIGE_GOLD_COST} gold)`);
+        console.log(`[prestigeRelic] ${walletLower} prestiged ${relicId} → PL${prestige[relicId]} (-${PRESTIGE_GOLD_COST} gold, -${PRESTIGE_FRAGMENT_COST} frags)`);
         return Response.json({
             success: true,
             saveData: updated,
             cost: PRESTIGE_GOLD_COST,
+            fragmentCost: PRESTIGE_FRAGMENT_COST,
             newPrestige: prestige[relicId],
         });
     } catch (error) {

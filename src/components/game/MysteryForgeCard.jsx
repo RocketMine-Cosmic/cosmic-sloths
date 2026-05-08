@@ -3,15 +3,16 @@ import { base44 } from '@/api/base44Client';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { WEAPONS } from '../../game/Constants';
-import { ChevronLeft, ChevronRight, Sparkles, Coins, Dices, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Coins, Dices, Lock, Puzzle } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 
-// S6 Phase 3b — Mystery Forge UI. Costs 5,000 gold per pull, grants a random
-// weapon augment (T1 60% / T2 30% / T3 10%) for the chosen weapon. Server
-// downgrades the rolled tier if prereqs aren't met (e.g. rolling T3 with no T2
-// owned grants T2 instead). Hard-gated to S6+ via the same seasonGate the
-// engine + saveScore use.
+// S6 Phase 3b — Mystery Forge UI. Costs 5,000 gold OR 50 relic fragments per pull,
+// grants a random weapon augment (T1 60% / T2 30% / T3 10%) for the chosen weapon.
+// Server downgrades the rolled tier if prereqs aren't met (e.g. rolling T3 with
+// no T2 owned grants T2 instead). Hard-gated to S6+ via the same seasonGate the
+// engine + saveScore use. Fragment alt-payment added 2026-05-08.
 const MYSTERY_FORGE_GOLD_COST = 5000;
+const MYSTERY_FORGE_FRAGMENT_COST = 50;
 const BRANCH_LABEL = { damage: 'Damage', area: 'Area', cd: 'Cooldown' };
 const TIER_LABEL  = { 1: 'Tier I',  2: 'Tier II', 3: 'Tier III' };
 const TIER_COLOR  = {
@@ -27,11 +28,16 @@ export default function MysteryForgeCard({ save, setSave }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [lastRoll, setLastRoll] = useState(null);
+    // 'gold' or 'fragments' — defaults to fragments when player has enough,
+    // since the whole point of the alt-currency is to drain fragment piles.
+    const [paymentMode, setPaymentMode] = useState('gold');
 
     const weapon = baseWeapons[weaponIdx];
     const ownedAugs = save.forgeWeaponAugments?.[weapon.id] || [];
     const allOwned = ['damage', 'area', 'cd'].every(b => [1,2,3].every(t => ownedAugs.includes(`${b}_${t}`)));
-    const canAfford = (save.gold || 0) >= MYSTERY_FORGE_GOLD_COST;
+    const hasGold = (save.gold || 0) >= MYSTERY_FORGE_GOLD_COST;
+    const hasFragments = (save.relicFragments || 0) >= MYSTERY_FORGE_FRAGMENT_COST;
+    const canAfford = paymentMode === 'fragments' ? hasFragments : hasGold;
 
     const cycleWeapon = (dir) => {
         SoundManager.playUIClick();
@@ -48,7 +54,7 @@ export default function MysteryForgeCard({ save, setSave }) {
         try {
             const res = await base44.functions.invoke('forgeAction', {
                 action: 'mysteryForge',
-                payload: { weaponId: weapon.id },
+                payload: { weaponId: weapon.id, paymentMode },
             });
             if (!res.data?.success) {
                 setError(res.data?.error || 'Roll failed');
@@ -58,6 +64,7 @@ export default function MysteryForgeCard({ save, setSave }) {
             if (res.data.saveData) {
                 const s = SaveManager.load();
                 s.gold = res.data.saveData.gold ?? s.gold;
+                s.relicFragments = res.data.saveData.relicFragments ?? s.relicFragments;
                 s.forgeWeaponAugments = res.data.saveData.forgeWeaponAugments ?? s.forgeWeaponAugments;
                 SaveManager.save(s);
                 setSave(s);
@@ -93,18 +100,50 @@ export default function MysteryForgeCard({ save, setSave }) {
                     <h3 className="font-black text-sm md:text-base text-purple-200 uppercase tracking-widest">Mystery Forge</h3>
                     <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-500/50 px-1.5 py-0.5 rounded font-bold">NEW</span>
                 </div>
-                <div className="flex items-center gap-1 bg-yellow-950/50 border border-yellow-700/50 px-2 py-1 rounded">
-                    <Coins className="w-3 h-3 text-yellow-400 fill-yellow-500" />
-                    <span className="text-[11px] font-bold text-yellow-300">{(save.gold || 0).toLocaleString()}</span>
+                <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 bg-yellow-950/50 border border-yellow-700/50 px-2 py-1 rounded">
+                        <Coins className="w-3 h-3 text-yellow-400 fill-yellow-500" />
+                        <span className="text-[11px] font-bold text-yellow-300">{(save.gold || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-fuchsia-950/50 border border-fuchsia-700/50 px-2 py-1 rounded">
+                        <Puzzle className="w-3 h-3 text-fuchsia-400 fill-fuchsia-500" />
+                        <span className="text-[11px] font-bold text-fuchsia-300">{(save.relicFragments || 0).toLocaleString()}</span>
+                    </div>
                 </div>
             </div>
 
-            <p className="text-[11px] md:text-xs text-slate-300 mb-3 leading-snug">
-                Pay <span className="font-bold text-yellow-300">5,000 gold</span> to roll a random augment for the selected weapon.
+            <p className="text-[11px] md:text-xs text-slate-300 mb-2 leading-snug">
+                Roll a random augment for the selected weapon — pay with gold OR relic fragments.
                 <span className="block text-[10px] text-slate-400 mt-0.5">
                     Tier I <span className="text-slate-200 font-bold">60%</span> · Tier II <span className="text-blue-300 font-bold">30%</span> · Tier III <span className="text-purple-300 font-bold">10%</span>
                 </span>
             </p>
+
+            {/* Payment mode toggle */}
+            <div className="flex gap-1.5 mb-3">
+                <button
+                    onClick={() => { SoundManager.playUIClick(); setPaymentMode('gold'); }}
+                    className={`flex-1 py-1.5 rounded-md text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        paymentMode === 'gold'
+                            ? 'bg-yellow-900/60 border border-yellow-500 text-yellow-200 shadow-[0_0_10px_rgba(234,179,8,0.25)]'
+                            : 'bg-slate-900/60 border border-slate-700 text-slate-400 hover:text-yellow-300 hover:border-yellow-700'
+                    }`}
+                >
+                    <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    {MYSTERY_FORGE_GOLD_COST.toLocaleString()} Gold
+                </button>
+                <button
+                    onClick={() => { SoundManager.playUIClick(); setPaymentMode('fragments'); }}
+                    className={`flex-1 py-1.5 rounded-md text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        paymentMode === 'fragments'
+                            ? 'bg-fuchsia-900/60 border border-fuchsia-500 text-fuchsia-200 shadow-[0_0_10px_rgba(217,70,239,0.25)]'
+                            : 'bg-slate-900/60 border border-slate-700 text-slate-400 hover:text-fuchsia-300 hover:border-fuchsia-700'
+                    }`}
+                >
+                    <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />
+                    {MYSTERY_FORGE_FRAGMENT_COST} Frags
+                </button>
+            </div>
 
             {/* Weapon selector */}
             <div className="flex items-center justify-between bg-slate-900/80 p-1.5 rounded-lg border border-slate-700 mb-3">
@@ -154,8 +193,17 @@ export default function MysteryForgeCard({ save, setSave }) {
                     <>
                         <Dices className="w-4 h-4" /> Roll
                         <span className="flex items-center gap-1 bg-black/30 px-2 py-0.5 rounded text-xs">
-                            <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                            {MYSTERY_FORGE_GOLD_COST.toLocaleString()}
+                            {paymentMode === 'fragments' ? (
+                                <>
+                                    <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />
+                                    {MYSTERY_FORGE_FRAGMENT_COST}
+                                </>
+                            ) : (
+                                <>
+                                    <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                    {MYSTERY_FORGE_GOLD_COST.toLocaleString()}
+                                </>
+                            )}
                         </span>
                     </>
                 )}

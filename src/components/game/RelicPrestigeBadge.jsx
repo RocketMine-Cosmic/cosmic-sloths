@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
-import { Coins, Sparkles, Lock, ShieldCheck } from 'lucide-react';
+import { Coins, Sparkles, Lock, ShieldCheck, Puzzle } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 
 // S6 Phase 3a — Prestige Relics UI. Renders inline on each relic card after L5
-// is reached. 1.5M gold per prestige tier (PL1–PL5), each adding +5% to the
-// relic's effect. Hard-gated to S6+ via seasonGate.
+// is reached. 1.5M gold + 100 relic fragments per prestige tier (PL1–PL5),
+// each adding +5% to the relic's effect. Hard-gated to S6+ via seasonGate.
+// Fragment cost added 2026-05-08 to drain existing fragment stockpiles.
 const PRESTIGE_GOLD_COST = 1_500_000;
+const PRESTIGE_FRAGMENT_COST = 100;
 const PRESTIGE_MAX = 5;
 
 export default function RelicPrestigeBadge({ relic, save, setSave }) {
@@ -25,7 +27,9 @@ export default function RelicPrestigeBadge({ relic, save, setSave }) {
 
     const prestige = (save.relicPrestige || {})[relic.id] || 0;
     const isMaxPrestige = prestige >= PRESTIGE_MAX;
-    const canAfford = (save.gold || 0) >= PRESTIGE_GOLD_COST;
+    const hasGold = (save.gold || 0) >= PRESTIGE_GOLD_COST;
+    const hasFragments = (save.relicFragments || 0) >= PRESTIGE_FRAGMENT_COST;
+    const canAfford = hasGold && hasFragments;
 
     // S5 — preview-only. Show locked tease so players know it's coming.
     if (!isS6) {
@@ -51,6 +55,7 @@ export default function RelicPrestigeBadge({ relic, save, setSave }) {
             if (res.data.saveData) {
                 const s = SaveManager.load();
                 s.gold = res.data.saveData.gold ?? s.gold;
+                s.relicFragments = res.data.saveData.relicFragments ?? s.relicFragments;
                 s.relicPrestige = res.data.saveData.relicPrestige ?? s.relicPrestige;
                 SaveManager.save(s);
                 setSave(s);
@@ -98,22 +103,35 @@ export default function RelicPrestigeBadge({ relic, save, setSave }) {
             )}
 
             {!isMaxPrestige && (
-                <button
-                    onClick={handlePrestige}
-                    disabled={busy || !canAfford}
-                    className={`w-full py-1.5 rounded font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all ${
-                        !canAfford || busy
-                            ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)] active:scale-95'
-                    }`}
-                >
-                    <Sparkles className="w-3 h-3" />
-                    {busy ? 'Prestiging…' : <>Prestige to PL{prestige + 1}</>}
-                    <span className="flex items-center gap-0.5 bg-black/30 px-1.5 py-0.5 rounded ml-1">
-                        <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        {(PRESTIGE_GOLD_COST / 1_000_000).toFixed(1)}M
-                    </span>
-                </button>
+                <>
+                    <button
+                        onClick={handlePrestige}
+                        disabled={busy || !canAfford}
+                        className={`w-full py-1.5 rounded font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all ${
+                            !canAfford || busy
+                                ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)] active:scale-95'
+                        }`}
+                    >
+                        <Sparkles className="w-3 h-3" />
+                        {busy ? 'Prestiging…' : <>Prestige to PL{prestige + 1}</>}
+                        <span className={`flex items-center gap-0.5 bg-black/30 px-1.5 py-0.5 rounded ml-1 ${!hasGold ? 'text-red-300' : ''}`}>
+                            <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            {(PRESTIGE_GOLD_COST / 1_000_000).toFixed(1)}M
+                        </span>
+                        <span className={`flex items-center gap-0.5 bg-black/30 px-1.5 py-0.5 rounded ${!hasFragments ? 'text-red-300' : ''}`}>
+                            <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />
+                            {PRESTIGE_FRAGMENT_COST}
+                        </span>
+                    </button>
+                    {!canAfford && (
+                        <div className="mt-1 text-[9px] text-slate-400 text-center">
+                            {!hasGold && !hasFragments && 'Need more gold and fragments'}
+                            {!hasGold && hasFragments && 'Need more gold'}
+                            {hasGold && !hasFragments && 'Need more relic fragments'}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
