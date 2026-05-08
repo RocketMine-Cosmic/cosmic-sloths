@@ -1,6 +1,27 @@
 import { SoundManager } from './SoundManager';
 import { SFXManager } from './SFXManager';
 import { getWeaponStatsAndMastery } from './Constants';
+import { isS6OrLater } from '@/lib/seasonGate';
+
+// S6 visual-radius caps — applied as a final clamp on each AoE weapon's drawn radius.
+// Damage is unaffected; only the visual/hitbox radius is capped so a maxed-out Aegis
+// Matrix doesn't blanket the screen. Numbers chosen to keep current legit max-stack
+// builds (Tijckers/Anubis ~1800-2000px peak) at ~70-75% of their old footprint —
+// readable but still satisfyingly large. See docs/S6_PATCH_NOTES.md §4.
+const S6_VISUAL_RADIUS_CAP = {
+    aegisMatrix:    320,
+    shieldBubble:   240,
+    burningBarrier: 280,
+    hellfire:       240,
+    quantumCollapse: 180,
+    toxicCloud:     200,
+    napalm:         180,
+};
+function capVisualRadius(weaponId, radius) {
+    if (!isS6OrLater()) return radius;
+    const cap = S6_VISUAL_RADIUS_CAP[weaponId];
+    return cap ? Math.min(radius, cap) : radius;
+}
 
 export function fireWeaponLogic(engine, w) {
     SFXManager.playWeaponFire(w.id);
@@ -10,9 +31,22 @@ export function fireWeaponLogic(engine, w) {
     const wDmgMult = stats.dmgMult;
     const wAreaMult = stats.areaMult;
 
-    const weaponLevelMult = 1 + Math.min(19, w.level - 1) * 0.15; // Reduced from 20% to 15% per level, capped at level 20
-    let dmg = w.baseDamage * Math.min(5.0, engine.player.damageMult) * weaponLevelMult * Math.min(2.0, wDmgMult);
-    let area = w.baseArea * Math.min(4.0, engine.player.areaMult) * (1 + Math.min(19, w.level - 1) * 0.08) * Math.min(2.0, wAreaMult); // Reduced area scaling from 10% to 8%
+    // S6 tightened the global caps to flatten extreme stacking — peaks landed under
+    // the old caps anyway (Tijckers ~3.5 area / ~1.66 dmg) so legit builds untouched.
+    // S5 keeps the original ceilings so end-of-season runs aren't retroactively nerfed.
+    const _s6 = isS6OrLater();
+    const playerAreaCap = _s6 ? 3.0 : 4.0;
+    const playerDmgCap  = _s6 ? 4.0 : 5.0;
+    const wAreaCap      = _s6 ? 1.6 : 2.0;
+    const wDmgCap       = _s6 ? 1.8 : 2.0;
+    // Per-level area scaling — S6 drops 0.08 → 0.05 so weapon level isn't a third
+    // independent area faucet on top of upgrades + forge. Damage scaling unchanged
+    // (0.15) so level-ups still feel impactful.
+    const areaPerLevel  = _s6 ? 0.05 : 0.08;
+
+    const weaponLevelMult = 1 + Math.min(19, w.level - 1) * 0.15;
+    let dmg = w.baseDamage * Math.min(playerDmgCap, engine.player.damageMult) * weaponLevelMult * Math.min(wDmgCap, wDmgMult);
+    let area = w.baseArea * Math.min(playerAreaCap, engine.player.areaMult) * (1 + Math.min(19, w.level - 1) * areaPerLevel) * Math.min(wAreaCap, wAreaMult);
 
     // Projectile Speed → Damage scaling (kinetic energy):
     // Faster projectiles hit harder. Applies ONLY to projectile-based weapons (not melee/AoE).
@@ -175,7 +209,7 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 40 * area,
+            radius: capVisualRadius('napalm', 40 * area),
             damage: dmg * 0.5,
             pierce: 999,
             life: 3 + w.level,
@@ -237,7 +271,7 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 80 * area,
+            radius: capVisualRadius('shieldBubble', 80 * area),
             damage: dmg,
             pierce: 999,
             life: 2.0,
@@ -253,7 +287,7 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 100 * area,
+            radius: capVisualRadius('burningBarrier', 100 * area),
             damage: dmg,
             pierce: 999,
             life: 3.0 + (w.level * 0.5),
@@ -523,7 +557,7 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 60 * area,
+            radius: capVisualRadius('hellfire', 60 * area),
             damage: dmg,
             pierce: 999,
             life: 5 + w.level,
@@ -542,7 +576,7 @@ export function fireWeaponLogic(engine, w) {
                 engine.projectiles.push({
                     x: engine.player.x, y: engine.player.y,
                     vx: 0, vy: 0,
-                    radius: 25 * area * multiplier,
+                    radius: capVisualRadius('quantumCollapse', 25 * area * multiplier),
                     damage: dmg * multiplier,
                     pierce: 999,
                     life: 1.0,
@@ -562,7 +596,7 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 120 * area,
+            radius: capVisualRadius('aegisMatrix', 120 * area),
             damage: dmg,
             pierce: 999,
             life: 2.5,
@@ -642,7 +676,7 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 50 * area,
+            radius: capVisualRadius('toxicCloud', 50 * area),
             damage: dmg * 0.4,
             pierce: 999,
             life: 4 + w.level,

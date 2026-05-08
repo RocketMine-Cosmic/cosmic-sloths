@@ -66,7 +66,12 @@ Score now scales with sector depth and victory, not run length.
 • NFT perks now apply additively with talents
 • Cosmic difficulty gold/XP reduced from 3× → 2×
 
-**Why:** With caps removed, the multiplier stack needed flattening at the source. Peak stack drops from ×38 to ×19 — roughly half the gold faucet — so the new sinks aren't drained instantly.
+🎯 **WEAPON STACKING — readability pass**
+• Per-weapon visual radius caps (Aegis Matrix, Shield Bubble, Burning Barrier, Hellfire, Quantum Collapse, Toxic Cloud, Napalm) — pools no longer blanket the screen at max stack
+• Global multiplier ceilings tightened: area 4.0→3.0, damage 5.0→4.0, weapon-area 2.0→1.6, weapon-damage 2.0→1.8
+• Weapon-level area scaling 0.08 → 0.05 per level (damage scaling unchanged at 0.15)
+
+**Why:** Maxed Aegis Matrix could cover 80% of the screen, hiding pickups, enemy tells and projectiles. Damage output is unchanged for current top builds — only the visual/hitbox footprint is clamped. With caps removed elsewhere, the multiplier stack needed flattening at the source. Peak gold stack drops from ×38 to ×19 — roughly half the gold faucet — so the new sinks aren't drained instantly.
 ```
 
 ---
@@ -99,4 +104,4 @@ Donations made in week N apply to week N+1's wars. Buffs reset weekly.
 **Why these sinks:** Prestige is a long-term gold + fragment dump for L5-relic owners. Mystery Forge is an optional RNG sink that also burns fragment piles. Treasury is a recurring sink that scales with squad size. None affect individual run scores or leaderboard balance.
 
 Feedback in `#s6-feedback` after launch — first 2 weeks we're monitoring closely for hotfixes.
-``
+`
