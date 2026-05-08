@@ -72,7 +72,9 @@ export function renderGame() {
     const camX = this.camera.x;
     const camY = this.camera.y;
 
-    drawPickups(this.ctx, this.pickups, this.time);
+    // Pickups (gold, XP, fragments, power-ups) render in a single top-layer pass
+    // AFTER particles + AoE pools so they all stay visible through weapon visual
+    // effects like Aegis, Hellfire, Quantum Collapse pools etc. — see below.
 
     if (this.characterPickup) {
         this.ctx.fillStyle = this.characterPickup.color;
@@ -375,6 +377,10 @@ export function renderGame() {
     }
 
     this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
+
+    // Top-layer pickup pass — gold/XP/fragments/power-ups all stay visible
+    // through weapon AoE pools (player request 2026-05-08).
+    drawPickups(this.ctx, this.pickups, this.time);
 
     const viewMinX = camX - 150;
     const viewMaxX = camX + vWidth + 150;
