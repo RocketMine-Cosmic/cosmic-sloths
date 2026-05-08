@@ -36,7 +36,7 @@ export default function RelicPrestigeBadge({ relic, save, setSave }) {
         return (
             <div className="mt-2 px-2 py-1.5 rounded-lg border border-slate-700 bg-slate-900/40 flex items-center gap-2 text-[11px]">
                 <Lock className="w-3 h-3 text-slate-500 shrink-0" />
-                <span className="text-slate-400 flex-1">Prestige unlocks Season 6 — +5% per tier (PL1–PL5)</span>
+                <span className="text-slate-400 flex-1">Prestige unlocks Season 6 — 1.5M gold + 100 frags per tier, +5% effect (PL1–PL5)</span>
             </div>
         );
     }

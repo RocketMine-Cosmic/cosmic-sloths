@@ -87,7 +87,7 @@ export default function MysteryForgeCard({ save, setSave }) {
                     <span className="font-bold text-xs uppercase tracking-widest">Mystery Forge</span>
                     <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-700 px-1.5 py-0.5 rounded font-bold">S6 PREVIEW</span>
                 </div>
-                <p className="text-xs text-slate-500">Unlocks May 18 — gamble 5,000 gold for a random weapon augment.</p>
+                <p className="text-xs text-slate-500">Unlocks May 18 — gamble 5,000 gold or 50 relic fragments for a random weapon augment.</p>
             </div>
         );
     }
