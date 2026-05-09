@@ -21,6 +21,39 @@ function getUpgradeWeight(upgrade, save, characterId, playerWeapons, playerPassi
     return getBiasMultiplier(upgrade, save, EVOLUTIONS, playerWeapons, playerPassives);
 }
 
+// S6+ silent autobalance — soft-corrects the level-up pool toward a balanced
+// loadout. ~45% of the raw pool is weapons (9 of 20 picks), so a player with 1
+// passive and 4 weapons would otherwise keep drowning in weapon offers. This
+// multiplier is layered on top of the player's allocated bias (which can still
+// dominate at 5–10× for dedicated builds), so it's a quality-of-life floor for
+// the 80% of players who don't engage with bias allocation.
+//
+// Evolutions are EXEMPT — they're rare game-changing weapon-type picks and we
+// shouldn't penalise them for being weapons.
+//
+//   ≥4 weapons + ≤2 passives → weapons 0.6×, passives 1.6× (push toward passives)
+//   ≤2 weapons + ≥3 passives → weapons 1.4×, passives 1.0× (push toward weapons)
+//   otherwise                → 1.0× (no nudge)
+function getRebalanceMultiplier(upgrade, playerWeapons, playerPassives) {
+    if (!isS6OrLater()) return 1;
+    // Distinct passives owned (each upgrade.id can stack to MAX_PASSIVE_LEVEL).
+    const distinctPassives = new Set((playerPassives || []).map(p => p.id)).size;
+    const weaponCount = (playerWeapons || []).length;
+
+    // Evolutions never get penalised/boosted by autobalance.
+    const isEvolution = upgrade.type === 'weapon' &&
+        EVOLUTIONS.some(e => e.evolvedWeapon === upgrade.weaponId);
+    if (isEvolution) return 1;
+
+    if (weaponCount >= 4 && distinctPassives <= 2) {
+        if (upgrade.type === 'weapon') return 0.6;
+        if (upgrade.type === 'passive') return 1.6;
+    } else if (weaponCount <= 2 && distinctPassives >= 3) {
+        if (upgrade.type === 'weapon') return 1.4;
+    }
+    return 1;
+}
+
 // Pick + remove a random item from `pool` using `weights` (parallel array). Returns the item.
 function weightedPickAndRemove(pool, weights) {
     let total = 0;
@@ -134,8 +167,13 @@ export function generateChoices(engine) {
         return true;
     });
     // Weighted draw: each upgrade's category (weapons / passives / stats / evolution)
-    // is biased by the points the player allocated on the Loadouts page.
-    const weights = pool.map(u => getUpgradeWeight(u, engine.save, engine.characterId, engine.player.weapons, engine.player.passives));
+    // is biased by the points the player allocated on the Loadouts page, then
+    // softly nudged by the S6+ autobalance multiplier (no-op on S5).
+    const weights = pool.map(u => {
+        const base = getUpgradeWeight(u, engine.save, engine.characterId, engine.player.weapons, engine.player.passives);
+        const rebalance = getRebalanceMultiplier(u, engine.player.weapons, engine.player.passives);
+        return base * rebalance;
+    });
 
     for (let i = 0; i < 3; i++) {
         if (pool.length === 0) break;
