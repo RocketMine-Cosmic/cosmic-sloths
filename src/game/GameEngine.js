@@ -279,6 +279,22 @@ export class GameEngine {
             titleBuff: titleBuff && Object.keys(titleBuff).length ? titleBuff : null
         };
         
+        // S6+ Fix A — final safety clamps on the most-stacked multipliers. Catches
+        // late-run Overcharge stacking, uncapped Astral Lab pulls, and any future
+        // multiplier source we haven't yet predicted. The engine's per-level growth
+        // caps in levelUp() (5.0 dmg / 2000 HP) DON'T apply to upgrade picks, so
+        // without these clamps a 90-min endless player can blow past them via
+        // Overcharge fillers. S5 unchanged (legacy whales keep their stacking).
+        if (this._isS6) {
+            this.player.damageMult = Math.min(6.0,  this.player.damageMult);
+            this.player.goldMult   = Math.min(8.0,  this.player.goldMult);
+            this.player.areaMult   = Math.min(4.0,  this.player.areaMult);
+            this.player.xpMult     = Math.min(5.0,  this.player.xpMult);
+            // cooldownMult is "lower is better" — floor at 0.35 (matches the
+            // existing per-weapon Math.max(0.35, ...) safeguard in updateWeapons).
+            this.player.cooldownMult = Math.max(0.35, this.player.cooldownMult);
+        }
+
         // Session XP buff (purchased via "+50% XP" SKU). xpExpiry is a server-clock
         // ms timestamp set by purchaseSku. We snapshot the expiry here AND re-check
         // every frame so the buff naturally drops off mid-run if it expires (rather
@@ -682,9 +698,18 @@ export class GameEngine {
         // Endless XP trickle — after 5 minutes, gain a small passive XP stream so
         // levelling isn't entirely boss-gated. Scales with the current XP requirement
         // (~one level every ~3 minutes of pure idling, faster with kills).
+        // S6+ Fix B: trickle uses the no-buff baseline (skips the 1.5× session buff)
+        // AND halts past level 50 so 90-min endless AFK can't spam Overcharge picks
+        // forever. The buff still applies normally to kill XP — only the passive
+        // trickle is excluded. S5 keeps the legacy behaviour.
         if (this.arena.duration === Infinity && this.time > 300) {
-            const trickle = (this.xpRequired / 180) * dt * this.player.xpMult;
-            this.xp += trickle;
+            if (this._isS6 && this.level >= 50) {
+                // skip — endless AFK ceiling
+            } else {
+                const trickleMult = this._isS6 ? (this._xpMultBase || this.player.xpMult) : this.player.xpMult;
+                const trickle = (this.xpRequired / 180) * dt * trickleMult;
+                this.xp += trickle;
+            }
         }
 
         // Movement input
