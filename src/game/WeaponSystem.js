@@ -260,7 +260,8 @@ export function fireWeaponLogic(engine, w) {
                     color: secondaryColor,
                     isAoe: true,
                     pulse: true,
-                    type: 'nova_pulse'
+                    type: 'nova_pulse',
+                    weaponId: 'novaPulse'
                 });
             }, 500);
         }
@@ -583,7 +584,8 @@ export function fireWeaponLogic(engine, w) {
                     color: '#8a2be2',
                     isAoe: true,
                     pulse: true,
-                    type: 'quantum_collapse'
+                    type: 'quantum_collapse',
+                    weaponId: 'quantumCollapse'
                 });
             }, delay);
         };
