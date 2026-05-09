@@ -1,8 +1,35 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Swords } from 'lucide-react';
+import { Swords, Sparkles } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import { WEAPON_SLOT_CAP } from '@/game/UpgradeSystem';
+import { EVOLUTIONS } from '@/game/Constants';
+
+// Returns true if picking this upgrade would put the player one step away from
+// triggering an evolution — either:
+//   • weapon choice + player already has the matching passive, OR
+//   • passive choice + player already owns the matching base weapon
+// Excluded if the evolved form is already owned. Pure UI — no business logic
+// changes; the actual evolution check still happens in UpgradeSystem.applyUpgrade.
+function isEvolutionReady(upgrade, player) {
+    if (!player || !upgrade) return false;
+    const ownedWeaponIds = new Set((player.weapons || []).map(w => w.id));
+    const ownedPassiveIds = new Set((player.passives || []).map(p => p.id));
+
+    if (upgrade.type === 'weapon') {
+        const evo = EVOLUTIONS.find(e => e.baseWeapon === upgrade.weaponId);
+        if (!evo) return false;
+        if (ownedWeaponIds.has(evo.evolvedWeapon)) return false;
+        return ownedPassiveIds.has(evo.passive);
+    }
+    if (upgrade.type === 'passive') {
+        const evo = EVOLUTIONS.find(e => e.passive === upgrade.id);
+        if (!evo) return false;
+        if (ownedWeaponIds.has(evo.evolvedWeapon)) return false;
+        return ownedWeaponIds.has(evo.baseWeapon);
+    }
+    return false;
+}
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -118,12 +145,19 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                     {choices.map((choice, i) => {
                         const isSelected = selectedIndex === i;
                         const preview = getStatPreview(choice, engineRef?.current?.player);
+                        const evoReady = isEvolutionReady(choice, engineRef?.current?.player);
                         return (
                             <motion.button
                                 key={i}
                                 onClick={() => setSelectedIndex(i)}
-                                className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-200 flex flex-col min-h-[90px] md:min-h-[160px] border-2 cursor-pointer ${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ').slice(1).join(' ')} ${isSelected ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900' : 'hover:brightness-110'}`}
+                                className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-200 flex flex-col min-h-[90px] md:min-h-[160px] border-2 cursor-pointer ${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ').slice(1).join(' ')} ${isSelected ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900' : 'hover:brightness-110'} ${evoReady ? 'shadow-[0_0_20px_rgba(251,146,60,0.7)]' : ''}`}
                             >
+                                {evoReady && (
+                                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-amber-400 text-black text-[9px] md:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow-[0_0_10px_rgba(251,146,60,0.9)] animate-pulse z-10">
+                                        <Sparkles className="w-3 h-3" />
+                                        Evolves
+                                    </div>
+                                )}
                                 <div className={`text-[10px] md:text-xs font-bold mb-1 md:mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
                                     {choice.rarity} {choice.type}
                                 </div>
