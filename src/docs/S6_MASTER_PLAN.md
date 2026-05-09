@@ -1,6 +1,8 @@
 # S6 Master Plan — Cap-Free, Skill-First, Gold-Balanced
 
-**Author:** Base44  •  **Date:** 2026-05-07  •  **Target:** Season 6 (starts Mon May 18 2026 00:00 UTC)
+**Author:** Base44  •  **Date:** 2026-05-07 (last updated 2026-05-09)  •  **Target:** Season 6 (starts Mon May 25 2026 00:00 UTC)
+
+> **2026-05-09 update:** Phases 1–4 implemented. Phase 5 (in-game communication) shipped via `S6WelcomeModal`. Two new launch-day admin tools added: `snapshotSeasonHallOfFame` (Hall of Fame archive) and `seedSquadTreasuries` (cold-start seed). Detailed staff-facing changelog now lives in `S6_STAFF_PATCH_NOTES.md`. The original schedule was Mon May 18 00:00 UTC; that slipped one week to **Mon May 25 00:00 UTC** to fit the additional weapon-system work (slot cap, evolution gate, rarity scaling, autobalance, Overcharge fillers, structural safety clamps). All other plans below are still accurate.
 
 This doc is the **unified plan** that pulls together the three S6 design docs:
 - `S6_SCORE_FORMULA.md` — the new score formula (Option A, scaled to ~1M peak)
@@ -80,7 +82,7 @@ So a whale finishes the entire economy in **week 1**. After that they have nothi
 
 Replaces the "minimum viable" recommendation in `S6_BALANCE_AUDIT.md` §4. With cap removal in scope, we need the full balance package, not the minimum.
 
-### Ship by May 18 (S6 launch)
+### Ship by May 25 (S6 launch)
 
 **Score & validation:**
 - ✅ Option A score formula (scaled — ~1M peak Sector 10 victory)
@@ -92,12 +94,28 @@ Replaces the "minimum viable" recommendation in `S6_BALANCE_AUDIT.md` §4. With 
 - ✅ **L1 — Talent 0.66× stack factor** (the single biggest unaudited multiplier)
 - ✅ **L2 — NFT/perk multipliers folded additive** (no more stacked-on-top)
 - ✅ **L3 — Cosmic 3× → 2× gold/XP** (Cosmic stays the hardest mode but stops being the gold meta)
-- 🆕 **L9 — Endless time-decay curve** (see §4)
+- ✅ **L9 — Endless time-decay curve** (see §4)
+
+**Weapon system overhaul (added 2026-05-09):**
+- ✅ 6-weapon hard slot cap — once full, only level-ups for owned weapons offered
+- ✅ Evolution Lvl 8 gate — base weapon must reach Lvl 8 before evolution fires
+- ✅ Weapon rarity scaling — Common +1 / Rare +2 / Epic +3 / Legendary +5
+- ✅ Pool autobalance — soft 0.6×/1.6× nudge toward balanced loadouts (player bias still wins)
+- ✅ Overcharge fillers — uncapped rotating stat boosters once pool is exhausted
+
+**Structural safety (added 2026-05-09):**
+- ✅ Fix A — final clamps (damage 6× / gold 8× / area 4× / xp 5× / cd ≥ 0.35) on engine init
+- ✅ Fix B — endless XP trickle uses no-buff baseline + halts past Lvl 50
 
 **New gold sinks:**
-- 🆕 **Prestige relics** (see §5a)
-- 🆕 **Forge re-roll lottery** (see §5b)
-- 🆕 **Squad treasury contributions** (see §5c)
+- ✅ **Prestige relics** (see §5a)
+- ✅ **Astral Lab** (replaces Forge lottery concept — see §5b)
+- ✅ **Squad treasury contributions** (see §5c)
+
+**Launch-day operations (added 2026-05-09):**
+- ✅ `snapshotSeasonHallOfFame` admin tool — archives top 50 S5 runs to permanent `LegendaryRun` entity
+- ✅ `seedSquadTreasuries` admin tool — pre-seeds 1000g for active squads
+- ✅ `S6WelcomeModal` — 7-step in-game tour explaining the changes (one-shot per player)
 
 ### Defer to S6 week 2 (post-launch hotfix window)
 
