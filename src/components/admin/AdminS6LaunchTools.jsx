@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Coins, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -7,7 +7,7 @@ import { Coins, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 function ConfirmAction({ label, icon: Icon, accent, helpText, onRun, busy, lastResult }) {
     const [armed, setArmed] = useState(false);
-    React.useEffect(() => {
+    useEffect(() => {
         if (!armed) return;
         const t = setTimeout(() => setArmed(false), 5000);
         return () => clearTimeout(t);
