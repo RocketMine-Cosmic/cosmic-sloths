@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Sparkles, Plus, RotateCcw, Sword, Zap, Wand2 } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Sparkles, Plus, Minus, RotateCcw, Sword, Zap, Wand2, Check, X } from 'lucide-react';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import {
@@ -12,7 +12,6 @@ import {
     getTotalBiasPoints,
     getAllocations,
     getSpentPoints,
-    getRemainingPoints,
     getPermanentLevel,
     getLevelsUntilNextPoint,
 } from '@/lib/poolBias';
@@ -28,24 +27,42 @@ import { refreshBalance } from '@/lib/playerDataCache';
 // pool with multiple competing targets.
 const BAR_FILL_CAP_POINTS = 10;
 
-function TargetRow({ target, points, onAdd, canAdd, accent }) {
+function TargetRow({ target, points, committedPoints, onAdd, onRemove, canAdd, accent }) {
     const pct = points * BIAS_PER_POINT * 100;
     const fillPct = Math.min(100, (points / BAR_FILL_CAP_POINTS) * 100);
+    // Highlight rows whose draft differs from what's currently committed so
+    // players can see at a glance which choices they've changed.
+    const isDirty = points !== committedPoints;
+    const delta = points - committedPoints;
     return (
-        <div className={`flex flex-col gap-1 bg-slate-900/60 border ${accent.border} rounded-lg px-2.5 py-1.5`}>
+        <div className={`flex flex-col gap-1 bg-slate-900/60 border ${isDirty ? 'border-fuchsia-500/60' : accent.border} rounded-lg px-2.5 py-1.5 transition-colors`}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span className="text-base shrink-0">{target.icon}</span>
                     <span className={`text-xs font-bold truncate ${accent.text}`}>{target.label}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[10px] font-mono text-slate-300 tabular-nums w-14 text-right">
+                    <span className="text-[10px] font-mono text-slate-300 tabular-nums w-20 text-right">
                         {points} pts <span className="text-slate-500">+{pct.toFixed(0)}%</span>
+                        {isDirty && (
+                            <span className={`ml-1 ${delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                ({delta > 0 ? '+' : ''}{delta})
+                            </span>
+                        )}
                     </span>
+                    <button
+                        onClick={onRemove}
+                        disabled={points <= 0}
+                        className="px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center gap-1 text-[10px] font-bold transition-colors"
+                        title="Remove 1 point"
+                    >
+                        <Minus className="w-3 h-3" />
+                    </button>
                     <button
                         onClick={onAdd}
                         disabled={!canAdd}
                         className={`px-2 py-0.5 rounded ${accent.btn} disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center gap-1 text-[10px] font-bold transition-colors`}
+                        title="Add 1 point"
                     >
                         <Plus className="w-3 h-3" />
                     </button>
@@ -68,42 +85,80 @@ export default function PoolBiasPanel({ save, setSave }) {
     const [respecBusy, setRespecBusy] = useState(false);
     const [respecError, setRespecError] = useState(null);
 
+    // Draft state — players freely +/− into this without touching the saved
+    // allocations until they press Confirm. Cancel restores the committed copy.
+    const committedAllocations = getAllocations(save);
+    const [draft, setDraft] = useState(committedAllocations);
+
+    // If the underlying save changes externally (e.g. respec clears it, or
+    // a different page updates allocations), sync the draft so we don't show
+    // stale data. JSON-stringify keeps this cheap and accurate for plain maps.
+    const committedKey = useMemo(() => JSON.stringify(committedAllocations), [committedAllocations]);
+    useEffect(() => {
+        setDraft(committedAllocations);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [committedKey]);
+
     const targets = getBiasTargets();
     const total = getTotalBiasPoints(save);
-    const spent = getSpentPoints(save);
-    const remaining = getRemainingPoints(save);
-    const allocations = getAllocations(save);
+    const committedSpent = getSpentPoints(save);
+    const draftSpent = Object.values(draft).reduce((a, b) => a + Number(b || 0), 0);
+    const draftRemaining = Math.max(0, total - draftSpent);
     const permLevel = getPermanentLevel(save);
     const levelsToNext = getLevelsUntilNextPoint(save);
     const isLateTier = permLevel >= POINTS_TIER_BREAKPOINT;
     const gold = save.gold || 0;
     const goldRespecCost = getGoldRespecCost(save);
-    const canRespecGold = spent > 0 && gold >= goldRespecCost;
-    const canRespecOmenx = spent > 0 && (omenxBalance ?? 0) >= RESPEC_COST_OMENX;
+    const canRespecGold = committedSpent > 0 && gold >= goldRespecCost;
+    const canRespecOmenx = committedSpent > 0 && (omenxBalance ?? 0) >= RESPEC_COST_OMENX;
 
-    const allocate = (targetId) => {
-        if (remaining <= 0) return;
+    const isDirty = committedKey !== JSON.stringify(draft);
+
+    const addPoint = (targetId) => {
+        if (draftRemaining <= 0) return;
         SoundManager.playUIClick();
-        const next = { ...allocations, [targetId]: Number(allocations[targetId] || 0) + 1 };
-        const newSave = { ...save, poolBiasAllocations: next };
+        setDraft(d => ({ ...d, [targetId]: Number(d[targetId] || 0) + 1 }));
+    };
+
+    const removePoint = (targetId) => {
+        const current = Number(draft[targetId] || 0);
+        if (current <= 0) return;
+        SoundManager.playUIClick();
+        setDraft(d => {
+            const next = { ...d, [targetId]: current - 1 };
+            // Clean up zero entries so the saved object stays tidy.
+            if (next[targetId] === 0) delete next[targetId];
+            return next;
+        });
+    };
+
+    // Apply a preset to the DRAFT — distributes remaining draft points across
+    // the preset's target weights. Doesn't reset existing allocations.
+    const applyPreset = (preset) => {
+        if (draftRemaining <= 0) return;
+        SoundManager.playUIClick();
+        const additions = buildPresetAllocation(preset.weights, draftRemaining);
+        setDraft(d => {
+            const next = { ...d };
+            for (const [id, pts] of Object.entries(additions)) {
+                next[id] = Number(next[id] || 0) + pts;
+            }
+            return next;
+        });
+    };
+
+    const confirmDraft = () => {
+        if (!isDirty) return;
+        SoundManager.playUIClick();
+        const newSave = { ...save, poolBiasAllocations: draft };
         SaveManager.save(newSave);
         setSave(newSave);
     };
 
-    // Apply a preset by distributing all REMAINING points across the preset's
-    // target weights. Adds on top of existing allocations (doesn't reset) — if
-    // the player wants a fresh start they can respec first.
-    const applyPreset = (preset) => {
-        if (remaining <= 0) return;
+    const cancelDraft = () => {
+        if (!isDirty) return;
         SoundManager.playUIClick();
-        const additions = buildPresetAllocation(preset.weights, remaining);
-        const next = { ...allocations };
-        for (const [id, pts] of Object.entries(additions)) {
-            next[id] = Number(next[id] || 0) + pts;
-        }
-        const newSave = { ...save, poolBiasAllocations: next };
-        SaveManager.save(newSave);
-        setSave(newSave);
+        setDraft(committedAllocations);
     };
 
     const respecWithGold = async () => {
@@ -129,6 +184,7 @@ export default function PoolBiasPanel({ save, setSave }) {
             };
             SaveManager.save(newSave);
             setSave(newSave);
+            setDraft({});
         } catch (e) {
             setRespecError(e?.message || 'Respec failed');
         } finally {
@@ -163,6 +219,7 @@ export default function PoolBiasPanel({ save, setSave }) {
             };
             SaveManager.save(newSave);
             setSave(newSave);
+            setDraft({});
             refreshBalance();
         } catch (e) {
             setRespecError(e?.message || 'Respec failed');
@@ -196,7 +253,7 @@ export default function PoolBiasPanel({ save, setSave }) {
                     </div>
                     <div className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
                         <span className="text-slate-400">Available:</span>{' '}
-                        <span className="text-cyan-300 font-mono font-bold">{remaining}</span>
+                        <span className="text-cyan-300 font-mono font-bold">{draftRemaining}</span>
                         <span className="text-slate-500"> / {total}</span>
                     </div>
                 </div>
@@ -213,8 +270,8 @@ export default function PoolBiasPanel({ save, setSave }) {
                         <button
                             key={p.id}
                             onClick={() => applyPreset(p)}
-                            disabled={remaining <= 0}
-                            title={remaining <= 0 ? 'No points available — earn more or respec first' : `Spends all ${remaining} available points: ${p.desc}`}
+                            disabled={draftRemaining <= 0}
+                            title={draftRemaining <= 0 ? 'No points available' : `Spends all ${draftRemaining} available points: ${p.desc}`}
                             className="flex items-start gap-2 bg-slate-900/60 hover:bg-fuchsia-900/30 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-fuchsia-500/60 rounded-lg px-2 py-1.5 text-left transition-colors"
                         >
                             <span className="text-base shrink-0">{p.icon}</span>
@@ -237,9 +294,11 @@ export default function PoolBiasPanel({ save, setSave }) {
                             <TargetRow
                                 key={t.id}
                                 target={t}
-                                points={Number(allocations[t.id] || 0)}
-                                onAdd={() => allocate(t.id)}
-                                canAdd={remaining > 0}
+                                points={Number(draft[t.id] || 0)}
+                                committedPoints={Number(committedAllocations[t.id] || 0)}
+                                onAdd={() => addPoint(t.id)}
+                                onRemove={() => removePoint(t.id)}
+                                canAdd={draftRemaining > 0}
                                 accent={weaponAccent}
                             />
                         ))}
@@ -254,9 +313,11 @@ export default function PoolBiasPanel({ save, setSave }) {
                             <TargetRow
                                 key={t.id}
                                 target={t}
-                                points={Number(allocations[t.id] || 0)}
-                                onAdd={() => allocate(t.id)}
-                                canAdd={remaining > 0}
+                                points={Number(draft[t.id] || 0)}
+                                committedPoints={Number(committedAllocations[t.id] || 0)}
+                                onAdd={() => addPoint(t.id)}
+                                onRemove={() => removePoint(t.id)}
+                                canAdd={draftRemaining > 0}
                                 accent={statAccent}
                             />
                         ))}
@@ -264,17 +325,45 @@ export default function PoolBiasPanel({ save, setSave }) {
                 </div>
             </div>
 
+            {/* Confirm / Cancel — only enabled when the draft differs from the
+                committed save. Players can freely +/− and presets-juggle until
+                they press Confirm. */}
+            <div className="mt-3 pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+                <div className="text-[11px] text-slate-400">
+                    {isDirty
+                        ? <span className="text-fuchsia-300 font-bold">Unsaved changes — Confirm to apply.</span>
+                        : <span>All changes saved.</span>
+                    }
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={cancelDraft}
+                        disabled={!isDirty}
+                        className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition-colors"
+                    >
+                        <X className="w-3.5 h-3.5" /> Cancel
+                    </button>
+                    <button
+                        onClick={confirmDraft}
+                        disabled={!isDirty}
+                        className="px-3 py-1.5 rounded bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+                    >
+                        <Check className="w-3.5 h-3.5" /> Confirm Choices
+                    </button>
+                </div>
+            </div>
+
             <div className="mt-3 pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
                 <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
                     <RotateCcw className="w-3.5 h-3.5" />
-                    Respec refunds all <span className="text-cyan-300 font-bold">{spent}</span> spent points. Gold cost increases each use.
+                    Respec refunds all <span className="text-cyan-300 font-bold">{committedSpent}</span> spent points. Gold cost increases each use.
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={respecWithGold}
                         disabled={!canRespecGold}
                         className="px-3 py-1.5 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-                        title={spent === 0 ? 'Nothing to respec' : `Costs ${goldRespecCost.toLocaleString()} gold (you have ${gold.toLocaleString()})`}
+                        title={committedSpent === 0 ? 'Nothing to respec' : `Costs ${goldRespecCost.toLocaleString()} gold (you have ${gold.toLocaleString()})`}
                     >
                         Respec — {goldRespecCost.toLocaleString()} Gold
                     </button>
@@ -282,7 +371,7 @@ export default function PoolBiasPanel({ save, setSave }) {
                         onClick={respecWithOmenx}
                         disabled={!canRespecOmenx || respecBusy}
                         className="px-3 py-1.5 rounded bg-purple-700 hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-                        title={spent === 0 ? 'Nothing to respec' : `Costs ${RESPEC_COST_OMENX} OMENX`}
+                        title={committedSpent === 0 ? 'Nothing to respec' : `Costs ${RESPEC_COST_OMENX} OMENX`}
                     >
                         {respecBusy ? 'Processing…' : `Respec — ${RESPEC_COST_OMENX} OMENX`}
                     </button>
