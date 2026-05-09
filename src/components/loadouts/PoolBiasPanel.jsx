@@ -144,19 +144,16 @@ export default function PoolBiasPanel({ save, setSave }) {
         });
     };
 
-    // Apply a preset to the DRAFT — distributes remaining draft points across
-    // the preset's target weights. Doesn't reset existing allocations.
+    // Apply a preset to the DRAFT — wipes the draft first then distributes ALL
+    // total points across the preset's target weights. This way switching
+    // between presets in the draft cleanly swaps builds (without each preset
+    // stacking on top of the previous one). Respec is still required to commit
+    // changes that reduce committed allocations — Confirm/Cancel handles that.
     const applyPreset = (preset) => {
-        if (draftRemaining <= 0) return;
+        if (total <= 0) return;
         SoundManager.playUIClick();
-        const additions = buildPresetAllocation(preset.weights, draftRemaining);
-        setDraft(d => {
-            const next = { ...d };
-            for (const [id, pts] of Object.entries(additions)) {
-                next[id] = Number(next[id] || 0) + pts;
-            }
-            return next;
-        });
+        const fresh = buildPresetAllocation(preset.weights, total);
+        setDraft(fresh);
     };
 
     const confirmDraft = () => {
@@ -285,8 +282,8 @@ export default function PoolBiasPanel({ save, setSave }) {
                         <button
                             key={p.id}
                             onClick={() => applyPreset(p)}
-                            disabled={draftRemaining <= 0}
-                            title={draftRemaining <= 0 ? 'No points available' : `Spends all ${draftRemaining} available points: ${p.desc}`}
+                            disabled={total <= 0}
+                            title={total <= 0 ? 'No points available' : `Redistributes all ${total} points: ${p.desc}`}
                             className="flex items-start gap-2 bg-slate-900/60 hover:bg-fuchsia-900/30 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-fuchsia-500/60 rounded-lg px-2 py-1.5 text-left transition-colors"
                         >
                             <span className="text-base shrink-0">{p.icon}</span>
