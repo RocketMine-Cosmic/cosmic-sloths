@@ -139,10 +139,12 @@ async function fetchNfts() {
                 return;
             }
             const nfts = res.data.nfts;
-            // Don't burn the 12h cooldown on an empty result — usually means
-            // the wallet wasn't fully linked yet or the upstream API blipped.
-            // Auto-retry on next page load instead of locking users out.
-            if (Array.isArray(nfts) && nfts.length > 0) {
+            // Persist whatever the upstream returned — including an empty array.
+            // An empty array is a VALID state (player sold all their NFTs); if we
+            // skipped the cache write, the stale persisted NFTs would rehydrate on
+            // next page load and the user would still see NFTs they no longer own.
+            // (The null branch above already guards against upstream errors.)
+            if (Array.isArray(nfts)) {
                 lastNftFetchAt = Date.now();
                 saveJSON('omenx_nft_cache', { nfts, timestamp: lastNftFetchAt });
                 saveJSON('omenx_nft_data', nfts);
