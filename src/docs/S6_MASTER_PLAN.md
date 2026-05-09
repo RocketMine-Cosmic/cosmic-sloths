@@ -1,8 +1,8 @@
 # S6 Master Plan — Cap-Free, Skill-First, Gold-Balanced
 
-**Author:** Base44  •  **Date:** 2026-05-07 (last updated 2026-05-09)  •  **Target:** Season 6 (starts Mon May 25 2026 00:00 UTC)
+**Author:** Base44  •  **Date:** 2026-05-07 (last updated 2026-05-09)  •  **Target:** Season 6 (starts Mon May 18 2026 00:00 UTC)
 
-> **2026-05-09 update:** Phases 1–4 implemented. Phase 5 (in-game communication) shipped via `S6WelcomeModal`. Two new launch-day admin tools added: `snapshotSeasonHallOfFame` (Hall of Fame archive) and `seedSquadTreasuries` (cold-start seed). Detailed staff-facing changelog now lives in `S6_STAFF_PATCH_NOTES.md`. The original schedule was Mon May 18 00:00 UTC; that slipped one week to **Mon May 25 00:00 UTC** to fit the additional weapon-system work (slot cap, evolution gate, rarity scaling, autobalance, Overcharge fillers, structural safety clamps). All other plans below are still accurate.
+> **2026-05-09 update:** Phases 1–4 implemented. Phase 5 (in-game communication) shipped via `S6WelcomeModal`. One launch-day admin tool added: `seedSquadTreasuries` (cold-start seed). Detailed staff-facing changelog lives in `S6_STAFF_PATCH_NOTES.md`. Endless leaderboard now scopes by `season_id` so it resets cleanly with the others at the rollover. All other plans below are still accurate.
 
 This doc is the **unified plan** that pulls together the three S6 design docs:
 - `S6_SCORE_FORMULA.md` — the new score formula (Option A, scaled to ~1M peak)

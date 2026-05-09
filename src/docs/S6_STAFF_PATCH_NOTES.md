@@ -1,7 +1,7 @@
 # Season 6 — Staff Brief
 
 **For:** Discord moderators & in-game staff with AdminDashboard access
-**Launch:** Mon May 25 2026 • 00:00 UTC
+**Launch:** Mon May 18 2026 • 00:00 UTC
 **Last updated:** 2026-05-09
 
 > Use this to answer player questions and run the launch-day tools. Public-facing patch notes are in `S6_PATCH_NOTES.md`.
@@ -72,15 +72,15 @@
 
 | When (UTC) | What happens | Who triggers it |
 |---|---|---|
-| Sun May 24, **23:00** | Maintenance flips to **SOFT** (yellow warning banner) | Scheduled automation |
-| Sun May 24, **23:40** | Maintenance flips to **HARD** (blocks `/game`) | Scheduled automation |
-| Mon May 25, **00:00** | Period rolls W20→W21, all S6 logic activates | Server-side (season-gated by `isS6OrLater()`) |
+| Sun May 17, **23:00** | Maintenance flips to **SOFT** (yellow warning banner) | Scheduled automation |
+| Sun May 17, **23:40** | Maintenance flips to **HARD** (blocks `/game`) | Scheduled automation |
+| Mon May 18, **00:00** | Period rolls W20→W21, all S6 logic activates | Server-side (season-gated by `isS6OrLater()`) |
 
 The scheduler can only flip the gate **on** — it never flips it off, by design (if rollover breaks, we want it to stay locked until a human clears it).
 
 ### What you do
 
-#### Any time before launch — Seed squad treasuries (one-shot)
+#### Any time before launch (recommended Sun May 17 evening) — Seed squad treasuries (one-shot)
 **Admin Dashboard → Live Ops → 🔧 Maintenance → S6 Launch Tools**
 
 1. **🪙 Seed Squad Treasuries**
@@ -91,7 +91,7 @@ The scheduler can only flip the gate **on** — it never flips it off, by design
 
 > All leaderboards (weekly / seasonal / endless) reset automatically when the season flips. No archive action needed.
 
-#### Mon May 25, ~00:10 UTC — Verify, then flip OFF
+#### Mon May 18, ~00:10 UTC — Verify, then flip OFF
 - Try a quick Sector 1 run on a test wallet — score should match new formula
 - Try entering an endless run — should see no "GOLD CAPPED" warnings
 - Check the Endless leaderboard tab — should be empty (S5 endless runs are now scoped to S5)

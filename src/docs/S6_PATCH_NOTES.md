@@ -2,8 +2,8 @@
 
 Condensed to 5 posts. Each under 2,000 chars so it fits a single Discord message.
 
-**Goes live:** Monday, May 25 • 00:00 UTC
-**Maintenance window:** Sun May 24, 23:00 UTC (1hr soft warning) → 23:40 UTC (game closes) → ~00:10 UTC Mon (back online)
+**Goes live:** Monday, May 18 • 00:00 UTC
+**Maintenance window:** Sun May 17, 23:00 UTC (1hr soft warning) → 23:40 UTC (game closes) → ~00:10 UTC Mon (back online)
 
 > Staff: detailed engineering version is in `S6_STAFF_PATCH_NOTES.md`. Don't paste that one to public channels.
 
@@ -12,13 +12,13 @@ Condensed to 5 posts. Each under 2,000 chars so it fits a single Discord message
 ## 📢 POST 1 — Headline & Schedule
 
 ```
-🌌 **SEASON 6 — May 25, 00:00 UTC**
+🌌 **SEASON 6 — May 18, 00:00 UTC**
 
-S5 ends Sunday May 24, 23:59 UTC. Final S5 leaderboard rewards + Squad Champions payouts distribute as normal. S6 starts fresh.
+S5 ends Sunday May 17, 23:59 UTC. Final S5 leaderboard rewards + Squad Champions payouts distribute as normal. S6 starts fresh.
 
 🗓️ **Schedule**
-S5 ends:    Sunday May 24, 23:59 UTC
-S6 begins:  Monday May 25, 00:00 UTC
+S5 ends:    Sunday May 17, 23:59 UTC
+S6 begins:  Monday May 18, 00:00 UTC
 
 🛡️ **What resets**
 • ALL leaderboards — Weekly, Seasonal AND Endless
@@ -31,7 +31,7 @@ S6 begins:  Monday May 25, 00:00 UTC
 • Squad XP, war record, rosters, treasury
 • Daily/weekly bounty progress
 
-Normal seasonal rollover — nothing extra is being wiped. The Endless leaderboard previously persisted across seasons; from S6 it resets alongside the others so everyone starts from zero. The first time you load /hub on May 25 a new in-game tour will walk you through the changes. Read the next 4 posts to get a head start.
+Normal seasonal rollover — nothing extra is being wiped. The Endless leaderboard previously persisted across seasons; from S6 it resets alongside the others so everyone starts from zero. The first time you load /hub on May 18 a new in-game tour will walk you through the changes. Read the next 4 posts to get a head start.
 ```
 
 ---
