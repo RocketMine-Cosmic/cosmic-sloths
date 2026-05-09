@@ -34,12 +34,24 @@ function TargetRow({ target, points, committedPoints, onAdd, onRemove, canAdd, a
     // players can see at a glance which choices they've changed.
     const isDirty = points !== committedPoints;
     const delta = points - committedPoints;
+    // Past +100% = diminishing returns kick in. We still allow it (no cap), but
+    // flag it visually so the player understands the bar staying full isn't a
+    // bug — extra points still count, they're just worth less per point.
+    const overCap = points > BAR_FILL_CAP_POINTS;
     return (
         <div className={`flex flex-col gap-1 bg-slate-900/60 border ${isDirty ? 'border-fuchsia-500/60' : accent.border} rounded-lg px-2.5 py-1.5 transition-colors`}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span className="text-base shrink-0">{target.icon}</span>
                     <span className={`text-xs font-bold truncate ${accent.text}`}>{target.label}</span>
+                    {overCap && (
+                        <span
+                            className="text-[9px] font-bold text-orange-400 bg-orange-950/60 border border-orange-500/40 rounded px-1 py-0.5 shrink-0"
+                            title="Diminishing returns — extra points still count but each one adds less appearance rate. Spreading to a second target usually pays off more."
+                        >
+                            ⚠ DIM
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[10px] font-mono text-slate-300 tabular-nums w-20 text-right">
@@ -243,6 +255,9 @@ export default function PoolBiasPanel({ save, setSave }) {
                     </p>
                     <p className="text-[10px] md:text-[11px] text-slate-500 mt-1">
                         Earn 1 pt per permanent upgrade for your first {POINTS_TIER_BREAKPOINT} levels, then 1 pt every {LATE_LEVELS_PER_POINT} levels. Each point = +{Math.round(BIAS_PER_POINT * 100)}% draw weight.
+                    </p>
+                    <p className="text-[10px] md:text-[11px] text-orange-300/80 mt-1">
+                        💡 Past <span className="font-bold">+100%</span> (10 pts) extra points still count but give diminishing returns — spreading to a second target usually pays off more.
                     </p>
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">
