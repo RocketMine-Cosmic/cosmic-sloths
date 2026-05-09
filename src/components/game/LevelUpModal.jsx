@@ -2,31 +2,49 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Sparkles } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
-import { WEAPON_SLOT_CAP } from '@/game/UpgradeSystem';
+import { WEAPON_SLOT_CAP, EVOLUTION_MIN_BASE_LEVEL } from '@/game/UpgradeSystem';
 import { EVOLUTIONS } from '@/game/Constants';
 
 // Returns true if picking this upgrade would put the player one step away from
 // triggering an evolution — either:
 //   • weapon choice + player already has the matching passive, OR
 //   • passive choice + player already owns the matching base weapon
-// Excluded if the evolved form is already owned. Pure UI — no business logic
+// Excluded if the evolved form is already owned. On S6+ also requires the base
+// weapon to be at level >= EVOLUTION_MIN_BASE_LEVEL — otherwise the badge would
+// promise an evolution that won't actually fire. Pure UI — no business logic
 // changes; the actual evolution check still happens in UpgradeSystem.applyUpgrade.
 function isEvolutionReady(upgrade, player) {
     if (!player || !upgrade) return false;
-    const ownedWeaponIds = new Set((player.weapons || []).map(w => w.id));
+    const ownedWeapons = player.weapons || [];
+    const ownedWeaponIds = new Set(ownedWeapons.map(w => w.id));
     const ownedPassiveIds = new Set((player.passives || []).map(p => p.id));
+    const requireMinLevel = isS6OrLater();
 
     if (upgrade.type === 'weapon') {
         const evo = EVOLUTIONS.find(e => e.baseWeapon === upgrade.weaponId);
         if (!evo) return false;
         if (ownedWeaponIds.has(evo.evolvedWeapon)) return false;
-        return ownedPassiveIds.has(evo.passive);
+        if (!ownedPassiveIds.has(evo.passive)) return false;
+        if (requireMinLevel) {
+            const owned = ownedWeapons.find(w => w.id === evo.baseWeapon);
+            // Picking this LEVELS the owned weapon by upgrade.value (1–3).
+            // Project the post-pick level so the badge shows when this very pick
+            // would push the weapon to/past the threshold.
+            const projected = (owned ? owned.level : 0) + (upgrade.value || 1);
+            if (projected < EVOLUTION_MIN_BASE_LEVEL) return false;
+        }
+        return true;
     }
     if (upgrade.type === 'passive') {
         const evo = EVOLUTIONS.find(e => e.passive === upgrade.id);
         if (!evo) return false;
         if (ownedWeaponIds.has(evo.evolvedWeapon)) return false;
-        return ownedWeaponIds.has(evo.baseWeapon);
+        if (!ownedWeaponIds.has(evo.baseWeapon)) return false;
+        if (requireMinLevel) {
+            const base = ownedWeapons.find(w => w.id === evo.baseWeapon);
+            if (!base || base.level < EVOLUTION_MIN_BASE_LEVEL) return false;
+        }
+        return true;
     }
     return false;
 }

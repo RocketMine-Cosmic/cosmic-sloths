@@ -308,12 +308,21 @@ export function checkSynergies(engine) {
     if (engine.checkEvolutions) engine.checkEvolutions();
 }
 
+// S6+ — evolutions require the base weapon to be at least level 8 before they
+// fire. Without this, picking the matching passive at level 1 silently evolves
+// the weapon, which feels accidental rather than earned. Genre standard
+// (Vampire Survivors, Halls of Torment) gates evolution behind weapon mastery.
+// S5 keeps the legacy "evolve immediately" behaviour so players who learned the
+// old rules aren't surprised mid-season.
+export const EVOLUTION_MIN_BASE_LEVEL = 8;
+
 export function checkEvolutions(engine) {
+    const requireMinLevel = isS6OrLater();
     for (const evolution of EVOLUTIONS) {
         const baseWeapon = engine.player.weapons.find(w => w.id === evolution.baseWeapon);
         const passive = engine.player.passives.find(p => p.id === evolution.passive);
 
-        if (baseWeapon && passive) {
+        if (baseWeapon && passive && (!requireMinLevel || baseWeapon.level >= EVOLUTION_MIN_BASE_LEVEL)) {
             engine.player.weapons = engine.player.weapons.filter(w => w.id !== evolution.baseWeapon);
             engine.player.weapons.push({ ...WEAPONS[evolution.evolvedWeapon], level: baseWeapon.level, timer: 0 });
             engine.addDamageText(engine.player.x, engine.player.y - 40, "WEAPON EVOLVED!", '#ff4500');
