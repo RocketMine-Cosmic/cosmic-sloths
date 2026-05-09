@@ -565,7 +565,7 @@ export function fireWeaponLogic(engine, w) {
             isAoe: true,
             burn: true,
             isMastered: true,
-            weaponId: 'napalm',
+            weaponId: 'hellfire',
             type: 'hellfire'
         });
     }
@@ -604,7 +604,7 @@ export function fireWeaponLogic(engine, w) {
             isAoe: true,
             pushback: 300,
             isMastered: true,
-            weaponId: 'shieldBubble',
+            weaponId: 'aegisMatrix',
             type: 'aegis_matrix'
         });
         // Retaliation missiles — described in WEAPONS.aegisMatrix.desc but were never
@@ -626,7 +626,7 @@ export function fireWeaponLogic(engine, w) {
                 vx: Math.cos(a) * 350 * engine.player.projSpeedMult,
                 vy: Math.sin(a) * 350 * engine.player.projSpeedMult,
                 radius: 6, damage: dmg * 0.6, pierce: 1, life: 2.0,
-                color: '#00ff88', type: 'missile', weaponId: 'shieldBubble'
+                color: '#00ff88', type: 'missile', weaponId: 'aegisMatrix'
             });
         }
     }
@@ -753,7 +753,7 @@ export function fireWeaponLogic(engine, w) {
                         vx: Math.cos(a) * 450 * engine.player.projSpeedMult,
                         vy: Math.sin(a) * 450 * engine.player.projSpeedMult,
                         radius: 4 * area, damage: dmg * 0.45, pierce: 2, life: 1.6,
-                        color: '#00D4FF', type: 'dual_laser', isMastered: blasterMastered, weaponId: 'twinLaser'
+                        color: '#00D4FF', type: 'dual_laser', isMastered: blasterMastered, weaponId: 'neoBlaster'
                     });
                 }
             }
