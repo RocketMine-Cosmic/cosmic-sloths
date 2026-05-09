@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Swords } from 'lucide-react';
+import { isS6OrLater } from '@/lib/seasonGate';
+import { WEAPON_SLOT_CAP } from '@/game/UpgradeSystem';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -80,9 +83,36 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                 <h2 className="text-xl md:text-3xl font-bold text-center text-cyan-400 mb-1 md:mb-2 font-mono">
                     LEVEL UP!
                 </h2>
-                <p className="text-slate-400 mb-2 md:mb-8 text-center text-xs md:text-base">
+                <p className="text-slate-400 mb-2 md:mb-3 text-center text-xs md:text-base">
                     Choose an upgrade to enhance your build.
                 </p>
+
+                {/* S6+ weapon slot indicator — prominent so players never wonder
+                    why no new weapons appear once they hit the cap. */}
+                {(() => {
+                    if (!isS6OrLater()) return null;
+                    const weapons = engineRef?.current?.player?.weapons;
+                    if (!Array.isArray(weapons)) return null;
+                    const count = weapons.length;
+                    const atCap = count >= WEAPON_SLOT_CAP;
+                    return (
+                        <div className={`mb-3 md:mb-6 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border-2 font-mono font-bold text-xs md:text-sm flex items-center gap-2 ${
+                            atCap
+                                ? 'bg-amber-950/60 border-amber-500 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
+                                : 'bg-cyan-950/60 border-cyan-700 text-cyan-300'
+                        }`}>
+                            <Swords className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                            <span className="tabular-nums">
+                                Weapons: {count}/{WEAPON_SLOT_CAP}
+                            </span>
+                            {atCap && (
+                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider opacity-90">
+                                    — Slots Full · Leveling Existing Only
+                                </span>
+                            )}
+                        </div>
+                    );
+                })()}
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 w-full mb-4 md:mb-8">
                     {choices.map((choice, i) => {

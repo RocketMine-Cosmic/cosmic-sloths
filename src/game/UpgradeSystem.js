@@ -4,6 +4,16 @@ import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
 import { getBiasMultiplier } from '@/lib/poolBias';
 import { getWeaponLevelUpEffect } from './WeaponLevelEffects';
+import { isS6OrLater } from '@/lib/seasonGate';
+
+// S6+ — hard cap on simultaneously equipped weapons. Industry standard for the
+// vampire-survivors-likes (VS / Brotato / Halls of Torment all use 6). Past 6,
+// frame rate dies on mobile, screen clutter blocks vision, and DPS dilutes
+// because none of the weapons get leveled. Once at the cap, the level-up pool
+// only offers level-ups for weapons the player already owns. Synergies (2→1)
+// free up a slot; evolutions are in-place. Players carrying 7+ from S5/early-S6
+// are grandfathered — they keep what they have but can't add an 8th.
+export const WEAPON_SLOT_CAP = 6;
 
 // Pool weight is now driven by the player's allocated bias points (Loadouts page).
 // See lib/poolBias.js for the math + category mapping.
@@ -84,6 +94,10 @@ export function generateChoices(engine) {
     const MAX_PASSIVE_LEVEL = 5;
     const isEndless = engine.arena?.duration === Infinity;
     const isRaid = engine.arena?.id === 'world_boss_arena';
+    // S6+ weapon-slot cap: once at/over the cap, the pool stops offering NEW
+    // weapons. Existing weapons can still be leveled. Cap is checked dynamically
+    // because synergies (2→1) reduce slot count mid-run.
+    const enforceWeaponCap = isS6OrLater() && engine.player.weapons.length >= WEAPON_SLOT_CAP;
     const choices = [];
     const pool = [...UPGRADES].filter(u => {
         if (engine.banishedUpgrades.has(u.id)) return false;
@@ -105,6 +119,8 @@ export function generateChoices(engine) {
         if (u.type === 'weapon') {
             const existing = engine.player.weapons.find(w => w.id === u.weaponId);
             if (existing && existing.level >= 20) return false;
+            // S6+ slot cap — once at 6/6 weapons, only allow level-ups for owned weapons.
+            if (enforceWeaponCap && !existing) return false;
             // Block base weapons whose evolved form the player already owns —
             // otherwise re-rolling the base weapon would let it evolve a second time
             // with the same passive (Hugo bug 2026-05-02).
