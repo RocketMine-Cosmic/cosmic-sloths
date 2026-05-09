@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Plus, RotateCcw, Sword, Zap } from 'lucide-react';
+import { Sparkles, Plus, RotateCcw, Sword, Zap, Wand2 } from 'lucide-react';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import {
@@ -16,31 +16,48 @@ import {
     getPermanentLevel,
     getLevelsUntilNextPoint,
 } from '@/lib/poolBias';
+import { POOL_BIAS_PRESETS, buildPresetAllocation } from '@/lib/poolBiasPresets';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { base44 } from '@/api/base44Client';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { getOmenXUserSync } from '@/lib/omenxUser';
 import { refreshBalance } from '@/lib/playerDataCache';
 
+// Cap the visual fill at 10 points (+100%) — beyond that the bar would imply
+// linear growth that doesn't reflect diminishing returns from a draw-weight
+// pool with multiple competing targets.
+const BAR_FILL_CAP_POINTS = 10;
+
 function TargetRow({ target, points, onAdd, canAdd, accent }) {
     const pct = points * BIAS_PER_POINT * 100;
+    const fillPct = Math.min(100, (points / BAR_FILL_CAP_POINTS) * 100);
     return (
-        <div className={`flex items-center justify-between gap-2 bg-slate-900/60 border ${accent.border} rounded-lg px-2.5 py-1.5`}>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-base shrink-0">{target.icon}</span>
-                <span className={`text-xs font-bold truncate ${accent.text}`}>{target.label}</span>
+        <div className={`flex flex-col gap-1 bg-slate-900/60 border ${accent.border} rounded-lg px-2.5 py-1.5`}>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-base shrink-0">{target.icon}</span>
+                    <span className={`text-xs font-bold truncate ${accent.text}`}>{target.label}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] font-mono text-slate-300 tabular-nums w-14 text-right">
+                        {points} pts <span className="text-slate-500">+{pct.toFixed(0)}%</span>
+                    </span>
+                    <button
+                        onClick={onAdd}
+                        disabled={!canAdd}
+                        className={`px-2 py-0.5 rounded ${accent.btn} disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center gap-1 text-[10px] font-bold transition-colors`}
+                    >
+                        <Plus className="w-3 h-3" />
+                    </button>
+                </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] font-mono text-slate-300 tabular-nums w-14 text-right">
-                    {points} pts <span className="text-slate-500">+{pct.toFixed(0)}%</span>
-                </span>
-                <button
-                    onClick={onAdd}
-                    disabled={!canAdd}
-                    className={`px-2 py-0.5 rounded ${accent.btn} disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center gap-1 text-[10px] font-bold transition-colors`}
-                >
-                    <Plus className="w-3 h-3" />
-                </button>
+            {/* Visual weight bar — fills as more points are allocated. Empty rows
+                still show the track so the row height stays consistent. */}
+            <div className="h-1 bg-slate-800/80 rounded-full overflow-hidden">
+                <div
+                    className={`h-full ${accent.bar} transition-all duration-300`}
+                    style={{ width: `${fillPct}%` }}
+                />
             </div>
         </div>
     );
@@ -68,6 +85,22 @@ export default function PoolBiasPanel({ save, setSave }) {
         if (remaining <= 0) return;
         SoundManager.playUIClick();
         const next = { ...allocations, [targetId]: Number(allocations[targetId] || 0) + 1 };
+        const newSave = { ...save, poolBiasAllocations: next };
+        SaveManager.save(newSave);
+        setSave(newSave);
+    };
+
+    // Apply a preset by distributing all REMAINING points across the preset's
+    // target weights. Adds on top of existing allocations (doesn't reset) — if
+    // the player wants a fresh start they can respec first.
+    const applyPreset = (preset) => {
+        if (remaining <= 0) return;
+        SoundManager.playUIClick();
+        const additions = buildPresetAllocation(preset.weights, remaining);
+        const next = { ...allocations };
+        for (const [id, pts] of Object.entries(additions)) {
+            next[id] = Number(next[id] || 0) + pts;
+        }
         const newSave = { ...save, poolBiasAllocations: next };
         SaveManager.save(newSave);
         setSave(newSave);
@@ -138,8 +171,8 @@ export default function PoolBiasPanel({ save, setSave }) {
         }
     };
 
-    const weaponAccent = { border: 'border-cyan-500/30',  text: 'text-cyan-300',   btn: 'bg-cyan-700 hover:bg-cyan-600' };
-    const statAccent   = { border: 'border-amber-500/30', text: 'text-amber-300',  btn: 'bg-amber-700 hover:bg-amber-600' };
+    const weaponAccent = { border: 'border-cyan-500/30',  text: 'text-cyan-300',   btn: 'bg-cyan-700 hover:bg-cyan-600',  bar: 'bg-cyan-500' };
+    const statAccent   = { border: 'border-amber-500/30', text: 'text-amber-300',  btn: 'bg-amber-700 hover:bg-amber-600', bar: 'bg-amber-500' };
 
     return (
         <div className="bg-[#0b0416]/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-3 md:p-5 mb-4">
@@ -148,9 +181,11 @@ export default function PoolBiasPanel({ save, setSave }) {
                     <h2 className="text-lg md:text-xl font-black uppercase tracking-widest flex items-center gap-2 text-fuchsia-300">
                         <Sparkles className="w-5 h-5" /> Pool Bias
                     </h2>
-                    <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">
-                        Earn <span className="text-cyan-300 font-bold">1 pt</span> per permanent upgrade for your first {POINTS_TIER_BREAKPOINT} levels,
-                        then <span className="text-cyan-300 font-bold">1 pt every {LATE_LEVELS_PER_POINT} levels</span>. Each point = <span className="text-cyan-300 font-bold">+{Math.round(BIAS_PER_POINT * 100)}%</span> draw weight on that specific weapon or stat.
+                    <p className="text-[11px] md:text-xs text-slate-200 mt-0.5 leading-relaxed">
+                        Spend points to make specific weapons or stats appear <span className="text-cyan-300 font-bold">more often</span> in your in-run level-up choices.
+                    </p>
+                    <p className="text-[10px] md:text-[11px] text-slate-500 mt-1">
+                        Earn 1 pt per permanent upgrade for your first {POINTS_TIER_BREAKPOINT} levels, then 1 pt every {LATE_LEVELS_PER_POINT} levels. Each point = +{Math.round(BIAS_PER_POINT * 100)}% draw weight.
                     </p>
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">
@@ -164,6 +199,31 @@ export default function PoolBiasPanel({ save, setSave }) {
                         <span className="text-cyan-300 font-mono font-bold">{remaining}</span>
                         <span className="text-slate-500"> / {total}</span>
                     </div>
+                </div>
+            </div>
+
+            {/* Quick-start presets — auto-distribute remaining points by archetype.
+                Helps new players who don't know where to spend their first batch. */}
+            <div className="mb-3 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-1.5 text-fuchsia-300 font-bold text-[11px] uppercase tracking-wider mb-1.5">
+                    <Wand2 className="w-3.5 h-3.5" /> Quick Start Presets
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                    {POOL_BIAS_PRESETS.map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => applyPreset(p)}
+                            disabled={remaining <= 0}
+                            title={remaining <= 0 ? 'No points available — earn more or respec first' : `Spends all ${remaining} available points: ${p.desc}`}
+                            className="flex items-start gap-2 bg-slate-900/60 hover:bg-fuchsia-900/30 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-fuchsia-500/60 rounded-lg px-2 py-1.5 text-left transition-colors"
+                        >
+                            <span className="text-base shrink-0">{p.icon}</span>
+                            <div className="min-w-0 flex-1">
+                                <div className="text-[11px] font-bold text-fuchsia-200 truncate">{p.name}</div>
+                                <div className="text-[9px] text-slate-400 leading-tight line-clamp-2">{p.desc}</div>
+                            </div>
+                        </button>
+                    ))}
                 </div>
             </div>
 
