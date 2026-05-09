@@ -38,11 +38,13 @@ export default function GlobalRaid({ isCarousel }) {
     const { omenxBalance, nfts } = useCurrency();
 
     // Merge NFT-unlocked characters with cloud unlocks (UI only — same logic as Hub).
+    // Always force-include 'neobyte' — it's the default starter and should never appear locked,
+    // even if save.unlockedCharacters is an empty array (Rselectric's wife bug 2026-05-09).
     const effectiveUnlockedCharacters = React.useMemo(() => {
         const nftUnlocked = (nfts || [])
             .map(nft => nft.metadata?.name?.toLowerCase())
             .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
-        return [...new Set([...(save.unlockedCharacters || ['neobyte']), ...nftUnlocked])];
+        return [...new Set(['neobyte', ...(save.unlockedCharacters || []), ...nftUnlocked])];
     }, [save.unlockedCharacters, nfts]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('global-raid');
 
