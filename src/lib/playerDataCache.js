@@ -235,14 +235,22 @@ function attachVisibilityListener() {
 }
 
 // Lazy fetchers — call on demand from pages that actually need this data.
-// No-ops if a cached value already exists (manual refresh buttons handle re-fetch).
-// VIP is now fetched once on wallet-link instead of on Profile mount, since it
-// rarely changes and never decreases. Kept here for backwards compat (no-op if cached).
+// VIP is fetched once on wallet-link, then cached indefinitely (rarely changes,
+// never decreases). Kept here for backwards compat (no-op if cached).
 export function ensureVipFetched() {
     if (lastVipFetchAt === 0) fetchVip();
 }
+// NFTs auto-refresh whenever the dashboard is opened and the cache is older
+// than 5 minutes. This is the only auto-refresh path — without it, players who
+// sold/bought an NFT in another tab would see stale data until they happened
+// to tap the manual button (which the previous "no auto-fetch if cached" rule
+// caused even days later). Manual refresh button still has its own 60s cooldown
+// to prevent abuse.
+const NFT_AUTO_REFRESH_TTL = 5 * 60 * 1000; // 5 min
 export function ensureNftsFetched() {
-    if (lastNftFetchAt === 0) fetchNfts();
+    if (lastNftFetchAt === 0 || Date.now() - lastNftFetchAt > NFT_AUTO_REFRESH_TTL) {
+        fetchNfts();
+    }
 }
 
 let storageListenerAttached = false;
