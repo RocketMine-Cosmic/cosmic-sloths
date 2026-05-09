@@ -240,17 +240,11 @@ function attachVisibilityListener() {
 export function ensureVipFetched() {
     if (lastVipFetchAt === 0) fetchVip();
 }
-// NFTs auto-refresh whenever the dashboard is opened and the cache is older
-// than 5 minutes. This is the only auto-refresh path — without it, players who
-// sold/bought an NFT in another tab would see stale data until they happened
-// to tap the manual button (which the previous "no auto-fetch if cached" rule
-// caused even days later). Manual refresh button still has its own 60s cooldown
-// to prevent abuse.
-const NFT_AUTO_REFRESH_TTL = 5 * 60 * 1000; // 5 min
+// NFTs are fetched once per wallet (on wallet-link) and then cached. Refresh
+// is manual only via the Refresh button on the NFT Dashboard. Avoids hammering
+// the OmenX API every time someone opens the page.
 export function ensureNftsFetched() {
-    if (lastNftFetchAt === 0 || Date.now() - lastNftFetchAt > NFT_AUTO_REFRESH_TTL) {
-        fetchNfts();
-    }
+    if (lastNftFetchAt === 0) fetchNfts();
 }
 
 let storageListenerAttached = false;
