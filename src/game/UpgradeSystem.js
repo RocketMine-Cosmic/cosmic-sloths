@@ -122,11 +122,17 @@ export function levelUp(engine) {
 }
 
 export function generateChoices(engine) {
+    // S6+ — weapon picks now use a dedicated `weaponLevels` field so the rarity
+    // tier feels actually special (Common +1, Rare +2, Epic +3, Legendary +5).
+    // Old behaviour reused `mult` for both passive scaling and weapon levels,
+    // which gave Rare = 1.5 → truncated to 1 (identical to Common) and made
+    // Legendary feel barely different from Epic. S5 keeps the legacy values.
+    const s6Weapons = isS6OrLater();
     const rarities = [
-        { name: 'Common', mult: 1, weight: 60 },
-        { name: 'Rare', mult: 1.5, weight: 25 },
-        { name: 'Epic', mult: 2, weight: 10 },
-        { name: 'Legendary', mult: 3, weight: 5 }
+        { name: 'Common',    mult: 1,   weight: 60, weaponLevels: s6Weapons ? 1 : 1 },
+        { name: 'Rare',      mult: 1.5, weight: 25, weaponLevels: s6Weapons ? 2 : 1 },
+        { name: 'Epic',      mult: 2,   weight: 10, weaponLevels: s6Weapons ? 3 : 2 },
+        { name: 'Legendary', mult: 3,   weight: 5,  weaponLevels: s6Weapons ? 5 : 3 }
     ];
 
     const getRarity = () => {
@@ -208,7 +214,11 @@ export function generateChoices(engine) {
                 return Number.isInteger(num * rarity.mult) ? (num * rarity.mult).toString() : (num * rarity.mult).toFixed(1);
             });
         } else if (baseUpgrade.type === 'weapon') {
-            newValue = rarity.mult;
+            // Use the rarity's dedicated weapon-level count (S6+ tier amplifies
+            // Rare/Legendary; S5 keeps legacy values). applyUpgrade reads
+            // `value` as the level increment.
+            const levels = rarity.weaponLevels || 1;
+            newValue = levels;
             // If the player already owns this weapon, this pick LEVELS it up — show what
             // the level-up actually does (damage/area scaling + per-weapon extras like
             // "+1 drone every 2 levels"). Otherwise it's a fresh weapon, so keep the
@@ -216,9 +226,9 @@ export function generateChoices(engine) {
             const owned = !!engine.player.weapons.find(w => w.id === baseUpgrade.weaponId);
             if (owned) {
                 const effect = getWeaponLevelUpEffect(baseUpgrade.weaponId);
-                newDesc = `+${rarity.mult} Level${rarity.mult > 1 ? 's' : ''} — ${effect}`;
+                newDesc = `+${levels} Level${levels > 1 ? 's' : ''} — ${effect}`;
             } else {
-                newDesc = `${baseUpgrade.desc} (Starts at Lv.${rarity.mult})`;
+                newDesc = `${baseUpgrade.desc} (Starts at Lv.${levels})`;
             }
         }
 
