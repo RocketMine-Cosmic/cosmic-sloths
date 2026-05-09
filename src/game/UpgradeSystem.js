@@ -6,6 +6,21 @@ import { getBiasMultiplier } from '@/lib/poolBias';
 import { getWeaponLevelUpEffect } from './WeaponLevelEffects';
 import { isS6OrLater } from '@/lib/seasonGate';
 
+// S6+ "Overcharge" filler picks — used once the normal upgrade pool is
+// exhausted (max passives + all weapons owned + banished). These bypass the
+// usual passive cap so endless players past 20 minutes still get meaningful
+// picks instead of hundreds of identical "+25 HP" options. Each pick stacks
+// indefinitely. Values match the magnitude of normal Common-rarity passives —
+// rarity scaling in generateChoices() multiplies them up to 3× for Legendary.
+const OVERCHARGE_FILLERS = [
+    { id: 'oc_dmg',    name: 'Overcharge: Damage',     desc: '+3% Damage (uncapped)',         type: 'passive', stat: 'damageMult',   value: 0.03 },
+    { id: 'oc_armor',  name: 'Reinforced Plating',     desc: '+1 Armor (uncapped)',           type: 'passive', stat: 'armor',        value: 1 },
+    { id: 'oc_hp',     name: 'Vital Surge',            desc: '+30 Max HP (uncapped)',         type: 'passive', stat: 'maxHp',        value: 30 },
+    { id: 'oc_cd',     name: 'Adrenaline Injector',    desc: '-2% Cooldown (uncapped)',       type: 'passive', stat: 'cooldownMult', value: -0.02 },
+    { id: 'oc_gold',   name: 'Scavenger Protocol',     desc: '+5% Gold (uncapped)',           type: 'passive', stat: 'goldMult',     value: 0.05 },
+    { id: 'oc_luck',   name: 'Lucky Find',             desc: '+1 Luck (uncapped)',            type: 'passive', stat: 'luck',         value: 1 },
+];
+
 // S6+ — hard cap on simultaneously equipped weapons. Industry standard for the
 // vampire-survivors-likes (VS / Brotato / Halls of Torment all use 6). Past 6,
 // frame rate dies on mobile, screen clutter blocks vision, and DPS dilutes
@@ -218,27 +233,54 @@ export function generateChoices(engine) {
 
     // Pool exhausted (max passives + all weapons owned + banished). Without this
     // the modal renders blank and the player gets stuck (Hugo bug 2026-05-06).
-    // Fill remaining slots with a consolation "+25 Max HP" pick so the player
-    // can always click something and resume the run.
-    while (choices.length < 3) {
-        choices.push({
+    //
+    // S6+: fill remaining slots with rotating "Overcharge" stat boosters that
+    // ignore the normal passive cap — late-run endless players were getting
+    // spammed with a single +25 HP option for hundreds of level-ups, which
+    // killed engagement past the 20-min mark. Each filler is uncapped so they
+    // stack indefinitely. Rarity is rolled the same way the main pool does.
+    // S5 keeps the legacy single-option behaviour so learned strategies survive.
+    if (choices.length < 3) {
+        const isS6 = isS6OrLater();
+        const fillerPool = isS6 ? OVERCHARGE_FILLERS : [{
             id: 'consolation_hp',
             name: 'Emergency Repair Kit',
             desc: '+25 Max HP (no upgrades left in pool)',
             type: 'passive',
             stat: 'maxHp',
             value: 25,
-            rarity: 'Common',
-        });
+        }];
+        while (choices.length < 3) {
+            const base = fillerPool[Math.floor(Math.random() * fillerPool.length)];
+            const rarity = isS6 ? getRarity() : { name: 'Common', mult: 1 };
+            const scaledValue = base.value * rarity.mult;
+            const scaledDesc = base.desc.replace(/[0-9]+(\.[0-9]+)?/, (match) => {
+                const num = parseFloat(match);
+                const scaled = num * rarity.mult;
+                return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
+            });
+            choices.push({
+                ...base,
+                desc: scaledDesc,
+                value: scaledValue,
+                rarity: rarity.name,
+            });
+        }
     }
     return choices;
 }
 
 export function applyUpgrade(engine, upgrade) {
     if (upgrade.type === 'passive') {
+        // Overcharge fillers (S6+ pool-exhausted picks) bypass the 5-stack cap by
+        // design — they're the late-game progression path once the normal pool
+        // is exhausted. Their ids are namespaced 'oc_*' so they're easy to spot.
+        const isOvercharge = typeof upgrade.id === 'string' && upgrade.id.startsWith('oc_');
         const maxLevel = 5;
-        const existingCount = engine.player.passives.filter(p => p.id === upgrade.id).length;
-        if (existingCount >= maxLevel) return;
+        if (!isOvercharge) {
+            const existingCount = engine.player.passives.filter(p => p.id === upgrade.id).length;
+            if (existingCount >= maxLevel) return;
+        }
 
         engine.player[upgrade.stat] += upgrade.value;
         if (upgrade.stat === 'maxHp') {
