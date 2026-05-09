@@ -79,7 +79,11 @@ Score now scales with sector depth and victory, not run length.
 • Pool autobalance — soft-corrects toward balanced loadouts when you're heavy on one side. Your manual Pool Bias still wins.
 • "Overcharge" fillers replace the late-game +25 HP loop — once you've maxed all passives + weapons, you'll see rotating uncapped stat boosters instead of the same option forever.
 
-**Why:** Maxed Aegis Matrix could cover 80% of the screen. Endless past 30 min was begging for new picks but only had +25 HP to offer. Slot cap matches the genre standard (VS, Brotato, Halls of Torment).
+**Why these changes:**
+• **Talent stack & Cosmic nerf** — top-end multipliers were stacking to ~38× on whale builds. Flattening to ~19× brings the gap between casual and whale builds back to "meaningful but fair," and stops Cosmic from being the only profitable difficulty.
+• **Slot cap & Lvl 8 evolutions** — carrying 9+ weapons at once tanks framerate on mobile and dilutes DPS because nothing gets levelled. Level-1 evolutions also felt accidental, not earned. Both match the genre standard (Vampire Survivors, Brotato, Halls of Torment).
+• **Rarity scaling** — old Rare picks were rounded to +1 (identical to Common) and Legendary felt barely different from Epic. Now each tier is a real upgrade.
+• **Overcharge fillers** — endless past 30 min was begging for new picks but only had a single repeated +25 HP option. Players now keep getting meaningful choices forever.
 ```
 
 ---
