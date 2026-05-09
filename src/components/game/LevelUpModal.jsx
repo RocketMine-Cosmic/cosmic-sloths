@@ -4,6 +4,7 @@ import { Swords, Sparkles } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import { WEAPON_SLOT_CAP, EVOLUTION_MIN_BASE_LEVEL } from '@/game/UpgradeSystem';
 import { EVOLUTIONS } from '@/game/Constants';
+import PoolBiasBadge from './PoolBiasBadge';
 
 // Returns true if picking this upgrade would put the player one step away from
 // triggering an evolution — either:
@@ -131,6 +132,8 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                 <p className="text-slate-400 mb-2 md:mb-3 text-center text-xs md:text-base">
                     Choose an upgrade to enhance your build.
                 </p>
+
+                <PoolBiasBadge save={engineRef?.current?.save} />
 
                 {/* S6+ weapon slot indicator — prominent so players never wonder
                     why no new weapons appear once they hit the cap. */}
