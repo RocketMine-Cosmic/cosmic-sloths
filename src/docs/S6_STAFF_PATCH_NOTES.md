@@ -42,7 +42,7 @@
 - Free Pool Bias respec on the Loadouts page (one-time)
 - Pool Bias badge in level-up screen (shows your top 2 boosted targets)
 - HUD live score now matches what gets credited at run end
-- S5 top-50 archived to permanent Hall of Fame
+- **Endless leaderboard now resets each season** alongside Weekly/Seasonal (was previously persistent — fixed for S6)
 
 ---
 
@@ -50,11 +50,13 @@
 
 | Stays ✅ | Resets ❌ |
 |---|---|
-| All gold + relic fragments earned in S5 | Leaderboard (top-50 archived) |
+| All gold + relic fragments earned in S5 | All leaderboards (Weekly, Seasonal, **Endless**) |
 | Unlocked characters, cosmetics, mastery | Weekly upgrades + talents |
 | Permanent upgrades + talents + relics | Seasonal upgrades + talents |
 | Squad XP, war record, rosters, treasury | Squad Champions standings |
 | Daily/weekly bounty progress | |
+
+> ⚠️ The **Endless leaderboard** previously persisted across seasons (filter was arena-only). For S6 it's now scoped by `season_id` like every other board, so it resets cleanly at the rollover. Any S5 endless runs are still queryable in the database by admins via `season_id = 2026-S5` if needed.
 
 **Nothing extra is being wiped.** This is a normal seasonal rollover.
 
@@ -67,20 +69,16 @@
 - Tap **⚠️ SOFT** twice to confirm
 - Use the SOFT preset message ("Season 6 rolls out in ~1 hour…")
 
-### Sun May 24, 23:30 UTC — Run the two launch tools
+### Sun May 24, 23:30 UTC — Run the launch tool
 **Admin Dashboard → Live Ops → 🔧 Maintenance → S6 Launch Tools**
 
-1. **🏆 Snapshot Season Hall of Fame**
-   - Confirm `seasonId` is `2026-S5`
-   - Tap "Run" twice to confirm
-   - Should show "Archived 50 runs for 2026-S5. Top: [name] ([score])"
-   - **Idempotent** — safe to re-run if you mistype
-
-2. **🪙 Seed Squad Treasuries**
+1. **🪙 Seed Squad Treasuries**
    - Confirm amount is `1000`
    - Tap "Run" twice to confirm
    - Shows "Seeded N squads (M skipped, already had treasury)"
    - **Idempotent** — squads with existing treasury are skipped automatically
+
+> All leaderboards (weekly / seasonal / endless) reset automatically when the season flips at 00:00 UTC — no archive action needed.
 
 ### Sun May 24, 23:40 UTC — Hard maintenance
 - Tap **🔒 HARD** twice
@@ -115,7 +113,10 @@
 > Weekly and seasonal talents now scale at 0.66× when stacking on top of permanent talents. Permanent talents are unchanged. This was a balance pass to flatten extreme triple-stacking — solo or paired tier upgrades feel the same, only the triple-max stack is curbed.
 
 ### "What about my S5 leaderboard rank?"
-> Top 50 S5 runs are permanently archived in the Hall of Fame. The S6 leaderboard starts fresh.
+> All leaderboards (Weekly, Seasonal, and Endless) reset at the start of every new season — that's how seasonal play works. Your S5 final rank determined your S5 reward payout, which has already been distributed. The S6 leaderboards start fresh for everyone.
+
+### "Why did my Endless leaderboard rank disappear?"
+> Endless used to persist across seasons but as of S6 it resets alongside the Weekly and Seasonal boards. This makes Endless a fair seasonal competition like the others instead of being permanently dominated by old runs. Your S5 endless score is still recorded — it just doesn't count for the S6 leaderboard.
 
 ### "What's the Astral Lab?"
 > A new gold-only RNG sink for endgame players. Each pull costs gold (starts at 20k, increases each pull) and grants a small permanent stat buff at random. Each stat caps eventually so it can't infinitely scale. It's designed as a deep prestige curve — completing it costs 30M+ gold.
@@ -158,7 +159,7 @@ Don't escalate:
 | "Player wants a refund" | 💸 Refund Player (Finance) |
 | "Their NFT perks aren't applying" | ✨ NFT Refresh (Player Operations) |
 | "Mute / unmute player chat" | 💬 Squad Chat (Moderation) |
-| "Where's their S5 high score?" | Leaderboard → filter season `2026-S5` (still queryable, just not on default view) |
+| "Where's their S5 high score?" | RunScore data still exists with `season_id = 2026-S5` — engineering can query if needed |
 
 ---
 
@@ -174,7 +175,7 @@ A: Yes — both launch tools are idempotent. Snapshot replaces existing rows for
 A: Prestige is live at S6 launch (May 25 00:00 UTC). Tell them it'll be available right after the rollover.
 
 **Q: A player insists their S5 score should still be on the board.**
-A: It's archived to Hall of Fame, not deleted. Direct them to that page when it goes live (or check `LegendaryRun` in the admin viewer for now).
+A: Leaderboards are seasonal — they always reset at season rollover. Their S5 reward (if they were top 45) was already paid out at the end of S5. The data still exists in the database for engineering to look up if there's a payout dispute.
 
 **Q: I see a "GOLD CAPPED" message in a player's screenshot.**
 A: They're on an old browser cache. Tell them to hard-refresh (Ctrl+Shift+R / Cmd+Shift+R). The warning code is gone in S6.

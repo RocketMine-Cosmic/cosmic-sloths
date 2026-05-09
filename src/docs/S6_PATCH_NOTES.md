@@ -20,7 +20,7 @@ S5 ends:    Sunday May 24, 23:59 UTC
 S6 begins:  Monday May 25, 00:00 UTC
 
 🛡️ **What resets**
-• Leaderboard (S5 top-50 archived to Hall of Fame)
+• ALL leaderboards — Weekly, Seasonal AND Endless
 • Weekly + seasonal upgrades
 
 🛡️ **What's kept**
@@ -30,7 +30,7 @@ S6 begins:  Monday May 25, 00:00 UTC
 • Squad XP, war record, rosters, treasury
 • Daily/weekly bounty progress
 
-Normal seasonal rollover — nothing extra is being wiped. The first time you load /hub on May 25 a new in-game tour will walk you through the changes. Read the next 4 posts to get a head start.
+Normal seasonal rollover — nothing extra is being wiped. The Endless leaderboard previously persisted across seasons; from S6 it resets alongside the others so everyone starts from zero. The first time you load /hub on May 25 a new in-game tour will walk you through the changes. Read the next 4 posts to get a head start.
 ```
 
 ---
@@ -132,8 +132,6 @@ Donations made in week N apply to week N+1's wars. Buffs reset weekly.
 🎁 **Free Pool Bias respec** — one-time gift on the Loadouts page so you can rebuild around the new weapon-rarity meta without paying.
 
 🏛️ **Squad Treasuries pre-seeded** — every active squad gets +1000g on launch day so you can immediately try the Bronze buff (25k) instead of starting from zero.
-
-🏆 **S5 Hall of Fame** — top 50 S5 runs archived permanently. Your S5 high score is preserved even though the leaderboard resets.
 
 🔍 **HUD score mirror** — the live score in your run now matches exactly what the leaderboard credits. No more "wait, why did my score change?" moments.
 

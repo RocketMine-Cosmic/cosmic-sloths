@@ -225,7 +225,11 @@ export default function Leaderboard() {
         try {
             const { week_id, season_id } = getCurrentPeriodIds();
 
-            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless' } : {};
+            // Endless leaderboard is now season-scoped — resets each season alongside
+            // the weekly/seasonal boards (was leaking S5 runs into S6 view because
+            // it filtered on arena only). All-time view is unchanged (intentionally
+            // includes every season).
+            const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless', season_id } : {};
             
             if (view === 'squads') {
                 const squadsData = await base44.entities.Squad.filter({ current_week: week_id }, '-weekly_kills', 50);

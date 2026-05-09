@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Trophy, Coins, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Coins, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
-// Admin one-shot tools for the S6 launch — Hall of Fame snapshot + squad
-// treasury seeding. Both are idempotent (safe to re-run) and log to
-// AdminChangesLog. Two-tap confirm prevents accidental clicks.
+// Admin one-shot tools for the S6 launch — currently just squad treasury seeding.
+// Both action and amount inputs are guarded by a two-tap confirm.
 
 function ConfirmAction({ label, icon: Icon, accent, helpText, onRun, busy, lastResult }) {
     const [armed, setArmed] = useState(false);
@@ -48,31 +47,9 @@ function ConfirmAction({ label, icon: Icon, accent, helpText, onRun, busy, lastR
 }
 
 export default function AdminS6LaunchTools() {
-    const [busy, setBusy] = useState(null); // 'snapshot' | 'seed' | null
-    const [snapshotResult, setSnapshotResult] = useState(null);
+    const [busy, setBusy] = useState(null);
     const [seedResult, setSeedResult] = useState(null);
-    const [seasonId, setSeasonId] = useState('2026-S5');
     const [seedAmount, setSeedAmount] = useState(1000);
-
-    const runSnapshot = async () => {
-        setBusy('snapshot');
-        setSnapshotResult(null);
-        try {
-            const res = await base44.functions.invoke('snapshotSeasonHallOfFame', {
-                seasonId,
-                topN: 50,
-            });
-            if (res.data?.error) throw new Error(res.data.error);
-            const top = res.data?.top?.[0];
-            setSnapshotResult({
-                ok: true,
-                message: `Archived ${res.data?.archived || 0} runs for ${seasonId}.${top ? ` Top: ${top.player_name} (${top.score?.toLocaleString()}).` : ''}`,
-            });
-        } catch (e) {
-            setSnapshotResult({ ok: false, message: e.message || 'Snapshot failed' });
-        }
-        setBusy(null);
-    };
 
     const runSeed = async () => {
         setBusy('seed');
@@ -99,41 +76,17 @@ export default function AdminS6LaunchTools() {
                     🚀 S6 Launch Tools
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                    One-shot admin actions for the Season 6 rollover. Both are idempotent — safe to re-run.
+                    One-shot admin actions for the Season 6 rollover. Idempotent — safe to re-run.
                 </p>
             </div>
 
             <div className="space-y-3">
-                {/* Snapshot Hall of Fame */}
-                <div>
-                    <ConfirmAction
-                        label="Snapshot Season Hall of Fame"
-                        icon={Trophy}
-                        accent="text-amber-300"
-                        helpText="Archives the top 50 RunScores for a season into a permanent LegendaryRun entity. Re-running replaces existing snapshots for that season."
-                        onRun={runSnapshot}
-                        busy={busy === 'snapshot'}
-                        lastResult={snapshotResult}
-                    />
-                    <div className="mt-1.5 flex items-center gap-2">
-                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Season:</label>
-                        <input
-                            type="text"
-                            value={seasonId}
-                            onChange={e => setSeasonId(e.target.value.trim())}
-                            placeholder="2026-S5"
-                            className="bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-500 w-32"
-                        />
-                    </div>
-                </div>
-
-                {/* Seed Squad Treasuries */}
                 <div>
                     <ConfirmAction
                         label="Seed Squad Treasuries"
                         icon={Coins}
                         accent="text-emerald-300"
-                        helpText="Gives every squad with a 0 treasury a starter gold pile so they can immediately try the cheapest weekly buff. Squads with existing treasury are skipped."
+                        helpText="Gives every squad with 0 treasury a starter gold pile so they can immediately try the cheapest weekly buff. Squads with existing treasury are skipped."
                         onRun={runSeed}
                         busy={busy === 'seed'}
                         lastResult={seedResult}
@@ -153,9 +106,9 @@ export default function AdminS6LaunchTools() {
                 </div>
             </div>
 
-            <div className="border-t border-slate-800 pt-3 text-[11px] text-slate-400 leading-relaxed space-y-2">
+            <div className="border-t border-slate-800 pt-3 text-[11px] text-slate-400 leading-relaxed">
                 <div className="italic text-fuchsia-400">
-                    💡 Run these BEFORE the S6 rollover at Mon May 25 00:00 UTC. The Hall of Fame snapshot must run while S5 RunScores still exist (they don't get deleted, but archiving early is best practice).
+                    💡 Run this BEFORE the S6 rollover at Mon May 25 00:00 UTC. Old S5 leaderboards (weekly / seasonal / endless) reset automatically when the season flips — no archive action needed.
                 </div>
             </div>
         </div>
