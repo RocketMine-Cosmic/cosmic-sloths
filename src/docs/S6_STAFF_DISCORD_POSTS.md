@@ -112,12 +112,6 @@ Admin Dashboard → Live Ops → 🔧 Maintenance → S6 Launch Tools
 • If the auto-schedule misfires, just flip manually — same result
 • Schedule can ONLY flip ON (never OFF) — by design, so a broken rollover stays locked until a human clears it
 
-**📌 Permissions you need:**
-• Base44 admin role (set via 👥 Managers tab)
-• `manage_maintenance` permission (added by owner via Managers tab)
-• Owners get everything automatically
-
-⚠️ Get 2-3 trusted staff `manage_maintenance` so SOMEONE can flip OFF if the primary contact is unavailable.
 ```
 
 ---
