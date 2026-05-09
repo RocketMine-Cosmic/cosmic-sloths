@@ -40,13 +40,30 @@ Normal seasonal rollover — nothing extra is being wiped. The Endless leaderboa
 
 ```
 ⚖️ **NEW SCORE FORMULA**
-Score now scales with sector depth and victory, not run length.
-• Sector multiplier scales with depth (Sector 10 victory ≈ 1M peak)
-• Sector victory bonus is the dominant scoring path
-• Gold no longer counts toward score
-• Endless score is time-capped (~10k per minute survived)
+Score now scales with sector depth and victory, not run length or gold.
 
-**Why:** Endless scaled linearly with time, so longer runs always beat shorter ones regardless of skill. New formula makes sector clears the highest-value path so leaderboard rank reflects skill, not session length.
+**Sector runs add up like this:**
+• Kills × 120
+• Level² × 100
+• Sector reached × 8,000
+• Victory bonus: Sector × 15,000
+
+**Endless runs:**
+• Kills × 120
+• Level² × 100
+• Time bonus: 10,000 per full minute survived
+
+**Gold no longer contributes to score at all.**
+Hard score ceiling: 2.5M (basically unreachable in normal play).
+
+**Reference points:**
+• Sector 1 quick clear → ~30k
+• Sector 5 victory → ~150k
+• Sector 10 victory → ~430k
+• Endless 25 minutes → ~550k
+• A clean Sector 10 victory now beats a 25-min endless farm run.
+
+**Why:** S5 rewarded raw playtime + gold pickups, so longer/AFK-style runs always beat skilled short runs. The new formula makes sector progression the headline scorer so leaderboard rank reflects skill, not session length.
 
 🪙 **GOLD CAPS REMOVED**
 • 10,000 gold endless ceiling — gone
