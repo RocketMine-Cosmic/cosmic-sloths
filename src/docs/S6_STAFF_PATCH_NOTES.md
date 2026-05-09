@@ -62,14 +62,25 @@
 
 ---
 
-## 3. Launch-day playbook (run these in AdminDashboard)
+## 3. Launch-day playbook
 
-### Sun May 24, 23:00 UTC — Soft maintenance
-**Admin Dashboard → Live Ops → 🔧 Maintenance**
-- Tap **⚠️ SOFT** twice to confirm
-- Use the SOFT preset message ("Season 6 rolls out in ~1 hour…")
+**Almost everything is automated.** Only two things need a human:
+1. Run the squad treasury seed tool (any time before launch — recommended ~Sun May 24 evening)
+2. Flip Maintenance OFF after verifying the rollover went well (~00:10 UTC Mon May 25)
 
-### Sun May 24, 23:30 UTC — Run the launch tool
+### What runs automatically
+
+| When (UTC) | What happens | Who triggers it |
+|---|---|---|
+| Sun May 24, **23:00** | Maintenance flips to **SOFT** (yellow warning banner) | Scheduled automation |
+| Sun May 24, **23:40** | Maintenance flips to **HARD** (blocks `/game`) | Scheduled automation |
+| Mon May 25, **00:00** | Period rolls W20→W21, all S6 logic activates | Server-side (season-gated by `isS6OrLater()`) |
+
+The scheduler can only flip the gate **on** — it never flips it off, by design (if rollover breaks, we want it to stay locked until a human clears it).
+
+### What you do
+
+#### Any time before launch — Seed squad treasuries (one-shot)
 **Admin Dashboard → Live Ops → 🔧 Maintenance → S6 Launch Tools**
 
 1. **🪙 Seed Squad Treasuries**
@@ -78,20 +89,19 @@
    - Shows "Seeded N squads (M skipped, already had treasury)"
    - **Idempotent** — squads with existing treasury are skipped automatically
 
-> All leaderboards (weekly / seasonal / endless) reset automatically when the season flips at 00:00 UTC — no archive action needed.
+> All leaderboards (weekly / seasonal / endless) reset automatically when the season flips. No archive action needed.
 
-### Sun May 24, 23:40 UTC — Hard maintenance
-- Tap **🔒 HARD** twice
-- Use HARD preset ("Season 6 rollover in progress…")
-- This blocks `/game` only — squads, chat, profile still accessible
-
-### Mon May 25, 00:00 UTC — Period auto-flips
-- Nothing for you to do — the W20→W21 boundary triggers all S6 logic automatically
-
-### Mon May 25, ~00:10 UTC — Verify, then OFF
+#### Mon May 25, ~00:10 UTC — Verify, then flip OFF
 - Try a quick Sector 1 run on a test wallet — score should match new formula
 - Try entering an endless run — should see no "GOLD CAPPED" warnings
-- Tap **✓ OFF** twice in Maintenance to re-open the game
+- Check the Endless leaderboard tab — should be empty (S5 endless runs are now scoped to S5)
+- **Admin Dashboard → Live Ops → 🔧 Maintenance** → Tap **✓ OFF** twice to re-open the game
+
+### If something looks wrong
+
+- **You don't need to wait for 00:10** to flip OFF if the gate is breaking and rollover hasn't happened yet — manual override always wins.
+- **You can manually flip the gate any time** — Maintenance panel works whether the schedule fired or not.
+- **If the SOFT/HARD schedule misfires** (didn't fire, fired wrong time, etc), just flip manually in the Maintenance panel — same result.
 
 ---
 

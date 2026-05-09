@@ -3,6 +3,7 @@
 Condensed to 5 posts. Each under 2,000 chars so it fits a single Discord message.
 
 **Goes live:** Monday, May 25 • 00:00 UTC
+**Maintenance window:** Sun May 24, 23:00 UTC (1hr soft warning) → 23:40 UTC (game closes) → ~00:10 UTC Mon (back online)
 
 > Staff: detailed engineering version is in `S6_STAFF_PATCH_NOTES.md`. Don't paste that one to public channels.
 
