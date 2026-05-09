@@ -5,7 +5,7 @@ import { Coins, AlertTriangle, CheckCircle2 } from 'lucide-react';
 // Admin one-shot tools for the S6 launch — currently just squad treasury seeding.
 // Both action and amount inputs are guarded by a two-tap confirm.
 
-function ConfirmAction({ label, icon: Icon, accent, helpText, onRun, busy, lastResult }) {
+function ConfirmAction({ label, icon: IconComp, accent, helpText, onRun, busy, lastResult }) {
     const [armed, setArmed] = useState(false);
     useEffect(() => {
         if (!armed) return;
@@ -23,7 +23,7 @@ function ConfirmAction({ label, icon: Icon, accent, helpText, onRun, busy, lastR
     return (
         <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
             <div className="flex items-start gap-3 mb-2">
-                <Icon className={`w-5 h-5 ${accent} shrink-0 mt-0.5`} />
+                <IconComp className={`w-5 h-5 ${accent} shrink-0 mt-0.5`} />
                 <div className="flex-1 min-w-0">
                     <div className={`text-sm font-bold ${accent}`}>{label}</div>
                     <div className="text-[11px] text-slate-400 leading-relaxed mt-1">{helpText}</div>
