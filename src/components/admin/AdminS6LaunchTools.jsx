@@ -49,14 +49,14 @@ function ConfirmAction({ label, icon: IconComp, accent, helpText, onRun, busy, l
 export default function AdminS6LaunchTools() {
     const [busy, setBusy] = useState(null);
     const [seedResult, setSeedResult] = useState(null);
-    const [seedAmount, setSeedAmount] = useState(1000);
+    const [seedAmount, setSeedAmount] = useState(25000);
 
     const runSeed = async () => {
         setBusy('seed');
         setSeedResult(null);
         try {
             const res = await base44.functions.invoke('seedSquadTreasuries', {
-                amount: Number(seedAmount) || 1000,
+                amount: Number(seedAmount) || 25000,
             });
             if (res.data?.error) throw new Error(res.data.error);
             setSeedResult({
@@ -86,7 +86,7 @@ export default function AdminS6LaunchTools() {
                         label="Seed Squad Treasuries"
                         icon={Coins}
                         accent="text-emerald-300"
-                        helpText="Gives every squad with 0 treasury a starter gold pile so they can immediately try the cheapest weekly buff. Squads with existing treasury are skipped."
+                        helpText="Gives every squad with 0 treasury enough gold to immediately activate the Bronze buff (25k). Squads with existing treasury are skipped."
                         onRun={runSeed}
                         busy={busy === 'seed'}
                         lastResult={seedResult}

@@ -132,7 +132,7 @@ Donations made in week N apply to week N+1's wars. Buffs reset weekly.
 
 🎁 **Free Pool Bias respec** — one-time gift on the Loadouts page so you can rebuild around the new weapon-rarity meta without paying.
 
-🏛️ **Squad Treasuries pre-seeded** — every active squad gets +1000g on launch day so you can immediately try the Bronze buff (25k) instead of starting from zero.
+🏛️ **Squad Treasuries pre-seeded** — every active squad gets +25,000g on launch day so leaders can immediately activate the Bronze buff for week 1.
 
 🔍 **HUD score mirror** — the live score in your run now matches exactly what the leaderboard credits. No more "wait, why did my score change?" moments.
 

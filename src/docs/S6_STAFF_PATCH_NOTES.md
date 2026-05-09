@@ -84,7 +84,7 @@ The scheduler can only flip the gate **on** — it never flips it off, by design
 **Admin Dashboard → Live Ops → 🔧 Maintenance → S6 Launch Tools**
 
 1. **🪙 Seed Squad Treasuries**
-   - Confirm amount is `1000`
+   - Confirm amount is `25000` (= one Bronze buff activation)
    - Tap "Run" twice to confirm
    - Shows "Seeded N squads (M skipped, already had treasury)"
    - **Idempotent** — squads with existing treasury are skipped automatically
@@ -132,7 +132,7 @@ The scheduler can only flip the gate **on** — it never flips it off, by design
 > A new gold-only RNG sink for endgame players. Each pull costs gold (starts at 20k, increases each pull) and grants a small permanent stat buff at random. Each stat caps eventually so it can't infinitely scale. It's designed as a deep prestige curve — completing it costs 30M+ gold.
 
 ### "How does the Squad Treasury work?"
-> Members donate gold to a shared squad pool. Leaders/officers spend it to activate weekly buffs (Bronze 25k → Platinum 2M). Donations made this week apply to next week's wars. Buffs reset weekly. We pre-seeded every squad with 1000g at launch so you can immediately try Bronze.
+> Members donate gold to a shared squad pool. Leaders/officers spend it to activate weekly buffs (Bronze 25k → Platinum 2M). Donations made this week apply to next week's wars. Buffs reset weekly. We pre-seeded every squad with 25,000g at launch so leaders can immediately activate the Bronze buff for week 1.
 
 ### "Where's the free respec?"
 > One-time gift on the Loadouts page — a green "Use Free Respec" button appears below your Pool Bias allocation. It refunds all your spent points at no cost so you can rebuild around the new weapon-rarity meta.

@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
         if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
         if (me.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
 
-        const { amount = 1000 } = await req.json();
+        const { amount = 25000 } = await req.json();
         const seedAmount = Math.max(0, Math.min(50000, Number(amount) || 0));
         if (seedAmount <= 0) return Response.json({ error: 'amount must be > 0' }, { status: 400 });
 
