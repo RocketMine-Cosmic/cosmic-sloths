@@ -101,6 +101,7 @@ Admin Dashboard → Live Ops → 🔧 Maintenance → S6 Launch Tools
 • Idempotent — squads with treasury already are skipped
 
 **2️⃣ Mon May 18, ~00:10 UTC — Verify, then flip OFF**
+• ⚡ Admins bypass the HARD gate automatically — you'll see a small "ADMIN BYPASS" pill instead of the block screen, /game stays playable
 • Test run: Sector 1 → score should match new formula
 • Test endless run → no "GOLD CAPPED" warnings
 • Endless leaderboard tab → should be empty

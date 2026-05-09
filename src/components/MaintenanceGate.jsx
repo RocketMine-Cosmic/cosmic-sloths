@@ -12,6 +12,10 @@ import { AlertTriangle, Wrench } from 'lucide-react';
 //        any other page (squads, chat, leaderboard, profile).
 export default function MaintenanceGate() {
     const [state, setState] = useState({ mode: 'off', message: '' });
+    // Admins bypass the HARD gate so they can smoke-test runs during a rollover
+    // (otherwise nobody could verify the rollover worked). Checked once on mount —
+    // role doesn't change mid-session. Falls back to non-admin on any error.
+    const [isAdmin, setIsAdmin] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -30,19 +34,36 @@ export default function MaintenanceGate() {
         };
         fetchState();
         const t = setInterval(fetchState, 30_000);
+
+        // One-shot admin check.
+        base44.auth.me()
+            .then(u => { if (!cancelled) setIsAdmin(u?.role === 'admin'); })
+            .catch(() => { /* not signed in or call failed — treat as non-admin */ });
+
         return () => { cancelled = true; clearInterval(t); };
     }, []);
 
     // If hard mode and player is on /game, push them out so they can't start a run.
-    // (Mid-run players see the overlay too — they can still read but the gameplay
-    // canvas is covered.)
+    // Admins are exempt — they need /game accessible to verify the rollover worked.
     useEffect(() => {
-        if (state.mode === 'hard' && location.pathname === '/game') {
+        if (state.mode === 'hard' && location.pathname === '/game' && !isAdmin) {
             navigate('/hub', { replace: true });
         }
-    }, [state.mode, location.pathname, navigate]);
+    }, [state.mode, location.pathname, navigate, isAdmin]);
 
     if (state.mode === 'off') return null;
+
+    // Admins see a small persistent pill instead of the SOFT banner / HARD overlay
+    // so the maintenance state is still visible (they shouldn't forget to flip OFF)
+    // but the game stays fully playable for smoke tests.
+    if (isAdmin) {
+        return (
+            <div className="fixed bottom-2 right-2 z-[9999] bg-amber-600/95 text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-md shadow-lg flex items-center gap-1.5 border border-amber-300/60">
+                <Wrench className="w-3 h-3 shrink-0" />
+                <span>ADMIN BYPASS · Gate is {state.mode.toUpperCase()}</span>
+            </div>
+        );
+    }
 
     if (state.mode === 'soft') {
         // Bottom-anchored so it doesn't overlap the WarpMenu / top nav, and

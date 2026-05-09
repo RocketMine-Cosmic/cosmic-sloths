@@ -92,10 +92,11 @@ The scheduler can only flip the gate **on** — it never flips it off, by design
 > All leaderboards (weekly / seasonal / endless) reset automatically when the season flips. No archive action needed.
 
 #### Mon May 18, ~00:10 UTC — Verify, then flip OFF
+- ⚡ **Admins bypass the HARD gate automatically.** You'll see a small "ADMIN BYPASS · Gate is HARD" pill in the bottom-right corner instead of the full block overlay. `/game` stays playable for you so you can smoke-test the rollover.
 - Try a quick Sector 1 run on a test wallet — score should match new formula
 - Try entering an endless run — should see no "GOLD CAPPED" warnings
 - Check the Endless leaderboard tab — should be empty (S5 endless runs are now scoped to S5)
-- **Admin Dashboard → Live Ops → 🔧 Maintenance** → Tap **✓ OFF** twice to re-open the game
+- **Admin Dashboard → Live Ops → 🔧 Maintenance** → Tap **✓ OFF** twice to re-open the game for everyone
 
 ### If something looks wrong
 
