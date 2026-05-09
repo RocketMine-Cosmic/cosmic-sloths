@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Sparkles, Plus, Minus, RotateCcw, Sword, Zap, Wand2, Check, X } from 'lucide-react';
+import { Sparkles, Plus, Minus, RotateCcw, Sword, Zap, Wand2, Check, X, Gift } from 'lucide-react';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import {
@@ -123,6 +123,10 @@ export default function PoolBiasPanel({ save, setSave }) {
     const goldRespecCost = getGoldRespecCost(save);
     const canRespecGold = committedSpent > 0 && gold >= goldRespecCost;
     const canRespecOmenx = committedSpent > 0 && (omenxBalance ?? 0) >= RESPEC_COST_OMENX;
+    // One-time free respec — granted to all players following the Pool Bias UI
+    // overhaul (preset rework + diminishing-returns disclosure). Local flag is
+    // good enough; worst-case tampering = a free respec, which is the intent.
+    const freeRespecAvailable = !save.freeBiasRespecUsed && committedSpent > 0;
 
     const isDirty = committedKey !== JSON.stringify(draft);
 
@@ -168,6 +172,19 @@ export default function PoolBiasPanel({ save, setSave }) {
         if (!isDirty) return;
         SoundManager.playUIClick();
         setDraft(committedAllocations);
+    };
+
+    const useFreeRespec = () => {
+        if (!freeRespecAvailable || respecBusy) return;
+        SoundManager.playUIClick();
+        const newSave = {
+            ...save,
+            poolBiasAllocations: {},
+            freeBiasRespecUsed: true,
+        };
+        SaveManager.save(newSave);
+        setSave(newSave);
+        setDraft({});
     };
 
     const respecWithGold = async () => {
@@ -364,6 +381,22 @@ export default function PoolBiasPanel({ save, setSave }) {
                     </button>
                 </div>
             </div>
+
+            {freeRespecAvailable && (
+                <div className="mt-3 pt-3 border-t border-slate-800 bg-emerald-950/20 border-emerald-500/30 rounded-lg p-3 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+                    <div className="text-[11px] text-emerald-300 flex items-center gap-1.5">
+                        <Gift className="w-3.5 h-3.5" />
+                        <span><span className="font-bold">Free respec available!</span> One-time gift for the Pool Bias rework — refunds all {committedSpent} spent points at no cost.</span>
+                    </div>
+                    <button
+                        onClick={useFreeRespec}
+                        disabled={!freeRespecAvailable}
+                        className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
+                    >
+                        <Gift className="w-3.5 h-3.5" /> Use Free Respec
+                    </button>
+                </div>
+            )}
 
             <div className="mt-3 pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
                 <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
