@@ -45,6 +45,7 @@ import SyncStatusBanner from './components/SyncStatusBanner';
 import DailyGoalBanner from './components/squads/DailyGoalBanner';
 import FirstTimeSetupLoader from './components/FirstTimeSetupLoader';
 import SaveStatusIndicator from './components/SaveStatusIndicator';
+import S6WelcomeModal from './components/onboarding/S6WelcomeModal';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
 import { fetchPlayerData } from '@/lib/playerDataCache';
@@ -206,6 +207,7 @@ function App() {
           <DailyGoalBanner />
           <FirstTimeSetupLoader />
           <SaveStatusIndicator />
+          <S6WelcomeModal />
           <Router>
           <MaintenanceGate />
           <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>}>

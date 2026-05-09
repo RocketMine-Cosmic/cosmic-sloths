@@ -48,6 +48,7 @@ import AdminBalance from '../components/admin/AdminBalance';
 import AdminCleanupTopScores from '../components/admin/AdminCleanupTopScores';
 import AdminS6ScorePreview from '../components/admin/AdminS6ScorePreview';
 import AdminMaintenance from '../components/admin/AdminMaintenance';
+import AdminS6LaunchTools from '../components/admin/AdminS6LaunchTools';
 
 const TAB_GROUPS = [
     {
@@ -283,7 +284,12 @@ export default function AdminDashboard() {
             case 'chat':        return <AdminSquadChatModeration walletAddress={adminWallet} />;
             case 'rewards':     return <AdminRewards walletAddress={adminWallet} />;
             case 'champions':   return <AdminSquadChampions walletAddress={adminWallet} />;
-            case 'maintenance': return <AdminMaintenance />;
+            case 'maintenance': return (
+                <div className="space-y-4">
+                    <AdminMaintenance />
+                    <AdminS6LaunchTools />
+                </div>
+            );
             case 'skus':        return <AdminSkus walletAddress={adminWallet} />;
             case 'content':     return <AdminContent />;
             case 'duplicates':  return (
