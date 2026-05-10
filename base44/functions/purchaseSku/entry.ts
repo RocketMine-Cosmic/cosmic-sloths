@@ -502,15 +502,17 @@ Deno.serve(async (req) => {
 
         const { week_id, season_id } = periodIds;
 
-        // Admin self-purchases are logged for audit but excluded from the TokenPool —
-        // it's counter-productive for an owner/admin's own OMENX spend to be split back
-        // out to themselves + the player base via weekly/seasonal payouts.
+        // Owner self-purchases are logged for audit but excluded from the TokenPool —
+        // it's counter-productive for the owner's own OMENX spend to be split back to
+        // themselves + the player base via weekly/seasonal payouts. Other staff/admins
+        // are NOT excluded (excluding them would be stealing from your own staff cut).
         let isAdminPurchase = false;
         try {
             const adminRecords = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress.toLowerCase() });
-            isAdminPurchase = adminRecords.length > 0;
+            const perms = adminRecords[0]?.permissions || [];
+            isAdminPurchase = perms.includes('owner');
         } catch (err) {
-            console.error('[purchaseSku] AdminWallet lookup failed (treating as non-admin):', err.message);
+            console.error('[purchaseSku] AdminWallet lookup failed (treating as non-owner):', err.message);
         }
 
         // Log token spend
