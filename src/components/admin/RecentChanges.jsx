@@ -27,8 +27,11 @@ export default function RecentChanges() {
     queryKey: ['adminChangesLog'],
     queryFn: () => base44.entities.AdminChangesLog.list('-created_date', 20),
     enabled: true,
-    refetchInterval: 60000,
-    staleTime: 30_000,
+    // Audit log is read-only background info — 5 min poll is plenty and
+    // matches the rest of the Overview tab's staleness budget.
+    refetchInterval: 5 * 60_000,
+    staleTime: 2 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   return (

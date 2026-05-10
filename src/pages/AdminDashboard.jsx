@@ -150,12 +150,14 @@ export default function AdminDashboard() {
             setCallerPerms(isEmergencyKey ? ['__emergency__'] : null);
             return;
         }
-        // Tiny boolean check — returns just { isAdmin, permissions } for the
-        // currently signed-in wallet. Avoids the 200-row AdminWallet list fetch
-        // that used to block login for several seconds on slow connections.
+        // Skip the fetch when handleWalletSubmit already populated callerPerms —
+        // otherwise login fires getAdminData twice back-to-back, which was a
+        // major contributor to the 429 bursts staff are hitting on dashboard load.
+        if (callerPerms !== null) return;
         base44.functions.invoke('getAdminData', { type: 'isAdmin' })
             .then(r => setCallerPerms(r.data?.permissions || []))
             .catch(() => setCallerPerms([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adminWallet, isEmergencyKey]);
 
     const canSeeTab = (tab) => {

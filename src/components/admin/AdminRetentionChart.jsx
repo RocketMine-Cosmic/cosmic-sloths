@@ -62,6 +62,10 @@ export default function AdminRetentionChart({ walletAddress }) {
             return { firstPlay, allPlays, totalScores: scores.length };
         },
         enabled: !!walletAddress,
+        // Retention dataset is large + barely changes — cache for 10 min so tab
+        // swaps don't re-fetch every score in the DB.
+        staleTime: 10 * 60_000,
+        refetchOnWindowFocus: false,
     });
 
     // Cohort retention (Day 1/2/7/14/30)

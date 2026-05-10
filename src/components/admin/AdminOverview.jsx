@@ -17,16 +17,22 @@ function StatCard({ label, value, color = 'text-white', sub }) {
 }
 
 export default function AdminOverview({ walletAddress, canViewFinance = false }) {
+    // staleTime keeps the cached data "fresh" so swapping tabs doesn't refire the
+    // query — pools/overview don't change minute-to-minute. 5 min is plenty.
     const { data: pools } = useQuery({
         queryKey: ['adminPools', walletAddress],
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'pools' }).then(r => r.data?.pools || []),
         enabled: !!walletAddress && canViewFinance,
+        staleTime: 5 * 60_000,
+        refetchOnWindowFocus: false,
     });
 
     const { data: ext } = useQuery({
         queryKey: ['adminExt-overview', walletAddress],
         queryFn: () => base44.functions.invoke('getAdminDataExtended', { type: 'overview' }).then(r => r.data || {}),
-        enabled: !!walletAddress
+        enabled: !!walletAddress,
+        staleTime: 5 * 60_000,
+        refetchOnWindowFocus: false,
     });
 
     const weeklyData = (pools || []).filter(p => p.period_type === 'weekly')

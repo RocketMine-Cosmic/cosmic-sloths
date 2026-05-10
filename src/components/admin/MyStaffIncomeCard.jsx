@@ -14,9 +14,11 @@ export default function MyStaffIncomeCard({ walletAddress, isEmergencyKey }) {
         queryFn: () => base44.functions.invoke('getAdminData', { type: 'my_staff_income' }).then(r => r.data),
         // Was 30s — that's way too aggressive for a passive header card.
         // Bumped to 2 min to ease pressure on the Base44 request quota.
-        refetchInterval: 120000,
+        // 5 min poll — same staleness budget as the rest of the dashboard.
+        // The card sits passively in the header; it doesn't need minute-precision.
+        refetchInterval: 5 * 60_000,
         refetchOnWindowFocus: false,
-        staleTime: 60_000,
+        staleTime: 4 * 60_000,
         enabled: !isEmergencyKey && !!walletAddress,
     });
 
