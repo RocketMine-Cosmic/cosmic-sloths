@@ -2,6 +2,33 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: Base44 session → linked wallet → AdminWallet lookup. (No OmenX OAuth — that goes stale.)
 
+// In-memory caches to dampen Base44 platform rate-limits during admin-dash load
+// bursts. Both are short-lived enough that perm changes show up within ~30s.
+const _meCache = new Map();         // sessionToken → { me, expiresAt }
+const _adminCache = new Map();      // wallet (lowercase) → { record, expiresAt }
+const ME_TTL_MS = 30_000;
+const ADMIN_TTL_MS = 30_000;
+
+// Tiny retry-on-429 helper. The Base44 platform throttles by token + endpoint,
+// so a single staff member opening AdminDash can burst past the limit on the
+// auth.me() / AdminWallet.filter calls. Sleeping briefly + retrying once is
+// kinder than failing fast (which causes the client to retry 4× — multiplying
+// the stampede).
+async function withRetry429(fn, attempts = 3) {
+    let lastErr;
+    for (let i = 0; i < attempts; i++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            if (status !== 429 || i === attempts - 1) throw err;
+            // 250ms → 500ms → 1s
+            await new Promise(r => setTimeout(r, 250 * Math.pow(2, i)));
+        }
+    }
+    throw lastErr;
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -13,18 +40,52 @@ Deno.serve(async (req) => {
         const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
         if (!authHeader) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+        // Cache the auth.me() result per session token. The SDK call hits the
+        // platform every time and was a top contributor to dashboard 429s.
+        const tokenKey = authHeader.slice(-32); // last 32 chars are unique enough
+        const now = Date.now();
         let me;
-        try {
-            me = await base44.auth.me();
-        } catch (authErr) {
-            // Stale/invalid session token — same silent 401 as missing auth.
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const meHit = _meCache.get(tokenKey);
+        if (meHit && now < meHit.expiresAt) {
+            me = meHit.me;
+        } else {
+            try {
+                me = await withRetry429(() => base44.auth.me());
+            } catch (authErr) {
+                const status = authErr?.status || authErr?.response?.status;
+                if (status === 429) {
+                    return Response.json({ error: 'Server is busy — please try again in a few seconds' }, { status: 429 });
+                }
+                // Stale/invalid session token — same silent 401 as missing auth.
+                return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+            if (me) _meCache.set(tokenKey, { me, expiresAt: now + ME_TTL_MS });
         }
         if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
         const wallet = me.wallet_address?.toLowerCase();
         if (!wallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
 
-        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: wallet });
+        // Cache the AdminWallet lookup per wallet — admin perms don't change
+        // minute-to-minute, and tab swaps + MyStaffIncomeCard polls + useEffects
+        // all hit this lookup on every dashboard load.
+        let adminWallets;
+        const adminHit = _adminCache.get(wallet);
+        if (adminHit && now < adminHit.expiresAt) {
+            adminWallets = adminHit.record;
+        } else {
+            try {
+                adminWallets = await withRetry429(
+                    () => base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: wallet })
+                );
+            } catch (err) {
+                const status = err?.status || err?.response?.status;
+                if (status === 429) {
+                    return Response.json({ error: 'Server is busy — please try again in a few seconds' }, { status: 429 });
+                }
+                throw err;
+            }
+            _adminCache.set(wallet, { record: adminWallets, expiresAt: now + ADMIN_TTL_MS });
+        }
         if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
         const perms = adminWallets[0].permissions || [];
