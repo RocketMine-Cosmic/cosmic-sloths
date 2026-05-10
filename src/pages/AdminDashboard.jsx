@@ -141,6 +141,7 @@ export default function AdminDashboard() {
     const [walletError, setWalletError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
     const [callerPerms, setCallerPerms] = useState(null);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
     const isEmergencyKey = adminWallet === 'admin_mode';
 
     useEffect(() => {
@@ -148,11 +149,11 @@ export default function AdminDashboard() {
             setCallerPerms(isEmergencyKey ? ['__emergency__'] : null);
             return;
         }
-        base44.functions.invoke('getAdminData', { type: 'adminWallets' })
-            .then(r => {
-                const me = (r.data?.records || []).find(a => a.wallet_address?.toLowerCase() === adminWallet.toLowerCase());
-                setCallerPerms(me?.permissions || []);
-            })
+        // Tiny boolean check — returns just { isAdmin, permissions } for the
+        // currently signed-in wallet. Avoids the 200-row AdminWallet list fetch
+        // that used to block login for several seconds on slow connections.
+        base44.functions.invoke('getAdminData', { type: 'isAdmin' })
+            .then(r => setCallerPerms(r.data?.permissions || []))
             .catch(() => setCallerPerms([]));
     }, [adminWallet, isEmergencyKey]);
 
@@ -172,15 +173,24 @@ export default function AdminDashboard() {
 
     const handleWalletSubmit = async (e, overrideWallet) => {
         if (e) e.preventDefault();
+        if (isLoggingIn) return;
         const wallet = overrideWallet || walletInput;
+        setIsLoggingIn(true);
         try {
-            const res = await base44.functions.invoke('getAdminData', { type: 'adminWallets' });
+            // Lightweight admin check — returns { isAdmin, permissions } only.
+            // Was previously fetching the full 200-row AdminWallet list which made
+            // login feel frozen on slow connections. Also seed callerPerms here so
+            // the follow-up effect doesn't have to refetch the same data.
+            const res = await base44.functions.invoke('getAdminData', { type: 'isAdmin' });
             if (res.data?.error) throw new Error(res.data.error);
+            setCallerPerms(res.data?.permissions || []);
             setAdminWallet(wallet);
             sessionStorage.setItem('admin_wallet', wallet);
             setWalletError('');
         } catch {
             setWalletError('Your logged-in wallet is not authorized as an admin');
+        } finally {
+            setIsLoggingIn(false);
         }
     };
 
@@ -224,8 +234,14 @@ export default function AdminDashboard() {
                         {linkedWallet && (
                             <button type="button"
                                 onClick={() => handleWalletSubmit(null, linkedWallet)}
-                                className="bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-md transition-colors flex items-center justify-center gap-2">
-                                ⚡ Enter Admin Panel
+                                disabled={isLoggingIn}
+                                className="bg-red-600 hover:bg-red-500 disabled:bg-red-900 disabled:cursor-wait text-white font-bold py-2.5 rounded-md transition-colors flex items-center justify-center gap-2">
+                                {isLoggingIn ? (
+                                    <>
+                                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        Authorizing…
+                                    </>
+                                ) : '⚡ Enter Admin Panel'}
                             </button>
                         )}
                         {walletError && <div className="text-red-400 text-xs text-center">{walletError}</div>}
