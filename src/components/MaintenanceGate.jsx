@@ -66,6 +66,10 @@ export default function MaintenanceGate() {
     }
 
     if (state.mode === 'soft') {
+        // Hide entirely during active gameplay — the banner overlapping HUD/joystick
+        // was too intrusive mid-run. Players see it on every other page (hub, squads,
+        // leaderboard, etc.) so they're still informed.
+        if (location.pathname === '/game') return null;
         // Bottom-anchored so it doesn't overlap the WarpMenu / top nav, and
         // pointer-events-none so it never blocks clicks on whatever sits behind
         // it (the banner itself has no interactive elements).
