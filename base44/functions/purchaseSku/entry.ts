@@ -383,12 +383,19 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
 }
 
 Deno.serve(async (req) => {
+    // Hoisted so the bottom catch can include identity in the Discord alert
+    // (previously you'd see "purchaseSku failed" with no wallet/SKU and have
+    // to guess who was hammering).
+    let walletAddress = null;
+    let skuId = null;
+    let playerNameForAlert = null;
     try {
         const base44 = createClientFromRequest(req);
         const me = await base44.auth.me();
         if (!me) return Response.json({ error: 'Please sign in to continue.' }, { status: 401 });
 
-        const walletAddress = me.wallet_address;
+        walletAddress = me.wallet_address;
+        playerNameForAlert = me.full_name || null;
         if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
         // Hard block — admins can globally disable OMENX purchases via AdminMaintenance.
@@ -404,7 +411,12 @@ Deno.serve(async (req) => {
             console.error('[purchaseSku] purchases-disabled read failed:', e?.message);
         }
 
-        const { skuId, quantity = 1, playerName: playerNameParam, grantInfo } = await req.json();
+        const body = await req.json();
+        skuId = body.skuId;
+        const quantity = body.quantity ?? 1;
+        const playerNameParam = body.playerName;
+        const grantInfo = body.grantInfo;
+        if (playerNameParam) playerNameForAlert = playerNameParam;
         if (!skuId) return Response.json({ error: 'Missing item info — please refresh and try again.' }, { status: 400 });
 
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
@@ -615,12 +627,17 @@ Deno.serve(async (req) => {
             saveData: updatedSave || null,
         });
     } catch (error) {
-        console.error('[purchaseSku] Error:', error.message);
+        console.error(`[purchaseSku] Error wallet=${walletAddress || 'unknown'} sku=${skuId || 'unknown'}:`, error.message);
         // Skip noisy rate-limit alerts — they're routine and clutter the error channel.
         if (!/rate limit/i.test(error?.message || '')) {
             postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
                 title: '❌ purchaseSku failed',
                 description: `\`\`\`${(error.message || String(error)).slice(0, 1500)}\`\`\``,
+                fields: [
+                    { name: 'Player', value: playerNameForAlert || 'Unknown pilot', inline: true },
+                    { name: 'Wallet', value: walletAddress ? `\`${walletAddress}\`` : 'unknown', inline: true },
+                    { name: 'SKU', value: skuId || 'unknown', inline: true },
+                ],
             });
         }
         return Response.json({ error: 'Something went wrong with your purchase. Please try again.' }, { status: 500 });
