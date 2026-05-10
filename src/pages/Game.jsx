@@ -28,6 +28,7 @@ import HideHudButton from '../components/game/HideHudButton';
 import SynergyBanner from '../components/game/SynergyBanner';
 import SessionExpiredBanner from '../components/game/SessionExpiredBanner';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
+import { useOmenXPurchasesDisabled } from '@/hooks/useOmenXPurchasesDisabled';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -53,6 +54,10 @@ export default function Game() {
     const [hudHidden, setHudHidden] = useState(false);
     const saveScoreRef = useRef(null);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
+    // Global kill-switch — when admins disable OMENX purchases, every in-run
+    // button (reroll / banish / revive / XP buff / squad ultimate) bails before
+    // opening the confirmation modal AND renders in a visibly-disabled state.
+    const { disabled: omenxPurchasesDisabled } = useOmenXPurchasesDisabled();
 
     // Banish tier: 3 uses at 2 OMENX, 3 uses at 4 OMENX, then 6 OMENX onwards.
     // SKU is 2 OMENX consumable → fire `cost / 2` separate charges per banish.
@@ -631,6 +636,7 @@ export default function Game() {
         const buffActive = engine.xpBuffExpiry > Date.now();
         if (buffActive) return; // server also rejects, but no point firing the modal
         if ((omenxBalance ?? 0) < XP_COST) return;
+        if (omenxPurchasesDisabled) return;
         confirmPurchase(XP_COST, '+50% XP Buff (1 hour)', () => {
             // Optimistic apply — engine flips to 1.5× XP immediately so the rest
             // of the run benefits while the OMENX charge settles in the background.
@@ -669,6 +675,7 @@ export default function Game() {
 
     const handleReroll = () => {
         const REROLL_COST = 2;
+        if (omenxPurchasesDisabled) return;
         if ((omenxBalance ?? 0) >= REROLL_COST) {
             confirmPurchase(REROLL_COST, 'Reroll Upgrades', () => {
                 // Grant immediately, pay in background (fire-and-forget)
@@ -681,6 +688,7 @@ export default function Game() {
 
     const handleBanish = (choice) => {
         const cost = banishCost;
+        if (omenxPurchasesDisabled) return;
         if ((omenxBalance ?? 0) >= cost) {
             const tierLabel = cost === 1 ? 'Tier 1' : cost === 2 ? 'Tier 2' : 'Tier 3';
             confirmPurchase(cost, `Banish Upgrade (${tierLabel})`, () => {
@@ -710,6 +718,7 @@ export default function Game() {
         const cost = tier === 'lite' ? 5 : 10;
         const itemName = tier === 'lite' ? 'Squad Lite (capped power)' : 'Squad Ultimate (full power)';
         const skuId = tier === 'lite' ? IN_GAME_SKUS.squadUltimateLite : IN_GAME_SKUS.squadUltimateFull;
+        if (omenxPurchasesDisabled) return;
         if ((omenxBalance ?? 0) >= cost && engineRef.current && !engineRef.current.isPaused) {
             confirmPurchase(cost, itemName, () => {
                 // Grant immediately, pay in background
@@ -804,6 +813,7 @@ export default function Game() {
     };
 
     const handleRevive = () => {
+        if (omenxPurchasesDisabled) return;
         if ((omenxBalance ?? 0) >= 4) {
             confirmPurchase(4, 'Emergency Revive', () => {
                 // Grant immediately, pay in background
@@ -873,7 +883,7 @@ export default function Game() {
             
             {!hudHidden && <VirtualJoystick onChange={handleJoystickChange} />}
             
-            {!hudHidden && <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} />}
+            {!hudHidden && <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
             {!hudHidden && <SynergyBanner />}
             {!hudHidden && <SessionExpiredBanner />}
@@ -892,11 +902,12 @@ export default function Game() {
                     onBuyXpBuff={handleXpBuff}
                     omenxBalance={omenxBalance ?? 0}
                     xpBuffExpiry={gameState.xpBuffExpiry || 0}
+                    omenxPurchasesDisabled={omenxPurchasesDisabled}
                 />
             )}
 
             {levelUpChoices && (
-                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} nextBanishCost={nextBanishCost} engineRef={engineRef} />
+                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} nextBanishCost={nextBanishCost} engineRef={engineRef} omenxPurchasesDisabled={omenxPurchasesDisabled} />
             )}
             
             {showRevivePrompt && (
@@ -904,10 +915,15 @@ export default function Game() {
                     <div className="bg-slate-900 border-2 border-emerald-500 p-6 md:p-8 rounded-xl max-w-md w-full text-center">
                         <h2 className="text-2xl font-bold text-white mb-2 font-mono">CRITICAL DAMAGE</h2>
                         <p className="text-slate-400 mb-6">Operative system failing. Use an Emergency Revive?</p>
+                        {omenxPurchasesDisabled && (
+                            <div className="mb-3 bg-red-950/40 border border-red-700/60 rounded-lg p-2 text-xs text-red-200">
+                                OMENX purchases temporarily disabled. Revive isn't available right now.
+                            </div>
+                        )}
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={handleRevive}
-                                disabled={(omenxBalance ?? 0) < 4}
+                                disabled={(omenxBalance ?? 0) < 4 || omenxPurchasesDisabled}
                                 className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold flex flex-wrap items-center justify-center gap-2 transition-colors"
                             >
                                 REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: 4 OMENX</span>

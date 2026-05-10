@@ -7,7 +7,7 @@ import PlayerStatsPanel from './PlayerStatsPanel';
 
 const XP_BUFF_COST = 10;
 
-export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef, onBuyXpBuff, omenxBalance = 0, xpBuffExpiry = 0 }) {
+export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef, onBuyXpBuff, omenxBalance = 0, xpBuffExpiry = 0, omenxPurchasesDisabled = false }) {
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
     const [showStats, setShowStats] = useState(false);
@@ -62,9 +62,9 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                         ) : (
                             <button
                                 onClick={onBuyXpBuff}
-                                disabled={!canAfford}
+                                disabled={!canAfford || omenxPurchasesDisabled}
                                 className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-bold text-base md:text-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
-                                title={canAfford ? 'Apply +50% XP for 1 hour' : `Need ${XP_BUFF_COST} OMENX`}
+                                title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : (canAfford ? 'Apply +50% XP for 1 hour' : `Need ${XP_BUFF_COST} OMENX`)}
                             >
                                 <Sparkles className="w-4 h-4" />
                                 +50% XP (1h)

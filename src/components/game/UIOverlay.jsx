@@ -25,7 +25,7 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate, omenxPurchasesDisabled = false }) {
     // Collapse loadout list by default on mobile so the pause button + top row stay visible.
     // Players can tap the HP bar to expand and review their build.
     const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
@@ -200,10 +200,10 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 <button
                     id="squad-ult-lite-btn"
                     onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate('lite'); }}
-                    disabled={omenxBalance < 5}
+                    disabled={omenxBalance < 5 || omenxPurchasesDisabled}
                     className="bg-[#0b0416]/90 px-2 py-1 md:px-4 md:py-3 rounded-lg md:rounded-xl border md:border-2 border-purple-500/80 hover:bg-purple-900 hover:border-purple-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_10px_rgba(168,85,247,0.25)] md:shadow-[0_0_15px_rgba(168,85,247,0.3)]"
                     style={{ touchAction: 'none' }}
-                    title="Squad Lite — capped clone power (5 OMENX)"
+                    title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Squad Lite — capped clone power (5 OMENX)'}
                 >
                     <span className="text-[10px] md:text-sm font-black text-purple-300 tracking-wider md:tracking-widest uppercase leading-tight">ULT LITE</span>
                     <span className="text-[8px] md:text-xs font-bold text-slate-300 leading-tight">5 OMENX</span>
@@ -211,10 +211,10 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 <button
                     id="squad-ult-full-btn"
                     onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); onSquadUltimate('full'); }}
-                    disabled={omenxBalance < 10}
+                    disabled={omenxBalance < 10 || omenxPurchasesDisabled}
                     className="bg-[#0b0416]/90 px-2 py-1 md:px-4 md:py-3 rounded-lg md:rounded-xl border md:border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_10px_rgba(217,70,239,0.25)] md:shadow-[0_0_15px_rgba(217,70,239,0.3)]"
                     style={{ touchAction: 'none' }}
-                    title="Squad Ultimate — scales with your full upgrades (10 OMENX)"
+                    title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Squad Ultimate — scales with your full upgrades (10 OMENX)'}
                 >
                     <span className="text-[10px] md:text-sm font-black text-fuchsia-300 tracking-wider md:tracking-widest uppercase leading-tight">ULT FULL</span>
                     <span className="text-[8px] md:text-xs font-bold text-slate-300 leading-tight">10 OMENX</span>
