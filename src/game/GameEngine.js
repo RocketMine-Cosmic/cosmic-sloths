@@ -302,13 +302,28 @@ export class GameEngine {
         this.xpBuffExpiry = Number(save.sessionBuffs?.xpExpiry || 0);
         const hasXpBuff = this.xpBuffExpiry > Date.now();
         const xpBuffMultiplier = hasXpBuff ? 1.5 : 1.0;
-        // Cache the no-buff baseline so we can toggle the multiplier on/off cleanly
-        // when the buff expires mid-run (see update() below).
-        this._xpMultBase = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult) * this.difficulty.xpMult;
+
+        // Global XP buff — admin-set server-wide multiplier (e.g. 2× XP for 24h
+        // as a make-good when something disrupts play). Folded into the baseline
+        // so it naturally stacks with the personal +50% buff multiplicatively.
+        // Locked in at run-start: changing the global value mid-run does not
+        // affect runs already in progress (matches how difficulty is locked).
+        const globalBuff = save.globalXpBuff;
+        const globalXpMult = (globalBuff && globalBuff.multiplier > 1 && globalBuff.expiresAt > Date.now())
+            ? Number(globalBuff.multiplier)
+            : 1.0;
+        this.globalXpMult = globalXpMult;
+
+        // Cache the no-personal-buff baseline (incl. global mult) so we can toggle
+        // the personal +50% on/off cleanly when it expires mid-run (see update() below).
+        this._xpMultBase = ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult) * this.difficulty.xpMult * globalXpMult;
         this.player.xpMult = this._xpMultBase * xpBuffMultiplier;
         this.player.xpBuffActive = hasXpBuff;
         if (hasXpBuff) {
             console.log('[GameEngine] +50% XP buff ACTIVE — expires in', Math.floor((this.xpBuffExpiry - Date.now()) / 1000), 'seconds');
+        }
+        if (globalXpMult > 1) {
+            console.log(`[GameEngine] Global XP buff ACTIVE — ${globalXpMult}× for entire server`);
         }
 
         if (hasAug('dat_ghost')) {

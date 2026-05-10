@@ -21,17 +21,23 @@ Deno.serve(async (req) => {
             return Response.json(cached);
         }
         const base44 = createClientFromRequest(req);
-        const [maintRecords, omenxRecords] = await Promise.all([
+        const [maintRecords, omenxRecords, xpBuffRecords] = await Promise.all([
             base44.asServiceRole.entities.AppConfig.filter({ key: 'maintenance_mode' }),
             base44.asServiceRole.entities.AppConfig.filter({ key: 'omenx_purchases_disabled' }),
+            base44.asServiceRole.entities.AppConfig.filter({ key: 'global_xp_buff' }),
         ]);
         const m = maintRecords[0]?.value || {};
         const o = omenxRecords[0]?.value || {};
+        const x = xpBuffRecords[0]?.value || {};
+        const xpActive = Number(x.multiplier || 1) > 1 && Number(x.expiresAt || 0) > now;
         const payload = {
             mode: m.mode || 'off',
             message: m.message || '',
             omenxPurchasesDisabled: !!o.disabled,
             omenxPurchasesMessage: o.message || '',
+            globalXpBuff: xpActive
+                ? { multiplier: Number(x.multiplier), expiresAt: Number(x.expiresAt), message: x.message || '' }
+                : null,
         };
         cached = payload;
         cacheExpiresAt = now + CACHE_TTL_MS;
@@ -39,6 +45,6 @@ Deno.serve(async (req) => {
     } catch (error) {
         // Fail OPEN — but DON'T cache the failure (next request retries).
         console.error('[getMaintenanceMode]', error.message);
-        return Response.json({ mode: 'off', message: '', omenxPurchasesDisabled: false, omenxPurchasesMessage: '' });
+        return Response.json({ mode: 'off', message: '', omenxPurchasesDisabled: false, omenxPurchasesMessage: '', globalXpBuff: null });
     }
 });

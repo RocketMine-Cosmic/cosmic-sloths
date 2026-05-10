@@ -48,6 +48,7 @@ import AdminBalance from '../components/admin/AdminBalance';
 import AdminCleanupTopScores from '../components/admin/AdminCleanupTopScores';
 import AdminS6ScorePreview from '../components/admin/AdminS6ScorePreview';
 import AdminMaintenance from '../components/admin/AdminMaintenance';
+import AdminGlobalXpBuff from '../components/admin/AdminGlobalXpBuff';
 import AdminS6LaunchTools from '../components/admin/AdminS6LaunchTools';
 
 const TAB_GROUPS = [
@@ -334,6 +335,7 @@ export default function AdminDashboard() {
             case 'maintenance': return (
                 <div className="space-y-4">
                     <AdminMaintenance />
+                    <AdminGlobalXpBuff />
                     <AdminS6LaunchTools />
                 </div>
             );
