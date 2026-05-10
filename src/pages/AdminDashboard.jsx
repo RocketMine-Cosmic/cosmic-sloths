@@ -176,14 +176,17 @@ export default function AdminDashboard() {
         if (isLoggingIn) return;
         const wallet = overrideWallet || walletInput;
         setIsLoggingIn(true);
-        // Retry up to 3× on rate-limit (429) and transient errors. Without this,
-        // a single 429 — common during busy gameplay windows — surfaces as
-        // "not authorized" and locks the admin out for no reason.
+        // Retry up to 4× on transient errors. The function returns 403 BOTH for
+        // genuine "not an admin" responses AND when Cloudflare returns a challenge
+        // HTML page (during high traffic). We can't tell the difference from the
+        // outside, so we retry 403s too — a real "not admin" 403 will return JSON
+        // with { error: 'Forbidden' } that we detect on the final attempt.
         let lastErr = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
+        let lastBody = null;
+        for (let attempt = 0; attempt < 4; attempt++) {
             try {
                 const res = await base44.functions.invoke('getAdminData', { type: 'isAdmin' });
-                if (res.data?.error) throw new Error(res.data.error);
+                if (res.data?.error) throw Object.assign(new Error(res.data.error), { _isJsonForbidden: true });
                 setCallerPerms(res.data?.permissions || []);
                 setAdminWallet(wallet);
                 sessionStorage.setItem('admin_wallet', wallet);
@@ -192,20 +195,30 @@ export default function AdminDashboard() {
                 return;
             } catch (err) {
                 lastErr = err;
+                lastBody = err?.response?.data;
                 const status = err?.response?.status;
+                const bodyIsHtml = typeof lastBody === 'string' && /<!DOCTYPE html|cloudflare|just a moment/i.test(lastBody);
                 const isRateLimit = status === 429 || /rate limit/i.test(err?.message || '');
-                const isTransient = status === 502 || status === 503 || status === 504 || isRateLimit;
-                if (!isTransient || attempt === 2) break;
-                await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+                const isCfChallenge = bodyIsHtml || status === 520 || status === 521 || status === 522;
+                const isJsonForbidden = err._isJsonForbidden; // real "not admin"
+                const isTransient = isRateLimit || isCfChallenge || status === 502 || status === 503 || status === 504;
+                if (isJsonForbidden || !isTransient || attempt === 3) break;
+                // Exponential-ish backoff: 0.8s → 1.6s → 2.4s → 3.2s
+                await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
             }
         }
         const status = lastErr?.response?.status;
-        if (status === 403) {
+        const bodyIsHtml = typeof lastBody === 'string' && /<!DOCTYPE html|cloudflare|just a moment/i.test(lastBody);
+        if (lastErr?._isJsonForbidden) {
             setWalletError('Your logged-in wallet is not authorized as an admin');
+        } else if (bodyIsHtml) {
+            setWalletError('Cloudflare is challenging requests — wait 30s and refresh the page, then try again');
         } else if (status === 429 || /rate limit/i.test(lastErr?.message || '')) {
             setWalletError('Server is busy — please try again in a few seconds');
         } else if (status === 401) {
             setWalletError('Sign-in expired — please refresh and sign in again');
+        } else if (status === 403) {
+            setWalletError('Auth check blocked — wait 30s, refresh the page, then try again');
         } else {
             setWalletError('Auth check failed — please try again');
         }
