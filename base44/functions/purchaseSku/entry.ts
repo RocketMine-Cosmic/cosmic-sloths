@@ -502,6 +502,17 @@ Deno.serve(async (req) => {
 
         const { week_id, season_id } = periodIds;
 
+        // Admin self-purchases are logged for audit but excluded from the TokenPool —
+        // it's counter-productive for an owner/admin's own OMENX spend to be split back
+        // out to themselves + the player base via weekly/seasonal payouts.
+        let isAdminPurchase = false;
+        try {
+            const adminRecords = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: walletAddress.toLowerCase() });
+            isAdminPurchase = adminRecords.length > 0;
+        } catch (err) {
+            console.error('[purchaseSku] AdminWallet lookup failed (treating as non-admin):', err.message);
+        }
+
         // Log token spend
         try {
             await base44.asServiceRole.entities.TokenSpendLog.create({
@@ -512,7 +523,8 @@ Deno.serve(async (req) => {
                 sku_id: skuId,
                 grant_info: grantInfo || null,
                 week_id,
-                season_id
+                season_id,
+                excluded_from_pool: isAdminPurchase,
             });
         } catch (err) {
             console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
@@ -531,24 +543,29 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Update TokenPool (non-fatal)
-        try {
-            const [weeklyPools, seasonalPools] = await Promise.all([
-                base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),
-                base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' }),
-            ]);
-            const weeklyPool = weeklyPools[0];
-            const seasonalPool = seasonalPools[0];
-            await Promise.all([
-                weeklyPool
-                    ? base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, { total_spent: (weeklyPool.total_spent || 0) + totalAmount })
-                    : base44.asServiceRole.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false }),
-                seasonalPool
-                    ? base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, { total_spent: (seasonalPool.total_spent || 0) + totalAmount })
-                    : base44.asServiceRole.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false }),
-            ]);
-        } catch (err) {
-            console.error('[purchaseSku] TokenPool upsert failed:', err.message);
+        // Update TokenPool (non-fatal). Skipped entirely for admin wallets so admin
+        // self-purchases don't inflate the player/staff payout pool.
+        if (!isAdminPurchase) {
+            try {
+                const [weeklyPools, seasonalPools] = await Promise.all([
+                    base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),
+                    base44.asServiceRole.entities.TokenPool.filter({ period_id: season_id, period_type: 'seasonal' }),
+                ]);
+                const weeklyPool = weeklyPools[0];
+                const seasonalPool = seasonalPools[0];
+                await Promise.all([
+                    weeklyPool
+                        ? base44.asServiceRole.entities.TokenPool.update(weeklyPool.id, { total_spent: (weeklyPool.total_spent || 0) + totalAmount })
+                        : base44.asServiceRole.entities.TokenPool.create({ period_id: week_id, period_type: 'weekly', total_spent: totalAmount, distributed: false }),
+                    seasonalPool
+                        ? base44.asServiceRole.entities.TokenPool.update(seasonalPool.id, { total_spent: (seasonalPool.total_spent || 0) + totalAmount })
+                        : base44.asServiceRole.entities.TokenPool.create({ period_id: season_id, period_type: 'seasonal', total_spent: totalAmount, distributed: false }),
+                ]);
+            } catch (err) {
+                console.error('[purchaseSku] TokenPool upsert failed:', err.message);
+            }
+        } else {
+            console.log(`[purchaseSku] Admin self-purchase ${walletAddress} ${totalAmount} OMENX — excluded from TokenPool.`);
         }
 
         return Response.json({

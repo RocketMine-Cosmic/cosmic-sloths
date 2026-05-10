@@ -29,6 +29,11 @@
     },
     "season_id": {
       "type": "string"
+    },
+    "excluded_from_pool": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, this spend is logged for audit but NOT counted toward the TokenPool used for player/staff payouts. Used for admin/owner self-purchases so spending your own OMENX doesn't end up redistributed back to yourself + the player base."
     }
   },
   "required": [

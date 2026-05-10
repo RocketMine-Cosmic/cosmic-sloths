@@ -67,7 +67,12 @@ Deno.serve(async (req) => {
         const reconcilePoolBeforeDistribution = async (pool) => {
             const filterKey = pool.period_type === 'weekly' ? { week_id: pool.period_id } : { season_id: pool.period_id };
             const logs = await db.entities.TokenSpendLog.filter(filterKey);
-            const logTotal = logs.reduce((sum, log) => sum + (log.amount || 0), 0);
+            // Exclude admin self-purchases from the reconciled total — they were
+            // intentionally not added to the TokenPool in purchaseSku, so summing
+            // them here would re-introduce them and undo the exclusion.
+            const logTotal = logs
+                .filter(log => !log.excluded_from_pool)
+                .reduce((sum, log) => sum + (log.amount || 0), 0);
             if (Math.abs(logTotal - pool.total_spent) > 0.01) {
                 console.warn(`[distributeRewards] MISMATCH: ${pool.period_id} pool=${pool.total_spent}, logs=${logTotal}. Auto-correcting...`);
                 await db.entities.TokenPool.update(pool.id, { total_spent: logTotal });
