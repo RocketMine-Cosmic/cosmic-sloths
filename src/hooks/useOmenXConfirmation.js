@@ -8,13 +8,20 @@ export function useOmenXConfirmation(pageId) {
     // doesn't bypass the modal — otherwise admins disabling purchases would only
     // affect first-time confirmers; users who'd opted into 24h skip would still
     // hit the server and get a 503 with no UI explanation.
-    const [purchasesDisabled, setPurchasesDisabled] = useState(false);
+    const purchasesDisabledRef = useRef(false);
     useEffect(() => {
         let cancelled = false;
-        base44.functions.invoke('getMaintenanceMode', {})
-            .then(res => { if (!cancelled) setPurchasesDisabled(!!res.data?.omenxPurchasesDisabled); })
-            .catch(() => {});
-        return () => { cancelled = true; };
+        const fetchOnce = () => {
+            base44.functions.invoke('getMaintenanceMode', {})
+                .then(res => { if (!cancelled) purchasesDisabledRef.current = !!res.data?.omenxPurchasesDisabled; })
+                .catch(() => {});
+        };
+        fetchOnce();
+        // Poll every 15s — matches the server cache TTL so admins flipping the
+        // kill-switch mid-run see effect within ~15s instead of waiting for the
+        // run to end.
+        const t = setInterval(fetchOnce, 15_000);
+        return () => { cancelled = true; clearInterval(t); };
     }, []);
 
     const isDisabledFor24h = useCallback(() => {
@@ -24,26 +31,47 @@ export function useOmenXConfirmation(pageId) {
     }, [pageId]);
 
     const confirm = useCallback((amount, itemName, onConfirmCallback) => {
-        // If purchases are globally disabled, ALWAYS show the modal (so the user
-        // sees the disabled banner) — never auto-fire the callback.
-        if (isDisabledFor24h() && !purchasesDisabled) {
-            onConfirmCallback();
-            return;
-        }
+        // Force a fresh check at click time — the cached flag may be stale (last
+        // poll up to 15s ago) and we MUST NOT fire the optimistic grant if the
+        // kill-switch is on. Network failure → fall back to the cached value.
+        const proceed = () => {
+            // Block entirely if the kill-switch is on, regardless of 24h-skip.
+            if (purchasesDisabledRef.current) {
+                // Show the modal so the player sees the "disabled" banner
+                // (instead of silently no-op'ing the click).
+                callbackRef.current = onConfirmCallback;
+                setPending({
+                    amount, itemName,
+                    onConfirm: () => {
+                        setPending(null);
+                        if (!purchasesDisabledRef.current && callbackRef.current) callbackRef.current();
+                    },
+                    onCancel: () => setPending(null),
+                });
+                return;
+            }
+            // Fast path — user opted into 24h skip and purchases are enabled.
+            if (isDisabledFor24h()) {
+                onConfirmCallback();
+                return;
+            }
+            // Default — show the confirmation modal.
+            callbackRef.current = onConfirmCallback;
+            setPending({
+                amount, itemName,
+                onConfirm: () => {
+                    setPending(null);
+                    if (callbackRef.current) callbackRef.current();
+                },
+                onCancel: () => setPending(null),
+            });
+        };
 
-        // Store callback in ref to avoid stale closure
-        callbackRef.current = onConfirmCallback;
-
-        setPending({
-            amount,
-            itemName,
-            onConfirm: () => {
-                setPending(null);
-                if (callbackRef.current) callbackRef.current();
-            },
-            onCancel: () => setPending(null),
-        });
-    }, [isDisabledFor24h, purchasesDisabled]);
+        base44.functions.invoke('getMaintenanceMode', {})
+            .then(res => { purchasesDisabledRef.current = !!res.data?.omenxPurchasesDisabled; })
+            .catch(() => {})
+            .finally(proceed);
+    }, [isDisabledFor24h]);
 
     return { pending, setPending, confirm };
 }

@@ -29,8 +29,23 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
         return () => { cancelled = true; };
     }, []);
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (purchasesDisabled) return;
+        // Re-check the flag at click time. The modal can stay open for a while
+        // (player reads the prompt, gets distracted) and the kill-switch may
+        // have flipped on after the modal mounted — without this check, the
+        // optimistic in-run grant (reroll / banish / ult) would still fire.
+        try {
+            const res = await base44.functions.invoke('getMaintenanceMode', {});
+            if (res.data?.omenxPurchasesDisabled) {
+                setPurchasesDisabled(true);
+                setDisabledMsg(res.data.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
+                return;
+            }
+        } catch {
+            // Network blip — fail OPEN (let the existing flag govern) so we don't
+            // block legit purchases on a transient hiccup.
+        }
         if (skipNext24h) {
             const disabledUntil = Date.now() + (24 * 60 * 60 * 1000);
             localStorage.setItem(`omenx_confirm_disabled_${pageId}`, disabledUntil.toString());

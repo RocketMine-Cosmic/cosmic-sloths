@@ -22,7 +22,11 @@ export function useOmenXPurchasesDisabled() {
                 .catch(() => {});
         };
         fetchOnce();
-        const t = setInterval(fetchOnce, 60_000);
+        // Poll every 15s — matches the getMaintenanceMode server cache TTL, so
+        // when an admin flips the kill-switch every active run reflects it
+        // within ~15s. Previously 60s, which let players continue clicking
+        // reroll/ult/etc. for a full minute after the switch was flipped.
+        const t = setInterval(fetchOnce, 15_000);
         return () => { cancelled = true; clearInterval(t); };
     }, []);
 
