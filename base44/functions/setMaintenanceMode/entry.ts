@@ -18,7 +18,37 @@ Deno.serve(async (req) => {
         if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
         if (me.role !== 'admin') return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
 
-        const { mode, message } = await req.json();
+        const body = await req.json();
+        const { mode, message } = body;
+
+        // Independent OMENX purchases toggle — when the only thing being changed
+        // is the purchases flag, callers can pass { omenxPurchasesDisabled: bool,
+        // omenxPurchasesMessage: '...' } and skip mode/message entirely.
+        if (typeof body.omenxPurchasesDisabled === 'boolean') {
+            const omenxValue = {
+                disabled: body.omenxPurchasesDisabled,
+                message: (body.omenxPurchasesMessage || '').toString().slice(0, 280),
+                updated_at: new Date().toISOString(),
+            };
+            const existingOmenx = await base44.asServiceRole.entities.AppConfig.filter({ key: 'omenx_purchases_disabled' });
+            if (existingOmenx.length > 0) {
+                await base44.asServiceRole.entities.AppConfig.update(existingOmenx[0].id, {
+                    value: omenxValue,
+                    updated_by: me.wallet_address || me.email,
+                });
+            } else {
+                await base44.asServiceRole.entities.AppConfig.create({
+                    key: 'omenx_purchases_disabled',
+                    value: omenxValue,
+                    updated_by: me.wallet_address || me.email,
+                });
+            }
+            // If only the purchases flag was sent, return early — don't touch the maintenance gate.
+            if (mode === undefined) {
+                return Response.json({ success: true, omenxPurchasesDisabled: body.omenxPurchasesDisabled });
+            }
+        }
+
         if (!VALID_MODES.includes(mode)) {
             return Response.json({ error: `Invalid mode. Must be one of: ${VALID_MODES.join(', ')}` }, { status: 400 });
         }

@@ -1,8 +1,21 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { base44 } from '@/api/base44Client';
 
 export function useOmenXConfirmation(pageId) {
     const [pending, setPending] = useState(null);
     const callbackRef = useRef(null);
+    // Track the global purchases-disabled flag so the 24h "skip confirm" path
+    // doesn't bypass the modal — otherwise admins disabling purchases would only
+    // affect first-time confirmers; users who'd opted into 24h skip would still
+    // hit the server and get a 503 with no UI explanation.
+    const [purchasesDisabled, setPurchasesDisabled] = useState(false);
+    useEffect(() => {
+        let cancelled = false;
+        base44.functions.invoke('getMaintenanceMode', {})
+            .then(res => { if (!cancelled) setPurchasesDisabled(!!res.data?.omenxPurchasesDisabled); })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
 
     const isDisabledFor24h = useCallback(() => {
         const disabledUntil = localStorage.getItem(`omenx_confirm_disabled_${pageId}`);
@@ -11,7 +24,9 @@ export function useOmenXConfirmation(pageId) {
     }, [pageId]);
 
     const confirm = useCallback((amount, itemName, onConfirmCallback) => {
-        if (isDisabledFor24h()) {
+        // If purchases are globally disabled, ALWAYS show the modal (so the user
+        // sees the disabled banner) — never auto-fire the callback.
+        if (isDisabledFor24h() && !purchasesDisabled) {
             onConfirmCallback();
             return;
         }
@@ -28,7 +43,7 @@ export function useOmenXConfirmation(pageId) {
             },
             onCancel: () => setPending(null),
         });
-    }, [isDisabledFor24h]);
+    }, [isDisabledFor24h, purchasesDisabled]);
 
     return { pending, setPending, confirm };
 }

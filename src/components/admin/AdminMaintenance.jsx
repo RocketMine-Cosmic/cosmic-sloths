@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Wrench, CheckCircle2, Coins } from 'lucide-react';
 
 // Three-state maintenance toggle — manual flip only, no automation.
 // Recommended flow for S6 rollover (May 18, 00:00 UTC):
@@ -13,6 +13,17 @@ export default function AdminMaintenance() {
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState('');
     const [ok, setOk] = useState('');
+    // Independent OMENX-purchases-disabled toggle — used when the OmenX settlement
+    // service is down but the game itself is still playable. Separate from SOFT/HARD
+    // so admins can disable purchases without putting the game into maintenance.
+    const [omenxPurchasesDisabled, setOmenxPurchasesDisabled] = useState(false);
+    const [omenxPurchasesMsg, setOmenxPurchasesMsg] = useState('');
+    const [omenxArmed, setOmenxArmed] = useState(false);
+    useEffect(() => {
+        if (!omenxArmed) return;
+        const t = setTimeout(() => setOmenxArmed(false), 5000);
+        return () => clearTimeout(t);
+    }, [omenxArmed]);
     // Two-tap confirm — first click arms a mode, second click within 5s commits.
     // Prevents accidental SOFT/HARD/OFF flips during a busy admin session.
     const [armed, setArmed] = useState(null); // 'off' | 'soft' | 'hard' | null
@@ -29,7 +40,30 @@ export default function AdminMaintenance() {
                 setCurrent({ mode: res.data.mode, message: res.data.message || '' });
                 setDraftMessage(res.data.message || '');
             }
+            setOmenxPurchasesDisabled(!!res.data?.omenxPurchasesDisabled);
+            setOmenxPurchasesMsg(res.data?.omenxPurchasesMessage || '');
         } catch (e) { /* noop */ }
+    };
+
+    const toggleOmenxPurchases = async () => {
+        if (busy) return;
+        if (!omenxArmed) { setOmenxArmed(true); setErr(''); setOk(''); return; }
+        setOmenxArmed(false);
+        setBusy(true); setErr(''); setOk('');
+        try {
+            const next = !omenxPurchasesDisabled;
+            const res = await base44.functions.invoke('setMaintenanceMode', {
+                omenxPurchasesDisabled: next,
+                omenxPurchasesMessage: omenxPurchasesMsg,
+            });
+            if (res.data?.error) throw new Error(res.data.error);
+            setOk(`OMENX purchases ${next ? 'DISABLED' : 'ENABLED'}`);
+            await refresh();
+            setTimeout(() => setOk(''), 3000);
+        } catch (e) {
+            setErr(e?.response?.data?.error || e.message || 'Failed');
+        }
+        setBusy(false);
     };
 
     useEffect(() => { refresh(); }, []);
@@ -146,6 +180,45 @@ export default function AdminMaintenance() {
 
             {ok && <div className="text-xs text-emerald-300 flex items-center gap-1.5"><CheckCircle2 size={12} /> {ok}</div>}
             {err && <div className="text-xs text-red-400 flex items-center gap-1.5"><AlertTriangle size={12} /> {err}</div>}
+
+            {/* Independent OMENX purchases kill-switch */}
+            <div className="border-t border-slate-800 pt-4 space-y-2">
+                <div className="flex items-center gap-2">
+                    <Coins size={14} className="text-orange-400" />
+                    <span className="text-xs font-bold text-orange-300 uppercase tracking-widest">OMENX purchases</span>
+                    <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded ${omenxPurchasesDisabled ? 'bg-red-950/60 text-red-300 border border-red-700/50' : 'bg-emerald-950/40 text-emerald-300 border border-emerald-700/50'}`}>
+                        {omenxPurchasesDisabled ? 'DISABLED' : 'ENABLED'}
+                    </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Hard-blocks all in-game OMENX SKU purchases server-side. Use when the settlement service is down. Independent of SOFT/HARD — game stays playable.
+                </p>
+                <input
+                    type="text"
+                    value={omenxPurchasesMsg}
+                    onChange={e => setOmenxPurchasesMsg(e.target.value)}
+                    maxLength={280}
+                    placeholder="Optional message shown on the purchase modal (e.g. 'OmenX settlement is offline. Back online soon.')"
+                    className="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-orange-500"
+                />
+                <button
+                    onClick={toggleOmenxPurchases}
+                    disabled={busy}
+                    className={`w-full ${omenxArmed
+                        ? 'bg-orange-500 ring-2 ring-orange-300 animate-pulse'
+                        : omenxPurchasesDisabled ? 'bg-emerald-700 hover:bg-emerald-600' : 'bg-orange-700 hover:bg-orange-600'}
+                        disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-2 rounded font-black text-xs uppercase tracking-widest transition-all`}
+                >
+                    {omenxArmed
+                        ? `Confirm ${omenxPurchasesDisabled ? 'enable' : 'disable'}?`
+                        : omenxPurchasesDisabled ? '✓ Re-enable purchases' : '🔒 Disable all OMENX purchases'}
+                </button>
+                {omenxArmed && (
+                    <div className="text-[11px] text-orange-300 flex items-center gap-1.5">
+                        <AlertTriangle size={12} /> Tap again within 5s to confirm.
+                    </div>
+                )}
+            </div>
 
             <div className="border-t border-slate-800 pt-3 text-[11px] text-slate-400 leading-relaxed space-y-3">
                 <div>

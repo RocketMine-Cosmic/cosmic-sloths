@@ -366,6 +366,20 @@ Deno.serve(async (req) => {
         const walletAddress = me.wallet_address;
         if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
+        // Hard block — admins can globally disable OMENX purchases via AdminMaintenance
+        // (e.g. when the OmenX settlement service is down). Logged with key
+        // 'omenx_purchases_disabled' in AppConfig.
+        try {
+            const purchasesCfg = await base44.asServiceRole.entities.AppConfig.filter({ key: 'omenx_purchases_disabled' });
+            if (purchasesCfg[0]?.value?.disabled) {
+                const msg = purchasesCfg[0].value.message || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.';
+                return Response.json({ error: msg, omenxPurchasesDisabled: true }, { status: 503 });
+            }
+        } catch (e) {
+            // Fail OPEN — don't block legit purchases on a config-read hiccup.
+            console.error('[purchaseSku] purchases-disabled read failed:', e?.message);
+        }
+
         const { skuId, quantity = 1, playerName: playerNameParam, grantInfo } = await req.json();
         if (!skuId) return Response.json({ error: 'Missing item info — please refresh and try again.' }, { status: 400 });
 

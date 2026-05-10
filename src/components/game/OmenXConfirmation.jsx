@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Lock } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -9,8 +10,27 @@ function OmenXIcon({ className }) {
 
 export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId }) {
     const [skipNext24h, setSkipNext24h] = useState(false);
+    // Server-side flag — when admins kill-switch OMENX purchases, surface a clear
+    // disabled state instead of letting the user confirm and hit a 503.
+    const [purchasesDisabled, setPurchasesDisabled] = useState(false);
+    const [disabledMsg, setDisabledMsg] = useState('');
+
+    useEffect(() => {
+        let cancelled = false;
+        base44.functions.invoke('getMaintenanceMode', {})
+            .then(res => {
+                if (cancelled) return;
+                if (res.data?.omenxPurchasesDisabled) {
+                    setPurchasesDisabled(true);
+                    setDisabledMsg(res.data.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
+                }
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
 
     const handleConfirm = () => {
+        if (purchasesDisabled) return;
         if (skipNext24h) {
             const disabledUntil = Date.now() + (24 * 60 * 60 * 1000);
             localStorage.setItem(`omenx_confirm_disabled_${pageId}`, disabledUntil.toString());
@@ -54,12 +74,20 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                     </label>
                 </div>
 
+                {purchasesDisabled && (
+                    <div className="mb-4 bg-red-950/40 border border-red-700/60 rounded-lg p-3 text-left flex gap-2">
+                        <Lock className="w-4 h-4 text-red-300 shrink-0 mt-0.5" />
+                        <div className="text-xs text-red-200 leading-relaxed">{disabledMsg}</div>
+                    </div>
+                )}
+
                 <div className="flex flex-col gap-3">
                     <button
                         onClick={handleConfirm}
-                        className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-lg font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+                        disabled={purchasesDisabled}
+                        className="w-full bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:shadow-none text-white py-3 rounded-lg font-bold transition-colors shadow-[0_0_15px_rgba(234,179,8,0.3)]"
                     >
-                        CONFIRM PURCHASE
+                        {purchasesDisabled ? 'PURCHASES TEMPORARILY DISABLED' : 'CONFIRM PURCHASE'}
                     </button>
                     <button
                         onClick={onCancel}
