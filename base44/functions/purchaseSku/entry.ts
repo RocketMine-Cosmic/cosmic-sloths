@@ -21,6 +21,31 @@ async function postDiscord(envName, color, { title, description, fields }) {
 }
 const LARGE_OMENX_THRESHOLD = 1000; // ≥ 1,000 OMENX in a single purchase pings #economy-alerts
 
+// In-memory cache for the OMENX purchases kill-switch flag. With dozens of
+// concurrent purchases per minute, reading this AppConfig row on every call
+// was a major rate-limit contributor. 15s TTL is short enough that admins
+// can still kill purchases promptly during an incident.
+let _purchasesDisabledCache = null;
+let _purchasesDisabledExpiresAt = 0;
+const PURCHASES_FLAG_TTL_MS = 15 * 1000;
+const DEFAULT_DISABLED_MSG = 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.';
+
+async function getOmenXPurchasesDisabled(base44) {
+    const now = Date.now();
+    if (_purchasesDisabledCache && now < _purchasesDisabledExpiresAt) {
+        return _purchasesDisabledCache;
+    }
+    const records = await base44.asServiceRole.entities.AppConfig.filter({ key: 'omenx_purchases_disabled' });
+    const v = records[0]?.value || {};
+    const result = {
+        disabled: !!v.disabled,
+        message: v.message || DEFAULT_DISABLED_MSG,
+    };
+    _purchasesDisabledCache = result;
+    _purchasesDisabledExpiresAt = now + PURCHASES_FLAG_TTL_MS;
+    return result;
+}
+
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
 // Pricing: server-side via OmenX dev portal (cached in memory).
 // Phase 3a: also applies the grant to PlayerSave server-side after charge confirmed.
@@ -366,14 +391,13 @@ Deno.serve(async (req) => {
         const walletAddress = me.wallet_address;
         if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
-        // Hard block — admins can globally disable OMENX purchases via AdminMaintenance
-        // (e.g. when the OmenX settlement service is down). Logged with key
-        // 'omenx_purchases_disabled' in AppConfig.
+        // Hard block — admins can globally disable OMENX purchases via AdminMaintenance.
+        // Cached in-memory (15s TTL) so 100 concurrent purchases don't all read the same
+        // AppConfig row. Admins flipping the kill-switch see effect within ~15s.
         try {
-            const purchasesCfg = await base44.asServiceRole.entities.AppConfig.filter({ key: 'omenx_purchases_disabled' });
-            if (purchasesCfg[0]?.value?.disabled) {
-                const msg = purchasesCfg[0].value.message || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.';
-                return Response.json({ error: msg, omenxPurchasesDisabled: true }, { status: 503 });
+            const flag = await getOmenXPurchasesDisabled(base44);
+            if (flag.disabled) {
+                return Response.json({ error: flag.message, omenxPurchasesDisabled: true }, { status: 503 });
             }
         } catch (e) {
             // Fail OPEN — don't block legit purchases on a config-read hiccup.
