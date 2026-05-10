@@ -176,22 +176,40 @@ export default function AdminDashboard() {
         if (isLoggingIn) return;
         const wallet = overrideWallet || walletInput;
         setIsLoggingIn(true);
-        try {
-            // Lightweight admin check — returns { isAdmin, permissions } only.
-            // Was previously fetching the full 200-row AdminWallet list which made
-            // login feel frozen on slow connections. Also seed callerPerms here so
-            // the follow-up effect doesn't have to refetch the same data.
-            const res = await base44.functions.invoke('getAdminData', { type: 'isAdmin' });
-            if (res.data?.error) throw new Error(res.data.error);
-            setCallerPerms(res.data?.permissions || []);
-            setAdminWallet(wallet);
-            sessionStorage.setItem('admin_wallet', wallet);
-            setWalletError('');
-        } catch {
-            setWalletError('Your logged-in wallet is not authorized as an admin');
-        } finally {
-            setIsLoggingIn(false);
+        // Retry up to 3× on rate-limit (429) and transient errors. Without this,
+        // a single 429 — common during busy gameplay windows — surfaces as
+        // "not authorized" and locks the admin out for no reason.
+        let lastErr = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                const res = await base44.functions.invoke('getAdminData', { type: 'isAdmin' });
+                if (res.data?.error) throw new Error(res.data.error);
+                setCallerPerms(res.data?.permissions || []);
+                setAdminWallet(wallet);
+                sessionStorage.setItem('admin_wallet', wallet);
+                setWalletError('');
+                setIsLoggingIn(false);
+                return;
+            } catch (err) {
+                lastErr = err;
+                const status = err?.response?.status;
+                const isRateLimit = status === 429 || /rate limit/i.test(err?.message || '');
+                const isTransient = status === 502 || status === 503 || status === 504 || isRateLimit;
+                if (!isTransient || attempt === 2) break;
+                await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+            }
         }
+        const status = lastErr?.response?.status;
+        if (status === 403) {
+            setWalletError('Your logged-in wallet is not authorized as an admin');
+        } else if (status === 429 || /rate limit/i.test(lastErr?.message || '')) {
+            setWalletError('Server is busy — please try again in a few seconds');
+        } else if (status === 401) {
+            setWalletError('Sign-in expired — please refresh and sign in again');
+        } else {
+            setWalletError('Auth check failed — please try again');
+        }
+        setIsLoggingIn(false);
     };
 
     const [adminKeyInput, setAdminKeyInput] = useState('');
