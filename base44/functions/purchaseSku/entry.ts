@@ -431,8 +431,17 @@ Deno.serve(async (req) => {
                 return Response.json({ error: flag.message, omenxPurchasesDisabled: true }, { status: 503 });
             }
         } catch (e) {
-            // Fail OPEN — don't block legit purchases on a config-read hiccup.
-            console.error('[purchaseSku] purchases-disabled read failed:', e?.message);
+            // Fail CLOSED — when AppConfig is rate-limited during an incident we MUST NOT
+            // let purchases through to OmenX. Each /v1/purchases call costs us money even
+            // when it 502s, and during a settlement outage every blind call is wasted spend.
+            // If the most-recent in-memory cache says "disabled", honor that; otherwise
+            // block the request with a 503 and let the next attempt (post-cache-refresh)
+            // through. Admins can flip the kill-switch OFF to restore normal flow.
+            console.error('[purchaseSku] purchases-disabled read failed — failing CLOSED:', e?.message);
+            return Response.json({
+                error: 'Purchases are temporarily unavailable while we check status. Please try again in a moment.',
+                omenxPurchasesDisabled: true,
+            }, { status: 503 });
         }
 
         // Circuit breaker — if OmenX's /v1/purchases is currently failing (5xx),
