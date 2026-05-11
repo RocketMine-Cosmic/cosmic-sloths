@@ -30,6 +30,30 @@ let _purchasesDisabledExpiresAt = 0;
 const PURCHASES_FLAG_TTL_MS = 15 * 1000;
 const DEFAULT_DISABLED_MSG = 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.';
 
+// ---- Circuit breaker for the OmenX /v1/purchases endpoint ----
+// When OmenX's settlement service is down (502/503/504), every retry costs us
+// money (their API is billed per-call) AND drowns players in error toasts.
+// Once we see N consecutive 5xx in a short window, trip the breaker and
+// reject NEW purchases instantly without calling OmenX at all for 60s.
+// Auto-resets on the next successful call.
+const CB_TRIP_THRESHOLD = 3;   // 3 consecutive 5xx → trip
+const CB_OPEN_DURATION_MS = 60_000;
+let _cbFailures = 0;
+let _cbOpenUntil = 0;
+function cbIsOpen() { return Date.now() < _cbOpenUntil; }
+function cbRecordFailure() {
+    _cbFailures++;
+    if (_cbFailures >= CB_TRIP_THRESHOLD) {
+        _cbOpenUntil = Date.now() + CB_OPEN_DURATION_MS;
+        _cbFailures = 0;
+        console.warn(`[purchaseSku] CIRCUIT BREAKER TRIPPED — blocking OmenX calls for ${CB_OPEN_DURATION_MS / 1000}s`);
+    }
+}
+function cbRecordSuccess() { _cbFailures = 0; _cbOpenUntil = 0; }
+function isUpstream5xx(msg) {
+    return /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
+}
+
 async function getOmenXPurchasesDisabled(base44) {
     const now = Date.now();
     if (_purchasesDisabledCache && now < _purchasesDisabledExpiresAt) {
@@ -411,6 +435,16 @@ Deno.serve(async (req) => {
             console.error('[purchaseSku] purchases-disabled read failed:', e?.message);
         }
 
+        // Circuit breaker — if OmenX's /v1/purchases is currently failing (5xx),
+        // reject instantly without burning more billable API calls or showing the
+        // player yet another red error toast.
+        if (cbIsOpen()) {
+            return Response.json({
+                error: 'The OMENX payment service is temporarily unavailable. Please try again in a minute.',
+                omenxPurchasesDisabled: true,
+            }, { status: 503 });
+        }
+
         const body = await req.json();
         skuId = body.skuId;
         const quantity = body.quantity ?? 1;
@@ -475,6 +509,8 @@ Deno.serve(async (req) => {
         // --- Charge OmenX ---
         // Try each payment key in order; retry on 429 (rate-limit) only. Idempotency key
         // ensures retries don't double-charge if a previous attempt actually went through.
+        // Upstream 5xx (502/503/504) = OmenX outage — bail immediately and trip the
+        // circuit breaker so the next caller doesn't pay for another doomed API call.
         let purchaseData;
         let lastErr = null;
         for (let i = 0; i < apiKeys.length; i++) {
@@ -488,10 +524,21 @@ Deno.serve(async (req) => {
                     paymentCurrency: 'OMENX',
                     paymentAmount: totalAmount,
                 });
+                cbRecordSuccess();
                 break; // success
             } catch (err) {
                 lastErr = err;
                 const msg = err?.message || String(err);
+                // 5xx from OmenX = their service is down. Don't keep cycling keys —
+                // it's not a per-key problem. Trip the breaker and stop.
+                if (isUpstream5xx(msg)) {
+                    cbRecordFailure();
+                    console.error('[purchaseSku] OmenX upstream 5xx — aborting retries:', msg.slice(0, 200));
+                    return Response.json({
+                        error: 'The OMENX payment service is temporarily unavailable. Please try again in a minute.',
+                        omenxPurchasesDisabled: true,
+                    }, { status: 503 });
+                }
                 if (msg.includes('429') && i < apiKeys.length - 1) {
                     console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
                     continue;
