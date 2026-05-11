@@ -297,14 +297,23 @@ export function updateProjectiles(engine, dt) {
                     }
                 }
             } else {
+                // Toxic Emitter mastery: clouds grow over time (Anubis bug 2026-05-11).
+                // Growth happens every frame for smooth visual scaling, capped at maxRadius.
+                if (p.growthRate && p.maxRadius && p.radius < p.maxRadius) {
+                    p.radius = Math.min(p.maxRadius, p.radius + p.growthRate * dt);
+                }
                 if (engine.frameCount % 15 === 0) {
                     checkAoe(e => {
                         if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
                             engine.damageEnemy(e, p.damage, p);
-                            engine.addParticle(e.x, e.y, p.weaponId === 'napalm' ? '#ff4500' : p.color, 2);
+                            engine.addParticle(e.x, e.y, p.weaponId === 'napalm' ? (p.isMastered ? '#00BFFF' : '#ff4500') : p.color, 2);
+                            // Mastered Napalm: 50% slow for 1.5s (re-applied each tick
+                            // while standing in the pool). Was 0.5s — too short to feel
+                            // (Anubis bug 2026-05-11). EnemyAI already applies 50% slow
+                            // when slowTimer > 0, so this now matches the description.
                             if (p.isMastered && p.weaponId === 'napalm') {
-                                e.slowTimer = 0.5;
+                                e.slowTimer = 1.5;
                             }
                         }
                     });

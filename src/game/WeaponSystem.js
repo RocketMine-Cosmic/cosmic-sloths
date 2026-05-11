@@ -170,8 +170,10 @@ export function fireWeaponLogic(engine, w) {
     }
     else if (w.id === 'slothSwarm') {
         const count = 1 + Math.floor(w.level / 2);
+        // Mastery: drones orbit 80% faster (was identical speed — Anubis bug 2026-05-11).
+        const orbitSpeed = isMastered ? 5.4 : 3;
         for(let i=0; i<count; i++) {
-            const angle = (Math.PI * 2 / count) * i + engine.time * 3;
+            const angle = (Math.PI * 2 / count) * i + engine.time * orbitSpeed;
             const px = engine.player.x + Math.cos(angle) * (60 * area);
             const py = engine.player.y + Math.sin(angle) * (60 * area);
             engine.enemies.forEach(e => {
@@ -213,7 +215,10 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg * 0.5,
             pierce: 999,
             life: 3 + w.level,
-            color: isMastered ? '#ff2200' : '#ff4500',
+            // Mastery flips the pool to blue plasma fire to clearly distinguish it from
+            // the orange base version (Anubis bug 2026-05-11 — old #ff2200 was nearly
+            // identical to non-mastered #ff4500).
+            color: isMastered ? '#00BFFF' : '#ff4500',
             isAoe: true,
             isMastered: isMastered,
             weaponId: 'napalm',
@@ -675,10 +680,16 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'toxicCloud') {
+        const baseRadius = capVisualRadius('toxicCloud', 50 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: capVisualRadius('toxicCloud', 50 * area),
+            radius: baseRadius,
+            // Mastery: cloud grows over time, capped at 2× base. Read in
+            // ProjectileSystem's per-frame AoE update (Anubis bug 2026-05-11).
+            baseRadius: baseRadius,
+            maxRadius: baseRadius * 2,
+            growthRate: isMastered ? baseRadius / (4 + w.level) : 0,
             damage: dmg * 0.4,
             pierce: 999,
             life: 4 + w.level,
