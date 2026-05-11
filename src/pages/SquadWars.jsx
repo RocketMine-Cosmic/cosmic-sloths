@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Swords, Trophy, Skull, ArrowLeft, Crown, Shield, Coins, Puzzle, Flame, Users, Award } from 'lucide-react';
@@ -77,23 +77,45 @@ export default function SquadWars({ isCarousel }) {
         throw lastErr;
     }, []);
 
-    const loadData = useCallback(async () => {
+    // Track when we last fetched + which tabs we've already loaded — avoids
+    // re-firing the same expensive backend calls on every focus / visibility flip.
+    const lastFetchRef = useRef(0);
+    const historyLoadedRef = useRef(false);
+    const raidLoadedRef = useRef(false);
+
+    const loadData = useCallback(async ({ force = false, includeHistory = false, includeRaid = false } = {}) => {
+        // Coalesce — if we fetched within the last 30s and this isn't a forced
+        // refetch (e.g. new-week subscription event), skip. Prevents the page
+        // from spamming the platform when focus / visibility flip in quick
+        // succession or when the SquadWar subscription fires a burst of events.
+        const now = Date.now();
+        if (!force && now - lastFetchRef.current < 30_000) return;
+        lastFetchRef.current = now;
+
         setLoading(true);
         setLoadError(null);
         try {
-            const calls = [
-                invokeWithRetry('squadWarEngine', { action: 'getRoster' }),
-                invokeWithRetry('getSquadRaidLeaderboard', {}),
-            ];
+            // Roster is always loaded — it's the "Wars Board" + drives weekId.
+            // Raid + History are lazy: only fetched on first tab-open OR when forced.
+            const calls = [invokeWithRetry('squadWarEngine', { action: 'getRoster' })];
+            const shouldLoadRaid = includeRaid || raidLoadedRef.current;
+            const shouldLoadHistory = mySquadId && (includeHistory || historyLoadedRef.current);
+            if (shouldLoadRaid) {
+                calls.push(invokeWithRetry('getSquadRaidLeaderboard', {}));
+            } else {
+                calls.push(Promise.resolve(null));
+            }
             if (mySquadId) {
                 calls.push(invokeWithRetry('squadWarEngine', { action: 'getCurrent', squadId: mySquadId }));
-                calls.push(invokeWithRetry('squadWarEngine', { action: 'getHistory', squadId: mySquadId, limit: 12 }));
+                if (shouldLoadHistory) {
+                    calls.push(invokeWithRetry('squadWarEngine', { action: 'getHistory', squadId: mySquadId, limit: 12 }));
+                }
             }
             // Use allSettled so a single failure (e.g. one rate-limited call) doesn't
             // wipe the other tabs' data. Each result is handled independently.
             const results = await Promise.allSettled(calls);
-            const ok = (i) => results[i].status === 'fulfilled' ? results[i].value : null;
-            const fail = (i) => results[i].status === 'rejected' ? results[i].reason : null;
+            const ok = (i) => results[i] && results[i].status === 'fulfilled' ? results[i].value : null;
+            const fail = (i) => results[i] && results[i].status === 'rejected' ? results[i].reason : null;
 
             const rosterRes = ok(0);
             const raidRes = ok(1);
@@ -101,12 +123,18 @@ export default function SquadWars({ isCarousel }) {
                 setRoster(rosterRes.wars || []);
                 setWeekId(rosterRes.weekId || '');
             }
-            if (raidRes) setRaidRanking(raidRes.ranking || []);
+            if (raidRes) {
+                setRaidRanking(raidRes.ranking || []);
+                raidLoadedRef.current = true;
+            }
             if (mySquadId) {
                 const curRes = ok(2);
                 const histRes = ok(3);
                 if (curRes) setMyWar(curRes.war || null);
-                if (histRes) setHistory(histRes.wars || []);
+                if (histRes) {
+                    setHistory(histRes.wars || []);
+                    historyLoadedRef.current = true;
+                }
             }
 
             // If the critical getRoster call failed, show an error banner so players
@@ -127,27 +155,42 @@ export default function SquadWars({ isCarousel }) {
         setLoading(false);
     }, [mySquadId, invokeWithRetry]);
 
-    // Wait for the squad membership check to finish before fetching war data,
-    // so we don't fire one round-trip with mySquadId=null and another a moment
-    // later with the real id (was doubling squadWarEngine traffic per page open).
-    useEffect(() => { if (squadCheckDone) loadData(); }, [squadCheckDone, loadData]);
+    // Initial load — wait for the squad membership check to finish, force the
+    // first fetch (bypasses the 30s coalesce gate), and skip cancelled.
+    useEffect(() => { if (squadCheckDone) loadData({ force: true }); }, [squadCheckDone, loadData]);
+
+    // Lazy-load Raid + History the first time their tabs are opened. Subsequent
+    // tab switches reuse the cached data + the existing refetch path keeps them
+    // fresh. This was previously eager-loaded on every page open = 4 backend
+    // calls when most users only look at one tab.
+    useEffect(() => {
+        if (activeTab === 'raid' && !raidLoadedRef.current) loadData({ force: true, includeRaid: true });
+        if (activeTab === 'history' && !historyLoadedRef.current && mySquadId) loadData({ force: true, includeHistory: true });
+    }, [activeTab, mySquadId, loadData]);
 
     // Real-time updates: subscribe to SquadWar changes.
-    // If a new week's wars get created (Monday pairing run) while a player has this
-    // page open, the previous weekId-filter would drop them — so when we see a war
-    // for a NEWER week than what we have loaded, trigger a full refetch instead of
-    // silently filtering it out. Fixes "have to clear cache to see new pairings".
+    // Same-week events patch local state in place (free). NEW-week events used to
+    // fire an instant full refetch — but the Monday pairing run creates ~10 wars
+    // in quick succession, which fan-out to ~10× loadData() on every open client
+    // and was a top contributor to the platform 429 storm. Debounce the refetch
+    // so the burst collapses into one refresh.
+    const newWeekTimerRef = useRef(null);
     useEffect(() => {
         const unsub = base44.entities.SquadWar.subscribe((event) => {
             if (event.type !== 'update' && event.type !== 'create') return;
             if (!event.data) return;
             const eventWeek = event.data.week_id;
-            // A war for a NEW week appeared → our data is stale, refetch everything.
+            // A war for a NEW week appeared → our data is stale, schedule a refetch
+            // ~3s out so a burst of creates collapses into one call.
             if (eventWeek && weekId && eventWeek > weekId) {
-                loadData();
+                if (newWeekTimerRef.current) return; // already scheduled
+                newWeekTimerRef.current = setTimeout(() => {
+                    newWeekTimerRef.current = null;
+                    loadData({ force: true });
+                }, 3000);
                 return;
             }
-            // Same-week update: patch state in place (cheap).
+            // Same-week update: patch state in place (cheap, no backend call).
             if (eventWeek === weekId) {
                 setRoster(prev => {
                     const idx = prev.findIndex(w => w.id === event.data.id);
@@ -163,21 +206,19 @@ export default function SquadWars({ isCarousel }) {
                 }
             }
         });
-        return unsub;
+        return () => {
+            unsub();
+            if (newWeekTimerRef.current) { clearTimeout(newWeekTimerRef.current); newWeekTimerRef.current = null; }
+        };
     }, [mySquadId, weekId, loadData]);
 
-    // Auto-refresh on day rollover / tab focus — covers users who left the page
-    // open overnight Sunday→Monday across the pairing run, or who tabbed away
-    // and back. Both refetch cheaply (~2 small queries).
+    // Auto-refresh on tab return — visibilitychange alone is enough (window focus
+    // fires alongside it on tab switch, so listening to both was doubling calls).
+    // loadData() self-coalesces via the 30s gate, so this is safe to fire freely.
     useEffect(() => {
-        const onFocus = () => loadData();
         const onVisibility = () => { if (!document.hidden) loadData(); };
-        window.addEventListener('focus', onFocus);
         document.addEventListener('visibilitychange', onVisibility);
-        return () => {
-            window.removeEventListener('focus', onFocus);
-            document.removeEventListener('visibilitychange', onVisibility);
-        };
+        return () => document.removeEventListener('visibilitychange', onVisibility);
     }, [loadData]);
 
     const handleClaimWinBonus = async (warId) => {
@@ -203,7 +244,7 @@ export default function SquadWars({ isCarousel }) {
                 description: `+${r.gold.toLocaleString()} Gold${r.fragments > 0 ? ` and +${r.fragments} Relic Fragments` : ''}!`,
             });
             // Refresh history so the claim button disappears
-            await loadData();
+            await loadData({ force: true, includeHistory: true });
         } catch (e) {
             console.error(e);
             toast({ title: 'Error', description: 'Failed to claim war bonus.' });
@@ -282,7 +323,7 @@ export default function SquadWars({ isCarousel }) {
                 {loadError && !loading && (
                     <div className="mb-3 bg-amber-950/50 border border-amber-600/60 rounded-lg p-3 flex items-center justify-between gap-3">
                         <div className="text-xs text-amber-200 flex-1">⚠ {loadError}</div>
-                        <button onClick={() => { SoundManager.playUIClick(); loadData(); }}
+                        <button onClick={() => { SoundManager.playUIClick(); loadData({ force: true, includeRaid: raidLoadedRef.current, includeHistory: historyLoadedRef.current }); }}
                             className="text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded transition-colors shrink-0">
                             Retry
                         </button>
