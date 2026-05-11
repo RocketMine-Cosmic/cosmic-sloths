@@ -86,13 +86,24 @@ export default function SquadWars({ isCarousel }) {
     // later with the real id (was doubling squadWarEngine traffic per page open).
     useEffect(() => { if (squadCheckDone) loadData(); }, [squadCheckDone, loadData]);
 
-    // Real-time updates: subscribe to SquadWar changes
+    // Real-time updates: subscribe to SquadWar changes.
+    // If a new week's wars get created (Monday pairing run) while a player has this
+    // page open, the previous weekId-filter would drop them — so when we see a war
+    // for a NEWER week than what we have loaded, trigger a full refetch instead of
+    // silently filtering it out. Fixes "have to clear cache to see new pairings".
     useEffect(() => {
         const unsub = base44.entities.SquadWar.subscribe((event) => {
-            if (event.type === 'update' || event.type === 'create') {
-                // Re-fetch only the slices that need it (cheap — these are small)
+            if (event.type !== 'update' && event.type !== 'create') return;
+            if (!event.data) return;
+            const eventWeek = event.data.week_id;
+            // A war for a NEW week appeared → our data is stale, refetch everything.
+            if (eventWeek && weekId && eventWeek > weekId) {
+                loadData();
+                return;
+            }
+            // Same-week update: patch state in place (cheap).
+            if (eventWeek === weekId) {
                 setRoster(prev => {
-                    if (!event.data || event.data.week_id !== weekId) return prev;
                     const idx = prev.findIndex(w => w.id === event.data.id);
                     if (idx >= 0) {
                         const next = [...prev];
@@ -101,13 +112,27 @@ export default function SquadWars({ isCarousel }) {
                     }
                     return [event.data, ...prev];
                 });
-                if (mySquadId && event.data && (event.data.squad_a_id === mySquadId || event.data.squad_b_id === mySquadId) && event.data.week_id === weekId) {
+                if (mySquadId && (event.data.squad_a_id === mySquadId || event.data.squad_b_id === mySquadId)) {
                     setMyWar(event.data);
                 }
             }
         });
         return unsub;
-    }, [mySquadId, weekId]);
+    }, [mySquadId, weekId, loadData]);
+
+    // Auto-refresh on day rollover / tab focus — covers users who left the page
+    // open overnight Sunday→Monday across the pairing run, or who tabbed away
+    // and back. Both refetch cheaply (~2 small queries).
+    useEffect(() => {
+        const onFocus = () => loadData();
+        const onVisibility = () => { if (!document.hidden) loadData(); };
+        window.addEventListener('focus', onFocus);
+        document.addEventListener('visibilitychange', onVisibility);
+        return () => {
+            window.removeEventListener('focus', onFocus);
+            document.removeEventListener('visibilitychange', onVisibility);
+        };
+    }, [loadData]);
 
     const handleClaimWinBonus = async (warId) => {
         if (claiming) return;
