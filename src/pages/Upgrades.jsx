@@ -11,6 +11,7 @@ function OmenXIcon({ className }) {
 import { useCurrency } from '@/lib/CurrencyContext';
 import { ensureNftsFetched } from '@/lib/playerDataCache';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
+import { useOmenXPurchasesDisabled } from '@/hooks/useOmenXPurchasesDisabled';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
@@ -66,6 +67,11 @@ export default function Upgrades({ isCarousel }) {
         return [...new Set([...(save.unlockedCharacters || ['neobyte']), ...nftUnlockedChars])];
     }, [save.unlockedCharacters, nftUnlockedChars]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('upgrades-page');
+    // Hard-gate every OMENX button when admins flip the kill-switch — previously
+    // only the confirmation modal blocked, so players could still click → modal
+    // → re-check → 503, which fired the OmenX 502 chain anyway when their
+    // settlement service was the actual problem.
+    const { disabled: omenxBlocked, message: omenxBlockedMsg } = useOmenXPurchasesDisabled();
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -587,14 +593,16 @@ export default function Upgrades({ isCarousel }) {
                                                 )}
                                                 {!isMax && (
                                                     <button
-                                                       onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyStat(stat.id, 'token'))}
-                                                       disabled={!canAffordToken || purchasing}
+                                                       onClick={() => !purchasing && !omenxBlocked && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyStat(stat.id, 'token'))}
+                                                       disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                       title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
+                                                            omenxBlocked ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed' :
                                                             canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                                         }`}
                                                      >
-                                                        {purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                        {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
                                                      </button>
                                                 )}
                                             </div>
@@ -729,14 +737,16 @@ export default function Upgrades({ isCarousel }) {
                                         </button>
                                         {!isMax && (
                                             <button
-                                                onClick={() => !purchasing && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyWeapon(weapon.id, stat.id, 'token'))}
-                                                disabled={!canAffordToken || purchasing}
+                                                onClick={() => !purchasing && !omenxBlocked && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyWeapon(weapon.id, stat.id, 'token'))}
+                                                disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
                                                 className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                    omenxBlocked ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed' :
                                                     canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {purchasing ? '…' : <><OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX</>}
                                             </button>
                                         )}
                                     </div>
@@ -915,14 +925,16 @@ export default function Upgrades({ isCarousel }) {
                                         )}
                                         {!isUnlocked && (
                                             <button
-                                                onClick={() => !purchasing && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
-                                                disabled={!canUnlock || !canAffordToken || purchasing}
+                                                onClick={() => !purchasing && !omenxBlocked && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
+                                                disabled={!canUnlock || !canAffordToken || purchasing || omenxBlocked}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
                                                 className={`w-full px-2 py-1 md:py-1.5 rounded md:rounded-md font-bold transition-colors text-[11px] md:text-xs flex items-center justify-center gap-1 ${
+                                                    omenxBlocked ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                                                     canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-600 border border-slate-700'
                                                 }`}
                                             >
-                                                {purchasing ? '…' : <><OmenXIcon className="w-3.5 h-3.5 md:w-5 md:h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-3.5 h-3.5 md:w-5 md:h-5" /> {tokenCost.toLocaleString()} OMENX</>}
                                             </button>
                                         )}
                                     </div>
@@ -1211,9 +1223,10 @@ export default function Upgrades({ isCarousel }) {
                                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                                             </button>
                                                             {skin.tokenCost > 0 && (
-                                                                <button onClick={() => !purchasing && confirmPurchase(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing}
-                                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                        <OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX
+                                                                <button onClick={() => !purchasing && !omenxBlocked && confirmPurchase(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                                        title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' : canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                        {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX</>}
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1277,13 +1290,15 @@ export default function Upgrades({ isCarousel }) {
                                             </button>
                                             {cosmetic.tokenCost > 0 && (
                                                 <button
-                                                    onClick={() => !purchasing && confirmPurchase(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
-                                                    disabled={!canAffordToken || purchasing}
+                                                    onClick={() => !purchasing && !omenxBlocked && confirmPurchase(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
+                                                    disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                    title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
                                                     className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                        omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
                                                         canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
-                                                    <OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX
+                                                    {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX</>}
                                                 </button>
                                             )}
                                         </div>
@@ -1374,6 +1389,16 @@ export default function Upgrades({ isCarousel }) {
                     </div>
                 )}
 
+                {omenxBlocked && (
+                    <div className="mb-3 md:mb-4 bg-red-950/40 border border-red-700/60 rounded-lg p-3 flex items-start gap-2">
+                        <span className="text-red-300 text-lg leading-none mt-0.5">🔒</span>
+                        <div className="text-xs md:text-sm text-red-200 leading-snug">
+                            <strong className="text-red-100">OMENX purchases are temporarily paused.</strong>
+                            <div className="mt-0.5 opacity-90">{omenxBlockedMsg || 'The settlement service is being restored. Gold upgrades are still available.'}</div>
+                        </div>
+                    </div>
+                )}
+
                 {activeCategory === 'permanent' && (
                     <div className="mb-3 text-[11px] md:text-xs text-emerald-300/90 bg-emerald-950/30 border border-emerald-700/40 rounded-lg px-3 py-2">
                         💡 <strong className="text-emerald-400">Pool Bias points:</strong> Every permanent stat, talent and weapon level you buy here grants you Pool Bias points. Spend them on the <strong className="text-white">Loadouts page</strong> to make specific weapons or stats appear <strong className="text-white">+10% more often per point</strong> in your in-run level-up choices. <span className="text-slate-500">(First 10 levels = 1pt each, then 1pt per 2 levels.)</span>
@@ -1436,7 +1461,7 @@ export default function Upgrades({ isCarousel }) {
                     goldCost={respecModal.goldCost}
                     omenxCost={respecModal.omenxCost}
                     canAffordGold={save.gold >= respecModal.goldCost}
-                    canAffordOmenx={(omenxBalance ?? 0) >= respecModal.omenxCost}
+                    canAffordOmenx={!omenxBlocked && (omenxBalance ?? 0) >= respecModal.omenxCost}
                     onPayGold={handleRespecPayGold}
                     onPayOmenx={handleRespecPayOmenx}
                     onCancel={() => setRespecModal(null)}
