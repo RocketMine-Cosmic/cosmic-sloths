@@ -283,16 +283,16 @@ export default function Game() {
         }
 
         // Global XP buff — admin-set "make-good" multiplier (e.g. 2× XP for 24h
-        // when OMENX settlement is down). Read from the same maintenance status
-        // call that the gate already polls every 30s, so no extra request here.
+        // when OMENX settlement is down). Read from the SHARED maintenance cache
+        // so we don't fire a fresh getMaintenanceMode call on every run start.
         try {
-            const res = await base44.functions.invoke('getMaintenanceMode', {});
-            const buff = res?.data?.globalXpBuff;
+            const { getStatus: getMaintStatus } = await import('@/lib/maintenanceStatus');
+            const buff = getMaintStatus()?.globalXpBuff;
             if (buff && buff.multiplier > 1 && buff.expiresAt > Date.now()) {
                 save.globalXpBuff = { multiplier: Number(buff.multiplier), expiresAt: Number(buff.expiresAt) };
             }
         } catch (e) {
-            // Maintenance check failed — skip buff (fail-open).
+            // Cache read failed — skip buff (fail-open).
         }
 
         // Inject NFT multipliers from playerDataCache so GameEngine can apply them

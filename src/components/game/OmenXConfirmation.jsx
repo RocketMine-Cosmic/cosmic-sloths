@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { AlertCircle, Lock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { getStatus as getMaintenanceStatus, refreshNow as refreshMaintenance } from '@/lib/maintenanceStatus';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -10,36 +10,21 @@ function OmenXIcon({ className }) {
 
 export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId }) {
     const [skipNext24h, setSkipNext24h] = useState(false);
-    // Server-side flag — when admins kill-switch OMENX purchases, surface a clear
-    // disabled state instead of letting the user confirm and hit a 503.
-    const [purchasesDisabled, setPurchasesDisabled] = useState(false);
-    const [disabledMsg, setDisabledMsg] = useState('');
-
-    useEffect(() => {
-        let cancelled = false;
-        base44.functions.invoke('getMaintenanceMode', {})
-            .then(res => {
-                if (cancelled) return;
-                if (res.data?.omenxPurchasesDisabled) {
-                    setPurchasesDisabled(true);
-                    setDisabledMsg(res.data.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
-                }
-            })
-            .catch(() => {});
-        return () => { cancelled = true; };
-    }, []);
+    // Read kill-switch from SHARED maintenance cache — no per-modal poll.
+    const initialMaint = getMaintenanceStatus();
+    const [purchasesDisabled, setPurchasesDisabled] = useState(!!initialMaint.omenxPurchasesDisabled);
+    const [disabledMsg, setDisabledMsg] = useState(initialMaint.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
 
     const handleConfirm = async () => {
         if (purchasesDisabled) return;
-        // Re-check the flag at click time. The modal can stay open for a while
-        // (player reads the prompt, gets distracted) and the kill-switch may
-        // have flipped on after the modal mounted — without this check, the
-        // optimistic in-run grant (reroll / banish / ult) would still fire.
+        // Force-refresh the SHARED cache at click time (deduped, so this is
+        // cheap even if multiple confirmations fire). If the kill-switch flipped
+        // on while the modal was open, abort before firing the optimistic grant.
         try {
-            const res = await base44.functions.invoke('getMaintenanceMode', {});
-            if (res.data?.omenxPurchasesDisabled) {
+            const s = await refreshMaintenance();
+            if (s?.omenxPurchasesDisabled) {
                 setPurchasesDisabled(true);
-                setDisabledMsg(res.data.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
+                setDisabledMsg(s.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
                 return;
             }
         } catch {

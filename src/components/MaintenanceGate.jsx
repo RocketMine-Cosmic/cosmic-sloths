@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { subscribe as subscribeMaintenance, getStatus as getMaintenanceStatus } from '@/lib/maintenanceStatus';
 import { AlertTriangle, Wrench } from 'lucide-react';
 
 // Wraps the app and shows either a top banner ('soft') or a full-screen overlay
@@ -11,7 +12,10 @@ import { AlertTriangle, Wrench } from 'lucide-react';
 // Hard = "rollover in progress" — /game route blocked, but players can stay on
 //        any other page (squads, chat, leaderboard, profile).
 export default function MaintenanceGate() {
-    const [state, setState] = useState({ mode: 'off', message: '' });
+    const [state, setState] = useState(() => {
+        const s = getMaintenanceStatus();
+        return { mode: s.mode || 'off', message: s.message || '' };
+    });
     // Admins bypass the HARD gate so they can smoke-test runs during a rollover
     // (otherwise nobody could verify the rollover worked). Checked once on mount —
     // role doesn't change mid-session. Falls back to non-admin on any error.
@@ -19,28 +23,19 @@ export default function MaintenanceGate() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Subscribe to the SHARED maintenance cache — no per-component polling.
+    // Previously this hit getMaintenanceMode every 30s on its own; combined with
+    // the other 3 callers that was the bulk of the 429 storm.
     useEffect(() => {
-        let cancelled = false;
-        const fetchState = async () => {
-            try {
-                const res = await base44.functions.invoke('getMaintenanceMode', {});
-                if (cancelled) return;
-                if (res.data && typeof res.data.mode === 'string') {
-                    setState({ mode: res.data.mode, message: res.data.message || '' });
-                }
-            } catch {
-                // fail open
-            }
-        };
-        fetchState();
-        const t = setInterval(fetchState, 30_000);
-
+        const unsub = subscribeMaintenance(s => {
+            setState({ mode: s.mode || 'off', message: s.message || '' });
+        });
         // One-shot admin check.
+        let cancelled = false;
         base44.auth.me()
             .then(u => { if (!cancelled) setIsAdmin(u?.role === 'admin'); })
             .catch(() => { /* not signed in or call failed — treat as non-admin */ });
-
-        return () => { cancelled = true; clearInterval(t); };
+        return () => { cancelled = true; unsub(); };
     }, []);
 
     // If hard mode and player is on /game, push them out so they can't start a run.

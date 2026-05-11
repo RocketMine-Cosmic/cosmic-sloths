@@ -1,28 +1,17 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { getStatus, subscribe, refreshNow, isOmenxDisabled } from '@/lib/maintenanceStatus';
 
+// Confirmation flow for OMENX purchases.
+// Reads the kill-switch flag from the SHARED maintenance cache (lib/maintenanceStatus)
+// — no per-hook polling. The shared cache is refreshed once per ~60s globally
+// and on visibility change; refreshNow() forces a fresh check at click time
+// before firing the optimistic grant.
 export function useOmenXConfirmation(pageId) {
     const [pending, setPending] = useState(null);
     const callbackRef = useRef(null);
-    // Track the global purchases-disabled flag so the 24h "skip confirm" path
-    // doesn't bypass the modal — otherwise admins disabling purchases would only
-    // affect first-time confirmers; users who'd opted into 24h skip would still
-    // hit the server and get a 503 with no UI explanation.
-    const purchasesDisabledRef = useRef(false);
-    useEffect(() => {
-        let cancelled = false;
-        const fetchOnce = () => {
-            base44.functions.invoke('getMaintenanceMode', {})
-                .then(res => { if (!cancelled) purchasesDisabledRef.current = !!res.data?.omenxPurchasesDisabled; })
-                .catch(() => {});
-        };
-        fetchOnce();
-        // Poll every 15s — matches the server cache TTL so admins flipping the
-        // kill-switch mid-run see effect within ~15s instead of waiting for the
-        // run to end.
-        const t = setInterval(fetchOnce, 15_000);
-        return () => { cancelled = true; clearInterval(t); };
-    }, []);
+    const disabledRef = useRef(isOmenxDisabled());
+
+    useEffect(() => subscribe(s => { disabledRef.current = !!s.omenxPurchasesDisabled; }), []);
 
     const isDisabledFor24h = useCallback(() => {
         const disabledUntil = localStorage.getItem(`omenx_confirm_disabled_${pageId}`);
@@ -31,20 +20,15 @@ export function useOmenXConfirmation(pageId) {
     }, [pageId]);
 
     const confirm = useCallback((amount, itemName, onConfirmCallback) => {
-        // Force a fresh check at click time — the cached flag may be stale (last
-        // poll up to 15s ago) and we MUST NOT fire the optimistic grant if the
-        // kill-switch is on. Network failure → fall back to the cached value.
         const proceed = () => {
             // Block entirely if the kill-switch is on, regardless of 24h-skip.
-            if (purchasesDisabledRef.current) {
-                // Show the modal so the player sees the "disabled" banner
-                // (instead of silently no-op'ing the click).
+            if (disabledRef.current) {
                 callbackRef.current = onConfirmCallback;
                 setPending({
                     amount, itemName,
                     onConfirm: () => {
                         setPending(null);
-                        if (!purchasesDisabledRef.current && callbackRef.current) callbackRef.current();
+                        if (!disabledRef.current && callbackRef.current) callbackRef.current();
                     },
                     onCancel: () => setPending(null),
                 });
@@ -67,10 +51,12 @@ export function useOmenXConfirmation(pageId) {
             });
         };
 
-        base44.functions.invoke('getMaintenanceMode', {})
-            .then(res => { purchasesDisabledRef.current = !!res.data?.omenxPurchasesDisabled; })
-            .catch(() => {})
-            .finally(proceed);
+        // Force a fresh check at click time — the cache may be up to a minute
+        // stale and we MUST NOT fire the optimistic grant if the kill-switch
+        // just flipped on. refreshNow() dedupes parallel callers, so this is
+        // safe to call frequently.
+        refreshNow().then(s => { disabledRef.current = !!s.omenxPurchasesDisabled; })
+                    .finally(proceed);
     }, [isDisabledFor24h]);
 
     return { pending, setPending, confirm };
