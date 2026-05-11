@@ -24,6 +24,7 @@ import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
+import { useOmenXPurchasesDisabled } from '@/hooks/useOmenXPurchasesDisabled';
 
 import { subscribePlayerData, ensureNftsFetched, refreshBalance } from '@/lib/playerDataCache';
 
@@ -172,6 +173,7 @@ export default function Hub({ isCarousel }) {
     const [currentTime, setCurrentTime] = useState(Date.now());
     const [buffPurchasing, setBuffPurchasing] = useState(false);
     const { pending: buffPending, confirm: confirmBuffPurchase } = useOmenXConfirmation('hub-xp-buff');
+    const { disabled: omenxBlocked, message: omenxBlockedMsg } = useOmenXPurchasesDisabled();
 
     useEffect(() => {
         const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
@@ -626,6 +628,7 @@ export default function Hub({ isCarousel }) {
                                     const timeLeft = hasXpBuff ? formatTimeLeft(sessionBuffs.xpExpiry - currentTime) : '';
                                     
                                     const buyBuff = () => {
+                                        if (omenxBlocked) return;
                                         if ((omenxBalance ?? 0) < 10) return;
                                         if (hasXpBuff || buffPurchasing) return; // prevent double-buy while one is in flight or already active
                                         SoundManager.playUIClick();
@@ -696,33 +699,36 @@ export default function Hub({ isCarousel }) {
 
                                             <button
                                                 onClick={buyBuff}
-                                                disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10}
+                                                disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10 || omenxBlocked}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
                                                 className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-2.5 border transition-all group ${
-                                                    hasXpBuff
-                                                        ? 'bg-emerald-950/60 border-emerald-500/60 cursor-default'
-                                                        : (omenxBalance ?? 0) < 10 || buffPurchasing
-                                                            ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
-                                                            : 'bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-purple-950/40 hover:from-emerald-900/60 hover:via-cyan-900/40 hover:to-purple-900/60 border-emerald-500/40 hover:border-emerald-400'
+                                                    omenxBlocked
+                                                        ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
+                                                        : hasXpBuff
+                                                            ? 'bg-emerald-950/60 border-emerald-500/60 cursor-default'
+                                                            : (omenxBalance ?? 0) < 10 || buffPurchasing
+                                                                ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
+                                                                : 'bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-purple-950/40 hover:from-emerald-900/60 hover:via-cyan-900/40 hover:to-purple-900/60 border-emerald-500/40 hover:border-emerald-400'
                                                 }`}
                                             >
                                                 <span className="flex items-center gap-2 md:gap-3">
-                                                    <span className="text-base md:text-lg">✨</span>
+                                                    <span className="text-base md:text-lg">{omenxBlocked ? '🔒' : '✨'}</span>
                                                     <span className="flex flex-col items-start">
                                                         <span className="text-[11px] md:text-sm font-black tracking-widest uppercase text-white">
-                                                            {hasXpBuff ? `+50% XP Active (${timeLeft})` : '+50% XP Buff · 60 min'}
+                                                            {omenxBlocked ? '+50% XP Buff — Paused' : hasXpBuff ? `+50% XP Active (${timeLeft})` : '+50% XP Buff · 60 min'}
                                                         </span>
                                                         <span className="text-[9px] md:text-[11px] text-emerald-300/70 font-normal normal-case tracking-normal hidden sm:inline">
-                                                            Boost XP gain for your next session
+                                                            {omenxBlocked ? 'OMENX purchases temporarily disabled' : 'Boost XP gain for your next session'}
                                                         </span>
                                                     </span>
                                                 </span>
-                                                {!hasXpBuff && !buffPurchasing && (
+                                                {!omenxBlocked && !hasXpBuff && !buffPurchasing && (
                                                     <span className="flex items-center gap-1 bg-purple-950/60 border border-purple-500/50 px-2 md:px-2.5 py-1 md:py-1.5 rounded shrink-0">
                                                         <span className="text-purple-300 font-black text-xs md:text-sm">10</span>
                                                         <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMENX</span>
                                                     </span>
                                                 )}
-                                                {buffPurchasing && (
+                                                {!omenxBlocked && buffPurchasing && (
                                                     <span className="text-slate-400 text-xs md:text-sm font-bold">Processing…</span>
                                                 )}
                                             </button>
