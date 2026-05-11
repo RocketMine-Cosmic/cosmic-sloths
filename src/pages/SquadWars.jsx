@@ -28,6 +28,7 @@ export default function SquadWars({ isCarousel }) {
     const [history, setHistory] = useState([]);
     const [raidRanking, setRaidRanking] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
     const [claiming, setClaiming] = useState(false);
 
     // Load my squad membership — omenxUser may use walletAddress (camelCase) or wallet_address
@@ -54,32 +55,77 @@ export default function SquadWars({ isCarousel }) {
         })();
     }, [omenxUser]);
 
+    // Retry helper — Base44 throttles bursts of function calls during peak (429s).
+    // When that happens, the whole page goes blank because every tab depends on
+    // these fetches. Retry transient 429/5xx with backoff so the page recovers.
+    const invokeWithRetry = useCallback(async (name, body) => {
+        const delays = [400, 900, 1800];
+        let lastErr;
+        for (let attempt = 0; attempt <= delays.length; attempt++) {
+            try {
+                const r = await base44.functions.invoke(name, body);
+                return r.data;
+            } catch (err) {
+                lastErr = err;
+                const status = err?.response?.status || err?.status;
+                const msg = String(err?.message || '').toLowerCase();
+                const isTransient = status === 429 || status === 502 || status === 503 || status === 504 || msg.includes('rate limit');
+                if (!isTransient || attempt === delays.length) throw err;
+                await new Promise(r => setTimeout(r, delays[attempt]));
+            }
+        }
+        throw lastErr;
+    }, []);
+
     const loadData = useCallback(async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             const calls = [
-                base44.functions.invoke('squadWarEngine', { action: 'getRoster' }).then(r => r.data),
-                base44.functions.invoke('getSquadRaidLeaderboard', {}).then(r => r.data),
+                invokeWithRetry('squadWarEngine', { action: 'getRoster' }),
+                invokeWithRetry('getSquadRaidLeaderboard', {}),
             ];
             if (mySquadId) {
-                calls.push(base44.functions.invoke('squadWarEngine', { action: 'getCurrent', squadId: mySquadId }).then(r => r.data));
-                calls.push(base44.functions.invoke('squadWarEngine', { action: 'getHistory', squadId: mySquadId, limit: 12 }).then(r => r.data));
+                calls.push(invokeWithRetry('squadWarEngine', { action: 'getCurrent', squadId: mySquadId }));
+                calls.push(invokeWithRetry('squadWarEngine', { action: 'getHistory', squadId: mySquadId, limit: 12 }));
             }
-            const results = await Promise.all(calls);
-            const rosterRes = results[0];
-            const raidRes = results[1];
-            setRoster(rosterRes?.wars || []);
-            setWeekId(rosterRes?.weekId || '');
-            setRaidRanking(raidRes?.ranking || []);
+            // Use allSettled so a single failure (e.g. one rate-limited call) doesn't
+            // wipe the other tabs' data. Each result is handled independently.
+            const results = await Promise.allSettled(calls);
+            const ok = (i) => results[i].status === 'fulfilled' ? results[i].value : null;
+            const fail = (i) => results[i].status === 'rejected' ? results[i].reason : null;
+
+            const rosterRes = ok(0);
+            const raidRes = ok(1);
+            if (rosterRes) {
+                setRoster(rosterRes.wars || []);
+                setWeekId(rosterRes.weekId || '');
+            }
+            if (raidRes) setRaidRanking(raidRes.ranking || []);
             if (mySquadId) {
-                setMyWar(results[2]?.war || null);
-                setHistory(results[3]?.wars || []);
+                const curRes = ok(2);
+                const histRes = ok(3);
+                if (curRes) setMyWar(curRes.war || null);
+                if (histRes) setHistory(histRes.wars || []);
+            }
+
+            // If the critical getRoster call failed, show an error banner so players
+            // know to retry instead of staring at empty tabs.
+            const rosterErr = fail(0);
+            if (rosterErr) {
+                const status = rosterErr?.response?.status || rosterErr?.status;
+                const isRateLimit = status === 429 || /rate limit/i.test(rosterErr?.message || '');
+                setLoadError(isRateLimit
+                    ? 'Server is busy right now. Tap "Retry" in a few seconds.'
+                    : 'Couldn\'t load Squad Wars. Tap "Retry" to try again.');
+                console.error('[SquadWars] getRoster failed:', rosterErr?.message);
             }
         } catch (e) {
             console.error('[SquadWars] Load failed:', e);
+            setLoadError('Couldn\'t load Squad Wars. Tap "Retry" to try again.');
         }
         setLoading(false);
-    }, [mySquadId]);
+    }, [mySquadId, invokeWithRetry]);
 
     // Wait for the squad membership check to finish before fetching war data,
     // so we don't fire one round-trip with mySquadId=null and another a moment
@@ -232,6 +278,16 @@ export default function SquadWars({ isCarousel }) {
                         );
                     })}
                 </div>
+
+                {loadError && !loading && (
+                    <div className="mb-3 bg-amber-950/50 border border-amber-600/60 rounded-lg p-3 flex items-center justify-between gap-3">
+                        <div className="text-xs text-amber-200 flex-1">⚠ {loadError}</div>
+                        <button onClick={() => { SoundManager.playUIClick(); loadData(); }}
+                            className="text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded transition-colors shrink-0">
+                            Retry
+                        </button>
+                    </div>
+                )}
 
                 <div className="flex-1 bg-[#0b0416]/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-3 md:p-5 shadow-[0_0_30px_rgba(239,68,68,0.12)] overflow-y-auto min-h-0">
                     {loading ? (
