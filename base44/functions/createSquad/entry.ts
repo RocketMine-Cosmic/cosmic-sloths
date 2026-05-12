@@ -31,6 +31,22 @@ Deno.serve(async (req) => {
 
         const tag = squadTag.toUpperCase().substring(0, 4);
         const today = new Date().toISOString().split('T')[0];
+        // Canonical ISO 8601 week id (Mon-start, Sun 23:59 UTC end) — MUST mirror
+        // lib/periodIds.js + saveScore + squadActions.resetPeriods. Previously stamped
+        // `today` (a YYYY-MM-DD date) into current_week, which lexicographically compares
+        // SMALLER than any "YYYY-Www" string — causing resetPeriods to fire the weekly-kills
+        // wipe branch on every page load until something else re-stamped it. New squads
+        // looked like their weekly kills were resetting day-to-day (Anubis bug 2026-05-12).
+        const currentWeekId = (() => {
+            const now = new Date();
+            const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            const dayNum = tmp.getUTCDay() || 7;
+            tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+            const isoYear = tmp.getUTCFullYear();
+            const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+            const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+            return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+        })();
 
         const [existingName, existingTag, existingMembership] = await Promise.all([
             base44.asServiceRole.entities.Squad.filter({ name: squadName }),
@@ -46,7 +62,7 @@ Deno.serve(async (req) => {
             name: squadName, tag, description: squadDesc || '',
             owner_wallet: walletAddress, icon: '🛡️',
             privacy: 'open',
-            weekly_kills: 0, current_week: today,
+            weekly_kills: 0, current_week: currentWeekId,
             daily_kills: 0, current_day: today,
             member_count: 1, xp: 0, level: 1
         });

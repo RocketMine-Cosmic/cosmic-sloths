@@ -605,9 +605,17 @@ Deno.serve(async (req) => {
             if (!squad) return Response.json({ error: 'Squad not found.' }, { status: 404 });
 
             const safePatch = {};
-            // Weekly rollover: only if the squad's stored week is BEHIND the canonical week.
-            // Roll prior weekly_kills into XP, then zero weekly_kills and stamp canonical week.
-            if (squad.current_week && squad.current_week < canonicalWeek) {
+            // Detect malformed current_week stamps (anything not in "YYYY-Www" format).
+            // The old createSquad stamped a date ("2026-05-12") here, which lexicographically
+            // compares SMALLER than any "YYYY-Www" string — so the wipe branch below fires
+            // every page load and the squad's weekly_kills appear to reset day-to-day
+            // (Anubis bug 2026-05-12). Heal those without zeroing kills.
+            const isCanonicalWeekFormat = /^\d{4}-W\d{2}$/.test(squad.current_week || '');
+            if (!isCanonicalWeekFormat) {
+                safePatch.current_week = canonicalWeek;
+            } else if (squad.current_week < canonicalWeek) {
+                // Weekly rollover: stored week is BEHIND canonical. Roll weekly_kills into XP,
+                // zero weekly_kills, stamp canonical week.
                 safePatch.current_week = canonicalWeek;
                 safePatch.weekly_kills = 0;
                 safePatch.xp = (squad.xp || 0) + (squad.weekly_kills || 0);
