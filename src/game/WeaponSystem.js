@@ -226,8 +226,11 @@ export function fireWeaponLogic(engine, w) {
         });
     }
     else if (w.id === 'novaPulse') {
-        const primaryColor = isMastered ? '#ff00ff' : '#00ffff';
-        const secondaryColor = isMastered ? '#8a2be2' : '#ffffff';
+        // masteryDesc explicitly says "(Purple Blast)" — primary was magenta/pink (#ff00ff)
+        // which reads more as hot pink than purple. Swapped to true purple/violet so the
+        // mastered pulse matches its description (Hugo audit 2026-05-12).
+        const primaryColor = isMastered ? '#9400d3' : '#00ffff';
+        const secondaryColor = isMastered ? '#c77dff' : '#ffffff';
         
         if (engine.player.charAugments?.includes('nova_chain')) {
             for(let i=0; i<2; i++) {
