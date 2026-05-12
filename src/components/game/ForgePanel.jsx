@@ -32,7 +32,7 @@ const CHAR_AUGMENTS = {
     ],
     pandypaws:   [
         { id: 'pan_armor',   name: 'Reactive Plating',      desc: '+3 armor permanently',                  cost: 5,  rarity: 'Common' },
-        { id: 'pan_stomp',   name: 'Seismic Stomp',         desc: 'Melee hits slow enemies by 20%',        cost: 15, rarity: 'Rare'   },
+        { id: 'pan_stomp',   name: 'Seismic Stomp',         desc: 'Melee hits slow enemies by 50% for 2s', cost: 15, rarity: 'Rare'   },
         { id: 'pan_fortress',name: 'Iron Fortress',         desc: 'Take 15% less damage at full health',   cost: 30, rarity: 'Epic'   },
     ],
     novabyte:    [
@@ -53,7 +53,7 @@ const CHAR_AUGMENTS = {
     codebreaker: [
         { id: 'code_xp',     name: 'XP Exploit',            desc: '+15% XP gain permanently',              cost: 5,  rarity: 'Common' },
         { id: 'code_hack',   name: 'System Hack',           desc: 'Kills have 5% chance to spawn gold',    cost: 15, rarity: 'Rare'   },
-        { id: 'code_virus',  name: 'Cascade Virus',         desc: 'Kills spread DOT to nearby enemies',    cost: 30, rarity: 'Epic'   },
+        { id: 'code_virus',  name: 'Cascade Virus',         desc: 'Kills infect nearby enemies — they fight each other', cost: 30, rarity: 'Epic'   },
     ],
     dataphantom: [
         { id: 'dat_ghost',   name: 'Ghost Protocol',        desc: 'Start each run with 5s invincibility',  cost: 5,  rarity: 'Common' },

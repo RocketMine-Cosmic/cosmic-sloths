@@ -567,7 +567,10 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 5 + w.level,
-            color: '#ff0000',
+            // Hellfire description says "Blue flames that persist" — was red (#ff0000)
+            // which contradicted the description and clashed visually with napalm.
+            // Deep sky blue distinguishes it from napalm mastery's lighter blue.
+            color: '#1E90FF',
             isAoe: true,
             burn: true,
             isMastered: true,
