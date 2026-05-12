@@ -196,14 +196,21 @@ Deno.serve(async (req) => {
             Deno.env.get('OMENX_REWARDS_API_KEY_4'),
         ].filter(Boolean);
 
-        let txId = '';
-        let chunks = 0;
-        if (topups.length > 0) {
-            const result = await grantBatchChunked(topups, apiBaseUrl, rewardsKeys, `weekly top-up ${period_id}`);
-            txId = result.txId;
-            chunks = result.chunks;
-            // Log each top-up
-            await Promise.all(topups.map(t => db.entities.PayoutLog.create({
+        // Resumable: process one chunk per invocation, log immediately after each
+        // successful chunk so a timeout mid-run doesn't lose data. The caller
+        // (or us) just re-runs the function until topup_count === 0.
+        const maxChunks = Number(body.maxChunks) || 1;
+        const allChunks = [];
+        for (let i = 0; i < topups.length; i += CHUNK_SIZE) allChunks.push(topups.slice(i, i + CHUNK_SIZE));
+        const chunksToRun = allChunks.slice(0, maxChunks);
+        let totalLogged = 0;
+        let lastTxId = '';
+        for (let ci = 0; ci < chunksToRun.length; ci++) {
+            const chunk = chunksToRun[ci];
+            const { txId } = await grantBatchChunked(chunk, apiBaseUrl, rewardsKeys, `weekly top-up ${period_id} chunk-${ci + 1}`);
+            lastTxId = txId;
+            // Log immediately so re-runs skip these wallets
+            await Promise.all(chunk.map(t => db.entities.PayoutLog.create({
                 period_id,
                 period_type: 'weekly_topup',
                 wallet_address: t.walletAddress,
@@ -212,25 +219,26 @@ Deno.serve(async (req) => {
                 rank: t.rank,
                 tx_id: txId,
             })));
+            totalLogged += chunk.length;
         }
+        const remaining = topups.length - totalLogged;
 
         try {
             await db.entities.AdminChangesLog.create({
                 wallet_address: 'system',
                 action_type: 'reward_adjustment',
-                description: `Weekly top-up for ${period_id} — paid ${topups.length} players (${totalTopupAmount} OMENX) to fix top-45 dilution`,
-                details: { period_id, topup_count: topups.length, topup_total: totalTopupAmount, tx_id: txId },
+                description: `Weekly top-up for ${period_id} — paid ${totalLogged} this run (${remaining} remaining) to fix top-45 dilution`,
+                details: { period_id, paid_this_run: totalLogged, remaining_after_run: remaining, last_tx_id: lastTxId },
             });
         } catch {}
 
         return Response.json({
             success: true,
             period_id,
-            topup_count: topups.length,
+            paid_this_run: totalLogged,
+            remaining_after_run: remaining,
             topup_total: totalTopupAmount,
-            chunks,
-            tx_id: txId,
-            topups,
+            last_tx_id: lastTxId,
         });
     } catch (error) {
         console.error('[topupWeeklyPayout] ERROR:', error);
