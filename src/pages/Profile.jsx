@@ -436,17 +436,31 @@ export default function Profile({ isCarousel }) {
                             </div>
                         ) : (
                             <div className="grid gap-2 md:gap-3 max-h-[200px] md:max-h-[300px] overflow-y-auto pr-2">
-                                {rewardsHistory.map((reward) => (
-                                    <div key={reward.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
-                                        <div>
-                                            <div className="font-bold text-white mb-1">{reward.reason}</div>
-                                            <div className="text-xs text-slate-400">Period: {reward.period_id}</div>
+                                {rewardsHistory.map((reward) => {
+                                    const lbLabel = reward.period_type === 'weekly' ? 'Weekly Leaderboard'
+                                        : reward.period_type === 'seasonal' ? 'Seasonal Leaderboard'
+                                        : reward.period_type === 'staff_weekly' ? 'Staff Payout'
+                                        : reward.period_type || 'Leaderboard';
+                                    const isStaff = reward.period_type === 'staff_weekly';
+                                    const showRank = !isStaff && reward.rank && reward.rank > 0;
+                                    return (
+                                    <div key={reward.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center gap-3">
+                                        <div className="min-w-0">
+                                            <div className="font-bold text-white mb-1 truncate">{reward.reason || lbLabel}</div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-[10px] uppercase tracking-wider font-bold bg-cyan-900/40 text-cyan-300 border border-cyan-700/50 px-1.5 py-0.5 rounded">{lbLabel}</span>
+                                                {showRank && (
+                                                    <span className="text-[10px] uppercase tracking-wider font-bold bg-amber-900/40 text-amber-300 border border-amber-700/50 px-1.5 py-0.5 rounded">Rank #{reward.rank}</span>
+                                                )}
+                                                <span className="text-xs text-slate-400">{reward.period_id}</span>
+                                            </div>
                                         </div>
-                                        <div className="bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
+                                        <div className="bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 shrink-0">
                                             <Hexagon className="w-4 h-4 fill-emerald-400 text-emerald-400" /> +{reward.amount.toLocaleString()}
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
