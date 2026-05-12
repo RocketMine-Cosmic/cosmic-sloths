@@ -122,17 +122,16 @@ export function levelUp(engine) {
 }
 
 export function generateChoices(engine) {
-    // S6+ — weapon picks now use a dedicated `weaponLevels` field so the rarity
-    // tier feels actually special (Common +1, Rare +2, Epic +3, Legendary +5).
-    // Old behaviour reused `mult` for both passive scaling and weapon levels,
-    // which gave Rare = 1.5 → truncated to 1 (identical to Common) and made
-    // Legendary feel barely different from Epic. S5 keeps the legacy values.
-    const s6Weapons = isS6OrLater();
+    // Weapon picks use a dedicated `weaponLevels` field so each rarity tier feels
+    // actually special. Old behaviour reused `mult` for both passive scaling and
+    // weapon levels, which gave Rare = 1.5 → truncated to 1 (identical to Common).
+    // Now Common +1, Rare +2, Epic +3, Legendary +5 on both S5 and S6+ so grey
+    // and blue picks are clearly distinct (player feedback 2026-05-12).
     const rarities = [
-        { name: 'Common',    mult: 1,   weight: 60, weaponLevels: s6Weapons ? 1 : 1 },
-        { name: 'Rare',      mult: 1.5, weight: 25, weaponLevels: s6Weapons ? 2 : 1 },
-        { name: 'Epic',      mult: 2,   weight: 10, weaponLevels: s6Weapons ? 3 : 2 },
-        { name: 'Legendary', mult: 3,   weight: 5,  weaponLevels: s6Weapons ? 5 : 3 }
+        { name: 'Common',    mult: 1,   weight: 60, weaponLevels: 1 },
+        { name: 'Rare',      mult: 1.5, weight: 25, weaponLevels: 2 },
+        { name: 'Epic',      mult: 2,   weight: 10, weaponLevels: 3 },
+        { name: 'Legendary', mult: 3,   weight: 5,  weaponLevels: 5 }
     ];
 
     const getRarity = () => {
