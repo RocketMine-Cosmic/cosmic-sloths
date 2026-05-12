@@ -533,6 +533,8 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'orbitalDefense') {
+        // Evolves from slothSwarm whose mastered color is red (#FF0000).
+        // Was magenta — broke the parent-color inheritance rule (Hugo audit 2026-05-12).
         const count = 4 + Math.floor(w.level / 2);
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + engine.time * 3;
@@ -542,7 +544,7 @@ export function fireWeaponLogic(engine, w) {
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 30) {
                     engine.damageEnemy(e, dmg * 0.5, { weaponId: w.id });
-                    engine.addParticle(e.x, e.y, '#ff00ff', 3);
+                    engine.addParticle(e.x, e.y, '#ff3030', 3);
                 }
             });
             
@@ -563,7 +565,7 @@ export function fireWeaponLogic(engine, w) {
                     damage: dmg,
                     pierce: 5 + Math.floor(w.level/2),
                     life: 2.0,
-                    color: '#ff00ff',
+                    color: '#ff3030',
                     type: 'beam'
                 });
             }
@@ -612,7 +614,9 @@ export function fireWeaponLogic(engine, w) {
         spawnCollapse(1.4, 600);
     }
     else if (w.id === 'aegisMatrix') {
-        engine.addParticle(engine.player.x, engine.player.y, '#00ff88', 12, 'circle', 2 * area, { speed: 300 });
+        // Evolves from shieldBubble whose mastered color is gold (#ffd700).
+        // Was green — broke the parent-color inheritance rule (Hugo audit 2026-05-12).
+        engine.addParticle(engine.player.x, engine.player.y, '#ffd700', 12, 'circle', 2 * area, { speed: 300 });
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -620,7 +624,7 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 2.5,
-            color: '#00ff88',
+            color: '#ffd700',
             isAoe: true,
             pushback: 300,
             isMastered: true,
@@ -646,7 +650,7 @@ export function fireWeaponLogic(engine, w) {
                 vx: Math.cos(a) * 350 * engine.player.projSpeedMult,
                 vy: Math.sin(a) * 350 * engine.player.projSpeedMult,
                 radius: 6, damage: dmg * 0.6, pierce: 1, life: 2.0,
-                color: '#00ff88', type: 'missile', weaponId: 'aegisMatrix'
+                color: '#ffd700', type: 'missile', weaponId: 'aegisMatrix'
             });
         }
     }
