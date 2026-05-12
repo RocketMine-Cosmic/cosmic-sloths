@@ -47,19 +47,25 @@ Deno.serve(async (_req) => {
         let raw = null;
         let lastErr = null;
         let workingKeyName = null;
+        const attempts = [];
         for (const [name, key] of candidateKeys) {
             try {
                 const sdk = new OmenXServerSDK({ apiKey: key, apiBaseUrl });
                 raw = await sdk.getTokenSpotUsdPrices(CHAIN_ID, [TOKENS.OMENX, TOKENS.GMT, TOKENS.BNB]);
                 workingKeyName = name;
+                attempts.push({ name, ok: true });
                 break;
             } catch (e) {
-                lastErr = e?.message || String(e);
+                const msg = e?.message || String(e);
+                lastErr = msg;
+                attempts.push({ name, ok: false, err: msg.slice(0, 200) });
             }
         }
+        console.log('[getTokenPrices] key attempts:', JSON.stringify(attempts));
         if (!raw) {
             return Response.json({
                 error: 'No API key in this app has the `prices:read` scope yet. Generate one on the OmenX dev portal and add it as a secret.',
+                attempts,
                 lastErr,
             }, { status: 403 });
         }
