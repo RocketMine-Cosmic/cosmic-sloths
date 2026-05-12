@@ -125,6 +125,51 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
+// Rank-tier buckets — each tier becomes its own batch (and own OmenX TX),
+// so the batch-level `note` describes the exact rank or rank band being paid.
+function rankTierLabel(rank) {
+    if (rank === 1) return { key: 'r1',   label: 'Rank #1' };
+    if (rank === 2) return { key: 'r2',   label: 'Rank #2' };
+    if (rank === 3) return { key: 'r3',   label: 'Rank #3' };
+    if (rank >= 4  && rank <= 10) return { key: 'r4-10',  label: 'Ranks #4–10' };
+    if (rank >= 11 && rank <= 20) return { key: 'r11-20', label: 'Ranks #11–20' };
+    if (rank >= 21 && rank <= 30) return { key: 'r21-30', label: 'Ranks #21–30' };
+    if (rank >= 31 && rank <= 40) return { key: 'r31-40', label: 'Ranks #31–40' };
+    if (rank >= 41 && rank <= 45) return { key: 'r41-45', label: 'Ranks #41–45' };
+    return { key: 'other', label: `Rank #${rank}` };
+}
+
+// Group ranked payments into tier buckets and send each tier as its own
+// grant-batch HTTP call so the OmenX-side note reflects the recipient's rank.
+async function postTieredBatches(payments, apiBaseUrl, apiKey, baseNote) {
+    if (payments.length === 0) return { txId: '' };
+    const tiers = new Map();
+    for (const p of payments) {
+        const { key, label } = rankTierLabel(p.rank);
+        if (!tiers.has(key)) tiers.set(key, { label, payments: [] });
+        tiers.get(key).payments.push(p);
+    }
+    const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'r21-30', 'r31-40', 'r41-45', 'other'];
+    const txIds = [];
+    for (const key of order) {
+        const tier = tiers.get(key);
+        if (!tier) continue;
+        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
+            }),
+        });
+        const batchResult = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+        const txId = batchResult?.transactionId || batchResult?.txHash || '';
+        if (txId) txIds.push(txId);
+    }
+    return { txId: txIds.join(',') };
+}
+
 async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.20);
     const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 1000);
@@ -152,24 +197,31 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
         .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * resolveStaffPct(a)), player_name: a.admin_name || a.wallet_address, isStaff: true }))
         .filter(p => p.amount >= 1);
 
-    const allPayments = [...payments, ...staffPayments];
-
-    if (allPayments.length === 0) {
+    if (payments.length === 0 && staffPayments.length === 0) {
         await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({
-            payments: allPayments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
-            gameId: GAME_ID, gameName: GAME_NAME, note: `weekly payout ${pool.period_id}`,
-        }),
-    });
-    const batchResult = await response.json();
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-    const txId = batchResult?.transactionId || batchResult?.txHash || '';
+    // Players: one batch per rank tier so OmenX TX history shows exact rank/band.
+    // Staff: separate batch (rank doesn't apply).
+    const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
+    const { txId: playerTxId } = await postTieredBatches(payments, apiBaseUrl, apiKey, playerBase);
+
+    let staffTxId = '';
+    if (staffPayments.length > 0) {
+        const staffResponse = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                payments: staffPayments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                gameId: GAME_ID, gameName: GAME_NAME, note: `${playerBase} — Staff share`,
+            }),
+        });
+        const staffResult = await staffResponse.json().catch(() => ({}));
+        if (!staffResponse.ok) throw new Error(`Staff batch failed — HTTP ${staffResponse.status}: ${JSON.stringify(staffResult)}`);
+        staffTxId = staffResult?.transactionId || staffResult?.txHash || '';
+    }
+    const txId = [playerTxId, staffTxId].filter(Boolean).join(',');
 
     for (const p of payments) {
         await base44.asServiceRole.entities.PayoutLog.create({
@@ -209,22 +261,14 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({
-            payments: payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
-            gameId: GAME_ID, gameName: GAME_NAME, note: `seasonal payout ${pool.period_id}`,
-        }),
-    });
-    const batchResult = await response.json();
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+    // One batch per rank tier so OmenX TX history shows exact rank/band.
+    const { txId } = await postTieredBatches(payments, apiBaseUrl, apiKey, `Cosmic Sloths seasonal payout ${pool.period_id}`);
 
     for (const p of payments) {
         await base44.asServiceRole.entities.PayoutLog.create({
             period_id: pool.period_id, period_type: 'seasonal',
             wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
-            amount: p.amount, rank: p.rank, tx_id: batchResult?.transactionId || batchResult?.txHash || ''
+            amount: p.amount, rank: p.rank, tx_id: txId
         });
     }
 
