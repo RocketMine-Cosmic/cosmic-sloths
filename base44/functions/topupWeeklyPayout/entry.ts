@@ -196,18 +196,32 @@ Deno.serve(async (req) => {
             Deno.env.get('OMENX_REWARDS_API_KEY_4'),
         ].filter(Boolean);
 
-        // Resumable: process one chunk per invocation, log immediately after each
+        // Resumable: process chunks per invocation, log immediately after each
         // successful chunk so a timeout mid-run doesn't lose data. The caller
-        // (or us) just re-runs the function until topup_count === 0.
+        // (or us) just re-runs the function until remaining_after_run === 0.
+        //
+        // Each chunk's note describes the rank tier of its payments so the
+        // OmenX-side transaction history reflects which rank/band was paid.
+        // We sort topups by rank ascending and chunk normally — chunks that
+        // straddle a tier boundary get a "Ranks #X–Y" note covering the span.
         const maxChunks = Number(body.maxChunks) || 1;
+        const sortedTopups = [...topups].sort((a, b) => a.rank - b.rank);
         const allChunks = [];
-        for (let i = 0; i < topups.length; i += CHUNK_SIZE) allChunks.push(topups.slice(i, i + CHUNK_SIZE));
+        for (let i = 0; i < sortedTopups.length; i += CHUNK_SIZE) allChunks.push(sortedTopups.slice(i, i + CHUNK_SIZE));
         const chunksToRun = allChunks.slice(0, maxChunks);
+
+        const chunkNote = (chunk) => {
+            const minRank = chunk[0].rank;
+            const maxRank = chunk[chunk.length - 1].rank;
+            const rankPart = minRank === maxRank ? `Rank #${minRank}` : `Ranks #${minRank}–${maxRank}`;
+            return `Cosmic Sloths weekly top-up ${period_id} — ${rankPart}`;
+        };
+
         let totalLogged = 0;
         let lastTxId = '';
         for (let ci = 0; ci < chunksToRun.length; ci++) {
             const chunk = chunksToRun[ci];
-            const { txId } = await grantBatchChunked(chunk, apiBaseUrl, rewardsKeys, `weekly top-up ${period_id} chunk-${ci + 1}`);
+            const { txId } = await grantBatchChunked(chunk, apiBaseUrl, rewardsKeys, chunkNote(chunk));
             lastTxId = txId;
             // Log immediately so re-runs skip these wallets
             await Promise.all(chunk.map(t => db.entities.PayoutLog.create({
@@ -221,7 +235,7 @@ Deno.serve(async (req) => {
             })));
             totalLogged += chunk.length;
         }
-        const remaining = topups.length - totalLogged;
+        const remaining = sortedTopups.length - totalLogged;
 
         try {
             await db.entities.AdminChangesLog.create({

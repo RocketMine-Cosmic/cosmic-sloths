@@ -153,6 +153,49 @@ function getWeeklyRewardPercentage(rank) {
 
 const CHUNK_SIZE = 20;
 
+// Rank-tier buckets — each tier becomes its own batch (and own OmenX TX),
+// so the batch-level `note` describes the exact rank or rank band being paid.
+// Top 3 get individual labels ("Rank #1", "Rank #2", "Rank #3"); the rest get
+// band labels ("Ranks #4–10", etc). Out-of-band payments fall through to a
+// generic "Other" tier (shouldn't happen — top 45 is capped — but safe fallback).
+function rankTierLabel(rank) {
+    if (rank === 1) return { key: 'r1',   label: 'Rank #1' };
+    if (rank === 2) return { key: 'r2',   label: 'Rank #2' };
+    if (rank === 3) return { key: 'r3',   label: 'Rank #3' };
+    if (rank >= 4  && rank <= 10) return { key: 'r4-10',  label: 'Ranks #4–10' };
+    if (rank >= 11 && rank <= 20) return { key: 'r11-20', label: 'Ranks #11–20' };
+    if (rank >= 21 && rank <= 30) return { key: 'r21-30', label: 'Ranks #21–30' };
+    if (rank >= 31 && rank <= 40) return { key: 'r31-40', label: 'Ranks #31–40' };
+    if (rank >= 41 && rank <= 45) return { key: 'r41-45', label: 'Ranks #41–45' };
+    return { key: 'other', label: `Rank #${rank}` };
+}
+
+// Group ranked payments into tier buckets and send each tier as its own batch
+// so the OmenX-side transaction note reflects the recipient's rank/band.
+// Preserves ordering within tiers (rank ascending). Returns combined tx ids + chunk count.
+async function grantTieredBatches(payments, apiBaseUrl, rewardsKeys, gameId, gameName, baseNote) {
+    if (payments.length === 0) return { txId: '', chunks: 0 };
+    const tiers = new Map(); // key -> { label, payments[] }
+    for (const p of payments) {
+        const { key, label } = rankTierLabel(p.rank);
+        if (!tiers.has(key)) tiers.set(key, { label, payments: [] });
+        tiers.get(key).payments.push(p);
+    }
+    // Preserve tier order: r1, r2, r3, r4-10, r11-20, r21-30, r31-40, r41-45, other
+    const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'r21-30', 'r31-40', 'r41-45', 'other'];
+    const allTxIds = [];
+    let totalChunks = 0;
+    for (const key of order) {
+        const tier = tiers.get(key);
+        if (!tier) continue;
+        const tierNote = `${baseNote} — ${tier.label}`;
+        const { txId, chunks } = await grantBatchChunked(tier.payments, apiBaseUrl, rewardsKeys, gameId, gameName, tierNote);
+        if (txId) allTxIds.push(txId);
+        totalChunks += chunks;
+    }
+    return { txId: allTxIds.join(','), chunks: totalChunks };
+}
+
 async function grantBatchChunked(allPayments, apiBaseUrl, rewardsKeys, gameId, gameName, note) {
     if (allPayments.length === 0) return { txId: '', chunks: 0 };
     const chunks = [];
@@ -254,12 +297,17 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
         .filter(a => a.wallet_address)
         .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * resolveStaffPct(a)), player_name: a.admin_name || a.wallet_address, isStaff: true }))
         .filter(p => p.amount >= 1);
-    const allPayments = [...payments, ...staffPayments];
-    if (allPayments.length === 0) {
+    if (payments.length === 0 && staffPayments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
-    const { txId, chunks } = await grantBatchChunked(allPayments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `weekly payout ${pool.period_id}`);
+    // Players: one batch per rank tier so OmenX TX history shows the exact rank/band.
+    // Staff: separate single batch (rank doesn't apply — they're not on the leaderboard).
+    const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
+    const { txId: playerTxId, chunks: playerChunks } = await grantTieredBatches(payments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, playerBase);
+    const { txId: staffTxId, chunks: staffChunks } = await grantBatchChunked(staffPayments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `Cosmic Sloths weekly payout ${pool.period_id} — Staff share`);
+    const txId = [playerTxId, staffTxId].filter(Boolean).join(',');
+    const chunks = playerChunks + staffChunks;
     await Promise.all([
         db.entities.TokenPool.update(pool.id, { distributed: true }),
         ...payments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'weekly', wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress, amount: p.amount, rank: p.rank, tx_id: txId })),
@@ -285,7 +333,8 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
-    const { txId, chunks } = await grantBatchChunked(payments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `seasonal payout ${pool.period_id}`);
+    // One batch per rank tier so OmenX TX history shows the exact rank/band.
+    const { txId, chunks } = await grantTieredBatches(payments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `Cosmic Sloths seasonal payout ${pool.period_id}`);
     await Promise.all([
         db.entities.TokenPool.update(pool.id, { distributed: true }),
         ...payments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'seasonal', wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress, amount: p.amount, rank: p.rank, tx_id: txId })),
