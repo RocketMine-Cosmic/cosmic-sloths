@@ -483,7 +483,11 @@ export function fireWeaponLogic(engine, w) {
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         const spawnOffset = engine.player.radius + 5;
         
-        engine.addParticle(engine.player.x, engine.player.y, '#ffaa00', 10, 'spark', 2 * area, { speed: 400 });
+        // Supernova Beam evolves from napBeam (whose mastered form is the "Blue Beam"),
+        // so the evolution should preserve that blue identity rather than flipping to
+        // orange. Bright cyan-blue keeps the supernova "super-charged" feel while
+        // honoring the parent weapon's mastery color (Hugo audit 2026-05-12).
+        engine.addParticle(engine.player.x, engine.player.y, '#4169E1', 10, 'spark', 2 * area, { speed: 400 });
         
         engine.projectiles.push({
             x: engine.player.x + Math.cos(angle) * spawnOffset,
@@ -494,7 +498,7 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 10 + w.level,
             life: 3,
-            color: '#ffaa00',
+            color: '#4169E1',
             type: 'supernova_beam',
             isMastered: true,
             weaponId: 'supernovaBeam'
