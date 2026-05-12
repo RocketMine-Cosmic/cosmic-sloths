@@ -22,14 +22,17 @@ Deno.serve(async (req) => {
         if (!apiKey) return Response.json({ error: 'No payment key configured' }, { status: 500 });
 
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
-        const wallet = user.wallet_address || '0x0000000000000000000000000000000000000000';
+        // Use a wallet that definitely has zero OMENX so the probe can't accidentally charge.
+        // OmenX should reject with INSUFFICIENT_FUNDS (proving settlement is live) instead of
+        // succeeding. Real player wallets are NOT used here.
+        const wallet = '0x000000000000000000000000000000000000dEaD';
         const idempotencyKey = `probe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
         const start = Date.now();
         try {
             const res = await sdk.createPurchase({
                 playerWallet: wallet,
-                skuId: '__health_probe_invalid_sku__',
+                skuId: 'ingame-xp-buff',
                 quantity: 1,
                 idempotencyKey,
                 paymentCurrency: 'OMENX',
