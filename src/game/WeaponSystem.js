@@ -344,6 +344,9 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'thornySwarm') {
+        // Display name is "Plasma Swarm" with "plasma whips" — old forest-green particles
+        // were a leftover from when this was called "Thorny Swarm" (plant theme).
+        // Plasma cyan + magenta now matches the in-game weapon name/description (Hugo audit 2026-05-12).
         const count = 2 + Math.floor(w.level / 2);
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + engine.time * 4;
@@ -353,7 +356,7 @@ export function fireWeaponLogic(engine, w) {
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 30) {
                     engine.damageEnemy(e, dmg * 0.3, { weaponId: w.id });
-                    engine.addParticle(e.x, e.y, '#228B22', 5);
+                    engine.addParticle(e.x, e.y, '#00ffff', 5);
                 }
             });
             
@@ -361,7 +364,7 @@ export function fireWeaponLogic(engine, w) {
                 engine.enemies.forEach(e => {
                     if (Math.hypot(e.x - px, e.y - py) < 120 * area) {
                         engine.damageEnemy(e, dmg, { weaponId: w.id });
-                        engine.addParticle(e.x, e.y, '#32CD32', 10);
+                        engine.addParticle(e.x, e.y, '#ff00ff', 10);
                     }
                 });
             }
@@ -674,7 +677,10 @@ export function fireWeaponLogic(engine, w) {
                 pierce: 999,
                 chainCount: 15,
                 life: 6,
-                color: '#ff0000',
+                // Description says "Multiple massive BLADES that ricochet wildly" — the base
+                // Ricochet Blade is metallic silver, so the evolution should be a brighter
+                // chrome/steel, not red flames (Hugo audit 2026-05-12).
+                color: '#e0e0e0',
                 weaponId: 'buzzsawSwarm',
                 type: 'buzzsaw',
                 rotation: 0,
