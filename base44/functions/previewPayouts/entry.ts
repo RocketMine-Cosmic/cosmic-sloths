@@ -2,7 +2,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: Base44 session → linked wallet → AdminWallet lookup.
 
-// Must match distributeRewards.js — payouts capped at top 45.
+// Must match distributeRewards.js — payouts capped at top 45, per-player cap 10000.
+const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
+
 function getWeeklyRewardPercentage(rank) {
     if (rank === 1) return 0.10;
     if (rank === 2) return 0.08;
@@ -50,7 +52,8 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     const multiplier = 1 / totalPct;
     const payments = [];
     for (let i = 0; i < uniqueScores.length; i++) {
-        const amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
+        let amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
+        amount = Math.min(amount, MAX_PAYOUT_PER_PLAYER_CAP);
         if (amount >= 1) {
             payments.push({
                 rank: i + 1,

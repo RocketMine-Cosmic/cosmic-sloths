@@ -3,6 +3,7 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
+const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 
 // Auth: Base44 session + 'distribute_rewards' permission, OR emergency master key.
 
@@ -115,7 +116,8 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     const multiplier = 1 / totalPct;
     const payments = [];
     for (let i = 0; i < uniqueScores.length; i++) {
-        const amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
+        let amount = Math.floor(rewardPool * getPercentageFn(i + 1) * multiplier);
+        amount = Math.min(amount, MAX_PAYOUT_PER_PLAYER_CAP);
         if (amount >= 1) {
             payments.push({ walletAddress: uniqueScores[i].wallet_address, amount, rank: i + 1, player_name: uniqueScores[i].player_name });
         }
