@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { RELICS, getCharacterMastery, CHARACTER_TALENTS } from '../../game/Constants';
 import { NFTPerkManager } from '../../game/NFTPerks';
 import { getTitleBuff } from '@/lib/playerTitles';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
+import { getStatus as getMaintStatus, subscribe as subscribeMaint } from '@/lib/maintenanceStatus';
 
 // Maps title-buff & talent stat keys to BuildSummary stat keys
 const STAT_KEY_MAP = {
@@ -52,7 +53,14 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
     const { nfts } = useCurrency();
     const { user: omenxUser } = useOmenXUser();
 
-    const { totals, sourceCount, xpBuffTimeLeft } = useMemo(() => {
+    // Global XP buff — admin-set server-wide multiplier (e.g. 2× XP for 24h).
+    // The GameEngine folds this into player.xpMult at run-start (see GameEngine.js
+    // ~line 311), so the build preview must too — otherwise players see no
+    // indication of the bonus they're actively receiving.
+    const [globalXpBuff, setGlobalXpBuff] = useState(() => getMaintStatus().globalXpBuff);
+    useEffect(() => subscribeMaint((s) => setGlobalXpBuff(s.globalXpBuff)), []);
+
+    const { totals, sourceCount, xpBuffTimeLeft, globalXpBuffTimeLeft } = useMemo(() => {
         const totals = {};
         let sourceCount = 0;
         let xpBuffTimeLeft = null;
@@ -182,8 +190,20 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
             xpBuffTimeLeft = `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        return { totals, sourceCount, xpBuffTimeLeft };
-    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, save.permanentUpgrades, save.weeklyUpgrades, save.seasonalUpgrades, save.permanentTalents, save.weeklyTalents, save.seasonalTalents, selectedChar, currentTime, vipLevel, nfts, omenxUser?.data?.player_title]);
+        // 9. Global XP buff (admin-set server-wide). Multiplier 1.5 = +50%, 2 = +100%, etc.
+        // Added as an additive bonus to xpMult for display parity with the other sources.
+        let globalXpBuffTimeLeft = null;
+        if (globalXpBuff && globalXpBuff.multiplier > 1 && globalXpBuff.expiresAt > currentTime) {
+            totals.xpMult = (totals.xpMult || 0) + (globalXpBuff.multiplier - 1);
+            sourceCount++;
+            const msLeft = globalXpBuff.expiresAt - currentTime;
+            const hrs = Math.floor(msLeft / 3600000);
+            const mins = Math.floor((msLeft % 3600000) / 60000);
+            globalXpBuffTimeLeft = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+        }
+
+        return { totals, sourceCount, xpBuffTimeLeft, globalXpBuffTimeLeft };
+    }, [save.equippedRelics, save.relicLevels, save.characterKills, save.sessionBuffs, save.permanentUpgrades, save.weeklyUpgrades, save.seasonalUpgrades, save.permanentTalents, save.weeklyTalents, save.seasonalTalents, selectedChar, currentTime, vipLevel, nfts, omenxUser?.data?.player_title, globalXpBuff]);
 
     const activeStats = STAT_ORDER.filter((k) => totals[k]);
 
@@ -206,6 +226,7 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
                 <span className="text-[10px] md:text-xs text-slate-500 font-bold tracking-wider uppercase">
                     {sourceCount} {sourceCount === 1 ? 'src' : 'srcs'}
                     {xpBuffTimeLeft && <span className="text-emerald-400 ml-1.5">· XP {xpBuffTimeLeft}</span>}
+                    {globalXpBuffTimeLeft && <span className="text-amber-300 ml-1.5">· 🌐 {globalXpBuffTimeLeft}</span>}
                 </span>
             </div>
 
