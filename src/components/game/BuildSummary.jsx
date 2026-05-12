@@ -38,11 +38,11 @@ const STAT_DEFS = {
     relicFragMult: { label: 'Relic Frags', icon: '🧩', color: 'text-fuchsia-300', border: 'border-fuchsia-500/40', bg: 'bg-fuchsia-950/30', fmt: (v) => `+${Math.round(v * 100)}%` },
     projSpeedMult: { label: 'Proj Speed', icon: '🚀', color: 'text-sky-300', border: 'border-sky-500/40',     bg: 'bg-sky-950/30',     fmt: (v) => `+${Math.round(v * 100)}%` },
     critBonus:  { label: 'Crit',   icon: '🎯', color: 'text-orange-300',  border: 'border-orange-500/40',  bg: 'bg-orange-950/30',  fmt: (v) => `+${Math.round(v * 100)}%` },
-    luck:       { label: 'Luck',   icon: '🍀', color: 'text-lime-300',    border: 'border-lime-500/40',    bg: 'bg-lime-950/30',    fmt: (v) => `+${v}` },
+    luck:       { label: 'Luck',   icon: '🍀', color: 'text-lime-300',    border: 'border-lime-500/40',    bg: 'bg-lime-950/30',    fmt: (v) => `+${Number(v.toFixed(1))}` },
     regen:      { label: 'Regen',  icon: '❤️', color: 'text-pink-300',    border: 'border-pink-500/40',    bg: 'bg-pink-950/30',    fmt: (v) => `+${v.toFixed(1)}/s` },
-    armor:      { label: 'Armor',  icon: '🛡️', color: 'text-slate-300',  border: 'border-slate-500/40',   bg: 'bg-slate-900/50',   fmt: (v) => `+${v}` },
-    magnet:     { label: 'Magnet', icon: '🧲', color: 'text-indigo-300',  border: 'border-indigo-500/40',  bg: 'bg-indigo-950/30',  fmt: (v) => `+${v}` },
-    maxHp:      { label: 'Max HP+', icon: '💗', color: 'text-rose-300',   border: 'border-rose-500/40',    bg: 'bg-rose-950/30',    fmt: (v) => `+${v}` },
+    armor:      { label: 'Armor',  icon: '🛡️', color: 'text-slate-300',  border: 'border-slate-500/40',   bg: 'bg-slate-900/50',   fmt: (v) => `+${Math.round(v)}` },
+    magnet:     { label: 'Magnet', icon: '🧲', color: 'text-indigo-300',  border: 'border-indigo-500/40',  bg: 'bg-indigo-950/30',  fmt: (v) => `+${Math.round(v)}` },
+    maxHp:      { label: 'Max HP+', icon: '💗', color: 'text-rose-300',   border: 'border-rose-500/40',    bg: 'bg-rose-950/30',    fmt: (v) => `+${Math.round(v)}` },
 };
 
 // Order in which to render stats (only those with non-zero totals appear)
@@ -234,17 +234,20 @@ export default function BuildSummary({ save, selectedChar, currentTime }) {
                 {activeStats.map((statKey) => {
                     const def = STAT_DEFS[statKey];
                     if (!def) return null;
+                    const formatted = def.fmt(totals[statKey]);
                     return (
                         <div
                             key={statKey}
-                            className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 py-1 md:py-1.5 rounded-md border ${def.border} ${def.bg}`}
+                            title={`${def.label}: ${formatted}`}
+                            aria-label={`${def.label}: ${formatted}`}
+                            className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 py-1 md:py-1.5 rounded-md border ${def.border} ${def.bg} cursor-help`}
                         >
                             <span className="text-xs md:text-sm">{def.icon}</span>
                             <span className="text-[10px] md:text-xs uppercase tracking-wider font-bold text-slate-400 hidden sm:inline">
                                 {def.label}
                             </span>
                             <span className={`text-xs md:text-base font-black font-mono ${def.color}`}>
-                                {def.fmt(totals[statKey])}
+                                {formatted}
                             </span>
                         </div>
                     );
