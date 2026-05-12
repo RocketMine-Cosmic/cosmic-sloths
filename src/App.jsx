@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import OmenXCallback from './pages/OmenXCallback';
 import PlayCarousel from './pages/PlayCarousel';
@@ -71,26 +71,29 @@ const MainApp = () => {
       <React.Suspense fallback={fallback}>
         <Routes>
           <Route path="/" element={<PlayCarousel />} />
-          <Route path="/hub" element={<Hub />} />
-          <Route path="/upgrades" element={<Upgrades />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          {/* Carousel-mirrored standalone routes — redirect into the carousel
+              with the matching ?slide= so users always get the WarpMenu / arrows.
+              Routes NOT in this list (e.g. /admin, /squad-wars, /game) stay standalone. */}
+          <Route path="/hub" element={<Navigate to="/?slide=1" replace />} />
+          <Route path="/dailys" element={<Navigate to="/?slide=2" replace />} />
+          <Route path="/upgrades" element={<Navigate to="/?slide=3" replace />} />
+          <Route path="/leaderboard" element={<Navigate to="/?slide=4" replace />} />
+          <Route path="/squads" element={<Navigate to="/?slide=5" replace />} />
+          <Route path="/bestiary" element={<Navigate to="/?slide=7" replace />} />
+          <Route path="/synergy-codex" element={<Navigate to="/?slide=8" replace />} />
+          <Route path="/mastery" element={<Navigate to="/?slide=9" replace />} />
+          <Route path="/trials" element={<Navigate to="/?slide=10" replace />} />
+          <Route path="/global-raid" element={<Navigate to="/?slide=11" replace />} />
+          <Route path="/nft-dashboard" element={<Navigate to="/?slide=12" replace />} />
+          <Route path="/profile" element={<Navigate to="/?slide=13" replace />} />
+          <Route path="/jukebox" element={<Navigate to="/?slide=14" replace />} />
+          <Route path="/titles" element={<Navigate to="/?slide=15" replace />} />
           <Route path="/game" element={<Game />} />
           <Route path="/info" element={<Info />} />
           <Route path="/credits" element={<Credits />} />
           <Route path="/achievements" element={<Achievements />} />
-          <Route path="/squads" element={<Squads />} />
-          <Route path="/bestiary" element={<Bestiary />} />
-          <Route path="/synergy-codex" element={<SynergyCodex />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/nft-dashboard" element={<NFTDashboard />} />
-          <Route path="/trials" element={<LeviathanTrials />} />
-          <Route path="/dailys" element={<Dailys />} />
-          <Route path="/global-raid" element={<GlobalRaid />} />
-          <Route path="/mastery" element={<Mastery />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/sku-editor" element={<SkuEditor />} />
-          <Route path="/jukebox" element={<Jukebox />} />
-          <Route path="/titles" element={<Titles />} />
           <Route path="/loadouts" element={<Loadouts />} />
           <Route path="/squad-wars" element={<SquadWars />} />
           <Route path="/war-archive" element={<WarArchive />} />
@@ -115,26 +118,29 @@ const MainApp = () => {
     <>
     <Routes>
       <Route path="/" element={<PlayCarousel />} />
-      <Route path="/hub" element={<Hub />} />
-      <Route path="/upgrades" element={<Upgrades />} />
-      <Route path="/leaderboard" element={<LeaderboardPage />} />
+      {/* Carousel-mirrored standalone routes — redirect into the carousel
+          with the matching ?slide= so users always get the WarpMenu / arrows.
+          Routes NOT in this list (e.g. /admin, /squad-wars, /game) stay standalone. */}
+      <Route path="/hub" element={<Navigate to="/?slide=1" replace />} />
+      <Route path="/dailys" element={<Navigate to="/?slide=2" replace />} />
+      <Route path="/upgrades" element={<Navigate to="/?slide=3" replace />} />
+      <Route path="/leaderboard" element={<Navigate to="/?slide=4" replace />} />
+      <Route path="/squads" element={<Navigate to="/?slide=5" replace />} />
+      <Route path="/bestiary" element={<Navigate to="/?slide=7" replace />} />
+      <Route path="/synergy-codex" element={<Navigate to="/?slide=8" replace />} />
+      <Route path="/mastery" element={<Navigate to="/?slide=9" replace />} />
+      <Route path="/trials" element={<Navigate to="/?slide=10" replace />} />
+      <Route path="/global-raid" element={<Navigate to="/?slide=11" replace />} />
+      <Route path="/nft-dashboard" element={<Navigate to="/?slide=12" replace />} />
+      <Route path="/profile" element={<Navigate to="/?slide=13" replace />} />
+      <Route path="/jukebox" element={<Navigate to="/?slide=14" replace />} />
+      <Route path="/titles" element={<Navigate to="/?slide=15" replace />} />
       <Route path="/game" element={<Game />} />
       <Route path="/info" element={<Info />} />
       <Route path="/credits" element={<Credits />} />
       <Route path="/achievements" element={<Achievements />} />
-      <Route path="/squads" element={<Squads />} />
-      <Route path="/bestiary" element={<Bestiary />} />
-      <Route path="/synergy-codex" element={<SynergyCodex />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/nft-dashboard" element={<NFTDashboard />} />
-      <Route path="/trials" element={<LeviathanTrials />} />
-      <Route path="/dailys" element={<Dailys />} />
-      <Route path="/global-raid" element={<GlobalRaid />} />
-      <Route path="/mastery" element={<Mastery />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/sku-editor" element={<SkuEditor />} />
-      <Route path="/jukebox" element={<Jukebox />} />
-      <Route path="/titles" element={<Titles />} />
       <Route path="/loadouts" element={<Loadouts />} />
       <Route path="/squad-wars" element={<SquadWars />} />
       <Route path="/war-archive" element={<WarArchive />} />
