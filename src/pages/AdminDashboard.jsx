@@ -38,6 +38,7 @@ import AdminRefreshPlayerNFTs from '../components/admin/AdminRefreshPlayerNFTs';
 import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
 import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
 import AdminStaffPayouts from '../components/admin/AdminStaffPayouts';
+import AdminWeeklyTopup from '../components/admin/AdminWeeklyTopup';
 import AdminStaffPayoutBackfill from '../components/admin/AdminStaffPayoutBackfill';
 import MyStaffIncomeCard from '../components/admin/MyStaffIncomeCard';
 import AdminSquadChampions from '../components/admin/AdminSquadChampions';
@@ -332,7 +333,12 @@ export default function AdminDashboard() {
             case 'economy':     return <AdminEconomy walletAddress={adminWallet} />;
             case 'suspicious':  return <AdminSuspiciousRuns walletAddress={adminWallet} />;
             case 'chat':        return <AdminSquadChatModeration walletAddress={adminWallet} />;
-            case 'rewards':     return <AdminRewards walletAddress={adminWallet} />;
+            case 'rewards':     return (
+                <div className="space-y-4">
+                    {(isEmergencyKey || (callerPerms || []).includes('owner')) && <AdminWeeklyTopup />}
+                    <AdminRewards walletAddress={adminWallet} />
+                </div>
+            );
             case 'champions':   return <AdminSquadChampions walletAddress={adminWallet} />;
             case 'maintenance': return (
                 <div className="space-y-4">
