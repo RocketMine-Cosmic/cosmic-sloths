@@ -81,6 +81,16 @@ async function fetchBalance(force = false) {
     inFlightBalance = (async () => {
         try {
             const res = await base44.functions.invoke('getPlayerBalance', {});
+            // Server signals fetch-failure via ok:false. When that happens, we MUST
+            // NOT overwrite the cached balance with a phantom 0 — that's how players
+            // with real OMENX would briefly see "0 OMENX" during a transient OmenX
+            // API blip, click Buy, and get hit with an "insufficient" error. Keep
+            // the previous cached balance and let the next poll heal it.
+            const ok = res.data?.ok !== false; // treat missing field as success (legacy)
+            if (!ok) {
+                console.warn('[playerDataCache] balance fetch returned ok=false — keeping cached balance');
+                return;
+            }
             const balance = res.data?.balance ?? 0;
             lastBalanceFetchAt = Date.now();
             saveJSON('omenx_balance_cache', { balance, timestamp: lastBalanceFetchAt });
