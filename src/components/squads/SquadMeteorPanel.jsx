@@ -22,51 +22,47 @@ export default function SquadMeteorPanel() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [launching, setLaunching] = useState(false);
-    const handleAttackMeteor = useCallback(async () => {
+    const handleAttackMeteor = useCallback(() => {
         if (!state?.in_squad) return;
         if ((state?.my_attempts_remaining ?? 0) <= 0) {
             toast({ title: 'No attacks remaining', description: 'Resets at 00:00 UTC.', variant: 'destructive' });
             return;
         }
-        if (launching) return;
-        setLaunching(true);
         SoundManager.playUIClick();
-        // Reserve an attempt server-side BEFORE launching the run. This consumes
-        // the daily attempt immediately — an abandoned/quit run still costs an
-        // attempt (matches the original spec).
-        try {
-            const res = await base44.functions.invoke('submitSquadMeteorDamage', {
-                mode: 'start',
-                damage: 0,
+        // FAST LAUNCH (2026-05-13): navigate to /game immediately. The attempt
+        // reservation fires in the background and stashes the resulting attackId
+        // in sessionStorage — Game.jsx picks it up when it's ready to submit
+        // damage. If the reservation fails, Game.jsx falls back to the legacy
+        // single-call finish path (which charges an attempt at run-end instead).
+        try { sessionStorage.removeItem('squad_meteor_pending_attack'); } catch {}
+        try { sessionStorage.removeItem('squad_meteor_quit_toast'); } catch {}
+        // Mark reservation as in-flight so Game.jsx knows to wait briefly.
+        try { sessionStorage.setItem('squad_meteor_pending_attack', JSON.stringify({ status: 'pending', startedAt: Date.now() })); } catch {}
+        base44.functions.invoke('submitSquadMeteorDamage', { mode: 'start', damage: 0 })
+            .then(res => {
+                if (res.data?.error || !res.data?.attackId) {
+                    try { sessionStorage.setItem('squad_meteor_pending_attack', JSON.stringify({ status: 'failed', error: res.data?.error || 'reserve failed' })); } catch {}
+                    return;
+                }
+                try { sessionStorage.setItem('squad_meteor_pending_attack', JSON.stringify({ status: 'ready', attackId: res.data.attackId })); } catch {}
+            })
+            .catch(err => {
+                try { sessionStorage.setItem('squad_meteor_pending_attack', JSON.stringify({ status: 'failed', error: err?.message || 'network' })); } catch {}
             });
-            if (res.data?.error || !res.data?.attackId) {
-                toast({
-                    title: 'Cannot start attack',
-                    description: res.data?.error || 'Failed to reserve attempt. Try again.',
-                    variant: 'destructive',
-                });
-                setLaunching(false);
-                return;
-            }
-            const attackId = res.data.attackId;
-            const save = SaveManager.load();
-            const characterId = save?.lastSelectedChar || 'neobyte';
-            navigate('/game', {
-                state: {
-                    characterId,
-                    arenaId: 'quantum_meteor',
-                    difficultyId: 'normal',
-                    isEndless: false,
-                    isSquadMeteor: true,
-                    meteorAttackId: attackId,
-                },
-            });
-        } catch (e) {
-            toast({ title: 'Network error', description: e?.message || 'Try again.', variant: 'destructive' });
-            setLaunching(false);
-        }
-    }, [state, navigate, toast, launching]);
+
+        const save = SaveManager.load();
+        const characterId = save?.lastSelectedChar || 'neobyte';
+        navigate('/game', {
+            state: {
+                characterId,
+                arenaId: 'quantum_meteor',
+                difficultyId: 'normal',
+                isEndless: false,
+                isSquadMeteor: true,
+                // meteorAttackId resolved at submit-time via sessionStorage.
+            },
+        });
+    }, [state, navigate, toast]);
 
     const load = useCallback(async () => {
         try {
@@ -100,6 +96,25 @@ export default function SquadMeteorPanel() {
     useEffect(() => {
         load();
     }, [load]);
+
+    // Show a toast if we just came back from a quit/abandoned meteor run.
+    // The Game page writes this key in handleQuit before navigating away.
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem('squad_meteor_quit_toast');
+            if (!raw) return;
+            sessionStorage.removeItem('squad_meteor_quit_toast');
+            const parsed = JSON.parse(raw);
+            const dmg = Number(parsed?.damage || 0);
+            if (parsed?.error) {
+                toast({ title: 'Meteor attack failed', description: parsed.error, variant: 'destructive' });
+            } else if (dmg > 0) {
+                toast({ title: 'Damage submitted', description: `Dealt ${fmtNum(dmg)} damage to the meteor.` });
+            } else {
+                toast({ title: 'Attempt used', description: 'No damage submitted — quit too early.' });
+            }
+        } catch {}
+    }, [toast]);
 
     if (loading) {
         return (
@@ -178,11 +193,11 @@ export default function SquadMeteorPanel() {
                 {/* ATTACK METEOR — launches the dedicated DPS run */}
                 <button
                     onClick={handleAttackMeteor}
-                    disabled={my_attempts_remaining <= 0 || launching}
+                    disabled={my_attempts_remaining <= 0}
                     className="mt-3 w-full bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 hover:from-orange-500 hover:via-red-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-black text-sm uppercase tracking-widest shadow-[0_0_25px_rgba(220,38,38,0.45)] hover:shadow-[0_0_35px_rgba(220,38,38,0.7)] transition-all flex items-center justify-center gap-2 border border-red-400/60"
                 >
-                    {launching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
-                    {launching ? 'LAUNCHING…' : 'ATTACK METEOR'}
+                    <Crosshair className="w-4 h-4" />
+                    ATTACK METEOR
                     <span className="text-[10px] bg-black/30 px-2 py-0.5 rounded-full font-bold tracking-normal">
                         {my_attempts_remaining} left
                     </span>

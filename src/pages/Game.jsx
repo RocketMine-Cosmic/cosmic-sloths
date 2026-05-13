@@ -445,9 +445,21 @@ export default function Game() {
                 // the run-end modal (purely cosmetic — the level itself is already
                 // applied server-side regardless of whether we read the response).
                 if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0) {
+                    // FAST LAUNCH: attackId may have been reserved AFTER navigation.
+                    // Pull the latest value from sessionStorage if location.state didn't carry one.
+                    let resolvedAttackId = meteorAttackId || null;
+                    if (!resolvedAttackId) {
+                        try {
+                            const raw = sessionStorage.getItem('squad_meteor_pending_attack');
+                            if (raw) {
+                                const p = JSON.parse(raw);
+                                if (p?.status === 'ready' && p.attackId) resolvedAttackId = p.attackId;
+                            }
+                        } catch {}
+                    }
                     base44.functions.invoke('submitSquadMeteorDamage', {
                         mode: 'finish',
-                        attackId: meteorAttackId || null,
+                        attackId: resolvedAttackId,
                         damage: stats.meteorDamage,
                     }).then(res => {
                         if (res?.data?.leveled_up) {
@@ -526,9 +538,19 @@ export default function Game() {
                 }
                 // Squad Meteor — same flow as onGameOver above.
                 if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0) {
+                    let resolvedAttackId = meteorAttackId || null;
+                    if (!resolvedAttackId) {
+                        try {
+                            const raw = sessionStorage.getItem('squad_meteor_pending_attack');
+                            if (raw) {
+                                const p = JSON.parse(raw);
+                                if (p?.status === 'ready' && p.attackId) resolvedAttackId = p.attackId;
+                            }
+                        } catch {}
+                    }
                     base44.functions.invoke('submitSquadMeteorDamage', {
                         mode: 'finish',
-                        attackId: meteorAttackId || null,
+                        attackId: resolvedAttackId,
                         damage: stats.meteorDamage,
                     }).then(res => {
                         if (res?.data?.leveled_up) {
@@ -885,18 +907,41 @@ export default function Game() {
             // (attempt was already consumed at launch, so the row is updated rather
             // than created). Pulled directly from the engine since `stats` may not
             // include meteorDamage for the early-quit path.
-            const quitMeteorAttackId = location.state?.meteorAttackId;
-            const quitMeteorDamage = Math.floor(engine?.runMeteorDamage || 0);
-            if (engine?.arena?.id === 'quantum_meteor' && quitMeteorDamage > 0) {
-                try {
-                    await base44.functions.invoke('submitSquadMeteorDamage', {
-                        mode: 'finish',
-                        attackId: quitMeteorAttackId || null,
-                        damage: quitMeteorDamage,
-                    });
-                } catch (mErr) {
-                    console.warn('[Game] submitSquadMeteorDamage on quit failed:', mErr?.message);
+            if (engine?.arena?.id === 'quantum_meteor') {
+                const quitMeteorDamage = Math.floor(engine?.runMeteorDamage || 0);
+                // Resolve attackId: prefer the value from location.state, fall back
+                // to sessionStorage (FAST LAUNCH path where reservation lands after nav).
+                let quitMeteorAttackId = location.state?.meteorAttackId || null;
+                if (!quitMeteorAttackId) {
+                    try {
+                        const raw = sessionStorage.getItem('squad_meteor_pending_attack');
+                        if (raw) {
+                            const p = JSON.parse(raw);
+                            if (p?.status === 'ready' && p.attackId) quitMeteorAttackId = p.attackId;
+                        }
+                    } catch {}
                 }
+                let submitError = null;
+                if (quitMeteorDamage > 0) {
+                    try {
+                        await base44.functions.invoke('submitSquadMeteorDamage', {
+                            mode: 'finish',
+                            attackId: quitMeteorAttackId || null,
+                            damage: quitMeteorDamage,
+                        });
+                    } catch (mErr) {
+                        submitError = mErr?.message || 'Submit failed';
+                        console.warn('[Game] submitSquadMeteorDamage on quit failed:', mErr?.message);
+                    }
+                }
+                // Drop a toast payload for SquadMeteorPanel to display on mount.
+                try {
+                    sessionStorage.setItem('squad_meteor_quit_toast', JSON.stringify({
+                        damage: quitMeteorDamage,
+                        error: submitError,
+                    }));
+                    sessionStorage.removeItem('squad_meteor_pending_attack');
+                } catch {}
             }
         } catch (e) {
             console.error('[Game] handleQuit save failed:', e);
