@@ -62,7 +62,12 @@ Deno.serve(async (req) => {
         let newName, newTitle, newIcon;
 
         if (body?.event?.entity_name === 'PlayerSave') {
-            // Entity automation payload
+            // Entity automation payload — read from the TOP-LEVEL mirrored columns
+            // (player_name, player_title, pilot_icon) which is exactly what the
+            // trigger condition watches. Avoids the previous bug where the function
+            // read save_data.profile but the trigger watched top-level columns —
+            // causing every sync (37k runs in 5 days) to fire the trigger and then
+            // bail on "no_profile_change", hammering the DB for no reason.
             const data = body.data;
             const oldData = body.old_data || {};
             if (!data) {
@@ -71,31 +76,20 @@ Deno.serve(async (req) => {
             }
             walletAddress = data.wallet_address;
 
-            // Extract profile fields from save_data.profile (new path) with fallback
-            // to legacy top-level save_data.player_title / pilot_icon.
-            const saveData = typeof data.save_data === 'string'
-                ? (() => { try { return JSON.parse(data.save_data); } catch { return {}; } })()
-                : (data.save_data || {});
-            const oldSaveData = typeof oldData.save_data === 'string'
-                ? (() => { try { return JSON.parse(oldData.save_data); } catch { return {}; } })()
-                : (oldData.save_data || {});
+            // Compare against old_data — only mirror fields that actually changed
+            // to a non-empty value. Empty → empty transitions are no-ops.
+            const curName = data.player_name;
+            const oldName = oldData.player_name;
+            const curTitle = data.player_title;
+            const oldTitle = oldData.player_title;
+            const curIcon = data.pilot_icon;
+            const oldIcon = oldData.pilot_icon;
 
-            const profile = saveData.profile || {};
-            const oldProfile = oldSaveData.profile || {};
-
-            const curName = profile.player_name ?? saveData.player_name ?? data.player_name;
-            const oldName = oldProfile.player_name ?? oldSaveData.player_name ?? oldData.player_name;
-            const curTitle = profile.player_title ?? saveData.player_title;
-            const oldTitle = oldProfile.player_title ?? oldSaveData.player_title;
-            const curIcon = profile.pilot_icon ?? saveData.pilot_icon;
-            const oldIcon = oldProfile.pilot_icon ?? oldSaveData.pilot_icon;
-
-            // Only mirror fields that actually changed.
-            if (curName !== undefined && curName !== oldName) newName = curName;
+            if (curName && curName !== oldName) newName = curName;
             if (curTitle !== undefined && curTitle !== oldTitle) newTitle = curTitle;
             if (curIcon !== undefined && curIcon !== oldIcon) newIcon = curIcon;
 
-            // Nothing to mirror — bail. Most PlayerSave updates don't touch profile fields.
+            // Nothing actually changed — bail without doing any work.
             if (newName === undefined && newTitle === undefined && newIcon === undefined) {
                 return Response.json({ skipped: true, reason: 'no_profile_change' });
             }
