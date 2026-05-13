@@ -10,6 +10,14 @@
       "type": "string",
       "description": "Player's display name (mirrored from save_data for easy admin search)"
     },
+    "player_title": {
+      "type": "string",
+      "description": "Player's equipped title (mirrored from save_data.profile so the Profile Fan-Out automation can trigger on changes without scanning save_data)."
+    },
+    "pilot_icon": {
+      "type": "string",
+      "description": "Player's pilot icon emoji (mirrored from save_data.profile so the Profile Fan-Out automation can trigger on changes without scanning save_data)."
+    },
     "save_data": {
       "type": "object",
       "additionalProperties": true

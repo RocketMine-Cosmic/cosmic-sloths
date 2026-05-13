@@ -502,6 +502,12 @@ Deno.serve(async (req) => {
             () => base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
                 wallet_address: walletLower,
                 player_name: preservedName,
+                // Mirror title + icon to top-level columns so the Profile Fan-Out
+                // automation can trigger on changed_fields without scanning save_data.
+                // Without these mirrors, the automation either fires on every save
+                // (broad trigger) or misses title/icon edits entirely (narrow trigger).
+                player_title: merged.player_title || '',
+                pilot_icon: merged.pilot_icon || '',
                 save_data: merged,
                 updated_at: newTs
             }),
