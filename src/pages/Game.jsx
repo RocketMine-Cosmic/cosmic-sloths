@@ -441,11 +441,25 @@ export default function Game() {
                 // Squad Meteor: submit damage against the squad's shared meteor.
                 // Attempt was already consumed at launch via mode='start' — passing
                 // attackId here UPDATES the reserved row rather than charging again.
+                // Capture the response so we can surface a level-up celebration on
+                // the run-end modal (purely cosmetic — the level itself is already
+                // applied server-side regardless of whether we read the response).
                 if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0) {
                     base44.functions.invoke('submitSquadMeteorDamage', {
                         mode: 'finish',
                         attackId: meteorAttackId || null,
                         damage: stats.meteorDamage,
+                    }).then(res => {
+                        if (res?.data?.leveled_up) {
+                            setGameOverStats(s => ({
+                                ...s,
+                                meteorLevelUp: {
+                                    leveled_up: true,
+                                    levels_gained: res.data.levels_gained || [],
+                                    new_level: res.data.meteor?.level,
+                                },
+                            }));
+                        }
                     }).catch(err => console.error('[Game] submitSquadMeteorDamage failed:', err?.message));
                 }
             },
@@ -516,6 +530,17 @@ export default function Game() {
                         mode: 'finish',
                         attackId: meteorAttackId || null,
                         damage: stats.meteorDamage,
+                    }).then(res => {
+                        if (res?.data?.leveled_up) {
+                            setVictoryStats(s => ({
+                                ...s,
+                                meteorLevelUp: {
+                                    leveled_up: true,
+                                    levels_gained: res.data.levels_gained || [],
+                                    new_level: res.data.meteor?.level,
+                                },
+                            }));
+                        }
                     }).catch(err => console.error('[Game] submitSquadMeteorDamage failed:', err?.message));
                 }
             }
