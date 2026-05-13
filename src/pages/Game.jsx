@@ -282,6 +282,21 @@ export default function Game() {
             // Not an admin or check failed — no buff applied
         }
 
+        // Squad Meteor buffs — apply to EVERY arena run for squad members
+        // ("Buffs apply to every squad member's runs" per getSquadMeteorState).
+        // Cached by SquadMeteorPanel whenever the player visits the Squads page.
+        try {
+            const cached = localStorage.getItem('squad_meteor_buffs');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed?.buffs && parsed.buffs.applied_level > 0) {
+                    save.squadMeteorBuffs = parsed.buffs;
+                }
+            }
+        } catch (e) {
+            // Cache read failed — skip buff (fail-open).
+        }
+
         // Global XP buff — admin-set "make-good" multiplier (e.g. 2× XP for 24h
         // when OMENX settlement is down). Read from the SHARED maintenance cache
         // so we don't fire a fresh getMaintenanceMode call on every run start.

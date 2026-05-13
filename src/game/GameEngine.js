@@ -241,6 +241,17 @@ export class GameEngine {
         const adminMult = (save.adminBuff?.mult) || 0;
         const adminHpBonus = Math.floor(titleHpBase * adminMult);
 
+        // Squad Meteor buffs — apply to EVERY squad member's runs across every arena
+        // ("Buffs apply to every squad member's runs" per getSquadMeteorState).
+        // Server returns percentages as whole numbers (5 = +5%), convert to additive
+        // multiplier deltas. cdrPct is "lower cooldown is better" — subtracted from
+        // cooldownMult (mirrors how talents handle cooldown reductions).
+        const meteorBuffs = save.squadMeteorBuffs || null;
+        const meteorDmgMult  = meteorBuffs ? (meteorBuffs.damage_pct || 0) / 100 : 0;
+        const meteorAoeMult  = meteorBuffs ? (meteorBuffs.aoe_pct    || 0) / 100 : 0;
+        const meteorGoldMult = meteorBuffs ? (meteorBuffs.gold_pct   || 0) / 100 : 0;
+        const meteorCdrMult  = meteorBuffs ? (meteorBuffs.cdr_pct    || 0) / 100 : 0;
+
         this.player = {
             name: baseChar.name,
             image: playerImage,
@@ -253,18 +264,18 @@ export class GameEngine {
             hp: baseChar.hp + getStatBonus('health') + (talentBonus.maxHp || 0) + (relicBonus.maxHp || 0) + vipHpBonus + titleHpBonus + adminHpBonus,
             speed: baseChar.speed,
             speedMult: (1 + getStatBonus('speed') + (talentBonus.speedMult || 0) + (relicBonus.speedMult || 0) + augBonus.speedMult + (titleBuff.speedMult || 0) + adminMult) * this.envModifiers.playerSpeed,
-            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0) + vipDmgBonus + (titleBuff.damageMult || 0) + adminMult,
+            damageMult: (baseChar.damageMult || 1) + getStatBonus('damage') + (talentBonus.damageMult || 0) + (relicBonus.damageMult || 0) + vipDmgBonus + (titleBuff.damageMult || 0) + adminMult + meteorDmgMult,
             magnetRange: (baseChar.magnetRange || 60) + 30 + getStatBonus('magnet') + (talentBonus.magnetRange || 0) + (relicBonus.magnetRange || 0) + (titleBuff.magnetRange || 0) + Math.floor(((baseChar.magnetRange || 60) + 30) * adminMult),
             regen: baseChar.regen + getStatBonus('regen') + (talentBonus.regen || 0) + (relicBonus.regen || 0) + augBonus.regen + (titleBuff.regen || 0),
             armor: baseChar.armor + (talentBonus.armor || 0) + (relicBonus.armor || 0) + augBonus.armor + (titleBuff.armor || 0),
-            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0) + augBonus.areaMult + (titleBuff.areaMult || 0) + adminMult,
-            cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0) + (titleBuff.cooldownMult || 0),
+            areaMult: (baseChar.areaMult || 1) + (talentBonus.areaMult || 0) + (relicBonus.areaMult || 0) + augBonus.areaMult + (titleBuff.areaMult || 0) + adminMult + meteorAoeMult,
+            cooldownMult: (baseChar.cooldownMult || 1) - getStatBonus('cooldown') + (talentBonus.cooldownMult || 0) + (relicBonus.cooldownMult || 0) + (titleBuff.cooldownMult || 0) - meteorCdrMult,
             projSpeedMult: (baseChar.projSpeedMult || 1) + (talentBonus.projSpeedMult || 0) + (relicBonus.projSpeedMult || 0),
             // S6+ L2: NFT gold multiplier folded into player.goldMult ADDITIVELY
             // instead of multiplied at pickup time. (`save.nftGoldMultiplier` is e.g.
             // 1.1 for +10% — convert to additive 0.1 when present.) PickupSystem
             // skips the multiplicative pickup-time bonus on S6+ to match.
-            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0) + adminMult + (this._isS6 ? Math.max(0, (save.nftGoldMultiplier || 1) - 1) : 0)) * this.difficulty.goldMult * sectorPenalty,
+            goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0) + adminMult + meteorGoldMult + (this._isS6 ? Math.max(0, (save.nftGoldMultiplier || 1) - 1) : 0)) * this.difficulty.goldMult * sectorPenalty,
             xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult) * this.difficulty.xpMult,
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0) + (titleBuff.luck || 0) + adminMult,
             critBonus: augBonus.critBonus + (titleBuff.critBonus || 0),

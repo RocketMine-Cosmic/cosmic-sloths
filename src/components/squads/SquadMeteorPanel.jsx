@@ -76,6 +76,20 @@ export default function SquadMeteorPanel() {
             } else {
                 setState(res.data);
                 setError(null);
+                // Cache buffs so EVERY arena run (not just meteor) picks them up.
+                // Read by Game.jsx on run start → injected into engine.save.squadMeteorBuffs.
+                // Squad members refresh this whenever they open the Squads page.
+                try {
+                    if (res.data?.in_squad && res.data?.buffs) {
+                        localStorage.setItem('squad_meteor_buffs', JSON.stringify({
+                            buffs: res.data.buffs,
+                            squadId: res.data.squad_id,
+                            cachedAt: Date.now(),
+                        }));
+                    } else {
+                        localStorage.removeItem('squad_meteor_buffs');
+                    }
+                } catch {}
             }
         } catch (e) {
             setError(e?.message || 'Failed to load meteor state.');
