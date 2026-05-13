@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         const walletAddress = me.wallet_address;
         if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
-        const { damage, playerName } = await req.json();
+        const { damage } = await req.json();
         if (typeof damage !== 'number' || damage <= 0) {
             return Response.json({ error: 'Couldn\'t record your damage — please try again.' }, { status: 400 });
         }
@@ -62,15 +62,33 @@ Deno.serve(async (req) => {
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);
         const { week_id } = getCurrentPeriodIds();
 
-        // Never expose the user's real OAuth name in the public raid feed /
-        // Discord. If no pilot name was set, or the supplied name matches their
-        // real name, fall back to an anonymous Pilot_XXXXXX handle.
+        // Authoritative pilot name lookup — mirrors saveScore/squadActions/createSquad.
+        // Bug 2026-05-13 (Anubis raid feed): client was passing user.player_name
+        // OR user.full_name as a fallback. When player_name was empty, full_name leaked
+        // through, and the server's anti-leak check correctly anonymized it to
+        // Pilot_XXXXXX — so legit pilots with no profile name (or where the client
+        // fallback fired) all showed as generic Pilot_XXXXXX in the contributors list.
+        //
+        // Fix: stop trusting any client-submitted name. Read PlayerSave.player_name
+        // directly (that's the profile-set, trusted pilot name) and fall back to
+        // Pilot_XXXXXX only when truly absent.
         const anonName = `Pilot_${walletAddress.slice(-6).toUpperCase()}`;
+        let trustedPilotName = '';
+        try {
+            const saves = await with429Retry(
+                () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress }),
+                'PlayerSave.filter'
+            );
+            trustedPilotName = (saves[0]?.player_name || '').trim();
+        } catch (e) {
+            console.warn('[submitBossDamage] PlayerSave lookup failed, using anon:', e.message);
+        }
+        // Final safety: never display the raw OAuth full_name even if it somehow
+        // ended up stored as player_name (legacy data).
         const realName = (me.full_name || '').trim().toLowerCase();
-        const submittedName = (playerName || '').trim();
-        const displayName = (!submittedName || (realName && submittedName.toLowerCase() === realName))
+        const displayName = (!trustedPilotName || (realName && trustedPilotName.toLowerCase() === realName))
             ? anonName
-            : submittedName;
+            : trustedPilotName;
 
         // Look up squad membership so contributions can be aggregated for the squad raid leaderboard
         let squadInfo = { squad_id: '', squad_name: '', squad_tag: '', squad_icon: '' };

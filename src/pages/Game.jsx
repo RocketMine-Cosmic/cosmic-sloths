@@ -417,8 +417,10 @@ export default function Game() {
                 });
                 
                 if (stats.worldBossDamage > 0) {
-                    const user = getOmenXUserSync();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name })
+                    // Server reads the trusted pilot name from PlayerSave — don't send it
+                    // from the client (fix 2026-05-13: client fallback to full_name was
+                    // causing legit pilots to show as Pilot_XXXXXX in the raid feed).
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             },
@@ -479,8 +481,8 @@ export default function Game() {
                 });
                 
                 if (stats.worldBossDamage > 0) {
-                    const user = getOmenXUserSync();
-                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name })
+                    // Server reads the trusted pilot name from PlayerSave (see onGameOver).
+                    base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
             }
@@ -811,9 +813,9 @@ export default function Game() {
             // Also await boss damage submission so raid contributions aren't dropped
             // when the navigate() unmounts the component mid-flight.
             if (stats.worldBossDamage > 0) {
-                const user = getOmenXUserSync();
+                // Server reads the trusted pilot name from PlayerSave (see onGameOver).
                 try {
-                    await base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage, playerName: user?.player_name || user?.full_name });
+                    await base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage });
                 } catch (bossErr) {
                     console.warn('[Game] submitBossDamage on quit failed:', bossErr?.message);
                 }
