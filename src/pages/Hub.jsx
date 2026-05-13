@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CharacterUnlockManager } from '../game/CharacterUnlocks';
 import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMETICS, getCharacterMastery } from '../game/Constants';
+
+// Hub sector picker should ONLY show selectable storyline sectors. Filter out
+// special-purpose arenas that are launched from dedicated UIs and would otherwise
+// leak in (and worse, show as "LOCKED" because they're not in unlockedArenasByCharacter):
+//   - quantum_meteor  → launched from Squads → Meteor tab
+//   - world_boss_arena → launched from Global Raid page
+//   - endless         → launched via the dedicated ENDLESS button, not this cycler
+const HUB_SECTOR_BLOCKLIST = new Set(['quantum_meteor', 'world_boss_arena', 'endless']);
+const SECTOR_ARENAS = ARENAS.filter(a => !HUB_SECTOR_BLOCKLIST.has(a.id));
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Coins } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
@@ -204,7 +213,14 @@ export default function Hub({ isCarousel }) {
     React.useEffect(() => {
         if (!syncReady || initialSelectionApplied.current) return;
         if (save.lastSelectedChar && save.lastSelectedChar !== selectedChar) setSelectedChar(save.lastSelectedChar);
-        if (save.lastSelectedArena && save.lastSelectedArena !== selectedArena) setSelectedArena(save.lastSelectedArena);
+        if (save.lastSelectedArena && save.lastSelectedArena !== selectedArena) {
+            // Guard: if the cloud save persists a blocked arena (e.g. someone
+            // landed on quantum_meteor / world_boss_arena via the old buggy
+            // cycler), snap back to 'station' so they aren't permanently stuck
+            // on a LOCKED tile they can't launch from.
+            const safeArena = HUB_SECTOR_BLOCKLIST.has(save.lastSelectedArena) ? 'station' : save.lastSelectedArena;
+            setSelectedArena(safeArena);
+        }
         if (save.lastSelectedDifficulty && save.lastSelectedDifficulty !== selectedDifficulty) setSelectedDifficulty(save.lastSelectedDifficulty);
         if (save.lastSelectedWeapon && save.lastSelectedWeapon !== selectedWeapon) setSelectedWeapon(save.lastSelectedWeapon);
         initialSelectionApplied.current = true;
@@ -476,12 +492,12 @@ export default function Hub({ isCarousel }) {
                                                 const touchEndX = e.changedTouches[0].screenX;
                                                 const diff = touchStartX.current - touchEndX;
                                                 if (diff > 50) {
-                                                    const idx = ARENAS.findIndex(a => a.id === selectedArena);
-                                                    setSelectedArena(ARENAS[idx >= ARENAS.length - 1 ? 0 : idx + 1].id);
+                                                    const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(SECTOR_ARENAS[idx >= SECTOR_ARENAS.length - 1 ? 0 : idx + 1].id);
                                                     SoundManager.playUIClick();
                                                 } else if (diff < -50) {
-                                                    const idx = ARENAS.findIndex(a => a.id === selectedArena);
-                                                    setSelectedArena(ARENAS[idx <= 0 ? ARENAS.length - 1 : idx - 1].id);
+                                                    const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(SECTOR_ARENAS[idx <= 0 ? SECTOR_ARENAS.length - 1 : idx - 1].id);
                                                     SoundManager.playUIClick();
                                                 }
                                                 touchStartX.current = null;
@@ -489,16 +505,16 @@ export default function Hub({ isCarousel }) {
                                         >
                                             <div 
                                                 className="absolute inset-0 opacity-40 bg-cover bg-center transition-all duration-500"
-                                                style={{ backgroundImage: `url(${ARENAS.find(a => a.id === selectedArena)?.image})` }}
+                                                style={{ backgroundImage: `url(${SECTOR_ARENAS.find(a => a.id === selectedArena)?.image})` }}
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
                                             <div className="relative flex items-center justify-between p-2 md:p-3 min-h-[72px] md:min-h-[96px]">
                                                 <button 
                                                     onClick={() => {
-                                                        const idx = ARENAS.findIndex(a => a.id === selectedArena);
-                                                        const newIdx = idx <= 0 ? ARENAS.length - 1 : idx - 1;
-                                                        setSelectedArena(ARENAS[newIdx].id);
+                                                        const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
+                                                        const newIdx = idx <= 0 ? SECTOR_ARENAS.length - 1 : idx - 1;
+                                                        setSelectedArena(SECTOR_ARENAS[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
                                                     className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
@@ -508,7 +524,7 @@ export default function Hub({ isCarousel }) {
                                                 
                                                 <div className="text-center z-10 flex-1 px-2 md:px-4">
                                                     <h4 className="text-lg md:text-xl font-bold text-white mb-0.5 md:mb-1 drop-shadow-md">
-                                                        {ARENAS.find(a => a.id === selectedArena)?.name}
+                                                        {SECTOR_ARENAS.find(a => a.id === selectedArena)?.name}
                                                     </h4>
                                                     {!((save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).includes(selectedArena)) ? (
                                                         <span className="inline-flex items-center gap-1 text-rose-300 font-black tracking-widest text-[9px] md:text-[10px] bg-rose-950/60 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-rose-500/50 backdrop-blur-sm shadow-[0_0_10px_rgba(244,63,94,0.2)]">
@@ -523,9 +539,9 @@ export default function Hub({ isCarousel }) {
 
                                                 <button 
                                                     onClick={() => {
-                                                        const idx = ARENAS.findIndex(a => a.id === selectedArena);
-                                                        const newIdx = idx >= ARENAS.length - 1 ? 0 : idx + 1;
-                                                        setSelectedArena(ARENAS[newIdx].id);
+                                                        const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
+                                                        const newIdx = idx >= SECTOR_ARENAS.length - 1 ? 0 : idx + 1;
+                                                        setSelectedArena(SECTOR_ARENAS[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
                                                     className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
