@@ -28,8 +28,24 @@ export const ARENAS = [
   { id: 'moon', name: 'Shattered Core', bg: '#112233', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/ef5a7f3ec_Map17.png', duration: 360, effect: 'fog' },
   { id: 'blackhole', name: 'Abyssal Vortex', bg: '#000000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b29cf4702_map18.png', duration: 390, effect: 'solar_flare' },
   { id: 'mothership', name: 'Turquoise Drift', bg: '#220022', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b7bfbd6fe_Map19.png', duration: 420, effect: 'neon_rain' },
-  { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450, effect: 'solar_flare' }
+  { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450, effect: 'solar_flare' },
+  // Squad Meteor — dedicated DPS-check arena. Background = QuantumHole.png, 3-min run,
+  // no mob spawns (handled by GameEngine when arena.id === 'quantum_meteor'), single
+  // stationary asteroid target. Not selectable in normal Hub/Loadouts — entered only
+  // via the "Attack Meteor" button on the Squads page.
+  { id: 'quantum_meteor', name: 'Quantum Meteor', bg: '#02040a', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/d5e6acf9c_QuantumHole.png', duration: 180, effect: 'none', isSquadMeteor: true, hideFromArenaPicker: true }
 ];
+
+// Sprite sheet for the Quantum Meteor target. 4×4 grid (16 frames), 192px per frame.
+// Looping pulse animation rendered by GameEngine when the meteor arena is active.
+export const QUANTUM_METEOR_SPRITE = {
+  url: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/6952b5286_sprite-192px-frames-16-rows-4-cols-4.png',
+  frameSize: 192,
+  cols: 4,
+  rows: 4,
+  frameCount: 16,
+  animationSpeed: 0.10,
+};
 
 // Per-weapon thematic labels for the Armory upgrade panel. Keys: damage / area / cooldown.
 // Same business logic as before — these only change the displayed label text.

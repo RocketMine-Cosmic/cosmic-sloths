@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Zap, Trophy, Loader2, AlertTriangle } from 'lucide-react';
+import { Sparkles, Zap, Trophy, Loader2, AlertTriangle, Crosshair } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
+import { SaveManager } from '../../game/SaveManager';
+import { SoundManager } from '../../game/SoundManager';
 
 function fmtNum(n) {
     if (n == null) return '0';
@@ -14,9 +17,31 @@ function fmtNum(n) {
 
 export default function SquadMeteorPanel() {
     const { toast } = useToast();
+    const navigate = useNavigate();
     const [state, setState] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const handleAttackMeteor = useCallback(() => {
+        if (!state?.in_squad) return;
+        if ((state?.my_attempts_remaining ?? 0) <= 0) {
+            toast({ title: 'No attacks remaining', description: 'Resets at 00:00 UTC.', variant: 'destructive' });
+            return;
+        }
+        SoundManager.playUIClick();
+        // Launch dedicated Quantum Meteor run. Use the player's last-selected character.
+        const save = SaveManager.load();
+        const characterId = save?.lastSelectedChar || 'neobyte';
+        navigate('/game', {
+            state: {
+                characterId,
+                arenaId: 'quantum_meteor',
+                difficultyId: 'normal',
+                isEndless: false,
+                isSquadMeteor: true,
+            },
+        });
+    }, [state, navigate, toast]);
 
     const load = useCallback(async () => {
         try {
@@ -106,6 +131,19 @@ export default function SquadMeteorPanel() {
                         All attacks used today — resets at 00:00 UTC
                     </div>
                 )}
+
+                {/* ATTACK METEOR — launches the dedicated DPS run */}
+                <button
+                    onClick={handleAttackMeteor}
+                    disabled={my_attempts_remaining <= 0}
+                    className="mt-3 w-full bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 hover:from-orange-500 hover:via-red-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-black text-sm uppercase tracking-widest shadow-[0_0_25px_rgba(220,38,38,0.45)] hover:shadow-[0_0_35px_rgba(220,38,38,0.7)] transition-all flex items-center justify-center gap-2 border border-red-400/60"
+                >
+                    <Crosshair className="w-4 h-4" />
+                    ATTACK METEOR
+                    <span className="text-[10px] bg-black/30 px-2 py-0.5 rounded-full font-bold tracking-normal">
+                        {my_attempts_remaining} left
+                    </span>
+                </button>
             </div>
 
             {/* BUFFS */}
@@ -151,10 +189,6 @@ export default function SquadMeteorPanel() {
                 )}
             </div>
 
-            {/* DEV NOTE — until game-engine integration lands in Session 3+ */}
-            <div className="text-[10px] text-slate-500 text-center italic px-2">
-                Damage is submitted automatically from your game runs (coming next session).
-            </div>
         </div>
     );
 }
