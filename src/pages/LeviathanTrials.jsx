@@ -13,7 +13,7 @@ const BOSS_MODIFIERS = [
     { id: 'fury', name: 'Leviathan\'s Fury', desc: 'Bosses deal +50% Damage', rewardDesc: '+500 Boss Gold Drop', icon: Swords, color: 'text-red-500' },
     { id: 'hide', name: 'Thick Hide', desc: 'Bosses have +100% HP', rewardDesc: '+50% Boss XP Drop', icon: Shield, color: 'text-slate-400' },
     { id: 'frenzy', name: 'Frenzy', desc: 'Bosses move 50% faster', rewardDesc: '+1 Relic Fragment on Boss Kill', icon: FastForward, color: 'text-yellow-500' },
-    { id: 'bullet_hell', name: 'Bullet Hell', desc: 'Bosses fire twice as many projectiles', rewardDesc: 'Pure challenge — no extra reward', icon: Zap, color: 'text-cyan-400' },
+    { id: 'bullet_hell', name: 'Bullet Hell', desc: 'Bosses fire twice as many projectiles', rewardDesc: '+2 Relic Fragments on Boss Kill', icon: Zap, color: 'text-cyan-400' },
     { id: 'regen', name: 'Cellular Regeneration', desc: 'Boss heals 1% Max HP every second', rewardDesc: '+800 Boss Gold Drop', icon: Heart, color: 'text-green-500' },
     { id: 'unstoppable', name: 'Unstoppable Force', desc: 'Boss ignores slow and pushback', rewardDesc: '+1000 Boss Gold Drop', icon: Anchor, color: 'text-orange-500' }
 ];

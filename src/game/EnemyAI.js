@@ -76,7 +76,7 @@ export function updateEnemies(engine, dt) {
 
             if (e.isBoss) {
                 const isEndless = engine.arena.duration === Infinity;
-                const fragmentReward = 1 + (engine.bossModifiers.frenzy ? 1 : 0);
+                const fragmentReward = 1 + (engine.bossModifiers.frenzy ? 1 : 0) + (engine.bossModifiers.bullet_hell ? 2 : 0);
                 // Auto-credit fragments directly to the save instead of dropping a pickup the
                 // player might miss (especially in endless mode where the boss can die far away,
                 // or when quitting/dying during the post-boss grace window).
