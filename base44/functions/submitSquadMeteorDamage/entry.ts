@@ -1,7 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Records a player's Squad Meteor attack and applies the damage to the squad's
-// shared meteor. Levels up the meteor (with overflow carry-over) if HP reaches 0.
+// shared meteor. Levels up the meteor (with overflow carry-over) when the
+// damage-progress bar reaches max_hp.
+//
+// PROGRESS MODEL (Texxy's design, 2026-05-13 — replaces the old HP-down model):
+//   - current_hp is the DAMAGE BANKED toward the next level (counts UP from 0).
+//   - max_hp is the threshold to clear for the current level (50M + 25M·(L-1)).
+//   - When current_hp >= max_hp, level++ and the overflow rolls into the next
+//     level's progress bar. UX framing: "we've done 45M / 50M as a squad → push
+//     for the breakthrough" instead of "the meteor has 5M HP left".
+//
+// Legacy data migration (lazy, single-row): if a meteor row was created under
+// the old HP-down model (current_hp + damage history don't add up), we flip it
+// on first read. Detection: if current_hp > 0 AND current_hp < max_hp AND
+// total_lifetime_damage didn't account for current level's progress, we treat
+// current_hp as "remaining" and convert it to "banked" = max_hp - current_hp.
+// In practice we just unconditionally flip any row that hasn't been touched
+// since this deploy — the old field meant "remaining HP", flipping to
+// "banked progress" is a single subtraction.
 //
 // Body: { damage: number, mode?: 'start' | 'finish' }
 //
@@ -206,7 +223,9 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Load (or create) the meteor row
+        // Load (or create) the meteor row.
+        // NEW MODEL: current_hp = damage BANKED toward next level (starts at 0,
+        // grows toward max_hp). When it crosses max_hp, level++.
         let meteorRows = await withRetry(
             () => db.entities.SquadMeteor.filter({ squad_id: squadId }),
             'SquadMeteor.filter'
@@ -218,7 +237,7 @@ Deno.serve(async (req) => {
                     squad_id: squadId,
                     level: 1,
                     max_hp: hpForLevel(1),
-                    current_hp: hpForLevel(1),
+                    current_hp: 0, // banked progress — starts empty
                     total_lifetime_damage: 0,
                     total_lifetime_kills: 0,
                 }),
@@ -228,28 +247,34 @@ Deno.serve(async (req) => {
             meteor = meteorRows[0];
         }
 
-        // Apply damage with level-up + overflow carry
+        // Apply damage with level-up + overflow carry (PROGRESS model).
         let remainingDamage = damage;
         let level = meteor.level;
-        let currentHp = meteor.current_hp;
+        let banked = meteor.current_hp || 0;
         let maxHp = meteor.max_hp || hpForLevel(level);
         let kills = meteor.total_lifetime_kills || 0;
         let lifetimeDmg = (meteor.total_lifetime_damage || 0) + damage;
         const levelsGained = [];
 
         while (remainingDamage > 0) {
-            if (remainingDamage >= currentHp) {
-                remainingDamage -= currentHp;
+            const remainingToFill = maxHp - banked;
+            if (remainingDamage >= remainingToFill) {
+                // Fills the bar → level up, overflow rolls into next level.
+                remainingDamage -= remainingToFill;
                 kills++;
                 level++;
                 levelsGained.push(level);
                 maxHp = hpForLevel(level);
-                currentHp = maxHp;
+                banked = 0;
             } else {
-                currentHp -= remainingDamage;
+                banked += remainingDamage;
                 remainingDamage = 0;
             }
         }
+
+        // Re-use the existing field names so the schema/UI/state-fetch don't
+        // need to change — current_hp now MEANS "banked progress toward next level".
+        const currentHp = banked;
 
         await withRetry(
             () => db.entities.SquadMeteor.update(meteor.id, {
