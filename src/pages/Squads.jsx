@@ -18,6 +18,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import SquadProfileModal from '../components/squads/SquadProfileModal';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
+import { isS6OrLater } from '@/lib/seasonGate';
 
 // System messages contain player names baked into the content string
 // (e.g. "William Luce has joined the squad!"). Pre-privacy-fix rows may have
@@ -1001,13 +1002,24 @@ export default function Squads({ isCarousel }) {
                                 >
                                     <Swords className="w-4 h-4" /> Squad Wars
                                 </button>
-                                <button
-                                    onClick={() => { SoundManager.playUIClick(); navigate('/squad-meteor'); }}
-                                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-purple-600/40 to-fuchsia-600/40 border border-purple-400/60 hover:border-purple-300 text-purple-100 hover:text-white font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:shadow-[0_0_30px_rgba(168,85,247,0.7)] animate-pulse"
-                                >
-                                    <span className="text-base">☄️</span> Squad Meteor
-                                    <span className="text-[9px] bg-purple-500/50 px-1.5 py-0.5 rounded text-white">NEW</span>
-                                </button>
+                                {isS6OrLater() ? (
+                                    <button
+                                        onClick={() => { SoundManager.playUIClick(); navigate('/squad-meteor'); }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-purple-600/40 to-fuchsia-600/40 border border-purple-400/60 hover:border-purple-300 text-purple-100 hover:text-white font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:shadow-[0_0_30px_rgba(168,85,247,0.7)] animate-pulse"
+                                    >
+                                        <span className="text-base">☄️</span> Squad Meteor
+                                        <span className="text-[9px] bg-purple-500/50 px-1.5 py-0.5 rounded text-white">NEW</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        disabled
+                                        title="Unlocks with Season 6 (Mon May 18 00:00 UTC)"
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-500 font-black text-xs uppercase tracking-widest cursor-not-allowed opacity-70"
+                                    >
+                                        <Lock className="w-3.5 h-3.5" /> Squad Meteor
+                                        <span className="text-[9px] bg-purple-500/30 px-1.5 py-0.5 rounded text-purple-300 border border-purple-500/40">S6</span>
+                                    </button>
+                                )}
                                 {isLeader && (
                                     <button
                                         onClick={() => { SoundManager.playUIClick(); navigate('/squad-leader'); }}
