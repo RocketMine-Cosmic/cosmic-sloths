@@ -361,18 +361,17 @@ export class GameEngine {
             this.xp = totalXpNeeded;
         }
 
-        // Squad Meteor — 3-minute DPS-check arena with no mob spawns. Without XP
-        // sources the player would mash a Lv.1 loadout for 3 minutes, so we hand
-        // out 10 instant starter level-ups at run start. Each pick fires the
-        // normal LevelUpModal (reroll/banish/evolutions all behave as usual);
-        // when the player commits an upgrade, applyUpgrade decrements
-        // `pendingStarterLevelUps` and re-arms XP so the next level-up modal
-        // pops on the following frame. The run timer is paused while the modal
-        // is open (engine.isPaused), so the 3-min clock doesn't start until the
-        // 10-stack is fully claimed.
+        // Squad Meteor — 3-minute DPS-check arena with no mob spawns. Hand out
+        // EXACTLY 10 starter level-ups at run start (no XP priming — XP-based
+        // priming is what makes raid players overshoot with stacked XP buffs,
+        // which Texxy explicitly doesn't want here). Each pick fires the normal
+        // LevelUpModal (reroll/banish/evolutions all behave as usual); when the
+        // player commits an upgrade, applyUpgrade decrements
+        // `pendingStarterLevelUps` and calls `engine.levelUp()` directly for
+        // the next pick. Run timer stays paused while the modal is open
+        // (engine.isPaused), so the 3-min clock only starts after all 10 picks.
         if (arenaId === 'quantum_meteor') {
             this.pendingStarterLevelUps = 10;
-            this.xp = this.xpRequired; // triggers first levelUp() on the very first update tick
         }
         
         this.isPaused = false;
@@ -853,6 +852,15 @@ export class GameEngine {
         updateCharacterMechanics(this, dt, dx, dy);
 
         if (this.xp >= this.xpRequired && !this.isPaused && !this.isGameOver && !this.isVictory) {
+            this.levelUp();
+        }
+
+        // Squad Meteor — kick off the 10-stack starter level-ups on the first
+        // unpaused tick. XP is intentionally NOT used here (raid uses XP and
+        // gets overshoot with stacked XP buffs — Texxy explicitly wants Lv.10
+        // exactly). Subsequent picks chain via applyUpgrade → levelUp().
+        if (this.pendingStarterLevelUps > 0 && !this._starterStackBegan && !this.isPaused) {
+            this._starterStackBegan = true;
             this.levelUp();
         }
         

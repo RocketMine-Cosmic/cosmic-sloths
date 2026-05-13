@@ -323,16 +323,16 @@ export function applyUpgrade(engine, upgrade) {
     }
     engine.isPaused = false;
 
-    // Squad Meteor starter stack — after the player commits a pick, queue up
-    // the next starter level-up by re-arming XP. The update() loop will see
-    // xp >= xpRequired on the next frame and fire levelUp() again, popping
-    // the modal for the next pick. Run timer stays paused throughout (modal
-    // sets isPaused = true), so the 3-min clock only starts after all 10
-    // picks are claimed.
+    // Squad Meteor starter stack — 10 guaranteed level-ups at run start,
+    // independent of XP (so stacked XP buffs can't push past 10). After the
+    // player commits a pick, decrement the counter and fire the next levelUp
+    // directly — bypassing XP entirely. Run timer stays paused throughout
+    // (modal sets isPaused = true), so the 3-min clock only starts after all
+    // 10 picks are claimed.
     if (engine.pendingStarterLevelUps > 0) {
         engine.pendingStarterLevelUps--;
         if (engine.pendingStarterLevelUps > 0) {
-            engine.xp = engine.xpRequired;
+            levelUp(engine);
         }
     }
 }
