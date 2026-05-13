@@ -129,7 +129,14 @@ export default function SquadMeteorPanel() {
             <div className="flex-1 flex items-center justify-center text-red-400 p-6 text-center">
                 <div>
                     <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
-                    <div className="text-sm">{error}</div>
+                    <div className="text-sm mb-3">{error}</div>
+                    <div className="text-xs text-slate-500 mb-3">Server is busy — try again in a second.</div>
+                    <button
+                        onClick={() => { setLoading(true); setError(null); load(); }}
+                        className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-xs"
+                    >
+                        Retry
+                    </button>
                 </div>
             </div>
         );

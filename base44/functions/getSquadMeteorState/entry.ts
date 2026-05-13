@@ -17,6 +17,27 @@ const DAILY_ATTEMPT_LIMIT = 3;
 const STATE_CACHE_TTL_MS = 15_000;
 const stateCache = new Map();
 
+// Wrap a base44 call with retry-on-429 (matches saveScore/loadSave pattern).
+// Without this, a single rate-limit spike bubbles a 500 straight to the panel.
+async function withRetry(fn, label = 'op') {
+    const delays = [300, 700, 1400];
+    let lastErr = null;
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+        try {
+            return await fn();
+        } catch (e) {
+            lastErr = e;
+            const status = e?.response?.status || e?.status;
+            const msg = (e?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit');
+            if (!is429 || attempt === delays.length) throw e;
+            console.warn(`[getSquadMeteorState] ${label} 429 — retry ${attempt + 1}/${delays.length} after ${delays[attempt]}ms`);
+            await new Promise(r => setTimeout(r, delays[attempt]));
+        }
+    }
+    throw lastErr;
+}
+
 function getCachedState(squadId) {
     const entry = stateCache.get(squadId);
     if (!entry) return null;
@@ -86,7 +107,7 @@ Deno.serve(async (req) => {
         const db = base44.asServiceRole;
 
         // Find the user's squad membership
-        const memberships = await db.entities.SquadMember.filter({ wallet_address: wallet });
+        const memberships = await withRetry(() => db.entities.SquadMember.filter({ wallet_address: wallet }), 'SquadMember.filter');
         if (memberships.length === 0) {
             return Response.json({ in_squad: false, message: 'Join a squad to attack the meteor.' });
         }
@@ -107,17 +128,17 @@ Deno.serve(async (req) => {
         }
 
         // Load (or lazily create) the meteor row for this squad
-        let meteors = await db.entities.SquadMeteor.filter({ squad_id: squadId });
+        let meteors = await withRetry(() => db.entities.SquadMeteor.filter({ squad_id: squadId }), 'SquadMeteor.filter');
         let meteor;
         if (meteors.length === 0) {
-            meteor = await db.entities.SquadMeteor.create({
+            meteor = await withRetry(() => db.entities.SquadMeteor.create({
                 squad_id: squadId,
                 level: 1,
                 max_hp: hpForLevel(1),
                 current_hp: hpForLevel(1),
                 total_lifetime_damage: 0,
                 total_lifetime_kills: 0,
-            });
+            }), 'SquadMeteor.create');
         } else {
             meteor = meteors[0];
         }
@@ -126,10 +147,10 @@ Deno.serve(async (req) => {
         const today = todayUtcDate();
         // Daily attempt cap is 3 × max ~50 squad members = 150 rows worst case.
         // 250 gives headroom while staying way under the 1000 that was triggering 429s.
-        const todayAttacks = await db.entities.SquadMeteorAttack.filter({
+        const todayAttacks = await withRetry(() => db.entities.SquadMeteorAttack.filter({
             squad_id: squadId,
             attack_date_utc: today,
-        }, '-created_date', 250);
+        }, '-created_date', 250), 'SquadMeteorAttack.today');
 
         // Aggregate per-member attacks
         const perMember = {};
@@ -150,10 +171,10 @@ Deno.serve(async (req) => {
         // leaderboard only displays the top 10 by damage. 500 rows of the most
         // recent attacks is plenty to identify the top 10 and stays well under
         // rate-limit thresholds. Was 2000 — heavy contributor to 429 storms.
-        const weekAttacks = await db.entities.SquadMeteorAttack.filter({
+        const weekAttacks = await withRetry(() => db.entities.SquadMeteorAttack.filter({
             squad_id: squadId,
             week_id: weekId,
-        }, '-created_date', 500);
+        }, '-created_date', 500), 'SquadMeteorAttack.week');
         const weekTotals = {};
         for (const a of weekAttacks) {
             const w = (a.wallet_address || '').toLowerCase();
