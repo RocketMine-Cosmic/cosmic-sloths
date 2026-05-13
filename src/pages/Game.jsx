@@ -869,6 +869,19 @@ export default function Game() {
             navigate(target, navState);
             return;
         }
+
+        // Squad Meteor quit: instead of suppressing the modal, trigger the engine's
+        // natural victory flow so the player sees the VictoryModal with their
+        // damage stats + level-up banner (and the existing onVictory callback
+        // saves the run + submits meteor damage). The modal's "Return to Lounge"
+        // button handles navigation back to the Squads page.
+        if (isMeteor) {
+            // Resume in case the player quit from the pause menu — victory() needs
+            // an unpaused engine to fire its callback cleanly.
+            engine.isPaused = false;
+            engine.victory();
+            return;
+        }
         // Endless / abandoned runs: must await saveScore before navigating away,
         // otherwise unmount cancels the in-flight fetch and progress is lost.
         setIsQuitting(true);

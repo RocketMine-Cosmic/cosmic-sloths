@@ -64,6 +64,21 @@ export default function VictoryModal({ stats }) {
                     ) : (
                         (() => {
                             const isRaid = stats.arenaId === 'world_boss_arena';
+                            const isMeteor = stats.arenaId === 'quantum_meteor';
+                            if (isMeteor) {
+                                // Meteor runs land back on the Squads page (slide 5)
+                                // so the player sees their updated meteor immediately.
+                                return (
+                                    <div className="flex justify-center">
+                                        <button
+                                            onClick={() => navigate('/?slide=5', { state: { slide: 5 } })}
+                                            className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                                        >
+                                            Return to Squad
+                                        </button>
+                                    </div>
+                                );
+                            }
                             if (isRaid) {
                                 return (
                                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
