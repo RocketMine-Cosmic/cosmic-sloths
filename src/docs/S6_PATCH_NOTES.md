@@ -31,7 +31,7 @@ S6 begins:  Monday May 18, 00:00 UTC
 • Squad XP, war record, rosters, treasury
 • Daily/weekly bounty progress
 
-Normal seasonal rollover — nothing extra is being wiped. The Endless leaderboard previously persisted across seasons; from S6 it resets alongside the others so everyone starts from zero. The first time you load /hub on May 18 a new in-game tour will walk you through the changes. Read the next 4 posts to get a head start.
+Normal seasonal rollover — nothing extra is being wiped. The Endless leaderboard previously persisted across seasons; from S6 it resets alongside the others so everyone starts from zero. The first time you load /hub on May 18 a new in-game tour will walk you through the changes. Read the next 5 posts to get a head start.
 ```
 
 ---
@@ -54,12 +54,12 @@ Score now scales with sector depth and victory, not run length or gold.
 • Time bonus: 10,000 per full minute survived
 
 **Gold no longer contributes to score at all.**
-Hard score ceiling: 2.5M (basically unreachable in normal play).
+Hard score ceiling: 10M (only the very best runs will get close).
 
-**Reference points:**
+**Reference points (approximate):**
 • Sector 1 quick clear → ~30k
-• Sector 5 victory → ~150k
-• Sector 10 victory → ~430k
+• Sector 5 victory → ~200k
+• Sector 10 victory → ~600k–1M (depends on kills + level)
 • Endless 25 minutes → ~550k
 • A clean Sector 10 victory now beats a 25-min endless farm run.
 
@@ -106,7 +106,7 @@ Hard score ceiling: 2.5M (basically unreachable in normal play).
 
 ---
 
-## 📢 POST 4 — New Sinks: Prestige, Mystery Forge, Treasury
+## 📢 POST 4 — New Sinks: Prestige, Astral Lab, Treasury
 
 ```
 💎 **PRESTIGE RELICS**

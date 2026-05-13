@@ -2,7 +2,7 @@
 
 **For:** Discord moderators & in-game staff with AdminDashboard access
 **Launch:** Mon May 18 2026 • 00:00 UTC
-**Last updated:** 2026-05-09
+**Last updated:** 2026-05-13
 
 > Use this to answer player questions and run the launch-day tools. Public-facing patch notes are in `S6_PATCH_NOTES.md`.
 
@@ -12,9 +12,10 @@
 
 ### 🏆 New score formula
 - Gold no longer counts toward score
-- Sector progression is now the headline scorer (Sector 10 victory ≈ 1M peak)
-- Endless score is time-capped per-minute (~10k/min) so long runs can't dominate
+- Sector progression is now the headline scorer (Sector 10 victory peaks around ~1M with strong kills/level)
+- Endless score scales at ~10k per full minute survived (+ kills/level) so long runs can't dominate
 - A **Sector 10 victory now beats a 25-min farm run** — skill > grind
+- Hard score ceiling: **10M** (anti-tamper backstop, not a realistic target)
 
 ### 🪙 Gold caps gone
 - The 10k endless gold ceiling, 30-fragment per-run cap, and "GOLD CAPPED" warnings are all removed
@@ -36,6 +37,14 @@
 - **Astral Lab** — RNG gold pulls for permanent stat buffs (capped per stat)
 - **Prestige Relics** — once a relic hits L5, prestige PL1→PL5 for +5% per tier (max +25%). Costs 1.5M gold + 100 fragments per tier.
 - **Squad Treasury** — donate gold to your squad pool, leaders activate weekly buffs (Bronze 25k → Platinum 2M)
+
+### ☄️ Squad Meteor *(new persistent squad boss)*
+- Every squad has its own meteor. Members attack it via a dedicated DPS run on the Squads page.
+- Damage accumulates toward the next level. When destroyed, level increments, a fresh beefier meteor spawns. **Levels never reset.**
+- Each member gets a small **daily attack quota** (resets 00:00 UTC).
+- Squad meteor level grants **persistent buffs that apply to EVERY arena run** (not just meteor): +gold drops, +damage, +AoE, +cooldown reduction. Strength scales with meteor level, capped to prevent old squads being infinitely stronger.
+- Two leaderboards on the Meteor tab: **Today** and **This Week** (per-member damage).
+- Quitting a meteor run mid-fight still banks the damage dealt up to that point — players see a "Damage submitted" toast.
 
 ### ✨ Quality of life
 - 7-step in-game tour on first /hub load after launch
@@ -65,8 +74,8 @@
 ## 3. Launch-day playbook
 
 **Almost everything is automated.** Only two things need a human:
-1. Run the squad treasury seed tool (any time before launch — recommended ~Sun May 24 evening)
-2. Flip Maintenance OFF after verifying the rollover went well (~00:10 UTC Mon May 25)
+1. Run the squad treasury seed tool (any time before launch — recommended ~Sun May 17 evening)
+2. Flip Maintenance OFF after verifying the rollover went well (~00:10 UTC Mon May 18)
 
 ### What runs automatically
 
@@ -109,7 +118,7 @@ The scheduler can only flip the gate **on** — it never flips it off, by design
 ## 4. Support scripts (copy-paste)
 
 ### "My score is way lower than S5"
-> Season 6 reset the leaderboard with a new scoring system that rewards reaching deeper sectors and beating bosses, instead of just running long. Your gameplay didn't change — the formula did. A clean Sector 10 victory now scores ~900k. Your S5 high score is preserved permanently in the Hall of Fame.
+> Season 6 reset the leaderboard with a new scoring system that rewards reaching deeper sectors and beating bosses, instead of just running long. Your gameplay didn't change — the formula did. A clean Sector 10 victory now scores around 600k–1M depending on your kills and level. Your S5 high score is preserved in the database for the record.
 
 ### "Why won't my weapon evolve?"
 > Season 6 added an evolution requirement: the base weapon needs to reach **level 8** before the evolution can trigger. Look for the orange 🌟 EVOLVES badge on the level-up screen — that means picking it now will trigger the evolution.
@@ -138,13 +147,20 @@ The scheduler can only flip the gate **on** — it never flips it off, by design
 ### "Where's the free respec?"
 > One-time gift on the Loadouts page — a green "Use Free Respec" button appears below your Pool Bias allocation. It refunds all your spent points at no cost so you can rebuild around the new weapon-rarity meta.
 
+### "What's the Squad Meteor?"
+> A new persistent boss your whole squad fights together. Open the Squads page → Meteor tab and tap ATTACK METEOR to launch a damage run. Damage banks toward levelling the meteor; once destroyed, a new (tougher) one spawns. Higher meteor level = stronger squad-wide buffs that apply to every arena run. Each member has a small daily attack quota (resets 00:00 UTC).
+
+### "I only got partial damage credit on the meteor"
+> If you quit a meteor run mid-fight, only the damage you'd dealt up to that point is banked. That's intentional — keeps things fair. Finish the run for full credit. The "Damage submitted: X" toast at the end shows exactly what was banked.
+
 ---
 
 ## 5. What to escalate to engineering
 
 Ping engineering (#base44-internal) if you see:
 
-- 🚨 **Score formula posting > 2.5M** for a single run — hard ceiling should prevent this; if it happens, something's wrong
+- 🚨 **Score formula posting > 5M** for a single run — far beyond intended peaks (~1M Sector 10 victory). Possible tampering or formula bug.
+- 🚨 **Squad Meteor stuck** — meteor HP hits 0 but level doesn't increment, or attacks aren't banking damage
 - 🚨 **One character/build dominating top 10** for 3+ days running (e.g. 7+ NeonVortex runs out of 10)
 - 🚨 **Player reports gold disappeared** (not "lower" — actually missing). Use Admin → 🪙 Gold Audit to verify before escalating.
 - 🚨 **Astral Lab returning impossible buffs** (e.g. damage past +20% cap)
@@ -179,11 +195,11 @@ Don't escalate:
 **Q: Do I need to do anything at midnight UTC?**
 A: No. Period rollover is automatic. Just verify after with a test run and flip Maintenance OFF.
 
-**Q: Can I re-run the snapshot tool if I make a mistake?**
-A: Yes — both launch tools are idempotent. Snapshot replaces existing rows for that season; Treasury seed skips squads that already have a balance.
+**Q: Can I re-run the Treasury seed tool if I make a mistake?**
+A: Yes — it's idempotent. Squads that already have a treasury balance are skipped automatically, so re-running just tops up any that were missed.
 
 **Q: What if a player asks about prestige relics during the SOFT maintenance window?**
-A: Prestige is live at S6 launch (May 25 00:00 UTC). Tell them it'll be available right after the rollover.
+A: Prestige is live at S6 launch (Mon May 18, 00:00 UTC). Tell them it'll be available right after the rollover.
 
 **Q: A player insists their S5 score should still be on the board.**
 A: Leaderboards are seasonal — they always reset at season rollover. Their S5 reward (if they were top 45) was already paid out at the end of S5. The data still exists in the database for engineering to look up if there's a payout dispute.
