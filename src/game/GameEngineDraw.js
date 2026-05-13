@@ -624,7 +624,7 @@ export function renderGame() {
         this.ctx.globalAlpha = Math.max(0, t.life);
         this.ctx.strokeStyle = '#000000';
         this.ctx.lineWidth = t.isCrit ? 4 : 3;
-        this.ctx.font = t.isCrit ? 'bold 20px "Courier New", Courier, monospace' : 'bold 14px "Courier New", Courier, monospace';
+        this.ctx.font = t.isCrit ? 'bold 26px "Courier New", Courier, monospace' : 'bold 18px "Courier New", Courier, monospace';
         const displayY = t.isCrit ? t.y - 10 * (1 - t.life) : t.y;
         const textToDraw = t.text + (t.isCrit ? '!' : '');
         this.ctx.strokeText(textToDraw, t.x, displayY);
