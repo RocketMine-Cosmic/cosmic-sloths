@@ -3,15 +3,30 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Records a player's Squad Meteor attack and applies the damage to the squad's
 // shared meteor. Levels up the meteor (with overflow carry-over) if HP reaches 0.
 //
-// Body: { damage: number }
+// Body: { damage: number, mode?: 'start' | 'finish' }
+//
+// Two-phase flow (Slice B integration 2026-05-13):
+//   - mode='start' (damage=0): RESERVES an attempt for the current run. Creates a
+//     SquadMeteorAttack row with damage=0 and returns its id. Counts toward the
+//     daily 3/day cap immediately so abandoned runs still consume an attempt.
+//     Does NOT touch the meteor HP.
+//   - mode='finish' (with attackId): UPDATES the reserved row with the real damage
+//     and applies it to the squad meteor (with level-up + overflow carry). The
+//     attempt itself is NOT re-charged (it was already consumed at start).
+//   - mode='finish' WITHOUT attackId: legacy path — creates a fresh attack row and
+//     counts as a fresh attempt. Kept for back-compat / direct testing.
+//   - mode unset (default 'finish'): legacy single-call path.
 //
 // Server-side guarantees:
 //   - Auth required (Base44 session with linked wallet)
 //   - Player must be in a squad
-//   - Daily attempt limit enforced (3/day/member, UTC)
+//   - Daily attempt limit enforced (3/day/member, UTC) — checked on 'start',
+//     and on 'finish' only when no attackId is provided (legacy path).
 //   - Damage clamped to a hard sanity ceiling (anti-cheat — single run can't
 //     submit > 100M, even though there's no soft cap)
 //   - Atomic meteor HP update with level-up + overflow carry
+//   - 'finish' with attackId verifies the row belongs to the caller's wallet
+//     and is from today's UTC date (no replays of older reservations).
 
 const DAILY_ATTEMPT_LIMIT = 3;
 const HP_PER_LEVEL = 25_000_000;
@@ -71,6 +86,8 @@ Deno.serve(async (req) => {
         if (!wallet) return Response.json({ error: 'No wallet linked.' }, { status: 400 });
 
         const body = await req.json().catch(() => ({}));
+        const mode = body?.mode === 'start' ? 'start' : 'finish';
+        const attackId = body?.attackId || null;
         const rawDamage = Number(body?.damage || 0);
         if (!isFinite(rawDamage) || rawDamage < 0) {
             return Response.json({ error: 'Invalid damage value.' }, { status: 400 });
@@ -90,22 +107,103 @@ Deno.serve(async (req) => {
         }
         const squadId = memberships[0].squad_id;
 
-        // Enforce daily attempt limit
         const today = todayUtcDate();
-        const todayMyAttacks = await withRetry(
-            () => db.entities.SquadMeteorAttack.filter({
-                squad_id: squadId,
-                wallet_address: wallet,
-                attack_date_utc: today,
-            }),
-            'count today attacks'
-        );
-        if (todayMyAttacks.length >= DAILY_ATTEMPT_LIMIT) {
+
+        // ─── MODE: START — reserve an attempt ───────────────────────────────────
+        // Logged as a damage=0 SquadMeteorAttack row. Counts toward the daily cap
+        // immediately, so an abandoned run still consumes its attempt.
+        if (mode === 'start') {
+            const todayMyAttacks = await withRetry(
+                () => db.entities.SquadMeteorAttack.filter({
+                    squad_id: squadId,
+                    wallet_address: wallet,
+                    attack_date_utc: today,
+                }),
+                'count today attacks (start)'
+            );
+            if (todayMyAttacks.length >= DAILY_ATTEMPT_LIMIT) {
+                return Response.json({
+                    error: `You've used all ${DAILY_ATTEMPT_LIMIT} attacks today. Try again tomorrow (resets at 00:00 UTC).`,
+                    attempts_used: todayMyAttacks.length,
+                    attempts_remaining: 0,
+                }, { status: 429 });
+            }
+            // Look up current meteor level so we can snapshot it on the row.
+            const meteorRows = await withRetry(
+                () => db.entities.SquadMeteor.filter({ squad_id: squadId }),
+                'SquadMeteor.filter (start)'
+            );
+            const meteorLevel = meteorRows.length > 0 ? meteorRows[0].level : 1;
+
+            const playerName = (body?.playerName || me.full_name || wallet).toString().slice(0, 80);
+            const reserved = await withRetry(
+                () => db.entities.SquadMeteorAttack.create({
+                    squad_id: squadId,
+                    wallet_address: wallet,
+                    player_name: playerName,
+                    damage: 0,
+                    meteor_level_at_attack: meteorLevel,
+                    attack_date_utc: today,
+                    week_id: getCurrentWeekId(),
+                }),
+                'SquadMeteorAttack.create (start)'
+            );
             return Response.json({
-                error: `You've used all ${DAILY_ATTEMPT_LIMIT} attacks today. Try again tomorrow (resets at 00:00 UTC).`,
-                attempts_used: todayMyAttacks.length,
-                attempts_remaining: 0,
-            }, { status: 429 });
+                success: true,
+                mode: 'start',
+                attackId: reserved.id,
+                attempts_used: todayMyAttacks.length + 1,
+                attempts_remaining: DAILY_ATTEMPT_LIMIT - (todayMyAttacks.length + 1),
+            });
+        }
+
+        // ─── MODE: FINISH — apply real damage ───────────────────────────────────
+        // If attackId is provided, we update that reserved row (no new attempt
+        // charged). Otherwise we fall through to the legacy "create fresh row"
+        // path, which DOES charge a fresh attempt.
+        let reservedRow = null;
+        if (attackId) {
+            reservedRow = await withRetry(
+                () => db.entities.SquadMeteorAttack.get(attackId).catch(() => null),
+                'SquadMeteorAttack.get (finish)'
+            );
+            if (!reservedRow ||
+                reservedRow.wallet_address !== wallet ||
+                reservedRow.squad_id !== squadId ||
+                reservedRow.attack_date_utc !== today) {
+                // Reservation invalid (stale, wrong wallet, wrong day) — reject
+                // rather than fall through to legacy path, which would double-charge.
+                return Response.json({
+                    error: 'Attack reservation expired or invalid. Start a new run.',
+                }, { status: 400 });
+            }
+            if ((reservedRow.damage || 0) > 0) {
+                // Already finalized — idempotent no-op so accidental retries don't
+                // double-apply damage to the meteor.
+                return Response.json({
+                    success: true,
+                    mode: 'finish',
+                    idempotent: true,
+                    damage_submitted: reservedRow.damage,
+                });
+            }
+        } else {
+            // Legacy single-call path — check daily limit before charging.
+            const todayMyAttacks = await withRetry(
+                () => db.entities.SquadMeteorAttack.filter({
+                    squad_id: squadId,
+                    wallet_address: wallet,
+                    attack_date_utc: today,
+                }),
+                'count today attacks (finish-legacy)'
+            );
+            if (todayMyAttacks.length >= DAILY_ATTEMPT_LIMIT) {
+                return Response.json({
+                    error: `You've used all ${DAILY_ATTEMPT_LIMIT} attacks today. Try again tomorrow (resets at 00:00 UTC).`,
+                    attempts_used: todayMyAttacks.length,
+                    attempts_remaining: 0,
+                }, { status: 429 });
+            }
         }
 
         // Load (or create) the meteor row
@@ -164,27 +262,49 @@ Deno.serve(async (req) => {
             'SquadMeteor.update'
         );
 
-        // Log the attack
+        // Log the attack — update reserved row if present, else create fresh.
         const playerName = (body?.playerName || me.full_name || wallet).toString().slice(0, 80);
-        await withRetry(
-            () => db.entities.SquadMeteorAttack.create({
+        if (reservedRow) {
+            await withRetry(
+                () => db.entities.SquadMeteorAttack.update(reservedRow.id, {
+                    player_name: playerName,
+                    damage,
+                    meteor_level_at_attack: meteor.level,
+                }),
+                'SquadMeteorAttack.update (finish)'
+            );
+        } else {
+            await withRetry(
+                () => db.entities.SquadMeteorAttack.create({
+                    squad_id: squadId,
+                    wallet_address: wallet,
+                    player_name: playerName,
+                    damage,
+                    meteor_level_at_attack: meteor.level,
+                    attack_date_utc: today,
+                    week_id: getCurrentWeekId(),
+                }),
+                'SquadMeteorAttack.create (finish-legacy)'
+            );
+        }
+
+        // Re-count today's attacks so the response carries the correct remaining count.
+        const finalCount = await withRetry(
+            () => db.entities.SquadMeteorAttack.filter({
                 squad_id: squadId,
                 wallet_address: wallet,
-                player_name: playerName,
-                damage,
-                meteor_level_at_attack: meteor.level,
                 attack_date_utc: today,
-                week_id: getCurrentWeekId(),
             }),
-            'SquadMeteorAttack.create'
+            'recount attacks (finish)'
         );
 
         return Response.json({
             success: true,
+            mode: 'finish',
             damage_submitted: damage,
             damage_clamped: rawDamage > SANITY_DAMAGE_CAP,
-            attempts_used: todayMyAttacks.length + 1,
-            attempts_remaining: DAILY_ATTEMPT_LIMIT - (todayMyAttacks.length + 1),
+            attempts_used: finalCount.length,
+            attempts_remaining: Math.max(0, DAILY_ATTEMPT_LIMIT - finalCount.length),
             meteor: {
                 level,
                 current_hp: currentHp,

@@ -120,7 +120,7 @@ export default function Game() {
         setBanishCount(0);
 
         const initGame = async () => {
-            const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+            const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, meteorAttackId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
             // NG+ removed — ignore any legacy isNGPlus state passed via navigation.
             
             // CRITICAL: Initialize SaveManager first to load cloud save + merge upgrades
@@ -423,6 +423,16 @@ export default function Game() {
                     base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
+                // Squad Meteor: submit damage against the squad's shared meteor.
+                // Attempt was already consumed at launch via mode='start' — passing
+                // attackId here UPDATES the reserved row rather than charging again.
+                if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0) {
+                    base44.functions.invoke('submitSquadMeteorDamage', {
+                        mode: 'finish',
+                        attackId: meteorAttackId || null,
+                        damage: stats.meteorDamage,
+                    }).catch(err => console.error('[Game] submitSquadMeteorDamage failed:', err?.message));
+                }
             },
             onVictory: (stats) => {
                 stats.difficultyId = difficultyId;
@@ -484,6 +494,14 @@ export default function Game() {
                     // Server reads the trusted pilot name from PlayerSave (see onGameOver).
                     base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage })
                         .catch(err => console.error('Failed to submit boss damage', err));
+                }
+                // Squad Meteor — same flow as onGameOver above.
+                if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0) {
+                    base44.functions.invoke('submitSquadMeteorDamage', {
+                        mode: 'finish',
+                        attackId: meteorAttackId || null,
+                        damage: stats.meteorDamage,
+                    }).catch(err => console.error('[Game] submitSquadMeteorDamage failed:', err?.message));
                 }
             }
         }, isEndless, worldBossId, worldBossName, startingWeaponId);
@@ -779,8 +797,11 @@ export default function Game() {
     const handleQuit = async () => {
         const engine = engineRef.current;
         const isRaid = engine?.arena?.id === 'world_boss_arena';
-        const target = isRaid ? '/?slide=11' : '/';
-        const navState = { state: { slide: isRaid ? 11 : 1 } };
+        const isMeteor = engine?.arena?.id === 'quantum_meteor';
+        // Meteor runs return to the Squads page (slide 5) so the player sees their
+        // updated meteor HP / activity feed immediately.
+        const target = isRaid ? '/?slide=11' : (isMeteor ? '/?slide=5' : '/');
+        const navState = { state: { slide: isRaid ? 11 : (isMeteor ? 5 : 1) } };
 
         if (!engine || engine.isGameOver || engine.isVictory) {
             navigate(target, navState);
@@ -818,6 +839,23 @@ export default function Game() {
                     await base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage });
                 } catch (bossErr) {
                     console.warn('[Game] submitBossDamage on quit failed:', bossErr?.message);
+                }
+            }
+            // Squad meteor quit — submit whatever damage was dealt before bailing
+            // (attempt was already consumed at launch, so the row is updated rather
+            // than created). Pulled directly from the engine since `stats` may not
+            // include meteorDamage for the early-quit path.
+            const quitMeteorAttackId = location.state?.meteorAttackId;
+            const quitMeteorDamage = Math.floor(engine?.runMeteorDamage || 0);
+            if (engine?.arena?.id === 'quantum_meteor' && quitMeteorDamage > 0) {
+                try {
+                    await base44.functions.invoke('submitSquadMeteorDamage', {
+                        mode: 'finish',
+                        attackId: quitMeteorAttackId || null,
+                        damage: quitMeteorDamage,
+                    });
+                } catch (mErr) {
+                    console.warn('[Game] submitSquadMeteorDamage on quit failed:', mErr?.message);
                 }
             }
         } catch (e) {

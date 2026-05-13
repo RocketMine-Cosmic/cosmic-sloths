@@ -215,6 +215,14 @@ export function updateEnemies(engine, dt) {
             continue;
         }
 
+        // Squad Meteor target — stationary, no contact damage, no AI. Just sits
+        // there and absorbs incoming damage. The world-boss hp-clamp in
+        // GameEngine.damageEnemy() keeps hp ≥ 1 so it never dies in-run; the
+        // run-end damage submit is what applies progress to the cloud meteor.
+        if (e._isMeteorTarget) {
+            continue;
+        }
+
         const dx = engine.player.x - e.x;
         const dy = engine.player.y - e.y;
         const dist = Math.hypot(dx, dy);

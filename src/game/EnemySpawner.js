@@ -1,9 +1,58 @@
 // Enemy spawning + boss spawning logic extracted from GameEngine.
-import { ENEMIES, ARENAS } from './Constants';
+import { ENEMIES, ARENAS, QUANTUM_METEOR_SPRITE } from './Constants';
 import { SFXManager } from './SFXManager';
 import { selectBossForArena } from './BossSystem';
 
+// Lazy-load the meteor sprite sheet exactly once per session (shared across runs).
+let _meteorSpriteImage = null;
+function getMeteorSpriteImage() {
+    if (typeof window === 'undefined') return null;
+    if (_meteorSpriteImage) return _meteorSpriteImage;
+    _meteorSpriteImage = new Image();
+    _meteorSpriteImage.src = QUANTUM_METEOR_SPRITE.url;
+    return _meteorSpriteImage;
+}
+
 export function spawnEnemies(engine, dt) {
+    // ─── SQUAD METEOR ARENA ─────────────────────────────────────────────────
+    // Single stationary target — no mob spawns, no boss spawns. Spawned once
+    // on first tick, sits dead-centre near the player, animates via the
+    // existing EnemyRenderer (16-frame sprite sheet). Has a huge HP pool that
+    // can't actually be killed in-run (clamped at 1 HP); the run-end submit
+    // is what applies damage to the cloud-side meteor.
+    if (engine.arena.id === 'quantum_meteor') {
+        if (!engine.meteorSpawned) {
+            engine.meteorSpawned = true;
+            const sprite = getMeteorSpriteImage();
+            const meteor = {
+                id: 'squad_meteor_target',
+                name: 'Squad Meteor',
+                x: engine.player.x,
+                y: engine.player.y - 220,
+                radius: 110,
+                hp: 1e15,                 // effectively immortal — server-side meteor is what matters
+                maxHp: 1e15,
+                damage: 0,                // doesn't deal contact damage
+                speed: 0,                 // stationary
+                color: '#f59e0b',
+                xp: 0,                    // no XP from hits — leveling is from time/sub-spawns... but we skip those
+                tier: 0,
+                isSquadMeteor: true,
+                isStationary: true,
+                isWorldBoss: true,        // reuse the world-boss damage-text/buffer rendering pipeline + immortality clamp
+                spriteImage: sprite,
+                frameCount: QUANTUM_METEOR_SPRITE.frameCount,
+                animationSpeed: QUANTUM_METEOR_SPRITE.animationSpeed,
+                // Custom flag — EnemyAI checks this to skip movement and contact damage.
+                _isMeteorTarget: true,
+            };
+            engine.enemies.push(meteor);
+            engine.encounteredEnemies.add(meteor.id);
+            engine.addDamageText(engine.player.x, engine.player.y - 80, 'SQUAD METEOR — DEAL DAMAGE!', '#f59e0b');
+        }
+        return;
+    }
+
     if (engine.arena.id === 'world_boss_arena') {
         if (!engine.worldBossSpawned) {
             engine.worldBossSpawned = true;

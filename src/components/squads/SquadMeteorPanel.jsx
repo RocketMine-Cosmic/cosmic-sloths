@@ -22,26 +22,51 @@ export default function SquadMeteorPanel() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const handleAttackMeteor = useCallback(() => {
+    const [launching, setLaunching] = useState(false);
+    const handleAttackMeteor = useCallback(async () => {
         if (!state?.in_squad) return;
         if ((state?.my_attempts_remaining ?? 0) <= 0) {
             toast({ title: 'No attacks remaining', description: 'Resets at 00:00 UTC.', variant: 'destructive' });
             return;
         }
+        if (launching) return;
+        setLaunching(true);
         SoundManager.playUIClick();
-        // Launch dedicated Quantum Meteor run. Use the player's last-selected character.
-        const save = SaveManager.load();
-        const characterId = save?.lastSelectedChar || 'neobyte';
-        navigate('/game', {
-            state: {
-                characterId,
-                arenaId: 'quantum_meteor',
-                difficultyId: 'normal',
-                isEndless: false,
-                isSquadMeteor: true,
-            },
-        });
-    }, [state, navigate, toast]);
+        // Reserve an attempt server-side BEFORE launching the run. This consumes
+        // the daily attempt immediately — an abandoned/quit run still costs an
+        // attempt (matches the original spec).
+        try {
+            const res = await base44.functions.invoke('submitSquadMeteorDamage', {
+                mode: 'start',
+                damage: 0,
+            });
+            if (res.data?.error || !res.data?.attackId) {
+                toast({
+                    title: 'Cannot start attack',
+                    description: res.data?.error || 'Failed to reserve attempt. Try again.',
+                    variant: 'destructive',
+                });
+                setLaunching(false);
+                return;
+            }
+            const attackId = res.data.attackId;
+            const save = SaveManager.load();
+            const characterId = save?.lastSelectedChar || 'neobyte';
+            navigate('/game', {
+                state: {
+                    characterId,
+                    arenaId: 'quantum_meteor',
+                    difficultyId: 'normal',
+                    isEndless: false,
+                    isSquadMeteor: true,
+                    meteorAttackId: attackId,
+                },
+            });
+        } catch (e) {
+            toast({ title: 'Network error', description: e?.message || 'Try again.', variant: 'destructive' });
+            setLaunching(false);
+        }
+    }, [state, navigate, toast, launching]);
 
     const load = useCallback(async () => {
         try {
@@ -135,11 +160,11 @@ export default function SquadMeteorPanel() {
                 {/* ATTACK METEOR — launches the dedicated DPS run */}
                 <button
                     onClick={handleAttackMeteor}
-                    disabled={my_attempts_remaining <= 0}
+                    disabled={my_attempts_remaining <= 0 || launching}
                     className="mt-3 w-full bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 hover:from-orange-500 hover:via-red-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-black text-sm uppercase tracking-widest shadow-[0_0_25px_rgba(220,38,38,0.45)] hover:shadow-[0_0_35px_rgba(220,38,38,0.7)] transition-all flex items-center justify-center gap-2 border border-red-400/60"
                 >
-                    <Crosshair className="w-4 h-4" />
-                    ATTACK METEOR
+                    {launching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
+                    {launching ? 'LAUNCHING…' : 'ATTACK METEOR'}
                     <span className="text-[10px] bg-black/30 px-2 py-0.5 rounded-full font-bold tracking-normal">
                         {my_attempts_remaining} left
                     </span>

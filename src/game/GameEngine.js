@@ -1070,8 +1070,15 @@ export class GameEngine {
         }
 
         if (enemy.isWorldBoss) {
-            this.worldBossDamage += finalDamage;
-            
+            // Route damage to the right bucket: meteor target → runMeteorDamage,
+            // actual world boss → worldBossDamage. Both reuse the world-boss render
+            // pipeline (clamped HP, floating damage-buffer text) but count separately.
+            if (enemy._isMeteorTarget) {
+                this.runMeteorDamage = (this.runMeteorDamage || 0) + finalDamage;
+            } else {
+                this.worldBossDamage += finalDamage;
+            }
+
             enemy.damageBuffer = (enemy.damageBuffer || 0) + finalDamage;
             if (isCrit) enemy.hadCritInBuffer = true;
             if (isWeakHit) enemy.hadWeakInBuffer = true;
@@ -1149,6 +1156,7 @@ export class GameEngine {
             characterId: this.characterId, arenaId: this.arena?.id,
             encountered: Array.from(this.encounteredEnemies), enemyKills: this.enemyKills,
             worldBossDamage: this.worldBossDamage || 0,
+            meteorDamage: Math.floor(this.runMeteorDamage || 0),
             totalDamageDealt: Math.floor(this.totalDamageDealt || 0),
             bossesKilled: this.bossesKilled || 0, elitesKilled: this.elitesKilled || 0,
             weaponDamage: this.weaponDamage || {},
