@@ -266,18 +266,41 @@ function MemberStatRow({ member }) {
                 </div>
             </div>
             <div className="grid grid-cols-4 gap-1.5 text-center">
-                <MemberStat label="Weekly" value={member.weekly_kills.toLocaleString()} color="text-yellow-400" />
-                <MemberStat label="All-Time" value={member.total_kills.toLocaleString()} color="text-cyan-400" />
-                <MemberStat label="Raid DMG" value={member.raid_damage_this_week.toLocaleString()} color="text-red-400" />
-                <MemberStat label="War Wins" value={member.war_wins_claimed.toLocaleString()} color="text-amber-400" />
+                <MemberStat
+                    label="Weekly Kills"
+                    value={member.weekly_kills.toLocaleString()}
+                    color="text-yellow-400"
+                    tooltip="Total enemies killed across ALL arena runs this week (resets Mon 00:00 UTC). This is NOT squad-war-only — it includes regular runs, trials, raid, etc."
+                />
+                <MemberStat
+                    label="All-Time Kills"
+                    value={member.total_kills.toLocaleString()}
+                    color="text-cyan-400"
+                    tooltip="Lifetime total kills across every run this pilot has ever played."
+                />
+                <MemberStat
+                    label="Raid DMG"
+                    value={member.raid_damage_this_week.toLocaleString()}
+                    color="text-red-400"
+                    tooltip="Damage dealt to this week's Global Raid Boss."
+                />
+                <MemberStat
+                    label="War Wins"
+                    value={member.war_wins_claimed.toLocaleString()}
+                    color="text-amber-400"
+                    tooltip="Squad War wins this pilot has personally claimed rewards for."
+                />
             </div>
         </div>
     );
 }
 
-function MemberStat({ label, value, color }) {
+function MemberStat({ label, value, color, tooltip }) {
     return (
-        <div className="bg-slate-950/60 rounded px-1 py-1 border border-slate-800/60">
+        <div
+            className="bg-slate-950/60 rounded px-1 py-1 border border-slate-800/60"
+            title={tooltip || undefined}
+        >
             <div className={`text-xs font-black ${color} truncate`}>{value}</div>
             <div className="text-[8px] text-slate-500 uppercase tracking-wider font-bold">{label}</div>
         </div>
