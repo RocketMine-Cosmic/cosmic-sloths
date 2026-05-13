@@ -124,7 +124,7 @@ export default function SquadMeteorPanel() {
         return <div className="flex-1 flex items-center justify-center text-slate-400 p-6">Join a squad to attack the meteor.</div>;
     }
 
-    const { meteor, buffs, today_activity, my_attempts_remaining, my_attempts_used_today, daily_attempt_limit } = state;
+    const { meteor, buffs, today_activity, weekly_leaderboard, my_attempts_remaining, my_attempts_used_today, daily_attempt_limit, today_date, week_id } = state;
     // current_hp now means "damage banked toward next level" (counts up 0 → max_hp).
     const hpPct = meteor.max_hp > 0 ? Math.min(100, (meteor.current_hp / meteor.max_hp) * 100) : 0;
 
@@ -205,31 +205,67 @@ export default function SquadMeteorPanel() {
                 </div>
             </div>
 
-            {/* TODAY'S ACTIVITY */}
-            <div className="bg-[#0b0416]/80 border border-orange-500/30 rounded-xl p-3">
-                <h4 className="text-xs font-black text-orange-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5" /> Today's Squad Activity
-                </h4>
-                {today_activity.length === 0 ? (
-                    <div className="text-center text-slate-500 text-xs py-4 italic">
-                        No attacks yet today. Be the first to strike!
+            {/* ACTIVITY FEEDS — daily + weekly side-by-side on desktop, stacked on mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* TODAY */}
+                <div className="bg-[#0b0416]/80 border border-orange-500/30 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-black text-orange-300 uppercase tracking-widest flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5" /> Today
+                        </h4>
+                        <span className="text-[9px] text-slate-500 font-mono">{today_date}</span>
                     </div>
-                ) : (
-                    <div className="space-y-1.5">
-                        {today_activity.map((row, i) => (
-                            <div key={row.wallet} className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1.5 border border-slate-800">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-[10px] font-black text-slate-500 w-4">{i + 1}</span>
-                                    <span className="text-sm text-white truncate">{sanitizePilotName(row.name, row.wallet)}</span>
+                    {today_activity.length === 0 ? (
+                        <div className="text-center text-slate-500 text-xs py-4 italic">
+                            No attacks yet today.
+                        </div>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {today_activity.map((row, i) => (
+                                <div key={row.wallet} className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1.5 border border-slate-800">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="text-[10px] font-black text-slate-500 w-4">{i + 1}</span>
+                                        <span className="text-sm text-white truncate">{sanitizePilotName(row.name, row.wallet)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-[10px] text-slate-400">{row.attacks}/{daily_attempt_limit}</span>
+                                        <span className="text-sm font-bold text-orange-300">{fmtNum(row.damage)}</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
-                                    <span className="text-[10px] text-slate-400">{row.attacks}/{daily_attempt_limit} hits</span>
-                                    <span className="text-sm font-bold text-orange-300">{fmtNum(row.damage)}</span>
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* THIS WEEK */}
+                <div className="bg-[#0b0416]/80 border border-purple-500/30 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-black text-purple-300 uppercase tracking-widest flex items-center gap-1.5">
+                            <Trophy className="w-3.5 h-3.5" /> This Week
+                        </h4>
+                        <span className="text-[9px] text-slate-500 font-mono">{week_id}</span>
                     </div>
-                )}
+                    {(!weekly_leaderboard || weekly_leaderboard.length === 0) ? (
+                        <div className="text-center text-slate-500 text-xs py-4 italic">
+                            No attacks yet this week.
+                        </div>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {weekly_leaderboard.map((row, i) => (
+                                <div key={row.wallet} className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1.5 border border-slate-800">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="text-[10px] font-black text-slate-500 w-4">{i + 1}</span>
+                                        <span className="text-sm text-white truncate">{sanitizePilotName(row.name, row.wallet)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-[10px] text-slate-400">{row.attacks} hits</span>
+                                        <span className="text-sm font-bold text-purple-300">{fmtNum(row.damage)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
         </div>
