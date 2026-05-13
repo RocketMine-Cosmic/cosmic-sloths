@@ -1040,7 +1040,7 @@ export default function Game() {
             
             {!hudHidden && <VirtualJoystick onChange={handleJoystickChange} />}
             
-            {!hudHidden && <UIOverlay {...gameState} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
+            {!hudHidden && <UIOverlay {...gameState} arenaId={engineRef.current?.arena?.id || location.state?.arenaId || ''} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
             {!hudHidden && <SynergyBanner />}
             {!hudHidden && <SessionExpiredBanner />}

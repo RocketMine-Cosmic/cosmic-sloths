@@ -25,7 +25,10 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate, omenxPurchasesDisabled = false }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate, omenxPurchasesDisabled = false, arenaId = '' }) {
+    // Squad Meteor runs don't feed the leaderboard — score has no meaning there,
+    // so hide the row to avoid confusing players who think it matters.
+    const isMeteorRun = arenaId === 'quantum_meteor';
     // Collapse loadout list by default on mobile so the pause button + top row stay visible.
     // Players can tap the HP bar to expand and review their build.
     const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
@@ -127,9 +130,11 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                     <div className="text-sm md:text-2xl font-black text-white font-mono tracking-wider">
                         {formatTime(time)} {duration === Infinity ? '' : <span className="text-slate-500 text-xs md:text-lg">/ {formatTime(duration || 300)}</span>}
                     </div>
-                    <div className="text-[10px] md:text-sm font-black text-fuchsia-400 font-mono mt-0.5">
-                        SCORE: {score.toLocaleString()}
-                    </div>
+                    {!isMeteorRun && (
+                        <div className="text-[10px] md:text-sm font-black text-fuchsia-400 font-mono mt-0.5">
+                            SCORE: {score.toLocaleString()}
+                        </div>
+                    )}
                     <div className="text-[9px] md:text-xs font-bold text-orange-400 font-mono mt-0.5" title="Damage per second">
                         DPS: {dps.toLocaleString()}
                     </div>
