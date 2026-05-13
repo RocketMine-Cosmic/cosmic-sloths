@@ -257,7 +257,7 @@ export default function BountiesPanel({ save, setSave }) {
                     </div>
                     {currentPoints >= SEASONAL_REWARD_TARGET && (
                         <div className="mt-3 text-center text-xs font-bold text-emerald-400 animate-pulse">
-                            SKIN UNLOCKED! (Coming soon)
+                            🏆 GOAL REACHED — Skin claim coming soon!
                         </div>
                     )}
                 </div>
