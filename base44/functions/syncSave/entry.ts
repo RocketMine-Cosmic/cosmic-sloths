@@ -175,7 +175,11 @@ function resolvePeriodicUpgradeContainer(cloudVal, clientVal, idKey, currentPeri
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
+        // base44.auth.me() THROWS (doesn't return null) when there's no auth context —
+        // common during page-load races. Catch it and return a clean 401 instead of a
+        // 500 that bubbles raw "Authentication required to view users" to the client.
+        let me = null;
+        try { me = await base44.auth.me(); } catch {}
         if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
         const wallet = me.wallet_address;

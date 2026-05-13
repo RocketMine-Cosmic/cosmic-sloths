@@ -415,7 +415,11 @@ Deno.serve(async (req) => {
     let playerNameForAlert = null;
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
+        // base44.auth.me() THROWS (doesn't return null) when there's no auth context.
+        // Catch it and return a clean 401 — otherwise the outer catch fires a Discord
+        // error alert for routine "user not signed in yet" page loads.
+        let me = null;
+        try { me = await base44.auth.me(); } catch {}
         if (!me) return Response.json({ error: 'Please sign in to continue.' }, { status: 401 });
 
         walletAddress = me.wallet_address;

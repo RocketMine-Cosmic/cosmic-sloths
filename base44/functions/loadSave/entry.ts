@@ -74,7 +74,11 @@ async function readWipeEpoch(base44) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
+        // base44.auth.me() THROWS (doesn't return null) when there's no auth context —
+        // common during page-load races. Catch it cleanly instead of logging a scary
+        // "Authentication required to view users" error in the runtime logs.
+        let me = null;
+        try { me = await base44.auth.me(); } catch {}
         if (!me) return Response.json({ saveData: null, wipeEpoch: 0 });
 
         const wallet = me.wallet_address;

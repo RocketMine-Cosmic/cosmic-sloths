@@ -489,7 +489,11 @@ function applyRunToSave(save, run, isVictory, charId, isEndless) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
+        // base44.auth.me() THROWS (doesn't return null) when there's no auth context —
+        // catch it and surface a clean 401 instead of a 500 that flushPendingScores
+        // would then re-queue forever.
+        let me = null;
+        try { me = await base44.auth.me(); } catch {}
         if (!me) return Response.json({ error: 'Please sign in to save your score.' }, { status: 401 });
 
         const walletAddress = me.wallet_address;
