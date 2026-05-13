@@ -13,7 +13,7 @@ export const CHARACTERS = [
 
 export const DIFFICULTIES = [
   { id: 'easy', name: 'Easy', desc: 'Forgiving start for new pilots. -50% XP & Gold.', xpMult: 0.5, goldMult: 0.5, enemyHpMult: 0.7, enemyDmgMult: 0.6, hazardChance: 0, speedMult: 0.85 },
-  { id: 'normal', name: 'Normal', desc: 'Standard cosmic experience.', xpMult: 1.0, goldMult: 1.0, enemyHpMult: 1.0, enemyDmgMult: 1.0, hazardChance: 0, speedMult: 1.0 },
+  { id: 'normal', name: 'Normal', desc: 'Standard experience. Balanced challenge.', xpMult: 1.0, goldMult: 1.0, enemyHpMult: 1.0, enemyDmgMult: 1.0, hazardChance: 0, speedMult: 1.0 },
   { id: 'hard', name: 'Hard', desc: 'Tougher enemies. Occasional hazards. +100% XP & Gold.', xpMult: 2.0, goldMult: 2.0, enemyHpMult: 1.5, enemyDmgMult: 1.5, hazardChance: 0.05, speedMult: 1.1 },
   { id: 'cosmic', name: 'Cosmic', desc: 'Extreme danger. Frequent hazards. +200% XP & Gold.', xpMult: 3.0, goldMult: 3.0, enemyHpMult: 2.5, enemyDmgMult: 2.5, hazardChance: 0.15, speedMult: 1.25 }
 ];
@@ -52,10 +52,10 @@ export const WEAPONS = {
   flamingLash: { id: 'flamingLash', name: 'Flaming Lash', type: 'weapon', desc: 'SYNERGY: A molten whip that leaves persistent fire.', baseDamage: 28, baseCooldown: 35, baseArea: 1.5, isSynergy: true, labels: { damage: 'Burn Power', area: 'Lash Reach', cooldown: 'Crack Rate' } },
   venomLash: { id: 'venomLash', name: 'Venom Lash', type: 'weapon', desc: 'SYNERGY: A whip that applies toxic damage and slows.', baseDamage: 25, baseCooldown: 40, baseArea: 1.5, isSynergy: true, labels: { damage: 'Venom Potency', area: 'Lash Reach', cooldown: 'Strike Rate' } },
   supernovaBeam: { id: 'supernovaBeam', name: 'Supernova Beam', type: 'weapon', desc: 'EVOLVED: Massive piercing beam that explodes on impact.', baseDamage: 60, baseCooldown: 60, baseArea: 1.5, isEvolution: true, labels: { damage: 'Beam Power', area: 'Blast Radius', cooldown: 'Charge Time' } },
-  vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals slightly and covers screen.', baseDamage: 45, baseCooldown: 50, baseArea: 2.2, isEvolution: true, labels: { damage: 'Drain Power', area: 'Lash Reach', cooldown: 'Strike Rate' } },
+  vampiricLash: { id: 'vampiricLash', name: 'Vampiric Lash', type: 'weapon', desc: 'EVOLVED: Heals 1% of damage dealt (up to 5% Max HP per swing) and covers screen.', baseDamage: 45, baseCooldown: 50, baseArea: 2.2, isEvolution: true, labels: { damage: 'Drain Power', area: 'Lash Reach', cooldown: 'Strike Rate' } },
   orbitalDefense: { id: 'orbitalDefense', name: 'Orbital Defense Network', type: 'weapon', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.', baseDamage: 35, baseCooldown: 40, baseArea: 2, isEvolution: true, labels: { damage: 'Drone Damage', area: 'Network Range', cooldown: 'Laser Fire Rate' } },
   hellfire: { id: 'hellfire', name: 'Hellfire', type: 'weapon', desc: 'EVOLVED: Blue flames that persist and melt everything.', baseDamage: 25, baseCooldown: 80, baseArea: 1.5, isEvolution: true, labels: { damage: 'Inferno Heat', area: 'Pool Size', cooldown: 'Drop Rate' } },
-  quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Constant rapid pulses of dark energy.', baseDamage: 75, baseCooldown: 80, baseArea: 2, isEvolution: true, labels: { damage: 'Pulse Yield', area: 'Collapse Radius', cooldown: 'Pulse Rate' } },
+  quantumCollapse: { id: 'quantumCollapse', name: 'Quantum Collapse', type: 'weapon', desc: 'EVOLVED: Triple-pulse dark energy burst (each pulse hits harder than the last).', baseDamage: 75, baseCooldown: 80, baseArea: 2, isEvolution: true, labels: { damage: 'Pulse Yield', area: 'Collapse Radius', cooldown: 'Pulse Rate' } },
   aegisMatrix: { id: 'aegisMatrix', name: 'Aegis Matrix', type: 'weapon', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.', baseDamage: 40, baseCooldown: 100, baseArea: 2, isEvolution: true, labels: { damage: 'Barrier Strength', area: 'Matrix Size', cooldown: 'Recharge Rate' } },
   buzzsawSwarm: { id: 'buzzsawSwarm', name: 'Buzzsaw Swarm', type: 'weapon', desc: 'EVOLVED: Multiple massive blades that ricochet wildly.', baseDamage: 30, baseCooldown: 50, baseArea: 1.5, isEvolution: true, labels: { damage: 'Blade Edge', area: 'Bounce Range', cooldown: 'Reload Speed' } },
 };
@@ -153,10 +153,10 @@ export const SKIN_COSMETICS = [
 
 export const EVOLUTIONS = [
     { baseWeapon: 'napBeam', passive: 'area_up', evolvedWeapon: 'supernovaBeam', name: 'Supernova Beam', desc: 'EVOLVED: Massive piercing beam that explodes on impact.' },
-    { baseWeapon: 'vineWhip', passive: 'regen_up', evolvedWeapon: 'vampiricLash', name: 'Vampiric Lash', desc: 'EVOLVED: Heals massively and covers screen.' },
+    { baseWeapon: 'vineWhip', passive: 'regen_up', evolvedWeapon: 'vampiricLash', name: 'Vampiric Lash', desc: 'EVOLVED: Heals 1% of damage dealt (up to 5% Max HP per swing) and covers screen.' },
     { baseWeapon: 'slothSwarm', passive: 'spd_up', evolvedWeapon: 'orbitalDefense', name: 'Orbital Defense Network', desc: 'EVOLVED: Indestructible drones that rapidly shoot lasers.' },
     { baseWeapon: 'napalm', passive: 'dmg_up', evolvedWeapon: 'hellfire', name: 'Hellfire', desc: 'EVOLVED: Blue flames that persist and melt everything.' },
-    { baseWeapon: 'novaPulse', passive: 'cd_down', evolvedWeapon: 'quantumCollapse', name: 'Quantum Collapse', desc: 'EVOLVED: Constant rapid pulses of dark energy.' },
+    { baseWeapon: 'novaPulse', passive: 'cd_down', evolvedWeapon: 'quantumCollapse', name: 'Quantum Collapse', desc: 'EVOLVED: Triple-pulse dark energy burst (each pulse hits harder than the last).' },
     { baseWeapon: 'shieldBubble', passive: 'hp_up', evolvedWeapon: 'aegisMatrix', name: 'Aegis Matrix', desc: 'EVOLVED: Massive repulsion and retaliates with missiles.' },
     { baseWeapon: 'bouncingBlade', passive: 'proj_spd', evolvedWeapon: 'buzzsawSwarm', name: 'Buzzsaw Swarm', desc: 'EVOLVED: Multiple massive blades that ricochet wildly.' }
 ];
