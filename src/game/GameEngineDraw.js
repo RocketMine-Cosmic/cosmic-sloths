@@ -173,42 +173,6 @@ export function renderGame() {
         });
     }
 
-    if (this.enemyProjectiles) {
-        this.ctx.globalCompositeOperation = 'screen';
-        const texStar = this.particleManager?.textures?.star;
-        this.enemyProjectiles.forEach(p => {
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            if (p.vx || p.vy) {
-                this.ctx.rotate(Math.atan2(p.vy, p.vx));
-            }
-            
-            this.ctx.globalCompositeOperation = 'lighter';
-            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 3));
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, p.color || '#ff0000');
-            grad.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = grad;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 3), 0, Math.PI * 2);
-            this.ctx.fill();
-
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.8), 0, Math.PI * 2);
-            this.ctx.fill();
-
-            if (texStar && texStar.isReady) {
-                this.ctx.globalAlpha = 0.8;
-                this.ctx.drawImage(texStar, -p.radius*2.5, -p.radius*2.5, p.radius*5, p.radius*5);
-                this.ctx.globalAlpha = 1.0;
-            }
-            this.ctx.globalCompositeOperation = 'screen';
-            this.ctx.restore();
-        });
-        this.ctx.globalCompositeOperation = 'source-over';
-    }
-
     const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
     if (swarm) {
         const stats = getWeaponStatsAndMastery(this.save, 'slothSwarm');
@@ -377,6 +341,46 @@ export function renderGame() {
     }
 
     this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
+
+    // Enemy projectiles render AFTER player particles/AoE pools so dangerous
+    // bullets stay visible through Hellfire/Quantum Collapse/Aegis effects
+    // (player request 2026-05-13). Previously enemy bullets were getting hidden
+    // under bright player AoE visuals — a real gameplay readability issue.
+    if (this.enemyProjectiles) {
+        this.ctx.globalCompositeOperation = 'screen';
+        const texStar = this.particleManager?.textures?.star;
+        this.enemyProjectiles.forEach(p => {
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
+            if (p.vx || p.vy) {
+                this.ctx.rotate(Math.atan2(p.vy, p.vx));
+            }
+            
+            this.ctx.globalCompositeOperation = 'lighter';
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 3));
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.2, p.color || '#ff0000');
+            grad.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = grad;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 3), 0, Math.PI * 2);
+            this.ctx.fill();
+
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.8), 0, Math.PI * 2);
+            this.ctx.fill();
+
+            if (texStar && texStar.isReady) {
+                this.ctx.globalAlpha = 0.8;
+                this.ctx.drawImage(texStar, -p.radius*2.5, -p.radius*2.5, p.radius*5, p.radius*5);
+                this.ctx.globalAlpha = 1.0;
+            }
+            this.ctx.globalCompositeOperation = 'screen';
+            this.ctx.restore();
+        });
+        this.ctx.globalCompositeOperation = 'source-over';
+    }
 
     // Top-layer pickup pass — gold/XP/fragments/power-ups all stay visible
     // through weapon AoE pools (player request 2026-05-08).
