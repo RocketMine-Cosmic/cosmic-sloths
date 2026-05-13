@@ -111,7 +111,8 @@ export default function SquadMeteorPanel() {
     }
 
     const { meteor, buffs, today_activity, my_attempts_remaining, my_attempts_used_today, daily_attempt_limit } = state;
-    const hpPct = meteor.max_hp > 0 ? (meteor.current_hp / meteor.max_hp) * 100 : 0;
+    // current_hp now means "damage banked toward next level" (counts up 0 → max_hp).
+    const hpPct = meteor.max_hp > 0 ? Math.min(100, (meteor.current_hp / meteor.max_hp) * 100) : 0;
 
     return (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -132,10 +133,10 @@ export default function SquadMeteorPanel() {
                     </div>
                 </div>
 
-                {/* HP bar */}
+                {/* Progress bar — damage banked toward next level-up */}
                 <div className="mb-2">
                     <div className="flex justify-between text-xs font-bold mb-1">
-                        <span className="text-orange-300">HP</span>
+                        <span className="text-orange-300">PROGRESS</span>
                         <span className="text-white">{fmtNum(meteor.current_hp)} / {fmtNum(meteor.max_hp)}</span>
                     </div>
                     <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
@@ -143,6 +144,9 @@ export default function SquadMeteorPanel() {
                             className="h-full bg-gradient-to-r from-orange-600 via-red-500 to-purple-500 transition-all duration-500"
                             style={{ width: `${hpPct}%` }}
                         />
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1 text-center">
+                        Fill the bar as a squad to break through to Lv.{meteor.level + 1}
                     </div>
                 </div>
 
