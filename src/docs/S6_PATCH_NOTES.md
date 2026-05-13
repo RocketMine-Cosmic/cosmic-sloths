@@ -1,6 +1,6 @@
 # S6 Patch Notes — Discord Post Pack
 
-Condensed to 5 posts. Each under 2,000 chars so it fits a single Discord message.
+Condensed to 6 posts. Each under 2,000 chars so it fits a single Discord message.
 
 **Goes live:** Monday, May 18 • 00:00 UTC
 **Maintenance window:** Sun May 17, 23:00 UTC (1hr soft warning) → 23:40 UTC (game closes) → ~00:10 UTC Mon (back online)
@@ -140,7 +140,43 @@ Donations made in week N apply to week N+1's wars. Buffs reset weekly.
 
 ---
 
-## 📢 POST 5 — UX Polish & First-Login Tour
+## 📢 POST 5 — Squad Meteor *(new persistent boss)*
+
+```
+☄️ **SQUAD METEOR — A NEW SQUAD BOSS**
+A persistent meteor that lives inside your squad. Hit it together, level it up, and the whole squad gets permanent buffs that apply to every run.
+
+**How it works:**
+• Every squad has its own meteor (starts at Lv.1)
+• Tap **⚔ ATTACK METEOR** on the Squads page to launch a dedicated DPS run
+• Damage you deal accumulates toward the next level
+• When the squad collectively breaks through, the meteor levels up — and a fresh, beefier one spawns
+• **Levels never reset** — keep climbing forever
+
+**Attack limits:**
+• Each member gets a small daily attack quota (resets 00:00 UTC)
+• Encourages consistent squad participation over single-player grinds
+
+**Persistent squad buffs (apply to ALL arena runs, not just meteor runs):**
+• +Gold drops
+• +Damage
+• +AoE size
+• +Cooldown reduction
+
+The buff strength scales with your squad's current meteor level. Buffs are **capped** so a 6-month-old squad isn't infinitely stronger than a new one — but every level matters.
+
+**Leaderboards:**
+• 📊 **Today** — your squad's top damage dealers today
+• 🏆 **This Week** — weekly squad-wide damage leaderboard
+
+**Why this exists:** Squads needed a true co-op endgame loop. Squad Wars are competitive (vs another squad) and the Global Raid is server-wide. Squad Meteor is *your squad vs the meteor* — a long-running shared goal that rewards everyone who shows up. The buffs intentionally apply to every arena so meteor participation feels valuable even if you don't love the meteor arena itself.
+
+**Where to find it:** Squads page → Meteor tab. Quit a meteor run early? Whatever damage you dealt up to that point is still banked.
+```
+
+---
+
+## 📢 POST 6 — UX Polish & First-Login Tour
 
 ```
 ✨ **QUALITY OF LIFE**
