@@ -29,7 +29,7 @@ export function spawnEnemies(engine, dt) {
                 name: 'Squad Meteor',
                 x: engine.player.x,
                 y: engine.player.y - 220,
-                radius: 110,
+                radius: 220,
                 hp: 1e15,                 // effectively immortal — server-side meteor is what matters
                 maxHp: 1e15,
                 damage: 0,                // doesn't deal contact damage
