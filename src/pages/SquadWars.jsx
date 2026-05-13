@@ -13,6 +13,8 @@ import WarHeadToHead from '../components/squadwars/WarHeadToHead';
 import WarHistoryRow from '../components/squadwars/WarHistoryRow';
 import RaidLeaderboardRow from '../components/squadwars/RaidLeaderboardRow';
 import ChampionsPanel from '../components/squadwars/ChampionsPanel';
+import MemberContributionsPanel from '../components/squadwars/MemberContributionsPanel';
+import { isS6OrLater } from '@/lib/seasonGate';
 
 export default function SquadWars({ isCarousel }) {
     const navigate = useNavigate();
@@ -345,7 +347,15 @@ export default function SquadWars({ isCarousel }) {
                                         <p className="text-sm">Squad Wars are 5v5 (max). Join or create a squad to enter weekly wars.</p>
                                     </div>
                                 ) : myWar ? (
-                                    <WarHeadToHead war={myWar} mySquadId={mySquadId} onClaim={handleClaimWinBonus} claiming={claiming} />
+                                    <>
+                                        <WarHeadToHead war={myWar} mySquadId={mySquadId} onClaim={handleClaimWinBonus} claiming={claiming} />
+                                        {isS6OrLater() && (
+                                            <MemberContributionsPanel
+                                                squadId={mySquadId}
+                                                myWalletLower={(omenxUser?.wallet_address || omenxUser?.walletAddress || '').toLowerCase()}
+                                            />
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="text-center py-16 text-slate-400">
                                         <Swords className="w-12 h-12 mx-auto mb-3 text-slate-600" />
