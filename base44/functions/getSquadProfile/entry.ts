@@ -10,6 +10,35 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //  - SquadWar.rewarded_member_wallets — count of resolved wars where this wallet
 //    appears, scoped to wars involving this squad (war wins claimed)
 
+// In-memory response cache. Keyed by squadId — same squad opened within
+// CACHE_TTL_MS skips ALL database reads (PlayerSave, RunScore, GlobalBossContribution,
+// SquadWar) and serves the cached payload. This is the fix for the "modal doesn't
+// load on many-to-many requests" bug: every open used to do a 1000-row RunScore
+// scan + 4 other heavy filters, which rate-limited under load.
+const PROFILE_CACHE_TTL_MS = 30_000;
+const profileCache = new Map(); // squadId -> { expiresAt, payload }
+
+function getCachedProfile(squadId) {
+    const entry = profileCache.get(squadId);
+    if (!entry) return null;
+    if (entry.expiresAt < Date.now()) {
+        profileCache.delete(squadId);
+        return null;
+    }
+    return entry.payload;
+}
+
+function setCachedProfile(squadId, payload) {
+    profileCache.set(squadId, { expiresAt: Date.now() + PROFILE_CACHE_TTL_MS, payload });
+    // Cheap GC: if cache gets oversized, drop the oldest entries.
+    if (profileCache.size > 200) {
+        const cutoff = Date.now();
+        for (const [k, v] of profileCache) {
+            if (v.expiresAt < cutoff) profileCache.delete(k);
+        }
+    }
+}
+
 function getCurrentWeekId() {
     const now = new Date();
     const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
@@ -24,6 +53,10 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const { squadId } = await req.json();
         if (!squadId) return Response.json({ error: 'squadId required' }, { status: 400 });
+
+        // Serve from cache when we have a fresh entry — skips ALL db reads.
+        const cached = getCachedProfile(squadId);
+        if (cached) return Response.json(cached);
 
         // Squad record (public read)
         const squad = await base44.asServiceRole.entities.Squad.get(squadId);
@@ -51,8 +84,13 @@ Deno.serve(async (req) => {
             // PlayerSave has no weeklyKills field (squad weekly_kills is the
             // aggregate). RunScore.wallet_address is the canonical wallet
             // (user_id on RunScore is the Base44 user id, NOT the wallet).
+            // 200 rows ≈ 40 runs/member × 5 members — covers normal play. Heavy
+            // farmers' totals slightly truncate, but the squad-level weekly_kills
+            // headline is always accurate (it's an aggregate on the Squad record).
+            // Was 1000 — main cause of rate-limit storms when many users opened
+            // the modal at once.
             memberWallets.length
-                ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', 1000)
+                ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', 200)
                 : Promise.resolve([]),
         ]);
 
@@ -110,7 +148,7 @@ Deno.serve(async (req) => {
             return b.weekly_kills - a.weekly_kills;
         });
 
-        return Response.json({
+        const payload = {
             success: true,
             squad: {
                 id: squad.id,
@@ -132,7 +170,9 @@ Deno.serve(async (req) => {
             },
             members: enrichedMembers,
             weekId,
-        });
+        };
+        setCachedProfile(squadId, payload);
+        return Response.json(payload);
     } catch (error) {
         console.error('[getSquadProfile]', error.message);
         // Pass through rate-limit responses with the right status + a clear message
