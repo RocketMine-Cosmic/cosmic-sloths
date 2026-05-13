@@ -147,6 +147,9 @@ export function generateChoices(engine) {
     const MAX_PASSIVE_LEVEL = 5;
     const isEndless = engine.arena?.duration === Infinity;
     const isRaid = engine.arena?.id === 'world_boss_arena';
+    // Squad Meteor is a DPS-check against a single stationary target — same
+    // filter as raid (no magnet/XP/gold or bouncing-blade ricochets into the void).
+    const isMeteor = engine.arena?.id === 'quantum_meteor';
     // S6+ weapon-slot cap: once at/over the cap, the pool stops offering NEW
     // weapons. Existing weapons can still be leveled. Cap is checked dynamically
     // because synergies (2→1) reduce slot count mid-run.
@@ -158,10 +161,10 @@ export function generateChoices(engine) {
         // Endless caps gold at 5k and regular enemies don't drop gold —
         // gold-multiplier upgrades are useless here, so hide them from the level-up pool.
         if (isEndless && u.stat === 'goldMult') return false;
-        // Global Raid: no pickups drop and there are no XP/gold rewards in-run, so
-        // pickup-range, XP, gold upgrades are wastes. Bouncing Blade also wastes
-        // shots ricocheting into empty space against a single boss.
-        if (isRaid) {
+        // Global Raid / Squad Meteor: no pickups drop and there are no XP/gold
+        // rewards in-run, so pickup-range, XP, gold upgrades are wastes.
+        // Bouncing Blade also wastes shots ricocheting into empty space.
+        if (isRaid || isMeteor) {
             if (u.stat === 'magnetRange' || u.stat === 'xpMult' || u.stat === 'goldMult') return false;
             if (u.type === 'weapon' && u.weaponId === 'bouncingBlade') return false;
         }
@@ -319,6 +322,19 @@ export function applyUpgrade(engine, upgrade) {
         checkSynergies(engine);
     }
     engine.isPaused = false;
+
+    // Squad Meteor starter stack — after the player commits a pick, queue up
+    // the next starter level-up by re-arming XP. The update() loop will see
+    // xp >= xpRequired on the next frame and fire levelUp() again, popping
+    // the modal for the next pick. Run timer stays paused throughout (modal
+    // sets isPaused = true), so the 3-min clock only starts after all 10
+    // picks are claimed.
+    if (engine.pendingStarterLevelUps > 0) {
+        engine.pendingStarterLevelUps--;
+        if (engine.pendingStarterLevelUps > 0) {
+            engine.xp = engine.xpRequired;
+        }
+    }
 }
 
 export function checkSynergies(engine) {

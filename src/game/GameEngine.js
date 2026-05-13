@@ -360,6 +360,20 @@ export class GameEngine {
             }
             this.xp = totalXpNeeded;
         }
+
+        // Squad Meteor — 3-minute DPS-check arena with no mob spawns. Without XP
+        // sources the player would mash a Lv.1 loadout for 3 minutes, so we hand
+        // out 10 instant starter level-ups at run start. Each pick fires the
+        // normal LevelUpModal (reroll/banish/evolutions all behave as usual);
+        // when the player commits an upgrade, applyUpgrade decrements
+        // `pendingStarterLevelUps` and re-arms XP so the next level-up modal
+        // pops on the following frame. The run timer is paused while the modal
+        // is open (engine.isPaused), so the 3-min clock doesn't start until the
+        // 10-stack is fully claimed.
+        if (arenaId === 'quantum_meteor') {
+            this.pendingStarterLevelUps = 10;
+            this.xp = this.xpRequired; // triggers first levelUp() on the very first update tick
+        }
         
         this.isPaused = false;
         this.isGameOver = false;
