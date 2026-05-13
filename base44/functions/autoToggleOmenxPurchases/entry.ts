@@ -18,7 +18,7 @@ const SUCCESS_THRESHOLD = 3;
 const MANUAL_OVERRIDE_GRACE_MS = 30 * 60 * 1000; // 30 minutes
 
 async function postDiscord(msg) {
-    const url = Deno.env.get('DISCORD_ALERT_WEBHOOK');
+    const url = Deno.env.get('DISCORD_ERROR_WEBHOOK');
     if (!url) return;
     try {
         await fetch(url, {
