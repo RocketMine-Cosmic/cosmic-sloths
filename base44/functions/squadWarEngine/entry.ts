@@ -346,11 +346,46 @@ Deno.serve(async (req) => {
 
             // Mark claimed FIRST so concurrent calls fail
             const updatedClaimList = [...(war.rewarded_member_wallets || []), walletAddress.toLowerCase()];
-            await base44.asServiceRole.entities.SquadWar.update(warId, {
-                rewarded_member_wallets: updatedClaimList,
-            });
+            await with429Retry(
+                () => base44.asServiceRole.entities.SquadWar.update(warId, {
+                    rewarded_member_wallets: updatedClaimList,
+                }),
+                'SquadWar.update'
+            );
 
-            const totals = await grantToPlayerSave(base44, walletAddress, gold, fragments);
+            // Grant rewards. If credit fails after 4 retries the war is already
+            // marked claimed for this wallet — alert Discord so admins can
+            // manually pay out (Discord webhook is fire-and-forget).
+            let totals;
+            try {
+                totals = await grantToPlayerSave(base44, walletAddress, gold, fragments);
+            } catch (creditErr) {
+                console.error('[squadWarEngine] CRITICAL: marked claimed but credit failed:', creditErr.message);
+                const errUrl = Deno.env.get('DISCORD_ERROR_WEBHOOK');
+                if (errUrl) {
+                    fetch(errUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ embeds: [{
+                            title: '⚠️ Squad War bonus marked but UNPAID',
+                            description: 'Member was marked claimed but the gold/fragment credit failed. Manual payout needed.',
+                            color: 0xef4444,
+                            fields: [
+                                { name: 'Wallet', value: `\`${walletAddress}\``, inline: true },
+                                { name: 'War ID', value: warId, inline: true },
+                                { name: 'Result', value: label, inline: true },
+                                { name: 'Owed gold', value: String(gold), inline: true },
+                                { name: 'Owed fragments', value: String(fragments), inline: true },
+                                { name: 'Error', value: String(creditErr.message || '').slice(0, 500), inline: false },
+                            ],
+                            timestamp: new Date().toISOString(),
+                        }] }),
+                    }).catch(() => {});
+                }
+                return Response.json({
+                    error: 'Your war bonus was logged but couldn\'t be credited right now. Our team has been alerted — please wait a moment.',
+                }, { status: 500 });
+            }
             return Response.json({
                 success: true,
                 reward: { gold, fragments, label },

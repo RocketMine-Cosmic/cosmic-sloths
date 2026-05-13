@@ -95,21 +95,73 @@ async function getCallerMember(base44, walletAddress, squadId) {
     return records[0] || null;
 }
 
+// 429-aware retry wrapper — without this, peak-load rate-limits silently lose
+// bounty claim rewards (member is marked claimed but gold/fragments never land).
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[squadActions] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
+// Discord alert when a bounty is marked claimed but the gold credit failed —
+// admins can manually pay from the wallet+amount logged here.
+async function alertUnpaidBounty(wallet, kind, gold, fragments, errMsg) {
+    const url = Deno.env.get('DISCORD_ERROR_WEBHOOK');
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{
+                title: '⚠️ Squad bounty marked but UNPAID',
+                description: 'Member was marked claimed but the gold/fragment credit failed. Manual payout needed.',
+                color: 0xef4444,
+                fields: [
+                    { name: 'Wallet', value: `\`${wallet}\``, inline: true },
+                    { name: 'Kind', value: kind, inline: true },
+                    { name: 'Owed gold', value: String(gold), inline: true },
+                    { name: 'Owed fragments', value: String(fragments), inline: true },
+                    { name: 'Error', value: String(errMsg || '').slice(0, 500), inline: false },
+                ],
+                timestamp: new Date().toISOString(),
+            }] }),
+        });
+    } catch {}
+}
+
 // Grants gold/fragments directly to the player's cloud PlayerSave so the
 // reward grant is server-authoritative and can't be tampered with by the client.
 async function grantToPlayerSave(base44, walletAddress, gold, fragments) {
     const walletLower = walletAddress.toLowerCase();
-    const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+    const records = await with429Retry(
+        () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower }),
+        'PlayerSave.filter'
+    );
     if (records.length === 0) throw new Error('PlayerSave not found');
     const record = records[0];
     const saveData = typeof record.save_data === 'string' ? JSON.parse(record.save_data) : record.save_data;
     saveData.gold = (saveData.gold || 0) + gold;
     if (fragments > 0) saveData.relicFragments = (saveData.relicFragments || 0) + fragments;
     saveData.updated_at = Date.now();
-    await base44.asServiceRole.entities.PlayerSave.update(record.id, {
-        save_data: saveData,
-        updated_at: Date.now()
-    });
+    await with429Retry(
+        () => base44.asServiceRole.entities.PlayerSave.update(record.id, {
+            save_data: saveData,
+            updated_at: Date.now()
+        }),
+        'PlayerSave.update'
+    );
     return { gold: saveData.gold, relicFragments: saveData.relicFragments || 0 };
 }
 
@@ -546,10 +598,24 @@ Deno.serve(async (req) => {
             }
 
             // Mark claimed FIRST so concurrent calls fail
-            await base44.asServiceRole.entities.SquadMember.update(memberId, { [lastClaimedField]: periodId });
+            await with429Retry(
+                () => base44.asServiceRole.entities.SquadMember.update(memberId, { [lastClaimedField]: periodId }),
+                'mark_claimed'
+            );
 
-            // Grant rewards to player's cloud PlayerSave
-            const updatedTotals = await grantToPlayerSave(base44, walletAddress, tier.gold, tier.fragments);
+            // Grant rewards to player's cloud PlayerSave. If credit fails after
+            // 4 retries, alert Discord so admins can manually pay out — the
+            // player keeps their idempotency lock so they can't double-claim.
+            let updatedTotals;
+            try {
+                updatedTotals = await grantToPlayerSave(base44, walletAddress, tier.gold, tier.fragments);
+            } catch (creditErr) {
+                console.error('[squadActions] CRITICAL: marked claimed but credit failed:', creditErr.message);
+                alertUnpaidBounty(walletAddress, isWeekly ? 'weekly' : 'daily', tier.gold, tier.fragments, creditErr.message);
+                return Response.json({
+                    error: 'Your bounty was logged but couldn\'t be credited right now. Our team has been alerted — please wait a moment.',
+                }, { status: 500 });
+            }
 
             // Award daily squad XP — ONCE per day, on the first member's daily claim.
             // Gives squads a steady drip of progression between weekly resets.

@@ -4,6 +4,51 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Server-authoritative claim — credits gold directly to PlayerSave.gold so the
 // reward survives sync (otherwise syncSave blocks the local "gold bump" as suspicious).
 
+// 429-aware retry wrapper — without this, a rate-limit on the gold-credit step
+// after the claim row was already written = player loses the reward permanently.
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[claimBossReward] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
+// Fire-and-forget Discord alert when a player is marked claimed but the gold
+// credit failed — admins can manually pay out from the wallet+amount logged here.
+async function alertUnpaidClaim(wallet, level, gold, errMsg) {
+    const url = Deno.env.get('DISCORD_ERROR_WEBHOOK');
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [{
+                title: '⚠️ Boss reward claim marked but UNPAID',
+                description: 'Player claim row was updated but PlayerSave.gold credit failed. Manual payout needed.',
+                color: 0xef4444,
+                fields: [
+                    { name: 'Wallet', value: `\`${wallet}\``, inline: true },
+                    { name: 'Boss Level', value: String(level), inline: true },
+                    { name: 'Owed gold', value: String(gold), inline: true },
+                    { name: 'Error', value: String(errMsg || '').slice(0, 500), inline: false },
+                ],
+                timestamp: new Date().toISOString(),
+            }] }),
+        });
+    } catch {}
+}
+
 // Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
 function getCurrentWeekId() {
     const now = new Date();
@@ -74,20 +119,36 @@ Deno.serve(async (req) => {
         const goldReward = levelNum * 250;
 
         // Mark claimed on the first row (sufficient for the duplicate check above)
-        // and credit gold atomically. Order: mark claimed first; if gold update fails
-        // we'd rather lose the gold than allow a double-claim.
+        // FIRST so concurrent claim attempts can't both pass the dedupe check.
+        // Then credit the gold with 429 retries — if gold update truly fails after
+        // 4 attempts we alert Discord so admins can manually pay out (player keeps
+        // their idempotency lock so they can't double-claim).
         const target = contribs[0];
         const targetClaimed = Array.isArray(target.claimed_milestones) ? target.claimed_milestones : [];
-        await base44.asServiceRole.entities.GlobalBossContribution.update(target.id, {
-            claimed_milestones: [...targetClaimed, levelNum],
-        });
+        await with429Retry(
+            () => base44.asServiceRole.entities.GlobalBossContribution.update(target.id, {
+                claimed_milestones: [...targetClaimed, levelNum],
+            }),
+            'mark_claimed'
+        );
 
         saveData.gold = (saveData.gold || 0) + goldReward;
         saveData.updated_at = Date.now();
-        await base44.asServiceRole.entities.PlayerSave.update(record.id, {
-            save_data: saveData,
-            updated_at: Date.now(),
-        });
+        try {
+            await with429Retry(
+                () => base44.asServiceRole.entities.PlayerSave.update(record.id, {
+                    save_data: saveData,
+                    updated_at: Date.now(),
+                }),
+                'credit_gold'
+            );
+        } catch (creditErr) {
+            console.error('[claimBossReward] CRITICAL: marked claimed but gold credit failed:', creditErr.message);
+            alertUnpaidClaim(walletAddress, levelNum, goldReward, creditErr.message);
+            return Response.json({
+                error: 'Your reward was logged but couldn\'t be credited right now. Our team has been alerted — please wait a moment.',
+            }, { status: 500 });
+        }
 
         console.log('[claimBossReward] Claimed level', levelNum, '+', goldReward, 'gold for', walletAddress);
         return Response.json({
