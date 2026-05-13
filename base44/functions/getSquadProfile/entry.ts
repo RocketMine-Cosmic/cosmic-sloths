@@ -106,10 +106,19 @@ Deno.serve(async (req) => {
             raidByWallet.set(w, (raidByWallet.get(w) || 0) + (c.damage || 0));
         }
         const weeklyKillsByWallet = new Map();
+        const dailyKillsByWallet = new Map();
+        // "Today" = UTC calendar day, mirroring squad.daily_kills rollover in saveScore.
+        const todayUtc = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
         for (const r of weeklyRuns) {
             const w = (r.wallet_address || '').toLowerCase();
             if (!w) continue;
-            weeklyKillsByWallet.set(w, (weeklyKillsByWallet.get(w) || 0) + (r.kills || 0));
+            const kills = r.kills || 0;
+            weeklyKillsByWallet.set(w, (weeklyKillsByWallet.get(w) || 0) + kills);
+            // Cheap daily aggregate from the same in-memory rows — no extra DB read.
+            const runDate = (r.created_date || '').split('T')[0];
+            if (runDate === todayUtc) {
+                dailyKillsByWallet.set(w, (dailyKillsByWallet.get(w) || 0) + kills);
+            }
         }
         const warWinsByWallet = new Map();
         for (const w of squadWars) {
@@ -135,6 +144,7 @@ Deno.serve(async (req) => {
                 player_title: m.player_title || '',
                 role: m.role,
                 weekly_kills: weeklyKillsByWallet.get(wallet) || 0,
+                daily_kills: dailyKillsByWallet.get(wallet) || 0,
                 total_kills: Number(sd.totalKills || 0),
                 raid_damage_this_week: raidByWallet.get(wallet) || 0,
                 war_wins_claimed: warWinsByWallet.get(wallet) || 0,

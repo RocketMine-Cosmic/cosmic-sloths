@@ -265,12 +265,18 @@ function MemberStatRow({ member }) {
                     {member.player_title && <span className="text-[9px] bg-slate-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-900/50 tracking-wider">{member.player_title}</span>}
                 </div>
             </div>
-            <div className="grid grid-cols-4 gap-1.5 text-center">
+            <div className="grid grid-cols-5 gap-1.5 text-center">
+                <MemberStat
+                    label="Today"
+                    value={(member.daily_kills || 0).toLocaleString()}
+                    color="text-green-400"
+                    tooltip="Kills this pilot has scored today (resets 00:00 UTC). Useful for tracking daily kill quests."
+                />
                 <MemberStat
                     label="Weekly Kills"
                     value={member.weekly_kills.toLocaleString()}
                     color="text-yellow-400"
-                    tooltip="Total enemies killed across ALL arena runs this week (resets Mon 00:00 UTC). This is NOT squad-war-only — it includes regular runs, trials, raid, etc."
+                    tooltip="Total enemies killed across ALL arena runs this week (resets Mon 00:00 UTC). Not squad-war-only — includes regular runs, trials, raid, etc."
                 />
                 <MemberStat
                     label="All-Time Kills"
