@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
-import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle, Swords, Globe, Star, Lock, ShieldQuestion, Vault } from 'lucide-react';
+import { Users, Search, Plus, MessageSquare, Shield, Send, ArrowLeft, Gift, Settings, Crown, UserX, Coins, Puzzle, Swords, Globe, Star, Lock, ShieldQuestion, Vault, Sparkles } from 'lucide-react';
 import SquadTreasuryPanel from '../components/squads/SquadTreasuryPanel';
+import SquadMeteorPanel from '../components/squads/SquadMeteorPanel';
 import EmojiPicker, { SQUAD_ICONS } from '../components/game/EmojiPicker';
 import JoinRequestsPanel from '../components/squads/JoinRequestsPanel';
 import PrivacySelector from '../components/squads/PrivacySelector';
@@ -1036,6 +1037,12 @@ export default function Squads({ isCarousel }) {
                                 >
                                     <Vault className="w-4 h-4" /> <span className="hidden sm:inline">Treasury</span>
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab('meteor')}
+                                    className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'meteor' ? 'text-purple-400 border-b-2 border-purple-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
+                                >
+                                    <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">Meteor</span>
+                                </button>
                                 {isLeader && (
                                     <button 
                                         onClick={() => setActiveTab('settings')}
@@ -1199,6 +1206,8 @@ export default function Squads({ isCarousel }) {
                                         </div>
                                     );})}
                                 </div>
+                            ) : activeTab === 'meteor' ? (
+                                <SquadMeteorPanel />
                             ) : activeTab === 'treasury' ? (
                                 <div className="flex-1 overflow-y-auto min-h-0">
                                     <SquadTreasuryPanel

@@ -1,0 +1,175 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Sparkles, Zap, Trophy, Loader2, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { sanitizePilotName } from '@/lib/sanitizePilotName';
+
+function fmtNum(n) {
+    if (n == null) return '0';
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + 'B';
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
+    if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+    return n.toLocaleString();
+}
+
+export default function SquadMeteorPanel() {
+    const { toast } = useToast();
+    const [state, setState] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const load = useCallback(async () => {
+        try {
+            const res = await base44.functions.invoke('getSquadMeteorState', {});
+            if (res.data?.error) {
+                setError(res.data.error);
+            } else {
+                setState(res.data);
+                setError(null);
+            }
+        } catch (e) {
+            setError(e?.message || 'Failed to load meteor state.');
+        }
+        setLoading(false);
+    }, []);
+
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex items-center justify-center text-slate-400">
+                <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex-1 flex items-center justify-center text-red-400 p-6 text-center">
+                <div>
+                    <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+                    <div className="text-sm">{error}</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!state?.in_squad) {
+        return <div className="flex-1 flex items-center justify-center text-slate-400 p-6">Join a squad to attack the meteor.</div>;
+    }
+
+    const { meteor, buffs, today_activity, my_attempts_remaining, my_attempts_used_today, daily_attempt_limit } = state;
+    const hpPct = meteor.max_hp > 0 ? (meteor.current_hp / meteor.max_hp) * 100 : 0;
+
+    return (
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* HERO — meteor + HP */}
+            <div className="bg-gradient-to-br from-purple-950/60 via-slate-900/80 to-orange-950/40 border border-purple-500/40 rounded-xl p-4 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="text-5xl drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]">☄️</div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-xl font-black text-white tracking-wider">SQUAD METEOR</h3>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-900/60 text-purple-200 border border-purple-500/50 tracking-widest">
+                                LV.{meteor.level}
+                            </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">
+                            {fmtNum(meteor.total_lifetime_kills)} destroyed · {fmtNum(meteor.total_lifetime_damage)} lifetime dmg
+                        </div>
+                    </div>
+                </div>
+
+                {/* HP bar */}
+                <div className="mb-2">
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                        <span className="text-orange-300">HP</span>
+                        <span className="text-white">{fmtNum(meteor.current_hp)} / {fmtNum(meteor.max_hp)}</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
+                        <div
+                            className="h-full bg-gradient-to-r from-orange-600 via-red-500 to-purple-500 transition-all duration-500"
+                            style={{ width: `${hpPct}%` }}
+                        />
+                    </div>
+                </div>
+
+                {/* Daily attempts indicator */}
+                <div className="mt-3 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Your attacks today</span>
+                    <span className="font-bold text-cyan-300">{my_attempts_used_today} / {daily_attempt_limit}</span>
+                </div>
+                {my_attempts_remaining === 0 && (
+                    <div className="mt-2 text-[10px] text-amber-300 text-center bg-amber-950/30 border border-amber-700/40 rounded py-1.5">
+                        All attacks used today — resets at 00:00 UTC
+                    </div>
+                )}
+            </div>
+
+            {/* BUFFS */}
+            <div className="bg-[#0b0416]/80 border border-cyan-500/30 rounded-xl p-3">
+                <h4 className="text-xs font-black text-cyan-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Active Squad Buffs (Lv.{buffs.applied_level}{buffs.is_capped ? ' MAX' : ''})
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                    <BuffPill label="Gold" value={`+${buffs.gold_pct.toFixed(1)}%`} color="yellow" />
+                    <BuffPill label="Damage" value={`+${buffs.damage_pct.toFixed(1)}%`} color="red" />
+                    <BuffPill label="AoE" value={`+${buffs.aoe_pct.toFixed(1)}%`} color="orange" />
+                    <BuffPill label="CDR" value={`+${buffs.cdr_pct.toFixed(2)}%`} color="cyan" />
+                </div>
+                <div className="text-[10px] text-slate-500 mt-2">
+                    Buffs apply to every squad member's runs. Destroy the meteor to level it up.
+                </div>
+            </div>
+
+            {/* TODAY'S ACTIVITY */}
+            <div className="bg-[#0b0416]/80 border border-orange-500/30 rounded-xl p-3">
+                <h4 className="text-xs font-black text-orange-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5" /> Today's Squad Activity
+                </h4>
+                {today_activity.length === 0 ? (
+                    <div className="text-center text-slate-500 text-xs py-4 italic">
+                        No attacks yet today. Be the first to strike!
+                    </div>
+                ) : (
+                    <div className="space-y-1.5">
+                        {today_activity.map((row, i) => (
+                            <div key={row.wallet} className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1.5 border border-slate-800">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-[10px] font-black text-slate-500 w-4">{i + 1}</span>
+                                    <span className="text-sm text-white truncate">{sanitizePilotName(row.name, row.wallet)}</span>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <span className="text-[10px] text-slate-400">{row.attacks}/{daily_attempt_limit} hits</span>
+                                    <span className="text-sm font-bold text-orange-300">{fmtNum(row.damage)}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* DEV NOTE — until game-engine integration lands in Session 3+ */}
+            <div className="text-[10px] text-slate-500 text-center italic px-2">
+                Damage is submitted automatically from your game runs (coming next session).
+            </div>
+        </div>
+    );
+}
+
+function BuffPill({ label, value, color }) {
+    const colorMap = {
+        yellow: 'border-yellow-500/40 bg-yellow-950/30 text-yellow-300',
+        red: 'border-red-500/40 bg-red-950/30 text-red-300',
+        orange: 'border-orange-500/40 bg-orange-950/30 text-orange-300',
+        cyan: 'border-cyan-500/40 bg-cyan-950/30 text-cyan-300',
+    };
+    return (
+        <div className={`rounded-lg border px-2 py-1.5 flex items-center justify-between ${colorMap[color]}`}>
+            <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{label}</span>
+            <span className="text-sm font-black">{value}</span>
+        </div>
+    );
+}
