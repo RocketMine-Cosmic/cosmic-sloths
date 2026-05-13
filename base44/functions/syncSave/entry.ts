@@ -525,6 +525,21 @@ Deno.serve(async (req) => {
         return Response.json(successResponse);
     } catch (error) {
         console.error('[syncSave]', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        // Pass through rate-limit / upstream-5xx as a 429 with a clean message.
+        // Without this, the client's "syncFailed" banner fires for ordinary Base44
+        // congestion (admin running a backfill, peak traffic) and the player thinks
+        // their progress is lost. Returning 429 lets SaveManager.syncToBackend's
+        // 429-aware retry path kick in instead.
+        const msg = String(error?.message || '').toLowerCase();
+        const status = error?.status || error?.response?.status || 0;
+        const isTransient = status === 429 || /rate limit|\b429\b/.test(msg)
+            || (status >= 502 && status <= 504);
+        if (isTransient) {
+            return Response.json(
+                { error: 'Too many requests — please wait a moment and try again.' },
+                { status: 429 }
+            );
+        }
+        return Response.json({ error: 'Couldn\'t sync your save. Please try again.' }, { status: 500 });
     }
 });

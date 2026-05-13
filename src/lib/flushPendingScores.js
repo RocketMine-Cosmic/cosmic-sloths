@@ -109,8 +109,22 @@ export async function flushPendingScores() {
                 await base44.functions.invoke('saveScore', entry.payload);
                 console.log('[flushPendingScores] Recovered queued run from', new Date(entry.queuedAt).toISOString(), entry.reason ? `(${entry.reason})` : '');
             } catch (e) {
-                // Still failing — keep it queued for next attempt
-                remaining.push(entry);
+                // Only re-queue for TRANSIENT failures (429, 5xx, network).
+                // Permanent 4xx errors (validation failed, duplicate run, banned
+                // wallet, etc.) would otherwise stay in the queue forever, retried
+                // on every launch and tab-focus — eventually growing past the 20-
+                // entry cap and getting silently shifted out. Drop them now so
+                // legitimate future runs aren't crowded out.
+                const status = e?.status || e?.response?.status || 0;
+                const msg = String(e?.message || '').toLowerCase();
+                const isTransient = status === 0 || status === 429 || status >= 500
+                    || msg.includes('rate limit') || msg.includes('network')
+                    || msg.includes('failed to fetch') || msg.includes('timeout');
+                if (isTransient) {
+                    remaining.push(entry);
+                } else {
+                    console.warn(`[flushPendingScores] Dropping permanently-failed entry (status=${status}): ${msg}`);
+                }
             }
         }
 
