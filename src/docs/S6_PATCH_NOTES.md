@@ -181,7 +181,7 @@ The buff strength scales with your squad's current meteor level. Buffs are **cap
 ```
 ✨ **QUALITY OF LIFE**
 
-🎓 **In-game S6 tour** — first time you load /hub after launch, a 7-step walkthrough explains the changes. Skip-able anytime.
+🎓 **In-game S6 tour** — first time you load /hub after launch, an 8-step walkthrough explains the changes (including Squad Meteor). Skip-able anytime.
 
 🎁 **Free Pool Bias respec** — one-time gift on the Loadouts page so you can rebuild around the new weapon-rarity meta without paying.
 

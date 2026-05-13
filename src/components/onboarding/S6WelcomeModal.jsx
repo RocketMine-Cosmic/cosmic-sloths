@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, X, Sparkles, Target, Swords, Trophy, Zap, Crown, Flame } from 'lucide-react';
+import { ChevronRight, ChevronLeft, X, Sparkles, Target, Swords, Trophy, Zap, Crown, Flame, Crosshair } from 'lucide-react';
 import { SoundManager } from '../../game/SoundManager';
 import { SaveManager } from '../../game/SaveManager';
 import { isS6OrLater } from '@/lib/seasonGate';
 
 // Season 6 launch announcement modal — shown ONCE per player on/after the
-// W20→W21 rollover (Mon May 25 2026 00:00 UTC). Explains the major changes
+// W20→W21 rollover (Mon May 18 2026 00:00 UTC). Explains the major changes
 // so returning S5 players don't quit when their score "looks lower" or
 // when their weapon won't evolve at level 1 like it used to.
 //
@@ -36,7 +36,7 @@ const STEPS = [
             <>
                 <p>Score now rewards <span className="text-cyan-300 font-bold">skill, not grind</span>. The formula is built from kills, level, sector reached, and victory — gold no longer affects the leaderboard.</p>
                 <p className="mt-2 text-slate-400 text-xs">A clean Sector 10 victory now beats a long farm run. Endless mode is its own track via per-minute scoring.</p>
-                <p className="mt-2 text-amber-200/90 bg-amber-950/40 border border-amber-700/40 rounded px-2 py-1.5 text-xs">⭐ A score of <span className="font-bold">~900k</span> is now legendary territory. Don't be confused by lower numbers — everyone's on the same scale.</p>
+                <p className="mt-2 text-amber-200/90 bg-amber-950/40 border border-amber-700/40 rounded px-2 py-1.5 text-xs">⭐ A score around <span className="font-bold">~1M</span> is now legendary territory. Don't be confused by lower numbers — everyone's on the same scale.</p>
             </>
         ),
     },
@@ -98,6 +98,20 @@ const STEPS = [
                     <li>🏛️ <span className="text-amber-300 font-bold">Squad Treasury</span> — donate to unlock weekly squad-wide buffs</li>
                 </ul>
                 <p className="mt-2 text-slate-400 text-xs">Endless mode now uses time-decay instead of hard caps — gold flows naturally without confusing "GOLD CAPPED" warnings.</p>
+            </>
+        ),
+    },
+    {
+        icon: Crosshair,
+        accent: 'text-red-300',
+        border: 'border-red-500/40',
+        title: 'Squad Meteor',
+        body: (
+            <>
+                <p>Every squad now has its own <span className="text-red-300 font-bold">persistent meteor</span> to hunt together. Open the Squads page → Meteor tab and tap <span className="text-orange-300 font-bold">⚔ ATTACK METEOR</span> for a dedicated DPS run.</p>
+                <p className="mt-2 text-slate-400 text-xs">Damage banks toward the next level. Destroy it as a squad → fresh, beefier meteor spawns. <span className="text-orange-300 font-bold">Levels never reset.</span></p>
+                <p className="mt-2 text-red-200/90 bg-red-950/40 border border-red-700/40 rounded px-2 py-1.5 text-xs">🔥 Meteor level grants <span className="font-bold">squad-wide buffs</span> (+gold, +dmg, +AoE, +CDR) that apply to <span className="font-bold">every arena run</span> — not just meteor runs.</p>
+                <p className="mt-2 text-slate-400 text-xs">Small daily attack quota per member — resets 00:00 UTC.</p>
             </>
         ),
     },
