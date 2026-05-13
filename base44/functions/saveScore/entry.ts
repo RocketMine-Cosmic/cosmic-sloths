@@ -149,19 +149,19 @@ function validateAndRecompute(scoreData) {
     }
     const isEndlessRun = scoreData.arena_id === 'endless';
     const isRaidRun = scoreData.arena_id === 'world_boss_arena';
+    const isMeteorRun = scoreData.arena_id === 'quantum_meteor';
     if (gold < 0) {
         return { ok: false, reason: `gold negative: ${gold}` };
     }
-    // Non-endless gold sanity rejection — S5 only. S6 drops the cap entirely
-    // (RLS already prevents client tampering of RunScore, and the score formula
-    // doesn't reward gold so there's no leaderboard exploit pathway).
-    if (!isS6OrLater && !isEndlessRun && !isRaidRun && gold > MAX_GOLD_BASELINE + (kills * MAX_GOLD_PER_KILL)) {
+    // Non-endless gold sanity rejection — S5 only. Skip for raid AND meteor:
+    // both are damage-only arenas with zero gold/kill credit anyway.
+    if (!isS6OrLater && !isEndlessRun && !isRaidRun && !isMeteorRun && gold > MAX_GOLD_BASELINE + (kills * MAX_GOLD_PER_KILL)) {
         return { ok: false, reason: `gold out of range: ${gold} for ${kills} kills (cap=${MAX_GOLD_BASELINE + kills * MAX_GOLD_PER_KILL})` };
     }
 
-    // Raid runs are damage-contribution only — no gold or kill credit to PlayerSave.
-    // Players are rewarded via boss milestone claims (claimBossReward), not run gold.
-    if (isRaidRun) {
+    // Raid AND Meteor runs are damage-contribution only — no gold or kill credit
+    // to PlayerSave. Rewards come from boss claims / squad meteor buffs, not run gold.
+    if (isRaidRun || isMeteorRun) {
         gold = 0;
         kills = 0;
     }
@@ -254,7 +254,8 @@ function validateAndRecompute(scoreData) {
         ok: true, score,
         kills, time, level, gold, fragments, // raw values (for score / leaderboard display)
         goldForLedger, killsForLedger, fragmentsForLedger, // ledger values (= raw in S6)
-        endlessGoldCapped, endlessKillsCapped, fragmentsCapped, isEndless
+        endlessGoldCapped, endlessKillsCapped, fragmentsCapped, isEndless,
+        isRaidRun, isMeteorRun, // damage-only arenas — excluded from RunScore + squad kill credit
     };
 }
 
@@ -649,14 +650,21 @@ Deno.serve(async (req) => {
             season_id,
         };
 
-        try {
-            await with429Retry(
-                () => base44.asServiceRole.entities.RunScore.create(runScore),
-                'RunScore.create'
-            );
-        } catch (err) {
-            console.error('[saveScore] RunScore save failed:', err.message);
-            // Save was already applied; return success with warning
+        // Raid + Meteor runs are damage-contribution only — DO NOT create a RunScore
+        // entry. RunScore is what powers weekly/seasonal/endless/squad leaderboards,
+        // so writing one for raid/meteor would leak their score into those boards
+        // (which players noticed and flagged 2026-05-13). Raid is tracked via
+        // GlobalBossContribution, meteor via SquadMeteorAttack — both separate.
+        if (!validation.isRaidRun && !validation.isMeteorRun) {
+            try {
+                await with429Retry(
+                    () => base44.asServiceRole.entities.RunScore.create(runScore),
+                    'RunScore.create'
+                );
+            } catch (err) {
+                console.error('[saveScore] RunScore save failed:', err.message);
+                // Save was already applied; return success with warning
+            }
         }
 
         // Update squad kills if applicable — use ledger-capped kills (endless capped, others raw)
@@ -672,7 +680,10 @@ Deno.serve(async (req) => {
             }
         }
 
-        if (squadIdToUpdate) {
+        // Raid + Meteor: kills are already zeroed (validation), but also skip the
+        // squad write entirely so neither arena ever bumps squad weekly_kills or
+        // daily_kills (squad leaderboard hygiene + skips a pointless DB read/write).
+        if (squadIdToUpdate && !validation.isRaidRun && !validation.isMeteorRun) {
             const today = new Date().toISOString().split('T')[0];
             const killsToAdd = validation.killsForLedger;
             try {
