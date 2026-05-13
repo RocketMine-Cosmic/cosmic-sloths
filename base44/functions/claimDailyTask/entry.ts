@@ -4,6 +4,26 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Tasks live on PlayerSave.dailyTasks = { date: 'YYYY-MM-DD', tasks: [{id, progress, claimed}, ...] }
 // Progress is updated in saveScore.js. This endpoint validates completion + claim and grants reward.
 
+// 429-aware retry wrapper — reduces visible failures during peak. Safe because
+// the claim is a single atomic write (mark + grant in one update).
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[claimDailyTask] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -19,7 +39,10 @@ Deno.serve(async (req) => {
         if (!taskId) return Response.json({ error: 'Couldn\'t process this claim — please refresh and try again.' }, { status: 400 });
 
         const walletLower = wallet.toLowerCase();
-        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+        const records = await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower }),
+            'PlayerSave.filter'
+        );
         if (records.length === 0) return Response.json({ error: 'We couldn\'t find your save. Please play a run first.' }, { status: 404 });
 
         const record = records[0];
@@ -51,10 +74,13 @@ Deno.serve(async (req) => {
 
         saveData.updated_at = Date.now();
 
-        await base44.asServiceRole.entities.PlayerSave.update(record.id, {
-            save_data: saveData,
-            updated_at: Date.now()
-        });
+        await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.update(record.id, {
+                save_data: saveData,
+                updated_at: Date.now()
+            }),
+            'PlayerSave.update'
+        );
 
         return Response.json({
             success: true,

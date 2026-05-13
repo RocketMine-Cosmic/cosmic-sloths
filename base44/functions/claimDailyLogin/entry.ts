@@ -3,6 +3,26 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Server-authoritative daily login claim. Uses cloud PlayerSave as source of truth
 // so users can't claim multiple times by tampering with localStorage or switching devices.
 
+// 429-aware retry wrapper — reduces visible failures during peak. Safe because
+// the claim is a single atomic write (mark + grant in one update).
+async function with429Retry(fn, label = 'op') {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try { return await fn(); }
+        catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            if (!is429 || attempt === 3) throw err;
+            const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
+            console.warn(`[claimDailyLogin] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            await new Promise(r => setTimeout(r, backoff));
+        }
+    }
+    throw lastErr;
+}
+
 const DAILY_REWARDS = [
     { day: 1, reward: 400,  currency: 'gold' },
     { day: 2, reward: 800,  currency: 'gold' },
@@ -40,7 +60,10 @@ Deno.serve(async (req) => {
         const today = todayUTC();
         const yesterday = yesterdayUTC();
 
-        const records = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower });
+        const records = await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletLower }),
+            'PlayerSave.filter'
+        );
         if (records.length === 0) return Response.json({ error: 'We couldn\'t find your save. Please play a run first to create one.' }, { status: 404 });
 
         const record = records[0];
@@ -69,10 +92,13 @@ Deno.serve(async (req) => {
         saveData.dailyLogin = { lastDate: today, streak: newStreak, claimed: true };
         saveData.updated_at = Date.now();
 
-        await base44.asServiceRole.entities.PlayerSave.update(record.id, {
-            save_data: saveData,
-            updated_at: Date.now()
-        });
+        await with429Retry(
+            () => base44.asServiceRole.entities.PlayerSave.update(record.id, {
+                save_data: saveData,
+                updated_at: Date.now()
+            }),
+            'PlayerSave.update'
+        );
 
         return Response.json({
             success: true,
