@@ -71,50 +71,62 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                     <span className="text-sm md:text-base text-slate-400">Total Damage</span>
                     <span className="text-orange-400 font-mono text-lg md:text-xl">{totalDamage.toLocaleString()}</span>
                 </div>
-                {stats.arenaId !== 'world_boss_arena' && (
+                {/* Squad Meteor runs are damage-contribution only — they don't credit
+                    gold, fragments, or submit a leaderboard score. Show meteor damage
+                    instead of those misleading rows. */}
+                {stats.arenaId === 'quantum_meteor' ? (
                     <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                        <span className="text-sm md:text-base text-slate-400">
-                            Gold Credited
-                            {serverConfirmed && stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
-                        </span>
-                        {serverConfirmed ? (
-                            <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
-                        ) : saveFailed ? (
-                            <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
-                        ) : (
-                            <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
+                        <span className="text-sm md:text-base text-slate-400">Meteor Damage Dealt</span>
+                        <span className="text-orange-400 font-mono text-xl md:text-2xl font-bold">{Math.floor(stats.meteorDamage || 0).toLocaleString()}</span>
+                    </div>
+                ) : (
+                    <>
+                        {stats.arenaId !== 'world_boss_arena' && (
+                            <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                                <span className="text-sm md:text-base text-slate-400">
+                                    Gold Credited
+                                    {serverConfirmed && stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                                </span>
+                                {serverConfirmed ? (
+                                    <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
+                                ) : saveFailed ? (
+                                    <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                                ) : (
+                                    <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
+                                )}
+                            </div>
                         )}
-                    </div>
+                        <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                            <span className="text-sm md:text-base text-slate-400">
+                                Relic Fragments
+                                {serverConfirmed && stats.fragmentsCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                            </span>
+                            {serverConfirmed ? (
+                                <span className="text-fuchsia-400 font-mono text-lg md:text-xl">+{stats.fragments || 0}</span>
+                            ) : saveFailed ? (
+                                <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                            ) : (
+                                <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
+                            )}
+                        </div>
+                        {stats.worldBossDamage > 0 && (
+                            <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                                <span className="text-sm md:text-base text-slate-400">Boss Damage Dealt</span>
+                                <span className="text-red-500 font-mono text-xl md:text-2xl font-bold">{Math.floor(stats.worldBossDamage).toLocaleString()}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
+                            <span className="text-sm md:text-base text-slate-400">Score Submitted</span>
+                            {serverConfirmed && stats.score != null ? (
+                                <span className="text-cyan-400 font-mono text-xl md:text-2xl font-bold">{stats.score.toLocaleString()}</span>
+                            ) : saveFailed ? (
+                                <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                            ) : (
+                                <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
+                            )}
+                        </div>
+                    </>
                 )}
-                <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                    <span className="text-sm md:text-base text-slate-400">
-                        Relic Fragments
-                        {serverConfirmed && stats.fragmentsCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
-                    </span>
-                    {serverConfirmed ? (
-                        <span className="text-fuchsia-400 font-mono text-lg md:text-xl">+{stats.fragments || 0}</span>
-                    ) : saveFailed ? (
-                        <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
-                    ) : (
-                        <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
-                    )}
-                </div>
-                {stats.worldBossDamage > 0 && (
-                    <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                        <span className="text-sm md:text-base text-slate-400">Boss Damage Dealt</span>
-                        <span className="text-red-500 font-mono text-xl md:text-2xl font-bold">{Math.floor(stats.worldBossDamage).toLocaleString()}</span>
-                    </div>
-                )}
-                <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-slate-700">
-                    <span className="text-sm md:text-base text-slate-400">Score Submitted</span>
-                    {serverConfirmed && stats.score != null ? (
-                        <span className="text-cyan-400 font-mono text-xl md:text-2xl font-bold">{stats.score.toLocaleString()}</span>
-                    ) : saveFailed ? (
-                        <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
-                    ) : (
-                        <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
-                    )}
-                </div>
             </div>
 
             {/* Extended stats — scrollable */}
