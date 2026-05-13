@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, Zap, Trophy, Loader2, AlertTriangle, Crosshair } from 'lucide-react';
+import { Sparkles, Zap, Trophy, Loader2, AlertTriangle, Crosshair, Lock } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
 import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
+import { isS6OrLater } from '@/lib/seasonGate';
+
+// Squad Meteor goes live with S6 (Mon May 18 2026 00:00 UTC, W20→W21 boundary).
+// Until then, every entry point shows a locked "Coming with S6" screen.
+const S6_START_UTC = Date.UTC(2026, 4, 18, 0, 0, 0); // May 18 2026 00:00 UTC
 
 function fmtNum(n) {
     if (n == null) return '0';
@@ -115,6 +120,38 @@ export default function SquadMeteorPanel() {
             }
         } catch {}
     }, [toast]);
+
+    // S6 gate — Squad Meteor unlocks at the W20→W21 rollover (May 18 2026 00:00 UTC).
+    // Show a polished "coming soon" screen instead of the live panel until then.
+    if (!isS6OrLater()) {
+        const msUntil = Math.max(0, S6_START_UTC - Date.now());
+        const days = Math.floor(msUntil / 86400000);
+        const hours = Math.floor((msUntil % 86400000) / 3600000);
+        return (
+            <div className="flex-1 flex items-center justify-center p-6">
+                <div className="max-w-sm text-center bg-gradient-to-br from-purple-950/60 via-slate-900/80 to-orange-950/40 border border-purple-500/40 rounded-xl p-6 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+                    <div className="text-6xl mb-3 drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]">☄️</div>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <Lock className="w-4 h-4 text-purple-300" />
+                        <h3 className="text-lg font-black text-white tracking-widest uppercase">Squad Meteor</h3>
+                    </div>
+                    <p className="text-purple-300 text-xs font-bold uppercase tracking-widest mb-3">
+                        Unlocks with Season 6
+                    </p>
+                    <p className="text-slate-400 text-xs mb-4 leading-relaxed">
+                        Strike together. Level the meteor. Buff the whole squad.
+                    </p>
+                    <div className="bg-slate-900/60 border border-purple-500/30 rounded-lg p-3">
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Launches in</div>
+                        <div className="text-2xl font-black text-orange-300">
+                            {days}d {hours}h
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-1">Mon May 18 · 00:00 UTC</div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
