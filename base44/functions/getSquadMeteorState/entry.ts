@@ -11,6 +11,32 @@ const HP_PER_LEVEL = 25_000_000;
 const HP_BASE = 50_000_000;
 const DAILY_ATTEMPT_LIMIT = 3;
 
+// In-memory cache to absorb spike load and prevent 429 rate-limit cascades.
+// Keyed by squadId — same squad opened within TTL skips ALL db reads.
+// Meteor state doesn't tick faster than ~15s in practice, so this is safe.
+const STATE_CACHE_TTL_MS = 15_000;
+const stateCache = new Map();
+
+function getCachedState(squadId) {
+    const entry = stateCache.get(squadId);
+    if (!entry) return null;
+    if (entry.expiresAt < Date.now()) {
+        stateCache.delete(squadId);
+        return null;
+    }
+    return entry.payload;
+}
+
+function setCachedState(squadId, payload) {
+    stateCache.set(squadId, { expiresAt: Date.now() + STATE_CACHE_TTL_MS, payload });
+    if (stateCache.size > 200) {
+        const cutoff = Date.now();
+        for (const [k, v] of stateCache) {
+            if (v.expiresAt < cutoff) stateCache.delete(k);
+        }
+    }
+}
+
 // ISO 8601 week id (Mon-start)
 function getCurrentWeekId() {
     const now = new Date();
@@ -66,6 +92,20 @@ Deno.serve(async (req) => {
         }
         const squadId = memberships[0].squad_id;
 
+        // Serve from cache when fresh — skips all the heavy db reads below.
+        // We still need to recompute the caller's personal "attempts remaining"
+        // because two members of the same squad can have different counts —
+        // so we pull the cached squad-wide payload and patch in the caller's numbers.
+        const cached = getCachedState(squadId);
+        if (cached) {
+            const myAttacksToday = cached.today_activity.find(r => r.wallet === wallet)?.attacks || 0;
+            return Response.json({
+                ...cached,
+                my_attempts_used_today: myAttacksToday,
+                my_attempts_remaining: Math.max(0, DAILY_ATTEMPT_LIMIT - myAttacksToday),
+            });
+        }
+
         // Load (or lazily create) the meteor row for this squad
         let meteors = await db.entities.SquadMeteor.filter({ squad_id: squadId });
         let meteor;
@@ -84,10 +124,12 @@ Deno.serve(async (req) => {
 
         // Today's attacks for this squad
         const today = todayUtcDate();
+        // Daily attempt cap is 3 × max ~50 squad members = 150 rows worst case.
+        // 250 gives headroom while staying way under the 1000 that was triggering 429s.
         const todayAttacks = await db.entities.SquadMeteorAttack.filter({
             squad_id: squadId,
             attack_date_utc: today,
-        }, '-created_date', 1000);
+        }, '-created_date', 250);
 
         // Aggregate per-member attacks
         const perMember = {};
@@ -104,10 +146,14 @@ Deno.serve(async (req) => {
 
         // Weekly leaderboard (top 10 contributors this week)
         const weekId = getCurrentWeekId();
+        // 3 attempts/day × 7 days × ~50 members = 1050 rows worst case, but the
+        // leaderboard only displays the top 10 by damage. 500 rows of the most
+        // recent attacks is plenty to identify the top 10 and stays well under
+        // rate-limit thresholds. Was 2000 — heavy contributor to 429 storms.
         const weekAttacks = await db.entities.SquadMeteorAttack.filter({
             squad_id: squadId,
             week_id: weekId,
-        }, '-created_date', 2000);
+        }, '-created_date', 500);
         const weekTotals = {};
         for (const a of weekAttacks) {
             const w = (a.wallet_address || '').toLowerCase();
@@ -122,7 +168,7 @@ Deno.serve(async (req) => {
         // Buffs
         const buffs = computeBuffs(meteor.level);
 
-        return Response.json({
+        const payload = {
             in_squad: true,
             squad_id: squadId,
             meteor: {
@@ -141,7 +187,9 @@ Deno.serve(async (req) => {
             weekly_leaderboard: weeklyLeaderboard,
             today_date: today,
             week_id: weekId,
-        });
+        };
+        setCachedState(squadId, payload);
+        return Response.json(payload);
     } catch (error) {
         console.error('[getSquadMeteorState]', error.message);
         return Response.json({ error: error.message }, { status: 500 });
