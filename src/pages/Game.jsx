@@ -754,7 +754,13 @@ export default function Game() {
         const engine = engineRef.current;
         if (!engine) { setLevelUpChoices(null); return; }
         engine.applyUpgrade(upgrade);
-        // If applyUpgrade caused another level-up (XP overflow), wait for the next modal.
+        // If applyUpgrade caused another level-up (XP overflow OR the squad-meteor
+        // starter stack queued the next one), wait for the next modal. Without the
+        // pendingStarterLevelUps check, the meteor 10-stack only fired ~2 modals
+        // before this handler unpaused the engine and wiped the queued choices.
+        if (engine.pendingStarterLevelUps > 0 && !engine.isGameOver && !engine.isVictory) {
+            return;
+        }
         if (engine.xp >= engine.xpRequired && !engine.isGameOver && !engine.isVictory) {
             setLevelUpChoices(null);
             return;
