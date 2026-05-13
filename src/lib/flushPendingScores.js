@@ -6,6 +6,19 @@
 import { base44 } from '@/api/base44Client';
 import { readRunSnapshot, clearRunSnapshot } from '@/lib/runSnapshot';
 import { getOmenXUserSync } from '@/lib/omenxUser';
+import { toast } from '@/components/ui/use-toast';
+
+// Friendly arena names so the toast reads "Rainbow Rift" instead of "dimension".
+const ARENA_LABELS = {
+    station: 'Station', asteroid: 'Asteroid Field', nebula: 'Nebula', void: 'Void',
+    plasma: 'Plasma Storm', crystal: 'Crystal Caverns', moon: 'Moon Base',
+    blackhole: 'Black Hole', mothership: 'Mothership', dimension: 'Rainbow Rift',
+    endless: 'Endless', world_boss_arena: 'Global Raid', quantum_meteor: 'Squad Meteor',
+};
+function formatTime(seconds) {
+    const s = Math.floor(seconds || 0);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
 
 let flushing = false;
 let listenersBound = false;
@@ -106,8 +119,31 @@ export async function flushPendingScores() {
             // reliable way to trigger 429s. 800ms between entries is plenty.
             if (i > 0) await new Promise(r => setTimeout(r, 800));
             try {
-                await base44.functions.invoke('saveScore', entry.payload);
+                const res = await base44.functions.invoke('saveScore', entry.payload);
                 console.log('[flushPendingScores] Recovered queued run from', new Date(entry.queuedAt).toISOString(), entry.reason ? `(${entry.reason})` : '');
+                // Notify the player so they know the run finally landed. Without this
+                // toast, queued-for-retry runs (long endless / tab-killed Android runs)
+                // recover silently and players have no idea their score was credited.
+                try {
+                    const sd = entry.payload?.scoreData || {};
+                    const arenaLabel = ARENA_LABELS[sd.arena_id] || sd.arena_id || 'Arena';
+                    const score = res?.data?.score;
+                    const gold = res?.data?.goldCredited;
+                    const frags = res?.data?.fragmentsCredited;
+                    const lines = [
+                        `${arenaLabel} • ${formatTime(sd.time_survived)} • Lvl ${sd.level} • ${sd.kills} kills`,
+                    ];
+                    if (typeof score === 'number') lines.push(`Score: ${score.toLocaleString()}`);
+                    const extras = [];
+                    if (typeof gold === 'number' && gold > 0) extras.push(`+${gold.toLocaleString()} gold`);
+                    if (typeof frags === 'number' && frags > 0) extras.push(`+${frags} fragment${frags === 1 ? '' : 's'}`);
+                    if (extras.length) lines.push(extras.join(' • '));
+                    toast({
+                        title: '🎯 Run recovered & submitted',
+                        description: lines.join(' · '),
+                        duration: 10000,
+                    });
+                } catch {}
             } catch (e) {
                 // Only re-queue for TRANSIENT failures (429, 5xx, network).
                 // Permanent 4xx errors (validation failed, duplicate run, banned
