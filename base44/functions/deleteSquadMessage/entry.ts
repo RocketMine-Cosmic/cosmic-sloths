@@ -23,7 +23,9 @@ Deno.serve(async (req) => {
 
         let callerWallet = 'EMERGENCY_KEY';
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            const me = await base44.auth.me();
+            // base44.auth.me() THROWS when there's no auth context — catch it for a clean 401.
+            let me = null;
+            try { me = await base44.auth.me(); } catch {}
             if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
             callerWallet = me.wallet_address?.toLowerCase();
             if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });

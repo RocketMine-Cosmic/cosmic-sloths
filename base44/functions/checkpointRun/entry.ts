@@ -39,7 +39,9 @@ function validateStats(s) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
+        // base44.auth.me() THROWS when there's no auth context — catch it for a clean 401.
+        let me = null;
+        try { me = await base44.auth.me(); } catch {}
         if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
         const walletAddress = me.wallet_address;

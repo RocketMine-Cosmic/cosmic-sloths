@@ -7,7 +7,9 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
+        // base44.auth.me() THROWS when there's no auth context — catch it for a clean 401.
+        let me = null;
+        try { me = await base44.auth.me(); } catch {}
         if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
         const callerWallet = me.wallet_address?.toLowerCase();
