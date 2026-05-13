@@ -1000,8 +1000,14 @@ export default function Squads({ isCarousel }) {
                                     }}
                                     className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-red-600/30 to-amber-600/30 border border-red-500/50 hover:border-red-400 text-red-200 hover:text-white font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                                 >
-                                    <Swords className="w-4 h-4" /> Enter Squad Wars
-                                    <span className="text-[9px] bg-red-500/40 px-1.5 py-0.5 rounded text-white">NEW</span>
+                                    <Swords className="w-4 h-4" /> Squad Wars
+                                </button>
+                                <button
+                                    onClick={() => { SoundManager.playUIClick(); setActiveTab('meteor'); }}
+                                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-purple-600/40 to-fuchsia-600/40 border border-purple-400/60 hover:border-purple-300 text-purple-100 hover:text-white font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:shadow-[0_0_30px_rgba(168,85,247,0.7)] animate-pulse"
+                                >
+                                    <span className="text-base">☄️</span> Squad Meteor
+                                    <span className="text-[9px] bg-purple-500/50 px-1.5 py-0.5 rounded text-white">NEW</span>
                                 </button>
                                 {isLeader && (
                                     <button
