@@ -49,19 +49,19 @@ export default function GameOverModal({ stats }) {
 
                 <div className="p-4 sm:p-6 md:p-8 pt-2 md:pt-4 shrink-0">
                     {(stats._saveFailed || timedOut) && (
-                        <div className="mb-3 text-center text-[11px] md:text-xs text-amber-300 bg-amber-950/40 border border-amber-500/40 rounded-lg px-3 py-2">
+                        <div className="mb-3 text-center text-[11px] md:text-xs text-emerald-200 bg-emerald-950/40 border border-emerald-500/40 rounded-lg px-3 py-2">
                             {stats._authExpired
-                                ? '⚠ Your sign-in expired during this long run — the run is queued and will save automatically next time you launch the game.'
+                                ? '✓ Your run is safely saved on this device. Your sign-in timed out during this long session — we\'ll auto-submit it the next time you launch the game.'
                                 : timedOut && !stats._saveFailed
-                                    ? '⚠ Save is taking longer than expected — the run is queued and will retry in the background. You can continue.'
-                                    : '⚠ Couldn\'t sync this run to the server — it\'s queued and will retry on next launch. Check your connection.'}
+                                    ? '✓ Run saved locally. The server is taking a moment — we\'ll auto-submit it in the background. Feel free to keep playing.'
+                                    : '✓ Run saved locally. We\'ll auto-submit it as soon as your connection\'s back — nothing is lost.'}
                         </div>
                     )}
                     {/* Wait until the server has saved this run before letting the player start a new one — otherwise the in-flight save could clobber the new run's progress. */}
                     {!showButtons ? (
                         <div className="text-center text-xs md:text-sm text-slate-400 italic flex items-center justify-center gap-2">
                             <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin inline-block" />
-                            {slow ? 'Still saving… taking longer than usual' : 'Saving run progress…'}
+                            {slow ? 'Almost there… banking your progress' : 'Saving your run…'}
                         </div>
                     ) : (
                         (() => {

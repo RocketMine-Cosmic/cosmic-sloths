@@ -90,7 +90,7 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                                 {serverConfirmed ? (
                                     <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>
                                 ) : saveFailed ? (
-                                    <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                                    <span className="text-emerald-300 font-mono text-xs italic">saving shortly ✓</span>
                                 ) : (
                                     <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
                                 )}
@@ -104,7 +104,7 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                             {serverConfirmed ? (
                                 <span className="text-fuchsia-400 font-mono text-lg md:text-xl">+{stats.fragments || 0}</span>
                             ) : saveFailed ? (
-                                <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                                <span className="text-emerald-300 font-mono text-xs italic">saving shortly ✓</span>
                             ) : (
                                 <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
                             )}
@@ -120,7 +120,7 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                             {serverConfirmed && stats.score != null ? (
                                 <span className="text-cyan-400 font-mono text-xl md:text-2xl font-bold">{stats.score.toLocaleString()}</span>
                             ) : saveFailed ? (
-                                <span className="text-slate-500 font-mono text-xs italic">queued for retry</span>
+                                <span className="text-emerald-300 font-mono text-xs italic">saving shortly ✓</span>
                             ) : (
                                 <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin inline-block" />
                             )}
