@@ -4,35 +4,46 @@ import { base44 } from '@/api/base44Client';
 import { getOmenXUserSync } from '@/lib/omenxUser';
 
 // Floating banner that shows the squad's active daily goal to every member.
-// Polls every 60s. Dismissible per-session via sessionStorage so members aren't
-// nagged once they've seen it.
+//
+// Load discipline (2026-05-14): this component sits in the global App tree, so
+// it runs on EVERY page for EVERY logged-in player. The old version polled
+// every 60s with 2 sequential calls (SquadMember.filter + squadActions) —
+// at 1k concurrent users that was ~2k DB ops/min just to maintain a banner.
+//
+// Now:
+//   • Membership comes from the cached `squad_membership_<wallet>` key written
+//     by Squads.jsx. No SquadMember.filter call on the global banner anymore.
+//   • Poll interval bumped to 5 min (daily goals change at most once a day).
+//   • Polling pauses when the tab is hidden.
+//   • If we know the player isn't in a squad, we skip the API call entirely.
 export default function DailyGoalBanner() {
     const [goal, setGoal] = useState(null);
-    const [squad, setSquad] = useState(null);
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
+        let interval = null;
 
         const tick = async () => {
             try {
                 const user = getOmenXUserSync();
                 const wallet = user?.walletAddress;
                 if (!wallet) return;
-                // Find caller's squad membership.
-                const members = await base44.entities.SquadMember.filter({ wallet_address: wallet });
-                if (!members || members.length === 0) {
-                    if (!cancelled) { setGoal(null); setSquad(null); }
+                // Read membership from the cache Squads.jsx maintains. No DB call.
+                let squadId = null;
+                try {
+                    const cached = localStorage.getItem(`squad_membership_${wallet}`);
+                    if (cached) squadId = JSON.parse(cached)?.squad_id || null;
+                } catch {}
+                if (!squadId) {
+                    if (!cancelled) setGoal(null);
                     return;
                 }
-                const squadId = members[0].squad_id;
-                if (!cancelled) setSquad(squadId);
 
                 const res = await base44.functions.invoke('squadActions', { action: 'getDailyGoal', squadId });
                 if (cancelled) return;
                 const g = res.data?.goal || null;
                 setGoal(g);
-                // Reset dismiss when goal id changes (new goal = re-show).
                 if (g) {
                     const dismissKey = `daily_goal_dismissed_${g.id}`;
                     setDismissed(sessionStorage.getItem(dismissKey) === '1');
@@ -40,9 +51,26 @@ export default function DailyGoalBanner() {
             } catch {}
         };
 
-        tick();
-        const interval = setInterval(tick, 60_000);
-        return () => { cancelled = true; clearInterval(interval); };
+        const start = () => {
+            if (interval) return;
+            tick();
+            interval = setInterval(tick, 5 * 60_000); // 5 min — daily goals change at most once/day
+        };
+        const stop = () => {
+            if (interval) { clearInterval(interval); interval = null; }
+        };
+        const onVis = () => {
+            if (document.visibilityState === 'visible') start();
+            else stop();
+        };
+        if (document.visibilityState === 'visible') start();
+        document.addEventListener('visibilitychange', onVis);
+
+        return () => {
+            cancelled = true;
+            stop();
+            document.removeEventListener('visibilitychange', onVis);
+        };
     }, []);
 
     if (!goal || dismissed) return null;

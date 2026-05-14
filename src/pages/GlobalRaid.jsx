@@ -96,6 +96,26 @@ export default function GlobalRaid({ isCarousel }) {
     }, []);
 
     useEffect(() => {
+        // Session-scoped cache so opening the page repeatedly within the same
+        // visit doesn't refetch 500 GlobalBossContribution rows + boss + events
+        // every time. Players hop in/out of this page often — without this it
+        // was a top-3 read source.
+        const CACHE_KEY = 'global_raid_snapshot_v1';
+        const CACHE_TTL = 60_000; // 60s — leaderboard slot changes infrequently enough
+        const tryCache = () => {
+            try {
+                const raw = sessionStorage.getItem(CACHE_KEY);
+                if (!raw) return false;
+                const parsed = JSON.parse(raw);
+                if (!parsed || Date.now() - parsed.t > CACHE_TTL) return false;
+                if (parsed.boss) setWorldBossData(parsed.boss);
+                if (parsed.contribution) setWorldBossContribution(parsed.contribution);
+                if (parsed.contributors) setTopContributors(parsed.contributors);
+                if (parsed.events) setRecentEvents(parsed.events);
+                return true;
+            } catch { return false; }
+        };
+
         const fetchBoss = async () => {
             try {
                 const { week_id } = getCurrentPeriodIds();
@@ -149,10 +169,21 @@ export default function GlobalRaid({ isCarousel }) {
                     setTopContributors(aggregated);
                     const events = await base44.entities.GlobalBossEvent.filter({ week_id }, '-created_date', 15);
                     setRecentEvents(events);
+                    // Persist snapshot so re-navigating the page within 60s is free.
+                    try {
+                        sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                            t: Date.now(),
+                            boss: bosses[0],
+                            contribution: null, // contribution state already set above; not worth re-reading
+                            contributors: aggregated,
+                            events,
+                        }));
+                    } catch {}
                 }
             } catch (e) { console.error('Failed to fetch world boss', e); }
         };
-        fetchBoss();
+        // Hit cache first; only call the network path if cache is cold/stale.
+        if (!tryCache()) fetchBoss();
     }, []);
 
     const handleClaimBossReward = async (level) => {
