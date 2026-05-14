@@ -44,9 +44,11 @@ export function fireWeaponLogic(engine, w) {
     // (0.15) so level-ups still feel impactful.
     const areaPerLevel  = _s6 ? 0.05 : 0.08;
 
-    const weaponLevelMult = 1 + Math.min(19, w.level - 1) * 0.15;
+    // Level cap follows the season: S5 stops scaling at lvl 20 (legacy), S6+ at lvl 25.
+    const _lvlCap = _s6 ? 24 : 19;
+    const weaponLevelMult = 1 + Math.min(_lvlCap, w.level - 1) * 0.15;
     let dmg = w.baseDamage * Math.min(playerDmgCap, engine.player.damageMult) * weaponLevelMult * Math.min(wDmgCap, wDmgMult);
-    let area = w.baseArea * Math.min(playerAreaCap, engine.player.areaMult) * (1 + Math.min(19, w.level - 1) * areaPerLevel) * Math.min(wAreaCap, wAreaMult);
+    let area = w.baseArea * Math.min(playerAreaCap, engine.player.areaMult) * (1 + Math.min(_lvlCap, w.level - 1) * areaPerLevel) * Math.min(wAreaCap, wAreaMult);
 
     // Projectile Speed → Damage scaling (kinetic energy):
     // Faster projectiles hit harder. Applies ONLY to projectile-based weapons (not melee/AoE).

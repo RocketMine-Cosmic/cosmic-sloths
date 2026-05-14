@@ -21,6 +21,13 @@ const OVERCHARGE_FILLERS = [
     { id: 'oc_luck',   name: 'Lucky Find',             desc: '+1 Luck (uncapped)',            type: 'passive', stat: 'luck',         value: 1 },
 ];
 
+// Max weapon level in a run. S5 = 20 (legacy), S6+ = 25 — gives evolved weapons
+// 5 more levels of growth post-evolution (evolution gate is lvl 8 in S6), and
+// stops endless runs collapsing to Overcharge-only picks once everything caps.
+// Per-weapon damage/area caps (1.8× / 1.6× in S6) still bind, so the extra
+// levels are pacing/QoL, not raw power.
+export const MAX_WEAPON_LEVEL = () => isS6OrLater() ? 25 : 20;
+
 // S6+ — hard cap on simultaneously equipped weapons. Industry standard for the
 // vampire-survivors-likes (VS / Brotato / Halls of Torment all use 6). Past 6,
 // frame rate dies on mobile, screen clutter blocks vision, and DPS dilutes
@@ -174,7 +181,7 @@ export function generateChoices(engine) {
         }
         if (u.type === 'weapon') {
             const existing = engine.player.weapons.find(w => w.id === u.weaponId);
-            if (existing && existing.level >= 20) return false;
+            if (existing && existing.level >= MAX_WEAPON_LEVEL()) return false;
             // S6+ slot cap — once at 6/6 weapons, only allow level-ups for owned weapons.
             if (enforceWeaponCap && !existing) return false;
             // Block base weapons whose evolved form the player already owns —
@@ -309,10 +316,11 @@ export function applyUpgrade(engine, upgrade) {
         // already, so the player can combine it with another weapon to form a NEW synergy
         // (e.g. having Flaming Lash shouldn't lock napalm out of Burning Barrier).
         const existing = engine.player.weapons.find(w => w.id === upgrade.weaponId);
+        const maxLvl = MAX_WEAPON_LEVEL();
         if (existing) {
-            existing.level = Math.min(20, existing.level + levelIncrement);
+            existing.level = Math.min(maxLvl, existing.level + levelIncrement);
         } else {
-            engine.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: Math.min(20, levelIncrement), timer: 0 });
+            engine.player.weapons.push({ ...WEAPONS[upgrade.weaponId], level: Math.min(maxLvl, levelIncrement), timer: 0 });
         }
         // CHECK EVOLUTIONS FIRST. Otherwise a synergy can consume the base weapon
         // before its evolution has a chance to fire (Hugo bug 2026-05-02 — picked up
@@ -349,7 +357,7 @@ export function checkSynergies(engine) {
         if (w1 && w2 && !alreadyHasResult) {
             engine.player.weapons = engine.player.weapons.filter(w => w.id !== synergy.weapon1 && w.id !== synergy.weapon2);
 
-            const newLevel = Math.min(20, Math.max(w1.level, w2.level) + 1);
+            const newLevel = Math.min(MAX_WEAPON_LEVEL(), Math.max(w1.level, w2.level) + 1);
             engine.player.weapons.push({ ...WEAPONS[synergy.result], level: newLevel, timer: 0 });
 
             engine.addDamageText(engine.player.x, engine.player.y - 40, "SYNERGY FORMED!", '#ff00ff');
