@@ -524,8 +524,17 @@ Deno.serve(async (req) => {
         // ensures retries don't double-charge if a previous attempt actually went through.
         // Upstream 5xx (502/503/504) = OmenX outage — bail immediately and trip the
         // circuit breaker so the next caller doesn't pay for another doomed API call.
+        // 422 from OmenX = "previous on-chain tx still settling for this wallet"
+        // (BSC block time ~3s). Auto-retry up to 2 times with a 3s wait so players
+        // doing back-to-back purchases don't see the red error toast. Same
+        // idempotencyKey is reused — OmenX dedupes, so we can never double-charge.
+        const isBusy422 = (msg) => /\b422\b/.test(msg) || /already.*pending|in.flight|still.*settl/i.test(msg);
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
         let purchaseData;
         let lastErr = null;
+        let busyRetries = 0;
+        const MAX_BUSY_RETRIES = 2;
         for (let i = 0; i < apiKeys.length; i++) {
             const sdk = new OmenXServerSDK({ apiKey: apiKeys[i], apiBaseUrl });
             try {
@@ -552,6 +561,16 @@ Deno.serve(async (req) => {
                         omenxPurchasesDisabled: true,
                     }, { status: 503 });
                 }
+                // 422 "network busy" — previous on-chain tx still settling. Wait
+                // and retry on the SAME key with the SAME idempotency key.
+                if (isBusy422(msg) && busyRetries < MAX_BUSY_RETRIES) {
+                    busyRetries++;
+                    const wait = 3000 + Math.floor(Math.random() * 1000); // 3-4s
+                    console.warn(`[purchaseSku] OmenX 422 busy — retry ${busyRetries}/${MAX_BUSY_RETRIES} in ${wait}ms`);
+                    await sleep(wait);
+                    i--; // retry the same key
+                    continue;
+                }
                 if (msg.includes('429') && i < apiKeys.length - 1) {
                     console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
                     continue;
@@ -561,6 +580,7 @@ Deno.serve(async (req) => {
                 // Surface common payment errors clearly, hide raw stack traces
                 const friendly = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
                     : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
+                    : isBusy422(msg) ? "The OMENX network is busy — please wait a few seconds and try again."
                     : "Your purchase couldn't be completed. Please try again.";
                 return Response.json({ error: friendly }, { status: 500 });
             }
