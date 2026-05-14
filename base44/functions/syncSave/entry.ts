@@ -479,17 +479,29 @@ Deno.serve(async (req) => {
         // emit the value back into save_data.player_name as a legacy alias.
         // The mirrorProfileFanOut entity automation handles propagating the change
         // to RunScore / SquadMember / SquadMessage asynchronously.
-        const profileFromClient = (merged.profile && typeof merged.profile === 'object') ? merged.profile : null;
-        const profileFromCloud = (existingData.profile && typeof existingData.profile === 'object') ? existingData.profile : null;
-        // Prefer client's profile (already set above via CLIENT_OWNED_EQUIP_FIELDS),
-        // fall back to cloud, then to legacy top-level fields.
-        const finalProfile = profileFromClient
-            || profileFromCloud
-            || {
-                player_name: existingData.player_name || existingData.pilotName || '',
-                player_title: existingData.player_title || '',
-                pilot_icon: existingData.pilot_icon || '',
-            };
+        //
+        // PER-FIELD MERGE (Waeoo bug 2026-05-14 — "callsigns fall off"):
+        // A stale/partial client profile object (e.g. an older tab that loaded
+        // before the title was equipped, or a SaveManager save that fired before
+        // useOmenXUser hydrated player_title) used to overwrite the cloud's title
+        // with "" via the whole-object swap. The empty top-level column then
+        // triggered mirrorProfileFanOut, which wiped the title across all
+        // RunScore / SquadMember / SquadMessage rows. Now: each profile field is
+        // taken from the client only when it's a non-empty string; otherwise the
+        // cloud value is preserved. Players can still CLEAR a title by equipping
+        // a different one (non-empty) — they just can't clear it accidentally.
+        const profileFromClient = (saveData.profile && typeof saveData.profile === 'object') ? saveData.profile : {};
+        const profileFromCloud = (existingData.profile && typeof existingData.profile === 'object') ? existingData.profile : {};
+        const pickField = (clientVal, cloudVal, legacyVal) => {
+            if (typeof clientVal === 'string' && clientVal.length > 0) return clientVal;
+            if (typeof cloudVal === 'string' && cloudVal.length > 0) return cloudVal;
+            return legacyVal || '';
+        };
+        const finalProfile = {
+            player_name:  pickField(profileFromClient.player_name,  profileFromCloud.player_name,  existingData.player_name || existingData.pilotName || ''),
+            player_title: pickField(profileFromClient.player_title, profileFromCloud.player_title, existingData.player_title || ''),
+            pilot_icon:   pickField(profileFromClient.pilot_icon,   profileFromCloud.pilot_icon,   existingData.pilot_icon || ''),
+        };
         merged.profile = finalProfile;
         // Legacy aliases (used by older code paths still reading these fields).
         // The single source of truth is `profile` — these are mirrors only.
