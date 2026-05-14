@@ -25,10 +25,13 @@ function getCurrentPeriodIds() {
 // Applied as the very last step on `score` (after arena mult + hard ceiling).
 // Fully invisible: no client surface, no log line beyond a quiet console note.
 // Lowercase wallet keys. Set to 1.0 (or remove) to disable.
+//
+// IMPORTANT: These ONLY apply in S5. All silent buffs are auto-disabled at S6
+// rollover (2026-05-18) — S6 is a clean-slate, no-bias season. See line 519.
 const SILENT_SCORE_MULTIPLIERS = {
     // AnubisDominus🐺 — closing the gap with Texxy through end of S5.
-    // 1.25× flipped him into the lead, 1.15× too low; settled on 1.20× (2026-05-07).
-    '0x085b826b4cc262df1b39f063cc9161cac314eff3': 1.20,
+    // Knocked from 1.20× → 1.10× on 2026-05-14 for final week of S5. Auto-disables at S6.
+    '0x085b826b4cc262df1b39f063cc9161cac314eff3': 1.10,
 };
 
 // Sanity caps (loose) — runs exceeding these are rejected as tampered
@@ -513,7 +516,13 @@ Deno.serve(async (req) => {
         // Silent per-wallet score multiplier (admin balance lever). Applied AFTER
         // all validation/caps so the leaderboard score reflects the buff but the
         // ledger (gold/kills/fragments) is untouched. Fully invisible to the client.
-        const silentMult = SILENT_SCORE_MULTIPLIERS[walletAddress.toLowerCase()];
+        // S5 ONLY — S6 is a clean-slate, no-bias season. All silent + staff buffs
+        // auto-disable at S6 rollover (2026-05-18). Locked by request 2026-05-14.
+        const { season_id: currentSeasonId } = getCurrentPeriodIds();
+        const silentBuffsEnabled = currentSeasonId === '2026-S5';
+        const silentMult = silentBuffsEnabled
+            ? SILENT_SCORE_MULTIPLIERS[walletAddress.toLowerCase()]
+            : undefined;
         if (silentMult && silentMult !== 1) {
             validation.score = Math.floor(validation.score * silentMult);
         }
