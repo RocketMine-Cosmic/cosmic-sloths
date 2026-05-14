@@ -551,33 +551,6 @@ Deno.serve(async (req) => {
             } catch (err) {
                 lastErr = err;
                 const msg = err?.message || String(err);
-                // ---- DEBUG: persist full error to AdminChangesLog (logs get truncated by Base44 SDK 429 spam) ----
-                try {
-                    const dump = {
-                        keyIndex: i,
-                        keyPrefix: apiKeys[i] ? apiKeys[i].slice(0, 12) + '...' : 'none',
-                        skuId,
-                        unitPrice,
-                        paymentAmount: totalAmount,
-                        idempotencyKey,
-                        errMessage: msg,
-                        errName: err?.name,
-                        errStatus: err?.status ?? err?.response?.status ?? err?.cause?.status,
-                        errCode: err?.code,
-                        errBody: err?.body ?? err?.response?.data ?? err?.response?.body ?? err?.data,
-                        errResponseText: err?.response?.text,
-                        errStack: (err?.stack || '').slice(0, 400),
-                        errKeys: Object.keys(err || {}),
-                    };
-                    await base44.asServiceRole.entities.AdminChangesLog.create({
-                        wallet_address: walletAddress || 'unknown',
-                        action_type: 'other',
-                        description: `[purchaseSku DEBUG] ${skuId} key#${i} → ${msg.slice(0, 100)}`,
-                        details: dump,
-                    });
-                } catch (dumpErr) {
-                    console.error('[purchaseSku] dump persist failed:', dumpErr?.message);
-                }
                 // 5xx from OmenX = their service is down. Don't keep cycling keys —
                 // it's not a per-key problem. Trip the breaker and stop.
                 if (isUpstream5xx(msg)) {
