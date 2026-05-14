@@ -918,7 +918,15 @@ export class GameEngine {
     updateEnemies(dt) { updateEnemiesLogic(this, dt); }
     updatePickups(dt) { updatePickupsLogic(this, dt); }
     levelUp() { levelUpLogic(this); }
-    rerollChoices() { this.callbacks.onLevelUp(generateChoicesLogic(this)); }
+    rerollChoices() {
+        // Defensive — guarantee the engine stays paused while the new choices
+        // are rendered. Without this, any path that briefly flipped isPaused
+        // (e.g. a confirmation modal closing) would let mobs deal a killing
+        // blow to a player who's mid-reroll, triggering the revive modal
+        // ON TOP of the still-open LevelUpModal (Tijckers bug 2026-05-14).
+        this.isPaused = true;
+        this.callbacks.onLevelUp(generateChoicesLogic(this));
+    }
     generateChoices() { return generateChoicesLogic(this); }
     applyUpgrade(upgrade) { applyUpgradeLogic(this, upgrade); }
     checkSynergies() { checkSynergiesLogic(this); }

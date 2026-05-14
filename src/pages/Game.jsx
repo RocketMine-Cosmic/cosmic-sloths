@@ -758,10 +758,17 @@ export default function Game() {
         // starter stack queued the next one), wait for the next modal. Without the
         // pendingStarterLevelUps check, the meteor 10-stack only fired ~2 modals
         // before this handler unpaused the engine and wiped the queued choices.
+        // CRITICAL: keep isPaused=true in this branch — applyUpgrade unpauses
+        // unconditionally, but if another level-up is queued the engine must
+        // NOT tick a frame in between (Tijckers bug 2026-05-14 — mobs killed
+        // the player between back-to-back level-ups, opening the revive modal
+        // ON TOP of the queued LevelUpModal).
         if (engine.pendingStarterLevelUps > 0 && !engine.isGameOver && !engine.isVictory) {
+            engine.isPaused = true;
             return;
         }
         if (engine.xp >= engine.xpRequired && !engine.isGameOver && !engine.isVictory) {
+            engine.isPaused = true;
             setLevelUpChoices(null);
             return;
         }
