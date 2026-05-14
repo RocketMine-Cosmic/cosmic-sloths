@@ -385,18 +385,36 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'buzzsaw') {
             ctx.rotate((p.rotation || time * 15) * (p.vx < 0 ? -1 : 1));
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = p.color;
+            // Use source-over (normal blending) for the blade body so overlapping
+            // saws don't stack additively to pure white (Texxy bug 2026-05-14 —
+            // 11 saws on screen looked like a stream of bright shurikens).
+            // Chrome body + dark outline gives a readable metallic silhouette;
+            // the white core is kept tiny + additive for a single hot highlight.
+            ctx.globalCompositeOperation = 'source-over';
+            const spikes = p.weaponId === 'buzzsawSwarm' ? 10 : 8;
             ctx.beginPath();
-            const spikes = p.type === 'buzzsaw_swarm' ? 12 : 8;
-            for(let i=0; i<spikes*2; i++) {
-                const a = (Math.PI*2/(spikes*2))*i;
-                const r = i%2===0 ? p.radius : p.radius*0.6;
-                ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+            for (let i = 0; i < spikes * 2; i++) {
+                const a = (Math.PI * 2 / (spikes * 2)) * i;
+                const r = i % 2 === 0 ? p.radius : p.radius * 0.55;
+                if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+                else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
             }
+            ctx.closePath();
+            ctx.fillStyle = p.weaponId === 'buzzsawSwarm' ? '#b8bcc4' : '#8a8e96';
             ctx.fill();
+            ctx.strokeStyle = '#2a2d33';
+            ctx.lineWidth = Math.max(1.5, p.radius * 0.08);
+            ctx.stroke();
+            // Inner hub ring
+            ctx.fillStyle = '#3a3d44';
+            ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.35, 0, Math.PI * 2); ctx.fill();
+            // Single small additive highlight — keeps the "spinning metal catching light"
+            // feel without the previous whole-blade whiteout.
+            ctx.globalCompositeOperation = 'lighter';
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.arc(0, 0, p.radius*0.3, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.15, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'toxic_cloud') {
             ctx.globalCompositeOperation = 'source-over';
