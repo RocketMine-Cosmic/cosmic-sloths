@@ -104,6 +104,19 @@ export default function Squads({ isCarousel }) {
     const [claimingWeekly, setClaimingWeekly] = useState(false);
     const [claimingDaily, setClaimingDaily] = useState(false);
 
+    // Browse tab — lazy-loaded the first time it's opened (and refreshed at
+    // most once per 60s). Avoids the always-on Squad.list('-created_date', 50)
+    // for every page load.
+    const browseLoadedAt = useRef(0);
+    const loadBrowseSquads = async () => {
+        if (Date.now() - browseLoadedAt.current < 60_000 && allSquads.length > 0) return;
+        try {
+            const squads = await base44.entities.Squad.list('-created_date', 50);
+            setAllSquads(squads);
+            browseLoadedAt.current = Date.now();
+        } catch {}
+    };
+
     // Settings edit state
     const [editName, setEditName] = useState('');
     const [editTag, setEditTag] = useState('');
@@ -188,13 +201,12 @@ export default function Squads({ isCarousel }) {
                          }
 
                          setMySquad(updatedSquad);
-                         // Also load all squads for the Browse tab (so members can scout rivals).
-                         try {
-                             const squads = await base44.entities.Squad.list('-created_date', 50);
-                             setAllSquads(squads);
-                         } catch {}
+                         // Don't pre-load all squads here — when the player is already in a
+                         // squad, they only need the Browse list if they click the Browse tab.
+                         // Pre-loading was ~50 Squad rows per page open for every member of
+                         // every squad, on every storage tick. Lazy-loaded in the tab below.
                      } else {
-                         // Load all squads
+                         // No squad — load the squad list so they can find one to join.
                          const squads = await base44.entities.Squad.list('-created_date', 50);
                          setAllSquads(squads);
                      }
@@ -241,32 +253,37 @@ export default function Squads({ isCarousel }) {
         }
     }, [mySquad]);
 
+    // Re-fetch members + messages only when the SQUAD ID changes, not on every
+    // squad-record update tick. The squad subscription previously caused a full
+    // re-fetch of members (5-table aggregation in getSquadProfile) every time
+    // weekly_kills ticked up — basically every kill credit by any member.
+    const mySquadId = mySquad?.id;
     useEffect(() => {
-        if (mySquad) {
+        if (mySquadId) {
             const loadMembersAndMessages = async () => {
                 // Use getSquadProfile so members come pre-enriched with weekly kills,
                 // raid damage, and war wins — same data the profile modal uses.
                 try {
-                    const res = await base44.functions.invoke('getSquadProfile', { squadId: mySquad.id });
+                    const res = await base44.functions.invoke('getSquadProfile', { squadId: mySquadId });
                     if (res.data?.success) {
                         setSquadMembers(res.data.members);
                     } else {
-                        const members = await base44.entities.SquadMember.filter({ squad_id: mySquad.id });
+                        const members = await base44.entities.SquadMember.filter({ squad_id: mySquadId });
                         setSquadMembers(members);
                     }
                 } catch {
-                    const members = await base44.entities.SquadMember.filter({ squad_id: mySquad.id });
+                    const members = await base44.entities.SquadMember.filter({ squad_id: mySquadId });
                     setSquadMembers(members);
                 }
                 
-                const msgs = await base44.entities.SquadMessage.filter({ squad_id: mySquad.id }, '-created_date', 50);
+                const msgs = await base44.entities.SquadMessage.filter({ squad_id: mySquadId }, '-created_date', 50);
                 setMessages(msgs.reverse());
             };
             loadMembersAndMessages();
             
             // Subscriptions
             const unsubMessages = base44.entities.SquadMessage.subscribe((event) => {
-                if (event.type === 'create' && event.data.squad_id === mySquad.id) {
+                if (event.type === 'create' && event.data.squad_id === mySquadId) {
                     setMessages(prev => {
                         // If this message is already in the list (e.g. from optimistic update), skip
                         if (prev.some(m => m.id === event.data.id)) return prev;
@@ -280,13 +297,13 @@ export default function Squads({ isCarousel }) {
                 }
             });
             const unsubSquad = base44.entities.Squad.subscribe((event) => {
-                if (event.type === 'update' && event.id === mySquad.id) {
+                if (event.type === 'update' && event.id === mySquadId) {
                     setMySquad(event.data);
                 }
             });
             return () => { unsubMessages(); unsubSquad(); };
         }
-    }, [mySquad]);
+    }, [mySquadId]);
 
     useEffect(() => {
         if (chatEndRef.current) {
@@ -508,13 +525,15 @@ export default function Squads({ isCarousel }) {
     };
 
     const reloadMembers = async () => {
+        // getSquadProfile already returns the squad record — use that instead
+        // of doing a second Squad.get round-trip (was halving the squad call
+        // budget on every member-list refresh).
         try {
             const res = await base44.functions.invoke('getSquadProfile', { squadId: mySquad.id });
-            if (res.data?.success) setSquadMembers(res.data.members);
-        } catch {}
-        try {
-            const updated = await base44.entities.Squad.get(mySquad.id);
-            if (updated) setMySquad(updated);
+            if (res.data?.success) {
+                setSquadMembers(res.data.members);
+                if (res.data.squad) setMySquad(prev => ({ ...prev, ...res.data.squad }));
+            }
         } catch {}
     };
 
@@ -1057,7 +1076,7 @@ export default function Squads({ isCarousel }) {
                                     <Users className="w-4 h-4" /> Members ({squadMembers.length}/{MAX_SQUAD_MEMBERS})
                                 </button>
                                 <button
-                                    onClick={() => setActiveTab('browse')}
+                                    onClick={() => { setActiveTab('browse'); loadBrowseSquads(); }}
                                     className={`flex-1 py-3 font-bold text-sm flex justify-center items-center gap-2 ${activeTab === 'browse' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-slate-800/50' : 'text-slate-400 hover:bg-slate-800/30'}`}
                                 >
                                     <Globe className="w-4 h-4" /> <span className="hidden sm:inline">Browse</span>

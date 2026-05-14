@@ -15,7 +15,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // SquadWar) and serves the cached payload. This is the fix for the "modal doesn't
 // load on many-to-many requests" bug: every open used to do a 1000-row RunScore
 // scan + 4 other heavy filters, which rate-limited under load.
-const PROFILE_CACHE_TTL_MS = 30_000;
+// Was 30s. Bumped to 60s because the modal data (kills/raid dmg/war wins) is
+// always slightly behind real-time anyway — players don't notice a 60s lag,
+// and at 50+ concurrent users this halves the DB load on the heaviest squad
+// read path (5-table aggregation per call).
+const PROFILE_CACHE_TTL_MS = 60_000;
 const profileCache = new Map(); // squadId -> { expiresAt, payload }
 
 function getCachedProfile(squadId) {
