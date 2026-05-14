@@ -3,9 +3,20 @@
 // which SKU is causing 422s when paymentAmount disagrees with their catalog.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Mirror of lib/skuMap.js — keep these in sync with the client-side map.
+// Mirror of the prices shown in the actual UI:
+//   - pages/Upgrades.jsx → UPGRADE_TYPES (stat/weapon/talent tokenCosts per tier/level)
+//   - lib/skuMap.js → getConsumableCost (in-game consumables)
+// Talent SKUs use lvl1/lvl2/lvl3 to mean talent TIER (not stat-upgrade level),
+// and Upgrades.jsx prices them at index [0, 2, 4] of tokenCosts (costTier = (tier-1)*2).
+const STAT_WEAPON_TOKEN_COSTS = {
+    permanent: [15, 30, 60, 120, 240],
+    weekly:    [4, 8, 15, 30, 60],
+    seasonal:  [10, 20, 40, 80, 160],
+};
+const TALENT_TIER_INDICES = [0, 2, 4]; // lvl1/2/3 → tokenCosts index 0/2/4
+
 const EXPECTED_PRICES = {
-    // In-game consumables
+    // In-game consumables (from lib/skuMap.js getConsumableCost)
     'ingame-banish': 2,
     'ingame-banish-2': 4,
     'ingame-banish-3': 6,
@@ -16,57 +27,12 @@ const EXPECTED_PRICES = {
     'ingame-xp-buff': 10,
     'bias-respec': 10,
 
-    // Talent respecs
+    // Talent respecs (from pages/Upgrades.jsx handleRespecTalents omenxCosts)
     'talent-respec-permanent': 10,
     'talent-respec-weekly': 4,
     'talent-respec-seasonal': 20,
 
-    // Stat upgrades (5/10/20/40/80 OMENX per level, all tiers same)
-    'stat-upgrade-permanent-lvl1': 5,
-    'stat-upgrade-permanent-lvl2': 10,
-    'stat-upgrade-permanent-lvl3': 20,
-    'stat-upgrade-permanent-lvl4': 40,
-    'stat-upgrade-permanent-lvl5': 80,
-    'stat-upgrade-weekly-lvl1': 5,
-    'stat-upgrade-weekly-lvl2': 10,
-    'stat-upgrade-weekly-lvl3': 20,
-    'stat-upgrade-weekly-lvl4': 40,
-    'stat-upgrade-weekly-lvl5': 80,
-    'stat-upgrade-seasonal-lvl1': 5,
-    'stat-upgrade-seasonal-lvl2': 10,
-    'stat-upgrade-seasonal-lvl3': 20,
-    'stat-upgrade-seasonal-lvl4': 40,
-    'stat-upgrade-seasonal-lvl5': 80,
-
-    // Weapon upgrades (same curve)
-    'weapon-upgrades-permanent-lvl1': 5,
-    'weapon-upgrades-permanent-lvl2': 10,
-    'weapon-upgrades-permanent-lvl3': 20,
-    'weapon-upgrades-permanent-lvl4': 40,
-    'weapon-upgrades-permanent-lvl5': 80,
-    'weapon-upgrades-weekly-lvl1': 5,
-    'weapon-upgrades-weekly-lvl2': 10,
-    'weapon-upgrades-weekly-lvl3': 20,
-    'weapon-upgrades-weekly-lvl4': 40,
-    'weapon-upgrades-weekly-lvl5': 80,
-    'weapon-upgrades-seasonal-lvl1': 5,
-    'weapon-upgrades-seasonal-lvl2': 10,
-    'weapon-upgrades-seasonal-lvl3': 20,
-    'weapon-upgrades-seasonal-lvl4': 40,
-    'weapon-upgrades-seasonal-lvl5': 80,
-
-    // Character talents (10/20/40 OMENX by tier)
-    'character-talents-permanent-lvl1': 10,
-    'character-talents-permanent-lvl2': 20,
-    'character-talents-permanent-lvl3': 40,
-    'character-talents-weekly-lvl1': 10,
-    'character-talents-weekly-lvl2': 20,
-    'character-talents-weekly-lvl3': 40,
-    'character-talents-seasonal-lvl1': 10,
-    'character-talents-seasonal-lvl2': 20,
-    'character-talents-seasonal-lvl3': 40,
-
-    // Cosmetics — map goldCost tier → OMENX cost
+    // Cosmetics — gold-tier → OMENX cost (matches dev portal)
     'character-trails-basic': 3,
     'character-trails-advanced': 10,
     'character-trails-epic': 20,
@@ -77,6 +43,22 @@ const EXPECTED_PRICES = {
     'character-skins-basic': 5,
     'character-skins-advance': 20,
 };
+
+// Stat + weapon upgrades — same curve per tier, 5 levels each
+for (const tier of ['permanent', 'weekly', 'seasonal']) {
+    const costs = STAT_WEAPON_TOKEN_COSTS[tier];
+    for (let lvl = 1; lvl <= 5; lvl++) {
+        EXPECTED_PRICES[`stat-upgrade-${tier}-lvl${lvl}`] = costs[lvl - 1];
+        EXPECTED_PRICES[`weapon-upgrades-${tier}-lvl${lvl}`] = costs[lvl - 1];
+    }
+    // Character talents — lvl1/2/3 = talent tier 1/2/3, priced at tokenCosts[0/2/4]
+    for (let tier_i = 0; tier_i < 3; tier_i++) {
+        EXPECTED_PRICES[`character-talents-${tier}-lvl${tier_i + 1}`] = costs[TALENT_TIER_INDICES[tier_i]];
+    }
+}
+
+// Tolerance for floating-point drift in the dev portal (e.g. 5.999999999... vs 6).
+const EPSILON = 0.001;
 
 function getCatalogKeys() {
     const keys = [
@@ -133,10 +115,10 @@ Deno.serve(async (req) => {
         for (const [skuId, expected] of Object.entries(EXPECTED_PRICES)) {
             if (!(skuId in livePrices)) {
                 missingFromLive.push({ skuId, expected });
-            } else if (livePrices[skuId] !== expected) {
+            } else if (Math.abs(livePrices[skuId] - expected) > EPSILON) {
                 mismatches.push({ skuId, expected, live: livePrices[skuId] });
             } else {
-                matches.push({ skuId, price: expected });
+                matches.push({ skuId, price: expected, live: livePrices[skuId] });
             }
         }
 
