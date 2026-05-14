@@ -15,11 +15,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // SquadWar) and serves the cached payload. This is the fix for the "modal doesn't
 // load on many-to-many requests" bug: every open used to do a 1000-row RunScore
 // scan + 4 other heavy filters, which rate-limited under load.
-// Was 30s. Bumped to 60s because the modal data (kills/raid dmg/war wins) is
-// always slightly behind real-time anyway — players don't notice a 60s lag,
-// and at 50+ concurrent users this halves the DB load on the heaviest squad
-// read path (5-table aggregation per call).
-const PROFILE_CACHE_TTL_MS = 60_000;
+// 20s — short enough that heavy farmers see their today/weekly numbers tick
+// up while they're playing (Texxy bug 2026-05-14 — 60s cache + row-cap
+// truncation made it look like daily kills had stopped updating entirely).
+const PROFILE_CACHE_TTL_MS = 20_000;
 const profileCache = new Map(); // squadId -> { expiresAt, payload }
 
 function getCachedProfile(squadId) {
@@ -88,13 +87,14 @@ Deno.serve(async (req) => {
             // PlayerSave has no weeklyKills field (squad weekly_kills is the
             // aggregate). RunScore.wallet_address is the canonical wallet
             // (user_id on RunScore is the Base44 user id, NOT the wallet).
-            // 200 rows ≈ 40 runs/member × 5 members — covers normal play. Heavy
-            // farmers' totals slightly truncate, but the squad-level weekly_kills
-            // headline is always accurate (it's an aggregate on the Squad record).
-            // Was 1000 — main cause of rate-limit storms when many users opened
-            // the modal at once.
+            // Scale the row budget with squad size so heavy Rainbow Rift farmers
+            // can't starve other members out of the window. 80 rows/member
+            // covers ~80 runs/day each (Waeoo was at ~60 today when this bug
+            // surfaced — Texxy bug 2026-05-14: today's kills appeared frozen
+            // because Waeoo+BattleToad's newer rows pushed Texxy's out of a
+            // flat 200-row cap). Capped at 800 to bound the cost.
             memberWallets.length
-                ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', 200)
+                ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', Math.min(800, memberWallets.length * 80))
                 : Promise.resolve([]),
         ]);
 
