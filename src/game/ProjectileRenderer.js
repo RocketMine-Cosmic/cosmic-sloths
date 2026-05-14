@@ -49,8 +49,12 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         
         const isElongated = p.type === 'beam' || p.type === 'dual_laser' || p.type === 'supernova_beam' || p.type === 'missile' || p.type === 'railgun' || p.type === 'blaster_shot';
 
-        // High Quality Glowing Aura (Pre-rendered)
-        if (!p.isAoe) {
+        // High Quality Glowing Aura (Pre-rendered).
+        // Skip for buzzsaw blades — at high area stacking, multiple blades each with
+        // a 3× radius aura whited out the entire screen (Anubis bug 2026-05-14).
+        // The blades' own spike rendering + white core already give them plenty of
+        // visual punch without the additive halo.
+        if (!p.isAoe && p.type !== 'buzzsaw') {
             ctx.globalCompositeOperation = 'lighter';
             const auraRadius = Math.max(0.1, p.radius * 3);
             
