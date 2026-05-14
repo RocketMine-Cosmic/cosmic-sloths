@@ -524,17 +524,17 @@ Deno.serve(async (req) => {
         // ensures retries don't double-charge if a previous attempt actually went through.
         // Upstream 5xx (502/503/504) = OmenX outage — bail immediately and trip the
         // circuit breaker so the next caller doesn't pay for another doomed API call.
-        // 422 from OmenX = "previous on-chain tx still settling for this wallet"
-        // (BSC block time ~3s). Auto-retry up to 2 times with a 3s wait so players
-        // doing back-to-back purchases don't see the red error toast. Same
-        // idempotencyKey is reused — OmenX dedupes, so we can never double-charge.
-        const isBusy422 = (msg) => /\b422\b/.test(msg) || /already.*pending|in.flight|still.*settl/i.test(msg);
-        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
+        //
+        // 422 from OmenX (per Emilio, 2026-05-14): PAYMENT_FAILED. Was previously
+        // "still settling" but they changed the response semantics — 422 is now a
+        // hard payment failure (insufficient balance, price drift, rejected tx, etc.)
+        // and should NOT be retried. We still do ONE price-refresh check on first 422
+        // so we can surface a clean "price updated" error if the catalog moved under us,
+        // but we no longer sleep-retry. Saves wasted API calls + faster error feedback.
+        const is422 = (msg) => /\b422\b/.test(msg);
         let purchaseData;
         let lastErr = null;
-        let busyRetries = 0;
-        const MAX_BUSY_RETRIES = 2;
+        let didPriceRecheck = false;
         for (let i = 0; i < apiKeys.length; i++) {
             const sdk = new OmenXServerSDK({ apiKey: apiKeys[i], apiBaseUrl });
             try {
@@ -561,21 +561,22 @@ Deno.serve(async (req) => {
                         omenxPurchasesDisabled: true,
                     }, { status: 503 });
                 }
-                // 422 from OmenX. Could be:
-                //   (a) stale SKU price — our cached unit price ≠ their current catalog price
-                //   (b) on-chain tx still settling for this wallet (BSC ~3s blocks)
-                //   (c) some other validation failure (insufficient balance, etc.)
-                // On the FIRST 422 only, force-refresh the price cache and re-validate
-                // the paymentAmount. If the price changed, surface a clean error so the
-                // client can refresh and retry with the correct amount. Otherwise treat
-                // as (b) and retry on the SAME key + SAME idempotency key.
-                if (isBusy422(msg)) {
-                    if (busyRetries === 0) {
+                // 422 from OmenX = PAYMENT_FAILED (per Emilio 2026-05-14, was previously
+                // 502 for "still settling"). Possible causes:
+                //   (a) stale cached SKU price — our paymentAmount ≠ their current catalog price
+                //   (b) insufficient balance / rejected on-chain tx / other validation failure
+                // ONCE per request, on the first 422, force-refresh the price cache.
+                // If the price drifted, return a clean 409 so the client can refresh and
+                // retry with the right amount. Otherwise it's a real PAYMENT_FAILED → bail
+                // immediately with a friendly error (no sleep-retry — we'd just be burning
+                // more billable API calls for a request OmenX has already rejected).
+                if (is422(msg)) {
+                    if (!didPriceRecheck) {
+                        didPriceRecheck = true;
                         try {
                             const freshUnitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys, true);
                             console.warn(`[purchaseSku] OmenX 422 — refreshed price for ${skuId}: cached=${unitPrice} fresh=${freshUnitPrice}`);
                             if (freshUnitPrice > 0 && freshUnitPrice !== unitPrice) {
-                                // Price drifted — abort cleanly so client retries with correct amount.
                                 postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
                                     title: '⚠️ SKU price drift detected',
                                     description: `Cached price was stale — purchase rejected by OmenX.`,
@@ -595,14 +596,12 @@ Deno.serve(async (req) => {
                             console.error('[purchaseSku] price re-check failed:', priceErr.message);
                         }
                     }
-                    if (busyRetries < MAX_BUSY_RETRIES) {
-                        busyRetries++;
-                        const wait = 3000 + Math.floor(Math.random() * 1000); // 3-4s
-                        console.warn(`[purchaseSku] OmenX 422 busy — retry ${busyRetries}/${MAX_BUSY_RETRIES} in ${wait}ms`);
-                        await sleep(wait);
-                        i--; // retry the same key
-                        continue;
-                    }
+                    // Genuine PAYMENT_FAILED — return friendly error, do not retry.
+                    console.warn(`[purchaseSku] OmenX 422 PAYMENT_FAILED — wallet=${walletAddress} sku=${skuId}: ${msg.slice(0, 200)}`);
+                    const friendly422 = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
+                        : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
+                        : "Your payment was rejected. Please check your OMENX balance and try again.";
+                    return Response.json({ error: friendly422 }, { status: 400 });
                 }
                 if (msg.includes('429') && i < apiKeys.length - 1) {
                     console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
@@ -613,7 +612,6 @@ Deno.serve(async (req) => {
                 // Surface common payment errors clearly, hide raw stack traces
                 const friendly = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
                     : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
-                    : isBusy422(msg) ? "The OMENX network is busy — please wait a few seconds and try again."
                     : "Your purchase couldn't be completed. Please try again.";
                 return Response.json({ error: friendly }, { status: 500 });
             }
