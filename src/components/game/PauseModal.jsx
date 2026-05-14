@@ -22,6 +22,16 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
     const buffMinsLeft = buffActive ? Math.max(0, Math.ceil((xpBuffExpiry - now) / 60000)) : 0;
     const canAfford = omenxBalance >= XP_BUFF_COST;
 
+    // Player identity card — read from the canonical save.profile written by syncSave.
+    // Falls back to legacy top-level fields if profile object hasn't hydrated yet.
+    // Shown so players can confirm their callsign/title/icon are set correctly mid-run
+    // (Waeoo bug 2026-05-14 — callsigns were falling off without anyone noticing).
+    const save = engineRef?.current?.save || {};
+    const profile = save.profile || {};
+    const pilotIcon = profile.pilot_icon || save.pilot_icon || '🚀';
+    const pilotName = profile.player_name || save.player_name || save.pilotName || 'Pilot';
+    const pilotTitle = profile.player_title || save.player_title || '';
+
     return (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
             <motion.div 
@@ -29,7 +39,16 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                 animate={{ scale: 1, opacity: 1 }}
                 className="bg-slate-900 border-2 border-cyan-500 p-6 md:p-8 rounded-xl max-w-sm w-full text-center my-auto"
             >
-                <h2 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-4 font-mono">PAUSED</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-2 font-mono">PAUSED</h2>
+
+                {/* Identity card — lets players verify their callsign hasn't fallen off mid-run */}
+                <div className="mb-4 mx-auto inline-flex items-center gap-2 bg-slate-800/60 border border-cyan-500/30 rounded-lg px-3 py-1.5">
+                    <span className="text-xl leading-none">{pilotIcon}</span>
+                    <div className="text-left leading-tight">
+                        <div className="text-cyan-200 text-sm font-bold font-mono">{pilotName}</div>
+                        {pilotTitle && <div className="text-cyan-400/70 text-[10px] uppercase tracking-wide">{pilotTitle}</div>}
+                    </div>
+                </div>
 
                 <button
                     onClick={() => setShowStats(s => !s)}
