@@ -604,17 +604,32 @@ Deno.serve(async (req) => {
             );
 
             // Grant rewards to player's cloud PlayerSave. If credit fails after
-            // 4 retries, alert Discord so admins can manually pay out — the
-            // player keeps their idempotency lock so they can't double-claim.
+            // 4 retries, ROLL BACK the claim stamp so the player can simply
+            // click again in a few seconds — much better UX than locking them
+            // out and forcing manual admin payout. Discord alert still fires
+            // so we can see persistent failure patterns.
             let updatedTotals;
             try {
                 updatedTotals = await grantToPlayerSave(base44, walletAddress, tier.gold, tier.fragments);
             } catch (creditErr) {
-                console.error('[squadActions] CRITICAL: marked claimed but credit failed:', creditErr.message);
-                alertUnpaidBounty(walletAddress, isWeekly ? 'weekly' : 'daily', tier.gold, tier.fragments, creditErr.message);
+                console.error('[squadActions] credit failed, rolling back claim:', creditErr.message);
+                // Restore the previous claim stamp so the player isn't locked out.
+                try {
+                    await with429Retry(
+                        () => base44.asServiceRole.entities.SquadMember.update(memberId, {
+                            [lastClaimedField]: member[lastClaimedField] || ''
+                        }),
+                        'rollback_claim'
+                    );
+                } catch (rollbackErr) {
+                    // Rollback itself failed — NOW it's a real unpaid bounty. Alert.
+                    console.error('[squadActions] CRITICAL: rollback failed too:', rollbackErr.message);
+                    alertUnpaidBounty(walletAddress, isWeekly ? 'weekly' : 'daily', tier.gold, tier.fragments, `credit: ${creditErr.message} | rollback: ${rollbackErr.message}`);
+                }
                 return Response.json({
-                    error: 'Your bounty was logged but couldn\'t be credited right now. Our team has been alerted — please wait a moment.',
-                }, { status: 500 });
+                    error: 'The server is busy right now — please tap Claim again in a few seconds.',
+                    retryable: true,
+                }, { status: 503 });
             }
 
             // Award daily squad XP — ONCE per day, on the first member's daily claim.
