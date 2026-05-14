@@ -32,16 +32,19 @@ const EXPECTED_PRICES = {
     'talent-respec-weekly': 4,
     'talent-respec-seasonal': 20,
 
-    // Cosmetics — gold-tier → OMENX cost (matches dev portal)
-    'character-trails-basic': 3,
-    'character-trails-advanced': 10,
-    'character-trails-epic': 20,
-    'character-trails-leg': 30,
-    'character-kill-effects-basic': 3,
-    'character-kill-effects-advanced': 12,
-    'character-kill-effects-epic': 25,
-    'character-skins-basic': 5,
-    'character-skins-advance': 20,
+    // Cosmetics — actual UI tokenCost from game/Constants.js:
+    //   TRAIL_COSMETICS (4 tiers): 30 / 100 / 200 / 300
+    //   KILL_COSMETICS (3 tiers):  30 / 120 / 250
+    //   SKIN_COSMETICS (2 tiers):  50 / 200
+    'character-trails-basic': 30,
+    'character-trails-advanced': 100,
+    'character-trails-epic': 200,
+    'character-trails-leg': 300,
+    'character-kill-effects-basic': 30,
+    'character-kill-effects-advanced': 120,
+    'character-kill-effects-epic': 250,
+    'character-skins-basic': 50,
+    'character-skins-advance': 200,
 };
 
 // Stat + weapon upgrades — same curve per tier, 5 levels each
