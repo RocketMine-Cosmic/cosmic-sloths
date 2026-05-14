@@ -990,6 +990,9 @@ export default function Game() {
 
     const handleDeclineRevive = () => {
         setShowRevivePrompt(false);
+        // Player chose death — clear any pending level-up so it can't render
+        // briefly during the death animation / game-over transition.
+        setLevelUpChoices(null);
         if (engineRef.current) {
             engineRef.current.isPaused = false;
             engineRef.current.player.hasRevivedWithTokens = true;
@@ -1063,7 +1066,7 @@ export default function Game() {
                 />
             )}
 
-            {levelUpChoices && (
+            {levelUpChoices && !showRevivePrompt && (
                 <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} nextBanishCost={nextBanishCost} engineRef={engineRef} omenxPurchasesDisabled={omenxPurchasesDisabled} />
             )}
             
