@@ -779,13 +779,16 @@ export default function Game() {
             setLevelUpChoices(null);
             return;
         }
-        // Resume immediately, but grant 1.0s of invulnerability so players who get
-        // ambushed mid-modal don't die instantly. (Tijckers bug 2026-05-14 — 0.5s
-        // wasn't enough when rerolling left players at 1 HP with mobs camping
-        // their position. Bumped to 1.0s for a more forgiving post-modal window.)
+        // Resume immediately, but grant a generous invulnerability window so
+        // players who get ambushed mid-modal don't die instantly. 2.0s is enough
+        // to reposition out of a swarm, dodge an overlapping boss telegraph, or
+        // walk through camping mobs without taking fatal contact damage.
+        // (Tijckers bug 2026-05-14 — players were dying inside the iFrames
+        // window with mobs camping them at 1 HP. Period — no death on the
+        // level-up modal regardless of whether a reroll happened.)
         engine.lastTime = performance.now();
-        engine.player.iFrames = Math.max(engine.player.iFrames || 0, 1.0);
-        engine.player.invincibleTimer = Math.max(engine.player.invincibleTimer || 0, 1.0);
+        engine.player.iFrames = Math.max(engine.player.iFrames || 0, 2.0);
+        engine.player.invincibleTimer = Math.max(engine.player.invincibleTimer || 0, 2.0);
         engine.isPaused = false;
         setLevelUpChoices(null);
     };
