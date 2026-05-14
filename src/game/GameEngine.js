@@ -582,15 +582,34 @@ export class GameEngine {
                 this.isPaused = false;
             }
         };
+        // Belt-and-braces safety net for in-app browsers (Discord, Twitter, Telegram,
+        // FB Messenger) that don't reliably fire `visibilitychange` when their webview
+        // is re-focused. Without this, backgrounding the game to switch apps could
+        // leave it paused forever with no UI indication — players see a frozen
+        // "SURVIVE 0:00 / SCORE 0" HUD with the warning banner stuck on screen
+        // (Thom bug 2026-05-14 — Discord in-app browser). Window focus + pointer
+        // events DO fire reliably in those webviews, so we use them as fallbacks
+        // to un-pause if we were the ones who paused via visibility change.
+        this.handleAutoResume = () => {
+            if (this._wasAutoPaused) {
+                this._wasAutoPaused = false;
+                this.lastTime = performance.now();
+                this.isPaused = false;
+            }
+        };
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
+        window.addEventListener('focus', this.handleAutoResume);
+        window.addEventListener('pointerdown', this.handleAutoResume);
     }
 
     cleanup() {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+        window.removeEventListener('focus', this.handleAutoResume);
+        window.removeEventListener('pointerdown', this.handleAutoResume);
         cancelAnimationFrame(this.animationId);
     }
 
