@@ -349,6 +349,13 @@ export default function Game() {
                 setGameState(s => ({ ...s, cosmicTokens: save.cosmicTokens }));
             },
             onDeathPrompt: () => {
+                // Defensive — clear any pending level-up choices so the LevelUp
+                // modal can't render behind the revive prompt (Tijckers bug
+                // 2026-05-14 — death triggered mid-reroll left the level-up
+                // modal visible underneath). The level-up XP is still on the
+                // engine, so if the player revives, levelUp() fires again on
+                // the next tick and re-opens the modal cleanly.
+                setLevelUpChoices(null);
                 setShowRevivePrompt(true);
             },
             onCharacterFound: (charId) => {
@@ -772,11 +779,13 @@ export default function Game() {
             setLevelUpChoices(null);
             return;
         }
-        // Resume immediately, but grant 0.5s of invulnerability so players who get
-        // ambushed mid-modal don't die instantly. (Replaced 1.5s pause that felt like lag.)
+        // Resume immediately, but grant 1.0s of invulnerability so players who get
+        // ambushed mid-modal don't die instantly. (Tijckers bug 2026-05-14 — 0.5s
+        // wasn't enough when rerolling left players at 1 HP with mobs camping
+        // their position. Bumped to 1.0s for a more forgiving post-modal window.)
         engine.lastTime = performance.now();
-        engine.player.iFrames = Math.max(engine.player.iFrames || 0, 0.5);
-        engine.player.invincibleTimer = Math.max(engine.player.invincibleTimer || 0, 0.5);
+        engine.player.iFrames = Math.max(engine.player.iFrames || 0, 1.0);
+        engine.player.invincibleTimer = Math.max(engine.player.invincibleTimer || 0, 1.0);
         engine.isPaused = false;
         setLevelUpChoices(null);
     };
