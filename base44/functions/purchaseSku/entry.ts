@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.34';
 
 // Discord webhook fire-and-forget. Never throws — any failure is swallowed.
 async function postDiscord(envName, color, { title, description, fields }) {
