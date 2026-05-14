@@ -624,12 +624,18 @@ export class GameEngine {
 
         if (this.dynamicDifficulty.timer >= 15) {
             const killsDelta = this.kills - this.dynamicDifficulty.lastKills;
+            // S6+ Option 2: asymmetric ramp — strong play climbs FAST (+0.15/cycle),
+            // struggling decays SLOW (-0.05/cycle). One good 15s window matters more
+            // than one bad one. Rewards consistency for top players. S5 keeps the
+            // legacy symmetric ±0.1 ramp. Same 0.7×–2.0× caps either way.
+            const upStep   = this._isS6 ? 0.15 : 0.1;
+            const downStep = this._isS6 ? 0.05 : 0.1;
             if (this.dynamicDifficulty.damageTaken > this.player.maxHp * 0.3) {
-                this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - 0.1);
-                this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - 0.1);
+                this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - downStep);
+                this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - downStep);
             } else if (killsDelta > 30 && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
-                this.dynamicDifficulty.speedMult = Math.min(2.0, this.dynamicDifficulty.speedMult + 0.1);
-                this.dynamicDifficulty.spawnRateMult = Math.min(2.0, this.dynamicDifficulty.spawnRateMult + 0.1);
+                this.dynamicDifficulty.speedMult = Math.min(2.0, this.dynamicDifficulty.speedMult + upStep);
+                this.dynamicDifficulty.spawnRateMult = Math.min(2.0, this.dynamicDifficulty.spawnRateMult + upStep);
             }
             this.dynamicDifficulty.lastKills = this.kills;
             this.dynamicDifficulty.damageTaken = 0;
