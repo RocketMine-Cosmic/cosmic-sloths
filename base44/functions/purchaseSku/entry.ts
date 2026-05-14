@@ -184,9 +184,9 @@ function getPaymentKeys() {
     return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
 }
 
-async function getSkuPrice(skuId, apiBaseUrl, apiKeys) {
+async function getSkuPrice(skuId, apiBaseUrl, apiKeys, forceRefresh = false) {
     const now = Date.now();
-    if (!skuPriceCache || now >= skuPriceCacheExpiresAt) {
+    if (forceRefresh || !skuPriceCache || now >= skuPriceCacheExpiresAt) {
         let res, lastStatus = 0;
         for (const key of apiKeys) {
             res = await fetch(`${apiBaseUrl}/v1/products`, {
@@ -561,15 +561,48 @@ Deno.serve(async (req) => {
                         omenxPurchasesDisabled: true,
                     }, { status: 503 });
                 }
-                // 422 "network busy" — previous on-chain tx still settling. Wait
-                // and retry on the SAME key with the SAME idempotency key.
-                if (isBusy422(msg) && busyRetries < MAX_BUSY_RETRIES) {
-                    busyRetries++;
-                    const wait = 3000 + Math.floor(Math.random() * 1000); // 3-4s
-                    console.warn(`[purchaseSku] OmenX 422 busy — retry ${busyRetries}/${MAX_BUSY_RETRIES} in ${wait}ms`);
-                    await sleep(wait);
-                    i--; // retry the same key
-                    continue;
+                // 422 from OmenX. Could be:
+                //   (a) stale SKU price — our cached unit price ≠ their current catalog price
+                //   (b) on-chain tx still settling for this wallet (BSC ~3s blocks)
+                //   (c) some other validation failure (insufficient balance, etc.)
+                // On the FIRST 422 only, force-refresh the price cache and re-validate
+                // the paymentAmount. If the price changed, surface a clean error so the
+                // client can refresh and retry with the correct amount. Otherwise treat
+                // as (b) and retry on the SAME key + SAME idempotency key.
+                if (isBusy422(msg)) {
+                    if (busyRetries === 0) {
+                        try {
+                            const freshUnitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys, true);
+                            console.warn(`[purchaseSku] OmenX 422 — refreshed price for ${skuId}: cached=${unitPrice} fresh=${freshUnitPrice}`);
+                            if (freshUnitPrice > 0 && freshUnitPrice !== unitPrice) {
+                                // Price drifted — abort cleanly so client retries with correct amount.
+                                postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
+                                    title: '⚠️ SKU price drift detected',
+                                    description: `Cached price was stale — purchase rejected by OmenX.`,
+                                    fields: [
+                                        { name: 'SKU', value: skuId, inline: true },
+                                        { name: 'Cached', value: `${unitPrice} OMENX`, inline: true },
+                                        { name: 'Fresh', value: `${freshUnitPrice} OMENX`, inline: true },
+                                        { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
+                                    ],
+                                });
+                                return Response.json({
+                                    error: 'This item\'s price was updated. Please refresh and try again.',
+                                    priceUpdated: true,
+                                }, { status: 409 });
+                            }
+                        } catch (priceErr) {
+                            console.error('[purchaseSku] price re-check failed:', priceErr.message);
+                        }
+                    }
+                    if (busyRetries < MAX_BUSY_RETRIES) {
+                        busyRetries++;
+                        const wait = 3000 + Math.floor(Math.random() * 1000); // 3-4s
+                        console.warn(`[purchaseSku] OmenX 422 busy — retry ${busyRetries}/${MAX_BUSY_RETRIES} in ${wait}ms`);
+                        await sleep(wait);
+                        i--; // retry the same key
+                        continue;
+                    }
                 }
                 if (msg.includes('429') && i < apiKeys.length - 1) {
                     console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
