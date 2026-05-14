@@ -98,6 +98,12 @@ export default function Squads({ isCarousel }) {
     // Profile modal state — viewing any squad's public profile
     const [profileSquadId, setProfileSquadId] = useState(null);
 
+    // Tracks in-flight claim calls so a player can't accidentally fire the
+    // bounty endpoint 3-4 times in 2 seconds (each call = 5 DB reads/writes →
+    // rate-limit bucket overflow → 429 → all retries fail → unpaid bounty).
+    const [claimingWeekly, setClaimingWeekly] = useState(false);
+    const [claimingDaily, setClaimingDaily] = useState(false);
+
     // Settings edit state
     const [editName, setEditName] = useState('');
     const [editTag, setEditTag] = useState('');
@@ -587,10 +593,12 @@ export default function Squads({ isCarousel }) {
 
     const handleClaimWeekly = async () => {
         if (!mySquad || !myMemberRecord) return;
+        if (claimingWeekly) return; // already in flight — block repeat taps
         const currentWeek = getCurrentWeek();
         const tier = getBountyTier(mySquad.level || 1);
 
         if ((mySquad.weekly_kills || 0) >= tier.target && myMemberRecord.last_payout_week !== currentWeek) {
+            setClaimingWeekly(true);
             try {
                 SoundManager.playLevelUp();
                 const res = await base44.functions.invoke('squadActions', {
@@ -610,16 +618,20 @@ export default function Squads({ isCarousel }) {
                 toast({ title: "Weekly Bounty Claimed!", description: `You received ${res.data.reward.gold.toLocaleString()} Gold and ${res.data.reward.fragments} Relic Fragments!` });
             } catch (e) {
                 console.error(e);
+            } finally {
+                setClaimingWeekly(false);
             }
         }
     };
 
     const handleClaimDaily = async () => {
         if (!mySquad || !myMemberRecord) return;
+        if (claimingDaily) return; // already in flight — block repeat taps
         const currentDay = getCurrentDayUTC();
         const tier = getDailyBountyTier(mySquad.level || 1);
 
         if ((mySquad.daily_kills || 0) >= tier.target && myMemberRecord.last_daily_payout_date !== currentDay) {
+            setClaimingDaily(true);
             try {
                 SoundManager.playGoldPickup();
                 const res = await base44.functions.invoke('squadActions', {
@@ -643,6 +655,8 @@ export default function Squads({ isCarousel }) {
                 toast({ title: "Daily Bounty Claimed!", description: `You received ${dGold.toLocaleString()} Gold${dFrag > 0 ? ` and ${dFrag} Relic Fragments` : ''}!${xpSuffix}` });
             } catch (e) {
                 console.error(e);
+            } finally {
+                setClaimingDaily(false);
             }
         }
     };
@@ -835,8 +849,8 @@ export default function Squads({ isCarousel }) {
                                             <div className="bg-gradient-to-r from-cyan-600 to-cyan-300 h-full" style={{ width: `${Math.min(100, (dailyKills / dailyTier.target) * 100)}%` }} />
                                         </div>
                                         {isDailyComplete && !isDailyClaimed && (
-                                            <button onClick={handleClaimDaily} className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold animate-pulse shrink-0">
-                                                CLAIM
+                                            <button onClick={handleClaimDaily} disabled={claimingDaily} className="text-[10px] bg-emerald-600 disabled:bg-slate-700 disabled:opacity-60 text-white px-2 py-0.5 rounded font-bold animate-pulse shrink-0">
+                                                {claimingDaily ? '…' : 'CLAIM'}
                                             </button>
                                         )}
                                         {isDailyClaimed && <span className="text-[10px] text-emerald-500 font-bold shrink-0">✓ Claimed</span>}
@@ -849,8 +863,8 @@ export default function Squads({ isCarousel }) {
                                             <div className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full" style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }} />
                                         </div>
                                         {isComplete && !isClaimed && (
-                                            <button onClick={handleClaimWeekly} className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold animate-pulse shrink-0">
-                                                CLAIM
+                                            <button onClick={handleClaimWeekly} disabled={claimingWeekly} className="text-[10px] bg-emerald-600 disabled:bg-slate-700 disabled:opacity-60 text-white px-2 py-0.5 rounded font-bold animate-pulse shrink-0">
+                                                {claimingWeekly ? '…' : 'CLAIM'}
                                             </button>
                                         )}
                                         {isClaimed && <span className="text-[10px] text-emerald-500 font-bold shrink-0">✓ Claimed</span>}
@@ -931,8 +945,8 @@ export default function Squads({ isCarousel }) {
                                                     <div className="bg-gradient-to-r from-cyan-600 to-cyan-300 h-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyKills / dailyTier.target) * 100)}%` }} />
                                                 </div>
                                                 {isDailyComplete && !isDailyClaimed ? (
-                                                    <button onClick={handleClaimDaily} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 text-xs rounded-lg flex items-center justify-center gap-1.5 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
-                                                        <Gift className="w-3 h-3" /> CLAIM DAILY
+                                                    <button onClick={handleClaimDaily} disabled={claimingDaily} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:opacity-60 disabled:animate-none text-white font-bold py-1.5 text-xs rounded-lg flex items-center justify-center gap-1.5 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                                        <Gift className="w-3 h-3" /> {claimingDaily ? 'CLAIMING…' : 'CLAIM DAILY'}
                                                     </button>
                                                 ) : isDailyClaimed ? (
                                                     <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-1.5 rounded-lg border border-emerald-900/50">
@@ -970,8 +984,8 @@ export default function Squads({ isCarousel }) {
                                                     <div className="bg-gradient-to-r from-orange-600 to-yellow-400 h-full transition-all duration-500" style={{ width: `${Math.min(100, (kills / tier.target) * 100)}%` }} />
                                                 </div>
                                                 {isComplete && !isClaimed ? (
-                                                    <button onClick={handleClaimWeekly} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 text-xs rounded-lg flex items-center justify-center gap-1.5 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
-                                                        <Gift className="w-3 h-3" /> CLAIM WEEKLY
+                                                    <button onClick={handleClaimWeekly} disabled={claimingWeekly} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:opacity-60 disabled:animate-none text-white font-bold py-1.5 text-xs rounded-lg flex items-center justify-center gap-1.5 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                                        <Gift className="w-3 h-3" /> {claimingWeekly ? 'CLAIMING…' : 'CLAIM WEEKLY'}
                                                     </button>
                                                 ) : isClaimed ? (
                                                     <div className="text-center text-xs font-bold text-emerald-500 bg-emerald-950/30 py-1.5 rounded-lg border border-emerald-900/50">

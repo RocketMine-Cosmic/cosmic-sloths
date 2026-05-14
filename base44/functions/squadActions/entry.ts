@@ -553,8 +553,14 @@ Deno.serve(async (req) => {
             const { memberId, squadId } = body;
             if (!memberId || !squadId) return Response.json({ error: 'Couldn\'t claim your bounty — please refresh and try again.' }, { status: 400 });
 
-            // Load member + squad to validate
-            const member = await base44.asServiceRole.entities.SquadMember.get(memberId);
+            // Load member + squad in parallel (independent reads). Sequential
+            // gets used to add ~80-150ms latency and double the rate-limit pressure
+            // during the hot path of a claim — at peak the bucket would overflow
+            // here before we even got to the credit step.
+            const [member, squad] = await Promise.all([
+                base44.asServiceRole.entities.SquadMember.get(memberId).catch(() => null),
+                base44.asServiceRole.entities.Squad.get(squadId).catch(() => null),
+            ]);
             if (!member) return Response.json({ error: 'You\'re no longer a member of this squad.' }, { status: 404 });
             // Case-insensitive wallet comparison — older SquadMember rows were created
             // with mixed-case wallets via the direct-join path while newer rows from
@@ -566,7 +572,6 @@ Deno.serve(async (req) => {
             }
             if (member.squad_id !== squadId) return Response.json({ error: 'You\'re not a member of this squad.' }, { status: 400 });
 
-            const squad = await base44.asServiceRole.entities.Squad.get(squadId);
             if (!squad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
 
             const isWeekly = action === 'claimWeekly';
