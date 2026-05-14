@@ -342,10 +342,16 @@ export function renderGame() {
 
     this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
 
-    // Enemy projectiles render AFTER player particles/AoE pools so dangerous
+    // LAYER 1: XP / gold / reroll pickups — drawn BELOW enemy projectiles so the
+    // currency litter doesn't visually mask dangerous bullets. Player can still
+    // see what they're collecting since enemy projectiles are small bright dots
+    // that read clearly over the larger XP/gold icons.
+    drawPickups(this.ctx, this.pickups, this.time, 'minor');
+
+    // LAYER 2: Enemy projectiles render AFTER player particles/AoE pools so dangerous
     // bullets stay visible through Hellfire/Quantum Collapse/Aegis effects
-    // (player request 2026-05-13). Previously enemy bullets were getting hidden
-    // under bright player AoE visuals — a real gameplay readability issue.
+    // (player request 2026-05-13). Sit on the same conceptual layer as XP/gold so
+    // the player can still parse them in the chaos.
     if (this.enemyProjectiles) {
         this.ctx.globalCompositeOperation = 'screen';
         const texStar = this.particleManager?.textures?.star;
@@ -382,9 +388,11 @@ export function renderGame() {
         this.ctx.globalCompositeOperation = 'source-over';
     }
 
-    // Top-layer pickup pass — gold/XP/fragments/power-ups all stay visible
-    // through weapon AoE pools (player request 2026-05-08).
-    drawPickups(this.ctx, this.pickups, this.time);
+    // LAYER 3 (top): Major pickups — magnets, shields, nukes, relic fragments,
+    // chests, power-ups with custom icons. These are rare/high-value drops the
+    // player MUST be able to spot through the chaos, so they sit above enemy
+    // projectiles + AoE pools (player request 2026-05-14).
+    drawPickups(this.ctx, this.pickups, this.time, 'major');
 
     const viewMinX = camX - 150;
     const viewMaxX = camX + vWidth + 150;

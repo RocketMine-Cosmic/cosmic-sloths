@@ -10,8 +10,21 @@ const IS_DESKTOP = typeof window !== 'undefined'
 // pickups to read more clearly on bigger screens.
 const PICKUP_SCALE = IS_DESKTOP ? 1.5 : 1.15;
 
-export function drawPickups(ctx, pickups, time) {
-    const sorted = [...pickups].sort((a, b) => {
+// Layer filter — draw only a subset of pickup types per pass so we can stack
+// XP/gold BELOW enemy projectiles and main power-up pickups ABOVE them. Lets
+// the player track dangerous enemy bullets through XP/gold litter while still
+// keeping rare drops like magnets/shields/relic fragments visible above the chaos.
+//   'minor'  → xp + gold + reroll (low-value, draw lower)
+//   'major'  → everything else (power-ups, fragments, custom icons — draw top)
+//   undefined → all pickups (legacy behaviour)
+const MINOR_PICKUP_TYPES = new Set(['xp', 'gold', 'reroll']);
+
+export function drawPickups(ctx, pickups, time, layer) {
+    let list = pickups;
+    if (layer === 'minor') list = pickups.filter(p => MINOR_PICKUP_TYPES.has(p.type));
+    else if (layer === 'major') list = pickups.filter(p => !MINOR_PICKUP_TYPES.has(p.type));
+
+    const sorted = [...list].sort((a, b) => {
         const order = { gold: 0, reroll: 1, xp: 2 };
         return (order[a.type] ?? 1) - (order[b.type] ?? 1);
     });
