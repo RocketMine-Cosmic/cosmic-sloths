@@ -107,16 +107,24 @@ export default function VictoryModal({ stats }) {
                                     >
                                         Return to Lounge
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            const currentIndex = ARENAS.findIndex(a => a.id === stats.arenaId);
-                                            const nextArena = currentIndex >= 0 && currentIndex < ARENAS.length - 1 ? ARENAS[currentIndex + 1] : ARENAS[currentIndex];
-                                            navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true });
-                                        }}
-                                        className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
-                                    >
-                                        Try Next Sector
-                                    </button>
+                                    {(() => {
+                                        // "Next Sector" must skip hidden arenas like Squad Meteor
+                                        // (Texxy bug 2026-05-14 — finishing Rainbow Rift dropped
+                                        // players into the squad meteor by index). If the player
+                                        // is already on the last real sector, hide the button.
+                                        const pickable = ARENAS.filter(a => !a.hideFromArenaPicker);
+                                        const idx = pickable.findIndex(a => a.id === stats.arenaId);
+                                        if (idx < 0 || idx >= pickable.length - 1) return null;
+                                        const nextArena = pickable[idx + 1];
+                                        return (
+                                            <button
+                                                onClick={() => navigate('/game', { state: { characterId: stats.characterId, arenaId: nextArena.id, difficultyId: stats.difficultyId || 'normal', isEndless: stats.isEndless || false, startingWeaponId: stats.startingWeaponId, _retry: Date.now() }, replace: true })}
+                                                className="bg-yellow-600 hover:bg-yellow-500 text-slate-900 px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-bold transition-colors text-sm md:text-base w-full sm:w-auto"
+                                            >
+                                                Try Next Sector
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
                             );
                         })()
