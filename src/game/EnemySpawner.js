@@ -206,7 +206,13 @@ export function spawnEnemies(engine, dt) {
         const dmgMult = (1.0 + (1.6 * Math.pow(progress, 1.4))) * engine.difficulty.enemyDmgMult * sectorDifficultyScale;
         const spdMult = engine.difficulty.speedMult || 1.0;
 
-        if (engine.time > 60 && Math.random() < 0.01 + (progress * 0.04)) {
+        // S6+ Option 3: when DD has ramped UP (player is stomping), boost elite
+        // spawn chance proportionally. Caps cleanly with DD's own 2.0× ceiling.
+        // Gives strong players a visible "in the zone" reward — more elites =
+        // more XP (elite ×4) = more levels = more level² score. S5 unchanged.
+        const ddMult = engine.dynamicDifficulty?.spawnRateMult || 1.0;
+        const eliteDDBoost = (engine._isS6 && ddMult > 1.0) ? ddMult : 1.0;
+        if (engine.time > 60 && Math.random() < (0.01 + (progress * 0.04)) * eliteDDBoost) {
             const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
             if (elites.length > 0) {
                 const elite = elites[Math.floor(Math.random() * elites.length)];
