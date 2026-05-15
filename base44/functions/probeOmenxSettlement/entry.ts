@@ -30,24 +30,43 @@ Deno.serve(async (req) => {
         const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
         if (!apiKey) return Response.json({ error: 'No payment key configured' }, { status: 500 });
 
+        // Optional body params:
+        //   { wallet: "0x...", skuId: "...", paymentAmount: 1 }
+        // When `wallet` is provided, we probe with a real funded wallet so the
+        // thirdweb settlement layer actually fires. Default = dead-wallet 1 OMENX
+        // probe (short-circuits at balance check, can't detect thirdweb outage).
+        let body = {};
+        try { body = await req.json(); } catch {}
+        const wallet = body.wallet || '0x000000000000000000000000000000000000dEaD';
+        const skuId = body.skuId || 'ingame-xp-buff';
+        const paymentAmount = Number(body.paymentAmount) || 1;
+        const deepProbe = wallet !== '0x000000000000000000000000000000000000dEaD';
+
         const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
-        // Use a wallet that definitely has zero OMENX so the probe can't accidentally charge.
-        // OmenX should reject with INSUFFICIENT_FUNDS (proving settlement is live) instead of
-        // succeeding. Real player wallets are NOT used here.
-        const wallet = '0x000000000000000000000000000000000000dEaD';
         const idempotencyKey = `probe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
         const start = Date.now();
         try {
             const res = await sdk.createPurchase({
                 playerWallet: wallet,
-                skuId: 'ingame-xp-buff',
+                skuId,
                 quantity: 1,
                 idempotencyKey,
                 paymentCurrency: 'OMENX',
-                paymentAmount: 1,
+                paymentAmount,
             });
-            return Response.json({ healthy: true, durationMs: Date.now() - start, res });
+            return Response.json({
+                healthy: true,
+                durationMs: Date.now() - start,
+                deepProbe,
+                wallet,
+                skuId,
+                paymentAmount,
+                res,
+                verdict: deepProbe
+                    ? '🟢 DEEP probe SUCCEEDED — settlement (thirdweb) is fully working'
+                    : '🟢 Shallow probe succeeded unexpectedly (dead wallet was charged?!)',
+            });
         } catch (err) {
             const msg = err?.message || String(err);
             const is5xx = /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
@@ -59,28 +78,42 @@ Deno.serve(async (req) => {
             //   "402 Payment Required - {"error":{"code":"INSUFFICIENT_FUNDS",...}}"
             const codeMatch = msg.match(/"code"\s*:\s*"([A-Z_]+)"/);
             const code = codeMatch ? codeMatch[1] : null;
-            // INSUFFICIENT_FUNDS / PAYMENT_FAILED = expected healthy rejection of the dead-wallet probe.
-            const isHealthyCode = code === 'INSUFFICIENT_FUNDS' || code === 'PAYMENT_FAILED';
+
+            // CRITICAL: OmenX reuses `PAYMENT_FAILED` for BOTH user-side failures
+            // (insufficient balance, etc.) AND thirdweb RPC outages. The status
+            // code alone (422/402) doesn't distinguish them — we have to look at
+            // the error message body. If the message mentions an RPC error,
+            // thirdweb node, eth_sendRawTransaction, etc, the settlement layer
+            // is down even though OmenX's own API is responding cleanly.
+            const isSettlementRpcError =
+                /rpc[_ ]?error/i.test(msg)
+                || /thirdweb\.com/i.test(msg)
+                || /eth_sendRawTransaction/i.test(msg)
+                || /eth_call/i.test(msg)
+                || /chain[_ ]?node|node[_ ]?unavailable/i.test(msg)
+                || /upstream[_ ]?error|gateway[_ ]?error|settlement[_ ]?unavailable/i.test(msg);
+
+            // True user-side rejection (only when there's NO RPC error noise).
+            const isHealthyCode = (code === 'INSUFFICIENT_FUNDS' || code === 'PAYMENT_FAILED') && !isSettlementRpcError;
             // Codes that explicitly signal a settlement outage upstream.
             const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR';
 
-            // 402 is ambiguous on its own — body code decides.
-            // If we get 402/422 with a healthy code → UP.
-            // If we get 5xx, OR 402 with a down code, OR 402 with no parseable code → DOWN.
             const settlementDown =
                 is5xx
                 || isDownCode
+                || isSettlementRpcError
                 || (is402 && !isHealthyCode);
             const healthy =
                 !settlementDown
-                && (isHealthyCode || is422 || is4xxOther);
+                && (isHealthyCode || is4xxOther);
 
             let verdict;
             if (is5xx) verdict = '🔴 Settlement DOWN (5xx from OmenX gateway)';
+            else if (isSettlementRpcError) verdict = `🔴 Settlement DOWN — thirdweb RPC error (BSC node unreachable). Code=${code || 'unknown'}`;
             else if (isDownCode) verdict = `🔴 Settlement DOWN (${code} — upstream outage)`;
             else if (is402 && isHealthyCode) verdict = `🟢 Settlement is UP — OmenX returned 402 ${code} for the dead wallet (expected)`;
             else if (is402) verdict = `🔴 Settlement DOWN (402 with code=${code || 'unknown'})`;
-            else if (is422) verdict = '🟢 Settlement is UP — OmenX returned 422 PAYMENT_FAILED for the dead wallet (expected)';
+            else if (is422 && isHealthyCode) verdict = '🟢 Settlement is UP — OmenX returned 422 PAYMENT_FAILED (clean user-side rejection)';
             else if (healthy) verdict = '🟢 Settlement is UP — OmenX rejected our fake SKU as expected';
             else verdict = '🟡 Unexpected response — neither down-signal nor a clean 4xx';
 
@@ -88,8 +121,9 @@ Deno.serve(async (req) => {
                 healthy,
                 settlementDown,
                 code,
+                rpcError: isSettlementRpcError,
                 durationMs: Date.now() - start,
-                error: msg.slice(0, 500),
+                error: msg.slice(0, 800),
                 verdict,
             });
         }

@@ -55,21 +55,26 @@ async function runProbe() {
         const msg = err?.message || String(err);
         const is5xx = /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
         const is402 = /\b402\b/.test(msg);
-        const is422 = /\b422\b/.test(msg);
         const is4xxOther = /\b40[01345-9]\b/.test(msg);
-        // OmenX returns 402 for both "wallet empty" (healthy) and "upstream
-        // thirdweb/settlement outage" (down) — the error body code is what
-        // disambiguates. Parse it out and decide accordingly.
         const codeMatch = msg.match(/"code"\s*:\s*"([A-Z_]+)"/);
         const code = codeMatch ? codeMatch[1] : null;
-        const isHealthyCode = code === 'INSUFFICIENT_FUNDS' || code === 'PAYMENT_FAILED';
+        // OmenX reuses PAYMENT_FAILED for both user-side failures AND thirdweb RPC
+        // outages. Inspect the error body for RPC-flavoured strings to tell them apart.
+        const isSettlementRpcError =
+            /rpc[_ ]?error/i.test(msg)
+            || /thirdweb\.com/i.test(msg)
+            || /eth_sendRawTransaction/i.test(msg)
+            || /eth_call/i.test(msg)
+            || /chain[_ ]?node|node[_ ]?unavailable/i.test(msg)
+            || /upstream[_ ]?error|gateway[_ ]?error|settlement[_ ]?unavailable/i.test(msg);
+        const isHealthyCode = (code === 'INSUFFICIENT_FUNDS' || code === 'PAYMENT_FAILED') && !isSettlementRpcError;
         const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR';
-        const settlementDown = is5xx || isDownCode || (is402 && !isHealthyCode);
-        const healthy = !settlementDown && (isHealthyCode || is422 || is4xxOther);
+        const settlementDown = is5xx || isDownCode || isSettlementRpcError || (is402 && !isHealthyCode);
+        const healthy = !settlementDown && (isHealthyCode || is4xxOther);
         return {
             healthy,
             durationMs: Date.now() - start,
-            detail: `${code ? `[${code}] ` : ''}${msg}`.slice(0, 300),
+            detail: `${code ? `[${code}${isSettlementRpcError ? '/RPC' : ''}] ` : ''}${msg}`.slice(0, 300),
         };
     }
 }
