@@ -54,8 +54,15 @@ async function runProbe() {
     } catch (err) {
         const msg = err?.message || String(err);
         const is5xx = /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
+        // Post 2026-05-14 OmenX semantics: 422 is now PAYMENT_FAILED (was "still
+        // settling"). For our dead-wallet probe, 422 means the service is UP and
+        // correctly rejecting an unfunded charge — same as a clean 4xx. Only 5xx
+        // counts as "down" for the kill-switch.
+        const is422 = /\b422\b/.test(msg) || /payment[_ ]?failed|insufficient/i.test(msg);
+        const is4xx = /\b40[0-9]\b/.test(msg);
+        const healthy = !is5xx && (is422 || is4xx);
         return {
-            healthy: !is5xx,
+            healthy,
             durationMs: Date.now() - start,
             detail: msg.slice(0, 300),
         };

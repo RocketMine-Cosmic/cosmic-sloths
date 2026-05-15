@@ -2,10 +2,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.34';
 
 // Admin-only one-shot probe of OmenX's /v1/purchases endpoint, bypassing our
-// internal kill-switch and circuit breaker. Uses an obviously-invalid SKU so
-// no charge can succeed — we just want to read what kind of error OmenX
-// returns. 502/503/504 → still down. 400/404/422 → up (rejecting our fake SKU
-// is the expected healthy response).
+// internal kill-switch and circuit breaker.
+//
+// Status semantics (post 2026-05-14 OmenX change — confirmed with Emilio):
+//   • 5xx (502/503/504) → settlement is DOWN. Keep purchases disabled.
+//   • 422 → PAYMENT_FAILED (was previously "still settling"). This is now a
+//     HEALTHY signal — OmenX accepted the request, looked up the wallet, and
+//     rejected it for insufficient funds. That proves the service is up.
+//   • 400/404 → also HEALTHY (request validation working).
+// We send paymentAmount=1 against the dead-wallet `0x...dEaD` so a real charge
+// can never go through — we only care about which error class comes back.
 
 Deno.serve(async (req) => {
     try {
@@ -42,14 +48,23 @@ Deno.serve(async (req) => {
         } catch (err) {
             const msg = err?.message || String(err);
             const is5xx = /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
+            // 422 PAYMENT_FAILED is the new "expected healthy rejection" for our
+            // dead-wallet probe (post 2026-05-14). 400/404 are also healthy.
+            const is422 = /\b422\b/.test(msg) || /payment[_ ]?failed|insufficient/i.test(msg);
+            const is4xx = /\b40[0-9]\b/.test(msg);
+            const healthy = !is5xx && (is422 || is4xx);
             return Response.json({
-                healthy: !is5xx,
+                healthy,
                 settlementDown: is5xx,
                 durationMs: Date.now() - start,
                 error: msg.slice(0, 500),
                 verdict: is5xx
                     ? '🔴 Settlement still DOWN (5xx from OmenX)'
-                    : '🟢 Settlement is UP — OmenX rejected our fake SKU as expected',
+                    : is422
+                        ? '🟢 Settlement is UP — OmenX returned 422 PAYMENT_FAILED for the dead wallet (expected)'
+                        : healthy
+                            ? '🟢 Settlement is UP — OmenX rejected our fake SKU as expected'
+                            : '🟡 Unexpected response — neither 5xx nor a clean 4xx',
             });
         }
     } catch (error) {
