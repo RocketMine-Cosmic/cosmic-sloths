@@ -712,7 +712,17 @@ Deno.serve(async (req) => {
                         }),
                 ]);
 
-                const dailyKillsReset = squad.current_day !== today ? 0 : (squad.daily_kills || 0);
+                // Daily-kills reset logic — MUST match squadActions resetPeriods (line 719).
+                // Only wipe if the stored day is STRICTLY BEHIND today. Previous code
+                // used `!==`, which also wiped when current_day was '', null, or a
+                // future-stamped corrupt value from an older buggy client — causing
+                // daily_kills to appear to "reset a double time" because two members'
+                // concurrent saves could each see a stale pre-reset squad row and
+                // each wipe to 0 + their own kills, losing the other member's
+                // contribution (Texxy bug 2026-05-15).
+                const storedDay = squad.current_day || '';
+                const dayBehindToday = storedDay && storedDay < today;
+                const dailyKillsReset = dayBehindToday ? 0 : (squad.daily_kills || 0);
                 const myWar = skipWar ? null : activeWars.find(w => w.squad_a_id === squadIdToUpdate || w.squad_b_id === squadIdToUpdate);
 
                 // Parallelize the two writes too — Squad.update and SquadWar.update

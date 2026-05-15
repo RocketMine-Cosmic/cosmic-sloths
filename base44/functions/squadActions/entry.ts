@@ -728,6 +728,33 @@ Deno.serve(async (req) => {
                 return Response.json({ success: true, squad });
             }
 
+            // TOCTOU guard (Texxy bug 2026-05-15 — "daily kills reset a double time"):
+            // saveScore and resetPeriods both reset daily_kills at UTC rollover. If a
+            // squadmate finishes a run at 00:00:05 and writes daily_kills=200 with
+            // current_day=today, then another member opens the Squad page at 00:00:10,
+            // resetPeriods read the squad row BEFORE that write replicated, saw
+            // current_day=yesterday, and wiped the 200 kills back to 0.
+            //
+            // Fix: re-fetch the row immediately before the update. If another writer
+            // has already advanced current_day to canonicalDay, drop the daily wipe
+            // from the patch — saveScore (or a previous resetPeriods call) has already
+            // handled the rollover and any kills posted since then are legitimate.
+            if (safePatch.daily_kills === 0) {
+                try {
+                    const fresh = await base44.asServiceRole.entities.Squad.get(squadId);
+                    if (fresh && fresh.current_day === canonicalDay) {
+                        // Another writer (likely saveScore) already rolled the day over.
+                        // Don't touch daily_kills — saveScore already zeroed it and added
+                        // its own kills on top. Wiping again would erase those kills.
+                        delete safePatch.daily_kills;
+                        delete safePatch.current_day;
+                        if (Object.keys(safePatch).length === 0) {
+                            return Response.json({ success: true, squad: fresh });
+                        }
+                    }
+                } catch {}
+            }
+
             await base44.asServiceRole.entities.Squad.update(squadId, safePatch);
             const updatedSquad = await base44.asServiceRole.entities.Squad.get(squadId);
             return Response.json({ success: true, squad: updatedSquad });
