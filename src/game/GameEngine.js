@@ -572,8 +572,25 @@ export class GameEngine {
         // fires at ~1Hz in the background — clamped dt makes the game limp along while
         // real time races ahead, which players perceive as "boss HP stuck" or weapons
         // not firing. We just freeze the loop entirely while the tab is hidden.
+        //
+        // CRITICAL: don't fire auto-pause during the engine's first ~1 second AND before
+        // the loop has actually ticked once. Mobile browsers (Samsung Internet, Chrome
+        // Android, Discord webview) routinely fire spurious `visibilitychange(hidden=true)`
+        // events during the page transition into /game — when the address bar collapses,
+        // when the loading overlay first paints, when system UI inserts itself. Without
+        // this guard, those phantom events latch _wasAutoPaused=true on a freshly-loaded
+        // run and the engine never ticks — player sees a frozen "SURVIVE 0:00 / SCORE 0"
+        // HUD with the boss already on screen and nothing happens (Lucifer bug 2026-05-15,
+        // following Thom's 2026-05-14 report). The 1s + frameCount guard means we only
+        // pause runs that have ACTUALLY started, which is the only state worth pausing.
+        this._engineCreatedAt = performance.now();
         this.handleVisibilityChange = () => {
             if (document.hidden) {
+                const aliveMs = performance.now() - (this._engineCreatedAt || 0);
+                if (aliveMs < 1000 || (this.frameCount || 0) < 5) {
+                    // Engine just spun up — ignore spurious hidden events.
+                    return;
+                }
                 this._wasAutoPaused = !this.isPaused;
                 this.isPaused = true;
             } else if (this._wasAutoPaused) {
@@ -585,13 +602,14 @@ export class GameEngine {
         // Belt-and-braces safety net for in-app browsers (Discord, Twitter, Telegram,
         // FB Messenger) that don't reliably fire `visibilitychange` when their webview
         // is re-focused. Without this, backgrounding the game to switch apps could
-        // leave it paused forever with no UI indication — players see a frozen
-        // "SURVIVE 0:00 / SCORE 0" HUD with the warning banner stuck on screen
-        // (Thom bug 2026-05-14 — Discord in-app browser). Window focus + pointer
-        // events DO fire reliably in those webviews, so we use them as fallbacks
-        // to un-pause if we were the ones who paused via visibility change.
+        // leave it paused forever with no UI indication.
+        // NOTE: we used to also listen for `pointerdown` here, but that turned out to
+        // mask the real bug above (engine started in auto-paused state and only
+        // un-paused if the player happened to tap). We removed pointerdown so
+        // auto-pause stays purely tied to actual document visibility — the right
+        // semantic for a "browser put the tab to sleep" recovery net.
         this.handleAutoResume = () => {
-            if (this._wasAutoPaused) {
+            if (this._wasAutoPaused && !document.hidden) {
                 this._wasAutoPaused = false;
                 this.lastTime = performance.now();
                 this.isPaused = false;
@@ -601,7 +619,6 @@ export class GameEngine {
         window.addEventListener('keyup', this.handleKeyUp);
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
         window.addEventListener('focus', this.handleAutoResume);
-        window.addEventListener('pointerdown', this.handleAutoResume);
     }
 
     cleanup() {
@@ -609,12 +626,23 @@ export class GameEngine {
         window.removeEventListener('keyup', this.handleKeyUp);
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
         window.removeEventListener('focus', this.handleAutoResume);
-        window.removeEventListener('pointerdown', this.handleAutoResume);
         cancelAnimationFrame(this.animationId);
     }
 
     loop(timestamp) {
         try {
+            // Self-healing auto-pause recovery — if the engine got auto-paused but
+            // the document is NOT hidden (e.g. phantom visibility event during page
+            // load, browser fired hidden but never fired visible), force-resume.
+            // Belt-and-braces in case anything ever leaks _wasAutoPaused=true while
+            // the tab is actually visible. Guarantees no run can stay frozen for
+            // more than one animation frame (Lucifer bug 2026-05-15).
+            if (this._wasAutoPaused && this.isPaused && !document.hidden
+                && !this.isGameOver && !this.isVictory) {
+                this._wasAutoPaused = false;
+                this.lastTime = timestamp;
+                this.isPaused = false;
+            }
             if (!this.isPaused && !this.isGameOver && !this.isVictory) {
                 const dt = (timestamp - this.lastTime) / 1000;
                 this.update(dt);
