@@ -584,10 +584,18 @@ export class GameEngine {
         // following Thom's 2026-05-14 report). The 1s + frameCount guard means we only
         // pause runs that have ACTUALLY started, which is the only state worth pausing.
         this._engineCreatedAt = performance.now();
+        // Grace period bumped to 3 seconds (was 1s) + 30 frames (was 5). Real-world
+        // testing showed mobile browsers fire phantom `hidden` events up to ~2s
+        // into the run — during the GameLoadingScreen unmount, address-bar collapse,
+        // canvas resize, and the WORLD-BOSS-INBOUND banner animation. Anything
+        // shorter than 3s leaves a window where these phantom events can latch
+        // the engine into a permanent paused state (Thom report 2026-05-15,
+        // following Lucifer 2026-05-14). 3s is well below the time it takes
+        // any reasonable player to actually background the app intentionally.
         this.handleVisibilityChange = () => {
             if (document.hidden) {
                 const aliveMs = performance.now() - (this._engineCreatedAt || 0);
-                if (aliveMs < 1000 || (this.frameCount || 0) < 5) {
+                if (aliveMs < 3000 || (this.frameCount || 0) < 30) {
                     // Engine just spun up — ignore spurious hidden events.
                     return;
                 }
@@ -631,12 +639,33 @@ export class GameEngine {
 
     loop(timestamp) {
         try {
-            // Self-healing auto-pause recovery — if the engine got auto-paused but
-            // the document is NOT hidden (e.g. phantom visibility event during page
-            // load, browser fired hidden but never fired visible), force-resume.
-            // Belt-and-braces in case anything ever leaks _wasAutoPaused=true while
-            // the tab is actually visible. Guarantees no run can stay frozen for
-            // more than one animation frame (Lucifer bug 2026-05-15).
+            // Self-healing auto-pause recovery. If the engine is paused, the
+            // document is visible, and the player hasn't intentionally paused
+            // (no UI modal open), force-resume. This is intentionally aggressive
+            // because mobile browsers (Samsung Internet, Chrome Android, Discord
+            // webview) fire phantom/orphaned visibility events during page-load
+            // transitions that can latch the engine into a permanent pause —
+            // sometimes WITHOUT a matching `visible` event ever following, and
+            // sometimes with `_wasAutoPaused` cleared by an earlier resume that
+            // raced with a stale `hidden` event. Checking the actual state of the
+            // world (document.hidden + no game-over/victory/modal) is more
+            // reliable than trusting our own flags weren't trampled.
+            //
+            // Intentional pauses we MUST respect (don't auto-resume through):
+            //   - Pause menu (PauseModal — Game.jsx tracks this in React state,
+            //     not on the engine; checking `!document.hidden` is enough because
+            //     when the player taps Resume, Game.jsx flips engine.isPaused
+            //     back itself).
+            //   - Level-up / death / victory modals (engine sets isPaused=true
+            //     and we check isGameOver/isVictory below; for level-up, the
+            //     callbacks.onLevelUp setter populates levelUpChoices in React,
+            //     and we leave that one alone via the _wasAutoPaused gate).
+            //
+            // To distinguish, only force-resume runs that auto-paused themselves
+            // — that's exactly what _wasAutoPaused tracks. If it got cleared by
+            // a stale event race, the visibility handler's "visible" branch will
+            // also have run and unpaused us, so the engine should already be
+            // moving. Belt-and-braces (Lucifer 2026-05-14, Thom 2026-05-15).
             if (this._wasAutoPaused && this.isPaused && !document.hidden
                 && !this.isGameOver && !this.isVictory) {
                 this._wasAutoPaused = false;
