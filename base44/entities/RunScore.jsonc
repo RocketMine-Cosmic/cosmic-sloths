@@ -70,10 +70,9 @@
       "type": "string",
       "enum": [
         "sector",
-        "endless",
-        "trial"
+        "endless"
       ],
-      "description": "Run category \u2014 used to filter reads cheaply without scanning arena_id. 'sector' = standard sector/world-boss-arena run, 'endless' = endless mode, 'trial' = Leviathan Trial. Written at saveScore time; older RunScore rows may be missing this field until backfilled."
+      "description": "Run category \u2014 used to filter reads cheaply without scanning arena_id. 'sector' = any non-endless run that lands in RunScore (sectors + Leviathan Trial modifiers), 'endless' = endless arena. Written at saveScore time; older RunScore rows may be missing this field until backfilled."
     },
     "week_id": {
       "type": "string",

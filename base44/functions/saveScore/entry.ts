@@ -655,6 +655,11 @@ Deno.serve(async (req) => {
             gold_credited: validation.goldForLedger,
             character_id: charId,
             arena_id: scoreData.arena_id,
+            // run_type — written so future reads can filter by category without
+            // scanning arena_id. Raid/meteor never reach here (skipped above), so
+            // every row created from this point is either 'sector' or 'endless'.
+            // Older RunScore rows lack this field until a backfill runs.
+            run_type: validation.isEndless ? 'endless' : 'sector',
             week_id,
             season_id,
         };
