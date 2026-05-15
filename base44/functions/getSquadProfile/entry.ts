@@ -71,7 +71,10 @@ Deno.serve(async (req) => {
 
         // Per-member stats — fetch in parallel
         const weekId = getCurrentWeekId();
-        const [saves, raidContribs, squadWars, weeklyRuns] = await Promise.all([
+        // "Today" = UTC calendar day, mirroring squad.daily_kills rollover in saveScore.
+        const todayUtc = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
+        const todayStartIso = `${todayUtc}T00:00:00.000Z`;
+        const [saves, raidContribs, squadWars, weeklyRuns, dailyRuns] = await Promise.all([
             // PlayerSave per-member (total kills live in save_data.totalKills)
             memberWallets.length
                 ? base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: { $in: memberWallets } })
@@ -96,6 +99,20 @@ Deno.serve(async (req) => {
             memberWallets.length
                 ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', Math.min(800, memberWallets.length * 80))
                 : Promise.resolve([]),
+            // DEDICATED daily query — narrowly scoped to today's rows only.
+            // Texxy bug 2026-05-15: with a heavy squad (multiple members doing
+            // 60+ short runs today), the 400–800-row weekly window evicts older
+            // daily rows before we can count them, so per-member daily totals
+            // show 3k when reality is 15k+. A daily-scoped filter with the same
+            // row budget covers ~80 runs/member/day cleanly without competing
+            // against other members' weekly history.
+            memberWallets.length
+                ? base44.asServiceRole.entities.RunScore.filter(
+                    { wallet_address: { $in: memberWallets }, created_date: { $gte: todayStartIso } },
+                    '-created_date',
+                    Math.min(1000, memberWallets.length * 150)
+                )
+                : Promise.resolve([]),
         ]);
 
         // Index helpers
@@ -110,19 +127,20 @@ Deno.serve(async (req) => {
             raidByWallet.set(w, (raidByWallet.get(w) || 0) + (c.damage || 0));
         }
         const weeklyKillsByWallet = new Map();
-        const dailyKillsByWallet = new Map();
-        // "Today" = UTC calendar day, mirroring squad.daily_kills rollover in saveScore.
-        const todayUtc = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
         for (const r of weeklyRuns) {
             const w = (r.wallet_address || '').toLowerCase();
             if (!w) continue;
-            const kills = r.kills || 0;
-            weeklyKillsByWallet.set(w, (weeklyKillsByWallet.get(w) || 0) + kills);
-            // Cheap daily aggregate from the same in-memory rows — no extra DB read.
-            const runDate = (r.created_date || '').split('T')[0];
-            if (runDate === todayUtc) {
-                dailyKillsByWallet.set(w, (dailyKillsByWallet.get(w) || 0) + kills);
-            }
+            weeklyKillsByWallet.set(w, (weeklyKillsByWallet.get(w) || 0) + (r.kills || 0));
+        }
+        // Daily kills now come from the DEDICATED dailyRuns query (above) so heavy
+        // farmers' today rows aren't evicted from the weekly window by other
+        // members' fresher runs (Texxy bug 2026-05-15 — showed 3,457 daily when
+        // real total was 15k+).
+        const dailyKillsByWallet = new Map();
+        for (const r of dailyRuns) {
+            const w = (r.wallet_address || '').toLowerCase();
+            if (!w) continue;
+            dailyKillsByWallet.set(w, (dailyKillsByWallet.get(w) || 0) + (r.kills || 0));
         }
         const warWinsByWallet = new Map();
         for (const w of squadWars) {
