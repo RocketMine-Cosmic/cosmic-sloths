@@ -510,19 +510,29 @@ Deno.serve(async (req) => {
         merged.pilot_icon = finalProfile.pilot_icon || '';
         const preservedName = merged.player_name;
 
+        // Only include profile mirror columns in the update payload if they ACTUALLY
+        // changed vs what's already on the record. Writing them on every sync (even
+        // with identical values) was tripping the Profile Fan-Out entity automation's
+        // `changed_fields contains player_name` trigger on every single syncSave call,
+        // racking up 37k+ automation runs in a week and burning integration credits.
+        // Now: identical values are omitted → `changed_fields` won't include them →
+        // automation only fires when the player actually edits their profile.
+        const updatePayload = {
+            wallet_address: walletLower,
+            save_data: merged,
+            updated_at: newTs,
+        };
+        const currentTopName  = existing[0].player_name  || '';
+        const currentTopTitle = existing[0].player_title || '';
+        const currentTopIcon  = existing[0].pilot_icon   || '';
+        const nextTopTitle = merged.player_title || '';
+        const nextTopIcon  = merged.pilot_icon   || '';
+        if (preservedName !== currentTopName)  updatePayload.player_name  = preservedName;
+        if (nextTopTitle  !== currentTopTitle) updatePayload.player_title = nextTopTitle;
+        if (nextTopIcon   !== currentTopIcon)  updatePayload.pilot_icon   = nextTopIcon;
+
         await with429Retry(
-            () => base44.asServiceRole.entities.PlayerSave.update(existing[0].id, {
-                wallet_address: walletLower,
-                player_name: preservedName,
-                // Mirror title + icon to top-level columns so the Profile Fan-Out
-                // automation can trigger on changed_fields without scanning save_data.
-                // Without these mirrors, the automation either fires on every save
-                // (broad trigger) or misses title/icon edits entirely (narrow trigger).
-                player_title: merged.player_title || '',
-                pilot_icon: merged.pilot_icon || '',
-                save_data: merged,
-                updated_at: newTs
-            }),
+            () => base44.asServiceRole.entities.PlayerSave.update(existing[0].id, updatePayload),
             'PlayerSave.update'
         );
 
