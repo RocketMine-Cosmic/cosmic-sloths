@@ -1040,6 +1040,52 @@ export default function Game() {
         return () => document.removeEventListener('touchmove', preventPullToRefresh);
     }, []);
 
+    // Stuck-state watchdog. If the engine ends up paused with NO modal/UI reason
+    // to be paused (no level-up, no revive, no pause menu, no game-over/victory,
+    // and the tab is visible), force-resume after a short grace period. This is
+    // the programmatic equivalent of Texxy's "pause→resume" workaround and
+    // catches every soft-lock path regardless of root cause (Thom/Tijckers/
+    // Texxy bugs 2026-05-14/15 — regular runs occasionally stuck after a
+    // level-up modal dismissed, with no other state visible).
+    //
+    // 1.5s grace = long enough to never fire during normal animation/transition
+    // gaps (modal close → React re-render → engine.isPaused=false is microseconds),
+    // short enough that players don't notice the stuck state before it self-heals.
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            const engine = engineRef.current;
+            if (!engine) return;
+            if (!engine.isPaused) return;
+            if (engine.isGameOver || engine.isVictory) return;
+            if (document.hidden) return;
+            // Respect every legitimate paused state.
+            if (levelUpChoices) return;
+            if (showRevivePrompt) return;
+            if (isPaused) return;       // PauseModal showing
+            if (pending) return;        // OmenXConfirmation showing
+            if (isQuitting) return;
+            // Engine is paused with no UI reason. Track how long.
+            if (!engine._stuckSince) {
+                engine._stuckSince = performance.now();
+                return;
+            }
+            const stuckMs = performance.now() - engine._stuckSince;
+            if (stuckMs >= 1500) {
+                console.warn('[Game] Stuck-pause watchdog: force-resuming engine after', Math.floor(stuckMs), 'ms');
+                engine._stuckSince = null;
+                engine.lastTime = performance.now();
+                engine.isPaused = false;
+            }
+        }, 500);
+        // Clear the tracker any time a legit paused state IS showing — prevents
+        // the timer from counting through legitimate pauses.
+        const engine = engineRef.current;
+        if (engine && (levelUpChoices || showRevivePrompt || isPaused || pending || isQuitting)) {
+            engine._stuckSince = null;
+        }
+        return () => clearInterval(interval);
+    }, [levelUpChoices, showRevivePrompt, isPaused, pending, isQuitting]);
+
     // Keyboard pause hotkeys: Escape or P toggles pause/resume.
     React.useEffect(() => {
         const onKeyDown = (e) => {
