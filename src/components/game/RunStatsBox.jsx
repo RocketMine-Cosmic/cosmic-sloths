@@ -1,7 +1,18 @@
 import React from 'react';
 import { WEAPONS } from '../../game/Constants';
 
-const formatWeaponName = (id) => WEAPONS[id]?.name || id.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).trim();
+// Pseudo-weapon ids — damage sources that aren't traditional weapons but should
+// still appear in the post-run breakdown so the listed weapons add up to ~100%.
+// Keeps Texxy's "I'm missing 50% of damage" bug from recurring.
+const PSEUDO_WEAPON_NAMES = {
+    squadUltimate: 'Squad Ultimate',
+    neonExecute:   'NeonVortex Execute',
+    other:         'Other Sources',
+};
+
+const formatWeaponName = (id) => PSEUDO_WEAPON_NAMES[id]
+    || WEAPONS[id]?.name
+    || id.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).trim();
 
 // Shared scrollable stats box used by both GameOverModal and VictoryModal.
 // Shows headline stats + an extended stats section (scrollable).
@@ -41,6 +52,20 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
         kills: weaponKills[id] || 0,
         share: totalDamage > 0 ? ((weaponDamage[id] || 0) / totalDamage) * 100 : 0,
     })).sort((a, b) => b.damage - a.damage);
+
+    // Any total damage that wasn't credited to a specific weapon goes into an
+    // "Other Sources" bucket — covers hacked-enemy infighting and any future
+    // damage path that forgets to tag a weaponId. Only shown when it's >= 1%.
+    const trackedDamageSum = weaponBreakdown.reduce((a, w) => a + w.damage, 0);
+    const otherDamage = Math.max(0, totalDamage - trackedDamageSum);
+    if (totalDamage > 0 && otherDamage / totalDamage >= 0.01) {
+        weaponBreakdown.push({
+            id: 'other',
+            damage: otherDamage,
+            kills: 0,
+            share: (otherDamage / totalDamage) * 100,
+        });
+    }
     const mvpWeapon = weaponBreakdown[0];
 
     return (

@@ -90,7 +90,12 @@ export function updateSquadClones(engine, dt) {
                     x: clone.x, y: clone.y,
                     vx: Math.cos(angle) * 500,
                     vy: Math.sin(angle) * 500,
-                    radius: 8, damage: 30 * clone.damageMult, pierce: 3, life: 2, color: clone.color, type: 'beam'
+                    radius: 8, damage: 30 * clone.damageMult, pierce: 3, life: 2, color: clone.color, type: 'beam',
+                    // Tag with a pseudo-weaponId so squad-clone damage shows up in the
+                    // post-run weapon breakdown instead of vanishing into "untracked"
+                    // (Texxy bug 2026-05-15 — ~50% of damage was unaccounted for in
+                    // runs where squad ultimate fired multiple times).
+                    weaponId: 'squadUltimate'
                 });
                 engine.addParticle(clone.x, clone.y, clone.color, 5, 'spark', 1);
             }

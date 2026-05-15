@@ -1130,7 +1130,10 @@ export class GameEngine {
                     pierce: 3,
                     life: 2,
                     color: '#7A00FF',
-                    type: 'railgun'
+                    type: 'railgun',
+                    // Credit NeonVortex execute splash to neonExecute so it appears in
+                    // the post-run weapon breakdown (Texxy bug 2026-05-15).
+                    weaponId: 'neonExecute'
                 });
             }
         }
