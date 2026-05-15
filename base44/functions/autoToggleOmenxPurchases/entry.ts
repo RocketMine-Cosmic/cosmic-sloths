@@ -5,7 +5,10 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.34';
 // kill-switch based on probe results.
 //
 // Policy (intentionally conservative to avoid flapping):
-//   • 2 consecutive failures (~10 min) → DISABLE purchases.
+//   • 3 consecutive failures (~15 min) → DISABLE purchases.
+//     Bumped from 2 → 3 (2026-05-15) after observing thirdweb BSC node blips
+//     that recover within 60–90s. We'd rather let a couple of player purchases
+//     fail than yo-yo the kill-switch on transient flakiness.
 //   • 3 consecutive successes (~15 min) → RE-ENABLE purchases.
 //   • If an admin manually flipped the flag in the last 30 min → AUTO STAYS OUT.
 //     (Manual overrides win — operator is in charge.)
@@ -13,7 +16,7 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.34';
 // State stored in AppConfig key 'omenx_probe_state':
 //   { consecutiveFailures, consecutiveSuccesses, lastResult, lastProbeAt, lastAutoFlipAt }
 
-const FAILURE_THRESHOLD = 2;
+const FAILURE_THRESHOLD = 3;
 const SUCCESS_THRESHOLD = 3;
 const MANUAL_OVERRIDE_GRACE_MS = 30 * 60 * 1000; // 30 minutes
 
