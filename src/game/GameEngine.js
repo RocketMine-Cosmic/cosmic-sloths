@@ -584,6 +584,14 @@ export class GameEngine {
         // following Thom's 2026-05-14 report). The 1s + frameCount guard means we only
         // pause runs that have ACTUALLY started, which is the only state worth pausing.
         this._engineCreatedAt = performance.now();
+        // Verify-then-pause pattern. iOS Safari fires spurious `visibilitychange(hidden)`
+        // events during URL-bar collapse, Control Center peek, scroll-bounce, and other
+        // system gestures — they clear within ~200ms. Pausing on every one of those was
+        // causing the "random raid pauses" Thom kept reporting (Safari iPhone, 2026-05-15).
+        // Now: when `hidden=true` arrives, schedule a verification check 350ms later. If
+        // the document is STILL hidden by then, it's a real backgrounding and we pause.
+        // If it flipped back to visible (Safari flicker), we ignore the event entirely.
+        this._pendingHidePause = null;
         this.handleVisibilityChange = () => {
             if (document.hidden) {
                 const aliveMs = performance.now() - (this._engineCreatedAt || 0);
@@ -593,12 +601,25 @@ export class GameEngine {
                     // transition (address-bar collapse, layout shift, etc.).
                     return;
                 }
-                this._wasAutoPaused = !this.isPaused;
-                this.isPaused = true;
-            } else if (this._wasAutoPaused) {
-                this._wasAutoPaused = false;
-                this.lastTime = performance.now(); // prevent dt spike on resume
-                this.isPaused = false;
+                // Defer the pause — wait to confirm the tab is actually backgrounded.
+                if (this._pendingHidePause) clearTimeout(this._pendingHidePause);
+                this._pendingHidePause = setTimeout(() => {
+                    this._pendingHidePause = null;
+                    if (!document.hidden) return; // Safari flicker — abort.
+                    this._wasAutoPaused = !this.isPaused;
+                    this.isPaused = true;
+                }, 350);
+            } else {
+                // Visible — cancel any pending pause from a flicker that already cleared.
+                if (this._pendingHidePause) {
+                    clearTimeout(this._pendingHidePause);
+                    this._pendingHidePause = null;
+                }
+                if (this._wasAutoPaused) {
+                    this._wasAutoPaused = false;
+                    this.lastTime = performance.now(); // prevent dt spike on resume
+                    this.isPaused = false;
+                }
             }
         };
         // Belt-and-braces safety net for in-app browsers (Discord, Twitter, Telegram,
@@ -628,6 +649,10 @@ export class GameEngine {
         window.removeEventListener('keyup', this.handleKeyUp);
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
         window.removeEventListener('focus', this.handleAutoResume);
+        if (this._pendingHidePause) {
+            clearTimeout(this._pendingHidePause);
+            this._pendingHidePause = null;
+        }
         cancelAnimationFrame(this.animationId);
     }
 
