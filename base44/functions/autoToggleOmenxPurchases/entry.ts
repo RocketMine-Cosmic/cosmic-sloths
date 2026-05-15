@@ -54,17 +54,22 @@ async function runProbe() {
     } catch (err) {
         const msg = err?.message || String(err);
         const is5xx = /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
-        // Post 2026-05-14 OmenX semantics: 422 is now PAYMENT_FAILED (was "still
-        // settling"). For our dead-wallet probe, 422 means the service is UP and
-        // correctly rejecting an unfunded charge — same as a clean 4xx. Only 5xx
-        // counts as "down" for the kill-switch.
-        const is422 = /\b422\b/.test(msg) || /payment[_ ]?failed|insufficient/i.test(msg);
-        const is4xx = /\b40[0-9]\b/.test(msg);
-        const healthy = !is5xx && (is422 || is4xx);
+        const is402 = /\b402\b/.test(msg);
+        const is422 = /\b422\b/.test(msg);
+        const is4xxOther = /\b40[01345-9]\b/.test(msg);
+        // OmenX returns 402 for both "wallet empty" (healthy) and "upstream
+        // thirdweb/settlement outage" (down) — the error body code is what
+        // disambiguates. Parse it out and decide accordingly.
+        const codeMatch = msg.match(/"code"\s*:\s*"([A-Z_]+)"/);
+        const code = codeMatch ? codeMatch[1] : null;
+        const isHealthyCode = code === 'INSUFFICIENT_FUNDS' || code === 'PAYMENT_FAILED';
+        const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR';
+        const settlementDown = is5xx || isDownCode || (is402 && !isHealthyCode);
+        const healthy = !settlementDown && (isHealthyCode || is422 || is4xxOther);
         return {
             healthy,
             durationMs: Date.now() - start,
-            detail: msg.slice(0, 300),
+            detail: `${code ? `[${code}] ` : ''}${msg}`.slice(0, 300),
         };
     }
 }
