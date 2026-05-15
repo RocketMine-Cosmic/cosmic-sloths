@@ -253,25 +253,27 @@ export function generateChoices(engine) {
     // Pool exhausted (max passives + all weapons owned + banished). Without this
     // the modal renders blank and the player gets stuck (Hugo bug 2026-05-06).
     //
-    // S6+: fill remaining slots with rotating "Overcharge" stat boosters that
-    // ignore the normal passive cap — late-run endless players were getting
-    // spammed with a single +25 HP option for hundreds of level-ups, which
-    // killed engagement past the 20-min mark. Each filler is uncapped so they
-    // stack indefinitely. Rarity is rolled the same way the main pool does.
-    // S5 keeps the legacy single-option behaviour so learned strategies survive.
+    // Both seasons now use the rotating "Overcharge" stat boosters so the modal
+    // never shows 3 identical cards (Hugo bug 2026-05-15 — banish-heavy runs were
+    // landing on 3 copies of "Emergency Repair Kit" once the pool exhausted, AND
+    // after 5 picks of the same id, applyUpgrade's passive cap silently bailed,
+    // making the modal feel broken). Overcharge ids are namespaced `oc_*` so they
+    // bypass the 5-stack cap in applyUpgrade — uncapped infinite-stack picks.
+    //
+    // De-dup within the 3 choices: don't show the same id twice, which is what
+    // made the broken state visually obvious in the screenshot.
     if (choices.length < 3) {
-        const isS6 = isS6OrLater();
-        const fillerPool = isS6 ? OVERCHARGE_FILLERS : [{
-            id: 'consolation_hp',
-            name: 'Emergency Repair Kit',
-            desc: '+25 Max HP (no upgrades left in pool)',
-            type: 'passive',
-            stat: 'maxHp',
-            value: 25,
-        }];
-        while (choices.length < 3) {
-            const base = fillerPool[Math.floor(Math.random() * fillerPool.length)];
-            const rarity = isS6 ? getRarity() : { name: 'Common', mult: 1 };
+        const seenFillerIds = new Set();
+        // Avoid offering an overcharge that duplicates a normal pool pick already chosen.
+        for (const c of choices) if (c?.id) seenFillerIds.add(c.id);
+        let safety = 30; // hard guard so we never infinite-loop if pool somehow shrinks
+        while (choices.length < 3 && safety-- > 0) {
+            const remaining = OVERCHARGE_FILLERS.filter(f => !seenFillerIds.has(f.id));
+            // If we've already used every overcharge id once, allow repeats to fill the slot.
+            const sourcePool = remaining.length > 0 ? remaining : OVERCHARGE_FILLERS;
+            const base = sourcePool[Math.floor(Math.random() * sourcePool.length)];
+            seenFillerIds.add(base.id);
+            const rarity = getRarity();
             const scaledValue = base.value * rarity.mult;
             const scaledDesc = base.desc.replace(/[0-9]+(\.[0-9]+)?/, (match) => {
                 const num = parseFloat(match);
@@ -291,14 +293,22 @@ export function generateChoices(engine) {
 
 export function applyUpgrade(engine, upgrade) {
     if (upgrade.type === 'passive') {
-        // Overcharge fillers (S6+ pool-exhausted picks) bypass the 5-stack cap by
+        // Overcharge fillers (pool-exhausted picks) bypass the 5-stack cap by
         // design — they're the late-game progression path once the normal pool
         // is exhausted. Their ids are namespaced 'oc_*' so they're easy to spot.
         const isOvercharge = typeof upgrade.id === 'string' && upgrade.id.startsWith('oc_');
         const maxLevel = 5;
         if (!isOvercharge) {
             const existingCount = engine.player.passives.filter(p => p.id === upgrade.id).length;
-            if (existingCount >= maxLevel) return;
+            if (existingCount >= maxLevel) {
+                // Don't silently bail — that leaves the engine paused with no UI
+                // path forward (Hugo bug 2026-05-15). Unpause cleanly so the
+                // player keeps playing; their pick was a no-op but the game
+                // continues. Should be impossible to reach in practice now that
+                // capped ids are filtered out of the pool in generateChoices.
+                engine.isPaused = false;
+                return;
+            }
         }
 
         engine.player[upgrade.stat] += upgrade.value;
