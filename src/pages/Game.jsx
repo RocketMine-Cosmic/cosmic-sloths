@@ -762,21 +762,27 @@ export default function Game() {
         if (!engine) { setLevelUpChoices(null); return; }
         engine.applyUpgrade(upgrade);
         // If applyUpgrade caused another level-up (XP overflow OR the squad-meteor
-        // starter stack queued the next one), wait for the next modal. Without the
-        // pendingStarterLevelUps check, the meteor 10-stack only fired ~2 modals
-        // before this handler unpaused the engine and wiped the queued choices.
-        // CRITICAL: keep isPaused=true in this branch — applyUpgrade unpauses
-        // unconditionally, but if another level-up is queued the engine must
-        // NOT tick a frame in between (Tijckers bug 2026-05-14 — mobs killed
-        // the player between back-to-back level-ups, opening the revive modal
-        // ON TOP of the queued LevelUpModal).
+        // starter stack queued the next one), fire the NEXT levelUp() IMMEDIATELY
+        // so the engine never ticks a frame between modals. applyUpgrade unpauses
+        // unconditionally, so we have to call levelUp() here (which re-pauses and
+        // generates fresh choices) — without this call, the engine was getting
+        // soft-locked: isPaused=true, modal closed, and nothing to reopen it
+        // (Thom bug 2026-05-15 raid runs stuck at 0/0/0; Tijckers bug 2026-05-14
+        // mobs killing the player between back-to-back level-ups).
+        //
+        // For squad meteor, applyUpgrade itself already chains to levelUp() via
+        // pendingStarterLevelUps, so we just keep isPaused=true and return — the
+        // new choices are already queued by the time we get here.
         if (engine.pendingStarterLevelUps > 0 && !engine.isGameOver && !engine.isVictory) {
             engine.isPaused = true;
             return;
         }
         if (engine.xp >= engine.xpRequired && !engine.isGameOver && !engine.isVictory) {
-            engine.isPaused = true;
-            setLevelUpChoices(null);
+            // Don't close the modal yet — engine.levelUp() will replace its
+            // contents via the onLevelUp callback (setLevelUpChoices(newChoices)),
+            // so closing here would just cause a single-frame flicker. Just hand
+            // off to the engine and let React render the next set.
+            engine.levelUp();
             return;
         }
         // Resume immediately, but grant a generous invulnerability window so

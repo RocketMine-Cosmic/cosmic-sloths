@@ -584,19 +584,13 @@ export class GameEngine {
         // following Thom's 2026-05-14 report). The 1s + frameCount guard means we only
         // pause runs that have ACTUALLY started, which is the only state worth pausing.
         this._engineCreatedAt = performance.now();
-        // Grace period bumped to 3 seconds (was 1s) + 30 frames (was 5). Real-world
-        // testing showed mobile browsers fire phantom `hidden` events up to ~2s
-        // into the run — during the GameLoadingScreen unmount, address-bar collapse,
-        // canvas resize, and the WORLD-BOSS-INBOUND banner animation. Anything
-        // shorter than 3s leaves a window where these phantom events can latch
-        // the engine into a permanent paused state (Thom report 2026-05-15,
-        // following Lucifer 2026-05-14). 3s is well below the time it takes
-        // any reasonable player to actually background the app intentionally.
         this.handleVisibilityChange = () => {
             if (document.hidden) {
                 const aliveMs = performance.now() - (this._engineCreatedAt || 0);
-                if (aliveMs < 3000 || (this.frameCount || 0) < 30) {
-                    // Engine just spun up — ignore spurious hidden events.
+                if (aliveMs < 1000 || (this.frameCount || 0) < 5) {
+                    // Engine just spun up — ignore spurious hidden events fired
+                    // by mobile browsers during the GameLoadingScreen → canvas
+                    // transition (address-bar collapse, layout shift, etc.).
                     return;
                 }
                 this._wasAutoPaused = !this.isPaused;
