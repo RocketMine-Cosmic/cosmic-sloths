@@ -177,9 +177,20 @@ export default function Squads({ isCarousel }) {
                              needsUpdate = true;
                          }
 
-                         if (squad.current_day !== currentDay) {
+                         // Only trigger a reset when the stored day is STRICTLY BEHIND today
+                         // (matches squadActions resetPeriods + saveScore logic). Using `!==`
+                         // here previously fired a reset for empty/null/future-stamped values
+                         // too, contributing to the "daily kills reset a double time" bug
+                         // (Texxy 2026-05-15). Server is still authoritative — this just
+                         // decides whether to make the call at all.
+                         const storedDay = squad.current_day || '';
+                         if (storedDay && storedDay < currentDay) {
                              updateData.current_day = currentDay;
                              updateData.daily_kills = 0;
+                             needsUpdate = true;
+                         } else if (storedDay !== currentDay) {
+                             // Heal missing/future-stamped day without wiping kills.
+                             updateData.current_day = currentDay;
                              needsUpdate = true;
                          }
 
