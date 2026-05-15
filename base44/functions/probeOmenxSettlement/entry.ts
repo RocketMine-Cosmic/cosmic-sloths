@@ -93,15 +93,34 @@ Deno.serve(async (req) => {
                 || /chain[_ ]?node|node[_ ]?unavailable/i.test(msg)
                 || /upstream[_ ]?error|gateway[_ ]?error|settlement[_ ]?unavailable/i.test(msg);
 
-            // True user-side rejection (only when there's NO RPC error noise).
-            const isHealthyCode = (code === 'INSUFFICIENT_FUNDS' || code === 'PAYMENT_FAILED') && !isSettlementRpcError;
+            // CRITICAL nuance for deep probes against a KNOWN-FUNDED wallet:
+            // INSUFFICIENT_FUNDS is itself a symptom of the RPC outage. If OmenX
+            // can't reach thirdweb to read the on-chain balance, it falls back
+            // to "balance = 0" and reports INSUFFICIENT_FUNDS even though the
+            // wallet has plenty. So for a deep probe, INSUFFICIENT_FUNDS is
+            // a RED flag, not a green one. For the shallow dead-wallet probe,
+            // INSUFFICIENT_FUNDS is correct and means settlement is healthy.
+            const isInsufficient = code === 'INSUFFICIENT_FUNDS';
+            const isPaymentFailed = code === 'PAYMENT_FAILED';
+            const isHealthyCode = !isSettlementRpcError && (
+                (isInsufficient && !deepProbe) // empty dead wallet: healthy
+                || (isPaymentFailed && !deepProbe) // legacy: dead-wallet PAYMENT_FAILED is healthy too
+            );
             // Codes that explicitly signal a settlement outage upstream.
             const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR';
+            // Deep probe + INSUFFICIENT_FUNDS = lying balance read = RPC outage.
+            const isDeepProbeFalseEmpty = deepProbe && isInsufficient;
+            // Deep probe + PAYMENT_FAILED (no RPC error string) = settlement
+            // rejected an on-chain transfer for a funded wallet, which is also
+            // an outage symptom (gas estimation, nonce fetch, or send failed).
+            const isDeepProbePaymentFailed = deepProbe && isPaymentFailed && !isSettlementRpcError;
 
             const settlementDown =
                 is5xx
                 || isDownCode
                 || isSettlementRpcError
+                || isDeepProbeFalseEmpty
+                || isDeepProbePaymentFailed
                 || (is402 && !isHealthyCode);
             const healthy =
                 !settlementDown
@@ -111,6 +130,8 @@ Deno.serve(async (req) => {
             if (is5xx) verdict = '🔴 Settlement DOWN (5xx from OmenX gateway)';
             else if (isSettlementRpcError) verdict = `🔴 Settlement DOWN — thirdweb RPC error (BSC node unreachable). Code=${code || 'unknown'}`;
             else if (isDownCode) verdict = `🔴 Settlement DOWN (${code} — upstream outage)`;
+            else if (isDeepProbeFalseEmpty) verdict = '🔴 Settlement DOWN — OmenX reported INSUFFICIENT_FUNDS for a funded wallet (thirdweb balance read failed)';
+            else if (isDeepProbePaymentFailed) verdict = '🔴 Settlement DOWN — funded wallet hit PAYMENT_FAILED (likely RPC outage during settle)';
             else if (is402 && isHealthyCode) verdict = `🟢 Settlement is UP — OmenX returned 402 ${code} for the dead wallet (expected)`;
             else if (is402) verdict = `🔴 Settlement DOWN (402 with code=${code || 'unknown'})`;
             else if (is422 && isHealthyCode) verdict = '🟢 Settlement is UP — OmenX returned 422 PAYMENT_FAILED (clean user-side rejection)';
