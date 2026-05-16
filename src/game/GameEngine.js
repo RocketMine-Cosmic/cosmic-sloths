@@ -488,10 +488,21 @@ export class GameEngine {
             this.addParticle(this.player.x, this.player.y, '#C0C0C0', 20, 'smoke', 2);
         }
 
-        let actualDmg = Math.max(1, amount - this.player.armor - (this.characterMechanics.scrapArmor || 0));
+        // Armor — S5: pure flat reduction (legacy). S6+: hybrid model so armor
+        // builds stay viable into late game. Each point of armor also grants a
+        // 0.5% multiplicative reduction, capped at 15% (30 armor = the practical
+        // ceiling from talents+relics+augments). Early game feels identical
+        // (flat dominates); late game a stacker takes ~15% less from boss hits.
+        const totalArmor = this.player.armor + (this.characterMechanics.scrapArmor || 0);
+        let actualDmg = Math.max(1, amount - totalArmor);
+        if (this._isS6) {
+            const pctReduction = Math.min(0.15, totalArmor * 0.005);
+            actualDmg = Math.max(1, actualDmg * (1 - pctReduction));
+        }
         if (this.player.charAugments?.includes('pan_fortress') && this.player.hp >= this.player.maxHp) {
             actualDmg = Math.max(1, Math.floor(actualDmg * 0.85));
         }
+        actualDmg = Math.max(1, Math.floor(actualDmg));
 
         // Bribe (SynthBeats): dodge a hit by paying gold. Now scales with the damage
         // being negated (so big hits cost a lot of gold) and is rate-limited so
