@@ -490,13 +490,14 @@ export class GameEngine {
 
         // Armor — S5: pure flat reduction (legacy). S6+: hybrid model so armor
         // builds stay viable into late game. Each point of armor also grants a
-        // 0.5% multiplicative reduction, capped at 15% (30 armor = the practical
-        // ceiling from talents+relics+augments). Early game feels identical
-        // (flat dominates); late game a stacker takes ~15% less from boss hits.
+        // 0.5% multiplicative reduction, capped at 25% (50 armor — only true
+        // armor stackers reach this). Early game feels identical (flat dominates);
+        // late game a dedicated stacker takes ~25% less from boss hits, making
+        // armor a real defensive build path alongside HP/regen/iFrames.
         const totalArmor = this.player.armor + (this.characterMechanics.scrapArmor || 0);
         let actualDmg = Math.max(1, amount - totalArmor);
         if (this._isS6) {
-            const pctReduction = Math.min(0.15, totalArmor * 0.005);
+            const pctReduction = Math.min(0.25, totalArmor * 0.005);
             actualDmg = Math.max(1, actualDmg * (1 - pctReduction));
         }
         if (this.player.charAugments?.includes('pan_fortress') && this.player.hp >= this.player.maxHp) {
