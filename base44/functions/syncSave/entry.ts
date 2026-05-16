@@ -386,6 +386,12 @@ Deno.serve(async (req) => {
         // were spamming SyncBlockLog and worrying staff (e.g. AnubisDominus 76k gold).
         // The cloud value is still kept either way — only the audit log is suppressed.
         for (const key of SERVER_OWNED_RUN_STATS) {
+            // `dailyKillsDate` is a string ("YYYY-MM-DD") — must NOT be Number-coerced
+            // (would become NaN→0 and break the today-match in getSquadProfile).
+            if (key === 'dailyKillsDate') {
+                merged[key] = typeof existingData[key] === 'string' ? existingData[key] : '';
+                continue;
+            }
             merged[key] = Number(existingData[key] || 0);
             const clientVal = Number(saveData[key] || 0);
             if (clientVal > merged[key] && clientIsStale) {
