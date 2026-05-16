@@ -425,6 +425,19 @@ function applyRunToSave(save, run, isVictory, charId, isEndless) {
     const newTotalKills = prevTotalKills + run.kills;
     s.totalKills = newTotalKills;
 
+    // Per-player daily kills — authoritative server-side counter so the squad
+    // profile can display reliable per-member "today" totals without scanning
+    // RunScore (which gets soft-deleted by the keep-top-scores cleanup cron,
+    // causing the squad page to drop legit daily kills — Texxy 2026-05-16).
+    // Resets at UTC midnight, mirroring squad.daily_kills.
+    const todayUtc = new Date().toISOString().split('T')[0];
+    const prevDailyDate = s.dailyKillsDate || '';
+    if (prevDailyDate !== todayUtc) {
+        s.dailyKills = 0;
+        s.dailyKillsDate = todayUtc;
+    }
+    s.dailyKills = Number(s.dailyKills || 0) + run.kills;
+
     s.characterKills = { ...(s.characterKills || {}) };
     s.characterKills[charId] = Number(s.characterKills[charId] || 0) + run.kills;
 

@@ -107,6 +107,7 @@ const SERVER_OWNED_RUN_STATS = [
     'maxTimeSurvived', 'maxLevelReached', 'totalKills', 'totalGoldEarned',
     'relicFragments', 'cosmicTokens', 'seasonalPoints',
     'starFragments', // Phase 3e — Forge currency
+    'dailyKills', 'dailyKillsDate', // Per-player daily kills counter (saveScore writes only)
 ];
 
 // SERVER-OWNED nested aggregates (cloud is truth).

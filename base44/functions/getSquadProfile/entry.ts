@@ -73,8 +73,7 @@ Deno.serve(async (req) => {
         const weekId = getCurrentWeekId();
         // "Today" = UTC calendar day, mirroring squad.daily_kills rollover in saveScore.
         const todayUtc = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
-        const todayStartIso = `${todayUtc}T00:00:00.000Z`;
-        const [saves, raidContribs, squadWars, weeklyRuns, dailyRuns] = await Promise.all([
+        const [saves, raidContribs, squadWars, weeklyRuns] = await Promise.all([
             // PlayerSave per-member (total kills live in save_data.totalKills)
             memberWallets.length
                 ? base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: { $in: memberWallets } })
@@ -99,22 +98,12 @@ Deno.serve(async (req) => {
             memberWallets.length
                 ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', Math.min(800, memberWallets.length * 80))
                 : Promise.resolve([]),
-            // DEDICATED daily query — narrowly scoped to today's rows only.
-            // Bug 2026-05-16: `created_date: { $gte: ... }` does NOT work as a
-            // server-side filter on RunScore (Base44 returns 0 rows even when
-            // matching rows exist — verified with direct entity queries). So
-            // we fetch the same wallet-scoped window WITHOUT the date filter
-            // and slice client-side using r.created_date. Sorted desc, we walk
-            // until we cross the midnight cutoff. Row budget bumped slightly
-            // since we now need to scan through both today + yesterday's tail
-            // before we hit the cutoff.
-            memberWallets.length
-                ? base44.asServiceRole.entities.RunScore.filter(
-                    { wallet_address: { $in: memberWallets } },
-                    '-created_date',
-                    Math.min(1500, memberWallets.length * 200)
-                )
-                : Promise.resolve([]),
+            // Daily kills now come from PlayerSave.save_data.dailyKills — written
+            // authoritatively by saveScore per run, immune to RunScore cleanup
+            // (Texxy bug 2026-05-16: keep-top-scores cron was deleting today's
+            // smaller runs and the RunScore-derived daily count was constantly
+            // truncated — squad page showed 62 daily when reality was 1277+).
+            // No extra DB read needed — `saves` already includes save_data.
         ]);
 
         // Index helpers
@@ -134,19 +123,17 @@ Deno.serve(async (req) => {
             if (!w) continue;
             weeklyKillsByWallet.set(w, (weeklyKillsByWallet.get(w) || 0) + (r.kills || 0));
         }
-        // Daily kills — client-side filter by created_date since RunScore doesn't
-        // support `$gte` on created_date server-side (bug 2026-05-16: SVA squad
-        // showed 0 daily kills for every member despite real runs landing today).
-        // Rows are sorted desc by created_date, so we can break early once we
-        // cross the midnight cutoff.
+        // Daily kills — read directly from PlayerSave.save_data.dailyKills. Only
+        // valid if dailyKillsDate matches today (otherwise it's stale from a prior
+        // day and the player just hasn't run yet today, so it'll auto-reset on
+        // their next saveScore).
         const dailyKillsByWallet = new Map();
-        const todayStartMs = Date.parse(todayStartIso);
-        for (const r of dailyRuns) {
-            const created = r.created_date ? Date.parse(r.created_date) : 0;
-            if (!created || created < todayStartMs) break; // sorted desc — rest are older
-            const w = (r.wallet_address || '').toLowerCase();
-            if (!w) continue;
-            dailyKillsByWallet.set(w, (dailyKillsByWallet.get(w) || 0) + (r.kills || 0));
+        for (const [wallet, sd] of saveByWallet) {
+            const dKills = Number(sd.dailyKills || 0);
+            const dDate = sd.dailyKillsDate || '';
+            if (dDate === todayUtc && dKills > 0) {
+                dailyKillsByWallet.set(wallet, dKills);
+            }
         }
         const warWinsByWallet = new Map();
         for (const w of squadWars) {
