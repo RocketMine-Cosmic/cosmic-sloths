@@ -100,17 +100,19 @@ Deno.serve(async (req) => {
                 ? base44.asServiceRole.entities.RunScore.filter({ week_id: weekId, wallet_address: { $in: memberWallets } }, '-created_date', Math.min(800, memberWallets.length * 80))
                 : Promise.resolve([]),
             // DEDICATED daily query — narrowly scoped to today's rows only.
-            // Texxy bug 2026-05-15: with a heavy squad (multiple members doing
-            // 60+ short runs today), the 400–800-row weekly window evicts older
-            // daily rows before we can count them, so per-member daily totals
-            // show 3k when reality is 15k+. A daily-scoped filter with the same
-            // row budget covers ~80 runs/member/day cleanly without competing
-            // against other members' weekly history.
+            // Bug 2026-05-16: `created_date: { $gte: ... }` does NOT work as a
+            // server-side filter on RunScore (Base44 returns 0 rows even when
+            // matching rows exist — verified with direct entity queries). So
+            // we fetch the same wallet-scoped window WITHOUT the date filter
+            // and slice client-side using r.created_date. Sorted desc, we walk
+            // until we cross the midnight cutoff. Row budget bumped slightly
+            // since we now need to scan through both today + yesterday's tail
+            // before we hit the cutoff.
             memberWallets.length
                 ? base44.asServiceRole.entities.RunScore.filter(
-                    { wallet_address: { $in: memberWallets }, created_date: { $gte: todayStartIso } },
+                    { wallet_address: { $in: memberWallets } },
                     '-created_date',
-                    Math.min(1000, memberWallets.length * 150)
+                    Math.min(1500, memberWallets.length * 200)
                 )
                 : Promise.resolve([]),
         ]);
@@ -132,12 +134,16 @@ Deno.serve(async (req) => {
             if (!w) continue;
             weeklyKillsByWallet.set(w, (weeklyKillsByWallet.get(w) || 0) + (r.kills || 0));
         }
-        // Daily kills now come from the DEDICATED dailyRuns query (above) so heavy
-        // farmers' today rows aren't evicted from the weekly window by other
-        // members' fresher runs (Texxy bug 2026-05-15 — showed 3,457 daily when
-        // real total was 15k+).
+        // Daily kills — client-side filter by created_date since RunScore doesn't
+        // support `$gte` on created_date server-side (bug 2026-05-16: SVA squad
+        // showed 0 daily kills for every member despite real runs landing today).
+        // Rows are sorted desc by created_date, so we can break early once we
+        // cross the midnight cutoff.
         const dailyKillsByWallet = new Map();
+        const todayStartMs = Date.parse(todayStartIso);
         for (const r of dailyRuns) {
+            const created = r.created_date ? Date.parse(r.created_date) : 0;
+            if (!created || created < todayStartMs) break; // sorted desc — rest are older
             const w = (r.wallet_address || '').toLowerCase();
             if (!w) continue;
             dailyKillsByWallet.set(w, (dailyKillsByWallet.get(w) || 0) + (r.kills || 0));
