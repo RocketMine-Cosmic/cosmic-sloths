@@ -93,7 +93,7 @@ const TABS_CONTENT = {
                     Survive the full time limit of each sector to <strong className="text-green-400">win</strong>. As time progresses, enemies get stronger and more numerous. An optional <strong className="text-purple-400">Endless Void</strong> mode scales infinitely with boss fights every 3 minutes.
                 </p>
                 <div className="mt-3 bg-slate-900/40 rounded-lg p-3 border border-purple-700/50 text-xs text-slate-400">
-                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold, and credited Gold/kills <strong className="text-white">scale with how long you survive</strong> (~1,500 Gold/min, ~240 kills/min) up to a hard cap of <strong className="text-white">25,000 Gold</strong> and <strong className="text-white">6,000 kills</strong> per run. Endless runs are also <strong className="text-white">excluded from OMENX leaderboard payouts</strong>. Play <strong className="text-white">Sectors</strong> to farm Gold.
+                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold. S6 removed all endless caps, so <strong className="text-white">every Gold and kill you earn is credited in full</strong> (no per-run ceiling). Endless runs are still <strong className="text-white">excluded from OMENX leaderboard payouts</strong> — play <strong className="text-white">Sectors</strong> for the weekly/seasonal boards.
                 </div>
             </SectionCard>
 
@@ -311,26 +311,40 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">All-time high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. No resets — this is your permanent legacy score. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards. Credited Gold/kills scale with run time (~720 Gold/min, ~240 kills/min) up to 10,000 Gold and 6,000 kills per run.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Season-scoped high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards — but they earn their own <strong className="text-purple-300">Endless Bonus</strong> in the score formula (10,000 per minute survived), so a long, well-played endless run can rival a Sector 10 victory at the very top of the boards. S6 removed all gold/kill caps — every Gold and kill is credited in full.</p>
                     </div>
                 </div>
             </SectionCard>
 
-            <SectionCard title="📊 How Scores Work" color="green">
+            <SectionCard title="📊 How Scores Work (Season 6)" color="green">
                 <p className="text-sm text-slate-300 leading-relaxed mb-3">
-                    Your score is calculated server-side at the end of each run:
+                    S6 rebuilt the score formula from scratch — <strong className="text-white">skill beats grind</strong>. Gold no longer contributes to score, time spent no longer rewards you, and sector progression is now the headline scorer:
                 </p>
-                <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-xs text-center text-green-300 mb-3">
-                    Score = (Kills×10 + Level×100 + Time×5 + Gold×2 + Victory Bonus) × Sector Multiplier
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-[11px] text-center text-green-300 mb-3 leading-relaxed">
+                    Score = Kills×120 + Level²×100 + Sector×8,000 + Victory Bonus + Endless Bonus
                 </div>
-                <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-                    The <strong className="text-green-300">Sector Multiplier</strong> grows the further you push: ×1.0 in Sector 1 (Azure Expanse), +0.2 per sector across <strong className="text-white">10 sectors</strong> up to ×2.8 in Rainbow Rift, with <strong className="text-purple-300">×2.0 in Endless Void</strong>. Beating the sector timer adds a flat <strong className="text-white">+5,000 Victory Bonus</strong>.
-                </p>
+                <div className="space-y-2 text-xs text-slate-400 mb-3">
+                    <div className="bg-slate-900/50 rounded-lg p-2.5 border border-slate-700/60">
+                        <strong className="text-green-300">⚔️ Kills × 120</strong> — every enemy you defeat. Skill kills are the foundation.
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-2.5 border border-slate-700/60">
+                        <strong className="text-green-300">📈 Level² × 100</strong> — quadratic, so late levels matter <em>massively</em> more than early ones.
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-2.5 border border-slate-700/60">
+                        <strong className="text-green-300">🌌 Sector × 8,000</strong> — flat bonus for reaching each sector. Sector 10 = +72k just for being there.
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-2.5 border border-amber-700/40">
+                        <strong className="text-amber-300">🏆 Victory Bonus = Sector × 15,000</strong> — clearing Sector 10 = +135k bonus. Boss-killing is now the real prize.
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-2.5 border border-purple-700/40">
+                        <strong className="text-purple-300">♾️ Endless Bonus = Minutes × 10,000</strong> — endless gets its own per-minute scaling so long, well-played endless runs stay competitive with sector victories.
+                    </div>
+                </div>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-slate-700 mb-3 leading-relaxed">
-                    <strong className="text-white">Difficulty doesn't directly multiply score</strong> — instead, harder difficulties grant more XP & Gold per run, which feed into the formula above. Hard = +100% XP/Gold, Cosmic = +200% XP/Gold.
+                    <strong className="text-white">Gold no longer affects score.</strong> Stacking gold multipliers helps you survive — it doesn't pad your leaderboard score. <strong className="text-white">Difficulty</strong> also doesn't directly multiply score in S6; harder difficulties just grant more XP & Gold (Hard +100%, Cosmic +200%), which feed kills/level naturally.
                 </div>
                 <div className="text-xs text-slate-500 bg-slate-900/40 rounded-lg p-2 border border-slate-800">
-                    💡 Only your <strong className="text-white">highest score</strong> per week counts on the leaderboard. Keep grinding and replace it with a better run!
+                    💡 Top-of-board target: <strong className="text-white">~900k–1M</strong>. A clean Sector 10 victory lands ~850k. A long, skilled endless can rival it. Only your <strong className="text-white">highest score per period</strong> counts on the leaderboard.
                 </div>
             </SectionCard>
 

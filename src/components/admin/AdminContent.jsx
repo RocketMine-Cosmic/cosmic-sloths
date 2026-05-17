@@ -55,11 +55,22 @@ Three leaderboards. Real crypto rewards.
 
 ### ♾️ **Endless Void**
 - Infinitely scaling difficulty with boss fights every 3 minutes
-- Permanent legacy leaderboard — no resets
-- **Excluded from OMENX payouts.** Endless runs credit Gold/kills scaled by playtime (~720 Gold/min, ~240 kills/min) so longer runs earn proportionally more, with a hard ceiling of 10,000 Gold and 6,000 kills per run
+- Season-scoped leaderboard (resets each season alongside Weekly/Seasonal)
+- **Excluded from OMENX payouts** — but earns its own per-minute score bonus, so long endless runs stay competitive with sector victories at the very top
+- **S6: all caps removed** — every Gold and kill is credited in full, no per-run ceiling
 
-### 📊 **How Scores Work**
-Score = (Kills×10 + Level×100 + Time×5 + Gold×2 + Victory Bonus) × Sector Multiplier. Only your **highest score per period** counts. Sector multiplier ×1.0 → ×2.8 across **10 sectors** (Azure Expanse → Rainbow Rift), ×2.0 in Endless Void.
+### 📊 **How Scores Work (Season 6)**
+S6 rebuilt the formula from scratch — **skill beats grind**. Gold and raw playtime no longer pad your score; sector progression and boss-killing are the headline:
+
+> **Score = (Kills × 120) + (Level² × 100) + (Sector × 8,000) + Victory Bonus + Endless Bonus**
+
+- **⚔️ Kills × 120** — every enemy defeated
+- **📈 Level² × 100** — quadratic, so late levels matter massively more
+- **🌌 Sector × 8,000** — flat bonus for each sector reached (Sector 10 = +72k)
+- **🏆 Victory Bonus = Sector × 15,000** — clearing Sector 10 = +135k bonus
+- **♾️ Endless Bonus = Minutes × 10,000** — endless runs get per-minute scaling instead of a sector bonus
+
+**Gold no longer affects score** — stacking gold multipliers helps you survive, not pad your leaderboard. **Difficulty no longer multiplies score directly** either; harder difficulties just grant more XP & Gold (Hard +100%, Cosmic +200%), feeding kills/level naturally. Only your **highest score per period** counts. Top-of-board target: **~900k–1M**.
 
 ---
 
