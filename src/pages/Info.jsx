@@ -318,8 +318,9 @@ const TABS_CONTENT = {
                 <p className="text-sm text-slate-300 leading-relaxed mb-3">
                     S6 rebuilt the score formula from scratch — <strong className="text-white">skill beats grind</strong>. Gold no longer contributes to score, time spent no longer rewards you, and sector progression is now the headline scorer:
                 </p>
-                <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-[11px] text-center text-green-300 mb-3 leading-relaxed">
-                    Score = Kills×120 + Level²×100 + (SectorIndex)×8,000 + Victory Bonus + Endless Bonus
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-[11px] text-center text-green-300 mb-3 leading-relaxed space-y-2">
+                    <div><span className="text-slate-500">Sector runs:</span> Score = Kills×120 + Level²×100 + SectorIndex×8,000 + Victory Bonus</div>
+                    <div className="border-t border-slate-800 pt-2"><span className="text-slate-500">Endless runs:</span> Score = Kills×120 + Level²×100 + Minutes×10,000</div>
                 </div>
                 <div className="space-y-2 text-xs text-slate-400 mb-3">
                     <div className="bg-slate-900/50 rounded-lg p-2.5 border border-slate-700/60">
