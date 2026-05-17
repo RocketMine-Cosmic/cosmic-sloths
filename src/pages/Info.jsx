@@ -336,7 +336,7 @@ const TABS_CONTENT = {
                         <strong className="text-amber-300">🏆 Victory Bonus = SectorIndex × 15,000</strong> — clearing Sector 10 = +135k bonus. Boss-killing is now the real prize.
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-2.5 border border-purple-700/40">
-                        <strong className="text-purple-300">♾️ Endless Bonus = Minutes × 10,000</strong> — endless gets its own per-minute scaling so long, well-played endless runs stay competitive with sector victories.
+                        <strong className="text-purple-300">♾️ Endless Bonus = Minutes × 10,000</strong> — endless gets its own per-minute scaling (linear, no cap) so long, well-played endless runs stay competitive with sector victories.
                     </div>
                 </div>
                 <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-slate-700 mb-3 leading-relaxed">
