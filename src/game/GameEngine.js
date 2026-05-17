@@ -552,7 +552,12 @@ export class GameEngine {
                     pierce: 1,
                     life: 2,
                     color: '#00ff66',
-                    type: 'missile'
+                    type: 'missile',
+                    // Tag retaliation missiles so damage shows up in the post-run
+                    // breakdown — these are spawned from takeDamage(), not the
+                    // weapon-fire path, so they bypass the fallback weaponId
+                    // assignment in WeaponSystem.js (Texxy bug 2026-05-17).
+                    weaponId: 'aegisMatrix'
                 });
             }
         }
