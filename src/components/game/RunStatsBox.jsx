@@ -7,7 +7,16 @@ import { WEAPONS } from '../../game/Constants';
 const PSEUDO_WEAPON_NAMES = {
     squadUltimate: 'Squad Ultimate',
     neonExecute:   'NeonVortex Execute',
-    other:         'Other Sources',
+    other:         'Untracked Damage',
+};
+
+// Short hint shown under pseudo-weapon names so players understand what each
+// non-weapon damage bucket represents (was the "What is other sources?"
+// confusion in #general 2026-05-17).
+const PSEUDO_WEAPON_HINTS = {
+    squadUltimate: "Damage from your squad's ultimate ability",
+    neonExecute:   'NeonVortex execute splash + finisher shots',
+    other:         'Hacked enemies fighting each other, hazards, character abilities (Sonic Boom, etc.)',
 };
 
 const formatWeaponName = (id) => PSEUDO_WEAPON_NAMES[id]
@@ -208,6 +217,9 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                                             <span className="text-cyan-300 font-bold truncate">{formatWeaponName(w.id)}</span>
                                             <span className="text-slate-400 font-mono ml-2 text-[10px]">{w.share.toFixed(0)}%</span>
                                         </div>
+                                        {PSEUDO_WEAPON_HINTS[w.id] && (
+                                            <div className="text-[9px] text-slate-500 italic mb-0.5 leading-tight">{PSEUDO_WEAPON_HINTS[w.id]}</div>
+                                        )}
                                         <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
                                             <span>DMG: <span className="text-orange-300">{w.damage.toLocaleString()}</span></span>
                                             <span>KILLS: <span className="text-rose-300">{w.kills}</span></span>
