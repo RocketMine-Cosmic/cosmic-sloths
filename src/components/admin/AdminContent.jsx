@@ -45,12 +45,17 @@ Three leaderboards. Real crypto rewards.
 
 ### 📅 **Weekly Leaderboard**
 - Resets every Monday 00:00 UTC
-- **Only the top 100 players earn OMENX** — higher rank = bigger payout
+- **20% of the weekly OMENX spend pool** is paid out to the **top 45 players** — higher rank = bigger share
+- #1 = 10% · #2 = 8% · #3 = 6% · #4–10 = 4% each · #11–20 = 3% each · #21–30 = 1.8% each · #31–45 = 1.2% each
+- Max **10,000 OMENX** per player per period
 - Weekly stat upgrades also reset
 
 ### 🗓️ **Seasonal Leaderboard**
 - 4-week cycles
-- **Only the top 100 players earn OMENX** — higher rank = bigger payout
+- **30% of the seasonal OMENX spend pool** is paid out to the **top 45 players** — higher rank = bigger share
+- An additional **10%** is reserved for the Squad Wars Champions pool
+- #1 = 10% · #2 = 7.5% · #3 = 6% · #4–10 = 3.2% each · #11–20 = 2.2% each · #21–30 = 1.5% each · #31–40 = 0.9% each · #41–45 = 0.7% each
+- Max **10,000 OMENX** per player per period
 - Seasonal stat upgrades reset at season end
 
 ### ♾️ **Endless Void**

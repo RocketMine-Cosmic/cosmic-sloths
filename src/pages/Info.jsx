@@ -280,7 +280,7 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
                         <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. Only the <strong className="text-emerald-400">top 100 players</strong> earn OMENX — players outside the top 100 earn nothing, so push hard! Weekly stat upgrades also reset.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. <strong className="text-emerald-400">20% of the weekly OMENX spend pool</strong> is paid out to the <strong className="text-emerald-400">top 45 players</strong>. Higher rank = bigger share. Weekly stat upgrades also reset.</p>
                         <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
                             <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
                             <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">8%</span></div>
@@ -288,26 +288,24 @@ const TABS_CONTENT = {
                             <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#4–10</span><span className="text-white">4% each</span></div>
                             <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">3% each</span></div>
                             <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">1.8% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#31–50</span><span className="text-white">1.2% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#51–100</span><span className="text-white">0.8% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#31–45</span><span className="text-white">1.2% each</span></div>
                         </div>
-                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts.</div>
+                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts. Max payout per player is <strong className="text-slate-400">10,000 OMENX</strong> per period.</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. Only the <strong className="text-emerald-400">top 100 players</strong> earn OMENX — players outside the top 100 earn nothing. Seasonal stat upgrades reset at season end.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. <strong className="text-emerald-400">30% of the seasonal OMENX spend pool</strong> is paid out to the <strong className="text-emerald-400">top 45 players</strong>. An additional <strong className="text-amber-300">10%</strong> is reserved for the Squad Wars Champions pool (see the Squad Wars tab). Seasonal stat upgrades reset at season end.</p>
                         <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
-                            <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">8%</span></div>
-                            <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">6%</span></div>
-                            <div className="bg-orange-950/40 border border-orange-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(249,115,22,0.15)]"><span className="text-orange-300">🥉 #3</span><span className="text-white">5%</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#4–10</span><span className="text-white">3% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">2.5% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">2% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#31–40</span><span className="text-white">1.5% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#41–60</span><span className="text-white">1% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#61–100</span><span className="text-white">0.6% each</span></div>
+                            <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
+                            <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">7.5%</span></div>
+                            <div className="bg-orange-950/40 border border-orange-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(249,115,22,0.15)]"><span className="text-orange-300">🥉 #3</span><span className="text-white">6%</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#4–10</span><span className="text-white">3.2% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">2.2% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">1.5% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#31–40</span><span className="text-white">0.9% each</span></div>
+                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#41–45</span><span className="text-white">0.7% each</span></div>
                         </div>
-                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts.</div>
+                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts. Max payout per player is <strong className="text-slate-400">10,000 OMENX</strong> per period.</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>

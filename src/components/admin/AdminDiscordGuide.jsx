@@ -42,9 +42,9 @@ Score is calculated **server-side** at the end of every run:
 
 **No gold contribution. No difficulty multiplier.** Harder difficulties just grant more XP & Gold, which feed into kills/level naturally. Only your **highest score per period** counts on the leaderboard.
 
-📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Weekly stat upgrades also reset.
+📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — **20% of the weekly OMENX spend pool** is paid to the **top 45** players. Higher rank = bigger share (#1 = 10%, ..., #31–45 = 1.2% each). Max **10,000 OMENX** per player. Weekly stat upgrades also reset.
 
-🗓️ **Seasonal Leaderboard** (4-week cycles) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Seasonal stat upgrades reset at season end.
+🗓️ **Seasonal Leaderboard** (4-week cycles) — **30% of the seasonal OMENX spend pool** is paid to the **top 45** players (#1 = 10%, ..., #41–45 = 0.7% each). A further **10%** funds the Squad Wars Champions pool. Max **10,000 OMENX** per player. Seasonal stat upgrades reset at season end.
 
 ♾️ **Endless Void Leaderboard** — Season-scoped ranking. **NOT eligible for OMENX payouts.** Long, well-played endless runs (25+ min) can reach 600k–1M score, rivaling or exceeding sector victories thanks to per-minute scaling.
 
