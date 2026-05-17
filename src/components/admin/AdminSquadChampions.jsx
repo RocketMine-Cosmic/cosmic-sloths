@@ -2,20 +2,10 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Crown, Eye, Send, AlertTriangle } from 'lucide-react';
+import { getCurrentPeriodIds } from '@/lib/periodIds';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
-}
-
-function getCurrentSeasonId() {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const startOfWeek = new Date(startOfYear);
-    startOfWeek.setUTCDate(startOfYear.getUTCDate() - startOfYear.getUTCDay() + 1);
-    const isoWeek = Math.ceil(((now - startOfWeek) / 86400000 + 1) / 7);
-    const seasonNum = Math.floor((isoWeek - 1) / 4) + 1;
-    return `${year}-S${seasonNum}`;
 }
 
 // Admin panel: preview & distribute the Squad Wars Champions Pool for a given season.
@@ -36,7 +26,7 @@ export default function AdminSquadChampions({ walletAddress }) {
         enabled: !!walletAddress
     });
 
-    const currentSeasonId = getCurrentSeasonId();
+    const currentSeasonId = getCurrentPeriodIds().season_id;
     const seasonOptions = [
         { id: '', label: '— previous season (auto) —', distributed: false },
         { id: currentSeasonId, label: `${currentSeasonId} (current)`, distributed: false },
