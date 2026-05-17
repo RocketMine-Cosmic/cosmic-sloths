@@ -5,18 +5,24 @@ import { WEAPONS } from '../../game/Constants';
 // still appear in the post-run breakdown so the listed weapons add up to ~100%.
 // Keeps Texxy's "I'm missing 50% of damage" bug from recurring.
 const PSEUDO_WEAPON_NAMES = {
-    squadUltimate: 'Squad Ultimate',
-    neonExecute:   'NeonVortex Execute',
-    other:         'Untracked Damage',
+    squadUltimate:  'Squad Ultimate',
+    neonExecute:    'NeonVortex Execute',
+    hackedInfight:  'Hacked Enemies (Infighting)',
+    novabyteChain:  'NovaByte Chain Explosion',
+    sonicBoom:      'Skybyte Sonic Boom',
+    other:          'Untracked Damage',
 };
 
 // Short hint shown under pseudo-weapon names so players understand what each
 // non-weapon damage bucket represents (was the "What is other sources?"
 // confusion in #general 2026-05-17).
 const PSEUDO_WEAPON_HINTS = {
-    squadUltimate: "Damage from your squad's ultimate ability",
-    neonExecute:   'NeonVortex execute splash + finisher shots',
-    other:         'Hacked enemies fighting each other, hazards, character abilities (Sonic Boom, etc.)',
+    squadUltimate:  "Damage from your squad's ultimate ability",
+    neonExecute:    'NeonVortex execute splash + finisher shots',
+    hackedInfight:  'Damage dealt by hacked enemies attacking each other (CodeBreaker)',
+    novabyteChain:  "Chain explosions that fire on NovaByte's kills",
+    sonicBoom:      'Skybyte\'s charge-release shockwave',
+    other:          'Cosmic hazards + any remaining unclassified damage',
 };
 
 const formatWeaponName = (id) => PSEUDO_WEAPON_NAMES[id]

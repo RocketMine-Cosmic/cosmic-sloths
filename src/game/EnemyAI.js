@@ -48,7 +48,9 @@ export function updateEnemies(engine, dt) {
                 engine.particleManager.createExplosion(e.x, e.y, '#FF007F', 1.5 * engine.player.areaMult, 'default');
                 engine.enemies.forEach(other => {
                     if (other !== e && Math.hypot(other.x - e.x, other.y - e.y) < 100 * engine.player.areaMult) {
-                        engine.damageEnemy(other, 20 * engine.player.damageMult);
+                        // NovaByte's on-kill chain explosion — tagged so it shows
+                        // up in the post-run breakdown.
+                        engine.damageEnemy(other, 20 * engine.player.damageMult, { weaponId: 'novabyteChain' });
                     }
                 });
             }
@@ -248,7 +250,11 @@ export function updateEnemies(engine, dt) {
 
                 if (hdist < e.radius + nearest.radius) {
                     if (!e.attackTimer || e.attackTimer <= 0) {
-                        engine.damageEnemy(nearest, e.damage);
+                        // Tag hacked-enemy infighting so it shows up in the post-run
+                        // weapon breakdown instead of vanishing into "Untracked Damage".
+                        // CodeBreaker's hack mechanic was the dominant culprit in
+                        // long endless runs (AnubisDominus 2026-05-17, 93% untracked).
+                        engine.damageEnemy(nearest, e.damage, { weaponId: 'hackedInfight' });
                         e.hp -= nearest.damage;
                         e.attackTimer = 1.0;
                     }

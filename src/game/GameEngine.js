@@ -463,7 +463,9 @@ export class GameEngine {
         this.shake(isSuper ? 1.0 : 0.5);
         this.enemies.forEach(e => {
             if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < radius) {
-                this.damageEnemy(e, dmg * this.player.damageMult);
+                // Skybyte's Sonic Boom — tagged so it appears in the post-run
+                // weapon breakdown instead of "Untracked Damage".
+                this.damageEnemy(e, dmg * this.player.damageMult, { weaponId: 'sonicBoom' });
                 const angle = Math.atan2(e.y - this.player.y, e.x - this.player.x);
                 e.x += Math.cos(angle) * (isSuper ? 180 : 100);
                 e.y += Math.sin(angle) * (isSuper ? 180 : 100);
