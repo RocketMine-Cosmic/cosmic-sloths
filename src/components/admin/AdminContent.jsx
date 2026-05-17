@@ -62,15 +62,15 @@ Three leaderboards. Real crypto rewards.
 ### 📊 **How Scores Work (Season 6)**
 S6 rebuilt the formula from scratch — **skill beats grind**. Gold and raw playtime no longer pad your score; sector progression and boss-killing are the headline:
 
-> **Score = (Kills × 120) + (Level² × 100) + (Sector × 8,000) + Victory Bonus + Endless Bonus**
+> **Score = (Kills × 120) + (Level² × 100) + (SectorIndex × 8,000) + Victory Bonus + Endless Bonus**
 
 - **⚔️ Kills × 120** — every enemy defeated
 - **📈 Level² × 100** — quadratic, so late levels matter massively more
-- **🌌 Sector × 8,000** — flat bonus for each sector reached (Sector 10 = +72k)
-- **🏆 Victory Bonus = Sector × 15,000** — clearing Sector 10 = +135k bonus
-- **♾️ Endless Bonus = Minutes × 10,000** — endless runs get per-minute scaling instead of a sector bonus
+- **🌌 SectorIndex × 8,000** — flat bonus per sector reached (Sector 1 = 0, Sector 2 = 8k, ... Sector 10 = 72k)
+- **🏆 Victory Bonus = SectorIndex × 15,000** — clearing Sector 10 = +135k bonus
+- **♾️ Endless Bonus = Minutes × 10,000** — endless runs get per-minute scaling so they stay competitive with sector victories
 
-**Gold no longer affects score** — stacking gold multipliers helps you survive, not pad your leaderboard. **Difficulty no longer multiplies score directly** either; harder difficulties just grant more XP & Gold (Hard +100%, Cosmic +200%), feeding kills/level naturally. Only your **highest score per period** counts. Top-of-board target: **~900k–1M**.
+**Gold no longer affects score** — stacking gold multipliers helps you survive, not pad your leaderboard. **Difficulty no longer multiplies score directly** either; harder difficulties just grant more XP & Gold (Hard +100%, Cosmic +200%), feeding kills/level naturally. Only your **highest score per period** counts. A clean Sector 10 victory lands ~430k. Long, skilled endless (25+ min with high kills/level) can reach 600k–1M. Top-of-board target: **~900k–1M**.
 
 ---
 

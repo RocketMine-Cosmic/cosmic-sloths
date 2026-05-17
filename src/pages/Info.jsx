@@ -321,7 +321,7 @@ const TABS_CONTENT = {
                     S6 rebuilt the score formula from scratch — <strong className="text-white">skill beats grind</strong>. Gold no longer contributes to score, time spent no longer rewards you, and sector progression is now the headline scorer:
                 </p>
                 <div className="bg-slate-900/60 rounded-xl p-4 border border-green-900/40 font-mono text-[11px] text-center text-green-300 mb-3 leading-relaxed">
-                    Score = Kills×120 + Level²×100 + Sector×8,000 + Victory Bonus + Endless Bonus
+                    Score = Kills×120 + Level²×100 + (SectorIndex)×8,000 + Victory Bonus + Endless Bonus
                 </div>
                 <div className="space-y-2 text-xs text-slate-400 mb-3">
                     <div className="bg-slate-900/50 rounded-lg p-2.5 border border-slate-700/60">
@@ -331,10 +331,10 @@ const TABS_CONTENT = {
                         <strong className="text-green-300">📈 Level² × 100</strong> — quadratic, so late levels matter <em>massively</em> more than early ones.
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-2.5 border border-slate-700/60">
-                        <strong className="text-green-300">🌌 Sector × 8,000</strong> — flat bonus for reaching each sector. Sector 10 = +72k just for being there.
+                        <strong className="text-green-300">🌌 SectorIndex × 8,000</strong> — flat bonus per sector reached (Sector 1 = 0, Sector 2 = 8k, ... Sector 10 = 72k). Progression is the real multiplier.
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-2.5 border border-amber-700/40">
-                        <strong className="text-amber-300">🏆 Victory Bonus = Sector × 15,000</strong> — clearing Sector 10 = +135k bonus. Boss-killing is now the real prize.
+                        <strong className="text-amber-300">🏆 Victory Bonus = SectorIndex × 15,000</strong> — clearing Sector 10 = +135k bonus. Boss-killing is now the real prize.
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-2.5 border border-purple-700/40">
                         <strong className="text-purple-300">♾️ Endless Bonus = Minutes × 10,000</strong> — endless gets its own per-minute scaling so long, well-played endless runs stay competitive with sector victories.
@@ -344,7 +344,7 @@ const TABS_CONTENT = {
                     <strong className="text-white">Gold no longer affects score.</strong> Stacking gold multipliers helps you survive — it doesn't pad your leaderboard score. <strong className="text-white">Difficulty</strong> also doesn't directly multiply score in S6; harder difficulties just grant more XP & Gold (Hard +100%, Cosmic +200%), which feed kills/level naturally.
                 </div>
                 <div className="text-xs text-slate-500 bg-slate-900/40 rounded-lg p-2 border border-slate-800">
-                    💡 Top-of-board target: <strong className="text-white">~900k–1M</strong>. A clean Sector 10 victory lands ~850k. A long, skilled endless can rival it. Only your <strong className="text-white">highest score per period</strong> counts on the leaderboard.
+                    💡 Top-of-board target: <strong className="text-white">~900k–1M</strong>. A clean Sector 10 victory (no stacking) lands ~430k. Long, skilled endless runs (25+ min with high kills/level) can reach 600k–1M. A long endless with high kills/level multipliers can compete with or exceed sector victories. Only your <strong className="text-white">highest score per period</strong> counts on the leaderboard.
                 </div>
             </SectionCard>
 

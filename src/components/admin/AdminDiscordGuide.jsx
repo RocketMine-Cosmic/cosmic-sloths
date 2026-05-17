@@ -28,21 +28,25 @@ Difficulty doesn't directly multiply your score — but more XP & Gold per run *
     },
     {
         title: 'Post 2 — Scoring & Leaderboards',
-        content: `🏆 **HOW SCORING WORKS**
+        content: `🏆 **HOW SCORING WORKS (Season 6)**
 
 Score is calculated **server-side** at the end of every run:
 
-\`Score = (Kills×10 + Level×100 + Time×5 + Gold×2 + Victory Bonus) × Sector Multiplier\`
+**Score = (Kills × 120) + (Level² × 100) + (SectorIndex × 8,000) + Victory Bonus + Endless Bonus**
 
-• **Victory Bonus:** flat +5,000 if you beat the timer
-• **Sector Multiplier:** ×1.0 (Azure Expanse) → +0.2 per sector across **10 sectors** → ×2.8 (Rainbow Rift) → **×2.0 in Endless Void**
-• Only your **highest score per period** counts on the leaderboard
+• **Kills × 120** — every enemy defeated
+• **Level² × 100** — quadratic scaling (late levels matter way more)
+• **SectorIndex × 8,000** — flat bonus per sector (Sector 1 = 0, Sector 10 = 72k)
+• **Victory Bonus = SectorIndex × 15,000** — only if you win (Sector 10 = +135k)
+• **Endless Bonus = Minutes × 10,000** — endless mode only (~10k per minute)
+
+**No gold contribution. No difficulty multiplier.** Harder difficulties just grant more XP & Gold, which feed into kills/level naturally. Only your **highest score per period** counts on the leaderboard.
 
 📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Weekly stat upgrades also reset.
 
 🗓️ **Seasonal Leaderboard** (4-week cycles) — Only the **top 100** players earn OMENX. Higher rank = bigger payout. Seasonal stat upgrades reset at season end.
 
-♾️ **Endless Void Leaderboard** — Permanent legacy ranking, never resets. **NOT eligible for OMENX payouts.** Credited Gold/kills scale with how long you survive (~720 Gold/min, ~240 kills/min) up to a hard cap of **10,000 Gold** and **6,000 kills** per run.
+♾️ **Endless Void Leaderboard** — Season-scoped ranking. **NOT eligible for OMENX payouts.** Long, well-played endless runs (25+ min) can reach 600k–1M score, rivaling or exceeding sector victories thanks to per-minute scaling.
 
 💠 Real OMENX is paid directly to your wallet at the end of each cycle — no claiming, no clicking.`,
     },
