@@ -280,7 +280,7 @@ const TABS_CONTENT = {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
                         <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. <strong className="text-emerald-400">20% of the weekly OMENX spend pool</strong> is paid out to the <strong className="text-emerald-400">top 45 players</strong>. Higher rank = bigger share. Weekly stat upgrades also reset.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. Only the <strong className="text-emerald-400">top 45 players</strong> earn OMENX — higher rank = bigger share. Weekly stat upgrades also reset.</p>
                         <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
                             <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
                             <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">8%</span></div>
@@ -294,7 +294,7 @@ const TABS_CONTENT = {
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. <strong className="text-emerald-400">30% of the seasonal OMENX spend pool</strong> is paid out to the <strong className="text-emerald-400">top 45 players</strong>. An additional <strong className="text-amber-300">10%</strong> is reserved for the Squad Wars Champions pool (see the Squad Wars tab). Seasonal stat upgrades reset at season end.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. Only the <strong className="text-emerald-400">top 45 players</strong> earn OMENX — higher rank = bigger share. Seasonal stat upgrades reset at season end.</p>
                         <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
                             <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
                             <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">7.5%</span></div>
