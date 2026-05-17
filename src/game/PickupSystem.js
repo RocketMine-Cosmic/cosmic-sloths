@@ -90,16 +90,10 @@ export function updatePickups(engine, dt) {
                 // smoothly over ~0.5s instead of teleporting them in one frame
                 // (which used to look like "everything just disappeared in a flash").
                 engine.pickups.forEach(otherP => {
-                    if (otherP.type === 'xp' || otherP.type === 'gold' || otherP.type === 'fragment') {
+                    if (otherP.type === 'xp' || otherP.type === 'gold') {
                         otherP.magnetSweep = true;
                     }
                 });
-                // Keep the sweep active for 3 seconds so gold/XP dropped from mobs
-                // dying DURING the sweep (very common on AoE builds) also gets pulled
-                // in. Without this, the magnet only grabbed the snapshot of pickups
-                // that existed at the exact moment of pickup, and new drops during
-                // the sweep just sat there (Anubis bug 2026-05-17).
-                engine.magnetSweepUntil = (engine.time || 0) + 3.0;
                 engine.addDamageText(engine.player.x, engine.player.y - 60, `MAGNETIC SURGE`, '#0000ff');
             } else if (p.type === 'shield_power') {
                 SFXManager.playGoldPickup();
@@ -111,15 +105,6 @@ export function updatePickups(engine, dt) {
                 engine.addDamageText(engine.player.x, engine.player.y - 40, `+0.1 ARMOR`, '#aaaaaa');
             }
             return false;
-        }
-        // During an active Magnetic Surge window, retroactively flag any pickup
-        // (XP / gold / fragment) that spawned AFTER the surge started so they also
-        // get vacuumed in. Fixes the "magnet only pulled some of the gold" issue on
-        // AoE builds where new mobs die during the sweep window.
-        if (engine.magnetSweepUntil && engine.time < engine.magnetSweepUntil
-            && !p.magnetSweep
-            && (p.type === 'xp' || p.type === 'gold' || p.type === 'fragment')) {
-            p.magnetSweep = true;
         }
         if (p.magnetSweep || dist < engine.player.magnetRange) {
             if (p.type !== 'nuke') {
