@@ -94,15 +94,31 @@ Deno.serve(async (req) => {
 
         console.log(`[backupData] Backup complete: ${backup_name} with ${Object.values(entity_counts).reduce((a, b) => a + b, 0)} total records`);
 
+        // Free the big snapshot object before the retention prune so we have headroom.
+        // Without this, the prune step OOMs because each old DataBackup row carries
+        // a ~50-100MB snapshot_data blob and the isolate is still holding everything
+        // from the fresh backup we just created.
+        for (const k of Object.keys(snapshot_data)) delete snapshot_data[k];
+
         // Retention: prune AUTOMATED backups older than 14 days. Manual backups are kept indefinitely.
+        // Paginate in small chunks (oldest-first) and stop as soon as we hit a row
+        // newer than the cutoff — keeps memory tiny even with hundreds of backups.
         let pruned = 0;
         if (is_automated) {
             try {
                 const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
-                const oldAutomated = await base44.asServiceRole.entities.DataBackup.filter({ backup_type: 'automated' }, '-created_date', 1000);
-                const toDelete = oldAutomated.filter(b => new Date(b.created_date).getTime() < cutoffMs);
-                for (const old of toDelete) {
-                    try { await base44.asServiceRole.entities.DataBackup.delete(old.id); pruned++; } catch {}
+                const PAGE = 20;
+                let done = false;
+                while (!done) {
+                    const batch = await base44.asServiceRole.entities.DataBackup.filter(
+                        { backup_type: 'automated' }, 'created_date', PAGE
+                    );
+                    if (!batch.length) break;
+                    for (const old of batch) {
+                        if (new Date(old.created_date).getTime() >= cutoffMs) { done = true; break; }
+                        try { await base44.asServiceRole.entities.DataBackup.delete(old.id); pruned++; } catch {}
+                    }
+                    if (batch.length < PAGE) break;
                 }
                 if (pruned > 0) console.log(`[backupData] Pruned ${pruned} automated backup(s) older than 14 days`);
             } catch (e) {
