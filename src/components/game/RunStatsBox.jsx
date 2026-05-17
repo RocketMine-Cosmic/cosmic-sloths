@@ -10,6 +10,7 @@ const PSEUDO_WEAPON_NAMES = {
     hackedInfight:  'Hacked Enemies (Infighting)',
     novabyteChain:  'NovaByte Chain Explosion',
     sonicBoom:      'Skybyte Sonic Boom',
+    nukePickup:     'Nuke Pickup',
     other:          'Untracked Damage',
 };
 
@@ -22,6 +23,7 @@ const PSEUDO_WEAPON_HINTS = {
     hackedInfight:  'Damage dealt by hacked enemies attacking each other (CodeBreaker)',
     novabyteChain:  "Chain explosions that fire on NovaByte's kills",
     sonicBoom:      'Skybyte\'s charge-release shockwave',
+    nukePickup:     'Nuclear detonation pickups (☢️) that clear the screen',
     other:          'Cosmic hazards + any remaining unclassified damage',
 };
 

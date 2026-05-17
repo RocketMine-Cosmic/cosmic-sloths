@@ -70,7 +70,11 @@ export function updatePickups(engine, dt) {
                 SFXManager.playWeaponFire('novaPulse');
                 engine.enemies.forEach(e => {
                     if (!e.isBoss) {
-                        engine.damageEnemy(e, e.maxHp * 10);
+                        // Tag nuke pickup damage so it shows up in the post-run
+                        // breakdown. Nukes one-shot every non-boss on screen and
+                        // can stack into MASSIVE untracked damage in long runs
+                        // (drops from elites + nova_nuke augment on boss kills).
+                        engine.damageEnemy(e, e.maxHp * 10, { weaponId: 'nukePickup' });
                     }
                 });
                 engine.addDamageText(engine.player.x, engine.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
