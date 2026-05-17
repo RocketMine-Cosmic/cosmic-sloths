@@ -646,8 +646,9 @@ Deno.serve(async (req) => {
 
         // Authoritative player_name comes from PlayerSave (set via Profile page).
         // Ignore the client-submitted name entirely — it can contain the OAuth
-        // full_name as a fallback. Fall back to Pilot_XXXXXX if unset.
-        const anonName = `Pilot_${walletAddress.slice(-6).toUpperCase()}`;
+        // full_name as a fallback. Fall back to Pilot_XXXXXXXX (8 chars) to avoid
+        // collisions when different wallets share the same last 6 digits.
+        const anonName = `Pilot_${walletAddress.slice(-8).toUpperCase()}`;
         const savedName = (saveData.player_name || saveRecord.player_name || '').trim();
         const safeName = savedName || anonName;
 
