@@ -292,7 +292,11 @@ export function updateProjectiles(engine, dt) {
                             pierce: 1,
                             life: 1,
                             color: '#FFD700',
-                            type: 'beam'
+                            type: 'beam',
+                            // Spawned inside updateProjectiles (NOT fireWeaponLogic) so it
+                            // bypasses the weaponId fallback — tag explicitly (Anubis bug
+                            // 2026-05-17, 81% untracked AoE).
+                            weaponId: 'shieldBubble'
                         });
                     }
                 }

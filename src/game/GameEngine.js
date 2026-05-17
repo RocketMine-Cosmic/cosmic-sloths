@@ -1190,10 +1190,23 @@ export class GameEngine {
         }
 
         // Credit damage to source weapon (if any) and remember last hitter for kill credit.
-        const sourceId = projectile?.weaponId || null;
-        if (sourceId) {
-            this.weaponDamage[sourceId] = (this.weaponDamage[sourceId] || 0) + finalDamage;
+        // If the caller didn't tag this hit, bucket it under 'untaggedAoE' so it
+        // shows up as a clear named row in RunStatsBox instead of silently bloating
+        // "Other" (Anubis bug 2026-05-17 — 81% in Other on an AoE-stack run).
+        // Dev-only one-shot console.warn helps hunt down the source on next run.
+        const sourceId = projectile?.weaponId || 'untaggedAoE';
+        this.weaponDamage[sourceId] = (this.weaponDamage[sourceId] || 0) + finalDamage;
+        if (projectile?.weaponId) {
             enemy._lastWeaponId = sourceId;
+        } else if (!this._warnedUntaggedTypes) {
+            this._warnedUntaggedTypes = new Set();
+        }
+        if (!projectile?.weaponId && this._warnedUntaggedTypes) {
+            const tag = projectile?.type || 'no-projectile';
+            if (!this._warnedUntaggedTypes.has(tag)) {
+                this._warnedUntaggedTypes.add(tag);
+                console.warn('[Untagged damage source]', tag, projectile);
+            }
         }
 
         // Don't let local damage "kill" the world boss — the server handles

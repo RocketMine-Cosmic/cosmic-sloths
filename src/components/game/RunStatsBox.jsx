@@ -11,6 +11,8 @@ const PSEUDO_WEAPON_NAMES = {
     novabyteChain:  'NovaByte Chain Explosion',
     sonicBoom:      'Skybyte Sonic Boom',
     nukePickup:     'Nuke Pickup',
+    aegisMatrix:    'Aegis Retaliation',
+    untaggedAoE:    'Untagged AoE Damage',
     other:          'Untracked Damage',
 };
 
@@ -24,6 +26,8 @@ const PSEUDO_WEAPON_HINTS = {
     novabyteChain:  "Chain explosions that fire on NovaByte's kills",
     sonicBoom:      'Skybyte\'s charge-release shockwave',
     nukePickup:     'Nuclear detonation pickups (☢️) that clear the screen',
+    aegisMatrix:    'Aegis Matrix retaliation missiles fired when you take damage',
+    untaggedAoE:    'AoE damage from a source the engine couldn\'t identify — report this to the team if it\'s a large %',
     other:          'Cosmic hazards + any remaining unclassified damage',
 };
 
