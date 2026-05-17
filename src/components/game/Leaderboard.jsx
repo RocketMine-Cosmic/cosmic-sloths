@@ -248,17 +248,22 @@ export default function Leaderboard() {
             }
             // Pool fetch is now handled by useQuery hook above
 
-            // Deduplicate by user_id (wallet_address is masked by RLS) — count up to
-            // 45 unique players for payout math AND display.
+            // Deduplicate per player — count up to 45 unique players for payout math AND display.
+            // Use the first available identifier (user_id → wallet_address → player_name)
+            // so older rows missing user_id (back when wallet-only writes existed) still
+            // dedup correctly. Without the fallback, two RunScore rows for the same
+            // player would both render as separate ranks (Anubis bug 2026-05-17).
             const allUnique = [];
-            const seenUserIds = new Set();
+            const seenKeys = new Set();
 
             for (const score of data) {
                 if (view !== 'endless' && score.arena_id === 'endless') continue;
 
-                const userId = score.user_id;
-                if (userId && seenUserIds.has(userId)) continue;
-                if (userId) seenUserIds.add(userId);
+                const key = score.user_id
+                    || (score.wallet_address || '').toLowerCase()
+                    || score.player_name;
+                if (key && seenKeys.has(key)) continue;
+                if (key) seenKeys.add(key);
                 allUnique.push(score);
 
                 if (allUnique.length >= 45) break;
