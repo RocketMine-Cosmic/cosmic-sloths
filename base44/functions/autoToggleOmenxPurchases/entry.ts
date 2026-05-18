@@ -77,7 +77,11 @@ async function runProbe() {
             || /eth_call/i.test(msg)
             || /chain[_ ]?node|node[_ ]?unavailable/i.test(msg)
             || /upstream[_ ]?error|gateway[_ ]?error|settlement[_ ]?unavailable/i.test(msg);
-        const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR';
+        const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR'
+            || code === 'PAYMENT_FAILED' || code === 'BALANCE_CHECK_FAILED';
+        // PAYMENT_FAILED (HTTP 422) = on-chain tx reverted / could not be broadcast.
+        // Terminal "do not retry" per OmenX docs — definitive proof settlement is down.
+        // BALANCE_CHECK_FAILED (HTTP 503) = RPC error reading balance — also a settlement-side failure.
         const settlementDown = is5xx || isDownCode || isSettlementRpcError;
         return {
             result: settlementDown ? 'failure' : 'inconclusive',
