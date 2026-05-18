@@ -24,6 +24,7 @@ import ForgePanel from '../components/game/ForgePanel';
 import TalentRespecModal from '../components/game/TalentRespecModal';
 import RelicPrestigeBadge from '../components/game/RelicPrestigeBadge';
 import StatPips, { SmallStatPips } from '../components/game/StatPips';
+import BuyAllStatsButton from '../components/upgrades/BuyAllStatsButton';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
@@ -548,7 +549,19 @@ export default function Upgrades({ isCarousel }) {
         
         return (
             <div className="space-y-2 md:space-y-4">
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">Base Stats</h2>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 mb-2 md:mb-4">
+                    <h2 className="text-xl md:text-2xl font-bold text-white">Base Stats</h2>
+                    {(activeCategory === 'weekly' || activeCategory === 'seasonal') && (
+                        <BuyAllStatsButton
+                            tier={activeCategory}
+                            tokenCosts={typeConfig.tokenCosts}
+                            save={save}
+                            omenxBalance={omenxBalance}
+                            omenxBlocked={omenxBlocked}
+                            omenxBlockedMsg={omenxBlockedMsg}
+                        />
+                    )}
+                </div>
                 {STATS.filter(Boolean).map(stat => {
                     const upgrades = upgradesObj;
                     const level = upgrades[stat.id] || 0;
