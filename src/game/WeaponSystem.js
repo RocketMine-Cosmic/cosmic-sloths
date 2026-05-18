@@ -8,9 +8,12 @@ import { isS6OrLater } from '@/lib/seasonGate';
 // actual AoE — players were noticing upgrades stopped mattering past the cap.
 // Numbers chosen to keep current legit max-stack builds at ~70-75% of their old
 // visual footprint — readable but still satisfyingly large. See docs/S6_PATCH_NOTES.md §4.
+// 2026-05-18: bumped shieldBubble 240→320 and aegisMatrix 320→420 after Texxy
+// reported the bubbles "felt small" on mobile — the visual was clipping well
+// below the true damage radius for maxed-area builds, making upgrades feel invisible.
 const S6_VISUAL_RADIUS_CAP = {
-    aegisMatrix:    320,
-    shieldBubble:   240,
+    aegisMatrix:    420,
+    shieldBubble:   320,
     burningBarrier: 280,
     hellfire:       240,
     quantumCollapse: 180,

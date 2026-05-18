@@ -39,7 +39,23 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         // bubble stays readable while area upgrades continue to expand the actual AoE.
         // Non-AoE projectiles never set visualRadius and render at full damage radius.
         const originalRadius = p.radius;
-        if (p.visualRadius != null && p.visualRadius < p.radius) {
+        const hasVisualCap = p.visualRadius != null && p.visualRadius < p.radius;
+        if (hasVisualCap) {
+            // Faint outline ring showing the TRUE damage radius — so players can see
+            // their area upgrades are actually working even when the drawn bubble is
+            // capped for readability (Texxy feedback 2026-05-18).
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.25;
+            ctx.strokeStyle = p.color || '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 10]);
+            ctx.lineDashOffset = -time * 20;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
             p.radius = p.visualRadius;
         }
 
