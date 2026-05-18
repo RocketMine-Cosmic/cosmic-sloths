@@ -3,11 +3,11 @@ import { SFXManager } from './SFXManager';
 import { getWeaponStatsAndMastery } from './Constants';
 import { isS6OrLater } from '@/lib/seasonGate';
 
-// S6 visual-radius caps — applied as a final clamp on each AoE weapon's drawn radius.
-// Damage is unaffected; only the visual/hitbox radius is capped so a maxed-out Aegis
-// Matrix doesn't blanket the screen. Numbers chosen to keep current legit max-stack
-// builds (Tijckers/Anubis ~1800-2000px peak) at ~70-75% of their old footprint —
-// readable but still satisfyingly large. See docs/S6_PATCH_NOTES.md §4.
+// S6 visual-radius caps — applied ONLY to the drawn radius on each AoE weapon.
+// Damage hitbox (p.radius) stays uncapped so area upgrades continue to scale the
+// actual AoE — players were noticing upgrades stopped mattering past the cap.
+// Numbers chosen to keep current legit max-stack builds at ~70-75% of their old
+// visual footprint — readable but still satisfyingly large. See docs/S6_PATCH_NOTES.md §4.
 const S6_VISUAL_RADIUS_CAP = {
     aegisMatrix:    320,
     shieldBubble:   240,
@@ -17,10 +17,17 @@ const S6_VISUAL_RADIUS_CAP = {
     toxicCloud:     200,
     napalm:         180,
 };
-function capVisualRadius(weaponId, radius) {
-    if (!isS6OrLater()) return radius;
+// Returns the visual cap for a weapon's drawn radius, or `undefined` when:
+//  - season is pre-S6, OR
+//  - this weapon has no cap entry.
+// Callers should attach this as `visualRadius` on the projectile (when defined),
+// leaving `radius` as the true damage hitbox.
+function getVisualRadius(weaponId, radius) {
+    if (!isS6OrLater()) return undefined;
     const cap = S6_VISUAL_RADIUS_CAP[weaponId];
-    return cap ? Math.min(radius, cap) : radius;
+    if (!cap) return undefined;
+    if (radius <= cap) return undefined; // No clamp needed — they're the same.
+    return cap;
 }
 
 export function fireWeaponLogic(engine, w) {
@@ -210,10 +217,12 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'napalm') {
+        const r = 40 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: capVisualRadius('napalm', 40 * area),
+            radius: r,
+            visualRadius: getVisualRadius('napalm', r),
             damage: dmg * 0.5,
             pierce: 999,
             life: 3 + w.level,
@@ -279,11 +288,12 @@ export function fireWeaponLogic(engine, w) {
     else if (w.id === 'shieldBubble') {
         const color = isMastered ? '#ffd700' : engine.player.color;
         engine.addParticle(engine.player.x, engine.player.y, color, 8, 'circle', 2 * area, { speed: 200 });
+        const r = 80 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 80 * area,  // Damage radius — scales uncapped with upgrades
-            visualRadius: capVisualRadius('shieldBubble', 80 * area),  // Visual radius — capped for screen space
+            radius: r,
+            visualRadius: getVisualRadius('shieldBubble', r),
             damage: dmg,
             pierce: 999,
             life: 2.0,
@@ -296,10 +306,12 @@ export function fireWeaponLogic(engine, w) {
         });
     }
     else if (w.id === 'burningBarrier') {
+        const r = 100 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: capVisualRadius('burningBarrier', 100 * area),
+            radius: r,
+            visualRadius: getVisualRadius('burningBarrier', r),
             damage: dmg,
             pierce: 999,
             life: 3.0 + (w.level * 0.5),
@@ -575,10 +587,12 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'hellfire') {
+        const r = 60 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: capVisualRadius('hellfire', 60 * area),
+            radius: r,
+            visualRadius: getVisualRadius('hellfire', r),
             damage: dmg,
             pierce: 999,
             life: 5 + w.level,
@@ -597,10 +611,12 @@ export function fireWeaponLogic(engine, w) {
         const spawnCollapse = (multiplier, delay) => {
             setTimeout(() => {
                 if (engine.isGameOver || engine.isVictory) return;
+                const r = 25 * area * multiplier;
                 engine.projectiles.push({
                     x: engine.player.x, y: engine.player.y,
                     vx: 0, vy: 0,
-                    radius: capVisualRadius('quantumCollapse', 25 * area * multiplier),
+                    radius: r,
+                    visualRadius: getVisualRadius('quantumCollapse', r),
                     damage: dmg * multiplier,
                     pierce: 999,
                     life: 1.0,
@@ -620,10 +636,12 @@ export function fireWeaponLogic(engine, w) {
         // Evolves from shieldBubble whose mastered color is gold (#ffd700).
         // Was green — broke the parent-color inheritance rule (Hugo audit 2026-05-12).
         engine.addParticle(engine.player.x, engine.player.y, '#ffd700', 12, 'circle', 2 * area, { speed: 300 });
+        const r = 120 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: capVisualRadius('aegisMatrix', 120 * area),
+            radius: r,
+            visualRadius: getVisualRadius('aegisMatrix', r),
             damage: dmg,
             pierce: 999,
             life: 2.5,
@@ -703,15 +721,20 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'toxicCloud') {
-        const baseRadius = capVisualRadius('toxicCloud', 50 * area);
+        const baseRadius = 50 * area;
+        const maxRadius = baseRadius * 2;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
             radius: baseRadius,
+            // Visual cap applies to whatever the cloud has grown to — damage hitbox
+            // (p.radius / maxRadius) stays uncapped so area upgrades scale DPS.
+            visualRadius: getVisualRadius('toxicCloud', baseRadius),
+            visualMaxRadius: getVisualRadius('toxicCloud', maxRadius),
             // Mastery: cloud grows over time, capped at 2× base. Read in
             // ProjectileSystem's per-frame AoE update (Anubis bug 2026-05-11).
             baseRadius: baseRadius,
-            maxRadius: baseRadius * 2,
+            maxRadius: maxRadius,
             growthRate: isMastered ? baseRadius / (4 + w.level) : 0,
             damage: dmg * 0.4,
             pierce: 999,

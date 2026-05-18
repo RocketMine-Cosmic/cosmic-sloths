@@ -255,12 +255,11 @@ export function updateProjectiles(engine, dt) {
             } else if (p.pushback) {
                 p.x = engine.player.x;
                 p.y = engine.player.y;
-                const damageRadius = p.radius;
-                const displayRadius = p.visualRadius || p.radius;  // Use visualRadius if set (for capped AoEs)
+                // p.radius = uncapped damage hitbox. visualRadius (if set) is render-only.
                 checkAoe(e => {
-                    if (Math.abs(e.x - p.x) > damageRadius + e.radius || Math.abs(e.y - p.y) > damageRadius + e.radius) return;
+                    if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                     const dist = Math.hypot(e.x - p.x, e.y - p.y);
-                    if (dist < damageRadius) {
+                    if (dist < p.radius) {
                         if (engine.frameCount % 15 === 0) {
                             engine.damageEnemy(e, p.damage, p);
                             if (p.burn) {
@@ -305,8 +304,13 @@ export function updateProjectiles(engine, dt) {
             } else {
                 // Toxic Emitter mastery: clouds grow over time (Anubis bug 2026-05-11).
                 // Growth happens every frame for smooth visual scaling, capped at maxRadius.
+                // `radius` = damage hitbox (uncapped). `visualRadius` (when set) is what
+                // gets drawn — grows in lockstep but clamped to visualMaxRadius.
                 if (p.growthRate && p.maxRadius && p.radius < p.maxRadius) {
                     p.radius = Math.min(p.maxRadius, p.radius + p.growthRate * dt);
+                    if (p.visualRadius != null && p.visualMaxRadius != null) {
+                        p.visualRadius = Math.min(p.visualMaxRadius, p.visualRadius + p.growthRate * dt);
+                    }
                 }
                 if (engine.frameCount % 15 === 0) {
                     checkAoe(e => {

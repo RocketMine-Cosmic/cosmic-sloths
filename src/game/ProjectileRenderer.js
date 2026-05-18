@@ -34,12 +34,14 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
     const texSmoke = particleManager?.textures?.smoke;
 
     projectiles.forEach(p => {
-        // Visual radius now matches the true hit radius (no clamp).
-        // Previously non-AoE projectiles were rendered at a fixed cap (6/8/15px)
-        // which made their visual size lie about their actual reach — projectiles
-        // with high area multipliers (e.g. 15*area supernova at 4× = 60px hit radius)
-        // were drawn tiny while still hitting far. Now visual scales with the hitbox.
+        // Decouple visual radius from damage radius. AoE weapons with S6 visual caps
+        // set `p.visualRadius` (separate from `p.radius` damage hitbox) so the drawn
+        // bubble stays readable while area upgrades continue to expand the actual AoE.
+        // Non-AoE projectiles never set visualRadius and render at full damage radius.
         const originalRadius = p.radius;
+        if (p.visualRadius != null && p.visualRadius < p.radius) {
+            p.radius = p.visualRadius;
+        }
 
         ctx.save();
         ctx.translate(p.x, p.y);
