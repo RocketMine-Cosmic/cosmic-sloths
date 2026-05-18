@@ -39,7 +39,8 @@ async function runProbe() {
     if (!apiKey) throw new Error('No payment key configured');
 
     const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
-    const wallet = '0x000000000000000000000000000000000000dEaD';
+    // Owner wallet — has balance, so probe exercises real settlement path
+    const wallet = '0xd2EBE0C69df70b97E3218fecFFA8295a00dd9B21';
     const idempotencyKey = `auto-probe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     const start = Date.now();
@@ -52,17 +53,14 @@ async function runProbe() {
             paymentCurrency: 'OMENX',
             paymentAmount: 1,
         });
-        // Success of the call itself is unexpected (dead wallet) — still healthy.
-        return { healthy: true, durationMs: Date.now() - start, detail: 'unexpected_success' };
+        // Successful settlement — settlement path is healthy
+        return { healthy: true, durationMs: Date.now() - start, detail: 'settlement_confirmed' };
     } catch (err) {
         const msg = err?.message || String(err);
         const is5xx = /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
-        const is402 = /\b402\b/.test(msg);
-        const is4xxOther = /\b40[01345-9]\b/.test(msg);
         const codeMatch = msg.match(/"code"\s*:\s*"([A-Z_]+)"/);
         const code = codeMatch ? codeMatch[1] : null;
-        // OmenX reuses PAYMENT_FAILED for both user-side failures AND thirdweb RPC
-        // outages. Inspect the error body for RPC-flavoured strings to tell them apart.
+        // Settlement RPC errors
         const isSettlementRpcError =
             /rpc[_ ]?error/i.test(msg)
             || /thirdweb\.com/i.test(msg)
@@ -70,10 +68,9 @@ async function runProbe() {
             || /eth_call/i.test(msg)
             || /chain[_ ]?node|node[_ ]?unavailable/i.test(msg)
             || /upstream[_ ]?error|gateway[_ ]?error|settlement[_ ]?unavailable/i.test(msg);
-        const isHealthyCode = (code === 'INSUFFICIENT_FUNDS' || code === 'PAYMENT_FAILED') && !isSettlementRpcError;
         const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR';
-        const settlementDown = is5xx || isDownCode || isSettlementRpcError || (is402 && !isHealthyCode);
-        const healthy = !settlementDown && (isHealthyCode || is4xxOther);
+        const settlementDown = is5xx || isDownCode || isSettlementRpcError;
+        const healthy = !settlementDown;
         return {
             healthy,
             durationMs: Date.now() - start,
