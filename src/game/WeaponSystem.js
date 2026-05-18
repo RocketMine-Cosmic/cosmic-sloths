@@ -19,6 +19,14 @@ const S6_VISUAL_RADIUS_CAP = {
     quantumCollapse: 180,
     toxicCloud:     200,
     napalm:         180,
+    // Expanding pulse rings — these grow at 500px/s in ProjectileSystem so the
+    // DRAWN radius can balloon past 500px on high-area builds. Capping the visual
+    // keeps the screen readable + bounds the glow-texture cache size; damage
+    // hitbox (p.radius) still grows uncapped so area upgrades scale DPS.
+    // ProjectileSystem grows p.visualRadius in lockstep, clamped to these caps.
+    novaPulse:      350,
+    laserNova:      400,
+    seismicWhip:    300,
 };
 // Returns the visual cap for a weapon's drawn radius, or `undefined` when:
 //  - season is pre-S6, OR
@@ -257,10 +265,14 @@ export function fireWeaponLogic(engine, w) {
             }
         }
         
+        const novaR = 10 * area;
+        const novaVisCap = getVisualRadius('novaPulse', 9999); // cap value if S6+
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 10 * area,
+            radius: novaR,
+            visualRadius: novaR,
+            visualMaxRadius: novaVisCap,
             damage: dmg,
             pierce: 999,
             life: 0.5,
@@ -275,7 +287,9 @@ export function fireWeaponLogic(engine, w) {
                 engine.projectiles.push({
                     x: engine.player.x, y: engine.player.y,
                     vx: 0, vy: 0,
-                    radius: 10 * area,
+                    radius: novaR,
+                    visualRadius: novaR,
+                    visualMaxRadius: novaVisCap,
                     damage: dmg * 0.5,
                     pierce: 999,
                     life: 0.5,
@@ -337,10 +351,13 @@ export function fireWeaponLogic(engine, w) {
             }
         }
         
+        const lnR = 15 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: 15 * area,
+            radius: lnR,
+            visualRadius: lnR,
+            visualMaxRadius: getVisualRadius('laserNova', 9999),
             damage: dmg,
             pierce: 999,
             life: 0.8,
@@ -451,10 +468,13 @@ export function fireWeaponLogic(engine, w) {
         
         if (hitAny) {
             engine.addParticle(hitX, hitY, '#00ffff', 15, 'spark', 2);
+            const swR = 30 * area;
             engine.projectiles.push({
                 x: hitX, y: hitY,
                 vx: 0, vy: 0,
-                radius: 30 * area,
+                radius: swR,
+                visualRadius: swR,
+                visualMaxRadius: getVisualRadius('seismicWhip', 9999),
                 damage: dmg * 1.5,
                 pierce: 999,
                 life: 0.5,

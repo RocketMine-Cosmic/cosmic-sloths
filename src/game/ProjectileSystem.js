@@ -241,6 +241,11 @@ export function updateProjectiles(engine, dt) {
 
             if (p.pulse) {
                 p.radius += 500 * dt;
+                // Grow visualRadius in lockstep, clamped to visualMaxRadius (S6 cap).
+                // Damage hitbox (p.radius) stays uncapped so area upgrades still scale DPS.
+                if (p.visualRadius != null && p.visualMaxRadius != null) {
+                    p.visualRadius = Math.min(p.visualMaxRadius, p.visualRadius + 500 * dt);
+                }
                 checkAoe(e => {
                     if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                     if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
