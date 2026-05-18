@@ -46,16 +46,16 @@ const PRESTIGE_MAX = 5;
 
 async function with429Retry(fn, label = 'op') {
     let lastErr;
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 6; attempt++) {
         try { return await fn(); }
         catch (err) {
             lastErr = err;
             const status = err?.status || err?.response?.status;
             const msg = String(err?.message || '').toLowerCase();
             const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
-            if (!is429 || attempt === 3) throw err;
+            if (!is429 || attempt === 5) throw err;
             const backoff = 300 * Math.pow(2, attempt) + Math.random() * 200;
-            console.warn(`[prestigeRelic] ${label} 429 — retry ${attempt + 1}/3 after ${Math.round(backoff)}ms`);
+            console.warn(`[prestigeRelic] ${label} 429 — retry ${attempt + 1}/5 after ${Math.round(backoff)}ms`);
             await new Promise(r => setTimeout(r, backoff));
         }
     }
