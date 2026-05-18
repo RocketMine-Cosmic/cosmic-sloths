@@ -74,7 +74,12 @@ export default function AdminSquadChampions({ walletAddress }) {
                 mode: 'execute',
             });
             if (res.data?.success) {
-                setExecuteMsg(`✓ Paid ${res.data.member_count || 0} members across ${(res.data.top_squads || []).length} squads — ${(res.data.total_payout_omenx || 0).toFixed(2)} OMENX total.`);
+                // Function returns paid_this_run / paid_omenx_this_run for resume-aware runs.
+                // Fall back to member_count / total_payout_omenx for older shape compatibility.
+                const paidCount = res.data.paid_this_run ?? res.data.member_count ?? 0;
+                const paidOmenx = res.data.paid_omenx_this_run ?? res.data.total_payout_omenx ?? 0;
+                const squadCount = (res.data.top_squads || []).length;
+                setExecuteMsg(`✓ Paid ${paidCount} members across ${squadCount} squads — ${Math.floor(paidOmenx).toLocaleString()} OMENX total.`);
                 setPreviewData(null); // force fresh preview after distribution
             } else {
                 setExecuteMsg(`✗ ${res.data?.error || 'Distribution failed.'}`);
