@@ -30,13 +30,19 @@ let _purchasesDisabledExpiresAt = 0;
 const PURCHASES_FLAG_TTL_MS = 15 * 1000;
 const DEFAULT_DISABLED_MSG = 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.';
 
-// Note: 502 from OmenX = gateway timeout (slow settlement, NOT down). The
-// transaction often still settles on-chain. We do NOT trip a circuit breaker
-// and we do NOT retry across keys on 5xx — each retry is a billable API call
-// for the same in-flight transaction. Single attempt, return whatever OmenX
-// says, move on.
-function isUpstream5xx(msg) {
-    return /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
+// OmenX error code semantics (per OmenX docs, refreshed 2026-05-18):
+//   502 PAYMENT_PENDING       — on-chain tx broadcast, receipt not yet seen. Retry with same idempotencyKey.
+//   503 BALANCE_CHECK_FAILED  — RPC error reading balance. Retry-safe.
+//   504 GATEWAY_TIMEOUT       — generic upstream timeout. Retry-safe.
+//   422 PAYMENT_FAILED        — on-chain tx reverted. TERMINAL — do not retry.
+//   402 INSUFFICIENT_FUNDS    — balance below paymentAmount. TERMINAL.
+//   404 SKU_NOT_FOUND         — SKU not configured. TERMINAL.
+//   401 INVALID_API_KEY       — this key disabled/expired. Cycle to next key.
+//   400 VALIDATION_ERROR      — malformed request. TERMINAL.
+//   428 IDEMPOTENCY_KEY_REQ   — we always send one, should never happen.
+function isRetryable5xx(msg) {
+    // 502/503/504 are all retry-safe per OmenX spec
+    return /\b50[234]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable|balance_check_failed|payment_pending/i.test(msg);
 }
 
 async function getOmenXPurchasesDisabled(base44) {
@@ -522,11 +528,46 @@ Deno.serve(async (req) => {
                 lastErr = err;
                 const msg = err?.message || String(err);
 
-                // 5xx = OmenX gateway timeout (slow settlement, often still lands
-                // on-chain). Retry with next key up to MAX_RETRIES.
-                if (isUpstream5xx(msg)) {
+                // 404 SKU_NOT_FOUND — terminal, SKU not configured on OmenX side.
+                if (/\b404\b/.test(msg) || /sku_not_found/i.test(msg)) {
+                    console.error(`[purchaseSku] OmenX 404 SKU_NOT_FOUND sku=${skuId}:`, msg.slice(0, 200));
+                    postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
+                        title: '❌ SKU not found on OmenX',
+                        description: 'SKU is missing from the OmenX developer portal — players cannot buy this item.',
+                        fields: [
+                            { name: 'SKU', value: skuId, inline: true },
+                            { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
+                        ],
+                    });
+                    return Response.json({ error: "This item isn't available right now. Please try again later." }, { status: 400 });
+                }
+
+                // 402 INSUFFICIENT_FUNDS — terminal, balance check confirmed too low.
+                if (/\b402\b/.test(msg) || /insufficient_funds/i.test(msg)) {
+                    return Response.json({ error: "You don't have enough OMENX to complete this purchase." }, { status: 400 });
+                }
+
+                // 401 INVALID_API_KEY — this key is dead. Cycle to next without
+                // counting it as a real retry attempt against MAX_RETRIES.
+                if (/\b401\b/.test(msg) || /invalid_api_key/i.test(msg)) {
                     if (i < attempts - 1) {
-                        console.warn(`[purchaseSku] OmenX 5xx on key ${i + 1} — retrying (${i + 2}/${attempts}):`, msg.slice(0, 120));
+                        console.warn(`[purchaseSku] OmenX 401 INVALID_API_KEY on key ${i + 1} — cycling to next key`);
+                        continue;
+                    }
+                    console.error('[purchaseSku] All payment keys returned 401 INVALID_API_KEY');
+                    postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
+                        title: '🔑 All OMENX payment keys invalid',
+                        description: 'Every configured payment key returned 401 — check OmenX dev portal.',
+                    });
+                    return Response.json({ error: 'Payments are temporarily unavailable. Please try again shortly.' }, { status: 500 });
+                }
+
+                // 502/503/504 = retry-safe per OmenX spec (PAYMENT_PENDING /
+                // BALANCE_CHECK_FAILED / GATEWAY_TIMEOUT). Same idempotencyKey
+                // protects against double-charge if a previous attempt settled.
+                if (isRetryable5xx(msg)) {
+                    if (i < attempts - 1) {
+                        console.warn(`[purchaseSku] OmenX retry-safe 5xx on key ${i + 1} — retrying (${i + 2}/${attempts}):`, msg.slice(0, 120));
                         continue;
                     }
                     console.error(`[purchaseSku] OmenX 5xx after ${attempts} attempts:`, msg.slice(0, 200));
