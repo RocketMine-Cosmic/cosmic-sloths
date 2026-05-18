@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ChevronDown, ChevronUp, Users, Crown, Loader2, AlertTriangle } from 'lucide-react';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
@@ -23,8 +23,16 @@ export default function MemberContributionsPanel({ squadId, myWalletLower = '' }
     const [rows, setRows] = useState(null);
     const [totalShown, setTotalShown] = useState(0);
 
+    // attempted ref — once we've tried (success OR failure) we DON'T auto-retry.
+    // Previously, a 429 left rows === null with an error, so any parent re-render
+    // (squad subscription events, wallet hydration, tab switch) re-fired the
+    // effect → hammered the backend → made the 429 storm worse. Now: one attempt
+    // per open, and the user clicks "Retry" if they want another.
+    const attemptedRef = useRef(false);
+
     const load = useCallback(async () => {
         if (!squadId) return;
+        attemptedRef.current = true;
         setLoading(true);
         setError(null);
         try {
@@ -43,10 +51,20 @@ export default function MemberContributionsPanel({ squadId, myWalletLower = '' }
         setLoading(false);
     }, [squadId]);
 
-    // Lazy-load: only fetch when the panel is opened the first time.
+    // Reset the attempted flag if the squad id changes (e.g. user switched squads).
+    useEffect(() => { attemptedRef.current = false; setRows(null); setError(null); }, [squadId]);
+
+    // Lazy-load: only fetch when the panel is opened the first time. Will NOT
+    // re-fire on error — user must click "Retry" explicitly.
     useEffect(() => {
-        if (open && rows === null && !loading) load();
-    }, [open, rows, loading, load]);
+        if (open && !attemptedRef.current && !loading) load();
+    }, [open, loading, load]);
+
+    // Explicit retry handler — resets the gate and re-fetches.
+    const handleRetry = useCallback(() => {
+        attemptedRef.current = false;
+        load();
+    }, [load]);
 
     return (
         <div className="mt-4 bg-slate-900/60 border border-slate-700 rounded-xl overflow-hidden">
@@ -73,7 +91,7 @@ export default function MemberContributionsPanel({ squadId, myWalletLower = '' }
                     {error && !loading && (
                         <div className="flex items-center justify-between gap-2 text-xs text-amber-200 bg-amber-950/40 border border-amber-700/40 rounded p-2">
                             <div className="flex items-center gap-2"><AlertTriangle className="w-3.5 h-3.5" /> {error}</div>
-                            <button onClick={load} className="px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-500 text-white font-bold">Retry</button>
+                            <button onClick={handleRetry} className="px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-500 text-white font-bold">Retry</button>
                         </div>
                     )}
                     {!loading && !error && rows && rows.length === 0 && (
