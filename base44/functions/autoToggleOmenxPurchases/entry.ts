@@ -54,13 +54,22 @@ async function runProbe() {
             paymentAmount: 1,
         });
         // Successful settlement — settlement path is healthy
-        return { healthy: true, durationMs: Date.now() - start, detail: 'settlement_confirmed' };
+        return { result: 'success', durationMs: Date.now() - start, detail: 'settlement_confirmed' };
     } catch (err) {
         const msg = err?.message || String(err);
         const is5xx = /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
         const codeMatch = msg.match(/"code"\s*:\s*"([A-Z_]+)"/);
         const code = codeMatch ? codeMatch[1] : null;
-        // Settlement RPC errors
+        // Probe-side issues (don't count toward streak, just log)
+        const isProbeIssue = /\b401\b|INVALID_API_KEY|invalid[_ ]?key|rate[_ ]?limit|429|\b404\b|SKU_NOT_FOUND|VALIDATION_ERROR|\b400\b|IDEMPOTENCY_KEY/.test(msg);
+        if (isProbeIssue) {
+            return {
+                result: 'inconclusive',
+                durationMs: Date.now() - start,
+                detail: `[${code || 'PROBE_ISSUE'}] ${msg}`.slice(0, 300),
+            };
+        }
+        // Settlement RPC errors — OmenX/thirdweb is down
         const isSettlementRpcError =
             /rpc[_ ]?error/i.test(msg)
             || /thirdweb\.com/i.test(msg)
@@ -70,9 +79,8 @@ async function runProbe() {
             || /upstream[_ ]?error|gateway[_ ]?error|settlement[_ ]?unavailable/i.test(msg);
         const isDownCode = code === 'SETTLEMENT_UNAVAILABLE' || code === 'UPSTREAM_ERROR' || code === 'GATEWAY_ERROR';
         const settlementDown = is5xx || isDownCode || isSettlementRpcError;
-        const healthy = !settlementDown;
         return {
-            healthy,
+            result: settlementDown ? 'failure' : 'inconclusive',
             durationMs: Date.now() - start,
             detail: `${code ? `[${code}${isSettlementRpcError ? '/RPC' : ''}] ` : ''}${msg}`.slice(0, 300),
         };
@@ -110,23 +118,24 @@ Deno.serve(async (req) => {
             killUpdatedAt > lastAutoFlipAt + 5000 && // 5s slop for clock drift
             (Date.now() - killUpdatedAt) < MANUAL_OVERRIDE_GRACE_MS;
 
-        // Update consecutive counters
+        // Update consecutive counters (only on conclusive results, ignore inconclusive)
         const newState = { ...prevState };
-        if (probe.healthy) {
+        if (probe.result === 'success') {
             newState.consecutiveSuccesses = (prevState.consecutiveSuccesses || 0) + 1;
             newState.consecutiveFailures = 0;
-        } else {
+        } else if (probe.result === 'failure') {
             newState.consecutiveFailures = (prevState.consecutiveFailures || 0) + 1;
             newState.consecutiveSuccesses = 0;
         }
-        newState.lastResult = probe.healthy ? 'healthy' : 'down';
+        // else: inconclusive — don't change either counter
+        newState.lastResult = probe.result;
         newState.lastProbeAt = new Date().toISOString();
         newState.lastDetail = probe.detail;
         newState.lastDurationMs = probe.durationMs;
 
-        // Decide if we should flip
+        // Decide if we should flip (only on confirmed success/failure, never on inconclusive)
         let flipTo = null; // null = no change, true = disable, false = enable
-        if (!manuallyChangedRecently) {
+        if (!manuallyChangedRecently && probe.result !== 'inconclusive') {
             if (!currentlyDisabled && newState.consecutiveFailures >= FAILURE_THRESHOLD) {
                 flipTo = true;
             } else if (currentlyDisabled && newState.consecutiveSuccesses >= SUCCESS_THRESHOLD) {
