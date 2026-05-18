@@ -30,21 +30,22 @@ Difficulty doesn't directly multiply your score — but more XP & Gold per run *
         title: 'Post 2 — Scoring & Leaderboards',
         content: `🏆 **HOW SCORING WORKS (Season 6)**
 
-Score is calculated **server-side** at the end of every run:
+Score is calculated **server-side** at the end of every run. **Sector and Endless modes have separate formulas:**
 
-**Score = (Kills × 120) + (Level² × 100) + (SectorIndex × 8,000) + Victory Bonus + Endless Bonus**
+**Sector Runs:** Score = (Kills × 120) + (Level² × 100) + (SectorIndex × 8,000) + Victory Bonus
+**Endless Runs:** Score = (Kills × 120) + (Level² × 100) + (Minutes × 10,000)
 
 • **Kills × 120** — every enemy defeated
 • **Level² × 100** — quadratic scaling (late levels matter way more)
-• **SectorIndex × 8,000** — flat bonus per sector (Sector 1 = 0, Sector 10 = 72k)
-• **Victory Bonus = SectorIndex × 15,000** — only if you win (Sector 10 = +135k)
-• **Endless Bonus = Minutes × 10,000** — endless mode only (~10k per minute)
+• **SectorIndex × 8,000** — flat bonus per sector reached (Sector 1 = 0, Sector 10 = 72k)
+• **Victory Bonus = SectorIndex × 15,000** — sector runs only (Sector 10 = +135k)
+• **Minutes × 10,000** — endless runs only (~10k per minute, no cap)
 
 **No gold contribution. No difficulty multiplier.** Harder difficulties just grant more XP & Gold, which feed into kills/level naturally. Only your **highest score per period** counts on the leaderboard.
 
-📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — **20% of the weekly OMENX spend pool** is paid to the **top 45** players. Higher rank = bigger share (#1 = 10%, ..., #31–45 = 1.2% each). Max **10,000 OMENX** per player. Weekly stat upgrades also reset.
+📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Top **45 players** earn OMENX payouts based on rank. #1 = 10% · #2 = 8% · #3 = 6% · #4–10 = 4% each · #11–20 = 3% each · #21–30 = 1.8% each · #31–45 = 1.2% each. Max **10,000 OMENX** per player. **Endless runs excluded from payouts.** Weekly stat upgrades also reset.
 
-🗓️ **Seasonal Leaderboard** (4-week cycles) — **30% of the seasonal OMENX spend pool** is paid to the **top 45** players (#1 = 10%, ..., #41–45 = 0.7% each). A further **10%** funds the Squad Wars Champions pool. Max **10,000 OMENX** per player. Seasonal stat upgrades reset at season end.
+🗓️ **Seasonal Leaderboard** (4-week cycles) — Top **45 players** earn OMENX payouts. #1 = 10% · #2 = 7.5% · #3 = 6% · #4–10 = 3.2% each · #11–20 = 2.2% each · #21–30 = 1.5% each · #31–40 = 0.9% each · #41–45 = 0.7% each. A separate **10%** pool funds the Squad Wars Champions rewards. Max **10,000 OMENX** per player. **Endless runs excluded from payouts.** Seasonal stat upgrades reset at season end.
 
 ♾️ **Endless Void Leaderboard** — Season-scoped ranking. **NOT eligible for OMENX payouts.** Long, well-played endless runs (25+ min) can reach 600k–1M score, rivaling or exceeding sector victories thanks to per-minute scaling.
 
@@ -79,7 +80,7 @@ Own a pilot's OmenX NFT? Unlocks instantly on sign-in. Plus you earn rarity-base
 *(Sell the NFT and the pilot is removed — but your kill mastery is preserved if you re-acquire it.)*
 
 **Path 2 — Kill Milestones (Permanent)**
-Reach cumulative kill thresholds to randomly unlock pilots: **2k / 5k / 10k / 20k kills**. These unlocks **never expire**, NFT or not.
+Reach cumulative kill thresholds to permanently unlock pilots: **2k / 5k / 10k / 20k kills**. These unlocks **never expire**, NFT or not.
 
 NeoByte is unlocked by default. Everyone else needs an NFT or a milestone.`,
     },
@@ -224,7 +225,7 @@ Floating buttons (bottom-right) summon an AI clone from your unlocked roster:
 
 Earned via **real-money VIP subscription** on the OmenX platform. Each tier grants **+1% Damage & +1% Max HP per run**, stacking with all your other upgrades.
 
-Bonus: every VIP tier earns a **weekly OMENX allocation** paid directly to your wallet (Phase 2 + Phase 3, 10 weeks each) — your subscription literally pays you back in crypto.
+Bonus: every VIP tier earns a **weekly OMENX allocation** paid directly to your wallet while Phase 2 + Phase 3 are active — your subscription literally pays you back in crypto. Future allocation TBD after Phase 3 ends.
 
 🔄 Your VIP tier is fetched **once on sign-in** and cached for the session. Upgraded your tier? Use the **Refresh VIP** button on your Profile page (24h cooldown) to pull the new value.
 
