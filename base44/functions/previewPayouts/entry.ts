@@ -132,8 +132,35 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
 
+        // RESUME-AWARE: look up existing PayoutLog rows for this period so the
+        // preview can show exactly which wallets a retry would skip vs pay.
+        // Mirrors the resume logic in manuallyDistributeRewards.
+        const playerLogType = period_type === 'weekly' ? 'weekly' : 'seasonal';
+        const existingPlayerLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id, period_type: playerLogType }, '-created_date', 1000);
+        const alreadyPaidPlayers = new Set(existingPlayerLogs.map(l => (l.wallet_address || '').toLowerCase()));
+
+        let alreadyPaidStaff = new Set();
+        if (period_type === 'weekly') {
+            const existingStaffLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id, period_type: 'staff_weekly' }, '-created_date', 1000);
+            alreadyPaidStaff = new Set(existingStaffLogs.map(l => (l.wallet_address || '').toLowerCase()));
+        }
+
+        // Annotate each payment so the UI can show paid vs pending rows.
+        const annotatedPayments = payments.map(p => ({
+            ...p,
+            already_paid: alreadyPaidPlayers.has((p.wallet_address || '').toLowerCase()),
+        }));
+        const annotatedStaff = staffPayments.map(p => ({
+            ...p,
+            already_paid: alreadyPaidStaff.has((p.wallet_address || '').toLowerCase()),
+        }));
+
         const playerPayout = payments.reduce((s, p) => s + p.amount, 0);
         const staffPayout = staffPayments.reduce((s, p) => s + p.amount, 0);
+        const pendingPlayerPayout = annotatedPayments.filter(p => !p.already_paid).reduce((s, p) => s + p.amount, 0);
+        const pendingStaffPayout = annotatedStaff.filter(p => !p.already_paid).reduce((s, p) => s + p.amount, 0);
+        const paidPlayerCount = annotatedPayments.filter(p => p.already_paid).length;
+        const paidStaffCount = annotatedStaff.filter(p => p.already_paid).length;
 
         return Response.json({
             period_id, period_type,
@@ -145,8 +172,16 @@ Deno.serve(async (req) => {
             grand_total: playerPayout + staffPayout,
             player_count: payments.length,
             staff_count: staffPayments.length,
-            payments,
-            staff_payments: staffPayments,
+            // New resume-aware fields
+            paid_player_count: paidPlayerCount,
+            paid_staff_count: paidStaffCount,
+            pending_player_count: payments.length - paidPlayerCount,
+            pending_staff_count: staffPayments.length - paidStaffCount,
+            pending_player_payout: pendingPlayerPayout,
+            pending_staff_payout: pendingStaffPayout,
+            pending_grand_total: pendingPlayerPayout + pendingStaffPayout,
+            payments: annotatedPayments,
+            staff_payments: annotatedStaff,
         });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

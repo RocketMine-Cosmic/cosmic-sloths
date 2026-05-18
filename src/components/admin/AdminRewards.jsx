@@ -132,6 +132,27 @@ export default function AdminRewards({ walletAddress }) {
                                 <div className={`font-mono font-bold text-sm ${previewData.distributed ? 'text-red-400' : 'text-emerald-400'}`}>{previewData.distributed ? 'ALREADY DISTRIBUTED' : 'PENDING'}</div>
                             </div>
                         </div>
+
+                        {/* Resume-on-retry summary — only shown if a previous attempt partially paid */}
+                        {(previewData.paid_player_count > 0 || previewData.paid_staff_count > 0) && (
+                            <div className="bg-amber-950/30 border border-amber-700/60 rounded-lg p-3 mb-3">
+                                <div className="text-amber-300 font-bold text-sm mb-2 uppercase tracking-wider">⚠️ Partial payout detected — retry will resume</div>
+                                <div className="flex flex-wrap gap-3 text-xs">
+                                    <div className="bg-slate-900/60 border border-amber-800/40 rounded px-3 py-2">
+                                        <div className="text-[10px] text-slate-500 uppercase">Already Paid</div>
+                                        <div className="font-mono font-bold text-amber-400">{previewData.paid_player_count} players{previewData.paid_staff_count ? ` + ${previewData.paid_staff_count} staff` : ''}</div>
+                                    </div>
+                                    <div className="bg-slate-900/60 border border-emerald-800/40 rounded px-3 py-2">
+                                        <div className="text-[10px] text-slate-500 uppercase">Pending (Will Pay)</div>
+                                        <div className="font-mono font-bold text-emerald-400">{previewData.pending_player_count} players{previewData.pending_staff_count ? ` + ${previewData.pending_staff_count} staff` : ''}</div>
+                                    </div>
+                                    <div className="bg-slate-900/60 border border-emerald-800/40 rounded px-3 py-2">
+                                        <div className="text-[10px] text-slate-500 uppercase">Retry Will Send</div>
+                                        <div className="font-mono font-bold text-emerald-400">{previewData.pending_grand_total?.toFixed(2)} OMENX</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs">
                                 <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
@@ -143,14 +164,20 @@ export default function AdminRewards({ walletAddress }) {
                                         <th className="p-2 text-right">Would Receive</th>
                                     </tr>
                                 </thead>
+                                <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
+                                    {/* extra status column — only matters when some rows are already paid */}
+                                </thead>
                                 <tbody className="divide-y divide-slate-800/50">
                                     {(previewData.payments || []).map(p => (
-                                        <tr key={p.rank} className="hover:bg-slate-800/30">
+                                        <tr key={p.rank} className={`hover:bg-slate-800/30 ${p.already_paid ? 'bg-amber-950/20 opacity-60' : ''}`}>
                                             <td className="p-2 text-center font-mono">{p.rank <= 3 ? ['🥇','🥈','🥉'][p.rank-1] : `#${p.rank}`}</td>
-                                            <td className="p-2 font-bold text-white">{p.player_name}</td>
+                                            <td className="p-2 font-bold text-white">
+                                                {p.player_name}
+                                                {p.already_paid && <span className="ml-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300 uppercase">Paid</span>}
+                                            </td>
                                             <td className="p-2 text-slate-500 font-mono text-[10px]">{p.wallet_address ? `${p.wallet_address.slice(0,6)}...${p.wallet_address.slice(-4)}` : '-'}</td>
                                             <td className="p-2 text-right font-mono text-slate-300">{(p.score || 0).toLocaleString()}</td>
-                                            <td className="p-2 text-right font-mono font-bold text-sky-400">{p.amount.toFixed(2)} OMENX</td>
+                                            <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-sky-400'}`}>{p.amount.toFixed(2)} OMENX</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -172,11 +199,14 @@ export default function AdminRewards({ walletAddress }) {
                                         </thead>
                                         <tbody className="divide-y divide-slate-800/50">
                                             {previewData.staff_payments.map(p => (
-                                                <tr key={p.wallet_address} className="hover:bg-slate-800/30">
-                                                    <td className="p-2 font-bold text-white">{p.player_name}</td>
+                                                <tr key={p.wallet_address} className={`hover:bg-slate-800/30 ${p.already_paid ? 'bg-amber-950/20 opacity-60' : ''}`}>
+                                                    <td className="p-2 font-bold text-white">
+                                                        {p.player_name}
+                                                        {p.already_paid && <span className="ml-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300 uppercase">Paid</span>}
+                                                    </td>
                                                     <td className="p-2 text-slate-500 font-mono text-[10px]">{p.wallet_address ? `${p.wallet_address.slice(0,6)}...${p.wallet_address.slice(-4)}` : '-'}</td>
                                                     <td className="p-2 text-right font-mono text-slate-400">{((p.pct || 0) * 100).toFixed(2)}%</td>
-                                                    <td className="p-2 text-right font-mono font-bold text-amber-400">{p.amount.toFixed(2)} OMENX</td>
+                                                    <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-amber-400'}`}>{p.amount.toFixed(2)} OMENX</td>
                                                 </tr>
                                             ))}
                                         </tbody>
