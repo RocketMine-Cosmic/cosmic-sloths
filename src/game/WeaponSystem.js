@@ -282,7 +282,8 @@ export function fireWeaponLogic(engine, w) {
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
-            radius: capVisualRadius('shieldBubble', 80 * area),
+            radius: 80 * area,  // Damage radius — scales uncapped with upgrades
+            visualRadius: capVisualRadius('shieldBubble', 80 * area),  // Visual radius — capped for screen space
             damage: dmg,
             pierce: 999,
             life: 2.0,

@@ -255,10 +255,12 @@ export function updateProjectiles(engine, dt) {
             } else if (p.pushback) {
                 p.x = engine.player.x;
                 p.y = engine.player.y;
+                const damageRadius = p.radius;
+                const displayRadius = p.visualRadius || p.radius;  // Use visualRadius if set (for capped AoEs)
                 checkAoe(e => {
-                    if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
+                    if (Math.abs(e.x - p.x) > damageRadius + e.radius || Math.abs(e.y - p.y) > damageRadius + e.radius) return;
                     const dist = Math.hypot(e.x - p.x, e.y - p.y);
-                    if (dist < p.radius) {
+                    if (dist < damageRadius) {
                         if (engine.frameCount % 15 === 0) {
                             engine.damageEnemy(e, p.damage, p);
                             if (p.burn) {
@@ -279,7 +281,7 @@ export function updateProjectiles(engine, dt) {
                     const inRange = [];
                     checkAoe(e => {
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius * 2) inRange.push(e);
-                    }, p.radius);
+                    }, p.radius);  // Use uncapped damage radius
                     if (inRange.length > 0) {
                         const target = inRange[Math.floor(Math.random() * inRange.length)];
                         const angle = Math.atan2(target.y - p.y, target.x - p.x);
