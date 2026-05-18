@@ -4,6 +4,7 @@ import { Swords, Sparkles } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import { WEAPON_SLOT_CAP, EVOLUTION_MIN_BASE_LEVEL } from '@/game/UpgradeSystem';
 import { EVOLUTIONS } from '@/game/Constants';
+import { useAntiMashCooldown } from '@/hooks/useAntiMashCooldown';
 import PoolBiasBadge from './PoolBiasBadge';
 
 // Returns true if picking this upgrade would put the player one step away from
@@ -93,6 +94,10 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
     const showNextPrice = nextBanishCost !== null && nextBanishCost !== banishCost;
     const [hasRerolled, setHasRerolled] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(null);
+    // Anti-mash: 2.5s cooldown on Reroll & Banish so a flurry of clicks during
+    // a slow OmenX settlement doesn't queue up multiple billable purchases.
+    const rerollCd = useAntiMashCooldown(2500);
+    const banishCd = useAntiMashCooldown(2500);
 
     React.useEffect(() => {
         setHasRerolled(false);
@@ -220,15 +225,18 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => {
-                                if ((cosmicTokens || 0) < 2 || omenxPurchasesDisabled) return;
-                                setHasRerolled(true);
-                                onReroll();
+                                if ((cosmicTokens || 0) < 2 || omenxPurchasesDisabled || rerollCd.locked) return;
+                                rerollCd.trigger(() => {
+                                    setHasRerolled(true);
+                                    onReroll();
+                                });
                             }}
-                            disabled={omenxPurchasesDisabled}
-                            title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : undefined}
-                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 2 || omenxPurchasesDisabled ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
+                            disabled={omenxPurchasesDisabled || rerollCd.locked}
+                            title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : rerollCd.locked ? 'Just a sec…' : undefined}
+                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 2 || omenxPurchasesDisabled || rerollCd.locked ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
                         >
-                            <OmenXIcon className="w-5 h-5 md:w-6 md:h-6 mr-1" /> Reroll (2 OMENX)
+                            <OmenXIcon className="w-5 h-5 md:w-6 md:h-6 mr-1" />
+                            {rerollCd.locked ? `Reroll (${(rerollCd.remainingMs / 1000).toFixed(1)}s)` : 'Reroll (2 OMENX)'}
                         </motion.button>
                     )}
                     
@@ -237,15 +245,19 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => {
-                                if ((cosmicTokens || 0) < banishCost || omenxPurchasesDisabled) return;
-                                onBanish(choices[selectedIndex]);
+                                if ((cosmicTokens || 0) < banishCost || omenxPurchasesDisabled || banishCd.locked) return;
+                                banishCd.trigger(() => onBanish(choices[selectedIndex]));
                             }}
-                            disabled={omenxPurchasesDisabled}
-                            title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : undefined}
-                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex flex-col items-center justify-center gap-0.5 ${(cosmicTokens || 0) < banishCost || omenxPurchasesDisabled ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
+                            disabled={omenxPurchasesDisabled || banishCd.locked}
+                            title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : banishCd.locked ? 'Just a sec…' : undefined}
+                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex flex-col items-center justify-center gap-0.5 ${(cosmicTokens || 0) < banishCost || omenxPurchasesDisabled || banishCd.locked ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
                         >
-                            <span>Banish T{banishTier} ({banishCost} OMENX)</span>
-                            {banishUsesInTier !== null && (
+                            <span>
+                                {banishCd.locked
+                                    ? `Banish (${(banishCd.remainingMs / 1000).toFixed(1)}s)`
+                                    : `Banish T${banishTier} (${banishCost} OMENX)`}
+                            </span>
+                            {!banishCd.locked && banishUsesInTier !== null && (
                                 <span className="text-[10px] md:text-xs font-normal opacity-80">
                                     {banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left{showNextPrice ? ` · Next: ${nextBanishCost} OMENX` : ''}
                                 </span>
