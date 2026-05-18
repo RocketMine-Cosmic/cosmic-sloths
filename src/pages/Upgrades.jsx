@@ -26,6 +26,8 @@ import RelicPrestigeBadge from '../components/game/RelicPrestigeBadge';
 import StatPips, { SmallStatPips } from '../components/game/StatPips';
 import BuyAllStatsButton from '../components/upgrades/BuyAllStatsButton';
 import BuyAllWeaponStatsButton from '../components/upgrades/BuyAllWeaponStatsButton';
+import BuyAllStatsGoldButton from '../components/upgrades/BuyAllStatsGoldButton';
+import BuyAllWeaponStatsGoldButton from '../components/upgrades/BuyAllWeaponStatsGoldButton';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
@@ -553,14 +555,21 @@ export default function Upgrades({ isCarousel }) {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 mb-2 md:mb-4">
                     <h2 className="text-xl md:text-2xl font-bold text-white">Base Stats</h2>
                     {(activeCategory === 'weekly' || activeCategory === 'seasonal') && (
-                        <BuyAllStatsButton
-                            tier={activeCategory}
-                            tokenCosts={typeConfig.tokenCosts}
-                            save={save}
-                            omenxBalance={omenxBalance}
-                            omenxBlocked={omenxBlocked}
-                            omenxBlockedMsg={omenxBlockedMsg}
-                        />
+                        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                            <BuyAllStatsGoldButton
+                                tier={activeCategory}
+                                goldCosts={typeConfig.goldCosts}
+                                save={save}
+                            />
+                            <BuyAllStatsButton
+                                tier={activeCategory}
+                                tokenCosts={typeConfig.tokenCosts}
+                                save={save}
+                                omenxBalance={omenxBalance}
+                                omenxBlocked={omenxBlocked}
+                                omenxBlockedMsg={omenxBlockedMsg}
+                            />
+                        </div>
                     )}
                 </div>
                 {STATS.filter(Boolean).map(stat => {
@@ -701,15 +710,23 @@ export default function Upgrades({ isCarousel }) {
                             <h3 className={`font-bold text-lg md:text-xl ${isMastered ? 'text-yellow-400' : 'text-white'}`}>{weapon.name}</h3>
                             <div className="flex items-center gap-2 flex-wrap">
                                 {(activeCategory === 'weekly' || activeCategory === 'seasonal') && (
-                                    <BuyAllWeaponStatsButton
-                                        tier={activeCategory}
-                                        weapon={weapon}
-                                        tokenCosts={typeConfig.tokenCosts}
-                                        save={save}
-                                        omenxBalance={omenxBalance}
-                                        omenxBlocked={omenxBlocked}
-                                        omenxBlockedMsg={omenxBlockedMsg}
-                                    />
+                                    <>
+                                        <BuyAllWeaponStatsGoldButton
+                                            tier={activeCategory}
+                                            weapon={weapon}
+                                            goldCosts={typeConfig.goldCosts}
+                                            save={save}
+                                        />
+                                        <BuyAllWeaponStatsButton
+                                            tier={activeCategory}
+                                            weapon={weapon}
+                                            tokenCosts={typeConfig.tokenCosts}
+                                            save={save}
+                                            omenxBalance={omenxBalance}
+                                            omenxBlocked={omenxBlocked}
+                                            omenxBlockedMsg={omenxBlockedMsg}
+                                        />
+                                    </>
                                 )}
                                 {isMastered && (
                                     <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded border border-yellow-500/50">
