@@ -152,11 +152,13 @@ Deno.serve(async (req) => {
             attack_date_utc: today,
         }, '-created_date', 250), 'SquadMeteorAttack.today');
 
-        // Aggregate per-member attacks
+        // Aggregate per-member attacks. We DON'T trust stored player_name —
+        // GDPR fix (2026-05-18): older rows leaked OAuth full_name (e.g. "Dennis"
+        // / "Patrick Heelan Jr."). Names are re-resolved from PlayerSave below.
         const perMember = {};
         for (const a of todayAttacks) {
             const w = (a.wallet_address || '').toLowerCase();
-            if (!perMember[w]) perMember[w] = { wallet: w, name: a.player_name || w, attacks: 0, damage: 0 };
+            if (!perMember[w]) perMember[w] = { wallet: w, name: '', attacks: 0, damage: 0 };
             perMember[w].attacks++;
             perMember[w].damage += Number(a.damage || 0);
         }
@@ -178,13 +180,44 @@ Deno.serve(async (req) => {
         const weekTotals = {};
         for (const a of weekAttacks) {
             const w = (a.wallet_address || '').toLowerCase();
-            if (!weekTotals[w]) weekTotals[w] = { wallet: w, name: a.player_name || w, damage: 0, attacks: 0 };
+            if (!weekTotals[w]) weekTotals[w] = { wallet: w, name: '', damage: 0, attacks: 0 };
             weekTotals[w].damage += Number(a.damage || 0);
             weekTotals[w].attacks++;
         }
         const weeklyLeaderboard = Object.values(weekTotals)
             .sort((a, b) => b.damage - a.damage)
             .slice(0, 10);
+
+        // GDPR-safe name resolution: pull pilot names from PlayerSave for every
+        // wallet shown in either feed. Stored player_name on SquadMeteorAttack
+        // is IGNORED — older rows leaked OAuth full_name and we cannot trust them.
+        // Falls back to Pilot_XXXXXX if PlayerSave has no pilot name or if the
+        // stored pilot name equals the caller's OAuth name (legacy paranoia).
+        const wallets = new Set([
+            ...Object.keys(perMember),
+            ...weeklyLeaderboard.map(r => r.wallet),
+        ]);
+        const nameByWallet = {};
+        await Promise.all([...wallets].map(async (w) => {
+            try {
+                const saves = await withRetry(
+                    () => db.entities.PlayerSave.filter({ wallet_address: w }),
+                    `PlayerSave.filter(${w.slice(-6)})`
+                );
+                const stored = (saves[0]?.player_name || '').trim();
+                const anon = `Pilot_${w.slice(-6).toUpperCase()}`;
+                nameByWallet[w] = stored || anon;
+            } catch {
+                nameByWallet[w] = `Pilot_${w.slice(-6).toUpperCase()}`;
+            }
+        }));
+        // Apply resolved names
+        for (const w of Object.keys(perMember)) {
+            perMember[w].name = nameByWallet[w] || `Pilot_${w.slice(-6).toUpperCase()}`;
+        }
+        for (const row of weeklyLeaderboard) {
+            row.name = nameByWallet[row.wallet] || `Pilot_${row.wallet.slice(-6).toUpperCase()}`;
+        }
 
         // Buffs
         const buffs = computeBuffs(meteor.level);
