@@ -175,6 +175,9 @@ export default function BuyAllStatsButton({ tier, tokenCosts, save, omenxBalance
                                         💡 Maxing every stat would cost <strong>{plan.totalRemainingCost.toLocaleString()} OMENX</strong> — your balance covers {plan.affordable.length} of {plan.totalRemaining}.
                                     </div>
                                 )}
+                                <div className="text-[11px] text-cyan-300 bg-cyan-950/30 border border-cyan-800/40 rounded-lg p-2 leading-snug">
+                                    ⏱️ Estimated time: <strong>~{Math.ceil(plan.affordable.length * 3.5)}s</strong> ({plan.affordable.length} purchases × ~3.5s each). Please don't close this window while it's running.
+                                </div>
                             </div>
                         )}
 
