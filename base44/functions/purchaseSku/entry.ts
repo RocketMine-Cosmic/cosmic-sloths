@@ -495,17 +495,19 @@ Deno.serve(async (req) => {
         }
 
         // --- Charge OmenX ---
-        // SINGLE attempt only. No multi-key retry loop — every retry is a billable
-        // call to OmenX, and on 502 (slow settlement) the original tx often still
-        // settles on-chain anyway, so retrying just multiplies cost without benefit.
-        // Only exception: 429 (rate-limited on this specific key) cycles to the
-        // next key, since that's a key-level issue not an OmenX-side problem.
+        // Retry on 5xx (gateway timeout) and 429 (rate-limit) by cycling to the
+        // next payment key. Hard-capped at MAX_RETRIES total attempts so a single
+        // purchase can't burn through all 8 keys when OmenX is having a bad day.
+        // Idempotency key ensures retries don't double-charge if a previous
+        // attempt actually settled on-chain.
+        const MAX_RETRIES = 3; // 1 original + 2 retries = max 3 billable calls per purchase
         const is422 = (msg) => /\b422\b/.test(msg);
         let purchaseData;
         let didPriceRecheck = false;
-        let keyIndex = 0;
-        while (keyIndex < apiKeys.length) {
-            const sdk = new OmenXServerSDK({ apiKey: apiKeys[keyIndex], apiBaseUrl });
+        let lastErr = null;
+        const attempts = Math.min(MAX_RETRIES, apiKeys.length);
+        for (let i = 0; i < attempts; i++) {
+            const sdk = new OmenXServerSDK({ apiKey: apiKeys[i], apiBaseUrl });
             try {
                 purchaseData = await sdk.createPurchase({
                     playerWallet: walletAddress,
@@ -517,12 +519,17 @@ Deno.serve(async (req) => {
                 });
                 break; // success
             } catch (err) {
+                lastErr = err;
                 const msg = err?.message || String(err);
 
-                // 5xx = OmenX gateway timeout. Their settlement is slow; tx may
-                // still land on-chain. We do NOT retry — single billable call.
+                // 5xx = OmenX gateway timeout (slow settlement, often still lands
+                // on-chain). Retry with next key up to MAX_RETRIES.
                 if (isUpstream5xx(msg)) {
-                    console.error('[purchaseSku] OmenX 5xx (single attempt, no retry):', msg.slice(0, 200));
+                    if (i < attempts - 1) {
+                        console.warn(`[purchaseSku] OmenX 5xx on key ${i + 1} — retrying (${i + 2}/${attempts}):`, msg.slice(0, 120));
+                        continue;
+                    }
+                    console.error(`[purchaseSku] OmenX 5xx after ${attempts} attempts:`, msg.slice(0, 200));
                     return Response.json({
                         error: 'OMENX settlement is slow right now. Please try again in a moment.',
                     }, { status: 503 });
@@ -563,11 +570,9 @@ Deno.serve(async (req) => {
                     return Response.json({ error: friendly422 }, { status: 400 });
                 }
 
-                // 429 = this key is rate-limited. Cycle to the next key (this is
-                // a key issue, not an OmenX-load issue).
-                if (msg.includes('429') && keyIndex < apiKeys.length - 1) {
-                    console.warn('[purchaseSku] payment key', keyIndex + 1, 'rate-limited — trying next key');
-                    keyIndex++;
+                // 429 = this key is rate-limited. Cycle to the next key.
+                if (msg.includes('429') && i < attempts - 1) {
+                    console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
                     continue;
                 }
                 if (msg.includes('429')) return Response.json({ error: 'Too many purchases right now — please try again in a moment.' }, { status: 429 });
@@ -580,6 +585,7 @@ Deno.serve(async (req) => {
             }
         }
         if (!purchaseData) {
+            console.error('[purchaseSku] No purchase data; lastErr:', lastErr?.message);
             return Response.json({ error: "Your purchase couldn't be completed. Please try again." }, { status: 500 });
         }
 
