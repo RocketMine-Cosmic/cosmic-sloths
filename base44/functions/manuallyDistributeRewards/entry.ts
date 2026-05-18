@@ -141,19 +141,30 @@ function rankTierLabel(rank) {
 
 // Group ranked payments into tier buckets and send each tier as its own
 // grant-batch HTTP call so the OmenX-side note reflects the recipient's rank.
-async function postTieredBatches(payments, apiBaseUrl, apiKey, baseNote) {
-    if (payments.length === 0) return { txId: '' };
+//
+// IDEMPOTENCY (added 2026-05-18 after S5 seasonal payout hit a 502 mid-way):
+//   - alreadyPaidWallets is the set of wallets that already have a PayoutLog row
+//     for this period_id+period_type. We skip those wallets when retrying.
+//   - PayoutLogs are written *per-tier* as each tier succeeds (not all at the
+//     end), so a 502 partway through doesn't leave an empty audit trail.
+//   - Caller is responsible for passing alreadyPaidWallets and writing logs in
+//     the per-tier callback (onTierSuccess).
+async function postTieredBatches(payments, apiBaseUrl, apiKey, baseNote, alreadyPaidWallets, onTierSuccess) {
+    if (payments.length === 0) return { txId: '', tiersPaid: 0, tiersSkipped: 0 };
     const tiers = new Map();
     for (const p of payments) {
+        // Skip wallets already paid in a previous (failed) attempt.
+        if (alreadyPaidWallets && alreadyPaidWallets.has(p.walletAddress)) continue;
         const { key, label } = rankTierLabel(p.rank);
         if (!tiers.has(key)) tiers.set(key, { label, payments: [] });
         tiers.get(key).payments.push(p);
     }
     const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'r21-30', 'r31-40', 'r41-45', 'other'];
     const txIds = [];
+    let tiersPaid = 0;
     for (const key of order) {
         const tier = tiers.get(key);
-        if (!tier) continue;
+        if (!tier || tier.payments.length === 0) continue;
         const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -166,8 +177,12 @@ async function postTieredBatches(payments, apiBaseUrl, apiKey, baseNote) {
         if (!response.ok) throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
         const txId = batchResult?.transactionId || batchResult?.txHash || '';
         if (txId) txIds.push(txId);
+        tiersPaid++;
+        // Write logs for THIS tier immediately so a failure in the next tier
+        // doesn't lose the audit trail for tiers that already succeeded.
+        if (onTierSuccess) await onTierSuccess(tier.payments, txId);
     }
-    return { txId: txIds.join(',') };
+    return { txId: txIds.join(','), tiersPaid, tiersSkipped: 0 };
 }
 
 async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
@@ -175,6 +190,13 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 45);
+
+    // RESUME-SAFE: if a previous attempt partially paid this period, skip wallets
+    // that already have a PayoutLog row so we don't double-pay.
+    const existingLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'weekly' }, '-created_date', 1000);
+    const existingStaffLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'staff_weekly' }, '-created_date', 1000);
+    const alreadyPaidWallets = new Set(existingLogs.map(l => (l.wallet_address || '').toLowerCase()));
+    const alreadyPaidStaff = new Set(existingStaffLogs.map(l => (l.wallet_address || '').toLowerCase()));
 
     // Staff payments — mirrors distributeRewards. Global default via AppConfig
     // (staff_pct_per_wallet), with per-wallet AdminWallet.payout_pct_override taking priority.
@@ -203,49 +225,51 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     }
 
     // Players: one batch per rank tier so OmenX TX history shows exact rank/band.
-    // Staff: separate batch (rank doesn't apply).
+    // PayoutLogs are written per-tier as each tier succeeds (resume-safe).
     const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
-    const { txId: playerTxId } = await postTieredBatches(payments, apiBaseUrl, apiKey, playerBase);
+    const onTierSuccess = async (tierPayments, tierTxId) => {
+        for (const p of tierPayments) {
+            await base44.asServiceRole.entities.PayoutLog.create({
+                period_id: pool.period_id, period_type: 'weekly',
+                wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+                amount: p.amount, rank: p.rank, tx_id: tierTxId
+            });
+        }
+    };
+    const { txId: playerTxId } = await postTieredBatches(payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets, onTierSuccess);
 
+    // Staff: separate batch, also resume-safe — skip already-paid staff wallets.
+    const remainingStaff = staffPayments.filter(p => !alreadyPaidStaff.has(p.walletAddress.toLowerCase()));
     let staffTxId = '';
-    if (staffPayments.length > 0) {
+    if (remainingStaff.length > 0) {
         const staffResponse = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
-                payments: staffPayments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                payments: remainingStaff.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
                 gameId: GAME_ID, gameName: GAME_NAME, note: `${playerBase} — Staff share`,
             }),
         });
         const staffResult = await staffResponse.json().catch(() => ({}));
         if (!staffResponse.ok) throw new Error(`Staff batch failed — HTTP ${staffResponse.status}: ${JSON.stringify(staffResult)}`);
         staffTxId = staffResult?.transactionId || staffResult?.txHash || '';
-    }
-    const txId = [playerTxId, staffTxId].filter(Boolean).join(',');
-
-    for (const p of payments) {
-        await base44.asServiceRole.entities.PayoutLog.create({
-            period_id: pool.period_id, period_type: 'weekly',
-            wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
-            amount: p.amount, rank: p.rank, tx_id: txId
-        });
-    }
-    for (const p of staffPayments) {
-        await base44.asServiceRole.entities.PayoutLog.create({
-            period_id: pool.period_id, period_type: 'staff_weekly',
-            wallet_address: p.walletAddress, player_name: p.player_name,
-            amount: p.amount, rank: 0, tx_id: txId
-        });
+        for (const p of remainingStaff) {
+            await base44.asServiceRole.entities.PayoutLog.create({
+                period_id: pool.period_id, period_type: 'staff_weekly',
+                wallet_address: p.walletAddress, player_name: p.player_name,
+                amount: p.amount, rank: 0, tx_id: staffTxId
+            });
+        }
     }
 
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
     return {
-        paid: payments.length,
-        staff_paid: staffPayments.length,
-        totalOmenx: payments.reduce((s, p) => s + p.amount, 0),
-        staffOmenx: staffPayments.reduce((s, p) => s + p.amount, 0),
-        payments,
-        staffPayments,
+        paid: payments.length - alreadyPaidWallets.size,
+        skipped_already_paid: alreadyPaidWallets.size,
+        staff_paid: remainingStaff.length,
+        staff_skipped_already_paid: staffPayments.length - remainingStaff.length,
+        totalOmenx: payments.filter(p => !alreadyPaidWallets.has(p.walletAddress.toLowerCase())).reduce((s, p) => s + p.amount, 0),
+        staffOmenx: remainingStaff.reduce((s, p) => s + p.amount, 0),
     };
 }
 
@@ -261,17 +285,34 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
         return { paid: 0, skipped: 'no eligible wallets' };
     }
 
-    // One batch per rank tier so OmenX TX history shows exact rank/band.
-    const { txId } = await postTieredBatches(payments, apiBaseUrl, apiKey, `Cosmic Sloths seasonal payout ${pool.period_id}`);
+    // RESUME-SAFE: skip wallets that already have a PayoutLog for this period.
+    const existingLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'seasonal' }, '-created_date', 1000);
+    const alreadyPaidWallets = new Set(existingLogs.map(l => (l.wallet_address || '').toLowerCase()));
 
-    for (const p of payments) {
-        await base44.asServiceRole.entities.PayoutLog.create({
-            period_id: pool.period_id, period_type: 'seasonal',
-            wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
-            amount: p.amount, rank: p.rank, tx_id: txId
-        });
-    }
+    // One batch per rank tier so OmenX TX history shows exact rank/band.
+    // PayoutLogs written per-tier so partial failures preserve the audit trail.
+    const onTierSuccess = async (tierPayments, tierTxId) => {
+        for (const p of tierPayments) {
+            await base44.asServiceRole.entities.PayoutLog.create({
+                period_id: pool.period_id, period_type: 'seasonal',
+                wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+                amount: p.amount, rank: p.rank, tx_id: tierTxId
+            });
+        }
+    };
+    const { txId, tiersPaid } = await postTieredBatches(
+        payments, apiBaseUrl, apiKey,
+        `Cosmic Sloths seasonal payout ${pool.period_id}`,
+        alreadyPaidWallets, onTierSuccess
+    );
 
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
-    return { paid: payments.length, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), payments };
+    const newlyPaid = payments.filter(p => !alreadyPaidWallets.has(p.walletAddress.toLowerCase()));
+    return {
+        paid: newlyPaid.length,
+        skipped_already_paid: alreadyPaidWallets.size,
+        tiersPaid,
+        totalOmenx: newlyPaid.reduce((s, p) => s + p.amount, 0),
+        payments: newlyPaid,
+    };
 }
