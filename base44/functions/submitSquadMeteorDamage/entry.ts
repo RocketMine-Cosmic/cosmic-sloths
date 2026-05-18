@@ -114,6 +114,29 @@ Deno.serve(async (req) => {
 
         const db = base44.asServiceRole;
 
+        // Trusted pilot name lookup — mirrors submitBossDamage (2026-05-13 fix).
+        // BUG 2026-05-18 (Texxy): leaderboard was showing real names ("Dennis",
+        // "Patrick Heelan Jr.") because we were storing me.full_name (the OAuth
+        // account name) as player_name. Fix: read PlayerSave.player_name (the
+        // profile-set pilot name) and ignore any client-submitted playerName.
+        // Fall back to Pilot_XXXXXX if no pilot name is set OR if the stored
+        // name happens to equal the OAuth full_name (legacy data safety).
+        const anonName = `Pilot_${wallet.slice(-6).toUpperCase()}`;
+        let trustedPilotName = '';
+        try {
+            const saves = await withRetry(
+                () => db.entities.PlayerSave.filter({ wallet_address: wallet }),
+                'PlayerSave.filter (pilot name)'
+            );
+            trustedPilotName = (saves[0]?.player_name || '').trim();
+        } catch (e) {
+            console.warn('[submitSquadMeteorDamage] PlayerSave lookup failed, using anon:', e.message);
+        }
+        const realName = (me.full_name || '').trim().toLowerCase();
+        const displayName = (!trustedPilotName || (realName && trustedPilotName.toLowerCase() === realName))
+            ? anonName
+            : trustedPilotName;
+
         // Find squad membership
         const memberships = await withRetry(
             () => db.entities.SquadMember.filter({ wallet_address: wallet }),
@@ -152,7 +175,7 @@ Deno.serve(async (req) => {
             );
             const meteorLevel = meteorRows.length > 0 ? meteorRows[0].level : 1;
 
-            const playerName = (body?.playerName || me.full_name || wallet).toString().slice(0, 80);
+            const playerName = displayName.slice(0, 80);
             const reserved = await withRetry(
                 () => db.entities.SquadMeteorAttack.create({
                     squad_id: squadId,
@@ -288,7 +311,7 @@ Deno.serve(async (req) => {
         );
 
         // Log the attack — update reserved row if present, else create fresh.
-        const playerName = (body?.playerName || me.full_name || wallet).toString().slice(0, 80);
+        const playerName = displayName.slice(0, 80);
         if (reservedRow) {
             await withRetry(
                 () => db.entities.SquadMeteorAttack.update(reservedRow.id, {
