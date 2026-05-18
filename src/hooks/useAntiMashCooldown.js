@@ -11,7 +11,12 @@ import { useState, useRef, useCallback, useEffect } from 'react';
  *   - remainingMs: number — ms remaining (0 when unlocked)
  *   - trigger(fn): wraps your click handler. If locked, the call is dropped.
  */
+// 2026-05-18: enforce a 1500ms minimum floor so individual callers can't
+// accidentally pass a tiny value (or 0) and let players spam-click during
+// an OmenX outage — which generates the retry storm we're trying to avoid.
+const MIN_COOLDOWN_MS = 1500;
 export function useAntiMashCooldown(cooldownMs = 2500) {
+    const effectiveCooldown = Math.max(MIN_COOLDOWN_MS, cooldownMs);
     const [unlockAt, setUnlockAt] = useState(0);
     const [, setTick] = useState(0);
     const intervalRef = useRef(null);
@@ -38,9 +43,9 @@ export function useAntiMashCooldown(cooldownMs = 2500) {
 
     const trigger = useCallback((fn) => {
         if (Date.now() < unlockAt) return; // mash blocked
-        setUnlockAt(Date.now() + cooldownMs);
+        setUnlockAt(Date.now() + effectiveCooldown);
         if (typeof fn === 'function') fn();
-    }, [unlockAt, cooldownMs]);
+    }, [unlockAt, effectiveCooldown]);
 
     return { locked, remainingMs, trigger };
 }

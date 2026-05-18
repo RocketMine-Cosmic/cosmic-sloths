@@ -30,6 +30,63 @@ let _purchasesDisabledExpiresAt = 0;
 const PURCHASES_FLAG_TTL_MS = 15 * 1000;
 const DEFAULT_DISABLED_MSG = 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.';
 
+// ============================================================================
+// In-process circuit breaker for OmenX settlement outages (2026-05-18).
+// When OmenX is flaking (502 PAYMENT_PENDING, RPC errors), our per-call retry
+// loop multiplies the load on EVERY dependency — Base44 function quota,
+// OmenX billable calls, isolate headroom that other functions need. The
+// breaker tracks recent 5xx failures and short-circuits new calls when the
+// failure rate crosses a threshold, returning a clean "try again shortly"
+// without spending OmenX budget or burning isolate time.
+//
+// State lives in module scope so all requests handled by the same isolate
+// share it (Deno keeps isolates warm for ~minutes). Across isolates it
+// resets independently — that's fine because hot isolates are the ones
+// generating most of the load.
+// ============================================================================
+const BREAKER_WINDOW_MS = 60_000;       // count failures from the last 60s
+const BREAKER_TRIP_FAILURES = 5;        // 5+ failures in window → open
+const BREAKER_COOLDOWN_MS = 30_000;     // stay open for 30s, then try again
+let _breakerFailures = [];              // timestamps of recent 5xx failures
+let _breakerOpenUntil = 0;              // ms timestamp; while > now, short-circuit
+
+function recordBreakerFailure() {
+    const now = Date.now();
+    _breakerFailures.push(now);
+    // prune anything older than the window
+    _breakerFailures = _breakerFailures.filter(t => now - t < BREAKER_WINDOW_MS);
+    if (_breakerFailures.length >= BREAKER_TRIP_FAILURES && now >= _breakerOpenUntil) {
+        _breakerOpenUntil = now + BREAKER_COOLDOWN_MS;
+        console.warn(`[purchaseSku] CIRCUIT BREAKER OPEN — ${_breakerFailures.length} failures in ${BREAKER_WINDOW_MS}ms, blocking new calls for ${BREAKER_COOLDOWN_MS}ms`);
+        postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
+            title: '⚡ purchaseSku circuit breaker tripped',
+            description: `Auto-blocking new purchases for ${BREAKER_COOLDOWN_MS / 1000}s — OmenX settlement is flaking.`,
+            fields: [
+                { name: 'Failures in window', value: `${_breakerFailures.length} in ${BREAKER_WINDOW_MS / 1000}s`, inline: true },
+            ],
+        });
+    }
+}
+function isBreakerOpen() {
+    return Date.now() < _breakerOpenUntil;
+}
+function recordBreakerSuccess() {
+    // A success means OmenX is probably healthy again — flush the failure window
+    // so transient blips don't accumulate forever.
+    if (_breakerFailures.length > 0) _breakerFailures = [];
+}
+
+// In-run SKUs (rerolls/banishes/revives/squad-ult/xp-buff/bias-respec) are
+// time-sensitive. A 20s+ retry storm mid-fight is WORSE UX than failing fast,
+// and during an outage these are the calls that generate the bulk of retry
+// pressure. Use MAX_RETRIES=1 for these (single attempt, no retries) and
+// keep the full 3 for out-of-run purchases (talents/upgrades) where the
+// player isn't waiting on a fight.
+const IN_RUN_SKU_PREFIXES = ['ingame-', 'bias-respec'];
+function isInRunSku(skuId) {
+    return IN_RUN_SKU_PREFIXES.some(p => skuId === p || skuId.startsWith(p));
+}
+
 // OmenX error code semantics (per OmenX docs, refreshed 2026-05-18):
 //   502 PAYMENT_PENDING       — on-chain tx broadcast, receipt not yet seen. Retry with same idempotencyKey.
 //   503 BALANCE_CHECK_FAILED  — RPC error reading balance. Retry-safe.
@@ -500,13 +557,51 @@ Deno.serve(async (req) => {
             }
         }
 
+        // --- Circuit breaker fail-open for in-run items ---
+        // If the breaker is open AND this is an in-run consumable, grant the item
+        // FREE so the player isn't punished for an OmenX outage AND we don't
+        // generate more retry pressure on a known-flaking upstream. Out-of-run
+        // purchases (talents/upgrades) still go through normally — the breaker
+        // just short-circuits with a clear error there.
+        if (isBreakerOpen()) {
+            if (isInRunSku(skuId) && grantInfo && saveRecord) {
+                console.warn(`[purchaseSku] BREAKER OPEN — granting ${skuId} FREE to ${walletAddress} (OmenX flaking)`);
+                try {
+                    const freshRecords = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
+                    if (freshRecords.length === 0) throw new Error('Save vanished');
+                    const freshRecord = freshRecords[0];
+                    const freshSave = typeof freshRecord.save_data === 'string' ? JSON.parse(freshRecord.save_data) : freshRecord.save_data;
+                    const reAppliedSave = applyGrant(freshSave, grantInfo, skuId, periodIds);
+                    await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, {
+                        save_data: reAppliedSave,
+                        updated_at: Date.now()
+                    });
+                    return Response.json({
+                        success: true,
+                        amount: 0,
+                        grantApplied: true,
+                        saveData: reAppliedSave,
+                        freeGrant: true,
+                    });
+                } catch (err) {
+                    console.error('[purchaseSku] breaker-open free-grant failed:', err.message);
+                    return Response.json({ error: 'OMENX is recovering — try again in a moment.' }, { status: 503 });
+                }
+            }
+            // Non-in-run purchase during outage — fail fast, no retries.
+            return Response.json({
+                error: 'OMENX settlement is recovering — please try again in 30 seconds.',
+                breakerOpen: true,
+            }, { status: 503 });
+        }
+
         // --- Charge OmenX ---
         // Retry on 5xx (gateway timeout) and 429 (rate-limit) by cycling to the
-        // next payment key. Hard-capped at MAX_RETRIES total attempts so a single
-        // purchase can't burn through all 8 keys when OmenX is having a bad day.
-        // Idempotency key ensures retries don't double-charge if a previous
-        // attempt actually settled on-chain.
-        const MAX_RETRIES = 3; // 1 original + 2 retries = max 3 billable calls per purchase
+        // next payment key. Idempotency key ensures retries don't double-charge
+        // if a previous attempt actually settled on-chain.
+        // In-run SKUs get 1 attempt (no retries) — mid-fight UX > retry success
+        // rate, and these are the hot path during outages. Out-of-run gets 3.
+        const MAX_RETRIES = isInRunSku(skuId) ? 1 : 3;
         const is422 = (msg) => /\b422\b/.test(msg);
         let purchaseData;
         let didPriceRecheck = false;
@@ -571,6 +666,24 @@ Deno.serve(async (req) => {
                         continue;
                     }
                     console.error(`[purchaseSku] OmenX 5xx after ${attempts} attempts:`, msg.slice(0, 200));
+                    recordBreakerFailure();
+                    // Breaker just tripped + this is in-run → fail-open with free grant
+                    // so the player isn't punished and we stop retrying.
+                    if (isBreakerOpen() && isInRunSku(skuId) && grantInfo && saveRecord) {
+                        console.warn(`[purchaseSku] BREAKER TRIPPED — granting ${skuId} FREE to ${walletAddress}`);
+                        try {
+                            const freshRecords = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
+                            if (freshRecords.length > 0) {
+                                const freshRecord = freshRecords[0];
+                                const freshSave = typeof freshRecord.save_data === 'string' ? JSON.parse(freshRecord.save_data) : freshRecord.save_data;
+                                const reAppliedSave = applyGrant(freshSave, grantInfo, skuId, periodIds);
+                                await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, { save_data: reAppliedSave, updated_at: Date.now() });
+                                return Response.json({ success: true, amount: 0, grantApplied: true, saveData: reAppliedSave, freeGrant: true });
+                            }
+                        } catch (e) {
+                            console.error('[purchaseSku] post-trip free-grant failed:', e.message);
+                        }
+                    }
                     return Response.json({
                         error: 'OMENX settlement is slow right now. Please try again in a moment.',
                     }, { status: 503 });
@@ -633,6 +746,7 @@ Deno.serve(async (req) => {
         const txHash = purchaseData?.transactionId || purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.paymentTxHash || null;
         const status = purchaseData?.status || 'unknown';
         console.log(`[purchaseSku] OmenX status=${status} txHash=${txHash || 'NONE'}`);
+        if (status === 'confirmed') recordBreakerSuccess();
         if (status !== 'confirmed') {
             console.error('[purchaseSku] Purchase not confirmed:', JSON.stringify(purchaseData).slice(0, 500));
             return Response.json({ error: "Your payment didn't go through. Please try again — you haven't been charged." }, { status: 500 });
