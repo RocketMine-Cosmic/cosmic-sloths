@@ -758,9 +758,16 @@ Deno.serve(async (req) => {
                     const patch = isSideA
                         ? { kills_a: (myWar.kills_a || 0) + killsToAdd }
                         : { kills_b: (myWar.kills_b || 0) + killsToAdd };
+                    // Wrap in with429Retry — previously a silent .catch swallowed
+                    // transient rate-limit errors, causing the war's kills_a/kills_b
+                    // to fall behind Squad.weekly_kills (Crybel/MiSFiTS bug 2026-05-18:
+                    // squad row showed 1,415 kills but war row stuck at 680).
                     writes.push(
-                        base44.asServiceRole.entities.SquadWar.update(myWar.id, patch).catch(warErr => {
-                            console.error('[saveScore] SquadWar update failed:', warErr.message);
+                        with429Retry(
+                            () => base44.asServiceRole.entities.SquadWar.update(myWar.id, patch),
+                            'SquadWar.update'
+                        ).catch(warErr => {
+                            console.error('[saveScore] SquadWar update failed after retries:', warErr.message);
                         })
                     );
                 }

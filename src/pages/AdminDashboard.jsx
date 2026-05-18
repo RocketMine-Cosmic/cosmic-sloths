@@ -51,6 +51,7 @@ import AdminS6ScorePreview from '../components/admin/AdminS6ScorePreview';
 import AdminMaintenance from '../components/admin/AdminMaintenance';
 import AdminGlobalXpBuff from '../components/admin/AdminGlobalXpBuff';
 import AdminS6LaunchTools from '../components/admin/AdminS6LaunchTools';
+import AdminResyncWarKills from '../components/admin/AdminResyncWarKills';
 
 const TAB_GROUPS = [
     {
@@ -359,6 +360,7 @@ export default function AdminDashboard() {
             );
             case 'cleanup':     return (
                 <div className="space-y-4">
+                    <AdminResyncWarKills />
                     <AdminCleanupTopScores walletAddress={adminWallet} />
                     <AdminBackfillNames />
                     <AdminOrphanedData walletAddress={adminWallet} />
