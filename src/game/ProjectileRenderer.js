@@ -1,16 +1,29 @@
 const glowCache = {};
+// Quantize radius to 16px buckets so an expanding pulse (radius grows 500px/s)
+// doesn't generate a fresh glow texture every frame. Without this, a single
+// Nova Pulse / Laser Nova / Quantum Collapse pulse could cache ~30+ unique
+// large canvases per shot, eventually OOM'ing the canvas allocator on mobile
+// and crashing the run when the synergy fires (ReZuM bug 2026-05-18).
+const RADIUS_QUANT = 16;
+// Cap the cached texture size — pulses with high area stacking could allocate
+// 2000×2000 canvases, which on mobile silently fails canvas creation and
+// returns a broken context → drawImage throws and the run crashes.
+const MAX_GLOW_SIZE = 512;
 function getGlowTexture(color, radius) {
     if (radius <= 0) return null;
-    const key = `${color}_${Math.round(radius)}`;
+    const quantR = Math.max(RADIUS_QUANT, Math.round(radius / RADIUS_QUANT) * RADIUS_QUANT);
+    const key = `${color}_${quantR}`;
     if (glowCache[key]) return glowCache[key];
     
-    const size = Math.ceil(radius * 2.5); // Provide enough padding for glow
+    let size = Math.ceil(quantR * 2.5); // Provide enough padding for glow
     if (size <= 0) return null;
+    if (size > MAX_GLOW_SIZE) size = MAX_GLOW_SIZE;
 
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return null; // Mobile canvas allocation can silently fail
     
     const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
     grad.addColorStop(0, color);
