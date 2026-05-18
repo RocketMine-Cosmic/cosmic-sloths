@@ -149,11 +149,16 @@ export class GameEngine {
         };
 
         const relicLevels = save.relicLevels || {};
+        const relicPrestigeMap = save.relicPrestige || {};
         equippedRelics.forEach(rId => {
             const r = RELICS.find(rd => rd.id === rId);
             if (r) {
                 const level = relicLevels[rId] || 1;
-                const val = r.values ? r.values[Math.min(level, 5) - 1] : r.value;
+                const baseVal = r.values ? r.values[Math.min(level, 5) - 1] : r.value;
+                // Prestige: +5% per tier (PL1–PL5 → +5% to +25%) applied multiplicatively
+                // to the relic's effect value. e.g. Midas Core L5 at PL2 = +50% × 1.10 = +55%.
+                const prestigeTier = Math.min(5, Math.max(0, Number(relicPrestigeMap[rId] || 0)));
+                const val = baseVal * (1 + prestigeTier * 0.05);
                 relicBonus[r.stat] = (relicBonus[r.stat] || 0) + val;
             }
         });
