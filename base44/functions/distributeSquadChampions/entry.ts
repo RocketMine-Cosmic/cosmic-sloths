@@ -177,42 +177,31 @@ async function fetchSquadMemberWallets(squadId) {
     return [...new Set(wallets)];
 }
 
-async function callOmenxBatch(payments, apiBaseUrl, rewardsKeys, note) {
-    const CHUNK_SIZE = 20;
-    const chunks = [];
-    for (let i = 0; i < payments.length; i += CHUNK_SIZE) {
-        chunks.push(payments.slice(i, i + CHUNK_SIZE));
-    }
-    const txIds = [];
-    for (let ci = 0; ci < chunks.length; ci++) {
-        const chunk = chunks[ci];
-        const startIdx = ci % rewardsKeys.length;
-        let lastErr = null;
-        let ok = false;
-        for (let attempt = 0; attempt < rewardsKeys.length; attempt++) {
-            const key = rewardsKeys[(startIdx + attempt) % rewardsKeys.length];
-            const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-                body: JSON.stringify({
-                    payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
-                    gameId: GAME_ID, gameName: GAME_NAME,
-                    note: `${note} chunk ${ci + 1}/${chunks.length}`,
-                }),
-            });
-            const result = await response.json().catch(() => ({}));
-            if (response.ok) {
-                txIds.push(result?.transactionId || result?.txHash || '');
-                ok = true;
-                break;
-            }
-            lastErr = `HTTP ${response.status}: ${JSON.stringify(result)}`;
-            console.warn(`[distributeSquadChampions] chunk ${ci + 1} key ${attempt + 1} failed:`, lastErr);
-            if (response.status !== 429 && response.status < 500) break;
+// Sends ONE chunk to OMENX (with per-key fallback on 429/5xx). Returns the txId on success.
+// Throws on failure so the caller can stop and preserve any logs already written for prior chunks.
+async function callOmenxOneChunk(chunk, apiBaseUrl, rewardsKeys, note, ci, totalChunks) {
+    const startIdx = ci % rewardsKeys.length;
+    let lastErr = null;
+    for (let attempt = 0; attempt < rewardsKeys.length; attempt++) {
+        const key = rewardsKeys[(startIdx + attempt) % rewardsKeys.length];
+        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+            body: JSON.stringify({
+                payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                gameId: GAME_ID, gameName: GAME_NAME,
+                note: `${note} chunk ${ci + 1}/${totalChunks}`,
+            }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok) {
+            return result?.transactionId || result?.txHash || '';
         }
-        if (!ok) throw new Error(`Chunk ${ci + 1}/${chunks.length} failed: ${lastErr}`);
+        lastErr = `HTTP ${response.status}: ${JSON.stringify(result)}`;
+        console.warn(`[distributeSquadChampions] chunk ${ci + 1} key ${attempt + 1} failed:`, lastErr);
+        if (response.status !== 429 && response.status < 500) break;
     }
-    return txIds.join(',');
+    throw new Error(`Chunk ${ci + 1}/${totalChunks} failed: ${lastErr}`);
 }
 
 Deno.serve(async (req) => {
@@ -277,15 +266,12 @@ Deno.serve(async (req) => {
         const pool = pools[0];
         const championsPool = Math.floor((pool.total_spent || 0) * CHAMPIONS_POOL_PCT);
 
-        // Idempotency: already distributed?
-        const existingPayouts = await db.entities.SquadChampionsPayoutLog.filter({ period_id });
-        if (existingPayouts.length > 0 && mode === 'execute') {
-            return Response.json({
-                error: `Champions Pool already distributed for ${period_id} (${existingPayouts.length} existing payouts).`,
-                already_distributed: true,
-                existing_count: existingPayouts.length,
-            }, { status: 409 });
-        }
+        // Existing payouts (used both for preview metadata and resume-aware execute).
+        // CHANGED 2026-05-18: previously hard-blocked execute mode if ANY rows existed,
+        // which made partial-payout recovery impossible. Now we always allow retry and
+        // skip wallets that already have a log row (matches manuallyDistributeRewards).
+        const existingPayouts = await db.entities.SquadChampionsPayoutLog.filter({ period_id }, '-created_date', 1000);
+        const alreadyPaidWallets = new Set(existingPayouts.map(l => (l.wallet_address || '').toLowerCase()));
 
         // Build season ranking
         const ranking = await buildSeasonRanking(period_id);
@@ -356,6 +342,16 @@ Deno.serve(async (req) => {
 
         const totalPayout = allMemberPayments.reduce((s, p) => s + p.amount, 0);
 
+        // Resume-aware: split planned payments into "already paid" and "pending"
+        // so both preview and execute can show/process them correctly.
+        const annotatedPayments = allMemberPayments.map(p => ({
+            ...p,
+            already_paid: alreadyPaidWallets.has((p.walletAddress || '').toLowerCase()),
+        }));
+        const pendingPayments = annotatedPayments.filter(p => !p.already_paid);
+        const paidCount = annotatedPayments.length - pendingPayments.length;
+        const pendingPayoutTotal = pendingPayments.reduce((s, p) => s + p.amount, 0);
+
         // ---- PREVIEW MODE: don't pay, just return what would happen ----
         if (mode !== 'execute') {
             return Response.json({
@@ -365,6 +361,9 @@ Deno.serve(async (req) => {
                 pool_total_spent: pool.total_spent,
                 champions_pool_omenx: championsPool,
                 already_distributed: existingPayouts.length > 0,
+                paid_member_count: paidCount,
+                pending_member_count: pendingPayments.length,
+                pending_payout_omenx: pendingPayoutTotal,
                 eligible_squads: eligible.length,
                 top_squads: squadResults,
                 total_member_payouts: allMemberPayments.length,
@@ -382,9 +381,14 @@ Deno.serve(async (req) => {
                 skipped: 'zero champions pool',
             });
         }
-        if (allMemberPayments.length === 0) {
-            // Snapshot rosters even when no payout (for audit trail)
+        // Snapshot rosters ONCE up front (idempotent — skip if already exists for this period).
+        // Used to live after the OMENX call which meant a 502 mid-payout left zero rosters
+        // even though some members had been paid. Doing this first makes recovery clean.
+        try {
+            const existingRosters = await db.entities.SquadSeasonRoster.filter({ period_id });
+            const haveSquadIds = new Set(existingRosters.map(r => r.squad_id));
             for (const sq of squadResults) {
+                if (haveSquadIds.has(sq.squad_id)) continue;
                 await db.entities.SquadSeasonRoster.create({
                     period_id,
                     squad_id: sq.squad_id,
@@ -400,6 +404,11 @@ Deno.serve(async (req) => {
                     champions_pool_share: sq.squad_share_omenx,
                 });
             }
+        } catch (e) {
+            console.warn('[distributeSquadChampions] roster snapshot warn:', e?.message);
+        }
+
+        if (allMemberPayments.length === 0) {
             return Response.json({
                 success: true,
                 mode: 'execute',
@@ -409,7 +418,19 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Pay via OMENX
+        if (pendingPayments.length === 0) {
+            // Everyone already has a log row — nothing to retry.
+            return Response.json({
+                success: true,
+                mode: 'execute',
+                period_id,
+                skipped: 'all members already paid',
+                already_paid_count: paidCount,
+                champions_pool_omenx: championsPool,
+            });
+        }
+
+        // Pay via OMENX — only the pending wallets, chunked, with per-chunk log writes.
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         const rewardsKeys = [
             Deno.env.get('OMENX_REWARDS_API_KEY'),
@@ -421,64 +442,101 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'No OMENX rewards API keys configured' }, { status: 500 });
         }
 
-        const txId = await callOmenxBatch(
-            allMemberPayments, apiBaseUrl, rewardsKeys,
-            `Squad Champions ${period_id}`
-        );
-
-        // Persist roster snapshots + payout logs
-        for (const sq of squadResults) {
-            await db.entities.SquadSeasonRoster.create({
-                period_id,
-                squad_id: sq.squad_id,
-                squad_name: sq.squad_name,
-                squad_tag: sq.squad_tag,
-                squad_icon: sq.squad_icon,
-                wallet_addresses: sq.member_wallets,
-                ranking_points: sq.ranking_points,
-                total_kills: sq.total_kills,
-                wars_fought: sq.wars_fought,
-                wins: sq.wins, losses: sq.losses, ties: sq.ties, byes: sq.byes,
-                final_rank: sq.rank,
-                champions_pool_share: sq.squad_share_omenx,
-            });
+        const CHUNK_SIZE = 20;
+        const chunks = [];
+        for (let i = 0; i < pendingPayments.length; i += CHUNK_SIZE) {
+            chunks.push(pendingPayments.slice(i, i + CHUNK_SIZE));
         }
-        for (const p of allMemberPayments) {
-            await db.entities.SquadChampionsPayoutLog.create({
-                period_id,
-                wallet_address: p.walletAddress,
-                squad_id: p.squad_id,
-                squad_name: p.squad_name,
-                squad_tag: p.squad_tag,
-                squad_rank: p.squad_rank,
-                amount: p.amount,
-                tx_id: txId,
-                status: 'success',
-            });
+        const txIds = [];
+        let paidThisRun = 0;
+        let partialError = null;
+
+        for (let ci = 0; ci < chunks.length; ci++) {
+            const chunk = chunks[ci];
+            let chunkTxId;
+            try {
+                chunkTxId = await callOmenxOneChunk(chunk, apiBaseUrl, rewardsKeys, `Squad Champions ${period_id}`, ci, chunks.length);
+            } catch (e) {
+                // Stop here — partial success preserved by per-chunk log writes already done.
+                partialError = e?.message || String(e);
+                console.error(`[distributeSquadChampions] STOPPED at chunk ${ci + 1}/${chunks.length}: ${partialError}`);
+                break;
+            }
+            txIds.push(chunkTxId);
+            // Write logs IMMEDIATELY for this chunk before sending the next one,
+            // so a 502 on chunk N+1 leaves chunk N safely recorded.
+            for (const p of chunk) {
+                try {
+                    await db.entities.SquadChampionsPayoutLog.create({
+                        period_id,
+                        wallet_address: p.walletAddress,
+                        squad_id: p.squad_id,
+                        squad_name: p.squad_name,
+                        squad_tag: p.squad_tag,
+                        squad_rank: p.squad_rank,
+                        amount: p.amount,
+                        tx_id: chunkTxId,
+                        status: 'success',
+                    });
+                    paidThisRun++;
+                } catch (logErr) {
+                    // A failed log write would let a retry double-pay this wallet — alert loudly.
+                    console.error('[distributeSquadChampions] CRITICAL: paid OMENX but log write failed', {
+                        wallet: p.walletAddress, amount: p.amount, tx: chunkTxId, err: logErr?.message
+                    });
+                }
+            }
         }
 
-        // Audit log
+        const txId = txIds.join(',');
+        const paidPayoutThisRun = paidThisRun > 0
+            ? pendingPayments.slice(0, paidThisRun).reduce((s, p) => s + p.amount, 0)
+            : 0;
+
+        // Audit log (includes partial-failure info if relevant)
         try {
             await db.entities.AdminChangesLog.create({
                 wallet_address: callerWallet,
                 action_type: 'reward_adjustment',
-                description: `Squad Wars Champions Pool distributed for ${period_id}`,
+                description: partialError
+                    ? `Squad Wars Champions Pool PARTIAL payout for ${period_id} — ${paidThisRun}/${pendingPayments.length} pending wallets paid`
+                    : `Squad Wars Champions Pool distributed for ${period_id}`,
                 details: {
                     period_id,
                     champions_pool_omenx: championsPool,
-                    total_payout: totalPayout,
-                    member_count: allMemberPayments.length,
+                    paid_this_run: paidThisRun,
+                    paid_omenx_this_run: paidPayoutThisRun,
+                    already_paid_before_run: paidCount,
+                    total_pending_at_start: pendingPayments.length,
+                    partial_error: partialError || undefined,
                     top_squads: squadResults.map(s => ({ rank: s.rank, name: s.squad_name, tag: s.squad_tag, share: s.squad_share_omenx })),
                 },
             });
         } catch {}
+
+        if (partialError) {
+            return Response.json({
+                success: false,
+                partial: true,
+                mode: 'execute',
+                period_id,
+                champions_pool_omenx: championsPool,
+                paid_this_run: paidThisRun,
+                paid_omenx_this_run: paidPayoutThisRun,
+                remaining_pending: pendingPayments.length - paidThisRun,
+                error: partialError,
+                tx_id: txId,
+            }, { status: 207 }); // 207 Multi-Status — partial success
+        }
 
         return Response.json({
             success: true,
             mode: 'execute',
             period_id,
             champions_pool_omenx: championsPool,
-            total_payout_omenx: totalPayout,
+            paid_this_run: paidThisRun,
+            paid_omenx_this_run: paidPayoutThisRun,
+            already_paid_before_run: paidCount,
             member_count: allMemberPayments.length,
             top_squads: squadResults.map(s => ({
                 rank: s.rank,
