@@ -33,7 +33,7 @@ export const ARENAS = [
   // no mob spawns (handled by GameEngine when arena.id === 'quantum_meteor'), single
   // stationary asteroid target. Not selectable in normal Hub/Loadouts — entered only
   // via the "Attack Meteor" button on the Squads page.
-  { id: 'quantum_meteor', name: 'Quantum Meteor', bg: '#02040a', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/d5e6acf9c_QuantumHole.png', duration: 180, effect: 'none', isSquadMeteor: true, hideFromArenaPicker: true }
+  { id: 'quantum_meteor', name: 'Quantum Meteor', bg: '#02040a', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/d5e6acf9c_QuantumHole.png', duration: 90, effect: 'none', isSquadMeteor: true, hideFromArenaPicker: true }
 ];
 
 // Sprite sheet for the Quantum Meteor target. 4×4 grid (16 frames), 192px per frame.
