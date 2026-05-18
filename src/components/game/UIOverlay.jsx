@@ -245,7 +245,7 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
             </div>
 
             {/* Bottom: XP Bar — centered, leaving room for the floating ULT buttons on the right */}
-            <div className="mt-auto pointer-events-auto w-full mb-2 md:mb-4 flex justify-center px-2 md:px-0">
+            <div className="mt-auto pointer-events-auto w-full mb-2 md:mb-4 flex justify-center px-2 md:px-0 flex-col gap-1.5">
                 <div className={`bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border w-full max-w-2xl transition-colors ${xpBuffActive ? 'border-emerald-400/60 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 'border-cyan-500/30'}`}>
                     <div className="flex justify-between items-end mb-1 gap-2">
                         <span className="text-sm md:text-lg font-black text-cyan-400 tracking-wider flex items-center gap-2">
@@ -265,6 +265,11 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         />
                     </div>
                 </div>
+                {omenxPurchasesDisabled && (
+                    <div className="bg-red-950/60 p-1.5 md:p-2 rounded-lg border border-red-500/50 w-full max-w-2xl flex items-center justify-center mx-auto">
+                        <span className="text-[10px] md:text-xs font-bold text-red-300 text-center">⚠️ Purchases disabled while OMENX is down</span>
+                    </div>
+                )}
             </div>
         </div>
     );
