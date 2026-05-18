@@ -30,26 +30,11 @@ let _purchasesDisabledExpiresAt = 0;
 const PURCHASES_FLAG_TTL_MS = 15 * 1000;
 const DEFAULT_DISABLED_MSG = 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.';
 
-// ---- Circuit breaker for the OmenX /v1/purchases endpoint ----
-// When OmenX's settlement service is down (502/503/504), every retry costs us
-// money (their API is billed per-call) AND drowns players in error toasts.
-// Once we see N consecutive 5xx in a short window, trip the breaker and
-// reject NEW purchases instantly without calling OmenX at all for 60s.
-// Auto-resets on the next successful call.
-const CB_TRIP_THRESHOLD = 3;   // 3 consecutive 5xx → trip
-const CB_OPEN_DURATION_MS = 60_000;
-let _cbFailures = 0;
-let _cbOpenUntil = 0;
-function cbIsOpen() { return Date.now() < _cbOpenUntil; }
-function cbRecordFailure() {
-    _cbFailures++;
-    if (_cbFailures >= CB_TRIP_THRESHOLD) {
-        _cbOpenUntil = Date.now() + CB_OPEN_DURATION_MS;
-        _cbFailures = 0;
-        console.warn(`[purchaseSku] CIRCUIT BREAKER TRIPPED — blocking OmenX calls for ${CB_OPEN_DURATION_MS / 1000}s`);
-    }
-}
-function cbRecordSuccess() { _cbFailures = 0; _cbOpenUntil = 0; }
+// Note: 502 from OmenX = gateway timeout (slow settlement, NOT down). The
+// transaction often still settles on-chain. We do NOT trip a circuit breaker
+// and we do NOT retry across keys on 5xx — each retry is a billable API call
+// for the same in-flight transaction. Single attempt, return whatever OmenX
+// says, move on.
 function isUpstream5xx(msg) {
     return /\b50[02-4]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable/i.test(msg);
 }
@@ -448,16 +433,6 @@ Deno.serve(async (req) => {
             }, { status: 503 });
         }
 
-        // Circuit breaker — if OmenX's /v1/purchases is currently failing (5xx),
-        // reject instantly without burning more billable API calls or showing the
-        // player yet another red error toast.
-        if (cbIsOpen()) {
-            return Response.json({
-                error: 'The OMENX payment service is temporarily unavailable. Please try again in a minute.',
-                omenxPurchasesDisabled: true,
-            }, { status: 503 });
-        }
-
         const body = await req.json();
         skuId = body.skuId;
         const quantity = body.quantity ?? 1;
@@ -520,103 +495,93 @@ Deno.serve(async (req) => {
         }
 
         // --- Charge OmenX ---
-         // Try each payment key in order; retry on 429 (rate-limit) only. Idempotency key
-         // ensures retries don't double-charge if a previous attempt actually went through.
-         // Upstream 5xx (502/503/504) = OmenX outage — bail immediately and trip the
-         // circuit breaker so the next caller doesn't pay for another doomed API call.
-         // The OmenX SDK handles PAYMENT_PENDING retries internally; if a 502 still
-         // bubbles up to us, retrying ourselves just burns more billable calls for
-         // the same doomed transaction (confirmed via logs 2026-05-18).
-         //
-         // 422 from OmenX (per Emilio, 2026-05-14): PAYMENT_FAILED. Hard failure — don't retry.
-         const is422 = (msg) => /\b422\b/.test(msg);
-         let purchaseData;
-         let lastErr = null;
-         let didPriceRecheck = false;
-         for (let i = 0; i < apiKeys.length; i++) {
-             const sdk = new OmenXServerSDK({ apiKey: apiKeys[i], apiBaseUrl });
-             try {
-                 purchaseData = await sdk.createPurchase({
-                     playerWallet: walletAddress,
-                     skuId,
-                     quantity,
-                     idempotencyKey,
-                     paymentCurrency: 'OMENX',
-                     paymentAmount: totalAmount,
-                 });
-                 cbRecordSuccess();
-                 break; // success
-             } catch (err) {
-                 lastErr = err;
-                 const msg = err?.message || String(err);
-                 // 5xx from OmenX = their service is down or PAYMENT_PENDING bubbled past
-                 // the SDK's internal retry. Either way, retrying ourselves doesn't help —
-                 // each retry is a billable API call to a failing endpoint. Trip the
-                 // breaker and bail so the next caller gets an instant 503.
-                 if (isUpstream5xx(msg)) {
-                     cbRecordFailure();
-                     console.error('[purchaseSku] OmenX upstream 5xx — aborting retries:', msg.slice(0, 200));
-                     return Response.json({
-                         error: 'The OMENX payment service is temporarily unavailable. Please try again in a minute.',
-                         omenxPurchasesDisabled: true,
-                     }, { status: 503 });
-                 }
+        // SINGLE attempt only. No multi-key retry loop — every retry is a billable
+        // call to OmenX, and on 502 (slow settlement) the original tx often still
+        // settles on-chain anyway, so retrying just multiplies cost without benefit.
+        // Only exception: 429 (rate-limited on this specific key) cycles to the
+        // next key, since that's a key-level issue not an OmenX-side problem.
+        const is422 = (msg) => /\b422\b/.test(msg);
+        let purchaseData;
+        let didPriceRecheck = false;
+        let keyIndex = 0;
+        while (keyIndex < apiKeys.length) {
+            const sdk = new OmenXServerSDK({ apiKey: apiKeys[keyIndex], apiBaseUrl });
+            try {
+                purchaseData = await sdk.createPurchase({
+                    playerWallet: walletAddress,
+                    skuId,
+                    quantity,
+                    idempotencyKey,
+                    paymentCurrency: 'OMENX',
+                    paymentAmount: totalAmount,
+                });
+                break; // success
+            } catch (err) {
+                const msg = err?.message || String(err);
 
-                 // 422 from OmenX = PAYMENT_FAILED. Possible causes:
-                 //   (a) stale cached SKU price — our paymentAmount ≠ their current catalog price
-                 //   (b) insufficient balance / rejected on-chain tx / other validation failure
-                 // ONCE per request, on the first 422, force-refresh the price cache.
-                 // If the price drifted, return a clean 409 so the client can refresh and
-                 // retry with the right amount. Otherwise it's a real PAYMENT_FAILED → bail.
-                 if (is422(msg)) {
-                     if (!didPriceRecheck) {
-                         didPriceRecheck = true;
-                         try {
-                             const freshUnitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys, true);
-                             console.warn(`[purchaseSku] OmenX 422 — refreshed price for ${skuId}: cached=${unitPrice} fresh=${freshUnitPrice}`);
-                             if (freshUnitPrice > 0 && freshUnitPrice !== unitPrice) {
-                                 postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
-                                     title: '⚠️ SKU price drift detected',
-                                     description: `Cached price was stale — purchase rejected by OmenX.`,
-                                     fields: [
-                                         { name: 'SKU', value: skuId, inline: true },
-                                         { name: 'Cached', value: `${unitPrice} OMENX`, inline: true },
-                                         { name: 'Fresh', value: `${freshUnitPrice} OMENX`, inline: true },
-                                         { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
-                                     ],
-                                 });
-                                 return Response.json({
-                                     error: 'This item\'s price was updated. Please refresh and try again.',
-                                     priceUpdated: true,
-                                 }, { status: 409 });
-                             }
-                         } catch (priceErr) {
-                             console.error('[purchaseSku] price re-check failed:', priceErr.message);
-                         }
-                     }
-                     console.warn(`[purchaseSku] OmenX 422 PAYMENT_FAILED — wallet=${walletAddress} sku=${skuId}: ${msg.slice(0, 200)}`);
-                     const friendly422 = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
-                         : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
-                         : "Your payment was rejected. Please check your OMENX balance and try again.";
-                     return Response.json({ error: friendly422 }, { status: 400 });
-                 }
+                // 5xx = OmenX gateway timeout. Their settlement is slow; tx may
+                // still land on-chain. We do NOT retry — single billable call.
+                if (isUpstream5xx(msg)) {
+                    console.error('[purchaseSku] OmenX 5xx (single attempt, no retry):', msg.slice(0, 200));
+                    return Response.json({
+                        error: 'OMENX settlement is slow right now. Please try again in a moment.',
+                    }, { status: 503 });
+                }
 
-                 if (msg.includes('429') && i < apiKeys.length - 1) {
-                     console.warn('[purchaseSku] payment key', i + 1, 'rate-limited — trying next key');
-                     continue;
-                 }
-                 if (msg.includes('429')) return Response.json({ error: 'Too many purchases right now — please try again in a moment.' }, { status: 429 });
-                 console.error('[purchaseSku] SDK purchase failed:', msg);
-                 const friendly = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
-                     : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
-                     : "Your purchase couldn't be completed. Please try again.";
-                 return Response.json({ error: friendly }, { status: 500 });
-             }
-         }
-         if (!purchaseData) {
-             console.error('[purchaseSku] No purchase data; lastErr:', lastErr?.message);
-             return Response.json({ error: "Your purchase couldn't be completed. Please try again." }, { status: 500 });
-         }
+                // 422 = PAYMENT_FAILED. Try a one-shot price refresh in case the
+                // cached price drifted. No retry beyond that.
+                if (is422(msg)) {
+                    if (!didPriceRecheck) {
+                        didPriceRecheck = true;
+                        try {
+                            const freshUnitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys, true);
+                            console.warn(`[purchaseSku] OmenX 422 — refreshed price for ${skuId}: cached=${unitPrice} fresh=${freshUnitPrice}`);
+                            if (freshUnitPrice > 0 && freshUnitPrice !== unitPrice) {
+                                postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
+                                    title: '⚠️ SKU price drift detected',
+                                    description: `Cached price was stale — purchase rejected by OmenX.`,
+                                    fields: [
+                                        { name: 'SKU', value: skuId, inline: true },
+                                        { name: 'Cached', value: `${unitPrice} OMENX`, inline: true },
+                                        { name: 'Fresh', value: `${freshUnitPrice} OMENX`, inline: true },
+                                        { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
+                                    ],
+                                });
+                                return Response.json({
+                                    error: 'This item\'s price was updated. Please refresh and try again.',
+                                    priceUpdated: true,
+                                }, { status: 409 });
+                            }
+                        } catch (priceErr) {
+                            console.error('[purchaseSku] price re-check failed:', priceErr.message);
+                        }
+                    }
+                    console.warn(`[purchaseSku] OmenX 422 PAYMENT_FAILED — wallet=${walletAddress} sku=${skuId}: ${msg.slice(0, 200)}`);
+                    const friendly422 = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
+                        : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
+                        : "Your payment was rejected. Please check your OMENX balance and try again.";
+                    return Response.json({ error: friendly422 }, { status: 400 });
+                }
+
+                // 429 = this key is rate-limited. Cycle to the next key (this is
+                // a key issue, not an OmenX-load issue).
+                if (msg.includes('429') && keyIndex < apiKeys.length - 1) {
+                    console.warn('[purchaseSku] payment key', keyIndex + 1, 'rate-limited — trying next key');
+                    keyIndex++;
+                    continue;
+                }
+                if (msg.includes('429')) return Response.json({ error: 'Too many purchases right now — please try again in a moment.' }, { status: 429 });
+
+                console.error('[purchaseSku] SDK purchase failed:', msg);
+                const friendly = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
+                    : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
+                    : "Your purchase couldn't be completed. Please try again.";
+                return Response.json({ error: friendly }, { status: 500 });
+            }
+        }
+        if (!purchaseData) {
+            return Response.json({ error: "Your purchase couldn't be completed. Please try again." }, { status: 500 });
+        }
 
         const txHash = purchaseData?.transactionId || purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.paymentTxHash || null;
         const status = purchaseData?.status || 'unknown';
