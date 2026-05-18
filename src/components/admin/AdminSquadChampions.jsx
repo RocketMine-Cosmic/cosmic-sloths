@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Crown, Eye, Send, AlertTriangle } from 'lucide-react';
+import { Crown, Eye, Send, AlertTriangle, Users, ScrollText } from 'lucide-react';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
+import SquadChampionsPayoutLogs from './SquadChampionsPayoutLogs';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -158,27 +159,58 @@ export default function AdminSquadChampions({ walletAddress }) {
                             )}
                         </div>
 
-                        {/* Top squads */}
+                        {/* Top squads with per-member breakdown */}
                         {(previewData.top_squads || []).length > 0 && (
                             <div>
-                                <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Top Squads</div>
+                                <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Top Squads & Recipients</div>
                                 <div className="space-y-2">
                                     {previewData.top_squads.map(sq => {
                                         const rankIcon = sq.rank === 1 ? '🥇' : sq.rank === 2 ? '🥈' : '🥉';
+                                        const membersOfSquad = (previewData.member_payments || []).filter(m => m.squad_rank === sq.rank);
                                         return (
-                                            <div key={sq.squad_id} className="bg-slate-900/50 border border-slate-700 rounded-lg p-3 flex flex-wrap items-center gap-3">
-                                                <span className="text-xl">{rankIcon}</span>
-                                                <span className="text-xl">{sq.squad_icon?.startsWith('http') ? <img src={sq.squad_icon} className="w-6 h-6 rounded" alt="" /> : (sq.squad_icon || '🛡️')}</span>
-                                                <div className="flex-1 min-w-[180px]">
-                                                    <div className="font-bold text-white">{sq.squad_name} <span className="text-[10px] text-slate-500">[{sq.squad_tag}]</span></div>
-                                                    <div className="text-[10px] text-slate-400">
-                                                        {sq.wins}W · {sq.losses}L · {sq.ties}T · {sq.byes}B · {sq.total_kills.toLocaleString()} kills · {sq.member_count} members
+                                            <div key={sq.squad_id} className="bg-slate-900/50 border border-slate-700 rounded-lg overflow-hidden">
+                                                <div className="p-3 flex flex-wrap items-center gap-3 border-b border-slate-700/60">
+                                                    <span className="text-xl">{rankIcon}</span>
+                                                    <span className="text-xl">{sq.squad_icon?.startsWith('http') ? <img src={sq.squad_icon} className="w-6 h-6 rounded" alt="" /> : (sq.squad_icon || '🛡️')}</span>
+                                                    <div className="flex-1 min-w-[180px]">
+                                                        <div className="font-bold text-white">{sq.squad_name} <span className="text-[10px] text-slate-500">[{sq.squad_tag}]</span></div>
+                                                        <div className="text-[10px] text-slate-400">
+                                                            {sq.wins}W · {sq.losses}L · {sq.ties}T · {sq.byes}B · {sq.total_kills.toLocaleString()} kills · {sq.member_count} members
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-amber-300 font-mono font-bold flex items-center gap-1 justify-end"><OmenXIcon className="w-4 h-4" /> {Math.floor(sq.squad_share_omenx).toLocaleString()}</div>
+                                                        <div className="text-[9px] text-slate-500 uppercase">~{Math.floor(sq.per_member_omenx).toLocaleString()}/member</div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="text-amber-300 font-mono font-bold flex items-center gap-1 justify-end"><OmenXIcon className="w-4 h-4" /> {Math.floor(sq.squad_share_omenx).toLocaleString()}</div>
-                                                    <div className="text-[9px] text-slate-500 uppercase">~{Math.floor(sq.per_member_omenx).toLocaleString()}/member</div>
-                                                </div>
+                                                {membersOfSquad.length > 0 ? (
+                                                    <table className="w-full text-xs">
+                                                        <thead className="text-slate-500 bg-slate-950/40">
+                                                            <tr>
+                                                                <th className="p-1.5 text-left font-normal">Player</th>
+                                                                <th className="p-1.5 text-left font-normal">Wallet</th>
+                                                                <th className="p-1.5 text-right font-normal">Amount</th>
+                                                                <th className="p-1.5 text-center font-normal">Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-800">
+                                                            {membersOfSquad.map(m => (
+                                                                <tr key={m.wallet_address} className={m.already_paid ? 'bg-emerald-950/20' : ''}>
+                                                                    <td className="p-1.5 text-white">{m.player_name}</td>
+                                                                    <td className="p-1.5 font-mono text-slate-500 text-[10px]">{m.wallet_address.slice(0, 6)}…{m.wallet_address.slice(-4)}</td>
+                                                                    <td className="p-1.5 text-right font-mono text-amber-300">{Math.floor(m.amount).toLocaleString()}</td>
+                                                                    <td className="p-1.5 text-center">
+                                                                        {m.already_paid
+                                                                            ? <span className="text-[10px] text-emerald-400 font-bold">✓ PAID</span>
+                                                                            : <span className="text-[10px] text-sky-400 font-bold">PENDING</span>}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                ) : (
+                                                    <div className="p-2 text-[10px] text-slate-500 italic">No eligible members (blacklisted or per-member share rounded to 0).</div>
+                                                )}
                                             </div>
                                         );
                                     })}
@@ -248,6 +280,9 @@ export default function AdminSquadChampions({ walletAddress }) {
                     </div>
                 )}
             </div>
+
+            {/* Step 3 — Payout Logs viewer (shows actual SquadChampionsPayoutLog rows) */}
+            <SquadChampionsPayoutLogs periodId={previewData?.period_id || periodId || ''} />
         </div>
     );
 }

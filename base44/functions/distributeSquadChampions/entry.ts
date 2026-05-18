@@ -354,6 +354,26 @@ Deno.serve(async (req) => {
 
         // ---- PREVIEW MODE: don't pay, just return what would happen ----
         if (mode !== 'execute') {
+            // Enrich each planned payment with the player's current name (best effort).
+            // Look up PlayerSave by wallet so admins see who each row corresponds to.
+            const walletsToLookup = [...new Set(annotatedPayments.map(p => p.walletAddress))];
+            const nameByWallet = {};
+            for (const w of walletsToLookup) {
+                try {
+                    const rows = await db.entities.PlayerSave.filter({ wallet_address: w }, '-updated_at', 1);
+                    if (rows.length > 0) nameByWallet[w] = rows[0].player_name || '';
+                } catch {}
+            }
+            const memberPayments = annotatedPayments.map(p => ({
+                wallet_address: p.walletAddress,
+                player_name: nameByWallet[p.walletAddress] || '(unknown)',
+                amount: p.amount,
+                squad_name: p.squad_name,
+                squad_tag: p.squad_tag,
+                squad_rank: p.squad_rank,
+                already_paid: p.already_paid,
+            }));
+
             return Response.json({
                 success: true,
                 mode: 'preview',
@@ -366,6 +386,7 @@ Deno.serve(async (req) => {
                 pending_payout_omenx: pendingPayoutTotal,
                 eligible_squads: eligible.length,
                 top_squads: squadResults,
+                member_payments: memberPayments,
                 total_member_payouts: allMemberPayments.length,
                 total_payout_omenx: totalPayout,
                 full_ranking: ranking.slice(0, 20), // top 20 for visibility
