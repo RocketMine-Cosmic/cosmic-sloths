@@ -4,6 +4,7 @@ import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { getStatSku } from '@/lib/skuMap';
 import { refreshBalance } from '@/lib/playerDataCache';
+import { invokePurchaseWithRetry, formatPurchaseError, delay, PURCHASE_THROTTLE_MS } from './buyAllHelpers';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -84,9 +85,8 @@ export default function BuyAllStatsButton({ tier, tokenCosts, save, omenxBalance
             const grantInfo = { type: 'stat', tier, stat: item.stat, level: item.level };
 
             try {
-                const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName, grantInfo });
+                const res = await invokePurchaseWithRetry({ skuId, quantity: 1, playerName, grantInfo });
                 const data = res.data;
-                if (!data?.success) throw new Error(data?.error || 'Purchase failed');
 
                 // Apply server save to local
                 if (data.saveData) {
@@ -103,12 +103,12 @@ export default function BuyAllStatsButton({ tier, tokenCosts, save, omenxBalance
                 purchased++;
                 setProgress({ done: purchased, total: plan.affordable.length });
                 SoundManager.playUIClick();
+                // Throttle between purchases to avoid bursty 429s on the next call.
+                await delay(PURCHASE_THROTTLE_MS);
             } catch (e) {
-                // Stop the batch on first failure — surface the error so the user can react.
                 const status = e?.response?.status;
-                const serverMsg = e?.response?.data?.error || e?.message || '';
-                console.error('[BuyAllStats] purchase failed:', status, serverMsg);
-                setError(serverMsg || 'Something went wrong — stopped batch.');
+                console.error('[BuyAllStats] purchase failed:', status, e?.classification, e?.message);
+                setError(formatPurchaseError(e));
                 break;
             }
         }

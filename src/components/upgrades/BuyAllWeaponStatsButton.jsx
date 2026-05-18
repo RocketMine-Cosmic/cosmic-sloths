@@ -4,6 +4,7 @@ import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { getWeaponSku } from '@/lib/skuMap';
 import { refreshBalance } from '@/lib/playerDataCache';
+import { invokePurchaseWithRetry, formatPurchaseError, delay, PURCHASE_THROTTLE_MS } from './buyAllHelpers';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -76,9 +77,8 @@ export default function BuyAllWeaponStatsButton({ tier, weapon, tokenCosts, save
             const grantInfo = { type: 'weapon', tier, weaponId: weapon.id, stat: item.stat, level: item.level };
 
             try {
-                const res = await base44.functions.invoke('purchaseSku', { skuId, quantity: 1, playerName, grantInfo });
+                const res = await invokePurchaseWithRetry({ skuId, quantity: 1, playerName, grantInfo });
                 const data = res.data;
-                if (!data?.success) throw new Error(data?.error || 'Purchase failed');
 
                 if (data.saveData) {
                     const s = SaveManager.load();
@@ -93,11 +93,11 @@ export default function BuyAllWeaponStatsButton({ tier, weapon, tokenCosts, save
                 purchased++;
                 setProgress({ done: purchased, total: plan.affordable.length });
                 SoundManager.playUIClick();
+                await delay(PURCHASE_THROTTLE_MS);
             } catch (e) {
                 const status = e?.response?.status;
-                const serverMsg = e?.response?.data?.error || e?.message || '';
-                console.error('[BuyAllWeaponStats] purchase failed:', status, serverMsg);
-                setError(serverMsg || 'Something went wrong — stopped batch.');
+                console.error('[BuyAllWeaponStats] purchase failed:', status, e?.classification, e?.message);
+                setError(formatPurchaseError(e));
                 break;
             }
         }
