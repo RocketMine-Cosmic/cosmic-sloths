@@ -25,6 +25,7 @@ import TalentRespecModal from '../components/game/TalentRespecModal';
 import RelicPrestigeBadge from '../components/game/RelicPrestigeBadge';
 import StatPips, { SmallStatPips } from '../components/game/StatPips';
 import BuyAllStatsButton from '../components/upgrades/BuyAllStatsButton';
+import BuyAllWeaponStatsButton from '../components/upgrades/BuyAllWeaponStatsButton';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
@@ -696,13 +697,26 @@ export default function Upgrades({ isCarousel }) {
                 
                 <div className={`bg-slate-800 p-2 md:p-4 rounded-xl border ${isMastered ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'border-slate-700'}`}>
                     <div className="mb-2 md:mb-4">
-                        <div className="flex justify-between items-start mb-1">
+                        <div className="flex justify-between items-start mb-1 gap-2 flex-wrap">
                             <h3 className={`font-bold text-lg md:text-xl ${isMastered ? 'text-yellow-400' : 'text-white'}`}>{weapon.name}</h3>
-                            {isMastered && (
-                                <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded border border-yellow-500/50">
-                                    MASTERED
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {(activeCategory === 'weekly' || activeCategory === 'seasonal') && (
+                                    <BuyAllWeaponStatsButton
+                                        tier={activeCategory}
+                                        weapon={weapon}
+                                        tokenCosts={typeConfig.tokenCosts}
+                                        save={save}
+                                        omenxBalance={omenxBalance}
+                                        omenxBlocked={omenxBlocked}
+                                        omenxBlockedMsg={omenxBlockedMsg}
+                                    />
+                                )}
+                                {isMastered && (
+                                    <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded border border-yellow-500/50">
+                                        MASTERED
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <p className="text-slate-400 text-xs md:text-sm">{weapon.desc}</p>
                         {isMastered && (
