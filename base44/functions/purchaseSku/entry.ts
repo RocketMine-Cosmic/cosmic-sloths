@@ -102,6 +102,25 @@ function isRetryable5xx(msg) {
     return /\b50[234]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable|balance_check_failed|payment_pending/i.test(msg);
 }
 
+// Client-side timeout for a single sdk.createPurchase call. The OmenX SDK has
+// no built-in timeout, so a flaking settlement service can hang the call for
+// 60+ seconds (Texxy 2026-05-18: saw a single /v1/purchases hang for 61.6s).
+// During that time the circuit breaker can't trip because no error has been
+// thrown yet — every concurrent player just stacks up waiting. 8s is well
+// above the ~1-2s happy path but below the 60s isolate budget. The timeout
+// throws a 504-shaped error so isRetryable5xx() catches it and the breaker
+// records the failure normally.
+const SDK_CALL_TIMEOUT_MS = 8_000;
+function withTimeout(promise, ms, label) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(
+            () => reject(new Error(`504 GATEWAY_TIMEOUT — ${label} exceeded ${ms}ms client-side cap`)),
+            ms,
+        )),
+    ]);
+}
+
 async function getOmenXPurchasesDisabled(base44) {
     const now = Date.now();
     if (_purchasesDisabledCache && now < _purchasesDisabledExpiresAt) {
@@ -610,14 +629,18 @@ Deno.serve(async (req) => {
         for (let i = 0; i < attempts; i++) {
             const sdk = new OmenXServerSDK({ apiKey: apiKeys[i], apiBaseUrl });
             try {
-                purchaseData = await sdk.createPurchase({
-                    playerWallet: walletAddress,
-                    skuId,
-                    quantity,
-                    idempotencyKey,
-                    paymentCurrency: 'OMENX',
-                    paymentAmount: totalAmount,
-                });
+                purchaseData = await withTimeout(
+                    sdk.createPurchase({
+                        playerWallet: walletAddress,
+                        skuId,
+                        quantity,
+                        idempotencyKey,
+                        paymentCurrency: 'OMENX',
+                        paymentAmount: totalAmount,
+                    }),
+                    SDK_CALL_TIMEOUT_MS,
+                    'sdk.createPurchase',
+                );
                 break; // success
             } catch (err) {
                 lastErr = err;
