@@ -33,7 +33,10 @@ export default function AdminSquadChampions({ walletAddress }) {
         ...allPools
             .filter(p => p.period_type === 'seasonal' && p.period_id !== currentSeasonId)
             .sort((a, b) => b.period_id.localeCompare(a.period_id))
-            .map(p => ({ id: p.period_id, label: `${p.period_id}${p.distributed ? ' ✓ distributed' : ' — pending'}`, distributed: p.distributed }))
+            // NOTE: p.distributed reflects the SEASONAL PLAYER pool (distributeRewards), NOT
+            // the Squad Champions pool. The real "champions already paid?" check happens in
+            // the preview response (`already_distributed` field). Don't show that flag here.
+            .map(p => ({ id: p.period_id, label: p.period_id, distributed: false }))
     ];
 
     const handlePreview = async () => {
