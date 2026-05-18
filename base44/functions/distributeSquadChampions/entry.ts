@@ -77,12 +77,9 @@ async function buildSeasonRanking(periodId) {
     const weekIds = getWeekIdsForSeason(periodId);
     if (weekIds.length === 0) return [];
 
-    // Pull all resolved wars for these 4 weeks
-    const allWars = [];
-    for (const wid of weekIds) {
-        const wars = await db.entities.SquadWar.filter({ week_id: wid });
-        allWars.push(...wars.filter(w => w.is_resolved));
-    }
+    // Pull all resolved wars for these 4 weeks in ONE batched query (was 4 sequential calls).
+    const warsAllWeeks = await db.entities.SquadWar.filter({ week_id: { $in: weekIds } }, '-created_date', 500);
+    const allWars = warsAllWeeks.filter(w => w.is_resolved);
 
     // Aggregate per squad
     const bySquad = new Map();
@@ -306,6 +303,20 @@ Deno.serve(async (req) => {
         const blacklisted = await db.entities.BlacklistedWallet.list();
         const blacklistSet = new Set(blacklisted.map(b => (b.wallet_address || '').toLowerCase()));
 
+        // Fetch members for all top-3 squads in ONE batched query (was 3 sequential paged
+        // calls → up to 9+ API hits). Top squads have ≤ ~30 members so 500 is plenty.
+        const top3Ids = top3.map(s => s.squad_id);
+        const walletsBySquad = new Map(top3Ids.map(id => [id, []]));
+        if (top3Ids.length > 0) {
+            const allMembers = await db.entities.SquadMember.filter({ squad_id: { $in: top3Ids } }, '-created_date', 500);
+            for (const m of allMembers) {
+                const w = (m.wallet_address || '').toLowerCase();
+                if (!w) continue;
+                const list = walletsBySquad.get(m.squad_id);
+                if (list && !list.includes(w)) list.push(w);
+            }
+        }
+
         // Compute per-squad and per-member payouts
         const squadResults = [];
         const allMemberPayments = []; // for OMENX batch call
@@ -313,7 +324,7 @@ Deno.serve(async (req) => {
         for (let i = 0; i < top3.length; i++) {
             const squad = top3[i];
             const squadShare = Math.floor(championsPool * shares[i]);
-            const wallets = await fetchSquadMemberWallets(squad.squad_id);
+            const wallets = walletsBySquad.get(squad.squad_id) || [];
 
             const eligibleWallets = wallets.filter(w => !blacklistSet.has(w));
 
