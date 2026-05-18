@@ -33,11 +33,11 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
     // Collapse loadout list by default on mobile so the pause button + top row stay visible.
     // Players can tap the HP bar to expand and review their build.
     const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
-    // Anti-mash: 2.5s cooldown on Squad Ult buttons. Settlement can be flakey
+    // Anti-mash: 2s cooldown on Squad Ult buttons. Settlement can be flakey
     // and players panic-mash during fights — without this they queue multiple
     // billable OmenX purchases for a single intended ULT.
-    const ultLiteCd = useAntiMashCooldown(2500);
-    const ultFullCd = useAntiMashCooldown(2500);
+    const ultLiteCd = useAntiMashCooldown(2000);
+    const ultFullCd = useAntiMashCooldown(2000);
 
     // Aggregate passives once so both the count badge and the expanded list use the same data.
     const aggregatedPassives = Object.values(passives.reduce((acc, p) => {

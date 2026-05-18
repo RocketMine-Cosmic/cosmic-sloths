@@ -94,10 +94,10 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
     const showNextPrice = nextBanishCost !== null && nextBanishCost !== banishCost;
     const [hasRerolled, setHasRerolled] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(null);
-    // Anti-mash: 2.5s cooldown on Reroll & Banish so a flurry of clicks during
+    // Anti-mash: 2s cooldown on Reroll & Banish so a flurry of clicks during
     // a slow OmenX settlement doesn't queue up multiple billable purchases.
-    const rerollCd = useAntiMashCooldown(2500);
-    const banishCd = useAntiMashCooldown(2500);
+    const rerollCd = useAntiMashCooldown(2000);
+    const banishCd = useAntiMashCooldown(2000);
 
     React.useEffect(() => {
         setHasRerolled(false);
