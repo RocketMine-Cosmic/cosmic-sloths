@@ -291,6 +291,11 @@ Deno.serve(async (req) => {
             shares = TOP_3_SHARES;
         }
 
+        // Load blacklist ONCE up-front (was being re-fetched per squad → 3× wasted API calls
+        // that helped push the preview over Base44's rate limit).
+        const blacklisted = await db.entities.BlacklistedWallet.list();
+        const blacklistSet = new Set(blacklisted.map(b => (b.wallet_address || '').toLowerCase()));
+
         // Compute per-squad and per-member payouts
         const squadResults = [];
         const allMemberPayments = []; // for OMENX batch call
@@ -300,9 +305,6 @@ Deno.serve(async (req) => {
             const squadShare = Math.floor(championsPool * shares[i]);
             const wallets = await fetchSquadMemberWallets(squad.squad_id);
 
-            // Filter out blacklisted wallets defensively
-            const blacklisted = await db.entities.BlacklistedWallet.list();
-            const blacklistSet = new Set(blacklisted.map(b => (b.wallet_address || '').toLowerCase()));
             const eligibleWallets = wallets.filter(w => !blacklistSet.has(w));
 
             const memberCount = eligibleWallets.length;
@@ -354,15 +356,24 @@ Deno.serve(async (req) => {
 
         // ---- PREVIEW MODE: don't pay, just return what would happen ----
         if (mode !== 'execute') {
-            // Enrich each planned payment with the player's current name (best effort).
-            // Look up PlayerSave by wallet so admins see who each row corresponds to.
+            // Enrich each planned payment with the player's current name.
+            // SINGLE batched lookup (was N sequential filter() calls → 429 rate limit).
             const walletsToLookup = [...new Set(annotatedPayments.map(p => p.walletAddress))];
             const nameByWallet = {};
-            for (const w of walletsToLookup) {
+            if (walletsToLookup.length > 0) {
                 try {
-                    const rows = await db.entities.PlayerSave.filter({ wallet_address: w }, '-updated_at', 1);
-                    if (rows.length > 0) nameByWallet[w] = rows[0].player_name || '';
-                } catch {}
+                    const rows = await db.entities.PlayerSave.filter(
+                        { wallet_address: { $in: walletsToLookup } },
+                        '-updated_at',
+                        walletsToLookup.length
+                    );
+                    for (const r of rows) {
+                        const w = (r.wallet_address || '').toLowerCase();
+                        if (w && !nameByWallet[w]) nameByWallet[w] = r.player_name || '';
+                    }
+                } catch (e) {
+                    console.warn('[distributeSquadChampions] batched name lookup failed:', e?.message);
+                }
             }
             const memberPayments = annotatedPayments.map(p => ({
                 wallet_address: p.walletAddress,
