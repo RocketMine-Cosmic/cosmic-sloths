@@ -129,21 +129,31 @@ async function buildSeasonRanking(periodId) {
         }
     }
 
-    // Compute ranking points, refresh display fields with current squad info, and check member count
+    // Refresh display fields + member counts in ONE batched call (was N sequential Squad.get
+    // calls → easily 10+ API hits which combined with the rest of the preview was tripping
+    // Base44's rate limit).
+    const squadIds = [...bySquad.keys()];
+    const freshById = new Map();
+    if (squadIds.length > 0) {
+        try {
+            const freshSquads = await db.entities.Squad.filter({ id: { $in: squadIds } }, '-created_date', squadIds.length);
+            for (const f of freshSquads) freshById.set(f.id, f);
+        } catch (e) {
+            console.warn('[distributeSquadChampions] batched Squad lookup failed:', e?.message);
+        }
+    }
+
     const rows = [];
     for (const sq of bySquad.values()) {
         const points = sq.wins * 3 + sq.ties * 1 + sq.byes * 1;
-        // Refresh display fields + member count from current Squad record
+        const fresh = freshById.get(sq.squad_id);
         let memberCount = 0;
-        try {
-            const fresh = await db.entities.Squad.get(sq.squad_id);
-            if (fresh) {
-                sq.squad_name = fresh.name || sq.squad_name;
-                sq.squad_tag = fresh.tag || sq.squad_tag;
-                sq.squad_icon = fresh.icon || sq.squad_icon;
-                memberCount = fresh.member_count || 0;
-            }
-        } catch {}
+        if (fresh) {
+            sq.squad_name = fresh.name || sq.squad_name;
+            sq.squad_tag = fresh.tag || sq.squad_tag;
+            sq.squad_icon = fresh.icon || sq.squad_icon;
+            memberCount = fresh.member_count || 0;
+        }
         rows.push({
             ...sq,
             ranking_points: points,
