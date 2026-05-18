@@ -29,9 +29,11 @@ export function triggerSquadUltimate(engine, tier = 'full') {
     const life = 20;
 
     engine.squadClones = engine.squadClones || [];
+    const spawnRadius = 60;
+    const spawnAngle = Math.random() * Math.PI * 2;
     engine.squadClones.push({
-        x: engine.player.x + (Math.random() - 0.5) * 100,
-        y: engine.player.y + (Math.random() - 0.5) * 100,
+        x: engine.player.x + Math.cos(spawnAngle) * spawnRadius,
+        y: engine.player.y + Math.sin(spawnAngle) * spawnRadius,
         radius: 16,
         life,
         charId: cloneCharId,
@@ -110,6 +112,11 @@ export function updateSquadClones(engine, dt) {
                 clone.facingLeft = Math.cos(angle) < 0;
             }
         }
+        
+        // Bounds check: keep clones on screen
+        const MARGIN = 50;
+        clone.x = Math.max(MARGIN, Math.min(engine.width - MARGIN, clone.x));
+        clone.y = Math.max(MARGIN, Math.min(engine.height - MARGIN, clone.y));
         
         if (clone.life <= 0) {
             engine.addParticle(clone.x, clone.y, clone.color, 20, 'glow', 2);
