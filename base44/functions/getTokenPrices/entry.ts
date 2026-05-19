@@ -1,12 +1,11 @@
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.34';
-
-// Live USD spot prices for OMENX / GMT / BNB on BNB Smart Chain (chainId 56).
-// Used by the cosmetics shop + purchase modals to show players the exact
-// token amount they'll pay for a USD-priced SKU.
+// Live USD spot price for GMT (GoMining Token) on BNB Smart Chain.
+// Source: CoinGecko (free public API, no key) → DexScreener fallback.
+// Switched away from OmenX SDK 2026-05-19 — their endpoint requires a
+// `prices:read` scope we don't have yet. Can re-add OmenX as a primary
+// source later if/when the scope is granted.
 //
-// Cached server-side (60s TTL) — prices barely move on this scale and we want
-// to keep load off the OmenX SDK regardless of how many players have the shop
-// open at once.
+// Cached server-side (60s TTL) — prices barely move on this scale and we
+// want to keep CoinGecko's free-tier rate-limit happy.
 
 const CHAIN_ID = 56;
 
@@ -29,55 +28,71 @@ Deno.serve(async (_req) => {
             return Response.json({ ...(_cache), cached: true });
         }
 
-        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
+        // ====================================================================
+        // GMT price: CoinGecko (free public API, no key needed).
+        // OmenX SDK doesn't have `prices:read` scope yet — until they grant it,
+        // we use CoinGecko as the source for GoMining Token's USD spot price.
+        // ====================================================================
+        let gmtUsd = null;
+        let gmtSource = null;
+        let cgErr = null;
+        try {
+            const cgRes = await fetch(
+                'https://api.coingecko.com/api/v3/simple/price?ids=gomining-token&vs_currencies=usd',
+                { headers: { 'Accept': 'application/json' } }
+            );
+            if (cgRes.ok) {
+                const cgData = await cgRes.json();
+                const price = cgData?.['gomining-token']?.usd;
+                if (typeof price === 'number' && price > 0) {
+                    gmtUsd = price;
+                    gmtSource = 'coingecko';
+                }
+            } else {
+                cgErr = `CoinGecko HTTP ${cgRes.status}`;
+            }
+        } catch (e) {
+            cgErr = e?.message || String(e);
+        }
 
-        // The pricing endpoint requires the `prices:read` scope. We don't yet know
-        // which of our existing keys has it — try each in turn and surface the
-        // last error if all fail. Once we know which key has the scope, we can
-        // narrow this down.
-        const candidateKeys = [
-            ['OMENX_API_KEY',          Deno.env.get('OMENX_API_KEY')],
-            ['OMENX_AUTH_API_KEY',     Deno.env.get('OMENX_AUTH_API_KEY')],
-            ['OMENX_BALANCE_API_KEY',  Deno.env.get('OMENX_BALANCE_API_KEY')],
-            ['OMENX_PAYMENT_API_KEY',  Deno.env.get('OMENX_PAYMENT_API_KEY')],
-            ['OMENX_REWARDS_API_KEY',  Deno.env.get('OMENX_REWARDS_API_KEY')],
-        ].filter(([, v]) => !!v);
-
-        let raw = null;
-        let lastErr = null;
-        let workingKeyName = null;
-        const attempts = [];
-        for (const [name, key] of candidateKeys) {
+        // Fallback: DexScreener (no key, pulls from PancakeSwap liquidity).
+        if (gmtUsd === null) {
             try {
-                const sdk = new OmenXServerSDK({ apiKey: key, apiBaseUrl });
-                raw = await sdk.getTokenSpotUsdPrices(CHAIN_ID, [TOKENS.OMENX, TOKENS.GMT, TOKENS.BNB]);
-                workingKeyName = name;
-                attempts.push({ name, ok: true });
-                break;
+                const dsRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${TOKENS.GMT}`);
+                if (dsRes.ok) {
+                    const dsData = await dsRes.json();
+                    const pairs = dsData?.pairs || [];
+                    // Pick the deepest-liquidity pair to avoid weird thin-pool prices.
+                    const best = pairs
+                        .filter(p => p?.priceUsd)
+                        .sort((a, b) => (b?.liquidity?.usd || 0) - (a?.liquidity?.usd || 0))[0];
+                    const price = best?.priceUsd ? parseFloat(best.priceUsd) : null;
+                    if (price && price > 0) {
+                        gmtUsd = price;
+                        gmtSource = 'dexscreener';
+                    }
+                }
             } catch (e) {
-                const msg = e?.message || String(e);
-                lastErr = msg;
-                attempts.push({ name, ok: false, err: msg.slice(0, 200) });
+                cgErr = (cgErr || '') + ' | DexScreener: ' + (e?.message || String(e));
             }
         }
-        console.log('[getTokenPrices] key attempts:', JSON.stringify(attempts));
-        if (!raw) {
-            return Response.json({
-                error: 'No API key in this app has the `prices:read` scope yet. Generate one on the OmenX dev portal and add it as a secret.',
-                attempts,
-                lastErr,
-            }, { status: 403 });
-        }
-        console.log(`[getTokenPrices] using key: ${workingKeyName}`);
 
-        // We don't know the exact shape yet — log it for confirmation and pass through.
-        console.log('[getTokenPrices] raw response:', JSON.stringify(raw).slice(0, 500));
+        if (gmtUsd === null) {
+            console.error('[getTokenPrices] all external sources failed:', cgErr);
+            return Response.json({
+                error: 'Could not fetch GMT price from CoinGecko or DexScreener.',
+                detail: cgErr,
+            }, { status: 502 });
+        }
+
+        console.log(`[getTokenPrices] GMT=$${gmtUsd} (source=${gmtSource})`);
 
         const payload = {
             chainId: CHAIN_ID,
             fetchedAt: now,
-            raw,
+            prices: {
+                GMT: { usd: gmtUsd, source: gmtSource },
+            },
         };
         _cache = payload;
         _cacheExpiresAt = now + CACHE_TTL_MS;
