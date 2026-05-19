@@ -36,6 +36,7 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [myGold, setMyGold] = useState(SaveManager.load()?.gold || 0);
+    const [confirmTier, setConfirmTier] = useState(null); // tier key pending confirmation
 
     // Pull authoritative treasury state on mount + when squad changes.
     useEffect(() => {
@@ -124,7 +125,11 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                 active_buff_week_id: res.data.active_buff_week_id,
             }));
             const tier = TREASURY_TIERS.find(t => t.key === tierKey);
-            toast({ title: `${tier?.label} buff activated!`, description: `Applies to week ${res.data.active_buff_week_id}` });
+            toast({
+                title: res.data.upgraded ? `Upgraded to ${tier?.label}!` : `${tier?.label} buff activated!`,
+                description: `Applies to week ${res.data.active_buff_week_id}`,
+            });
+            setConfirmTier(null);
         } catch (e) {
             setError(e?.response?.data?.error || e.message || 'Activation failed');
         } finally {
@@ -254,12 +259,21 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                 {!canActivate && (
                     <p className="text-[11px] text-slate-500 mb-2 italic">Only the leader or officers can activate buffs.</p>
                 )}
+                {canActivate && !!treasury.active_buff_tier && (
+                    <p className="text-[11px] text-cyan-300/90 mb-2">💡 You can upgrade to a higher tier by paying the cost <em>difference</em>.</p>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {TREASURY_TIERS.map(tier => {
-                        const enough = (treasury.treasury_gold || 0) >= tier.cost;
                         const isActive = treasury.active_buff_tier === tier.key;
-                        const lockedByActive = !!treasury.active_buff_tier && !isActive;
+                        const activeTierObj = treasury.active_buff_tier
+                            ? TREASURY_TIERS.find(t => t.key === treasury.active_buff_tier)
+                            : null;
+                        const isUpgrade = !!activeTierObj && !isActive && tier.cost > activeTierObj.cost;
+                        const isDowngrade = !!activeTierObj && !isActive && tier.cost <= activeTierObj.cost;
+                        const chargeCost = isUpgrade ? tier.cost - activeTierObj.cost : tier.cost;
+                        const enough = (treasury.treasury_gold || 0) >= chargeCost;
+                        const lockedByDowngrade = isDowngrade; // can't downgrade
                         return (
                             <div key={tier.key} className={`p-2.5 rounded-lg border-2 ${tier.border} bg-gradient-to-br ${tier.color} bg-opacity-10 flex flex-col`}>
                                 <div className="flex items-center justify-between mb-1">
@@ -268,17 +282,24 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                                 </div>
                                 <p className="text-[10px] text-white/80 leading-snug mb-2 flex-1">{tier.desc}</p>
                                 <button
-                                    onClick={() => handleActivate(tier.key)}
-                                    disabled={!canActivate || busy || !enough || lockedByActive || isActive}
+                                    onClick={() => setConfirmTier(tier.key)}
+                                    disabled={!canActivate || busy || !enough || lockedByDowngrade || isActive}
                                     className={`w-full py-1.5 rounded font-bold text-[11px] flex items-center justify-center gap-1 transition-colors ${
                                         isActive
                                             ? 'bg-emerald-700 text-emerald-100 cursor-default'
-                                            : !canActivate || !enough || lockedByActive
+                                            : !canActivate || !enough || lockedByDowngrade
                                                 ? 'bg-black/40 text-white/40 border border-white/10 cursor-not-allowed'
-                                                : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
+                                                : isUpgrade
+                                                    ? 'bg-cyan-600/40 hover:bg-cyan-500/60 text-white border border-cyan-400/50'
+                                                    : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
                                     }`}
                                 >
-                                    {isActive ? '✓ ACTIVE' : lockedByActive ? 'Buff active' : (
+                                    {isActive ? '✓ ACTIVE' : lockedByDowngrade ? 'Lower tier' : isUpgrade ? (
+                                        <>
+                                            <Coins className="w-3 h-3 fill-current" />
+                                            +{chargeCost.toLocaleString()} (upgrade)
+                                        </>
+                                    ) : (
                                         <>
                                             <Coins className="w-3 h-3 fill-current" />
                                             {tier.cost.toLocaleString()}
@@ -296,6 +317,73 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                     ❌ {error}
                 </div>
             )}
+
+            {/* Confirmation modal — prevents accidental activations (Texxy bug 2026-05-19) */}
+            {confirmTier && (() => {
+                const tier = TREASURY_TIERS.find(t => t.key === confirmTier);
+                const activeTierObj = treasury.active_buff_tier
+                    ? TREASURY_TIERS.find(t => t.key === treasury.active_buff_tier)
+                    : null;
+                const isUpgrade = !!activeTierObj && tier.cost > activeTierObj.cost;
+                const chargeCost = isUpgrade ? tier.cost - activeTierObj.cost : tier.cost;
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => !busy && setConfirmTier(null)}>
+                        <div className={`bg-gradient-to-br from-slate-900 to-slate-950 border-2 ${tier.border} rounded-xl p-5 max-w-sm w-full shadow-2xl`} onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <Sparkles className={`w-5 h-5 ${tier.text}`} />
+                                <h3 className={`font-black text-base uppercase tracking-widest ${tier.text}`}>
+                                    {isUpgrade ? `Upgrade to ${tier.label}?` : `Activate ${tier.label}?`}
+                                </h3>
+                            </div>
+                            <p className="text-sm text-slate-300 leading-snug mb-2">{tier.desc}</p>
+                            <div className="bg-black/40 rounded p-2 mb-4 text-xs text-slate-300 space-y-1">
+                                {isUpgrade && (
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-400">Current buff:</span>
+                                        <span className="font-bold">{activeTierObj.label}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">{isUpgrade ? 'Upgrade cost:' : 'Cost:'}</span>
+                                    <span className="font-bold text-yellow-300 flex items-center gap-1">
+                                        <Coins className="w-3 h-3 fill-current" />
+                                        {chargeCost.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Treasury after:</span>
+                                    <span className="font-bold text-amber-300">
+                                        {((treasury.treasury_gold || 0) - chargeCost).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-slate-500 italic mb-4">
+                                Buff applies to week <span className="text-slate-300 font-bold">{activeTierObj ? treasury.active_buff_week_id : (treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next')}</span> and lasts the full week.
+                            </p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setConfirmTier(null)}
+                                    disabled={busy}
+                                    className="flex-1 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-widest disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleActivate(confirmTier)}
+                                    disabled={busy}
+                                    className={`flex-1 py-2 rounded font-black text-xs uppercase tracking-widest text-white transition-colors ${
+                                        isUpgrade
+                                            ? 'bg-cyan-600 hover:bg-cyan-500'
+                                            : 'bg-amber-600 hover:bg-amber-500'
+                                    } disabled:opacity-50`}
+                                >
+                                    {busy ? '…' : isUpgrade ? 'Upgrade' : 'Activate'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

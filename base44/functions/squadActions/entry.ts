@@ -1050,33 +1050,49 @@ Deno.serve(async (req) => {
                 const tier = TREASURY_TIERS[tierKey];
                 if (!tier) return Response.json({ error: 'Invalid buff tier.' }, { status: 400 });
 
+                // Tier-upgrade support (Texxy request 2026-05-19): if a buff is already
+                // active for the current week, allow swapping to a HIGHER tier by paying
+                // the cost DIFFERENCE only. The previously-spent gold is treated as already
+                // paid in. Downgrades and same-tier reactivations are blocked.
+                const treasury = squad.treasury_gold || 0;
+                let chargeAmount = tier.cost;
                 if (liveBuffTier) {
-                    return Response.json({ error: 'A buff is already active for this week.' }, { status: 409 });
+                    const liveCost = TREASURY_TIERS[liveBuffTier]?.cost || 0;
+                    if (liveBuffTier === tierKey) {
+                        return Response.json({ error: 'That buff is already active for this week.' }, { status: 409 });
+                    }
+                    if (tier.cost <= liveCost) {
+                        return Response.json({ error: 'You can only upgrade to a higher-tier buff (no downgrades).' }, { status: 400 });
+                    }
+                    chargeAmount = tier.cost - liveCost;
                 }
 
-                const treasury = squad.treasury_gold || 0;
-                if (treasury < tier.cost) {
+                if (treasury < chargeAmount) {
                     return Response.json({
-                        error: `Treasury holds ${treasury.toLocaleString()} — needs ${tier.cost.toLocaleString()} for ${tier.label}.`
+                        error: `Treasury holds ${treasury.toLocaleString()} — needs ${chargeAmount.toLocaleString()} ${liveBuffTier ? 'to upgrade' : `for ${tier.label}`}.`
                     }, { status: 400 });
                 }
 
                 // Buff applies to NEXT week (per master plan §5c locked decision —
                 // donations made during week N apply to all of week N+1's wars).
-                // We compute next ISO week from currentWeekId.
-                const nextWeekId = (() => {
-                    const m = currentWeekId.match(/^(\d{4})-W(\d{2})$/);
-                    if (!m) return currentWeekId; // shouldn't happen; safe fallback
-                    const year = parseInt(m[1], 10);
-                    const wk = parseInt(m[2], 10);
-                    // Assume <=52 weeks per ISO year for simplicity. Edge week 53 still
-                    // works — overflow rolls into year+1 W01 below.
-                    if (wk >= 52) return `${year + 1}-W01`;
-                    return `${year}-W${String(wk + 1).padStart(2, '0')}`;
-                })();
+                // EXCEPTION: tier-upgrade swaps an EXISTING active buff, so we keep
+                // the same active_buff_week_id (i.e. the swap takes effect on the
+                // same week the original buff applied to).
+                const nextWeekId = liveBuffTier
+                    ? squad.active_buff_week_id
+                    : (() => {
+                        const m = currentWeekId.match(/^(\d{4})-W(\d{2})$/);
+                        if (!m) return currentWeekId; // shouldn't happen; safe fallback
+                        const year = parseInt(m[1], 10);
+                        const wk = parseInt(m[2], 10);
+                        // Assume <=52 weeks per ISO year for simplicity. Edge week 53 still
+                        // works — overflow rolls into year+1 W01 below.
+                        if (wk >= 52) return `${year + 1}-W01`;
+                        return `${year}-W${String(wk + 1).padStart(2, '0')}`;
+                    })();
 
                 await base44.asServiceRole.entities.Squad.update(squadId, {
-                    treasury_gold: treasury - tier.cost,
+                    treasury_gold: treasury - chargeAmount,
                     active_buff_tier: tierKey,
                     active_buff_week_id: nextWeekId,
                 });
@@ -1086,15 +1102,18 @@ Deno.serve(async (req) => {
                         squad_id: squadId,
                         wallet_address: 'system',
                         player_name: 'SYSTEM',
-                        content: `⭐ ${authoritativeName} activated a ${tier.label} treasury buff for ${nextWeekId}!`,
+                        content: liveBuffTier
+                            ? `⭐ ${authoritativeName} upgraded the treasury buff to ${tier.label} for ${nextWeekId} (paid ${chargeAmount.toLocaleString()} difference)!`
+                            : `⭐ ${authoritativeName} activated a ${tier.label} treasury buff for ${nextWeekId}!`,
                     });
                 } catch {}
 
                 return Response.json({
                     success: true,
-                    treasury_gold: treasury - tier.cost,
+                    treasury_gold: treasury - chargeAmount,
                     active_buff_tier: tierKey,
                     active_buff_week_id: nextWeekId,
+                    upgraded: !!liveBuffTier,
                 });
             }
         }
