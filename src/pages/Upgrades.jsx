@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
 import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
-import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzzle } from 'lucide-react';
+import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzzle, Star } from 'lucide-react';
 import { getCurrentPeriodIds } from '../lib/periodIds';
 
 function OmenXIcon({ className }) {
@@ -400,6 +400,43 @@ export default function Upgrades({ isCarousel }) {
             }
         };
         confirmPurchase(omenxCost, `Respec ${respecModal.charName}'s Talents`, doPurchase);
+    };
+
+    const SEASONAL_POINTS_PER_SKIN = 100;
+    const [claimingSkinId, setClaimingSkinId] = useState(null);
+
+    const handleClaimSeasonalSkin = async (skin) => {
+        if (claimingSkinId) return;
+        setPurchaseError(null);
+        setClaimingSkinId(skin.id);
+        try {
+            let res;
+            try {
+                res = await base44.functions.invoke('claimSeasonalSkin', { skinId: skin.id });
+            } catch (e) {
+                const status = e?.response?.status;
+                const serverMsg = e?.response?.data?.error || e?.message || '';
+                setPurchaseError(friendlyError(`${status || ''} ${serverMsg}`));
+                return;
+            }
+            const data = res.data;
+            if (!data?.success) {
+                setPurchaseError(data?.error || 'Try again.');
+                return;
+            }
+            // Apply server result — server returns updated seasonalPoints + unlockedSkins
+            const s = SaveManager.load();
+            if (data.saveData.seasonalPoints !== undefined) s.seasonalPoints = data.saveData.seasonalPoints;
+            if (data.saveData.unlockedSkins !== undefined) s.unlockedSkins = data.saveData.unlockedSkins;
+            // Auto-equip the freshly-claimed skin so the player sees their reward immediately
+            s.cosmetics = { ...(s.cosmetics || {}), skins: { ...((s.cosmetics || {}).skins || {}), [skin.charId]: skin.id } };
+            SaveManager.save(s);
+            setSave(s);
+            SaveManager.syncToBackendImmediate();
+            SoundManager.playLevelUp();
+        } finally {
+            setClaimingSkinId(null);
+        }
     };
 
     const handleBuyRelic = async (relic) => {
@@ -1260,7 +1297,24 @@ export default function Upgrades({ isCarousel }) {
                                                        className={`w-full py-1 rounded-lg font-bold transition-colors text-xs ${previewSkinColor === skin.color ? 'bg-amber-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
                                                        {previewSkinColor === skin.color ? '👁 Previewing' : '👁 Preview'}
                                                     </button>
-                                                    {!skin.isSeasonalReward && (
+                                                    {skin.isSeasonalReward ? (() => {
+                                                        const points = save.seasonalPoints || 0;
+                                                        const canClaim = points >= SEASONAL_POINTS_PER_SKIN;
+                                                        const isClaimingThis = claimingSkinId === skin.id;
+                                                        return (
+                                                            <button
+                                                                onClick={() => canClaim && !claimingSkinId && handleClaimSeasonalSkin(skin)}
+                                                                disabled={!canClaim || !!claimingSkinId}
+                                                                title={canClaim ? `Spend ${SEASONAL_POINTS_PER_SKIN} Seasonal Points to claim this skin` : `You need ${SEASONAL_POINTS_PER_SKIN - points} more Seasonal Points`}
+                                                                className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                                    canClaim && !isClaimingThis ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 shadow-[0_0_10px_rgba(234,179,8,0.4)] animate-pulse' :
+                                                                    'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed'
+                                                                }`}
+                                                            >
+                                                                {isClaimingThis ? '…' : canClaim ? <>🏆 Claim ({SEASONAL_POINTS_PER_SKIN} Pts)</> : <><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {points} / {SEASONAL_POINTS_PER_SKIN} Pts</>}
+                                                            </button>
+                                                        );
+                                                    })() : (
                                                         <div className="flex gap-1.5">
                                                             <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold || purchasing}
                                                                 className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
