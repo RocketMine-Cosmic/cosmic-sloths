@@ -10,6 +10,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { subscribePlayerData, refreshNFTs, getNFTCooldownEnd, ensureNftsFetched } from '@/lib/playerDataCache';
 import RefreshOmenXDataButton from '../components/game/RefreshOmenXDataButton';
+import { normalizeNftCharacterName } from '@/lib/nftNameNormalize';
 
 export default function NFTDashboard({ isCarousel }) {
     const navigate = useNavigate();
@@ -31,7 +32,10 @@ export default function NFTDashboard({ isCarousel }) {
     }, []);
 
     const getCharacterData = (charName) => {
-        const char = CHARACTERS.find(c => c.id === charName.toLowerCase());
+        // Strip "_am" Asset Managers suffix so the new collection still resolves
+        // to the same in-game character as the original collection.
+        const normalized = normalizeNftCharacterName(charName);
+        const char = CHARACTERS.find(c => c.id === normalized);
         return char || null;
     };
 

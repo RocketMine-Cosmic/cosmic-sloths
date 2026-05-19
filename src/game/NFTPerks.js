@@ -1,6 +1,8 @@
 // NFT-based perk system
 // Maps NFT metadata to passive bonuses
 
+import { normalizeNftCharacterName } from '@/lib/nftNameNormalize';
+
 export const NFT_PERK_MAPPINGS = {
   // Mapping NFT collection/name patterns to perk types
   // Adjust patterns based on your actual OmenX NFT names/metadata
@@ -46,7 +48,7 @@ export class NFTPerkManager {
     let bestRarity = null;
     let bestRank = -1;
     for (const nft of nftData) {
-      if ((nft.metadata?.name || '').toLowerCase() !== characterId.toLowerCase()) continue;
+      if (normalizeNftCharacterName(nft.metadata?.name) !== characterId.toLowerCase()) continue;
       const rarityAttr = nft.metadata?.attributes?.find(a => a.trait_type === 'rarity');
       const rarity = rarityAttr?.value?.toLowerCase();
       if (!rarity || !RARITY_PERKS[rarity]) continue;

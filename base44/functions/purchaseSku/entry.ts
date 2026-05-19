@@ -179,6 +179,14 @@ function getBalanceKeys() {
     return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
 }
 
+// Strip the "_am" Asset Managers suffix so the new OmenX collection
+// (e.g. "novabyte_am") still resolves to the same character ID as the
+// original collection ("novabyte"). Mirrors lib/nftNameNormalize.js.
+function normalizeNftCharacterName(rawName) {
+    if (!rawName || typeof rawName !== 'string') return '';
+    return rawName.toLowerCase().replace(/_am$/, '');
+}
+
 async function ownsCharacter(save, walletAddress, charId) {
     if (charId === 'neobyte') return true;
     const unlocked = save.unlockedCharacters || ['neobyte'];
@@ -194,7 +202,7 @@ async function ownsCharacter(save, walletAddress, charId) {
             if (res.ok) {
                 const data = await res.json();
                 const nfts = data?.nfts || [];
-                return nfts.some(nft => (nft?.metadata?.name || '').toLowerCase() === charId);
+                return nfts.some(nft => normalizeNftCharacterName(nft?.metadata?.name) === charId);
             }
             if (res.status !== 429 && res.status < 500) return false;
         }
