@@ -1285,7 +1285,11 @@ export default function Upgrades({ isCarousel }) {
                                                     {!isOwned && <div className="text-[10px] text-slate-500 font-bold">LOCKED</div>}
                                                 </div>
                                             </div>
-                                            <p className="text-[11px] text-slate-400 leading-snug">{skin.desc}</p>
+                                            <p className="text-[11px] text-slate-400 leading-snug">
+                                               {skin.isSeasonalReward 
+                                                   ? 'Quest Milestone Reward: Earn Quest Points from Daily Missions to unlock!'
+                                                   : skin.desc}
+                                            </p>
                                             {isOwned ? (
                                                 <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={isEquipped}
                                                     className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs ${isEquipped ? 'bg-pink-700 text-pink-200 cursor-default' : 'bg-slate-700 text-white hover:bg-slate-600'}`}>
