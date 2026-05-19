@@ -55,6 +55,27 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
+// Returns the current level of the weapon/passive this upgrade targets, and
+// the projected level after picking it. Returns null for non-leveling upgrades
+// (e.g. evolutions, character buffs without a passive id).
+function getLevelInfo(upgrade, player) {
+    if (!upgrade || !player) return null;
+    if (upgrade.type === 'weapon') {
+        const owned = (player.weapons || []).find(w => w.id === upgrade.weaponId);
+        const currentLvl = owned ? owned.level : 0;
+        const projected = currentLvl + (upgrade.value || 1);
+        return { current: currentLvl, projected, isNew: currentLvl === 0 };
+    }
+    if (upgrade.type === 'passive') {
+        const owned = (player.passives || []).find(p => p.id === upgrade.id);
+        const currentLvl = owned ? owned.level : 0;
+        // Passives level up by 1 per pick (handled in UpgradeSystem).
+        const projected = currentLvl + 1;
+        return { current: currentLvl, projected, isNew: currentLvl === 0 };
+    }
+    return null;
+}
+
 // Maps an upgrade.stat key to a friendly label, the live value on player,
 // and how to format it. Returns null for upgrades without a clean numeric stat
 // (e.g. weapon picks — those are previewed differently).
@@ -293,6 +314,27 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                         Evolves
                                     </div>
                                 )}
+                                {(() => {
+                                    const lvlInfo = getLevelInfo(choice, engineRef?.current?.player);
+                                    if (!lvlInfo) return null;
+                                    // Position below the "Evolves" badge if it's showing
+                                    const topOffset = evoReady ? 'top-4 md:top-5' : '-top-2';
+                                    if (lvlInfo.isNew) {
+                                        return (
+                                            <div className={`absolute ${topOffset} -right-2 bg-emerald-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shadow-[0_0_8px_rgba(16,185,129,0.7)] z-10`}>
+                                                NEW
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <div className={`absolute ${topOffset} -right-2 bg-slate-800 border border-slate-500 text-slate-100 text-[9px] md:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shadow-md z-10 flex items-center gap-1`}>
+                                            <span className="text-slate-400">Lv.</span>
+                                            <span className="text-slate-300">{lvlInfo.current}</span>
+                                            <span className="text-slate-500">→</span>
+                                            <span className="text-cyan-300">{lvlInfo.projected}</span>
+                                        </div>
+                                    );
+                                })()}
                                 <div className={`text-[10px] md:text-xs font-bold mb-1 md:mb-2 uppercase tracking-wider ${rarityColors[choice.rarity].split(' ')[0]}`}>
                                     {choice.rarity} {choice.type}
                                 </div>
