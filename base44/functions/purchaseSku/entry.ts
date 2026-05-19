@@ -538,7 +538,10 @@ Deno.serve(async (req) => {
             console.error('[purchaseSku] No payment API keys configured');
             return Response.json({ error: 'Payments are temporarily unavailable. Please try again shortly.' }, { status: 500 });
         }
-        const idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
+        // `let` so we can rotate the suffix on nonce-too-low retries (see 422 handler).
+        // Default flow keeps the same key across retries (correct for 502/503/504 where
+        // we WANT idempotency to prevent double-charge).
+        let idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
         console.log(`[purchaseSku] SKU: ${skuId} x${quantity} wallet: ${walletAddress} grant: ${grantInfo?.type || 'none'}`);
 
@@ -717,6 +720,39 @@ Deno.serve(async (req) => {
                     }
                     return Response.json({
                         error: 'OMENX service is experiencing issues. Your balance is safe — please try again shortly.',
+                        omenxServiceDown: true,
+                    }, { status: 503 });
+                }
+
+                // 422 PAYMENT_FAILED with "nonce too low" — OmenX-side race condition
+                // where their transaction signer reused a nonce. The player's tx never
+                // landed on-chain (someone else's tx got that nonce first), so this is
+                // safe to retry with a *fresh* idempotency key on the next available key.
+                // Without a fresh key, OmenX would short-circuit the retry and return
+                // the same 422 from their idempotency cache.
+                if (is422(msg) && /nonce too low/i.test(msg)) {
+                    if (i < attempts - 1) {
+                        console.warn(`[purchaseSku] OmenX 422 nonce-too-low — rotating idempotencyKey and retrying (${i + 2}/${attempts})`);
+                        // The previous tx never landed (someone else's tx grabbed that
+                        // nonce), so we MUST issue a fresh idempotencyKey — otherwise
+                        // OmenX returns the cached 422 from their idempotency store
+                        // and the retry is pointless. Brief delay lets their nonce
+                        // sequencer catch up.
+                        idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}-r${i + 1}`;
+                        await new Promise(r => setTimeout(r, 400));
+                        continue;
+                    }
+                    console.error(`[purchaseSku] OmenX 422 nonce-too-low after ${attempts} attempts — wallet=${walletAddress} sku=${skuId}`);
+                    postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
+                        title: '⚠️ OmenX nonce-too-low (exhausted retries)',
+                        description: 'OmenX hot wallet had repeated nonce collisions — likely a settlement signer issue on their side.',
+                        fields: [
+                            { name: 'Wallet', value: `\`${walletAddress}\``, inline: true },
+                            { name: 'SKU', value: skuId, inline: true },
+                        ],
+                    });
+                    return Response.json({
+                        error: 'OMENX settlement is busy — please try again in a few seconds.',
                         omenxServiceDown: true,
                     }, { status: 503 });
                 }
