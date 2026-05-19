@@ -132,11 +132,63 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                     <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" /> {typeof cosmicTokens === 'number' ? cosmicTokens.toFixed(2) : (cosmicTokens || 0)}
                 </div>
                 <h2 className="text-xl md:text-3xl font-bold text-center text-cyan-400 mb-1 md:mb-2 font-mono">
-                    LEVEL UP!
+                    LEVEL UP! <span className="text-white">→ Lv. {level}</span>
                 </h2>
                 <p className="text-slate-400 mb-2 md:mb-3 text-center text-xs md:text-base">
                     Choose an upgrade to enhance your build.
                 </p>
+
+                {/* Raid / Meteor pre-fight level-up queue counter — players had no
+                    idea how many picks remained before the fight actually starts
+                    (Texxy bug 2026-05-19). For meteor we read pendingStarterLevelUps
+                    directly. For raid (world_boss_arena) the engine pre-stuffs XP for
+                    20 levels at start, so we estimate remaining picks by simulating
+                    how many more times xp will overflow xpRequired with the current
+                    growth curve. Purely informational — no business logic touched. */}
+                {(() => {
+                    const engine = engineRef?.current;
+                    if (!engine) return null;
+                    const arenaId = engine.arena?.id;
+
+                    // Squad Meteor — exact counter on the engine
+                    if (arenaId === 'quantum_meteor' && (engine.pendingStarterLevelUps || 0) > 0) {
+                        const remaining = engine.pendingStarterLevelUps;
+                        return (
+                            <div className="mb-3 md:mb-4 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border-2 border-fuchsia-500/60 bg-fuchsia-950/40 text-fuchsia-200 font-mono font-bold text-xs md:text-sm flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 shrink-0" />
+                                <span>
+                                    {remaining} more upgrade{remaining === 1 ? '' : 's'} before the fight begins
+                                </span>
+                            </div>
+                        );
+                    }
+
+                    // Global Raid — estimate remaining queued level-ups from banked XP
+                    if (arenaId === 'world_boss_arena') {
+                        let xp = engine.xp || 0;
+                        let req = engine.xpRequired || 1;
+                        let remaining = 0;
+                        // Walk the same growth formula used at run start (lines 370-378
+                        // of GameEngine.js): currentReq = floor(currentReq * 1.1 + 20)
+                        // Cap iterations defensively in case anything ever changes.
+                        for (let i = 0; i < 30 && xp >= req; i++) {
+                            xp -= req;
+                            req = Math.floor(req * 1.1 + 20);
+                            remaining++;
+                        }
+                        if (remaining > 0) {
+                            return (
+                                <div className="mb-3 md:mb-4 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border-2 border-fuchsia-500/60 bg-fuchsia-950/40 text-fuchsia-200 font-mono font-bold text-xs md:text-sm flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 shrink-0" />
+                                    <span>
+                                        {remaining} more upgrade{remaining === 1 ? '' : 's'} before the boss fight
+                                    </span>
+                                </div>
+                            );
+                        }
+                    }
+                    return null;
+                })()}
 
                 <PoolBiasBadge save={engineRef?.current?.save} />
 
