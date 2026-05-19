@@ -859,39 +859,104 @@ Deno.serve(async (req) => {
             console.error('[purchaseSku] AdminWallet lookup failed (treating as non-owner):', err.message);
         }
 
-        // Log token spend — deduped by idempotency_key so client retries after a
-        // successful OmenX charge don't create phantom duplicate rows. The key is
-        // the OmenX transaction id when available (one-per-on-chain-charge),
-        // otherwise our local idempotencyKey (one-per-attempt). If a log row
-        // with this key already exists, skip the create AND the TokenPool bump
-        // entirely — they were already applied on the first call.
+        // Log token spend.
+        //
+        // Two write paths to keep row volume sane:
+        //
+        // 1. IN-RUN SKUs (rerolls/revives/banishes/xp-buff/squad-ult) — high frequency,
+        //    individually small (~2-10 OMENX). One row per purchase would be 50k+/day
+        //    and rate-limits everything. Instead we aggregate into ONE daily row per
+        //    (wallet, sku, day_utc), atomically incrementing amount + a purchase count
+        //    stored in grant_info. The idempotency_key still prevents retries from
+        //    double-counting (we check it against the day's row).
+        //
+        // 2. OUT-OF-RUN SKUs (talents/upgrades/cosmetics) — low frequency, per-purchase
+        //    audit detail matters. One row per purchase, keyed by idempotency_key.
+        //
+        // Both paths preserve idempotency: a retry never bumps the amount twice.
         const logKey = txHash || idempotencyKey;
         let alreadyLogged = false;
-        try {
-            const existing = await base44.asServiceRole.entities.TokenSpendLog.filter({ idempotency_key: logKey }, null, 1);
-            if (existing && existing.length > 0) {
-                alreadyLogged = true;
-                console.log(`[purchaseSku] Duplicate suppressed — log row already exists for key=${logKey}`);
-            }
-        } catch (err) {
-            console.error('[purchaseSku] TokenSpendLog dedup check failed (continuing):', err.message);
-        }
-        if (!alreadyLogged) {
+        const useAggregateRow = isInRunSku(skuId);
+
+        if (useAggregateRow) {
+            // Aggregate: one row per (wallet, sku, day_utc). Increment amount + count.
+            const dayUtc = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+            const aggKey = `agg-${walletAddress.toLowerCase()}-${skuId}-${dayUtc}`;
             try {
-                await base44.asServiceRole.entities.TokenSpendLog.create({
-                    user_id: me.id,
-                    player_name: playerNameParam || me.full_name || walletAddress,
-                    wallet_address: walletAddress,
-                    amount: totalAmount,
-                    sku_id: skuId,
-                    grant_info: grantInfo || null,
-                    week_id,
-                    season_id,
-                    excluded_from_pool: isAdminPurchase,
-                    idempotency_key: logKey,
-                });
+                const existingAgg = await base44.asServiceRole.entities.TokenSpendLog.filter({ idempotency_key: aggKey }, null, 1);
+                if (existingAgg && existingAgg.length > 0) {
+                    const row = existingAgg[0];
+                    const seenKeys = Array.isArray(row.grant_info?.seen_keys) ? row.grant_info.seen_keys : [];
+                    if (seenKeys.includes(logKey)) {
+                        // This individual charge was already counted in today's aggregate — retry. Skip.
+                        alreadyLogged = true;
+                        console.log(`[purchaseSku] Aggregate dedup — charge ${logKey} already counted in ${aggKey}`);
+                    } else {
+                        // Bump the aggregate. Cap seen_keys to last 200 so the array doesn't grow unbounded.
+                        const newSeen = seenKeys.concat([logKey]).slice(-200);
+                        await base44.asServiceRole.entities.TokenSpendLog.update(row.id, {
+                            amount: (row.amount || 0) + totalAmount,
+                            grant_info: {
+                                aggregate: true,
+                                sku_id: skuId,
+                                day_utc: dayUtc,
+                                count: (row.grant_info?.count || 0) + 1,
+                                seen_keys: newSeen,
+                            },
+                        });
+                    }
+                } else {
+                    // First purchase today for this (wallet, sku) — create the daily row.
+                    await base44.asServiceRole.entities.TokenSpendLog.create({
+                        user_id: me.id,
+                        player_name: playerNameParam || me.full_name || walletAddress,
+                        wallet_address: walletAddress,
+                        amount: totalAmount,
+                        sku_id: skuId,
+                        grant_info: {
+                            aggregate: true,
+                            sku_id: skuId,
+                            day_utc: dayUtc,
+                            count: 1,
+                            seen_keys: [logKey],
+                        },
+                        week_id,
+                        season_id,
+                        excluded_from_pool: isAdminPurchase,
+                        idempotency_key: aggKey,
+                    });
+                }
             } catch (err) {
-                console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
+                console.error('[purchaseSku] TokenSpendLog aggregate upsert failed:', err.message);
+            }
+        } else {
+            // Per-purchase row for out-of-run SKUs. Dedup on the charge's own key.
+            try {
+                const existing = await base44.asServiceRole.entities.TokenSpendLog.filter({ idempotency_key: logKey }, null, 1);
+                if (existing && existing.length > 0) {
+                    alreadyLogged = true;
+                    console.log(`[purchaseSku] Duplicate suppressed — log row already exists for key=${logKey}`);
+                }
+            } catch (err) {
+                console.error('[purchaseSku] TokenSpendLog dedup check failed (continuing):', err.message);
+            }
+            if (!alreadyLogged) {
+                try {
+                    await base44.asServiceRole.entities.TokenSpendLog.create({
+                        user_id: me.id,
+                        player_name: playerNameParam || me.full_name || walletAddress,
+                        wallet_address: walletAddress,
+                        amount: totalAmount,
+                        sku_id: skuId,
+                        grant_info: grantInfo || null,
+                        week_id,
+                        season_id,
+                        excluded_from_pool: isAdminPurchase,
+                        idempotency_key: logKey,
+                    });
+                } catch (err) {
+                    console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
+                }
             }
         }
 
