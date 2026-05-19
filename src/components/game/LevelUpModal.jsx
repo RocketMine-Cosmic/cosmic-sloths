@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Swords, Sparkles } from 'lucide-react';
+import { Swords, Sparkles, ChevronDown } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import { WEAPON_SLOT_CAP, EVOLUTION_MIN_BASE_LEVEL } from '@/game/UpgradeSystem';
 import { EVOLUTIONS } from '@/game/Constants';
@@ -88,12 +88,13 @@ function getStatPreview(upgrade, player) {
 }
 
 export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, onReroll, onBanish, banishCost = 2, banishCount = 0, nextBanishCost = null, engineRef, omenxPurchasesDisabled = false }) {
-    // Each tier has 3 uses (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
-    const banishTier = banishCount < 3 ? 1 : banishCount < 6 ? 2 : 3;
-    const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
-    const showNextPrice = nextBanishCost !== null && nextBanishCost !== banishCost;
-    const [hasRerolled, setHasRerolled] = useState(false);
-    const [selectedIndex, setSelectedIndex] = useState(null);
+     // Each tier has 3 uses (uses 0–2 = T1, 3–5 = T2, 6+ = T3 unlimited)
+     const banishTier = banishCount < 3 ? 1 : banishCount < 6 ? 2 : 3;
+     const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
+     const showNextPrice = nextBanishCost !== null && nextBanishCost !== banishCost;
+     const [hasRerolled, setHasRerolled] = useState(false);
+     const [selectedIndex, setSelectedIndex] = useState(null);
+     const [showInventory, setShowInventory] = useState(false);
     // Anti-mash: 2s cooldown on Reroll & Banish so a flurry of clicks during
     // a slow OmenX settlement doesn't queue up multiple billable purchases.
     const rerollCd = useAntiMashCooldown(2000);
@@ -191,6 +192,62 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                 })()}
 
                 <PoolBiasBadge save={engineRef?.current?.save} />
+
+                {/* Current inventory dropdown — shows weapon/passive levels at a glance
+                    so players don't have to close the modal to check what level a weapon is
+                    before picking an upgrade (Texxy bug 2026-05-19). */}
+                <button
+                    onClick={() => setShowInventory(!showInventory)}
+                    className="mb-3 md:mb-4 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-slate-600 bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-slate-200 font-mono font-bold text-xs md:text-sm flex items-center justify-between gap-2 transition-colors w-full max-w-md mx-auto"
+                >
+                    <span>Current Build</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showInventory ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showInventory && (() => {
+                    const player = engineRef?.current?.player;
+                    if (!player) return null;
+                    const weapons = player.weapons || [];
+                    const passives = player.passives || [];
+                    return (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mb-4 md:mb-6 bg-slate-950/80 border border-slate-700 rounded-lg p-3 md:p-4 max-w-md mx-auto w-full text-xs md:text-sm space-y-2 overflow-y-auto max-h-48"
+                        >
+                            {weapons.length > 0 && (
+                                <div>
+                                    <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px] md:text-xs mb-1.5">⚔️ Weapons</div>
+                                    <div className="space-y-1">
+                                        {weapons.map((w, i) => (
+                                            <div key={i} className="text-slate-300 flex justify-between items-center bg-slate-900/40 px-2 py-1 rounded border border-slate-700/50">
+                                                <span className="font-mono">{w.name}</span>
+                                                <span className="text-slate-400 font-bold">Lv. {w.level}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {passives.length > 0 && (
+                                <div>
+                                    <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px] md:text-xs mb-1.5">✨ Passives</div>
+                                    <div className="space-y-1">
+                                        {passives.map((p, i) => (
+                                            <div key={i} className="text-slate-300 flex justify-between items-center bg-slate-900/40 px-2 py-1 rounded border border-slate-700/50">
+                                                <span className="font-mono">{p.name}</span>
+                                                <span className="text-slate-400 font-bold">Lv. {p.level}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {weapons.length === 0 && passives.length === 0 && (
+                                <div className="text-slate-500 italic text-center py-2">No weapons or passives yet</div>
+                            )}
+                        </motion.div>
+                    );
+                })()}
 
                 {/* S6+ weapon slot indicator — prominent so players never wonder
                     why no new weapons appear once they hit the cap. */}
