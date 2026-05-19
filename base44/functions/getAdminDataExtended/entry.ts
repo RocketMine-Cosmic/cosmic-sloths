@@ -50,7 +50,9 @@ Deno.serve(async (req) => {
         }
 
         if (type === 'scores') {
-            let allScores = await base44.asServiceRole.entities.RunScore.list('-score', 200);
+            // For "all" (used by retention chart) we need RECENT runs by date, not top-by-score.
+            // Page up to 10k recent runs so the active-players chart covers ~1 year of activity.
+            // For "weekly"/"seasonal" leaderboard we want top scores by score within the period.
             // Proper ISO 8601 (Mon-start, Sun 23:59 UTC end). Old formula rolled over a day early on Sundays.
             const computeIsoWeek = () => {
                 const now = new Date();
@@ -62,6 +64,32 @@ Deno.serve(async (req) => {
                 const isoWeek = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
                 return { isoYear, isoWeek };
             };
+
+            if (period === 'all') {
+                // Page through recent runs by date — retention chart needs the full timeline,
+                // not just top-200-by-score (which previously missed ~everyone outside the all-time top 200).
+                const PAGE = 500;
+                const MAX_PAGES = 20; // up to 10k recent runs
+                const out = [];
+                let page = 1;
+                while (page <= MAX_PAGES) {
+                    const batch = await base44.asServiceRole.entities.RunScore.list('-created_date', PAGE, page);
+                    if (!batch || batch.length === 0) break;
+                    // Only keep fields the retention chart needs to keep the payload small.
+                    for (const s of batch) {
+                        out.push({
+                            wallet_address: s.wallet_address,
+                            user_id: s.user_id,
+                            created_date: s.created_date,
+                        });
+                    }
+                    if (batch.length < PAGE) break;
+                    page++;
+                }
+                return Response.json({ scores: out });
+            }
+
+            let allScores = await base44.asServiceRole.entities.RunScore.list('-score', 200);
             if (period === 'weekly') {
                 const { isoYear, isoWeek } = computeIsoWeek();
                 const week_id = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
