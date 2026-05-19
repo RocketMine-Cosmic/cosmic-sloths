@@ -72,9 +72,9 @@ export default function BountiesPanel({ save, setSave }) {
         }
     };
 
-    const SEASONAL_REWARD_TARGET = 100;
-    const currentPoints = save.seasonalPoints || 0;
-    const progressPercent = Math.min(100, (currentPoints / SEASONAL_REWARD_TARGET) * 100);
+    const QUEST_REWARD_TARGET = 100;
+    const currentPoints = save.seasonalPoints || 0; // Internal: seasonalPoints; User-facing: "Quest Points"
+    const progressPercent = Math.min(100, (currentPoints / QUEST_REWARD_TARGET) * 100);
 
     return (
         <div className="flex flex-col md:flex-row gap-2 md:gap-4">
@@ -222,10 +222,10 @@ export default function BountiesPanel({ save, setSave }) {
             <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.15)] rounded-xl p-3 md:p-4 flex flex-col justify-between">
                 <div>
                     <h3 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
-                        <Star className="w-4 h-4 text-yellow-400" /> Seasonal Skin Reward
+                        <Star className="w-4 h-4 text-yellow-400" /> Quest Milestone Reward
                     </h3>
                     <p className="text-xs text-slate-400 mb-3">
-                        Earn Seasonal Points from Daily Missions to unlock exclusive character skins!
+                        Earn Quest Points from Daily Missions to unlock an exclusive character skin!
                     </p>
 
                     <div className="flex items-center justify-center gap-2 mb-4">
@@ -247,7 +247,7 @@ export default function BountiesPanel({ save, setSave }) {
                 <div>
                     <div className="flex justify-between text-xs font-bold mb-1">
                         <span className="text-slate-300">Progress</span>
-                        <span className="text-yellow-400">{currentPoints} / {SEASONAL_REWARD_TARGET}</span>
+                        <span className="text-yellow-400">{currentPoints} / {QUEST_REWARD_TARGET}</span>
                     </div>
                     <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
                         <div 
@@ -255,9 +255,9 @@ export default function BountiesPanel({ save, setSave }) {
                             style={{ width: `${progressPercent}%` }}
                         />
                     </div>
-                    {currentPoints >= SEASONAL_REWARD_TARGET && (
+                    {currentPoints >= QUEST_REWARD_TARGET && (
                         <div className="mt-3 text-center text-xs font-bold text-emerald-400 animate-pulse">
-                            🏆 GOAL REACHED — Claim your skin in the Cosmic Armory → Cosmetics → Character Skins!
+                            🏆 MILESTONE REACHED — Claim your skin in the Cosmic Armory → Cosmetics → Character Skins!
                         </div>
                     )}
                 </div>

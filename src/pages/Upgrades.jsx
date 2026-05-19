@@ -402,17 +402,17 @@ export default function Upgrades({ isCarousel }) {
         confirmPurchase(omenxCost, `Respec ${respecModal.charName}'s Talents`, doPurchase);
     };
 
-    const SEASONAL_POINTS_PER_SKIN = 100;
+    const QUEST_POINTS_PER_SKIN = 100;
     const [claimingSkinId, setClaimingSkinId] = useState(null);
 
-    const handleClaimSeasonalSkin = async (skin) => {
+    const handleClaimQuestSkin = async (skin) => {
         if (claimingSkinId) return;
         setPurchaseError(null);
         setClaimingSkinId(skin.id);
         try {
             let res;
             try {
-                res = await base44.functions.invoke('claimSeasonalSkin', { skinId: skin.id });
+                res = await base44.functions.invoke('claimSeasonalSkin', { skinId: skin.id }); // Backend function name unchanged
             } catch (e) {
                 const status = e?.response?.status;
                 const serverMsg = e?.response?.data?.error || e?.message || '';
@@ -1299,19 +1299,19 @@ export default function Upgrades({ isCarousel }) {
                                                     </button>
                                                     {skin.isSeasonalReward ? (() => {
                                                         const points = save.seasonalPoints || 0;
-                                                        const canClaim = points >= SEASONAL_POINTS_PER_SKIN;
+                                                        const canClaim = points >= QUEST_POINTS_PER_SKIN;
                                                         const isClaimingThis = claimingSkinId === skin.id;
                                                         return (
                                                             <button
-                                                                onClick={() => canClaim && !claimingSkinId && handleClaimSeasonalSkin(skin)}
+                                                                onClick={() => canClaim && !claimingSkinId && handleClaimQuestSkin(skin)}
                                                                 disabled={!canClaim || !!claimingSkinId}
-                                                                title={canClaim ? `Spend ${SEASONAL_POINTS_PER_SKIN} Seasonal Points to claim this skin` : `You need ${SEASONAL_POINTS_PER_SKIN - points} more Seasonal Points`}
+                                                                title={canClaim ? `Spend ${QUEST_POINTS_PER_SKIN} Quest Points to claim this skin` : `You need ${QUEST_POINTS_PER_SKIN - points} more Quest Points`}
                                                                 className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                                     canClaim && !isClaimingThis ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 shadow-[0_0_10px_rgba(234,179,8,0.4)] animate-pulse' :
                                                                     'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed'
                                                                 }`}
                                                             >
-                                                                {isClaimingThis ? '…' : canClaim ? <>🏆 Claim ({SEASONAL_POINTS_PER_SKIN} Pts)</> : <><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {points} / {SEASONAL_POINTS_PER_SKIN} Pts</>}
+                                                                {isClaimingThis ? '…' : canClaim ? <>🏆 Claim ({QUEST_POINTS_PER_SKIN} Pts)</> : <><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {points} / {QUEST_POINTS_PER_SKIN} Pts</>}
                                                             </button>
                                                         );
                                                     })() : (
