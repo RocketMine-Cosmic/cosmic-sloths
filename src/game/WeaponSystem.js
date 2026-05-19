@@ -803,7 +803,12 @@ export function fireWeaponLogic(engine, w) {
         if (engine.player.charAugments?.includes('neo_range')) p.life *= 1.2;
         if (engine.player.charAugments?.includes('neo_pierce') && p.pierce !== undefined) p.pierce += 1;
         if (isBeatPush && !p.isAoe) p.pushback = (p.pushback || 0) + 150;
-        if (engine.player.charAugments?.includes('neo_chain') && !p.isAoe && p.pierce !== undefined) p.chainCount = 1;
+        // neo_chain: ADDS 1 chain to non-AoE projectiles. Use additive so Ricochet Blade
+        // (chainCount: 4/8) and other already-chaining projectiles get a bonus instead
+        // of being clobbered down to 1 (Texxy bug 2026-05-19).
+        if (engine.player.charAugments?.includes('neo_chain') && !p.isAoe && p.pierce !== undefined) {
+            p.chainCount = (p.chainCount || 0) + 1;
+        }
     }
     
     // sky_twin: Twin Laser Array — fires every shot (was 50% RNG so it felt invisible —
