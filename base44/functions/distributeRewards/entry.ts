@@ -64,6 +64,14 @@ Deno.serve(async (req) => {
         };
         const { week_id: currentWeekId, season_id: currentSeasonId } = getCurrentPeriodIds();
 
+        // Reconciles TokenPool.total_spent against the summed TokenSpendLog total
+        // for the period, but ONLY when the discrepancy is small enough that the
+        // logs can be trusted. Historically the logs could contain phantom
+        // duplicate rows from purchaseSku retries (see TokenSpendLog.idempotency_key)
+        // which would cause this routine to silently inflate the pool by 10×+ and
+        // wreck payouts. Now it's gated: if logs and pool differ by more than 20%
+        // we REFUSE to auto-correct and surface a hard error so an admin can
+        // investigate before any OMENX moves.
         const reconcilePoolBeforeDistribution = async (pool) => {
             const filterKey = pool.period_type === 'weekly' ? { week_id: pool.period_id } : { season_id: pool.period_id };
             const logs = await db.entities.TokenSpendLog.filter(filterKey);
@@ -73,11 +81,20 @@ Deno.serve(async (req) => {
             const logTotal = logs
                 .filter(log => !log.excluded_from_pool)
                 .reduce((sum, log) => sum + (log.amount || 0), 0);
-            if (Math.abs(logTotal - pool.total_spent) > 0.01) {
-                console.warn(`[distributeRewards] MISMATCH: ${pool.period_id} pool=${pool.total_spent}, logs=${logTotal}. Auto-correcting...`);
-                await db.entities.TokenPool.update(pool.id, { total_spent: logTotal });
-                pool.total_spent = logTotal;
+            const diff = logTotal - pool.total_spent;
+            if (Math.abs(diff) < 0.01) return; // already in sync
+            const poolBase = pool.total_spent > 0 ? pool.total_spent : Math.max(logTotal, 1);
+            const driftPct = Math.abs(diff) / poolBase;
+            const SAFE_DRIFT = 0.20; // 20% — anything beyond this is almost certainly a dedup/dupe issue, not real drift
+            if (driftPct > SAFE_DRIFT) {
+                throw new Error(
+                    `Reconcile refused: ${pool.period_id} pool=${pool.total_spent} logs=${logTotal} ` +
+                    `(drift ${(driftPct * 100).toFixed(1)}%). Likely duplicate TokenSpendLog rows — investigate before distributing.`
+                );
             }
+            console.warn(`[distributeRewards] Reconcile within safe drift: ${pool.period_id} pool=${pool.total_spent} → logs=${logTotal} (${(driftPct * 100).toFixed(1)}%)`);
+            await db.entities.TokenPool.update(pool.id, { total_spent: logTotal });
+            pool.total_spent = logTotal;
         };
 
         const undistributedPools = await db.entities.TokenPool.filter({ distributed: false });

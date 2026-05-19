@@ -859,21 +859,40 @@ Deno.serve(async (req) => {
             console.error('[purchaseSku] AdminWallet lookup failed (treating as non-owner):', err.message);
         }
 
-        // Log token spend
+        // Log token spend — deduped by idempotency_key so client retries after a
+        // successful OmenX charge don't create phantom duplicate rows. The key is
+        // the OmenX transaction id when available (one-per-on-chain-charge),
+        // otherwise our local idempotencyKey (one-per-attempt). If a log row
+        // with this key already exists, skip the create AND the TokenPool bump
+        // entirely — they were already applied on the first call.
+        const logKey = txHash || idempotencyKey;
+        let alreadyLogged = false;
         try {
-            await base44.asServiceRole.entities.TokenSpendLog.create({
-                user_id: me.id,
-                player_name: playerNameParam || me.full_name || walletAddress,
-                wallet_address: walletAddress,
-                amount: totalAmount,
-                sku_id: skuId,
-                grant_info: grantInfo || null,
-                week_id,
-                season_id,
-                excluded_from_pool: isAdminPurchase,
-            });
+            const existing = await base44.asServiceRole.entities.TokenSpendLog.filter({ idempotency_key: logKey }, null, 1);
+            if (existing && existing.length > 0) {
+                alreadyLogged = true;
+                console.log(`[purchaseSku] Duplicate suppressed — log row already exists for key=${logKey}`);
+            }
         } catch (err) {
-            console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
+            console.error('[purchaseSku] TokenSpendLog dedup check failed (continuing):', err.message);
+        }
+        if (!alreadyLogged) {
+            try {
+                await base44.asServiceRole.entities.TokenSpendLog.create({
+                    user_id: me.id,
+                    player_name: playerNameParam || me.full_name || walletAddress,
+                    wallet_address: walletAddress,
+                    amount: totalAmount,
+                    sku_id: skuId,
+                    grant_info: grantInfo || null,
+                    week_id,
+                    season_id,
+                    excluded_from_pool: isAdminPurchase,
+                    idempotency_key: logKey,
+                });
+            } catch (err) {
+                console.error('[purchaseSku] TokenSpendLog create failed:', err.message);
+            }
         }
 
         // Alert #economy-alerts on large purchases (≥ threshold OMENX)
@@ -890,8 +909,10 @@ Deno.serve(async (req) => {
         }
 
         // Update TokenPool (non-fatal). Skipped entirely for admin wallets so admin
-        // self-purchases don't inflate the player/staff payout pool.
-        if (!isAdminPurchase) {
+        // self-purchases don't inflate the player/staff payout pool. Also skipped
+        // if we just detected a duplicate log row — the pool was already bumped
+        // on the original (non-retry) call.
+        if (!isAdminPurchase && !alreadyLogged) {
             try {
                 const [weeklyPools, seasonalPools] = await Promise.all([
                     base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),

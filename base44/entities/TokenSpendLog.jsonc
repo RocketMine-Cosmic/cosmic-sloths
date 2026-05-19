@@ -34,6 +34,10 @@
       "type": "boolean",
       "default": false,
       "description": "If true, this spend is logged for audit but NOT counted toward the TokenPool used for player/staff payouts. Used for admin/owner self-purchases so spending your own OMENX doesn't end up redistributed back to yourself + the player base."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Unique per on-chain charge \u2014 set by purchaseSku from the OmenX transaction id (preferred) or the idempotencyKey it sent. Used to dedup TokenSpendLog rows so client retries after a successful OmenX charge don't create phantom duplicate log rows that inflate TokenPool/payouts."
     }
   },
   "required": [
