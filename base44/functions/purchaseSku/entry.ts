@@ -743,14 +743,6 @@ Deno.serve(async (req) => {
                         continue;
                     }
                     console.error(`[purchaseSku] OmenX 422 nonce-too-low after ${attempts} attempts — wallet=${walletAddress} sku=${skuId}`);
-                    postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
-                        title: '⚠️ OmenX nonce-too-low (exhausted retries)',
-                        description: 'OmenX hot wallet had repeated nonce collisions — likely a settlement signer issue on their side.',
-                        fields: [
-                            { name: 'Wallet', value: `\`${walletAddress}\``, inline: true },
-                            { name: 'SKU', value: skuId, inline: true },
-                        ],
-                    });
                     return Response.json({
                         error: 'OMENX settlement is busy — please try again in a few seconds.',
                         omenxServiceDown: true,
