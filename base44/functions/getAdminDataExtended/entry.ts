@@ -68,14 +68,25 @@ Deno.serve(async (req) => {
             if (period === 'all') {
                 // Page through recent runs by date — retention chart needs the full timeline,
                 // not just top-200-by-score (which previously missed ~everyone outside the all-time top 200).
-                const PAGE = 500;
-                const MAX_PAGES = 20; // up to 10k recent runs
+                // Use large page size + small page count + throttle to avoid 429s.
+                const PAGE = 1000;
+                const MAX_PAGES = 6; // up to 6k recent runs — covers ~1 year for current traffic
+                const sleep = (ms) => new Promise(r => setTimeout(r, ms));
                 const out = [];
-                let page = 1;
-                while (page <= MAX_PAGES) {
-                    const batch = await base44.asServiceRole.entities.RunScore.list('-created_date', PAGE, page);
+                for (let page = 1; page <= MAX_PAGES; page++) {
+                    let batch;
+                    try {
+                        batch = await base44.asServiceRole.entities.RunScore.list('-created_date', PAGE, page);
+                    } catch (e) {
+                        // 429 or transient — one retry with a small delay, then stop paging.
+                        if (String(e.message || '').includes('429')) {
+                            await sleep(800);
+                            try {
+                                batch = await base44.asServiceRole.entities.RunScore.list('-created_date', PAGE, page);
+                            } catch { break; }
+                        } else { break; }
+                    }
                     if (!batch || batch.length === 0) break;
-                    // Only keep fields the retention chart needs to keep the payload small.
                     for (const s of batch) {
                         out.push({
                             wallet_address: s.wallet_address,
@@ -84,7 +95,8 @@ Deno.serve(async (req) => {
                         });
                     }
                     if (batch.length < PAGE) break;
-                    page++;
+                    // Gentle pacing between pages to keep the rate limiter happy.
+                    if (page < MAX_PAGES) await sleep(150);
                 }
                 return Response.json({ scores: out });
             }
