@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Coins, Clock } from 'lucide-react';
 import moment from 'moment';
 import SpendLogDescription from './SpendLogDescription';
+import AdminCleanupSpendLogs from './AdminCleanupSpendLogs';
 
 export default function AdminEconomy({ walletAddress }) {
     const [preset, setPreset] = useState('this_week');
@@ -101,6 +102,8 @@ export default function AdminEconomy({ walletAddress }) {
                     </table>
                 </div>
             </div>
+
+            <AdminCleanupSpendLogs />
 
             {/* Audit Trail */}
             <div className="bg-[#0b0416]/80 border border-slate-700/50 rounded-xl p-4">
