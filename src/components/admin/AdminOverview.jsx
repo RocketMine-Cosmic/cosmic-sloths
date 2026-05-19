@@ -4,7 +4,6 @@ import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceLine } from 'recharts';
 import RecentChanges from './RecentChanges';
 import DistributionTimer from './DistributionTimer';
-import AdminRetentionChart from './AdminRetentionChart';
 
 function StatCard({ label, value, color = 'text-white', sub }) {
     return (
@@ -138,9 +137,6 @@ export default function AdminOverview({ walletAddress, canViewFinance = false })
                     </div>
                 </div>
             )}
-
-            {/* Player Retention */}
-            <AdminRetentionChart walletAddress={walletAddress} />
 
             {ext?.topCharacters && (
                 <div className="bg-[#0b0416]/80 border border-purple-900/50 rounded-xl p-4">
