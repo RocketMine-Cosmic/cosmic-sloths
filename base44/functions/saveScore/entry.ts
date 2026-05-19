@@ -466,7 +466,14 @@ function applyRunToSave(save, run, isVictory, charId, isEndless) {
             const map = { ...(s.unlockedArenasByCharacter || {}) };
             const charArenas = Array.isArray(map[charId]) ? [...map[charId]] : ['station'];
             if (!charArenas.includes(nextArena)) {
-                charArenas.push(nextArena);
+                // Backfill: ensure all prior arenas in ARENA_ORDER are present (self-heal any gaps from legacy bugs).
+                for (let i = 0; i <= idx + 1; i++) {
+                    const arena = ARENA_ORDER[i];
+                    if (!charArenas.includes(arena)) {
+                        charArenas.push(arena);
+                    }
+                }
+                charArenas.sort((a, b) => ARENA_ORDER.indexOf(a) - ARENA_ORDER.indexOf(b));
                 unlockedArena = nextArena;
             }
             map[charId] = charArenas;
