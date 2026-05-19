@@ -662,7 +662,7 @@ Deno.serve(async (req) => {
 
                 // 402 INSUFFICIENT_FUNDS — terminal, balance check confirmed too low.
                 if (/\b402\b/.test(msg) || /insufficient_funds/i.test(msg)) {
-                    return Response.json({ error: "You don't have enough OMENX to complete this purchase." }, { status: 400 });
+                    return Response.json({ error: "You don't have enough OMENX to complete this purchase. Top up your balance and try again." }, { status: 400 });
                 }
 
                 // 401 INVALID_API_KEY — this key is dead. Cycle to next without
@@ -708,7 +708,8 @@ Deno.serve(async (req) => {
                         }
                     }
                     return Response.json({
-                        error: 'OMENX settlement is slow right now. Please try again in a moment.',
+                        error: 'OMENX service is experiencing issues. Your balance is safe — please try again shortly.',
+                        omenxServiceDown: true,
                     }, { status: 503 });
                 }
 
@@ -741,9 +742,9 @@ Deno.serve(async (req) => {
                         }
                     }
                     console.warn(`[purchaseSku] OmenX 422 PAYMENT_FAILED — wallet=${walletAddress} sku=${skuId}: ${msg.slice(0, 200)}`);
-                    const friendly422 = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
-                        : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
-                        : "Your payment was rejected. Please check your OMENX balance and try again.";
+                    const friendly422 = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase. Top up your balance and try again."
+                        : /balance/i.test(msg) ? "Couldn't confirm your OMENX balance. The service may be temporarily down — try again in a moment."
+                        : "Your payment was rejected by the settlement service. Please try again shortly.";
                     return Response.json({ error: friendly422 }, { status: 400 });
                 }
 
@@ -755,10 +756,10 @@ Deno.serve(async (req) => {
                 if (msg.includes('429')) return Response.json({ error: 'Too many purchases right now — please try again in a moment.' }, { status: 429 });
 
                 console.error('[purchaseSku] SDK purchase failed:', msg);
-                const friendly = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase."
-                    : /balance/i.test(msg) ? "Your OMENX balance couldn't be confirmed. Please try again."
-                    : "Your purchase couldn't be completed. Please try again.";
-                return Response.json({ error: friendly }, { status: 500 });
+                const friendly = /insufficient/i.test(msg) ? "You don't have enough OMENX to complete this purchase. Top up your balance and try again."
+                    : /balance/i.test(msg) ? "Couldn't confirm your OMENX balance — the service may be temporarily down. Try again in a moment."
+                    : "The settlement service encountered an error. Your purchase wasn't charged — please try again shortly.";
+                return Response.json({ error: friendly, omenxServiceDown: true }, { status: 500 });
             }
         }
         if (!purchaseData) {
