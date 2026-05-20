@@ -37,12 +37,15 @@ const VALID_RELIC_IDS = new Set([
     'relic_damage_core',
 ]);
 
-const PRESTIGE_GOLD_COST = 1_500_000;
-// 2026-05-08 — added fragment cost to drain existing relicFragment piles.
-// Audit showed L5-relic players sitting on 300–600+ unspent fragments with
-// nothing to spend them on. See docs/S6_MASTER_PLAN.md §5a.
+// 2026-05-20 — tiered prestige costs (500K → 2.5M) so early tiers feel achievable
+// while late tiers reward grind. Same total as flat 1.5M model (7.5M per relic).
+const PRESTIGE_GOLD_COSTS = [500_000, 1_000_000, 1_500_000, 2_000_000, 2_500_000];
 const PRESTIGE_FRAGMENT_COST = 100;
 const PRESTIGE_MAX = 5;
+
+function getPrestigeCost(tier) {
+    return PRESTIGE_GOLD_COSTS[Math.min(tier, PRESTIGE_MAX - 1)] || PRESTIGE_GOLD_COSTS[PRESTIGE_MAX - 1];
+}
 
 async function with429Retry(fn, label = 'op') {
     let lastErr;
@@ -111,9 +114,10 @@ Deno.serve(async (req) => {
         }
 
         const gold = Number(save.gold || 0);
-        if (gold < PRESTIGE_GOLD_COST) {
+        const prestigeCost = getPrestigeCost(currentPrestige);
+        if (gold < prestigeCost) {
             return Response.json({
-                error: `Not enough gold — you need ${PRESTIGE_GOLD_COST.toLocaleString()} but have ${gold.toLocaleString()}.`
+                error: `Not enough gold — you need ${prestigeCost.toLocaleString()} but have ${gold.toLocaleString()}.`
             }, { status: 400 });
         }
         const fragments = Number(save.relicFragments || 0);
@@ -125,7 +129,7 @@ Deno.serve(async (req) => {
 
         // Apply
         const updated = { ...save };
-        updated.gold = gold - PRESTIGE_GOLD_COST;
+        updated.gold = gold - prestigeCost;
         updated.relicFragments = fragments - PRESTIGE_FRAGMENT_COST;
         prestige[relicId] = currentPrestige + 1;
         updated.relicPrestige = prestige;
@@ -145,7 +149,7 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.GoldSpendLog.create({
                 wallet_address: walletLower,
                 player_name: saveRecord.player_name || updated.player_name || '',
-                amount: PRESTIGE_GOLD_COST,
+                amount: prestigeCost,
                 balance_before: gold,
                 balance_after: updated.gold,
                 grant_info: { type: 'relic_prestige', relicId, newPrestige: prestige[relicId], fragmentCost: PRESTIGE_FRAGMENT_COST },
@@ -154,11 +158,11 @@ Deno.serve(async (req) => {
             });
         } catch {}
 
-        console.log(`[prestigeRelic] ${walletLower} prestiged ${relicId} → PL${prestige[relicId]} (-${PRESTIGE_GOLD_COST} gold, -${PRESTIGE_FRAGMENT_COST} frags)`);
+        console.log(`[prestigeRelic] ${walletLower} prestiged ${relicId} → PL${prestige[relicId]} (-${prestigeCost} gold, -${PRESTIGE_FRAGMENT_COST} frags)`);
         return Response.json({
             success: true,
             saveData: updated,
-            cost: PRESTIGE_GOLD_COST,
+            cost: prestigeCost,
             fragmentCost: PRESTIGE_FRAGMENT_COST,
             newPrestige: prestige[relicId],
         });
