@@ -14,8 +14,31 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
+// Built-in defaults — mirrors functions/leaderboardPayoutConfig DEFAULT_CONFIG.
+// Used until the live config arrives from the backend.
+const DEFAULT_PAYOUT_CONFIG = {
+    top_n: 20,
+    weekly_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.08 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.04 },
+        { min: 11, max: 20, pct: 0.03 },
+    ],
+    seasonal_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.075 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.032 },
+        { min: 11, max: 20, pct: 0.022 },
+    ],
+};
+
 export default function Leaderboard() {
     const [scores, setScores] = useState([]);
+    // Live payout config — fetched from backend so the leaderboard always matches
+    // the actual distribution math even when the owner edits the config in admin.
+    const [payoutCfg, setPayoutCfg] = useState(DEFAULT_PAYOUT_CONFIG);
     // wallet_address (lowercased) -> { tag, name, icon } for squad badge display.
     const [squadByWallet, setSquadByWallet] = useState({});
     // Total unique ranked players in the period (capped at 20) — used as the
@@ -26,31 +49,21 @@ export default function Leaderboard() {
     const [timeLeft, setTimeLeft] = useState('');
     const [currentPool, setCurrentPool] = useState(0);
 
-    // Must match functions/distributeRewards.js — payouts capped at top 20.
-    const getWeeklyRewardPercentage = (rank) => {
-        if (rank === 1) return 0.10;
-        if (rank === 2) return 0.08;
-        if (rank === 3) return 0.06;
-        if (rank >= 4 && rank <= 10) return 0.04;
-        if (rank >= 11 && rank <= 20) return 0.03;
-        return 0;
+    // Tier lookup driven by live config — admin-configurable via the
+    // Leaderboard Payout Config panel in AdminDashboard.
+    const tierLookup = (tiers) => (rank) => {
+        const t = (tiers || []).find(t => rank >= t.min && rank <= t.max);
+        return t ? t.pct : 0;
     };
-
-    const getSeasonalRewardPercentage = (rank) => {
-        if (rank === 1) return 0.10;
-        if (rank === 2) return 0.075;
-        if (rank === 3) return 0.06;
-        if (rank >= 4 && rank <= 10) return 0.032;
-        if (rank >= 11 && rank <= 20) return 0.022;
-        return 0;
-    };
+    const getWeeklyRewardPercentage = tierLookup(payoutCfg.weekly_tiers);
+    const getSeasonalRewardPercentage = tierLookup(payoutCfg.seasonal_tiers);
 
     // Calculate actual payout amount (mirrors backend distributeRewards/previewPayouts EXACTLY).
-    // Backend caps at 20 ranked players and sums percentages over uniqueScores.length (capped at 20),
-    // so we must use the SAME denominator here.
+    // Backend caps at payoutCfg.top_n ranked players and sums percentages over uniqueScores.length
+    // (capped at top_n), so we must use the SAME denominator here.
     const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier, totalRankedPlayers) => {
         const rewardPool = Math.floor(pool * poolMultiplier);
-        const cappedTotal = Math.min(20, totalRankedPlayers);
+        const cappedTotal = Math.min(payoutCfg.top_n, totalRankedPlayers);
         if (cappedTotal === 0) return 0;
 
         let totalPct = 0;
@@ -129,6 +142,14 @@ export default function Leaderboard() {
     useEffect(() => {
         fetchScores();
     }, [view]);
+
+    // Fetch live payout config once on mount (public read — no auth needed).
+    // If it fails or returns nothing we just use the built-in defaults.
+    useEffect(() => {
+        base44.functions.invoke('leaderboardPayoutConfig', { action: 'get' })
+            .then(r => { if (r.data?.config) setPayoutCfg(r.data.config); })
+            .catch(() => {});
+    }, []);
 
     // Realtime subscriptions + polling fallback (every 20s while page is visible).
     // The polling is the safety net — realtime keeps it instant, polling guarantees
@@ -235,7 +256,7 @@ export default function Leaderboard() {
                 return;
             }
 
-            // Fetch enough scores to mirror the backend's ranked pool (capped at 20 unique).
+            // Fetch enough scores to mirror the backend's ranked pool (capped at payoutCfg.top_n unique).
             const data = await base44.entities.RunScore.filter(filter, '-score', 1000);
 
             if (view === 'squads') {
@@ -265,11 +286,11 @@ export default function Leaderboard() {
                 seenKeys.add(key);
                 allUnique.push(score);
 
-                if (allUnique.length >= 20) break;
+                if (allUnique.length >= payoutCfg.top_n) break;
             }
 
             setScores(allUnique);
-            setTotalRankedPlayers(allUnique.length); // up to 20 — used as payout denominator
+            setTotalRankedPlayers(allUnique.length); // up to payoutCfg.top_n — used as payout denominator
             setLastUpdated(Date.now());
 
             // Look up squad membership for the displayed players (best-effort, non-blocking).

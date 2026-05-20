@@ -2,25 +2,33 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: Base44 session → linked wallet → AdminWallet lookup.
 
-// Must match distributeRewards.js — payouts capped at top 20, per-player cap 10000.
+// Payout config is loaded from AppConfig at request time (see distributeRewards
+// for the same defaults + loader pattern).
 const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 
-function getWeeklyRewardPercentage(rank) {
-    if (rank === 1) return 0.10;
-    if (rank === 2) return 0.08;
-    if (rank === 3) return 0.06;
-    if (rank >= 4 && rank <= 10) return 0.04;
-    if (rank >= 11 && rank <= 20) return 0.03;
-    return 0;
-}
+const DEFAULT_PAYOUT_CONFIG = {
+    top_n: 20,
+    weekly_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.08 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.04 },
+        { min: 11, max: 20, pct: 0.03 },
+    ],
+    seasonal_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.075 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.032 },
+        { min: 11, max: 20, pct: 0.022 },
+    ],
+};
 
-function getSeasonalRewardPercentage(rank) {
-    if (rank === 1) return 0.10;
-    if (rank === 2) return 0.075;
-    if (rank === 3) return 0.06;
-    if (rank >= 4 && rank <= 10) return 0.032;
-    if (rank >= 11 && rank <= 20) return 0.022;
-    return 0;
+function makeTierLookup(tiers) {
+    return (rank) => {
+        const t = tiers.find(t => rank >= t.min && rank <= t.max);
+        return t ? t.pct : 0;
+    };
 }
 
 function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
@@ -85,11 +93,18 @@ Deno.serve(async (req) => {
 
         let staffPayments = [];
 
+        // Load admin-configurable payout settings (top_n + per-rank tiers)
+        let payoutCfg = DEFAULT_PAYOUT_CONFIG;
+        try {
+            const cfgRows = await base44.asServiceRole.entities.AppConfig.filter({ key: 'leaderboard_payout_config' });
+            if (cfgRows[0]?.value) payoutCfg = cfgRows[0].value;
+        } catch {}
+
         if (period_type === 'weekly') {
             rewardPool = Math.floor(pool.total_spent * 0.20);
             const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: period_id }, '-score', 1000);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
-            payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 20);
+            payments = buildRankedPayments(scores, rewardPool, makeTierLookup(payoutCfg.weekly_tiers), payoutCfg.top_n);
 
             // Mirror distributeRewards.js — only weekly payouts include staff cuts.
             // Staff % is configurable via AppConfig.staff_pct_per_wallet (default 2%),
@@ -122,7 +137,7 @@ Deno.serve(async (req) => {
             rewardPool = Math.floor(pool.total_spent * 0.30);
             const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: period_id }, '-score', 1000);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
-            payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 20);
+            payments = buildRankedPayments(scores, rewardPool, makeTierLookup(payoutCfg.seasonal_tiers), payoutCfg.top_n);
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }

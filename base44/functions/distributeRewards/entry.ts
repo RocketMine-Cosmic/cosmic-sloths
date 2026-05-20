@@ -126,15 +126,41 @@ Deno.serve(async (req) => {
     }
 });
 
-// Payouts are capped at top 20 ranks (weekly + seasonal) so top players'
-// share of the pool isn't diluted by an unbounded long tail of minimal payouts.
-function getWeeklyRewardPercentage(rank) {
-     if (rank === 1) return 0.10;
-     if (rank === 2) return 0.08;
-     if (rank === 3) return 0.06;
-     if (rank >= 4 && rank <= 10) return 0.04;
-     if (rank >= 11 && rank <= 20) return 0.03;
-     return 0;
+// Payouts are configurable via AppConfig key 'leaderboard_payout_config'.
+// Falls back to these defaults if no config exists. Owner edits via
+// functions/leaderboardPayoutConfig (admin panel: AdminLeaderboardPayoutConfig).
+const DEFAULT_PAYOUT_CONFIG = {
+    top_n: 20,
+    weekly_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.08 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.04 },
+        { min: 11, max: 20, pct: 0.03 },
+    ],
+    seasonal_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.075 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.032 },
+        { min: 11, max: 20, pct: 0.022 },
+    ],
+};
+
+async function loadPayoutConfig() {
+    try {
+        const rows = await db.entities.AppConfig.filter({ key: 'leaderboard_payout_config' });
+        return rows[0]?.value || DEFAULT_PAYOUT_CONFIG;
+    } catch {
+        return DEFAULT_PAYOUT_CONFIG;
+    }
+}
+
+function makeTierLookup(tiers) {
+    return (rank) => {
+        const t = tiers.find(t => rank >= t.min && rank <= t.max);
+        return t ? t.pct : 0;
+    };
  }
 
  function getSeasonalRewardPercentage(rank) {
@@ -273,8 +299,9 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
      const allScores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     // Capped at top 20 — protects top players' share from long-tail dilution.
-     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 20);
+     // Top N + per-rank percentages loaded from AppConfig (admin-configurable).
+     const cfg = await loadPayoutConfig();
+     const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.weekly_tiers), cfg.top_n);
     // Per-wallet override on AdminWallet.payout_pct_override (number, 0–0.10)
     // takes priority over the global STAFF_PCT_PER_WALLET — lets owners set
     // different cuts per staff member (e.g. lead mods get more than chat mods).
@@ -319,8 +346,9 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
      const allScores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     // Capped at top 20 — protects top players' share from long-tail dilution.
-     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 20);
+     // Top N + per-rank percentages loaded from AppConfig (admin-configurable).
+     const cfg = await loadPayoutConfig();
+     const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.seasonal_tiers), cfg.top_n);
     if (payments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };

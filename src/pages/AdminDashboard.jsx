@@ -52,6 +52,7 @@ import AdminMaintenance from '../components/admin/AdminMaintenance';
 import AdminGlobalXpBuff from '../components/admin/AdminGlobalXpBuff';
 import AdminS6LaunchTools from '../components/admin/AdminS6LaunchTools';
 import AdminResyncWarKills from '../components/admin/AdminResyncWarKills';
+import AdminLeaderboardPayoutConfig from '../components/admin/AdminLeaderboardPayoutConfig';
 
 const TAB_GROUPS = [
     {
@@ -336,6 +337,7 @@ export default function AdminDashboard() {
             case 'chat':        return <AdminSquadChatModeration walletAddress={adminWallet} />;
             case 'rewards':     return (
                 <div className="space-y-4">
+                    <AdminLeaderboardPayoutConfig isOwner={isEmergencyKey || (callerPerms || []).includes('owner')} />
                     {(isEmergencyKey || (callerPerms || []).includes('owner')) && <AdminWeeklyTopup />}
                     <AdminRewards walletAddress={adminWallet} />
                 </div>

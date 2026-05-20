@@ -68,28 +68,40 @@ Deno.serve(async (req) => {
     }
 });
 
-// Must match distributeRewards.js — payouts capped at top 45.
-function getWeeklyRewardPercentage(rank) {
-    if (rank === 1) return 0.10;
-    if (rank === 2) return 0.08;
-    if (rank === 3) return 0.06;
-    if (rank >= 4 && rank <= 10) return 0.04;
-    if (rank >= 11 && rank <= 20) return 0.03;
-    if (rank >= 21 && rank <= 30) return 0.018;
-    if (rank >= 31 && rank <= 45) return 0.012;
-    return 0;
+// Payout config loaded from AppConfig at distribution time. Defaults match
+// distributeRewards.js. Admin edits via functions/leaderboardPayoutConfig.
+const DEFAULT_PAYOUT_CONFIG = {
+    top_n: 20,
+    weekly_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.08 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.04 },
+        { min: 11, max: 20, pct: 0.03 },
+    ],
+    seasonal_tiers: [
+        { min: 1,  max: 1,  pct: 0.10 },
+        { min: 2,  max: 2,  pct: 0.075 },
+        { min: 3,  max: 3,  pct: 0.06 },
+        { min: 4,  max: 10, pct: 0.032 },
+        { min: 11, max: 20, pct: 0.022 },
+    ],
+};
+
+async function loadPayoutConfig(base44) {
+    try {
+        const rows = await base44.asServiceRole.entities.AppConfig.filter({ key: 'leaderboard_payout_config' });
+        return rows[0]?.value || DEFAULT_PAYOUT_CONFIG;
+    } catch {
+        return DEFAULT_PAYOUT_CONFIG;
+    }
 }
 
-function getSeasonalRewardPercentage(rank) {
-    if (rank === 1) return 0.10;
-    if (rank === 2) return 0.075;
-    if (rank === 3) return 0.06;
-    if (rank >= 4 && rank <= 10) return 0.032;
-    if (rank >= 11 && rank <= 20) return 0.022;
-    if (rank >= 21 && rank <= 30) return 0.015;
-    if (rank >= 31 && rank <= 40) return 0.009;
-    if (rank >= 41 && rank <= 45) return 0.007;
-    return 0;
+function makeTierLookup(tiers) {
+    return (rank) => {
+        const t = tiers.find(t => rank >= t.min && rank <= t.max);
+        return t ? t.pct : 0;
+    };
 }
 
 function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
@@ -189,7 +201,8 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.20);
     const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
-    const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 45);
+    const cfg = await loadPayoutConfig(base44);
+    const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.weekly_tiers), cfg.top_n);
 
     // RESUME-SAFE: if a previous attempt partially paid this period, skip wallets
     // that already have a PayoutLog row so we don't double-pay.
@@ -278,7 +291,8 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     const rewardPool = Math.floor(pool.total_spent * 0.30);
     const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
-    const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 45);
+    const cfg = await loadPayoutConfig(base44);
+    const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.seasonal_tiers), cfg.top_n);
 
     if (payments.length === 0) {
         await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
