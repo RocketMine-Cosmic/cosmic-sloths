@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
     }
 });
 
-// Payouts are capped at top 45 ranks (weekly + seasonal) so top players'
+// Payouts are capped at top 20 ranks (weekly + seasonal) so top players'
 // share of the pool isn't diluted by an unbounded long tail of minimal payouts.
 function getWeeklyRewardPercentage(rank) {
      if (rank === 1) return 0.10;
@@ -134,8 +134,6 @@ function getWeeklyRewardPercentage(rank) {
      if (rank === 3) return 0.06;
      if (rank >= 4 && rank <= 10) return 0.04;
      if (rank >= 11 && rank <= 20) return 0.03;
-     if (rank >= 21 && rank <= 30) return 0.018;
-     if (rank >= 31 && rank <= 45) return 0.012;
      return 0;
  }
 
@@ -145,9 +143,6 @@ function getWeeklyRewardPercentage(rank) {
      if (rank === 3) return 0.06;
      if (rank >= 4 && rank <= 10) return 0.032;
      if (rank >= 11 && rank <= 20) return 0.022;
-     if (rank >= 21 && rank <= 30) return 0.015;
-     if (rank >= 31 && rank <= 40) return 0.009;
-     if (rank >= 41 && rank <= 45) return 0.007;
      return 0;
  }
 
@@ -157,16 +152,13 @@ const CHUNK_SIZE = 20;
 // so the batch-level `note` describes the exact rank or rank band being paid.
 // Top 3 get individual labels ("Rank #1", "Rank #2", "Rank #3"); the rest get
 // band labels ("Ranks #4–10", etc). Out-of-band payments fall through to a
-// generic "Other" tier (shouldn't happen — top 45 is capped — but safe fallback).
+// generic "Other" tier (shouldn't happen — top 20 is capped — but safe fallback).
 function rankTierLabel(rank) {
     if (rank === 1) return { key: 'r1',   label: 'Rank #1' };
     if (rank === 2) return { key: 'r2',   label: 'Rank #2' };
     if (rank === 3) return { key: 'r3',   label: 'Rank #3' };
     if (rank >= 4  && rank <= 10) return { key: 'r4-10',  label: 'Ranks #4–10' };
     if (rank >= 11 && rank <= 20) return { key: 'r11-20', label: 'Ranks #11–20' };
-    if (rank >= 21 && rank <= 30) return { key: 'r21-30', label: 'Ranks #21–30' };
-    if (rank >= 31 && rank <= 40) return { key: 'r31-40', label: 'Ranks #31–40' };
-    if (rank >= 41 && rank <= 45) return { key: 'r41-45', label: 'Ranks #41–45' };
     return { key: 'other', label: `Rank #${rank}` };
 }
 
@@ -181,8 +173,8 @@ async function grantTieredBatches(payments, apiBaseUrl, rewardsKeys, gameId, gam
         if (!tiers.has(key)) tiers.set(key, { label, payments: [] });
         tiers.get(key).payments.push(p);
     }
-    // Preserve tier order: r1, r2, r3, r4-10, r11-20, r21-30, r31-40, r41-45, other
-    const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'r21-30', 'r31-40', 'r41-45', 'other'];
+    // Preserve tier order: r1, r2, r3, r4-10, r11-20, other
+    const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'other'];
     const allTxIds = [];
     let totalChunks = 0;
     for (const key of order) {
@@ -281,8 +273,8 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
      const allScores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     // Capped at top 45 — protects top players' share from long-tail dilution.
-     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 45);
+     // Capped at top 20 — protects top players' share from long-tail dilution.
+     const payments = buildRankedPayments(scores, rewardPool, getWeeklyRewardPercentage, 20);
     // Per-wallet override on AdminWallet.payout_pct_override (number, 0–0.10)
     // takes priority over the global STAFF_PCT_PER_WALLET — lets owners set
     // different cuts per staff member (e.g. lead mods get more than chat mods).
@@ -327,8 +319,8 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
      const allScores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     // Capped at top 45 — protects top players' share from long-tail dilution.
-     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 45);
+     // Capped at top 20 — protects top players' share from long-tail dilution.
+     const payments = buildRankedPayments(scores, rewardPool, getSeasonalRewardPercentage, 20);
     if (payments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
