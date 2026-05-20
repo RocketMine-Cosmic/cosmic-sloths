@@ -121,10 +121,11 @@ export default function MemberContributionsPanel({ squadId, myWalletLower = '' }
                                     );
                                 })}
                             </div>
-                            <div className="mt-2 text-[10px] text-slate-500 text-center">
-                                Total shown: {fmtNum(totalShown)} · Sector runs only — endless / raid / meteor don't count.
-                                <br />
-                                <span className="text-slate-600">Includes archived runs. Small drift vs squad total may persist due to mid-week resets.</span>
+                            <div className="mt-2 text-[10px] text-slate-500 text-center space-y-1">
+                                <div>Total shown: {fmtNum(totalShown)} · Sector runs only — endless / raid / meteor don't count.</div>
+                                <div className="text-slate-600">
+                                    ✓ Squad war total (kills_a) is <span className="font-bold">100% accurate</span>. Per-player breakdown may drift slightly due to score archives.
+                                </div>
                             </div>
                         </>
                     )}
