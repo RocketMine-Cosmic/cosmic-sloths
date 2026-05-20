@@ -62,6 +62,12 @@ export default function AdminEconomy({ walletAddress }) {
         return true;
     });
     const filteredTotal = filteredLogs.reduce((s, l) => s + Number(l.amount || 0), 0);
+    
+    // Calculate pool total for the current period to show excluded amount
+    const currentPeriod = preset === 'this_week' ? moment.utc().format('gggg-[W]WW') : 
+                          preset === 'last_week' ? moment.utc().subtract(1, 'week').format('gggg-[W]WW') : null;
+    const poolTotal = currentPeriod ? (pools || []).find(p => p.period_id === currentPeriod)?.total_spent || 0 : 0;
+    const excludedAmount = poolTotal > 0 ? Math.round((filteredTotal - poolTotal) * 100) / 100 : 0;
 
     return (
         <div className="space-y-4">
@@ -133,6 +139,7 @@ export default function AdminEconomy({ walletAddress }) {
                     </div>
                     <div className="text-[10px] text-slate-500 font-mono ml-auto">
                         {filteredLogs.length} {filteredLogs.length === 1 ? 'entry' : 'entries'} • <span className="text-amber-400">{filteredTotal.toFixed(2)} OMENX</span>
+                        {excludedAmount > 0 && <span className="text-slate-400 ml-2">({poolTotal.toFixed(2)} in pool + <span className="text-slate-500">{excludedAmount.toFixed(2)} excluded</span>)</span>}
                     </div>
                 </div>
                 <div className="overflow-x-auto">
