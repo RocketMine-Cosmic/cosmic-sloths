@@ -1115,7 +1115,7 @@ export default function Game() {
     }, [levelUpChoices, showRevivePrompt]);
 
     return (
-        <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none" style={{ overscrollBehavior: 'none', overscrollBehaviorY: 'none', touchAction: 'none' }}>
+        <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none" style={{ overscrollBehavior: 'none', overscrollBehaviorY: 'none' }}>
             <canvas 
                 ref={canvasRef} 
                 className="absolute inset-0"
