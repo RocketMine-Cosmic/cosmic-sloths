@@ -64,23 +64,36 @@ Deno.serve(async (req) => {
             return Response.json(payload);
         }
 
-        // Pull this week's runs for our squad members. 500 rows ≈ 100 runs/member ×
-        // 5 members — well above realistic weekly play. We only need kills + arena.
-        const runs = await base44.asServiceRole.entities.RunScore.filter(
-            { week_id: weekId, wallet_address: { $in: wallets } },
-            '-created_date',
-            500,
-        );
+        // Pull this week's runs for our squad members from BOTH RunScore AND
+        // DeletedRunScore. The cleanup automation (cleanupKeepTopScoresPerPlayer)
+        // soft-deletes lower scores into DeletedRunScore for archival, which
+        // previously caused per-member contribution totals to undercount vs the
+        // live squad war kills_a counter (Texxy bug 2026-05-20).
+        // 500/table × 2 tables = 1000 rows headroom — well above realistic weekly play.
+        const [runs, deletedRuns] = await Promise.all([
+            base44.asServiceRole.entities.RunScore.filter(
+                { week_id: weekId, wallet_address: { $in: wallets } },
+                '-created_date',
+                500,
+            ),
+            base44.asServiceRole.entities.DeletedRunScore.filter(
+                { week_id: weekId, wallet_address: { $in: wallets } },
+                '-created_date',
+                500,
+            ).catch(() => []),
+        ]);
 
-        // Sum war-eligible kills per wallet.
+        // Sum war-eligible kills per wallet across BOTH live and archived rows.
         const killsByWallet = new Map();
-        for (const r of runs) {
+        const addRow = (r) => {
             const arena = r.arena_id || '';
-            if (NON_WAR_ARENAS.has(arena)) continue;
+            if (NON_WAR_ARENAS.has(arena)) return;
             const w = (r.wallet_address || '').toLowerCase();
-            if (!w) continue;
+            if (!w) return;
             killsByWallet.set(w, (killsByWallet.get(w) || 0) + (r.kills || 0));
-        }
+        };
+        for (const r of runs) addRow(r);
+        for (const r of deletedRuns) addRow(r);
 
         const contributions = members.map(m => {
             const w = (m.wallet_address || '').toLowerCase();

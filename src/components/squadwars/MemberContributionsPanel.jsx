@@ -123,6 +123,8 @@ export default function MemberContributionsPanel({ squadId, myWalletLower = '' }
                             </div>
                             <div className="mt-2 text-[10px] text-slate-500 text-center">
                                 Total shown: {fmtNum(totalShown)} · Sector runs only — endless / raid / meteor don't count.
+                                <br />
+                                <span className="text-slate-600">Includes archived runs. Small drift vs squad total may persist due to mid-week resets.</span>
                             </div>
                         </>
                     )}
