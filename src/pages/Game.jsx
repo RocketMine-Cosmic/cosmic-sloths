@@ -1027,15 +1027,24 @@ export default function Game() {
     };
 
     React.useEffect(() => {
-        // Disable pull-to-refresh on mobile — but allow touchmove inside interactive
-        // controls (range sliders, modals, scrollable content) so volume sliders and
-        // other UI inputs work correctly on mobile.
+        // Block pull-down refresh globally during gameplay via CSS + touchmove handler.
+        // Set overscroll-behavior on the root to prevent Safari elastic scroll.
+        const root = document.querySelector('[style*="overscrollBehavior"]');
+        if (root) {
+            root.style.overscrollBehavior = 'none';
+            root.style.overscrollBehaviorY = 'none';
+        }
+        
+        // Block all touchmove at the top of viewport (pull-down refresh vector)
         const preventPullToRefresh = (e) => {
-            if (!e.touches || e.touches.length === 0 || window.scrollY !== 0) return;
-            const t = e.target;
-            if (t && t.closest && t.closest('input[type="range"], [data-allow-touchmove], .overflow-y-auto, [role="dialog"]')) return;
-            e.preventDefault();
+            if (!e.touches || e.touches.length === 0) return;
+            const touch = e.touches[0];
+            const isDownward = touch.clientY > 50; // allow touches below 50px from top
+            if (window.scrollY === 0 && !isDownward) {
+                e.preventDefault();
+            }
         };
+        
         document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
         return () => document.removeEventListener('touchmove', preventPullToRefresh);
     }, []);
@@ -1106,7 +1115,7 @@ export default function Game() {
     }, [levelUpChoices, showRevivePrompt]);
 
     return (
-        <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none" style={{ overscrollBehavior: 'none' }}>
+        <div className="w-screen h-[100dvh] overflow-hidden bg-black relative select-none" style={{ overscrollBehavior: 'none', overscrollBehaviorY: 'none', touchAction: 'none' }}>
             <canvas 
                 ref={canvasRef} 
                 className="absolute inset-0"
