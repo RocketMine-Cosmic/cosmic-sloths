@@ -1027,26 +1027,80 @@ export default function Game() {
     };
 
     React.useEffect(() => {
-        // Block pull-down refresh globally during gameplay via CSS + touchmove handler.
-        // Set overscroll-behavior on the root to prevent Safari elastic scroll.
+        // Block pull-down refresh AND iOS/Android swipe-back-gesture during gameplay.
+        // Two-pronged: CSS overscroll-behavior + JS touch handlers that intercept
+        // ANY gesture starting near the top edge (pull-to-refresh) or left/right
+        // edges (browser swipe-back / forward navigation).
+        // Texxy/JackM bug 2026-05-20 — accidental refresh during level-up modal
+        // touches, and left-edge swipes occasionally triggering history back nav.
         const root = document.querySelector('[style*="overscrollBehavior"]');
         if (root) {
             root.style.overscrollBehavior = 'none';
             root.style.overscrollBehaviorY = 'none';
         }
-        
-        // Block all touchmove at the top of viewport (pull-down refresh vector)
-        const preventPullToRefresh = (e) => {
+        // Also lock html/body — Android Chrome uses these as the scroll container
+        // for pull-to-refresh detection, not the visible app root.
+        const prevHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+        const prevBodyOverscroll = document.body.style.overscrollBehavior;
+        const prevHtmlTouch = document.documentElement.style.touchAction;
+        const prevBodyTouch = document.body.style.touchAction;
+        document.documentElement.style.overscrollBehavior = 'none';
+        document.body.style.overscrollBehavior = 'none';
+        // touch-action:none disables all native browser gestures (PTR + swipe-nav).
+        document.documentElement.style.touchAction = 'none';
+        document.body.style.touchAction = 'none';
+
+        // Track the initial touch position so we can identify edge-originating gestures.
+        let startX = 0;
+        let startY = 0;
+
+        const onTouchStart = (e) => {
             if (!e.touches || e.touches.length === 0) return;
-            const touch = e.touches[0];
-            const isDownward = touch.clientY > 50; // allow touches below 50px from top
-            if (window.scrollY === 0 && !isDownward) {
-                e.preventDefault();
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            // Pre-emptively block touches that START in browser-gesture zones:
+            //   - top 60px → pull-to-refresh
+            //   - leftmost 25px → iOS Safari swipe-back / Android edge-swipe
+            //   - rightmost 25px → swipe-forward / Android edge-swipe
+            const w = window.innerWidth;
+            if (startY < 60 || startX < 25 || startX > w - 25) {
+                if (e.cancelable) e.preventDefault();
             }
         };
-        
-        document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
-        return () => document.removeEventListener('touchmove', preventPullToRefresh);
+
+        const onTouchMove = (e) => {
+            if (!e.touches || e.touches.length === 0) return;
+            const x = e.touches[0].clientX;
+            const y = e.touches[0].clientY;
+            const dx = x - startX;
+            const dy = y - startY;
+            const w = window.innerWidth;
+            // Block any downward swipe that started near the top edge (pull-to-refresh).
+            if (startY < 80 && dy > 5) {
+                if (e.cancelable) e.preventDefault();
+                return;
+            }
+            // Block any horizontal swipe that started near a side edge (swipe-back/forward).
+            if ((startX < 30 && dx > 5) || (startX > w - 30 && dx < -5)) {
+                if (e.cancelable) e.preventDefault();
+                return;
+            }
+            // Belt-and-suspenders: if window somehow scrolled to top, block any downward drag.
+            if (window.scrollY === 0 && dy > 0 && startY < 100) {
+                if (e.cancelable) e.preventDefault();
+            }
+        };
+
+        document.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        return () => {
+            document.removeEventListener('touchstart', onTouchStart);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.documentElement.style.overscrollBehavior = prevHtmlOverscroll;
+            document.body.style.overscrollBehavior = prevBodyOverscroll;
+            document.documentElement.style.touchAction = prevHtmlTouch;
+            document.body.style.touchAction = prevBodyTouch;
+        };
     }, []);
 
     // Stuck-state watchdog. If the engine ends up paused with NO modal/UI reason
