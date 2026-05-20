@@ -113,11 +113,12 @@ export function updateSquadClones(engine, dt) {
             }
         }
         
-        // Bounds check: keep clones on screen
-        const MARGIN = 50;
-        clone.x = Math.max(MARGIN, Math.min(engine.width - MARGIN, clone.x));
-        clone.y = Math.max(MARGIN, Math.min(engine.height - MARGIN, clone.y));
-        
+        // No bounds clamp — clones operate in WORLD coordinates and the
+        // player-tracking branch above (dToPlayer > 150) already pulls them
+        // back if they drift away from the player. The old `engine.width/height`
+        // clamp used undefined values → NaN positions → clones spawned/froze
+        // off-map and dealt no damage (Anubis bug 2026-05-20).
+
         if (clone.life <= 0) {
             engine.addParticle(clone.x, clone.y, clone.color, 20, 'glow', 2);
         }
