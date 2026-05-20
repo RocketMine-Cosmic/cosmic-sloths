@@ -5,8 +5,9 @@
 ## Overview
 Promote cosmetics into a first-class destination by:
 1. Splitting the **Cosmetics tab out of `pages/Upgrades`** into its own standalone page accessible from the **WarpMenu**, so players can find it without digging through Upgrades.
-2. Supporting **multi-currency cosmetic purchases (OMENX / BNB / GMT)** with live USD-to-token conversion displayed on each button.
-3. Framing cosmetics as **direct developer support** — these purchases are intentionally **NOT pooled** into the weekly payout `TokenPool`, so 100% of the revenue supports the devs rather than being redistributed back to players/staff.
+2. Offering cosmetics **GMT-only** — no OMENX or gold. This positions them as pure developer support (not gameplay-impacting).
+3. Displaying live USD-to-GMT conversion on each button so players understand the cost.
+4. Framing cosmetics as **direct developer support** — these purchases are intentionally **NOT pooled** into the weekly payout `TokenPool`, so 100% of the revenue supports the devs rather than being redistributed back to players/staff.
 
 ---
 
@@ -30,13 +31,18 @@ Promote cosmetics into a first-class destination by:
 
 ---
 
-## Part 2: GMT Pricing Display
+## Part 2: GMT-Only Pricing Display
 
 ### Data Flow
-1. Cosmetic SKU already has `Price (USD)` and `Allowed payment currencies` (BNB, OMENX, GMT) configured in the OmenX dev dashboard.
+1. Cosmetic SKU has `Price (USD)` configured in the OmenX dev dashboard.
 2. Frontend calls `getTokenPrices` → receives `{ prices: { GMT: { usd: 0.2932, source: 'dexscreener' } } }`.
 3. Convert USD to GMT: `gmtAmount = usdPrice / gmtUsd`.
-4. Button displays: `"Buy for $3.00 or ~10.23 GMT"` when GMT is enabled as a payment option.
+4. Button displays only GMT: `"~10.23 GMT"` — no USD, no multi-currency picker.
+
+### Why GMT-Only?
+- Cosmetics are framed as **pure developer support**, separate from the gameplay economy.
+- GMT is a real utility token (not in-game), reinforcing the "real money" / "direct support" positioning.
+- Simpler UX — no currency switching, no balance checks against OMENX pools.
 
 ### Edge Cases
 - **Price lock vs re-quote:** Decide if GMT amount locks at render-time or updates before settlement.
@@ -48,9 +54,9 @@ Promote cosmetics into a first-class destination by:
 
 ### Wireframe (Cosmetic Card)
 ```
-[Fire Trail]                    $3.00
-                          Buy for ~10.23 GMT
-[Select Payment ▼]   ← OMENX / BNB / GMT
+[Fire Trail]
+~10.23 GMT
+[Buy]
 ```
 
 ---
