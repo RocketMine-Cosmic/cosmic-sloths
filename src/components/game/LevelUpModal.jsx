@@ -188,9 +188,9 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                 <div className="self-end md:absolute md:top-4 md:right-4 mb-2 md:mb-0 bg-emerald-950/50 border border-emerald-500/50 px-2 py-1 md:px-3 md:py-1 rounded-lg text-emerald-400 font-bold font-mono text-xs md:text-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1.5">
                     <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" /> {typeof cosmicTokens === 'number' ? cosmicTokens.toFixed(2) : (cosmicTokens || 0)}
                 </div>
-                <div className="flex items-center justify-center gap-3 mb-1 md:mb-2 flex-wrap">
-                    <h2 className="text-base md:text-3xl font-bold text-center text-cyan-400 font-mono">
-                        LEVEL UP! <span className="text-white">→ Lv. {level}</span>
+                <div className="flex items-center justify-center gap-2 md:gap-3 mb-1 md:mb-2 flex-wrap">
+                    <h2 className="text-sm md:text-3xl font-bold text-center text-cyan-400 font-mono leading-tight">
+                        LEVEL UP! <span className="text-white text-sm md:text-3xl">→</span> <span className="text-white">Lv. {level}</span>
                     </h2>
                     {/* Weapon slot counter — moved here so it's visible without scrolling on mobile */}
                     {isS6OrLater() && (() => {
