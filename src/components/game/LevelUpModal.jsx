@@ -51,6 +51,41 @@ function isEvolutionReady(upgrade, player) {
     return false;
 }
 
+// Returns evolution progress info if this upgrade is part of an evolution pair
+// but the level gate hasn't been met yet. Used to show a "Lv X/8 toward evolution"
+// hint on cards so players understand WHY their evolution isn't firing.
+// Returns null if no progress hint applies (evolution already ready, already done,
+// or no evolution exists for this upgrade).
+function getEvolutionProgress(upgrade, player) {
+    if (!player || !upgrade) return null;
+    if (!isS6OrLater()) return null; // S5 has no level gate
+
+    const ownedWeapons = player.weapons || [];
+    const ownedWeaponIds = new Set(ownedWeapons.map(w => w.id));
+    const ownedPassiveIds = new Set((player.passives || []).map(p => p.id));
+
+    if (upgrade.type === 'weapon') {
+        const evo = EVOLUTIONS.find(e => e.baseWeapon === upgrade.weaponId);
+        if (!evo) return null;
+        if (ownedWeaponIds.has(evo.evolvedWeapon)) return null;
+        if (!ownedPassiveIds.has(evo.passive)) return null;
+        const owned = ownedWeapons.find(w => w.id === evo.baseWeapon);
+        const projected = (owned ? owned.level : 0) + (upgrade.value || 1);
+        if (projected >= EVOLUTION_MIN_BASE_LEVEL) return null; // ready handled by isEvolutionReady
+        return { projected, threshold: EVOLUTION_MIN_BASE_LEVEL };
+    }
+    if (upgrade.type === 'passive') {
+        const evo = EVOLUTIONS.find(e => e.passive === upgrade.id);
+        if (!evo) return null;
+        if (ownedWeaponIds.has(evo.evolvedWeapon)) return null;
+        if (!ownedWeaponIds.has(evo.baseWeapon)) return null;
+        const base = ownedWeapons.find(w => w.id === evo.baseWeapon);
+        if (!base || base.level >= EVOLUTION_MIN_BASE_LEVEL) return null;
+        return { projected: base.level, threshold: EVOLUTION_MIN_BASE_LEVEL };
+    }
+    return null;
+}
+
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
@@ -302,6 +337,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                         const isSelected = selectedIndex === i;
                         const preview = getStatPreview(choice, engineRef?.current?.player);
                         const evoReady = isEvolutionReady(choice, engineRef?.current?.player);
+                        const evoProgress = !evoReady ? getEvolutionProgress(choice, engineRef?.current?.player) : null;
                         return (
                             <motion.button
                                 key={i}
@@ -344,6 +380,14 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                 <div className="text-xs md:text-sm text-slate-300 flex-1">
                                     {choice.desc}
                                 </div>
+                                {evoProgress && (
+                                    <div className="mt-1.5 bg-orange-950/40 border border-orange-700/50 rounded px-2 py-1 text-[10px] md:text-xs flex items-center gap-1.5 text-orange-300">
+                                        <Sparkles className="w-3 h-3 shrink-0" />
+                                        <span className="font-mono font-bold">
+                                            Lv {evoProgress.projected}/{evoProgress.threshold} → Evolves
+                                        </span>
+                                    </div>
+                                )}
                                 {preview && (
                                     <div className="mt-2 bg-slate-950/60 border border-slate-700 rounded px-2 py-1 text-[10px] md:text-xs flex items-center justify-between">
                                         <span className="text-slate-400 font-bold uppercase tracking-wider">{preview.label}</span>
