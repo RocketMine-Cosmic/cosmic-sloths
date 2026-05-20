@@ -385,6 +385,16 @@ export function fireWeaponLogic(engine, w) {
         // Display name is "Plasma Swarm" with "plasma whips" — old forest-green particles
         // were a leftover from when this was called "Thorny Swarm" (plant theme).
         // Plasma cyan + magenta now matches the in-game weapon name/description (Hugo audit 2026-05-12).
+        //
+        // Anubis feedback 2026-05-20: this synergy was strictly WORSE than both its
+        // parent components — orbs only contact-damaged at radius 30 for dmg*0.3, and
+        // the AoE "plasma whip lash" only fired 30% of frames at dmg*1.0. Players were
+        // trading up to a weaker weapon when forming the synergy. Fixes:
+        //   • Orb contact: dmg*0.3 → dmg*0.5 at radius 30 (matches Orbital Lasers).
+        //   • Plasma lash: was 30% RNG → now guaranteed every frame at dmg*0.6 (the
+        //     "lash" is the weapon's identity per the description, shouldn't be RNG).
+        //   • Lash damage tuned to 0.6 (not 1.0) since it now ALWAYS fires — net DPS
+        //     roughly 2× the old expected value, putting it ahead of both parents.
         const count = 2 + Math.floor(w.level / 2);
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + engine.time * 4;
@@ -393,19 +403,18 @@ export function fireWeaponLogic(engine, w) {
             
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 30) {
-                    engine.damageEnemy(e, dmg * 0.3, { weaponId: w.id });
+                    engine.damageEnemy(e, dmg * 0.5, { weaponId: w.id });
                     engine.addParticle(e.x, e.y, '#00ffff', 5);
                 }
             });
             
-            if (Math.random() < 0.3) {
-                engine.enemies.forEach(e => {
-                    if (Math.hypot(e.x - px, e.y - py) < 120 * area) {
-                        engine.damageEnemy(e, dmg, { weaponId: w.id });
-                        engine.addParticle(e.x, e.y, '#ff00ff', 10);
-                    }
-                });
-            }
+            // Guaranteed plasma-whip lash — the weapon's signature mechanic.
+            engine.enemies.forEach(e => {
+                if (Math.hypot(e.x - px, e.y - py) < 120 * area) {
+                    engine.damageEnemy(e, dmg * 0.6, { weaponId: w.id });
+                    if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 10);
+                }
+            });
         }
     }
     else if (w.id === 'orbitalLasers') {
