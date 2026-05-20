@@ -36,6 +36,7 @@ import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import { useOmenXPurchasesDisabled } from '@/hooks/useOmenXPurchasesDisabled';
 
 import { subscribePlayerData, ensureNftsFetched, refreshBalance } from '@/lib/playerDataCache';
+import { normalizeNftCharacterName } from '@/lib/nftNameNormalize';
 
 function getOmenXAuth() {
     try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; }
@@ -112,7 +113,7 @@ export default function Hub({ isCarousel }) {
     // visible immediately in the UI without waiting for the next cloud sync round-trip.
     const nftUnlockedChars = React.useMemo(() => {
         return (nfts || [])
-            .map(nft => nft.metadata?.name?.toLowerCase())
+            .map(nft => normalizeNftCharacterName(nft.metadata?.name))
             .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
     }, [nfts]);
 
