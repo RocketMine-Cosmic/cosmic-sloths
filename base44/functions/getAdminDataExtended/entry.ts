@@ -82,6 +82,15 @@ Deno.serve(async (req) => {
             }
             const q = query.toLowerCase();
 
+            // Fast path — exact wallet address. Avoids the heavy pagination + RunScore/SquadMember scans
+            // that were rate-limiting (429s) when the admin pasted a full wallet. A direct filter is one
+            // cheap API call and is the most common search admins do.
+            if (/^0x[0-9a-f]{40}$/.test(q)) {
+                const direct = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: q }, '-created_date', 1);
+                const players = direct.map(p => ({ ...p, _matchedVia: 'current', _matchedName: p.save_data?.player_name || p.player_name || '' }));
+                return Response.json({ players });
+            }
+
             // Page through all PlayerSaves once — used both for current-name matching
             // AND as the canonical lookup table when resolving wallets from historical names.
             const all = [];
