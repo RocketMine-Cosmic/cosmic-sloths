@@ -1103,6 +1103,38 @@ export default function Game() {
         };
     }, []);
 
+    // Back-button / back-gesture trap. On mount we push a sentinel history
+    // entry so the FIRST back press during a run fires `popstate` instead of
+    // navigating off /game. We re-push immediately and open the existing
+    // Pause modal — the player can choose Quit (which awaits saveScore) or
+    // Resume. After game-over/victory we let the back press through normally.
+    // Texxy/JackM 2026-05-20: accidental back gestures were silently ending runs.
+    React.useEffect(() => {
+        window.history.pushState({ gameTrap: true }, '');
+        const onPopState = () => {
+            const engine = engineRef.current;
+            // Re-arm the trap for the next back press.
+            window.history.pushState({ gameTrap: true }, '');
+            // Run finished — don't interfere with normal navigation.
+            if (!engine || engine.isGameOver || engine.isVictory) return;
+            // Open the existing Pause modal. Respects level-up / revive prompts
+            // (handlePause already gates on those).
+            if (!engine.isPaused && !levelUpChoicesRef.current && !showRevivePromptRef.current) {
+                engine.isPaused = true;
+                setIsPaused(true);
+            }
+        };
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
+    }, []);
+
+    // Refs that mirror level-up / revive state so the popstate listener (which
+    // only binds once on mount) can read the LATEST values without re-binding.
+    const levelUpChoicesRef = React.useRef(null);
+    const showRevivePromptRef = React.useRef(false);
+    React.useEffect(() => { levelUpChoicesRef.current = levelUpChoices; }, [levelUpChoices]);
+    React.useEffect(() => { showRevivePromptRef.current = showRevivePrompt; }, [showRevivePrompt]);
+
     // Stuck-state watchdog. If the engine ends up paused with NO modal/UI reason
     // to be paused (no level-up, no revive, no pause menu, no game-over/victory,
     // and the tab is visible), force-resume after a short grace period. This is

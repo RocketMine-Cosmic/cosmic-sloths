@@ -89,6 +89,14 @@
     @apply border-border outline-ring/50;
   }
 
+  /* Disable browser edge-swipe-back gesture (iOS Safari / Chrome on Android).
+     Without this, an accidental left-edge swipe during a run navigates back
+     out of the game and loses the score. `overscroll-behavior` is a no-op on
+     desktop and only suppresses the navigation gesture, not legit scrolling. */
+  html, body {
+    overscroll-behavior-x: none;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
