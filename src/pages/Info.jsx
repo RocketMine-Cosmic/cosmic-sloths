@@ -275,35 +275,33 @@ const TABS_CONTENT = {
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏆 Leaderboards & Seasons" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Compete for <strong className="text-emerald-400">OMENX</strong> — real crypto earned exclusively through competitive play. Rewards are sent automatically to your wallet at the end of each cycle.
+                    Compete for <strong className="text-emerald-400">OMENX</strong> — real crypto earned exclusively through competitive play. Rewards are sent automatically to your wallet at the end of each cycle. Payout tiers are admin-configurable and may change per season.
                 </p>
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-cyan-700/30 text-xs text-slate-300 mb-4">
+                    💡 <strong className="text-cyan-400">Dynamic Payouts:</strong> The number of paying ranks and per-rank percentages are set by the game admins and may be adjusted per season. Check back here or on the Leaderboard page to see the exact payouts for the current period.
+                </div>
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
                         <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. Only the <strong className="text-emerald-400">top 45 players</strong> earn OMENX — higher rank = bigger share. Weekly stat upgrades also reset.</p>
-                        <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
-                            <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
-                            <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">8%</span></div>
-                            <div className="bg-orange-950/40 border border-orange-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(249,115,22,0.15)]"><span className="text-orange-300">🥉 #3</span><span className="text-white">6%</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#4–10</span><span className="text-white">4% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">3% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">1.8% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#31–45</span><span className="text-white">1.2% each</span></div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. The top players earn OMENX — exact payout counts and percentages are set per season by admins and shown on the Hall of Fame page. Higher rank = bigger share. Weekly stat upgrades also reset.</p>
+                        <div className="bg-slate-800/60 rounded-lg p-3 border border-slate-700/50 text-[11px] text-slate-300">
+                            <strong className="text-white">Season 6 Default Payouts (Top 20):</strong>
+                            <div className="font-mono space-y-0.5 mt-1.5 text-slate-400">
+                                <div>🥇 #1: 10% • 🥈 #2: 8% • 🥉 #3: 6%</div>
+                                <div>#4–10: 4% each • #11–20: 3% each</div>
+                            </div>
                         </div>
                         <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts. Max payout per player is <strong className="text-slate-400">10,000 OMENX</strong> per period.</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. Only the <strong className="text-emerald-400">top 45 players</strong> earn OMENX — higher rank = bigger share. Seasonal stat upgrades reset at season end.</p>
-                        <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
-                            <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
-                            <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">7.5%</span></div>
-                            <div className="bg-orange-950/40 border border-orange-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(249,115,22,0.15)]"><span className="text-orange-300">🥉 #3</span><span className="text-white">6%</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#4–10</span><span className="text-white">3.2% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">2.2% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">1.5% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#31–40</span><span className="text-white">0.9% each</span></div>
-                            <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 flex justify-between"><span className="text-slate-300">#41–45</span><span className="text-white">0.7% each</span></div>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. The top players earn OMENX — exact payout counts and percentages are set per season by admins and shown on the Hall of Fame page. Higher rank = bigger share. Seasonal stat upgrades reset at season end.</p>
+                        <div className="bg-slate-800/60 rounded-lg p-3 border border-slate-700/50 text-[11px] text-slate-300">
+                            <strong className="text-white">Season 6 Default Payouts (Top 20):</strong>
+                            <div className="font-mono space-y-0.5 mt-1.5 text-slate-400">
+                                <div>🥇 #1: 10% • 🥈 #2: 7.5% • 🥉 #3: 6%</div>
+                                <div>#4–10: 3.2% each • #11–20: 2.2% each</div>
+                            </div>
                         </div>
                         <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts. Max payout per player is <strong className="text-slate-400">10,000 OMENX</strong> per period.</div>
                     </div>
