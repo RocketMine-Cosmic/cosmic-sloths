@@ -63,6 +63,13 @@ export default function Game() {
     // Captured on first render so a popstate-mutated location.state
     // (e.g. {gameTrap: true} from the trap) can't poison a later restart.
     const runConfigRef = useRef(location.state);
+    // Tracks the _retry timestamp from the last external restart navigation
+    // (GameOverModal 'Try Again', VictoryModal 'Next Sector'). When this
+    // changes we refresh runConfigRef and bump runId so the engine rebuilds
+    // with the new arena/character. Without this, post-run modal buttons
+    // were no-ops because navigate() updates location.state but the init
+    // effect only listens to runId (Anubis/Lucifer bug 2026-05-21).
+    const lastExternalRetryRef = useRef(location.state?._retry);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
     // Global kill-switch — when admins disable OMENX purchases, every in-run
     // button (reroll / banish / revive / XP buff / squad ultimate) bails before
@@ -1145,6 +1152,18 @@ export default function Game() {
         window.addEventListener('popstate', onPopState);
         return () => window.removeEventListener('popstate', onPopState);
     }, []);
+
+    // External-restart watcher. GameOverModal / VictoryModal navigate to
+    // /game with a fresh `_retry` timestamp — detect that here and convert
+    // it into a runId bump (which is what the init effect actually listens to).
+    React.useEffect(() => {
+        const retry = location.state?._retry;
+        if (retry && retry !== lastExternalRetryRef.current) {
+            lastExternalRetryRef.current = retry;
+            runConfigRef.current = location.state;
+            setRunId(id => id + 1);
+        }
+    }, [location.state?._retry]);
 
     // Refs that mirror level-up / revive state so the popstate listener (which
     // only binds once on mount) can read the LATEST values without re-binding.
