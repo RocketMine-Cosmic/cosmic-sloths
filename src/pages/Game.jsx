@@ -53,6 +53,16 @@ export default function Game() {
     const [isInitializing, setIsInitializing] = useState(true);
     const [hudHidden, setHudHidden] = useState(false);
     const saveScoreRef = useRef(null);
+    // Internal restart counter. The initGame effect ONLY re-runs when this
+    // counter bumps (via handleRestart). Listening to location.state for
+    // restart used to silently tear down the engine whenever popstate fired
+    // (back-gesture trap) — React ran the cleanup BEFORE the body's guard
+    // could short-circuit, leaving a destroyed engine + no UI to show it
+    // (Texxy bug 2026-05-21).
+    const [runId, setRunId] = useState(0);
+    // Captured on first render so a popstate-mutated location.state
+    // (e.g. {gameTrap: true} from the trap) can't poison a later restart.
+    const runConfigRef = useRef(location.state);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('game-run');
     // Global kill-switch — when admins disable OMENX purchases, every in-run
     // button (reroll / banish / revive / XP buff / squad ultimate) bails before
@@ -100,7 +110,7 @@ export default function Game() {
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        
+
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -120,7 +130,7 @@ export default function Game() {
         setBanishCount(0);
 
         const initGame = async () => {
-            const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, meteorAttackId } = location.state || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
+            const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, meteorAttackId } = runConfigRef.current || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
             // NG+ removed — ignore any legacy isNGPlus state passed via navigation.
             
             // CRITICAL: Initialize SaveManager first to load cloud save + merge upgrades
@@ -606,7 +616,10 @@ export default function Game() {
             SoundManager.stopBGM();
             SoundManager.setContext('menu');
         };
-    }, [location.state]);
+        // Deps: ONLY the internal restart counter. Popstate-triggered location
+        // changes (back-gesture trap) won't re-run this effect — which is what
+        // we want, otherwise the cleanup tears down the live engine.
+    }, [runId]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -879,11 +892,10 @@ export default function Game() {
     const handleRestart = () => {
         const engine = engineRef.current;
         if (!engine) return;
-        const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId } = location.state || {};
-        navigate('/game', {
-            state: { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, _retry: Date.now() },
-            replace: true,
-        });
+        // Bump the internal counter — effect re-runs, cleanup tears down the
+        // current engine, init builds a fresh one using runConfigRef.current.
+        // No navigation needed (and avoids interfering with the back-gesture trap).
+        setRunId(id => id + 1);
     };
 
     const [isQuitting, setIsQuitting] = useState(false);
