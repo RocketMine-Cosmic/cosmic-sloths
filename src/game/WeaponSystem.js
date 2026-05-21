@@ -304,7 +304,12 @@ export function fireWeaponLogic(engine, w) {
     }
     else if (w.id === 'shieldBubble') {
         const color = isMastered ? '#ffd700' : engine.player.color;
-        engine.addParticle(engine.player.x, engine.player.y, color, 8, 'circle', 2 * area, { speed: 200 });
+        // Removed the 8-circle activation burst (was: addParticle ... 8, 'circle', ..., {speed: 200}).
+        // Texxy 2026-05-20: when the bubble fires on a short cooldown, each refresh
+        // spawned 8 expanding circle particles from the player position. Stacked
+        // bursts created a flickering flashlight effect on top of the bubble —
+        // unsafe for epileptic players. The bubble's own dashed outline + fill
+        // pulse already provides clear activation feedback.
         const r = 80 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
@@ -673,7 +678,10 @@ export function fireWeaponLogic(engine, w) {
     else if (w.id === 'aegisMatrix') {
         // Evolves from shieldBubble whose mastered color is gold (#ffd700).
         // Was green — broke the parent-color inheritance rule (Hugo audit 2026-05-12).
-        engine.addParticle(engine.player.x, engine.player.y, '#ffd700', 12, 'circle', 2 * area, { speed: 300 });
+        // Removed the 12-circle activation burst (was: addParticle ... 12, 'circle', ..., {speed: 300}).
+        // Same epilepsy-safety pass as shieldBubble (Texxy 2026-05-20) — stacked
+        // bursts on every cooldown created a strobing flashlight effect overlaying
+        // the matrix. The dual-octagon rotation already signals activation.
         const r = 120 * area;
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
