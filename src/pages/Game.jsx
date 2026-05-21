@@ -1117,12 +1117,18 @@ export default function Game() {
             window.history.pushState({ gameTrap: true }, '');
             // Run finished — don't interfere with normal navigation.
             if (!engine || engine.isGameOver || engine.isVictory) return;
-            // Open the existing Pause modal. Respects level-up / revive prompts
-            // (handlePause already gates on those).
-            if (!engine.isPaused && !levelUpChoicesRef.current && !showRevivePromptRef.current) {
-                engine.isPaused = true;
-                setIsPaused(true);
-            }
+            // Don't interrupt the critical revive prompt (player needs to decide).
+            if (showRevivePromptRef.current) return;
+            // Already in pause modal — ignore repeat swipes.
+            if (isPausedRef.current) return;
+            // ALWAYS open pause modal on swipe-back, even if a level-up modal is
+            // up. PauseModal is rendered AFTER LevelUpModal in JSX so it stacks
+            // on top. When the player resumes, the level-up modal is still in
+            // state and remains visible for them to pick (Texxy/JackM bug
+            // 2026-05-21 — swipe back during level-up appeared to "summon" the
+            // level-up modal because pause was being skipped).
+            engine.isPaused = true;
+            setIsPaused(true);
         };
         window.addEventListener('popstate', onPopState);
         return () => window.removeEventListener('popstate', onPopState);
@@ -1132,8 +1138,10 @@ export default function Game() {
     // only binds once on mount) can read the LATEST values without re-binding.
     const levelUpChoicesRef = React.useRef(null);
     const showRevivePromptRef = React.useRef(false);
+    const isPausedRef = React.useRef(false);
     React.useEffect(() => { levelUpChoicesRef.current = levelUpChoices; }, [levelUpChoices]);
     React.useEffect(() => { showRevivePromptRef.current = showRevivePrompt; }, [showRevivePrompt]);
+    React.useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
     // Stuck-state watchdog. If the engine ends up paused with NO modal/UI reason
     // to be paused (no level-up, no revive, no pause menu, no game-over/victory,
@@ -1218,6 +1226,12 @@ export default function Game() {
                 <HideHudButton onShow={() => setHudHidden(false)} />
             )}
 
+            {/* LevelUpModal renders FIRST so PauseModal stacks on top of it when
+                both are active (e.g. player swipes back during a level-up). */}
+            {levelUpChoices && !showRevivePrompt && (
+                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} nextBanishCost={nextBanishCost} engineRef={engineRef} omenxPurchasesDisabled={omenxPurchasesDisabled} />
+            )}
+
             {isPaused && !hudHidden && (
                 <PauseModal
                     onResume={handleResume}
@@ -1230,10 +1244,6 @@ export default function Game() {
                     xpBuffExpiry={gameState.xpBuffExpiry || 0}
                     omenxPurchasesDisabled={omenxPurchasesDisabled}
                 />
-            )}
-
-            {levelUpChoices && !showRevivePrompt && (
-                <LevelUpModal level={gameState.level} choices={levelUpChoices} onSelect={handleUpgradeSelect} cosmicTokens={omenxBalance ?? 0} onReroll={handleReroll} onBanish={handleBanish} banishCost={banishCost} banishCount={banishCount} nextBanishCost={nextBanishCost} engineRef={engineRef} omenxPurchasesDisabled={omenxPurchasesDisabled} />
             )}
             
             {showRevivePrompt && (
