@@ -62,8 +62,8 @@ Deno.serve(async (req) => {
         const { action, adminKey, top_n, weekly_tiers, seasonal_tiers, notes } = body;
 
         // PUBLIC read — no auth required, so Leaderboard.jsx can fetch it.
-        const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: CONFIG_KEY });
-        const currentRecord = existing[0];
+        const existing = await base44.asServiceRole.entities.AppConfig.list();
+        const currentRecord = existing.find(r => r.key === CONFIG_KEY);
         const currentConfig = currentRecord?.value || DEFAULT_CONFIG;
 
         if (!action || action === 'get') {
@@ -86,9 +86,10 @@ Deno.serve(async (req) => {
                 if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
                 callerWallet = me.wallet_address?.toLowerCase();
                 if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
-                const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
-                if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
-                const perms = records[0].permissions || [];
+                const records = await base44.asServiceRole.entities.AdminWallet.list();
+                const adminRec = records.find(r => r.wallet_address === callerWallet);
+                if (!adminRec) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
+                const perms = adminRec.permissions || [];
                 if (!perms.includes('owner')) {
                     return Response.json({ error: "Forbidden — owner permission required" }, { status: 403 });
                 }
@@ -141,8 +142,9 @@ Deno.serve(async (req) => {
                 const me = await base44.auth.me();
                 if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
                 callerWallet = me.wallet_address?.toLowerCase();
-                const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
-                if (records.length === 0 || !(records[0].permissions || []).includes('owner')) {
+                const records = await base44.asServiceRole.entities.AdminWallet.list();
+                const adminRec = records.find(r => r.wallet_address === callerWallet);
+                if (!adminRec || !(adminRec.permissions || []).includes('owner')) {
                     return Response.json({ error: "Forbidden — owner permission required" }, { status: 403 });
                 }
             }
