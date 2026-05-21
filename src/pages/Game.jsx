@@ -63,6 +63,20 @@ export default function Game() {
     // Captured on first render so a popstate-mutated location.state
     // (e.g. {gameTrap: true} from the trap) can't poison a later restart.
     const runConfigRef = useRef(location.state);
+
+    // External restart bridge: "Try Again" / "Next Sector" buttons in the
+    // game-over / victory modals navigate to /game with a fresh _retry
+    // timestamp. Mirror that into runConfigRef + bump runId so the init
+    // effect tears down and rebuilds. Ignored when _retry is missing
+    // (e.g. the popstate trap's {gameTrap:true} push) — that's the whole
+    // point of gating on _retry specifically (Lucifer/Anubis bug 2026-05-21).
+    useEffect(() => {
+        const retry = location.state?._retry;
+        if (!retry) return;
+        if (runConfigRef.current?._retry === retry) return;
+        runConfigRef.current = location.state;
+        setRunId(id => id + 1);
+    }, [location.state?._retry]);
     // Tracks the _retry timestamp from the last external restart navigation
     // (GameOverModal 'Try Again', VictoryModal 'Next Sector'). When this
     // changes we refresh runConfigRef and bump runId so the engine rebuilds
