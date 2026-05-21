@@ -582,11 +582,13 @@ export function fireWeaponLogic(engine, w) {
     else if (w.id === 'orbitalDefense') {
         // Evolves from slothSwarm whose mastered color is red (#FF0000).
         // Was magenta — broke the parent-color inheritance rule (Hugo audit 2026-05-12).
-        // Drone count capped at 10 (was unbounded) — ReZuM reported white-screen
-        // crashes at lvl 13+ from beam-projectile spam (each drone fires a beam every
-        // fire-tick with pierce 11+ and life 2s). Level scaling continues via beam
-        // pierce (5 + level/2) and global damage so the weapon still gets stronger.
-        const count = Math.min(10, 4 + Math.floor(w.level / 2));
+        // Drone count capped at 7 (was unbounded) — ReZuM reported white-screen
+        // crashes at lvl 13+ from beam-projectile spam. Each drone fires a beam every
+        // fire-tick with pierce (5 + level/2) and life 1.5s; uncapped count produced
+        // 30-60+ beams-in-flight which overwhelmed the renderer. Beam life also
+        // tightened 2.0s → 1.5s (matches parent orbitalLasers) to keep flight count
+        // bounded. Level scaling continues via beam pierce and global damage.
+        const count = Math.min(7, 4 + Math.floor(w.level / 2));
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + engine.time * 3;
             const px = engine.player.x + Math.cos(angle) * (70 * area);
@@ -615,7 +617,7 @@ export function fireWeaponLogic(engine, w) {
                     radius: 5,
                     damage: dmg,
                     pierce: 5 + Math.floor(w.level/2),
-                    life: 2.0,
+                    life: 1.5,
                     color: '#ff3030',
                     type: 'beam'
                 });
