@@ -735,7 +735,12 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'buzzsawSwarm') {
-        const count = 3 + Math.floor(w.level / 2);
+        // Drone count capped at 7 (was unbounded) — Texxy reported lvl 24 buzzsaw
+        // swarm filling the entire screen (image: hundreds of blades obscuring all
+        // gameplay). Each blade has life: 6s and chainCount: 15, so uncapped count
+        // produced ~90+ blades on screen at once. Level scaling still applies via
+        // global damage + area; count cap just bounds the visual / performance load.
+        const count = Math.min(7, 3 + Math.floor(w.level / 2));
         for (let i = 0; i < count; i++) {
             let angle = (Math.PI * 2 / count) * i;
             engine.projectiles.push({

@@ -378,22 +378,28 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.fillStyle = p.color || '#ffffff';
             
             if (p.type === 'shield_bubble') {
-                // Shield Bubble: Rotating dashed ring with minimal center fill
+                // Shield Bubble: Rotating dashed ring with minimal center fill.
+                // Outline alpha 0.8→0.4 + dash speed 50→20 — Texxy flagged the
+                // mastered (yellow #ffd700) bubble as bright/flickering and unsafe
+                // for epileptic players when multiple bubbles overlap (additive
+                // `screen` blend stacks alpha into near-white strobing).
                 ctx.beginPath();
                 ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
                 ctx.fill();
                 
-                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.8;
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.4;
                 ctx.strokeStyle = p.color;
                 ctx.lineWidth = 2;
                 ctx.setLineDash([15, 20]);
-                ctx.lineDashOffset = -time * 50;
+                ctx.lineDashOffset = -time * 20;
                 ctx.beginPath();
                 ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
                 ctx.stroke();
                 ctx.setLineDash([]);
             } else {
-                // Burning Barrier: Hexagon shape so it's instantly distinct from circles
+                // Burning Barrier: Hexagon shape so it's instantly distinct from circles.
+                // Outline alpha 0.9→0.5 + dash speed 60→25 — same epilepsy-safety
+                // pass as shield_bubble (Texxy 2026-05-20).
                 ctx.beginPath();
                 for (let i = 0; i < 6; i++) {
                     const angle = (Math.PI / 3) * i + time;
@@ -405,11 +411,11 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.closePath();
                 ctx.fill();
 
-                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.9;
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.5;
                 ctx.strokeStyle = p.color;
                 ctx.lineWidth = 3;
                 ctx.setLineDash([20, 10]);
-                ctx.lineDashOffset = time * 60;
+                ctx.lineDashOffset = time * 25;
                 ctx.stroke();
                 ctx.setLineDash([]);
             }
@@ -492,6 +498,9 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'aegis_matrix') {
+            // Outline alpha 0.8→0.5 + rotation speeds halved — Texxy flagged the
+            // gold (#ffd700) bubble as too bright/strobing on `screen` blend when
+            // multiple matrices overlap. Calmer rotation + lower alpha = epilepsy-safer.
             ctx.globalCompositeOperation = 'screen';
             ctx.globalAlpha = 0.05; // Faint background
             ctx.fillStyle = p.color || '#00ff88';
@@ -499,14 +508,14 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.arc(0, 0, p.radius, 0, Math.PI*2);
             ctx.fill();
             
-            ctx.globalAlpha = 0.8;
+            ctx.globalAlpha = 0.5;
             ctx.strokeStyle = p.color || '#00ff88';
             ctx.lineWidth = 2;
             
             // Aegis Matrix: Dual rotating octagons (geometric tech pattern)
             ctx.beginPath();
             for (let i = 0; i < 8; i++) {
-                const angle = (Math.PI / 4) * i + time * 0.5;
+                const angle = (Math.PI / 4) * i + time * 0.25;
                 const px = Math.cos(angle) * p.radius;
                 const py = Math.sin(angle) * p.radius;
                 if (i === 0) ctx.moveTo(px, py);
@@ -517,7 +526,7 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
 
             ctx.beginPath();
             for (let i = 0; i < 8; i++) {
-                const angle = (Math.PI / 4) * i - time * 0.8;
+                const angle = (Math.PI / 4) * i - time * 0.4;
                 const px = Math.cos(angle) * (p.radius - 15);
                 const py = Math.sin(angle) * (p.radius - 15);
                 if (i === 0) ctx.moveTo(px, py);
