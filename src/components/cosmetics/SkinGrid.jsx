@@ -151,7 +151,7 @@ export default function SkinGrid({
                                                 {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? (
                                                     <>
                                                         <span className="relative w-full flex items-center justify-center">
-                                                            <GmtIcon className="absolute left-1/4 -translate-x-1/2 w-12 h-12" />
+                                                            <GmtIcon className="absolute left-1/4 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12" />
                                                             <span>{gmtCost.toFixed(2)} GMT</span>
                                                         </span>
                                                         {usdCost > 0 && <span className="text-[10px] opacity-80">≈ ${usdCost.toFixed(2)}</span>}
