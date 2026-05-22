@@ -51,6 +51,26 @@ export const COSMETIC_SKUS_BY_SLOT = {
     skin:  'cosmetic-gmt-3',
 };
 
+// Donation SKUs — dev-support tip jar. Flat USD amounts charged in GMT.
+// SKU mapping (per OmenX dev portal):
+//   donation-gmt-5  → $5
+//   donation-gmt-10 → $10
+//   donation-gmt-15 → $15
+// All Consumable, excluded from the OMENX player/staff payout pool.
+export const DONATION_SKUS = {
+    5:  'donation-gmt-5',
+    10: 'donation-gmt-10',
+    15: 'donation-gmt-15',
+};
+
+/**
+ * Returns the donation SKU for a given USD amount.
+ * @param {5|10|15} usdAmount
+ */
+export function getDonationSku(usdAmount) {
+    return DONATION_SKUS[usdAmount] || null;
+}
+
 // Talent respec SKUs — flat OMENX fee per tier to clear all talents for a single character.
 // Replace these with your real SKU IDs once registered in the OmenX portal.
 const TALENT_RESPEC_SKUS = {

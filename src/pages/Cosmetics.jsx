@@ -17,6 +17,8 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import CosmeticGrid from '../components/cosmetics/CosmeticGrid';
 import SkinGrid from '../components/cosmetics/SkinGrid';
+import DonationButtons from '../components/cosmetics/DonationButtons';
+import { getDonationSku } from '@/lib/skuMap';
 
 /**
  * Standalone Cosmetics page — promoted out of pages/Upgrades.jsx into its own
@@ -28,7 +30,7 @@ import SkinGrid from '../components/cosmetics/SkinGrid';
 export default function Cosmetics({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
-    const { omenxBalance, nfts } = useCurrency();
+    const { omenxBalance, gmtBalance, nfts } = useCurrency();
     const { pending, confirm: confirmPurchase } = useOmenXConfirmation('cosmetics-page');
     const { disabled: omenxBlocked, message: omenxBlockedMsg } = useOmenXPurchasesDisabled();
 
@@ -227,6 +229,20 @@ export default function Cosmetics({ isCarousel }) {
         confirmPurchase(gmtCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, slot, 'token'));
     };
 
+    // Dev-support donations — fixed USD tiers paid in GMT via dedicated SKUs.
+    // No grant is applied; this is a pure tip jar.
+    const handleDonate = (usdAmount, gmtAmount) => {
+        const skuId = getDonationSku(usdAmount);
+        if (!skuId) { setPurchaseError('Donation tier unavailable. Try again later.'); return; }
+        const grantInfo = { type: 'donation', usdAmount };
+        confirmPurchase(gmtAmount, `$${usdAmount} Dev Tip`, () => {
+            purchaseSku(skuId, grantInfo)
+                .then(() => SoundManager.playLevelUp())
+                .catch(err => console.error('[Cosmetics donate] purchase failed:', err))
+                .finally(() => refreshBalance());
+        });
+    };
+
     const handleClaimQuestSkin = async (skin) => {
         if (claimingSkinId) return;
         setPurchaseError(null);
@@ -289,16 +305,24 @@ export default function Cosmetics({ isCarousel }) {
                         <CurrencyHeader omenxAs="GMT" />
                     </header>
 
-                    {/* Dev-support banner — sets the cosmetics-as-tip framing per
-                        docs/COSMETICS_GMT_PRICING.md. Forward-looking copy: GMT
-                        migration + pool exclusion ship in follow-up commits. */}
+                    {/* Dev-support banner — cosmetics are GMT-only and excluded
+                        from the player/staff payout pool; revenue is dev tip. */}
                     <div className="mb-4 md:mb-5 bg-gradient-to-r from-fuchsia-950/50 via-pink-950/40 to-purple-950/50 border border-fuchsia-500/40 rounded-xl px-3 py-2.5 md:px-4 md:py-3 flex items-start gap-3">
                         <div className="text-2xl shrink-0 leading-none">💜</div>
                         <div className="text-xs md:text-sm text-fuchsia-100 leading-snug">
-                            <strong className="text-pink-300 block mb-0.5">Supporting the devs</strong>
-                            Cosmetics are moving to GMT-only soon — every purchase will go directly to development costs instead of the weekly player/staff payout pool. For now, OMENX &amp; Gold still work as usual.
+                            <strong className="text-pink-300 block mb-0.5">Cosmetics are GMT-only — they support the devs</strong>
+                            Every cosmetic purchase goes directly to development costs and is excluded from the weekly player/staff payout pool. Thank you for keeping the lights on. 💜
                         </div>
                     </div>
+
+                    <DonationButtons
+                        gmtPerDollar={gmtCost > 0 ? gmtCost / 2.50 : 0}
+                        gmtBalance={gmtBalance}
+                        purchasing={purchasing}
+                        omenxBlocked={omenxBlocked}
+                        omenxBlockedMsg={omenxBlockedMsg}
+                        onDonate={handleDonate}
+                    />
 
                     {omenxBlocked && (
                         <div className="mb-3 md:mb-4 bg-red-950/40 border border-red-700/60 rounded-lg p-3 flex items-start gap-2">
