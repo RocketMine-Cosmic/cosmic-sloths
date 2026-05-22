@@ -38,8 +38,24 @@ export default function Cosmetics({ isCarousel }) {
     const [purchasing, setPurchasing] = useState(false);
     const [purchaseError, setPurchaseError] = useState(null);
     const [claimingSkinId, setClaimingSkinId] = useState(null);
+    const [gmtPrices, setGmtPrices] = useState({}); // SKU → GMT cost
 
     useEffect(() => { ensureNftsFetched(); }, []);
+
+    // Fetch GMT pricing for cosmetics from getTokenPrices backend function
+    useEffect(() => {
+        const fetchGmtPrices = async () => {
+            try {
+                const res = await base44.functions.invoke('getTokenPrices', { tokenType: 'GMT' });
+                if (res.data?.prices) {
+                    setGmtPrices(res.data.prices);
+                }
+            } catch (err) {
+                console.error('[Cosmetics] Failed to fetch GMT prices:', err?.message);
+            }
+        };
+        fetchGmtPrices();
+    }, []);
 
     useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -336,6 +352,7 @@ export default function Cosmetics({ isCarousel }) {
                                 previewSkinColor={previewSkinColor}
                                 setPreviewSkinColor={setPreviewSkinColor}
                                 omenxBalance={omenxBalance}
+                                gmtPrices={gmtPrices}
                                 omenxBlocked={omenxBlocked}
                                 omenxBlockedMsg={omenxBlockedMsg}
                                 purchasing={purchasing}
@@ -353,6 +370,7 @@ export default function Cosmetics({ isCarousel }) {
                                 freeId={cosmeticTab === 'trail' ? 'default' : 'none'}
                                 equippedId={cosmeticTab === 'trail' ? equippedTrail : equippedKill}
                                 omenxBalance={omenxBalance}
+                                gmtPrices={gmtPrices}
                                 omenxBlocked={omenxBlocked}
                                 omenxBlockedMsg={omenxBlockedMsg}
                                 purchasing={purchasing}

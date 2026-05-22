@@ -444,6 +444,10 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             };
             const ok = (validPrefixes[slot] || []).some(p => skuId.startsWith(p));
             if (!ok) throw new Error(`This cosmetic doesn't match the slot. Please refresh and try again.`);
+            // COSMETICS ARE GMT-ONLY — exclude from the OMENX player/staff payout pool.
+            // This ensures cosmetic revenue goes entirely to developer support, not back
+            // to the player base (per docs/COSMETICS_GMT_PRICING.md).
+            isAdminPurchase = true; // Reuse admin-exclusion logic for cosmetics
             // Verify the SKU's goldCost-tier matches grantInfo.goldCost — prevents
             // buying a cheap SKU and granting an expensive cosmetic via tampered grant.
             const skuGoldCost = COSMETIC_SKU_COSTS[skuId];
@@ -905,6 +909,8 @@ Deno.serve(async (req) => {
             }
         } else {
             try {
+                // Cosmetics are always pool-excluded (set earlier in applyGrant)
+                const excludeFromPool = isAdminPurchase || (grantInfo?.type === 'cosmetic');
                 await base44.asServiceRole.entities.TokenSpendLog.create({
                     user_id: me.id,
                     player_name: playerNameParam || me.full_name || walletAddress,
@@ -914,7 +920,7 @@ Deno.serve(async (req) => {
                     grant_info: grantInfo || null,
                     week_id,
                     season_id,
-                    excluded_from_pool: isAdminPurchase,
+                    excluded_from_pool: excludeFromPool,
                 });
             } catch (err) {
                 console.error('[purchaseSku] TokenSpendLog create failed:', err.message);

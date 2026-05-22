@@ -16,7 +16,7 @@ const QUEST_POINTS_PER_SKIN = 100;
 export default function SkinGrid({
     save, unlockedChars, skinCharIndex, setSkinCharIndex,
     previewSkinColor, setPreviewSkinColor,
-    omenxBalance, omenxBlocked, omenxBlockedMsg, purchasing,
+    omenxBalance, gmtPrices, omenxBlocked, omenxBlockedMsg, purchasing,
     claimingSkinId, onBuy, onClaimQuest, onConfirmTokenPurchase,
 }) {
     const currentChar = CHARACTERS.find(c => c.id === unlockedChars[skinCharIndex % unlockedChars.length]) || CHARACTERS[0];
@@ -145,20 +145,24 @@ export default function SkinGrid({
                                             >
                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                             </button>
-                                            {skin.tokenCost > 0 && (
-                                                <button
-                                                    onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(skin, 'skin')}
-                                                    disabled={!canAffordToken || purchasing || omenxBlocked}
-                                                    title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
-                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                                        omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
-                                                        canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                                        'bg-slate-900 text-slate-500 border border-slate-700'
-                                                    }`}
-                                                >
-                                                    {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX</>}
-                                                </button>
-                                            )}
+                                            {skin.tokenCost > 0 && (() => {
+                                                const gmtCost = gmtPrices[`skin-${skin.name}`] || 0;
+                                                const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
+                                                return (
+                                                    <button
+                                                        onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(skin, 'skin')}
+                                                        disabled={!canAffordGmt || purchasing || omenxBlocked}
+                                                        title={omenxBlocked ? (omenxBlockedMsg || 'GMT purchases are temporarily disabled.') : undefined}
+                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                            omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
+                                                            canAffordGmt && !purchasing ? 'bg-purple-600 hover:bg-purple-500 text-white' :
+                                                            'bg-slate-900 text-slate-500 border border-slate-700'
+                                                        }`}
+                                                    >
+                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toLocaleString()} GMT</> : 'TBA'}
+                                                    </button>
+                                                );
+                                            })()}
                                         </div>
                                     )}
                                 </div>

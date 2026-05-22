@@ -13,7 +13,7 @@ function OmenXIcon({ className }) {
  */
 export default function CosmeticGrid({
     list, slot, save, unlockKey, freeId, equippedId,
-    omenxBalance, omenxBlocked, omenxBlockedMsg, purchasing,
+    omenxBalance, gmtPrices, omenxBlocked, omenxBlockedMsg, purchasing,
     onBuy, onPreview, onConfirmTokenPurchase,
 }) {
     return (
@@ -72,20 +72,24 @@ export default function CosmeticGrid({
                                     >
                                         <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
                                     </button>
-                                    {cosmetic.tokenCost > 0 && (
-                                        <button
-                                            onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(cosmetic, slot)}
-                                            disabled={!canAffordToken || purchasing || omenxBlocked}
-                                            title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
-                                            className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                                omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
-                                                canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
-                                                'bg-slate-900 text-slate-500 border border-slate-700'
-                                            }`}
-                                        >
-                                            {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX</>}
-                                        </button>
-                                    )}
+                                    {cosmetic.tokenCost > 0 && (() => {
+                                        const gmtCost = gmtPrices[`cosmetic-${slot}-${cosmetic.name}`] || 0;
+                                        const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
+                                        return (
+                                            <button
+                                                onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(cosmetic, slot)}
+                                                disabled={!canAffordGmt || purchasing || omenxBlocked}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'GMT purchases are temporarily disabled.') : undefined}
+                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                    omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
+                                                    canAffordGmt && !purchasing ? 'bg-purple-600 hover:bg-purple-500 text-white' :
+                                                    'bg-slate-900 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toLocaleString()} GMT</> : 'TBA'}
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         )}
