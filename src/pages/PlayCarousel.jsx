@@ -25,7 +25,6 @@ import Profile from './Profile';
 import Jukebox from './Jukebox';
 import Titles from './Titles';
 import SquadWars from './SquadWars';
-import Cosmetics from './Cosmetics';
 
 const SLIDE_LABELS = [
     { name: 'Main Menu', color: 'text-white' },
@@ -44,23 +43,21 @@ const SLIDE_LABELS = [
     { name: 'Pilot Profile', color: 'text-violet-300' },
     { name: 'Stellar Jukebox', color: 'text-fuchsia-300' },
     { name: 'Star Callsigns', color: 'text-amber-300' },
-    { name: 'Cosmic Wardrobe', color: 'text-pink-300' },
 ];
 
 // Renders a slide ONLY when it's active or adjacent. Off-screen slides stay
 // as empty divs (carousel layout preserved) until the user navigates near them.
-//
-// CRITICAL: slides UNMOUNT when scrolled away from. Previously they were kept
-// mounted forever "so state isn't lost when scrolling away" — which meant
-// after a session of swiping around the user had 10+ heavy pages (Squads,
-// SquadWars, GlobalRaid, etc.) all running their polling loops in parallel.
-// That was the dominant cause of the Base44 429 storm seen 2026-05-22.
-// Losing a selected-tab / scroll position when revisiting a slide is a tiny
-// UX cost compared to grinding every backend function into rate-limit errors.
 function LazySlide({ children, shouldMount }) {
+    const [hasMounted, setHasMounted] = useState(shouldMount);
+
+    useEffect(() => {
+        // Once mounted, keep mounted (so state isn't lost when scrolling away).
+        if (shouldMount && !hasMounted) setHasMounted(true);
+    }, [shouldMount, hasMounted]);
+
     return (
         <div className="flex-[0_0_100%] min-w-0 min-h-0 h-full overflow-y-auto select-none transform-gpu" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {shouldMount ? children : null}
+            {hasMounted ? children : null}
         </div>
     );
 }
@@ -72,12 +69,9 @@ export default function PlayCarousel() {
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
     // Initialize from ?slide= so deep-links and the back button restore the right page.
-    // Use SLIDE_LABELS.length as the upper bound so adding new slides doesn't require
-    // touching the bounds checks (previously hardcoded — caused off-by-one when adding
-    // Cosmic Wardrobe 2026-05-22).
     const initialSlide = (() => {
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        return Number.isFinite(raw) && raw >= 0 && raw < SLIDE_LABELS.length ? raw : 0;
+        return Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
     })();
     const [selectedIndex, setSelectedIndex] = useState(initialSlide);
     // Tracks whether a slide change came from the URL (popstate / back button)
@@ -112,7 +106,7 @@ export default function PlayCarousel() {
     useEffect(() => {
         if (!emblaApi) return;
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        const target = Number.isFinite(raw) && raw >= 0 && raw < SLIDE_LABELS.length ? raw : 0;
+        const target = Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
         if (target !== emblaApi.selectedScrollSnap()) {
             syncingFromUrlRef.current = true;
             emblaApi.scrollTo(target, true);
@@ -204,7 +198,6 @@ export default function PlayCarousel() {
                     <LazySlide shouldMount={isNear(13)}><Profile isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(14)}><Jukebox isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(15)}><Titles isCarousel={true} /></LazySlide>
-                    <LazySlide shouldMount={isNear(16)}><Cosmetics isCarousel={true} /></LazySlide>
                 </div>
             </div>
 

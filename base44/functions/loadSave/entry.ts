@@ -61,34 +61,12 @@ function rollStalePeriods(saveData) {
 
 // Read the global wipe epoch (set by resetAllPlayerData / fullWipeIncludingUsers).
 // Clients pass this back on next launch to detect "cloud was reset" and clear
-// stale local caches.
-//
-// Cached in module scope (5 min TTL) so loadSave doesn't burn an AppConfig
-// filter on EVERY page load. wipe_epoch only changes on admin wipes (extremely
-// rare — maybe once a year), and the 5min staleness window is harmless: clients
-// still detect bumps on their next refresh. This eliminates ~50% of loadSave's
-// internal Base44 entity reads, which was a top contributor to the 429 storm
-// seen at peak concurrency (2026-05-22). State lives per-isolate — Deno keeps
-// isolates warm for minutes, so hot paths share the cache.
-let _wipeEpochCache = null;
-let _wipeEpochExpiresAt = 0;
-const WIPE_EPOCH_TTL_MS = 5 * 60 * 1000;
-
+// stale local caches. Cached for the duration of one request.
 async function readWipeEpoch(base44) {
-    const now = Date.now();
-    if (_wipeEpochCache !== null && now < _wipeEpochExpiresAt) {
-        return _wipeEpochCache;
-    }
     try {
         const rows = await base44.asServiceRole.entities.AppConfig.filter({ key: 'wipe_epoch' });
-        const epoch = Number(rows?.[0]?.value?.epoch || 0);
-        _wipeEpochCache = epoch;
-        _wipeEpochExpiresAt = now + WIPE_EPOCH_TTL_MS;
-        return epoch;
+        return Number(rows?.[0]?.value?.epoch || 0);
     } catch {
-        // On read failure don't poison the cache — just return 0 for this call
-        // so the next request can retry. (Clients treat 0 as "no wipe ever",
-        // which is harmless: real wipes bump the epoch above 0.)
         return 0;
     }
 }

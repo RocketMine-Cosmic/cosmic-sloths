@@ -38,38 +38,27 @@ const TALENT_SKUS = {
     seasonal:  ['character-talents-seasonal-lvl1',  'character-talents-seasonal-lvl2',  'character-talents-seasonal-lvl3'],
 };
 
-// Cosmetic SKUs — flat $2.50 GMT per cosmetic, one SKU per slot.
-// SKU mapping (per OmenX dev portal, 2026-05-22):
-//   cosmetic-gmt-1 → trails
-//   cosmetic-gmt-2 → kill effects
-//   cosmetic-gmt-3 → skins
-// All three priced at $2.50 GMT (Consumable). Cosmetics are excluded from the
-// OMENX player/staff payout pool — revenue goes to dev support.
-export const COSMETIC_SKUS_BY_SLOT = {
-    trail: 'cosmetic-gmt-1',
-    kill:  'cosmetic-gmt-2',
-    skin:  'cosmetic-gmt-3',
+// Cosmetic SKUs
+const TRAIL_SKUS = {
+    // goldCost tiers: 0=free, 3000=basic, 10000=advanced, 20000=epic, 30000=legendary
+    3000:  'character-trails-basic',
+    10000: 'character-trails-advanced',
+    20000: 'character-trails-epic',
+    30000: 'character-trails-leg',
 };
 
-// Donation SKUs — dev-support tip jar. Flat USD amounts charged in GMT.
-// SKU mapping (per OmenX dev portal):
-//   gmt-donation-5  → $5
-//   gmt-donation-10 → $10
-//   gmt-donation-15 → $15
-// All Consumable, excluded from the OMENX player/staff payout pool.
-export const DONATION_SKUS = {
-    5:  'gmt-donation-5',
-    10: 'gmt-donation-10',
-    15: 'gmt-donation-15',
+const KILL_EFFECT_SKUS = {
+    // goldCost tiers: 3000=basic, 12000=advanced, 25000=epic
+    3000:  'character-kill-effects-basic',
+    12000: 'character-kill-effects-advanced',
+    25000: 'character-kill-effects-epic',
 };
 
-/**
- * Returns the donation SKU for a given USD amount.
- * @param {5|10|15} usdAmount
- */
-export function getDonationSku(usdAmount) {
-    return DONATION_SKUS[usdAmount] || null;
-}
+const SKIN_SKUS = {
+    // goldCost tiers: 5000=basic, 20000=advanced
+    5000:  'character-skins-basic',
+    20000: 'character-skins-advance',
+};
 
 // Talent respec SKUs — flat OMENX fee per tier to clear all talents for a single character.
 // Replace these with your real SKU IDs once registered in the OmenX portal.
@@ -127,13 +116,16 @@ export function getTalentSku(tier, charName, talentName, talentTier = 1) {
 }
 
 /**
- * Returns the SKU for a cosmetic. Flat-rate GMT pricing (2026-05-22) — one
- * SKU per slot, no per-rarity tiering. `name` and `goldCost` are accepted for
- * call-site compatibility but no longer affect the returned SKU.
+ * Returns the SKU for a cosmetic (trail, kill effect, or skin).
  * @param {'trail'|'kill'|'skin'} type
+ * @param {string} name  (unused)
+ * @param {number} goldCost  used to determine the tier
  */
-export function getCosmeticSku(type /*, name, goldCost */) {
-    return COSMETIC_SKUS_BY_SLOT[type] || null;
+export function getCosmeticSku(type, name, goldCost) {
+    if (type === 'trail')  return TRAIL_SKUS[goldCost] || null;
+    if (type === 'kill')   return KILL_EFFECT_SKUS[goldCost] || null;
+    if (type === 'skin')   return SKIN_SKUS[goldCost] || null;
+    return null;
 }
 
 /**

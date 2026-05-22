@@ -44,17 +44,11 @@ let userFetched = false;
 if (persistedBalance || persistedVip || persistedNfts) {
     cachedData = {
         balance: persistedBalance?.balance ?? 0,
-        gmtBalance: persistedBalance?.gmtBalance ?? 0,
         vipLevel: persistedVip?.vipLevel ?? 0,
         nfts: persistedNfts?.nfts ?? [],
     };
     // Mirror NFTs to legacy localStorage key consumed by NFTPerks at game-start.
     if (persistedNfts?.nfts) saveJSON('omenx_nft_data', persistedNfts.nfts);
-}
-// Pre-GMT persisted balance caches lack the gmtBalance field — force a refetch
-// so the header doesn't get stuck on a phantom 0.00 GMT while the TTL is warm.
-if (persistedBalance && persistedBalance.gmtBalance === undefined) {
-    lastBalanceFetchAt = 0;
 }
 
 function getAuthData() {
@@ -72,7 +66,7 @@ function getAuthData() {
 
 function notify() { listeners.forEach(fn => fn(cachedData)); }
 function applyData(patch) {
-    cachedData = { ...(cachedData || { balance: 0, gmtBalance: 0, vipLevel: 0, nfts: [] }), ...patch };
+    cachedData = { ...(cachedData || { balance: 0, vipLevel: 0, nfts: [] }), ...patch };
     notify();
 }
 
@@ -98,10 +92,9 @@ async function fetchBalance(force = false) {
                 return;
             }
             const balance = res.data?.balance ?? 0;
-            const gmtBalance = res.data?.gmtBalance ?? 0;
             lastBalanceFetchAt = Date.now();
-            saveJSON('omenx_balance_cache', { balance, gmtBalance, timestamp: lastBalanceFetchAt });
-            applyData({ balance, gmtBalance });
+            saveJSON('omenx_balance_cache', { balance, timestamp: lastBalanceFetchAt });
+            applyData({ balance });
         } catch (e) {
             console.error('[playerDataCache] balance fetch failed:', e?.message);
         } finally {
@@ -333,7 +326,6 @@ export function subscribePlayerData(fn) {
             const freshNfts = loadJSON('omenx_nft_cache');
             cachedData = {
                 balance: 0,
-                gmtBalance: 0,
                 vipLevel: freshVip?.vipLevel ?? 0,
                 nfts: freshNfts?.nfts ?? [],
             };

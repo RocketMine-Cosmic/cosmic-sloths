@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
-import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, RELICS, RELIC_RARITIES } from '../game/Constants';
-import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzzle } from 'lucide-react';
+import { CHARACTERS, CHARACTER_TALENTS, WEAPONS, TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, RELICS, RELIC_RARITIES } from '../game/Constants';
+import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzzle, Star } from 'lucide-react';
 import { getCurrentPeriodIds } from '../lib/periodIds';
 
 function OmenXIcon({ className }) {
@@ -16,9 +16,10 @@ import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { getAuthData } from '@/lib/getAuthData';
-import { getStatSku, getWeaponSku, getTalentSku, getTalentRespecSku, TALENT_RESPEC_GOLD_COSTS } from '@/lib/skuMap';
+import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku, getTalentRespecSku, TALENT_RESPEC_GOLD_COSTS } from '@/lib/skuMap';
 import { refreshBalance } from '@/lib/playerDataCache';
 import { SoundManager } from '../game/SoundManager';
+import CosmeticPreview from '../components/game/CosmeticPreview';
 import ForgePanel from '../components/game/ForgePanel';
 import TalentRespecModal from '../components/game/TalentRespecModal';
 import RelicPrestigeBadge from '../components/game/RelicPrestigeBadge';
@@ -92,6 +93,9 @@ export default function Upgrades({ isCarousel }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [purchasing, setPurchasing] = useState(false);
     const [purchaseError, setPurchaseError] = useState(null);
+    const [cosmeticTab, setCosmeticTab] = useState('trail'); // 'trail', 'kill', or 'skin'
+    const [skinCharIndex, setSkinCharIndex] = useState(0);
+    const [previewSkinColor, setPreviewSkinColor] = useState(null); // color being previewed (not yet purchased)
     const [respecModal, setRespecModal] = useState(null); // { tier, charId, charName, count, goldCost, omenxCost }
 
     useEffect(() => {
@@ -398,6 +402,43 @@ export default function Upgrades({ isCarousel }) {
         confirmPurchase(omenxCost, `Respec ${respecModal.charName}'s Talents`, doPurchase);
     };
 
+    const QUEST_POINTS_PER_SKIN = 100;
+    const [claimingSkinId, setClaimingSkinId] = useState(null);
+
+    const handleClaimQuestSkin = async (skin) => {
+        if (claimingSkinId) return;
+        setPurchaseError(null);
+        setClaimingSkinId(skin.id);
+        try {
+            let res;
+            try {
+                res = await base44.functions.invoke('claimSeasonalSkin', { skinId: skin.id }); // Backend function name unchanged
+            } catch (e) {
+                const status = e?.response?.status;
+                const serverMsg = e?.response?.data?.error || e?.message || '';
+                setPurchaseError(friendlyError(`${status || ''} ${serverMsg}`));
+                return;
+            }
+            const data = res.data;
+            if (!data?.success) {
+                setPurchaseError(data?.error || 'Try again.');
+                return;
+            }
+            // Apply server result — server returns updated seasonalPoints + unlockedSkins
+            const s = SaveManager.load();
+            if (data.saveData.seasonalPoints !== undefined) s.seasonalPoints = data.saveData.seasonalPoints;
+            if (data.saveData.unlockedSkins !== undefined) s.unlockedSkins = data.saveData.unlockedSkins;
+            // Auto-equip the freshly-claimed skin so the player sees their reward immediately
+            s.cosmetics = { ...(s.cosmetics || {}), skins: { ...((s.cosmetics || {}).skins || {}), [skin.charId]: skin.id } };
+            SaveManager.save(s);
+            setSave(s);
+            SaveManager.syncToBackendImmediate();
+            SoundManager.playLevelUp();
+        } finally {
+            setClaimingSkinId(null);
+        }
+    };
+
     const handleBuyRelic = async (relic) => {
         setPurchaseError(null);
         setPurchasing(true);
@@ -448,9 +489,97 @@ export default function Upgrades({ isCarousel }) {
         SoundManager.playUIClick();
     };
 
-    // Cosmetics moved to standalone page: pages/Cosmetics.jsx (carousel slide 16,
-    // ✨ Cosmic Wardrobe in WarpMenu). All cosmetic buy/equip/preview logic and
-    // the renderCosmetics tab have been removed from this page (2026-05-22).
+    const handleBuyCosmetic = (cosmetic, slot, currency) => {
+        // slot: 'trail', 'kill', or 'skin'
+        if (slot === 'skin') {
+            const unlocked = save.unlockedSkins || [];
+            const isOwned = unlocked.includes(cosmetic.id) || cosmetic.goldCost === 0;
+            const cosmetics = save.cosmetics || {};
+            const charSkins = cosmetics.skins || {};
+
+            if (currency === 'preview') {
+                setPreviewSkinColor(skin => skin === cosmetic.color ? null : cosmetic.color);
+                SoundManager.playUIClick();
+                return;
+            }
+            if (isOwned) {
+                const newSave = { ...save, cosmetics: { ...cosmetics, skins: { ...charSkins, [cosmetic.charId]: cosmetic.id } } };
+                SaveManager.save(newSave);
+                setSave(newSave);
+                SaveManager.syncToBackendImmediate();
+                SoundManager.playUIClick();
+                return;
+            }
+            if (currency === 'gold' && save.gold >= cosmetic.goldCost) {
+                const grantInfo = { type: 'cosmetic', slot: 'skin', cosmeticId: cosmetic.id, charId: cosmetic.charId, goldCost: cosmetic.goldCost };
+                spendGold(grantInfo).then(() => {
+                    SoundManager.playUIClick();
+                }).catch(err => {
+                    console.error('[handleBuyCosmetic skin] spendGold failed:', err);
+                });
+            } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+                setPurchasing(true);
+                const skuId = getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost);
+                // Pass goldCost so server can verify it matches the SKU's price tier
+                // (prevents tampered grantInfo from unlocking expensive skins via cheap SKU).
+                const grantInfo = { type: 'cosmetic', slot: 'skin', cosmeticId: cosmetic.id, charId: cosmetic.charId, goldCost: cosmetic.goldCost };
+                purchaseSku(skuId, grantInfo).then(() => {
+                    SoundManager.playUIClick();
+                }).catch(err => {
+                    console.error('[handleBuyCosmetic skin] purchase failed — skin NOT granted:', err);
+                }).finally(() => {
+                    setPurchasing(false);
+                    refreshBalance();
+                });
+            }
+            return;
+        }
+
+        const unlockKey = slot === 'trail' ? 'unlockedCosmetics' : 'unlockedKillEffects';
+        const freeId = slot === 'trail' ? 'default' : 'none';
+        const unlocked = save[unlockKey] || [freeId];
+        const cosmetics = save.cosmetics || { trail: 'default', killEffect: 'none' };
+        const cosmeticKey = slot === 'trail' ? 'trail' : 'killEffect';
+
+        // Preview: equip temporarily without purchasing (only updates local state, not save)
+        if (currency === 'preview') {
+            setSave(prev => ({ ...prev, cosmetics: { ...prev.cosmetics, [cosmeticKey]: cosmetic.id } }));
+            SoundManager.playUIClick();
+            return;
+        }
+
+        if (unlocked.includes(cosmetic.id)) {
+            const newSave = { ...save, cosmetics: { ...cosmetics, [cosmeticKey]: cosmetic.id } };
+            SaveManager.save(newSave);
+            setSave(newSave);
+            SaveManager.syncToBackendImmediate();
+            SoundManager.playUIClick();
+            return;
+        }
+
+        if (currency === 'gold' && save.gold >= cosmetic.goldCost) {
+            const grantInfo = { type: 'cosmetic', slot, cosmeticId: cosmetic.id, goldCost: cosmetic.goldCost };
+            spendGold(grantInfo).then(() => {
+                SoundManager.playUIClick();
+            }).catch(err => {
+                console.error('[handleBuyCosmetic trail/kill] spendGold failed:', err);
+            });
+        } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+            setPurchasing(true);
+            const skuId = getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost);
+            // Pass goldCost so server can verify it matches the SKU's price tier
+            // (prevents tampered grantInfo from unlocking expensive cosmetics via cheap SKU).
+            const grantInfo = { type: 'cosmetic', slot, cosmeticId: cosmetic.id, goldCost: cosmetic.goldCost };
+            purchaseSku(skuId, grantInfo).then(() => {
+                SoundManager.playUIClick();
+            }).catch(err => {
+                console.error('[handleBuyCosmetic trail/kill] purchase failed — cosmetic NOT granted:', err);
+            }).finally(() => {
+                setPurchasing(false);
+                refreshBalance();
+            });
+        }
+    };
 
     const renderStats = () => {
         const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
@@ -1031,6 +1160,261 @@ export default function Upgrades({ isCarousel }) {
         );
     };
 
+    const renderCosmetics = () => {
+        const isTrail = cosmeticTab === 'trail';
+        const list = isTrail ? TRAIL_COSMETICS : KILL_COSMETICS;
+        const unlockKey = isTrail ? 'unlockedCosmetics' : 'unlockedKillEffects';
+        const freeId = isTrail ? 'default' : 'none';
+        const equippedTrail = save.cosmetics?.trail || 'default';
+        const equippedKill = save.cosmetics?.killEffect || 'none';
+
+        // Preview uses currently equipped values (both tabs always visible in preview)
+        const previewTrail = equippedTrail;
+        const previewKill = equippedKill;
+
+        return (
+            <div>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-3">Cosmetics</h2>
+
+                {/* Live Preview — hidden on skins tab */}
+                {cosmeticTab !== 'skin' && (
+                    <div className="mb-4">
+                        <CosmeticPreview 
+                            trailId={previewTrail} 
+                            killEffectId={previewKill}
+                            charId={selectedChar}
+                            playerColor={SKIN_COSMETICS.find(s => s.id === (save.cosmetics?.skins?.[selectedChar] || `${selectedChar}_default`))?.color || CHARACTERS.find(c => c.id === selectedChar)?.color || '#00cfff'}
+                        />
+                        <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center">
+                            <span>Trail: <strong className="text-pink-400">{TRAIL_COSMETICS.find(t => t.id === equippedTrail)?.name}</strong></span>
+                            <span>Kill Effect: <strong className="text-pink-400">{KILL_COSMETICS.find(k => k.id === equippedKill)?.name}</strong></span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab switcher */}
+                <div className="flex gap-2 mb-4 border-b border-slate-800 pb-2 flex-wrap">
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('trail'); setPreviewSkinColor(null); }}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'trail' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        ✨ Trails
+                    </button>
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('kill'); setPreviewSkinColor(null); }}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'kill' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        💥 Kill Effects
+                    </button>
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setCosmeticTab('skin'); }}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${cosmeticTab === 'skin' ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                        🎨 Character Skins
+                    </button>
+                </div>
+
+                {cosmeticTab === 'skin' ? (() => {
+                    const unlockedChars = effectiveUnlockedCharacters;
+                    const currentChar = CHARACTERS.find(c => c.id === unlockedChars[skinCharIndex % unlockedChars.length]) || CHARACTERS[0];
+                    const charSkins = SKIN_COSMETICS.filter(s => s.charId === currentChar.id);
+                    const equippedSkinId = save.cosmetics?.skins?.[currentChar.id] || `${currentChar.id}_default`;
+                    const equippedSkin = SKIN_COSMETICS.find(s => s.id === equippedSkinId) || charSkins[0];
+                    const displayColor = previewSkinColor || equippedSkin?.color || currentChar.color;
+                    const unlockedSkins = save.unlockedSkins || [];
+
+                    return (
+                        <div>
+                            {/* Skin color preview */}
+                            <div className="mb-4 bg-slate-800/60 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
+                                <div className="relative shrink-0">
+                                    <div className="w-16 h-16 rounded-full border-4 border-slate-600 overflow-hidden bg-slate-900 flex items-center justify-center shadow-lg"
+                                        style={{ boxShadow: `0 0 20px ${displayColor}60` }}>
+                                        {currentChar.image
+                                            ? <img src={currentChar.image} alt={currentChar.name} className="w-full h-full object-cover" style={{ filter: `drop-shadow(0 0 6px ${displayColor})` }} />
+                                            : <div className="w-10 h-10 rounded-full" style={{ background: displayColor }} />
+                                        }
+                                    </div>
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-800" style={{ background: displayColor }} />
+                                </div>
+                                <div>
+                                    <div className="font-bold text-white text-sm">{currentChar.name}</div>
+                                    {previewSkinColor
+                                        ? <div className="text-xs text-amber-400 font-bold mt-0.5">👁 Previewing color</div>
+                                        : <div className="text-xs text-pink-400 font-bold mt-0.5">Equipped: {equippedSkin?.name || 'Default'}</div>
+                                    }
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <div className="w-3 h-3 rounded-full border border-slate-600" style={{ background: displayColor }} />
+                                        <span className="text-[10px] text-slate-500 font-mono">{displayColor}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Character selector */}
+                            <div className="flex items-center justify-between bg-slate-800 p-2 rounded-xl mb-4 border border-slate-700">
+                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i - 1 + unlockedChars.length) % unlockedChars.length); setPreviewSkinColor(null); }}
+                                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
+                                    <ChevronLeft className="w-6 h-6" />
+                                </button>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-pink-500" style={{ borderColor: currentChar.color }}>
+                                        {currentChar.image ? <img src={currentChar.image} alt={currentChar.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800" />}
+                                    </div>
+                                    <div className="font-bold text-white">{currentChar.name}
+                                        <div className="text-xs text-slate-500 font-normal">{skinCharIndex % unlockedChars.length + 1} / {unlockedChars.length}</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => { SoundManager.playUIClick(); setSkinCharIndex(i => (i + 1) % unlockedChars.length); setPreviewSkinColor(null); }}
+                                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
+                                    <ChevronRight className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                                {charSkins.map(skin => {
+                                    const isOwned = skin.goldCost === 0 || unlockedSkins.includes(skin.id);
+                                    const isEquipped = equippedSkinId === skin.id;
+                                    const canAffordGold = save.gold >= skin.goldCost;
+                                    const canAffordToken = (omenxBalance ?? 0) >= skin.tokenCost;
+                                    return (
+                                        <div key={skin.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full border-2 shrink-0" style={{ background: skin.color, borderColor: skin.color + '80' }} />
+                                                <div>
+                                                    <div className="font-bold text-sm text-white leading-tight">{skin.name}</div>
+                                                    {isEquipped && <div className="text-[10px] text-pink-400 font-bold">EQUIPPED</div>}
+                                                    {!isOwned && <div className="text-[10px] text-slate-500 font-bold">LOCKED</div>}
+                                                </div>
+                                            </div>
+                                            <p className="text-[11px] text-slate-400 leading-snug">
+                                               {skin.isSeasonalReward 
+                                                   ? 'Quest Milestone Reward: Earn Quest Points from Daily Missions to unlock!'
+                                                   : skin.desc}
+                                            </p>
+                                            {isOwned ? (
+                                                <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={isEquipped}
+                                                    className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs ${isEquipped ? 'bg-pink-700 text-pink-200 cursor-default' : 'bg-slate-700 text-white hover:bg-slate-600'}`}>
+                                                    {isEquipped ? '✓ EQUIPPED' : 'EQUIP'}
+                                                </button>
+                                            ) : (
+                                                <div className="flex gap-1.5 w-full flex-col">
+                                                    <button onClick={() => handleBuyCosmetic(skin, 'skin', 'preview')}
+                                                       className={`w-full py-1 rounded-lg font-bold transition-colors text-xs ${previewSkinColor === skin.color ? 'bg-amber-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                                                       {previewSkinColor === skin.color ? '👁 Previewing' : '👁 Preview'}
+                                                    </button>
+                                                    {skin.isSeasonalReward ? (() => {
+                                                        const points = save.seasonalPoints || 0;
+                                                        const canClaim = points >= QUEST_POINTS_PER_SKIN;
+                                                        const isClaimingThis = claimingSkinId === skin.id;
+                                                        return (
+                                                            <button
+                                                                onClick={() => canClaim && !claimingSkinId && handleClaimQuestSkin(skin)}
+                                                                disabled={!canClaim || !!claimingSkinId}
+                                                                title={canClaim ? `Spend ${QUEST_POINTS_PER_SKIN} Quest Points to claim this skin` : `You need ${QUEST_POINTS_PER_SKIN - points} more Quest Points`}
+                                                                className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                                    canClaim && !isClaimingThis ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 shadow-[0_0_10px_rgba(234,179,8,0.4)] animate-pulse' :
+                                                                    'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed'
+                                                                }`}
+                                                            >
+                                                                {isClaimingThis ? '…' : canClaim ? <>🏆 Claim ({QUEST_POINTS_PER_SKIN} Pts)</> : <><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {points} / {QUEST_POINTS_PER_SKIN} Pts</>}
+                                                            </button>
+                                                        );
+                                                    })() : (
+                                                        <div className="flex gap-1.5">
+                                                            <button onClick={() => handleBuyCosmetic(skin, 'skin', 'gold')} disabled={!canAffordGold || purchasing}
+                                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
+                                                            </button>
+                                                            {skin.tokenCost > 0 && (
+                                                                <button onClick={() => !purchasing && !omenxBlocked && confirmPurchase(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                                        title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' : canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
+                                                                        {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX</>}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })() : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                    {list.map(cosmetic => {
+                        const unlocked = save[unlockKey] || [freeId];
+                        const isOwned = unlocked.includes(cosmetic.id);
+                        const isEquipped = isTrail ? equippedTrail === cosmetic.id : equippedKill === cosmetic.id;
+                        const canAffordGold = save.gold >= cosmetic.goldCost;
+                        const canAffordToken = (omenxBalance ?? 0) >= cosmetic.tokenCost;
+
+                        return (
+                            <div key={cosmetic.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl">{cosmetic.icon}</span>
+                                    <div>
+                                        <div className="font-bold text-sm text-white leading-tight">{cosmetic.name}</div>
+                                        {isEquipped && <div className="text-[10px] text-pink-400 font-bold">EQUIPPED</div>}
+                                        {!isOwned && cosmetic.goldCost > 0 && <div className="text-[10px] text-slate-500 font-bold">LOCKED</div>}
+                                    </div>
+                                </div>
+                                <p className="text-[11px] text-slate-400 leading-snug">{cosmetic.desc}</p>
+
+                                {isOwned ? (
+                                    <button
+                                        onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'gold')}
+                                        disabled={isEquipped}
+                                        className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs ${
+                                            isEquipped ? 'bg-pink-700 text-pink-200 cursor-default' : 'bg-slate-700 text-white hover:bg-slate-600'
+                                        }`}
+                                    >
+                                        {isEquipped ? '✓ EQUIPPED' : 'EQUIP'}
+                                    </button>
+                                ) : (
+                                    <div className="flex gap-1.5 w-full flex-col">
+                                        <button
+                                            onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'preview')}
+                                            className="w-full py-1 rounded-lg font-bold transition-colors text-xs bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                        >
+                                            👁 Preview
+                                        </button>
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                onClick={() => handleBuyCosmetic(cosmetic, cosmeticTab, 'gold')}
+                                                disabled={!canAffordGold || purchasing}
+                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                    canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                }`}
+                                            >
+                                                <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
+                                            </button>
+                                            {cosmetic.tokenCost > 0 && (
+                                                <button
+                                                    onClick={() => !purchasing && !omenxBlocked && confirmPurchase(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
+                                                    disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                    title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                    className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                        omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
+                                                        canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
+                                                    }`}
+                                                >
+                                                    {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX</>}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-2 pb-20 md:p-6 font-sans`}>
@@ -1089,6 +1473,16 @@ export default function Upgrades({ isCarousel }) {
                     >
                         🔨 Forge
                     </button>
+                    <button
+                        onClick={() => { SoundManager.playUIClick(); setActiveCategory('cosmetics'); }}
+                        className={`px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all ${
+                            activeCategory === 'cosmetics' 
+                            ? 'bg-pink-500/20 border border-pink-400 text-pink-300 shadow-[0_0_15px_rgba(236,72,153,0.3)]' 
+                            : 'bg-[#0b0416]/80 border border-slate-700/50 text-slate-400 hover:border-pink-500/50 hover:text-pink-200'
+                        }`}
+                    >
+                        Cosmetics
+                    </button>
                 </div>
 
                 {timeLeft && (
@@ -1118,7 +1512,7 @@ export default function Upgrades({ isCarousel }) {
                         <ForgePanel save={save} setSave={setSave} />
                     ) : activeCategory === 'relics' ? (
                         renderRelics()
-                    ) : (
+                    ) : activeCategory !== 'cosmetics' ? (
                         <>
                             <div className="flex flex-wrap gap-2 mb-3 border-b border-slate-800 pb-2">
                                 {['stats', 'armory', 'talents'].map(sub => (
@@ -1137,6 +1531,8 @@ export default function Upgrades({ isCarousel }) {
                             {subCategory === 'armory' && renderArmory()}
                             {subCategory === 'talents' && renderTalents()}
                         </>
+                    ) : (
+                        renderCosmetics()
                     )}
                     
                 </div>

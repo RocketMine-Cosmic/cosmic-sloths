@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { Lock } from 'lucide-react';
+import { AlertCircle, Lock } from 'lucide-react';
 import { getStatus as getMaintenanceStatus, refreshNow as refreshMaintenance } from '@/lib/maintenanceStatus';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
-function GmtIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6e704606_4694-1734211863980.webp" className={className} alt="GMT" />;
-}
-
-export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId, currency = 'OMENX' }) {
+export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId }) {
     const [skipNext24h, setSkipNext24h] = useState(false);
     // Read kill-switch from SHARED maintenance cache — no per-modal poll.
     const initialMaint = getMaintenanceStatus();
@@ -50,18 +46,18 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                 className="bg-slate-900 border-2 border-orange-500 p-6 md:p-8 rounded-xl max-w-md w-full text-center shadow-[0_0_30px_rgba(234,179,8,0.2)]"
             >
                 <div className="flex justify-center mb-4">
-                    {currency === 'GMT' ? <GmtIcon className="w-12 h-12" /> : <OmenXIcon className="w-12 h-12" />}
+                    <AlertCircle className="w-12 h-12 text-orange-500" />
                 </div>
                 
                 <h2 className="text-2xl font-bold text-white mb-2 font-mono">CONFIRM PURCHASE</h2>
-                <p className="text-slate-400 mb-6">You're about to spend real {currency} tokens.</p>
+                <p className="text-slate-400 mb-6">You're about to spend real OMENX tokens.</p>
                 
                 <div className="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
                     <div className="text-sm text-slate-400 mb-2">ITEM</div>
                     <div className="font-bold text-white text-lg mb-4">{itemName}</div>
                     <div className="flex items-center justify-center gap-2 bg-orange-950/40 p-3 rounded-lg border border-orange-500/30">
                         <OmenXIcon className="w-5 h-5" />
-                        <span className="text-orange-400 font-bold text-lg">{amount.toFixed(2)} {currency}</span>
+                        <span className="text-orange-400 font-bold text-lg">{amount.toFixed(2)} OMENX</span>
                     </div>
                 </div>
 
