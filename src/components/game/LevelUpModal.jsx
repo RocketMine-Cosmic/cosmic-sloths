@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Swords, Sparkles, ChevronDown } from 'lucide-react';
+import { Swords, Sparkles, ChevronDown, Beaker, Zap, Lock } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import { WEAPON_SLOT_CAP, EVOLUTION_MIN_BASE_LEVEL } from '@/game/UpgradeSystem';
-import { EVOLUTIONS } from '@/game/Constants';
+import { EVOLUTIONS, SYNERGIES, WEAPONS, UPGRADES } from '@/game/Constants';
 import { useAntiMashCooldown } from '@/hooks/useAntiMashCooldown';
 import PoolBiasBadge from './PoolBiasBadge';
 
@@ -393,6 +393,56 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                         </div>
                                     </div>
                                 )}
+                                {/* Synergy & Evolution Preview (Simon's 2026-05-22 ask) */}
+                                {(() => {
+                                    const syns = (choice.type === 'weapon' && choice.weaponId) 
+                                        ? (SYNERGIES || []).filter(s => s.weapon1 === choice.weaponId || s.weapon2 === choice.weaponId)
+                                        : (choice.type === 'passive' && choice.id)
+                                        ? (SYNERGIES || []).filter(s => s.weapon1 === choice.id || s.weapon2 === choice.id)
+                                        : [];
+                                    const evos = (choice.type === 'weapon' && choice.weaponId)
+                                        ? (EVOLUTIONS || []).filter(e => e.baseWeapon === choice.weaponId)
+                                        : (choice.type === 'passive' && choice.id)
+                                        ? (EVOLUTIONS || []).filter(e => e.passive === choice.id)
+                                        : [];
+                                    if (syns.length === 0 && evos.length === 0) return null;
+                                    const discSyn = engineRef?.current?.save?.discoveredSynergies || [];
+                                    const discEvo = engineRef?.current?.save?.discoveredEvolutions || [];
+                                    return (
+                                        <div className="mt-1.5 bg-purple-950/40 border border-purple-700/30 rounded px-1.5 py-1 space-y-0.5 text-[9px] md:text-[10px] leading-tight">
+                                            {syns.map((syn, i) => {
+                                                const partner = WEAPONS?.[syn.weapon1 === choice.weaponId ? syn.weapon2 : syn.weapon1];
+                                                const result = WEAPONS?.[syn.result];
+                                                const discovered = discSyn.includes(syn.result);
+                                                return (
+                                                    <div key={`s-${i}`} className="flex items-center gap-1">
+                                                        <Beaker className="w-2.5 h-2.5 text-purple-400 shrink-0" />
+                                                        <span className="text-purple-300 truncate">+{partner?.name || syn.weapon2}</span>
+                                                        <span className="text-slate-600">→</span>
+                                                        <span className={discovered ? 'text-rose-400 font-bold' : 'text-slate-500 italic'}>
+                                                            {discovered ? result?.name : 'Locked'}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                            {evos.map((evo, i) => {
+                                                const passive = (UPGRADES || []).find(u => u.id === evo.passive);
+                                                const result = WEAPONS?.[evo.evolvedWeapon];
+                                                const discovered = discEvo.includes(evo.evolvedWeapon);
+                                                return (
+                                                    <div key={`e-${i}`} className="flex items-center gap-1">
+                                                        <Zap className="w-2.5 h-2.5 text-orange-400 shrink-0" />
+                                                        <span className="text-orange-300 truncate">+{passive?.name || evo.passive}</span>
+                                                        <span className="text-slate-600">→</span>
+                                                        <span className={discovered ? 'text-orange-400 font-bold' : 'text-slate-500 italic'}>
+                                                            {discovered ? result?.name : 'Locked'}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })()}
                             </motion.button>
                         );
                     })}
