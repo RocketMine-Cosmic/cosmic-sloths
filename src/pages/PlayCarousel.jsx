@@ -49,17 +49,18 @@ const SLIDE_LABELS = [
 
 // Renders a slide ONLY when it's active or adjacent. Off-screen slides stay
 // as empty divs (carousel layout preserved) until the user navigates near them.
+//
+// CRITICAL: slides UNMOUNT when scrolled away from. Previously they were kept
+// mounted forever "so state isn't lost when scrolling away" — which meant
+// after a session of swiping around the user had 10+ heavy pages (Squads,
+// SquadWars, GlobalRaid, etc.) all running their polling loops in parallel.
+// That was the dominant cause of the Base44 429 storm seen 2026-05-22.
+// Losing a selected-tab / scroll position when revisiting a slide is a tiny
+// UX cost compared to grinding every backend function into rate-limit errors.
 function LazySlide({ children, shouldMount }) {
-    const [hasMounted, setHasMounted] = useState(shouldMount);
-
-    useEffect(() => {
-        // Once mounted, keep mounted (so state isn't lost when scrolling away).
-        if (shouldMount && !hasMounted) setHasMounted(true);
-    }, [shouldMount, hasMounted]);
-
     return (
         <div className="flex-[0_0_100%] min-w-0 min-h-0 h-full overflow-y-auto select-none transform-gpu" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {hasMounted ? children : null}
+            {shouldMount ? children : null}
         </div>
     );
 }
