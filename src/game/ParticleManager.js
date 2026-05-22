@@ -329,10 +329,26 @@ export class ParticleManager {
         }
     }
 
-    draw(ctx, camX, camY, vWidth, vHeight) {
+    // layerFilter:
+    //   null (default)  → combat VFX only — skips any particle tagged as cosmetic
+    //                     (trail / kill effect). Called at the early particle pass so
+    //                     weapon impacts, explosions, AoE pools still feel immediate.
+    //   'trail'         → only trail cosmetic particles. Drawn AFTER enemies but
+    //                     BEFORE the player sprite so the trail reads as coming
+    //                     from the player without obscuring the skin.
+    //   'killfx'        → only kill-effect cosmetic particles. Drawn AFTER the
+    //                     player sprite so paid kill effects (golden, explosion,
+    //                     etc.) pop on top of everything except the HUD.
+    draw(ctx, camX, camY, vWidth, vHeight, layerFilter = null) {
         ctx.save();
 
         this.particles.forEach(p => {
+            // Cosmetic-layer routing — see comment above draw().
+            if (layerFilter === null) {
+                if (p._cosmeticLayer) { return; }
+            } else if (p._cosmeticLayer !== layerFilter) {
+                return;
+            }
             const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
 
@@ -467,6 +483,8 @@ export class ParticleManager {
         p.rotSpeed = 0;
         p.animName = animName;
         p.gravity = false;
+        // Clear any cosmetic tag inherited from a recycled pool object.
+        p._cosmeticLayer = null;
         
         this.particles.push(p);
     }
@@ -497,7 +515,10 @@ export class ParticleManager {
             p.growthRate = options.growthRate;
             p.targetX = options.targetX;
             p.targetY = options.targetY;
-            
+            // Clear any cosmetic tag inherited from a recycled pool object.
+            // createTrail / createKillEffect will re-tag if they're the caller.
+            p._cosmeticLayer = null;
+
             this.particles.push(p);
         }
     }
@@ -528,6 +549,10 @@ export class ParticleManager {
     }
 
     createKillEffect(x, y, effectId) {
+        // Tag every particle this call adds so they render in the dedicated
+        // late 'killfx' pass on top of the player sprite — paid kill effects
+        // were getting buried under enemy spawns / projectiles on busy screens.
+        const startLen = this.particles.length;
         switch (effectId) {
             case 'explosion':
                 this.addAnim(x, y, 'explosion_anim', 3.0, Math.random() * Math.PI * 2, '#ff4500');
@@ -568,6 +593,9 @@ export class ParticleManager {
                 this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
                 break;
         }
+        for (let i = startLen; i < this.particles.length; i++) {
+            this.particles[i]._cosmeticLayer = 'killfx';
+        }
     }
 
     createTrail(x, y, trailId, frameCount) {
@@ -587,7 +615,14 @@ export class ParticleManager {
         const config = trailConfigs[trailId];
         if (config) {
             const color = config.colors[frameCount % config.colors.length];
+            // Tag the trail particles so they render in the dedicated late
+            // 'trail' pass — visible through bullets/AoE but behind the player
+            // sprite so the skin stays the focal point.
+            const startLen = this.particles.length;
             this.addParticle(x, y, color, config.count, config.type, config.size, config.options);
+            for (let i = startLen; i < this.particles.length; i++) {
+                this.particles[i]._cosmeticLayer = 'trail';
+            }
         }
     }
 }

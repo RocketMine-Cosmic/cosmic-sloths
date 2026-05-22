@@ -340,6 +340,10 @@ export function renderGame() {
         }
     }
 
+    // Combat VFX pass — explosions, weapon impacts, AoE pool glow, shockwaves.
+    // Cosmetic particles (trails + kill effects) are filtered out here and
+    // rendered later in dedicated passes so paid cosmetics aren't buried under
+    // enemies / pickups / projectiles.
     this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight);
 
     // LAYER 1: XP / gold / reroll pickups — drawn BELOW enemy projectiles so the
@@ -427,6 +431,11 @@ export function renderGame() {
     if (this.player.trail !== 'default' && this.frameCount % 6 === 0) {
         this.particleManager.createTrail(this.player.x, this.player.y, this.player.trail, this.frameCount);
     }
+
+    // COSMETIC LAYER A — trail particles. Rendered AFTER enemies (so they
+    // read through the chaos) but BEFORE the player sprite (so the skin
+    // stays the focal point and the trail reads as coming from the player).
+    this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight, 'trail');
 
     if (this.squadClones) {
         this.squadClones.forEach(clone => {
@@ -616,6 +625,12 @@ export function renderGame() {
     }
 
     this.ctx.globalAlpha = 1.0;
+
+    // COSMETIC LAYER B — kill-effect particles. Rendered AFTER the player
+    // sprite so paid kill effects (golden, explosion, freeze, vaporize, etc.)
+    // pop on top of the player + everything in the playfield. Damage text
+    // and the HUD still render above this so feedback stays legible.
+    this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight, 'killfx');
 
     if (this.player.invincibleTimer > 0) {
         this.ctx.strokeStyle = '#ffff00';
