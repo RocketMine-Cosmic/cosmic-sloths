@@ -3,10 +3,16 @@
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
 import { updateBossAbilities } from './BossSystem';
-import { isS6OrLater } from '@/lib/seasonGate';
+import { isS6OrLater, isBossVacuumEnabled } from '@/lib/seasonGate';
 
 // Cached at module load — see PickupSystem for rationale.
 const _IS_S6 = isS6OrLater();
+// Boss-drop XP auto-vacuum — gated to flip on at the W21→W22 weekly rollover
+// (Mon May 25 2026 00:00 UTC). Tags the boss's XP orb with `magnetSweep` so it
+// reuses the existing magnet_power vacuum (smooth ~0.5s sweep, no teleport).
+// Only the boss's own XP drop is tagged — scattered mob pickups still require
+// magnet stat / walking, preserving the run-long pickup loop. Anubis 2026-05-22.
+const _BOSS_VAC_ENABLED = isBossVacuumEnabled();
 
 export function updateEnemies(engine, dt) {
     for (let i = engine.enemies.length - 1; i >= 0; i--) {
@@ -67,7 +73,15 @@ export function updateEnemies(engine, dt) {
             const progress = engine.arena?.duration === Infinity ? engine.time / 300 : Math.min(1, engine.time / (engine.arena?.duration || 300));
             xpValue *= (1.0 + Math.min(1.0, progress * 1.5));
 
-            engine.pickups.push({ x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc' });
+            // Boss XP drop auto-vacuums to the player on death (W22+) so the
+            // "crucial final orb" can't be missed when the boss dies off-screen
+            // or the player has no magnet stat. Reuses the existing magnetSweep
+            // mechanic from magnet_power pickups — see PickupSystem.js. Only
+            // tags this single XP pickup; other loot stays as-is.
+            engine.pickups.push({
+                x: e.x, y: e.y, type: 'xp', value: xpValue, color: '#00ffcc',
+                ...((_BOSS_VAC_ENABLED && e.isBoss) ? { magnetSweep: true } : {})
+            });
 
             engine.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 2 : 0.6, e.id);
             engine.shake(e.isBoss ? 0.5 : 0.05);
