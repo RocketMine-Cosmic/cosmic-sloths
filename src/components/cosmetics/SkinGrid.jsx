@@ -159,7 +159,7 @@ export default function SkinGrid({
                                                             'bg-slate-900 text-slate-500 border border-slate-700'
                                                         }`}
                                                     >
-                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-3 h-3" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
+                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-4 h-4" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
                                                     </button>
                                                 );
                                             })()}
