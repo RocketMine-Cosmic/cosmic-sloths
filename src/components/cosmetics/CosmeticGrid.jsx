@@ -86,7 +86,7 @@ export default function CosmeticGrid({
                                                     'bg-slate-900 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-5 h-5" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
+                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-6 h-6" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
                                             </button>
                                         );
                                     })()}
