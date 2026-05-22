@@ -51,6 +51,11 @@ if (persistedBalance || persistedVip || persistedNfts) {
     // Mirror NFTs to legacy localStorage key consumed by NFTPerks at game-start.
     if (persistedNfts?.nfts) saveJSON('omenx_nft_data', persistedNfts.nfts);
 }
+// Pre-GMT persisted balance caches lack the gmtBalance field — force a refetch
+// so the header doesn't get stuck on a phantom 0.00 GMT while the TTL is warm.
+if (persistedBalance && persistedBalance.gmtBalance === undefined) {
+    lastBalanceFetchAt = 0;
+}
 
 function getAuthData() {
     // Only walletAddress is required — backend functions authenticate via the
