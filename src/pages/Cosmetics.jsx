@@ -359,6 +359,7 @@ export default function Cosmetics({ isCarousel }) {
                                 setPreviewSkinColor={setPreviewSkinColor}
                                 omenxBalance={omenxBalance}
                                 gmtCost={gmtCost}
+                                usdCost={2.50}
                                 omenxBlocked={omenxBlocked}
                                 omenxBlockedMsg={omenxBlockedMsg}
                                 purchasing={purchasing}
@@ -377,6 +378,7 @@ export default function Cosmetics({ isCarousel }) {
                                 equippedId={cosmeticTab === 'trail' ? equippedTrail : equippedKill}
                                 omenxBalance={omenxBalance}
                                 gmtCost={gmtCost}
+                                usdCost={2.50}
                                 omenxBlocked={omenxBlocked}
                                 omenxBlockedMsg={omenxBlockedMsg}
                                 purchasing={purchasing}

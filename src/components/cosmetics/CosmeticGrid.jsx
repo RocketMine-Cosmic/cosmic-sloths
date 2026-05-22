@@ -12,7 +12,7 @@ function GmtIcon({ className }) {
  */
 export default function CosmeticGrid({
     list, slot, save, unlockKey, freeId, equippedId,
-    omenxBalance, gmtCost, omenxBlocked, omenxBlockedMsg, purchasing,
+    omenxBalance, gmtCost, usdCost, omenxBlocked, omenxBlockedMsg, purchasing,
     onBuy, onPreview, onConfirmTokenPurchase,
 }) {
     return (
@@ -67,13 +67,18 @@ export default function CosmeticGrid({
                                             onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(cosmetic, slot)}
                                             disabled={!canAffordGmt || purchasing || omenxBlocked}
                                             title={omenxBlocked ? (omenxBlockedMsg || 'GMT purchases are temporarily disabled.') : undefined}
-                                            className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                            className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs flex flex-col items-center justify-center leading-tight ${
                                                 omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
                                                 canAffordGmt && !purchasing ? 'bg-orange-600 hover:bg-orange-500 text-white' :
                                                 'bg-slate-900 text-slate-500 border border-slate-700'
                                             }`}
                                         >
-                                            {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-12 h-12" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
+                                            {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? (
+                                                <>
+                                                    <span className="flex items-center gap-1"><GmtIcon className="w-5 h-5" /> {gmtCost.toFixed(2)} GMT</span>
+                                                    {usdCost > 0 && <span className="text-[10px] opacity-80">≈ ${usdCost.toFixed(2)}</span>}
+                                                </>
+                                            ) : 'Loading…'}
                                         </button>
                                     );
                                 })()}
