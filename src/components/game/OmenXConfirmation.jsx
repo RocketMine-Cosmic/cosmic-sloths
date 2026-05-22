@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { AlertCircle, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { getStatus as getMaintenanceStatus, refreshNow as refreshMaintenance } from '@/lib/maintenanceStatus';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+}
+
+function GmtIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6e704606_4694-1734211863980.webp" className={className} alt="GMT" />;
 }
 
 export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId, currency = 'OMENX' }) {
@@ -46,7 +50,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                 className="bg-slate-900 border-2 border-orange-500 p-6 md:p-8 rounded-xl max-w-md w-full text-center shadow-[0_0_30px_rgba(234,179,8,0.2)]"
             >
                 <div className="flex justify-center mb-4">
-                    <AlertCircle className="w-12 h-12 text-orange-500" />
+                    {currency === 'GMT' ? <GmtIcon className="w-12 h-12" /> : <OmenXIcon className="w-12 h-12" />}
                 </div>
                 
                 <h2 className="text-2xl font-bold text-white mb-2 font-mono">CONFIRM PURCHASE</h2>
