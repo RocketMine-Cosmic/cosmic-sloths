@@ -311,7 +311,7 @@ export default function Cosmetics({ isCarousel }) {
                         <div className="text-2xl shrink-0 leading-none">💜</div>
                         <div className="text-xs md:text-sm text-fuchsia-100 leading-snug">
                             <strong className="text-pink-300 block mb-0.5">Cosmetics are GMT-only — they support the devs</strong>
-                            Every cosmetic purchase goes directly to development costs and is excluded from the weekly player/staff payout pool. Thank you for keeping the lights on. 💜
+                            Every cosmetic purchase goes directly to development and running costs. Thank you for keeping the lights on. 💜
                         </div>
                     </div>
 
@@ -329,7 +329,7 @@ export default function Cosmetics({ isCarousel }) {
                             <span className="text-red-300 text-lg leading-none mt-0.5">🔒</span>
                             <div className="text-xs md:text-sm text-red-200 leading-snug">
                                 <strong className="text-red-100">OMENX purchases are temporarily paused.</strong>
-                                <div className="mt-0.5 opacity-90">{omenxBlockedMsg || 'The settlement service is being restored. Gold purchases are still available.'}</div>
+                                <div className="mt-0.5 opacity-90">{omenxBlockedMsg || 'The settlement service is being restored.'}</div>
                             </div>
                         </div>
                     )}
