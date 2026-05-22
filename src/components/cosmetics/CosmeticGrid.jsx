@@ -76,7 +76,7 @@ export default function CosmeticGrid({
                                             {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? (
                                                 <>
                                                     <span className="relative w-full flex items-center justify-center">
-                                                        <GmtIcon className="absolute left-1 w-10 h-10" />
+                                                        <GmtIcon className="absolute left-4 w-12 h-12" />
                                                         <span>{gmtCost.toFixed(2)} GMT</span>
                                                     </span>
                                                     {usdCost > 0 && <span className="text-[10px] opacity-80">≈ ${usdCost.toFixed(2)}</span>}
