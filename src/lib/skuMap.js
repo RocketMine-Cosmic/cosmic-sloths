@@ -53,14 +53,14 @@ export const COSMETIC_SKUS_BY_SLOT = {
 
 // Donation SKUs — dev-support tip jar. Flat USD amounts charged in GMT.
 // SKU mapping (per OmenX dev portal):
-//   donation-gmt-5  → $5
-//   donation-gmt-10 → $10
-//   donation-gmt-15 → $15
+//   gift-donation-5  → $5
+//   gift-donation-10 → $10
+//   gift-donation-15 → $15
 // All Consumable, excluded from the OMENX player/staff payout pool.
 export const DONATION_SKUS = {
-    5:  'donation-gmt-5',
-    10: 'donation-gmt-10',
-    15: 'donation-gmt-15',
+    5:  'gift-donation-5',
+    10: 'gift-donation-10',
+    15: 'gift-donation-15',
 };
 
 /**
