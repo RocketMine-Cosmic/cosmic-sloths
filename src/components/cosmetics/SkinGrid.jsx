@@ -150,12 +150,10 @@ export default function SkinGrid({
                                             >
                                                 {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? (
                                                     <>
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <div className="bg-orange-700/60 rounded-lg p-1.5 flex items-center justify-center">
-                                                                <GmtIcon className="w-8 h-8" />
-                                                            </div>
-                                                            <span className="flex flex-col">{gmtCost.toFixed(2)} GMT</span>
-                                                        </div>
+                                                        <span className="flex items-center justify-center gap-1.5">
+                                                            <GmtIcon className="w-9 h-9" />
+                                                            <span>{gmtCost.toFixed(2)} GMT</span>
+                                                        </span>
                                                         {usdCost > 0 && <span className="text-[10px] opacity-80">≈ ${usdCost.toFixed(2)}</span>}
                                                     </>
                                                 ) : 'Loading…'}
