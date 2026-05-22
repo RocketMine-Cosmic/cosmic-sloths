@@ -4,7 +4,7 @@ import { CHARACTERS, SKIN_COSMETICS } from '../../game/Constants';
 import { SoundManager } from '../../game/SoundManager';
 
 function GmtIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6e704606_4694-1734211863980.webp" className={className} alt="GMT" />;
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/1d2e14d4e_gen-fcaff17865d0f2ed8e19ed81cc1fc502.png" className={className} alt="GMT" />;
 }
 
 const QUEST_POINTS_PER_SKIN = 100;
