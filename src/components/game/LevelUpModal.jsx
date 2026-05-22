@@ -1,11 +1,32 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Swords, Sparkles, ChevronDown, Beaker, Zap, Lock } from 'lucide-react';
+import { Swords, Sparkles, ChevronDown, Beaker, Zap, Lock, Eye, EyeOff } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import { WEAPON_SLOT_CAP, EVOLUTION_MIN_BASE_LEVEL } from '@/game/UpgradeSystem';
 import { EVOLUTIONS, SYNERGIES, WEAPONS, UPGRADES } from '@/game/Constants';
 import { useAntiMashCooldown } from '@/hooks/useAntiMashCooldown';
 import PoolBiasBadge from './PoolBiasBadge';
+
+// LocalStorage-backed UI prefs for the level-up modal — device-specific by design.
+// Added 2026-05-22 (Texxy/RocketMine ask) so experienced players can hide
+// synergy / evolution hint cards and NEW badges without touching cloud save.
+const LU_PREFS_KEY = 'cs_levelup_prefs';
+function loadLevelUpPref(key, def) {
+    try {
+        const raw = localStorage.getItem(LU_PREFS_KEY);
+        if (!raw) return def;
+        const obj = JSON.parse(raw);
+        return key in obj ? obj[key] : def;
+    } catch { return def; }
+}
+function saveLevelUpPref(key, val) {
+    try {
+        const raw = localStorage.getItem(LU_PREFS_KEY);
+        const obj = raw ? JSON.parse(raw) : {};
+        obj[key] = val;
+        localStorage.setItem(LU_PREFS_KEY, JSON.stringify(obj));
+    } catch {}
+}
 
 // Returns true if picking this upgrade would put the player one step away from
 // triggering an evolution — either:
@@ -151,6 +172,11 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
      const [hasRerolled, setHasRerolled] = useState(false);
      const [selectedIndex, setSelectedIndex] = useState(null);
      const [showInventory, setShowInventory] = useState(false);
+     // UI prefs — persisted per-device via localStorage (Texxy/RocketMine ask 2026-05-22).
+     const [showSynergies, setShowSynergies] = useState(() => loadLevelUpPref('showSynergies', true));
+     const [showEvolutions, setShowEvolutions] = useState(() => loadLevelUpPref('showEvolutions', true));
+     const [showNewBadges, setShowNewBadges] = useState(() => loadLevelUpPref('showNewBadges', true));
+     const togglePref = (key, val, setter) => { setter(val); saveLevelUpPref(key, val); };
     // Anti-mash: 2s cooldown on Reroll & Banish so a flurry of clicks during
     // a slow OmenX settlement doesn't queue up multiple billable purchases.
     const rerollCd = useAntiMashCooldown(2000);
@@ -269,6 +295,26 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
 
                 <PoolBiasBadge save={engineRef?.current?.save} />
 
+                {/* UI toggles (Texxy/RocketMine ask 2026-05-22) — let experienced players
+                    hide hint cards / NEW badges. Persisted per-device via localStorage. */}
+                <div className="mb-2 md:mb-3 flex flex-wrap items-center justify-center gap-1.5 md:gap-2 text-[10px] md:text-xs">
+                    <button onClick={() => togglePref('showSynergies', !showSynergies, setShowSynergies)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md border transition-colors ${showSynergies ? 'bg-purple-950/40 border-purple-600/60 text-purple-300' : 'bg-slate-900/40 border-slate-700 text-slate-500'}`}>
+                        {showSynergies ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        <span>Synergies</span>
+                    </button>
+                    <button onClick={() => togglePref('showEvolutions', !showEvolutions, setShowEvolutions)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md border transition-colors ${showEvolutions ? 'bg-orange-950/40 border-orange-600/60 text-orange-300' : 'bg-slate-900/40 border-slate-700 text-slate-500'}`}>
+                        {showEvolutions ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        <span>Evolutions</span>
+                    </button>
+                    <button onClick={() => togglePref('showNewBadges', !showNewBadges, setShowNewBadges)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md border transition-colors ${showNewBadges ? 'bg-emerald-950/40 border-emerald-600/60 text-emerald-300' : 'bg-slate-900/40 border-slate-700 text-slate-500'}`}>
+                        {showNewBadges ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        <span>NEW badges</span>
+                    </button>
+                </div>
+
                 {/* Current inventory dropdown — shows weapon/passive levels at a glance
                     so players don't have to close the modal to check what level a weapon is
                     before picking an upgrade (Texxy bug 2026-05-19). */}
@@ -339,7 +385,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                 onClick={() => setSelectedIndex(i)}
                                 className={`relative p-3 md:p-6 rounded-xl text-left transition-colors duration-200 flex flex-col min-h-[90px] md:min-h-[160px] border-2 cursor-pointer ${rarityBg[choice.rarity]} ${rarityColors[choice.rarity].split(' ').slice(1).join(' ')} ${isSelected ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900' : 'hover:brightness-110'} ${evoReady ? 'shadow-[0_0_20px_rgba(251,146,60,0.7)]' : ''}`}
                             >
-                                {evoReady && (
+                                {evoReady && showEvolutions && (
                                     <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-amber-400 text-black text-[9px] md:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow-[0_0_10px_rgba(251,146,60,0.9)] animate-pulse z-10">
                                         <Sparkles className="w-3 h-3" />
                                         Evolves
@@ -349,8 +395,8 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                     const lvlInfo = getLevelInfo(choice, engineRef?.current?.player);
                                     if (!lvlInfo) return null;
                                     // Position below the "Evolves" badge if it's showing
-                                    const topOffset = evoReady ? 'top-4 md:top-5' : '-top-2';
-                                    if (lvlInfo.isNew) {
+                                    const topOffset = (evoReady && showEvolutions) ? 'top-4 md:top-5' : '-top-2';
+                                    if (lvlInfo.isNew && showNewBadges) {
                                         return (
                                             <div className={`absolute ${topOffset} -right-2 bg-emerald-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shadow-[0_0_8px_rgba(16,185,129,0.7)] z-10`}>
                                                 NEW
@@ -405,12 +451,14 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                         : (choice.type === 'passive' && choice.id)
                                         ? (EVOLUTIONS || []).filter(e => e.passive === choice.id)
                                         : [];
-                                    if (syns.length === 0 && evos.length === 0) return null;
+                                    const visibleSyns = showSynergies ? syns : [];
+                                    const visibleEvos = showEvolutions ? evos : [];
+                                    if (visibleSyns.length === 0 && visibleEvos.length === 0) return null;
                                     const discSyn = engineRef?.current?.save?.discoveredSynergies || [];
                                     const discEvo = engineRef?.current?.save?.discoveredEvolutions || [];
                                     return (
                                         <div className="mt-1.5 bg-purple-950/40 border border-purple-700/30 rounded px-1.5 py-1 space-y-0.5 text-[9px] md:text-[10px] leading-tight">
-                                            {syns.map((syn, i) => {
+                                            {visibleSyns.map((syn, i) => {
                                                 const partner = WEAPONS?.[syn.weapon1 === choice.weaponId ? syn.weapon2 : syn.weapon1];
                                                 const result = WEAPONS?.[syn.result];
                                                 const discovered = discSyn.includes(syn.result);
@@ -425,7 +473,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                                     </div>
                                                 );
                                             })}
-                                            {evos.map((evo, i) => {
+                                            {visibleEvos.map((evo, i) => {
                                                 const passive = (UPGRADES || []).find(u => u.id === evo.passive);
                                                 const result = WEAPONS?.[evo.evolvedWeapon];
                                                 const discovered = discEvo.includes(evo.evolvedWeapon);
