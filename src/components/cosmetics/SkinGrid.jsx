@@ -40,7 +40,7 @@ export default function SkinGrid({
                             : <div className="w-10 h-10 rounded-full" style={{ background: displayColor }} />
                         }
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-800" style={{ background: displayColor }} />
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-2 border-slate-800" style={{ background: displayColor }} />
                 </div>
                 <div>
                     <div className="font-bold text-white text-sm">{currentChar.name}</div>
