@@ -139,9 +139,17 @@ export default function Leaderboard() {
     // Pause polling after 5 min of no activity to save API calls for AFK users
     const isIdle = useIsIdle(5 * 60 * 1000);
 
+    // Includes `payoutCfg.top_n` so when the live config arrives (or the owner
+    // changes top_n via the AdminDashboard Leaderboard Payout Config panel),
+    // the fetch re-runs and the list grows / shrinks to match the new cap
+    // instead of being stuck on whatever was rendered first using the
+    // DEFAULT_PAYOUT_CONFIG.top_n = 20 sentinel. Previously the only way to
+    // pick up the new cap was a manual view-tab switch — which re-ran this
+    // effect for a different reason (Hugo bug 2026-05-22 — admin changed
+    // top_n to 30, leaderboard kept showing 20 until tab switch).
     useEffect(() => {
         fetchScores();
-    }, [view]);
+    }, [view, payoutCfg.top_n]);
 
     // Fetch live payout config once on mount (public read — no auth needed).
     // If it fails or returns nothing we just use the built-in defaults.
@@ -209,7 +217,14 @@ export default function Leaderboard() {
             document.removeEventListener('visibilitychange', onVisibilityChange);
             if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         };
-    }, [view, isIdle]);
+        // `payoutCfg.top_n` is in the dep list so when the live config arrives
+        // the realtime subscriptions + polling interval tear down and re-bind
+        // with a fresh `fetchScores` closure that uses the new cap. Without it,
+        // the captured closure kept calling fetchScores() with the stale
+        // DEFAULT_PAYOUT_CONFIG.top_n = 20 on every background refresh — so
+        // even after a view-tab switch "unstuck" the initial render, the very
+        // next realtime tick / 20s poll would silently truncate back to 20.
+    }, [view, isIdle, payoutCfg.top_n]);
 
     // Deduplicate TokenPool queries using useQuery (30s stale time)
     const { data: poolData } = useQuery({
