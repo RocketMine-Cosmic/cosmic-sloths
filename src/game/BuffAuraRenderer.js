@@ -22,27 +22,29 @@ export function drawBuffAuras(ctx, player, time) {
     // shield is up" feedback from the 2026-05-22 Discord thread
     // (Simon/Texxy/RocketMine). Drawn BEFORE the titleBuff section so the
     // shield appears even when the player has no equipped-title buffs.
+    // FIXED 2026-05-22: Use 'source-over' instead of 'lighter' to prevent
+    // occlusion of weapon effects (Anubis bug: Quantum Collapse rings trapped in shield).
     const iFramesRemaining = Math.max(player.iFrames || 0, player.invincibleTimer || 0);
     if (iFramesRemaining > 0) {
         const pulse = (Math.sin(time * 9) + 1) * 0.5; // fast pulse — communicates urgency
-        // Bright outer ring
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.55 + pulse * 0.25;
-        ctx.strokeStyle = '#22d3ee'; // cyan-400
-        ctx.lineWidth = 2 + pulse * 1.5;
-        ctx.beginPath();
-        ctx.arc(px, py, r + 6 + pulse * 2, 0, Math.PI * 2);
-        ctx.stroke();
-        // Soft inner glow halo
-        ctx.globalAlpha = 0.18 + pulse * 0.12;
+        ctx.globalCompositeOperation = 'source-over';
+        // Soft inner glow halo (drawn first, behind the outer ring)
+        ctx.globalAlpha = 0.14 + pulse * 0.10;
         const glow = ctx.createRadialGradient(px, py, r * 0.5, px, py, r + 16);
         glow.addColorStop(0, 'rgba(34, 211, 238, 0)');
-        glow.addColorStop(0.65, 'rgba(34, 211, 238, 0.55)');
+        glow.addColorStop(0.65, 'rgba(34, 211, 238, 0.6)');
         glow.addColorStop(1, 'rgba(34, 211, 238, 0)');
         ctx.fillStyle = glow;
         ctx.beginPath();
         ctx.arc(px, py, r + 16, 0, Math.PI * 2);
         ctx.fill();
+        // Bright outer ring (drawn on top)
+        ctx.globalAlpha = 0.48 + pulse * 0.22;
+        ctx.strokeStyle = '#22d3ee'; // cyan-400
+        ctx.lineWidth = 2 + pulse * 1.5;
+        ctx.beginPath();
+        ctx.arc(px, py, r + 6 + pulse * 2, 0, Math.PI * 2);
+        ctx.stroke();
     }
 
     const buff = player.titleBuff || null;
