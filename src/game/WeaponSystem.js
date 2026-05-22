@@ -41,6 +41,19 @@ function getVisualRadius(weaponId, radius) {
     return cap;
 }
 
+// Damage hitbox cap for persistent AoE weapons (shields, pools, barriers).
+// Visual is already clamped via getVisualRadius — past 1.5× the visual cap the
+// damage hitbox is invisible to the player anyway AND the spatial-hash cell
+// window explodes ((r+50)/100)² cells per checkAoe. This bounds the worst-case
+// max-area-stacking scenario without affecting any normal build (Anubis/Leon
+// Legion crash audit 2026-05-22). Pre-S6 unchanged.
+function capDamageRadius(weaponId, radius) {
+    if (!isS6OrLater()) return radius;
+    const visCap = S6_VISUAL_RADIUS_CAP[weaponId];
+    if (!visCap) return radius;
+    return Math.min(visCap * 1.5, radius);
+}
+
 export function fireWeaponLogic(engine, w) {
     SFXManager.playWeaponFire(w.id);
     const stats = getWeaponStatsAndMastery(engine.save, w.id);
@@ -228,7 +241,7 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'napalm') {
-        const r = 40 * area;
+        const r = capDamageRadius('napalm', 40 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -236,7 +249,8 @@ export function fireWeaponLogic(engine, w) {
             visualRadius: getVisualRadius('napalm', r),
             damage: dmg * 0.5,
             pierce: 999,
-            life: 3 + w.level,
+            // Pool life capped at 15s (was up to 28s at lvl 25) (audit 2026-05-22).
+            life: Math.min(15, 3 + w.level),
             // Mastery flips the pool to blue plasma fire to clearly distinguish it from
             // the orange base version (Anubis bug 2026-05-11 — old #ff2200 was nearly
             // identical to non-mastered #ff4500).
@@ -282,9 +296,10 @@ export function fireWeaponLogic(engine, w) {
             type: 'nova_pulse'
         });
         if (isMastered) {
-            setTimeout(() => {
-                if (engine.isGameOver || engine.isVictory) return;
-                engine.projectiles.push({
+            // setTimeout → engine.deferredSpawns (same rationale as quantumCollapse).
+            (engine.deferredSpawns = engine.deferredSpawns || []).push({
+                fireAt: engine.time + 0.5,
+                spawn: () => ({
                     x: engine.player.x, y: engine.player.y,
                     vx: 0, vy: 0,
                     radius: novaR,
@@ -298,8 +313,8 @@ export function fireWeaponLogic(engine, w) {
                     pulse: true,
                     type: 'nova_pulse',
                     weaponId: 'novaPulse'
-                });
-            }, 500);
+                })
+            });
         }
     }
     else if (w.id === 'shieldBubble') {
@@ -310,7 +325,7 @@ export function fireWeaponLogic(engine, w) {
         // bursts created a flickering flashlight effect on top of the bubble —
         // unsafe for epileptic players. The bubble's own dashed outline + fill
         // pulse already provides clear activation feedback.
-        const r = 80 * area;
+        const r = capDamageRadius('shieldBubble', 80 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -328,7 +343,7 @@ export function fireWeaponLogic(engine, w) {
         });
     }
     else if (w.id === 'burningBarrier') {
-        const r = 100 * area;
+        const r = capDamageRadius('burningBarrier', 100 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -371,16 +386,21 @@ export function fireWeaponLogic(engine, w) {
             pulse: true,
             type: 'laser_nova_pulse'
         });
-        for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI / 4) * i;
+        // Laser Nova was the #1 reported screen-crasher (Anubis 2026-05-22).
+        // Beams 8→6, pierce capped at 5+min(6,level/2) (was unbounded → 17 at
+        // lvl 25), life 2s→1.2s. At high CDR, original could keep 40+ beams
+        // alive simultaneously, each with trails and chain potential.
+        const _lnBeamCount = 6;
+        for (let i = 0; i < _lnBeamCount; i++) {
+            const angle = (Math.PI * 2 / _lnBeamCount) * i;
             engine.projectiles.push({
                 x: engine.player.x, y: engine.player.y,
                 vx: Math.cos(angle) * 400 * engine.player.projSpeedMult,
                 vy: Math.sin(angle) * 400 * engine.player.projSpeedMult,
                 radius: 8 * area,
                 damage: dmg * 0.5,
-                pierce: 5 + Math.floor(w.level/2),
-                life: 2,
+                pierce: 5 + Math.min(6, Math.floor(w.level / 2)),
+                life: 1.2,
                 color: '#ff00ff',
                 type: 'beam'
             });
@@ -400,7 +420,9 @@ export function fireWeaponLogic(engine, w) {
         //     "lash" is the weapon's identity per the description, shouldn't be RNG).
         //   • Lash damage tuned to 0.6 (not 1.0) since it now ALWAYS fires — net DPS
         //     roughly 2× the old expected value, putting it ahead of both parents.
-        const count = 2 + Math.floor(w.level / 2);
+        // Drone count capped at 7 (was 14 at lvl 25) — same rationale as
+        // orbitalLasers above (audit 2026-05-22).
+        const count = Math.min(7, 2 + Math.floor(w.level / 2));
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + engine.time * 4;
             const px = engine.player.x + Math.cos(angle) * (80 * area);
@@ -423,7 +445,10 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'orbitalLasers') {
-        const count = 2 + Math.floor(w.level / 2);
+        // Drone count capped at 7 (was 14 at lvl 25). Each drone runs TWO full
+        // enemy-list scans per cast — uncapped count produced thousands of
+        // distance calcs per fire-tick on dense fields (audit 2026-05-22).
+        const count = Math.min(7, 2 + Math.floor(w.level / 2));
         for(let i=0; i<count; i++) {
             const angle = (Math.PI * 2 / count) * i + engine.time * 2;
             const px = engine.player.x + Math.cos(angle) * (60 * area);
@@ -516,7 +541,8 @@ export function fireWeaponLogic(engine, w) {
                     radius: 30 * area,
                     damage: dmg * 0.4,
                     pierce: 999,
-                    life: 2.0 + (w.level * 0.5),
+                    // Pool life capped at 15s (audit 2026-05-22).
+                    life: Math.min(15, 2.0 + (w.level * 0.5)),
                     color: '#ff4500',
                     isAoe: true,
                     burn: true,
@@ -630,7 +656,7 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'hellfire') {
-        const r = 60 * area;
+        const r = capDamageRadius('hellfire', 60 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -638,7 +664,8 @@ export function fireWeaponLogic(engine, w) {
             visualRadius: getVisualRadius('hellfire', r),
             damage: dmg,
             pierce: 999,
-            life: 5 + w.level,
+            // Pool life capped at 15s (was up to 30s at lvl 25) (audit 2026-05-22).
+            life: Math.min(15, 5 + w.level),
             // Hellfire description says "Blue flames that persist" — was red (#ff0000)
             // which contradicted the description and clashed visually with napalm.
             // Deep sky blue distinguishes it from napalm mastery's lighter blue.
@@ -651,11 +678,15 @@ export function fireWeaponLogic(engine, w) {
         });
     }
     else if (w.id === 'quantumCollapse') {
-        const spawnCollapse = (multiplier, delay) => {
-            setTimeout(() => {
-                if (engine.isGameOver || engine.isVictory) return;
+        // setTimeout → engine.deferredSpawns. Original timers kept firing after
+        // game-over (the early-return guard caught it but the queue still ran).
+        // Engine-tick deferral is cleaner: spawns drain inside updateProjectiles,
+        // which won't run post game-over. Position captured at fire time, not
+        // cast time — matches original behavior (audit 2026-05-22).
+        const queueCollapse = (multiplier, delayMs) => {
+            const spawn = () => {
                 const r = 25 * area * multiplier;
-                engine.projectiles.push({
+                return {
                     x: engine.player.x, y: engine.player.y,
                     vx: 0, vy: 0,
                     radius: r,
@@ -668,12 +699,20 @@ export function fireWeaponLogic(engine, w) {
                     pulse: true,
                     type: 'quantum_collapse',
                     weaponId: 'quantumCollapse'
+                };
+            };
+            if (delayMs === 0) {
+                engine.projectiles.push(spawn());
+            } else {
+                (engine.deferredSpawns = engine.deferredSpawns || []).push({
+                    fireAt: engine.time + delayMs / 1000,
+                    spawn
                 });
-            }, delay);
+            }
         };
-        spawnCollapse(1.0, 0);
-        spawnCollapse(1.2, 300);
-        spawnCollapse(1.4, 600);
+        queueCollapse(1.0, 0);
+        queueCollapse(1.2, 300);
+        queueCollapse(1.4, 600);
     }
     else if (w.id === 'aegisMatrix') {
         // Evolves from shieldBubble whose mastered color is gold (#ffd700).
@@ -682,7 +721,7 @@ export function fireWeaponLogic(engine, w) {
         // Same epilepsy-safety pass as shieldBubble (Texxy 2026-05-20) — stacked
         // bursts on every cooldown created a strobing flashlight effect overlaying
         // the matrix. The dual-octagon rotation already signals activation.
-        const r = 120 * area;
+        const r = capDamageRadius('aegisMatrix', 120 * area);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -701,7 +740,9 @@ export function fireWeaponLogic(engine, w) {
         // Retaliation missiles — described in WEAPONS.aegisMatrix.desc but were never
         // implemented. Fires homing-style missiles at the nearest enemies in range
         // (bug reported by Hugo 2026-05-06). Count scales with weapon level.
-        const missileCount = 4 + Math.floor(w.level / 2);
+        // Missile count capped at 8 (was unbounded → 16 at lvl 25) to match the
+        // drone-cap pattern on buzzsawSwarm / orbitalDefense (audit 2026-05-22).
+        const missileCount = Math.min(8, 4 + Math.floor(w.level / 2));
         const targets = engine.enemies
             .map(e => ({ e, d: Math.hypot(e.x - engine.player.x, e.y - engine.player.y) }))
             .filter(t => t.d < 600 * area)
@@ -758,8 +799,11 @@ export function fireWeaponLogic(engine, w) {
                 radius: 25 * area,
                 damage: dmg,
                 pierce: 999,
-                chainCount: 15,
-                life: 6,
+                // chainCount 15→8, life 6s→4s. Original spawned 105 chain
+                // events per cast (7 blades × 15 chains, each with full-enemy
+                // scan). At max CDR, multiple casts overlapped (audit 2026-05-22).
+                chainCount: 8,
+                life: 4,
                 // Description says "Multiple massive BLADES that ricochet wildly" — the base
                 // Ricochet Blade is metallic silver, so the evolution should be a brighter
                 // chrome/steel, not red flames (Hugo audit 2026-05-12).
@@ -772,8 +816,8 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'toxicCloud') {
-        const baseRadius = 50 * area;
-        const maxRadius = baseRadius * 2;
+        const baseRadius = capDamageRadius('toxicCloud', 50 * area);
+        const maxRadius = capDamageRadius('toxicCloud', baseRadius * 2);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -789,7 +833,9 @@ export function fireWeaponLogic(engine, w) {
             growthRate: isMastered ? baseRadius / (4 + w.level) : 0,
             damage: dmg * 0.4,
             pierce: 999,
-            life: 4 + w.level,
+            // Pool life capped at 15s (was up to 29s at lvl 25). Combined with
+            // mastery growth, old clouds piled up dozens-deep (audit 2026-05-22).
+            life: Math.min(15, 4 + w.level),
             color: isMastered ? '#00ff00' : '#32cd32',
             isAoe: true,
             isMastered: isMastered,
@@ -815,7 +861,8 @@ export function fireWeaponLogic(engine, w) {
                     radius: 30 * area,
                     damage: dmg * 0.3,
                     pierce: 999,
-                    life: 2.5 + (w.level * 0.5),
+                    // Pool life capped at 15s (audit 2026-05-22).
+                    life: Math.min(15, 2.5 + (w.level * 0.5)),
                     color: '#00ff88',
                     isAoe: true,
                     type: 'toxic_cloud'

@@ -26,6 +26,21 @@ function sweptHit(px0, py0, px, py, ex, ey, r) {
 }
 
 export function updateProjectiles(engine, dt) {
+    // Drain deferred spawns whose fireAt has elapsed. Replaces the old
+    // setTimeout-based quantum-collapse / nova-pulse-echo pattern — those
+    // timers kept firing after game-over and were unbounded if many casts
+    // queued up (audit 2026-05-22).
+    if (engine.deferredSpawns && engine.deferredSpawns.length > 0) {
+        const now = engine.time;
+        engine.deferredSpawns = engine.deferredSpawns.filter(d => {
+            if (now >= d.fireAt) {
+                engine.projectiles.push(d.spawn());
+                return false;
+            }
+            return true;
+        });
+    }
+
     engine.projectiles = engine.projectiles.filter(p => {
         if (p.dead) return false;
         // Capture pre-move position so collision checks can sweep the full path
@@ -40,8 +55,14 @@ export function updateProjectiles(engine, dt) {
         p.life -= dt;
         if (p.rotSpeed) p.rotation = (p.rotation || 0) + p.rotSpeed * dt;
 
-        // Trails
-        if (!p.isAoe && engine.frameCount % 2 === 0) {
+        // Trails. Throttled to every 4th frame for heavy-spam weapons when
+        // many projectiles are alive — trail particles were the dominant
+        // particle source on Laser Nova / Orbital Defense screen-crashes
+        // (audit 2026-05-22).
+        const _heavyLoad = engine.projectiles.length > 80;
+        const _isHeavyTrail = p.weaponId === 'laserNova' || p.weaponId === 'orbitalDefense' || p.weaponId === 'orbitalLasers';
+        const _trailEvery = (_heavyLoad && _isHeavyTrail) ? 4 : 2;
+        if (!p.isAoe && engine.frameCount % _trailEvery === 0) {
             if (p.type === 'dual_laser') engine.addParticle(p.x, p.y, p.color, 1, 'spark', 0.5);
             else if (p.type === 'lightning') engine.addParticle(p.x + (Math.random()-0.5)*10, p.y + (Math.random()-0.5)*10, p.color, 1, 'spark', 0.8);
             else if (p.type === 'glitch_slash') engine.addParticle(p.x, p.y, p.color, 2, 'spark', 1.0);
@@ -337,6 +358,15 @@ export function updateProjectiles(engine, dt) {
         }
         return p.life > 0;
     });
+
+    // Global projectile soft cap. Any unbounded weapon-stacking edge case
+    // (current or future) gets caught here — once we cross 200 active
+    // projectiles, drop the oldest to keep the per-frame iterate+filter
+    // cost bounded. The cap is high enough that no legit build hits it
+    // (audit 2026-05-22).
+    if (engine.projectiles.length > 200) {
+        engine.projectiles.splice(0, engine.projectiles.length - 200);
+    }
 
     if (engine.enemyProjectiles) {
         engine.enemyProjectiles = engine.enemyProjectiles.filter(p => {
