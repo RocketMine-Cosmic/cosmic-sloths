@@ -22,8 +22,6 @@ export function drawBuffAuras(ctx, player, time) {
     // shield is up" feedback from the 2026-05-22 Discord thread
     // (Simon/Texxy/RocketMine). Drawn BEFORE the titleBuff section so the
     // shield appears even when the player has no equipped-title buffs.
-    // FIXED 2026-05-22: Use 'source-over' instead of 'lighter' to prevent
-    // occlusion of weapon effects (Anubis bug: Quantum Collapse rings trapped in shield).
     const iFramesRemaining = Math.max(player.iFrames || 0, player.invincibleTimer || 0);
     if (iFramesRemaining > 0) {
         const pulse = (Math.sin(time * 9) + 1) * 0.5; // fast pulse — communicates urgency

@@ -683,6 +683,16 @@ export function fireWeaponLogic(engine, w) {
         // Engine-tick deferral is cleaner: spawns drain inside updateProjectiles,
         // which won't run post game-over. Position captured at fire time, not
         // cast time — matches original behavior (audit 2026-05-22).
+        // FIXED 2026-05-22 (Anubis Discord): visualRadius was using the
+        // wrong pattern — passing the start radius to getVisualRadius meant
+        // it was either `undefined` (no cap) or LOCKED to the cap forever.
+        // Combined with ProjectileSystem only growing visualRadius when BOTH
+        // visualRadius AND visualMaxRadius are set, the ring's visual got
+        // pinned at 180px while the damage hitbox kept growing — so the
+        // expanding outward rings appeared trapped inside any Bubble Shield
+        // (320px visual cap). Mirror the novaPulse / laserNova pattern:
+        // initial visualRadius = damage radius, separate visualMaxRadius cap.
+        const qcVisCap = getVisualRadius('quantumCollapse', 9999);
         const queueCollapse = (multiplier, delayMs) => {
             const spawn = () => {
                 const r = 25 * area * multiplier;
@@ -690,7 +700,8 @@ export function fireWeaponLogic(engine, w) {
                     x: engine.player.x, y: engine.player.y,
                     vx: 0, vy: 0,
                     radius: r,
-                    visualRadius: getVisualRadius('quantumCollapse', r),
+                    visualRadius: r,
+                    visualMaxRadius: qcVisCap,
                     damage: dmg * multiplier,
                     pierce: 999,
                     life: 1.0,
