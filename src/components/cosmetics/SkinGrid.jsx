@@ -150,7 +150,7 @@ export default function SkinGrid({
                                             >
                                                 {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? (
                                                     <>
-                                                        <span className="flex items-center gap-1"><GmtIcon className="w-5 h-5" /> {gmtCost.toFixed(2)} GMT</span>
+                                                        <span className="flex items-center gap-1"><GmtIcon className="w-7 h-7" /> {gmtCost.toFixed(2)} GMT</span>
                                                         {usdCost > 0 && <span className="text-[10px] opacity-80">≈ ${usdCost.toFixed(2)}</span>}
                                                     </>
                                                 ) : 'Loading…'}
