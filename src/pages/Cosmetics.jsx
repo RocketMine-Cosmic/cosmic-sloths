@@ -38,23 +38,28 @@ export default function Cosmetics({ isCarousel }) {
     const [purchasing, setPurchasing] = useState(false);
     const [purchaseError, setPurchaseError] = useState(null);
     const [claimingSkinId, setClaimingSkinId] = useState(null);
-    const [gmtPrices, setGmtPrices] = useState({}); // SKU → GMT cost
+    // Flat $2.50 USD per cosmetic — we convert to GMT using the live USD spot
+    // price from getTokenPrices. Single number since all cosmetic SKUs share
+    // the same dollar price.
+    const [gmtCost, setGmtCost] = useState(0);
 
     useEffect(() => { ensureNftsFetched(); }, []);
 
-    // Fetch GMT pricing for cosmetics from getTokenPrices backend function
+    // Convert flat $2.50 cosmetic price into GMT using live spot price.
     useEffect(() => {
-        const fetchGmtPrices = async () => {
+        const COSMETIC_USD_PRICE = 2.50;
+        const fetchGmtPrice = async () => {
             try {
-                const res = await base44.functions.invoke('getTokenPrices', { tokenType: 'GMT' });
-                if (res.data?.prices) {
-                    setGmtPrices(res.data.prices);
+                const res = await base44.functions.invoke('getTokenPrices', {});
+                const gmtUsd = res.data?.prices?.GMT?.usd;
+                if (typeof gmtUsd === 'number' && gmtUsd > 0) {
+                    setGmtCost(COSMETIC_USD_PRICE / gmtUsd);
                 }
             } catch (err) {
-                console.error('[Cosmetics] Failed to fetch GMT prices:', err?.message);
+                console.error('[Cosmetics] Failed to fetch GMT price:', err?.message);
             }
         };
-        fetchGmtPrices();
+        fetchGmtPrice();
     }, []);
 
     useEffect(() => {
@@ -218,10 +223,8 @@ export default function Cosmetics({ isCarousel }) {
     };
 
     const handleConfirmTokenPurchase = (cosmetic, slot) => {
-        // Flat GMT pricing — show GMT cost (not OMENX tokenCost) in the confirmation modal.
-        const skuId = getCosmeticSku(slot);
-        const gmtCost = gmtPrices[skuId] || 0;
-        confirmPurchase(gmtCost, `${cosmetic.name} (GMT)`, () => handleBuyCosmetic(cosmetic, slot, 'token'));
+        // Flat GMT pricing — show GMT cost in the confirmation modal.
+        confirmPurchase(gmtCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, slot, 'token'));
     };
 
     const handleClaimQuestSkin = async (skin) => {
@@ -355,7 +358,7 @@ export default function Cosmetics({ isCarousel }) {
                                 previewSkinColor={previewSkinColor}
                                 setPreviewSkinColor={setPreviewSkinColor}
                                 omenxBalance={omenxBalance}
-                                gmtPrices={gmtPrices}
+                                gmtCost={gmtCost}
                                 omenxBlocked={omenxBlocked}
                                 omenxBlockedMsg={omenxBlockedMsg}
                                 purchasing={purchasing}
@@ -373,7 +376,7 @@ export default function Cosmetics({ isCarousel }) {
                                 freeId={cosmeticTab === 'trail' ? 'default' : 'none'}
                                 equippedId={cosmeticTab === 'trail' ? equippedTrail : equippedKill}
                                 omenxBalance={omenxBalance}
-                                gmtPrices={gmtPrices}
+                                gmtCost={gmtCost}
                                 omenxBlocked={omenxBlocked}
                                 omenxBlockedMsg={omenxBlockedMsg}
                                 purchasing={purchasing}
@@ -399,6 +402,7 @@ export default function Cosmetics({ isCarousel }) {
                         onConfirm={pending.onConfirm}
                         onCancel={pending.onCancel}
                         pageId="cosmetics-page"
+                        currency="GMT"
                     />
                 )}
             </div>

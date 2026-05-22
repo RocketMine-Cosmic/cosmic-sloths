@@ -13,7 +13,7 @@ function OmenXIcon({ className }) {
  */
 export default function CosmeticGrid({
     list, slot, save, unlockKey, freeId, equippedId,
-    omenxBalance, gmtPrices, omenxBlocked, omenxBlockedMsg, purchasing,
+    omenxBalance, gmtCost, omenxBlocked, omenxBlockedMsg, purchasing,
     onBuy, onPreview, onConfirmTokenPurchase,
 }) {
     return (
@@ -73,9 +73,7 @@ export default function CosmeticGrid({
                                         <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
                                     </button>
                                     {cosmetic.tokenCost > 0 && (() => {
-                                        // Flat GMT pricing — one SKU per slot (trail/kill/skin).
-                                        const skuId = slot === 'trail' ? 'cosmetic-gmt-1' : 'cosmetic-gmt-2';
-                                        const gmtCost = gmtPrices[skuId] || 0;
+                                        // Flat GMT pricing — same GMT amount for every cosmetic.
                                         const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
                                         return (
                                             <button
@@ -88,7 +86,7 @@ export default function CosmeticGrid({
                                                     'bg-slate-900 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toLocaleString()} GMT</> : 'TBA'}
+                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toFixed(2)} GMT</> : 'Loading…'}
                                             </button>
                                         );
                                     })()}

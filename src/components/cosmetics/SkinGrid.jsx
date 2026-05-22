@@ -16,7 +16,7 @@ const QUEST_POINTS_PER_SKIN = 100;
 export default function SkinGrid({
     save, unlockedChars, skinCharIndex, setSkinCharIndex,
     previewSkinColor, setPreviewSkinColor,
-    omenxBalance, gmtPrices, omenxBlocked, omenxBlockedMsg, purchasing,
+    omenxBalance, gmtCost, omenxBlocked, omenxBlockedMsg, purchasing,
     claimingSkinId, onBuy, onClaimQuest, onConfirmTokenPurchase,
 }) {
     const currentChar = CHARACTERS.find(c => c.id === unlockedChars[skinCharIndex % unlockedChars.length]) || CHARACTERS[0];
@@ -146,8 +146,7 @@ export default function SkinGrid({
                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                             </button>
                                             {skin.tokenCost > 0 && (() => {
-                                                // Flat GMT pricing — skins use cosmetic-gmt-3.
-                                                const gmtCost = gmtPrices['cosmetic-gmt-3'] || 0;
+                                                // Flat GMT pricing — same GMT amount for every cosmetic.
                                                 const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
                                                 return (
                                                     <button
@@ -160,7 +159,7 @@ export default function SkinGrid({
                                                             'bg-slate-900 text-slate-500 border border-slate-700'
                                                         }`}
                                                     >
-                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toLocaleString()} GMT</> : 'TBA'}
+                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toFixed(2)} GMT</> : 'Loading…'}
                                                     </button>
                                                 );
                                             })()}
