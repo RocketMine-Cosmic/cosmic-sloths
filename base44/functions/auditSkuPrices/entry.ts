@@ -103,12 +103,24 @@ Deno.serve(async (req) => {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data?.products || data?.skus || data?.items || []);
 
-        // Build live price map
+        // Build live price map (OMENX-denominated SKUs)
         const livePrices = {};
+        // Full price-currency map for diagnostic purposes — used to surface
+        // GMT-denominated SKUs (cosmetic-gmt-*, gmt-donation-*) whose price
+        // isn't in OMENX and so wouldn't show up in livePrices.
+        const liveFullDetails = {};
         for (const sku of list) {
             const id = sku.sku || sku.skuId || sku.id || sku.productId;
             const price = parseFloat(sku.pricesInCurrency?.OMENX ?? sku.priceInOmenx ?? sku.price ?? 0);
-            if (id) livePrices[id] = price;
+            if (id) {
+                livePrices[id] = price;
+                liveFullDetails[id] = {
+                    pricesInCurrency: sku.pricesInCurrency || null,
+                    priceUsd: sku.priceUsd ?? sku.priceUSD ?? sku.usdPrice ?? null,
+                    name: sku.name || null,
+                    type: sku.type || sku.productType || null,
+                };
+            }
         }
 
         // Compare
@@ -125,11 +137,16 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Live SKUs we don't know about locally
+        // Live SKUs we don't know about locally — include full price detail
+        // so we can see GMT-denominated SKU pricing (which isn't in OMENX).
         const extraOnLive = [];
         for (const [skuId, live] of Object.entries(livePrices)) {
             if (!(skuId in EXPECTED_PRICES)) {
-                extraOnLive.push({ skuId, live });
+                extraOnLive.push({
+                    skuId,
+                    live,
+                    details: liveFullDetails[skuId] || null,
+                });
             }
         }
 
