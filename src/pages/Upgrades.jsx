@@ -28,6 +28,7 @@ import BuyAllStatsButton from '../components/upgrades/BuyAllStatsButton';
 import BuyAllWeaponStatsButton from '../components/upgrades/BuyAllWeaponStatsButton';
 import BuyAllStatsGoldButton from '../components/upgrades/BuyAllStatsGoldButton';
 import BuyAllWeaponStatsGoldButton from '../components/upgrades/BuyAllWeaponStatsGoldButton';
+import WeaponSynergyInfo from '../components/upgrades/WeaponSynergyInfo';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
@@ -773,6 +774,9 @@ export default function Upgrades({ isCarousel }) {
                             </div>
                         </div>
                         <p className="text-slate-400 text-xs md:text-sm">{weapon.desc}</p>
+                        {/* Per-weapon synergy + evolution preview (Simon/Texxy Discord ask 2026-05-22).
+                            Renders nothing when there are no combos for this weapon. */}
+                        <WeaponSynergyInfo weaponId={weapon.id} save={save} />
                         {isMastered && (
                             <p className="text-yellow-300 text-xs md:text-sm font-bold mt-2">✨ {weapon.masteryDesc}</p>
                         )}
