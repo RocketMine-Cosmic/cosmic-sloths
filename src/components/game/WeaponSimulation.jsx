@@ -201,6 +201,14 @@ export default function WeaponSimulation({ weaponId, isMastered }) {
                     });
                 } else if (p.pulse) {
                     p.radius += 500 * dt;
+                    // Mirror ProjectileSystem.js — grow visualRadius in lockstep,
+                    // clamped to visualMaxRadius. Without this, novaPulse / QC
+                    // spawn with visualRadius=initial and the renderer caps the
+                    // drawn radius at that initial tiny value (Anubis bug 2026-05-22:
+                    // "Nova Pulse looks like a single dot in preview").
+                    if (p.visualRadius != null && p.visualMaxRadius != null) {
+                        p.visualRadius = Math.min(p.visualMaxRadius, p.visualRadius + 500 * dt);
+                    }
                 } else if (p.pushback) {
                     p.x = mockEngine.player.x;
                     p.y = mockEngine.player.y;
