@@ -48,10 +48,15 @@ Deno.serve(async (req) => {
             });
             if (res.ok) {
                 const data = await res.json();
-                const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
-                const gmtToken = data?.balances?.tokens?.find(t => t.symbol === 'GMT');
+                const tokens = data?.balances?.tokens || [];
+                const omenxToken = tokens.find(t => t.symbol === 'OMENX');
+                // Match GMT case-insensitively in case the API returns 'gmt' or 'Gmt'.
+                const gmtToken = tokens.find(t => t.symbol?.toUpperCase() === 'GMT');
                 const balance = parseFloat(omenxToken?.balance ?? '0');
                 const gmtBalance = parseFloat(gmtToken?.balance ?? '0');
+                if (!gmtToken) {
+                    console.log('[getPlayerBalance] No GMT token. Symbols returned:', tokens.map(t => t.symbol).join(', '));
+                }
                 return Response.json({ balance, gmtBalance, ok: true });
             }
             lastStatus = res.status;
