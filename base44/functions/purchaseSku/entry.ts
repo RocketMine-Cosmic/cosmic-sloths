@@ -290,19 +290,12 @@ async function getSkuPrice(skuId, apiBaseUrl, apiKeys, forceRefresh = false) {
     return skuPriceCache[skuId] || 0;
 }
 
-// Cosmetic SKU ↔ goldCost binding — MUST mirror lib/skuMap.js. Used to verify the
-// SKU the player is actually paying for matches the cosmeticId being granted, so
-// a cheap SKU can't unlock an expensive cosmetic via tampered grantInfo.
-const COSMETIC_SKU_COSTS = {
-    'character-trails-basic':           3000,
-    'character-trails-advanced':        10000,
-    'character-trails-epic':            20000,
-    'character-trails-leg':             30000,
-    'character-kill-effects-basic':     3000,
-    'character-kill-effects-advanced':  12000,
-    'character-kill-effects-epic':      25000,
-    'character-skins-basic':            5000,
-    'character-skins-advance':          20000,
+// Cosmetic SKU ↔ slot binding — MUST mirror lib/skuMap.js. Flat GMT pricing
+// (2026-05-22) means one SKU per slot, no goldCost-tier check needed.
+const COSMETIC_SKU_BY_SLOT = {
+    trail: 'cosmetic-gmt-1',
+    kill:  'cosmetic-gmt-2',
+    skin:  'cosmetic-gmt-3',
 };
 
 // If the player's stored container is from a previous week/season, return a
@@ -436,26 +429,12 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
         }
         case 'cosmetic': {
             // grantInfo: { type, slot: 'trail'|'kill'|'skin', cosmeticId, charId?, goldCost }
-            const { slot, cosmeticId, charId, goldCost } = grantInfo;
-            const validPrefixes = {
-                trail: ['character-trails-'],
-                kill:  ['character-kill-effects-'],
-                skin:  ['character-skins-'],
-            };
-            const ok = (validPrefixes[slot] || []).some(p => skuId.startsWith(p));
-            if (!ok) throw new Error(`This cosmetic doesn't match the slot. Please refresh and try again.`);
-            // COSMETICS ARE GMT-ONLY — exclude from the OMENX player/staff payout pool.
-            // This ensures cosmetic revenue goes entirely to developer support, not back
-            // to the player base (per docs/COSMETICS_GMT_PRICING.md).
-            isAdminPurchase = true; // Reuse admin-exclusion logic for cosmetics
-            // Verify the SKU's goldCost-tier matches grantInfo.goldCost — prevents
-            // buying a cheap SKU and granting an expensive cosmetic via tampered grant.
-            const skuGoldCost = COSMETIC_SKU_COSTS[skuId];
-            if (skuGoldCost === undefined) {
-                throw new Error(`This cosmetic SKU isn't recognised. Please refresh and try again.`);
-            }
-            if (Number(goldCost) !== skuGoldCost) {
-                throw new Error(`This cosmetic doesn't match the SKU price. Please refresh and try again.`);
+            const { slot, cosmeticId, charId } = grantInfo;
+            // Flat GMT pricing — verify SKU matches the requested slot exactly.
+            const expectedSku = COSMETIC_SKU_BY_SLOT[slot];
+            if (!expectedSku) throw new Error(`This cosmetic slot isn't supported. Please refresh and try again.`);
+            if (skuId !== expectedSku) {
+                throw new Error(`This cosmetic doesn't match the SKU. Please refresh and try again.`);
             }
 
             if (slot === 'trail') {

@@ -73,7 +73,9 @@ export default function CosmeticGrid({
                                         <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
                                     </button>
                                     {cosmetic.tokenCost > 0 && (() => {
-                                        const gmtCost = gmtPrices[`cosmetic-${slot}-${cosmetic.name}`] || 0;
+                                        // Flat GMT pricing — one SKU per slot (trail/kill/skin).
+                                        const skuId = slot === 'trail' ? 'cosmetic-gmt-1' : 'cosmetic-gmt-2';
+                                        const gmtCost = gmtPrices[skuId] || 0;
                                         const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
                                         return (
                                             <button

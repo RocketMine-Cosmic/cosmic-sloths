@@ -146,7 +146,8 @@ export default function SkinGrid({
                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                             </button>
                                             {skin.tokenCost > 0 && (() => {
-                                                const gmtCost = gmtPrices[`skin-${skin.name}`] || 0;
+                                                // Flat GMT pricing — skins use cosmetic-gmt-3.
+                                                const gmtCost = gmtPrices['cosmetic-gmt-3'] || 0;
                                                 const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
                                                 return (
                                                     <button

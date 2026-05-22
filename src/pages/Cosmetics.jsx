@@ -218,7 +218,10 @@ export default function Cosmetics({ isCarousel }) {
     };
 
     const handleConfirmTokenPurchase = (cosmetic, slot) => {
-        confirmPurchase(cosmetic.tokenCost, cosmetic.name, () => handleBuyCosmetic(cosmetic, slot, 'token'));
+        // Flat GMT pricing — show GMT cost (not OMENX tokenCost) in the confirmation modal.
+        const skuId = getCosmeticSku(slot);
+        const gmtCost = gmtPrices[skuId] || 0;
+        confirmPurchase(gmtCost, `${cosmetic.name} (GMT)`, () => handleBuyCosmetic(cosmetic, slot, 'token'));
     };
 
     const handleClaimQuestSkin = async (skin) => {
