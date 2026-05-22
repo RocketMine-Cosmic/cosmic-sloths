@@ -49,8 +49,10 @@ Deno.serve(async (req) => {
             if (res.ok) {
                 const data = await res.json();
                 const omenxToken = data?.balances?.tokens?.find(t => t.symbol === 'OMENX');
+                const gmtToken = data?.balances?.tokens?.find(t => t.symbol === 'GMT');
                 const balance = parseFloat(omenxToken?.balance ?? '0');
-                return Response.json({ balance, ok: true });
+                const gmtBalance = parseFloat(gmtToken?.balance ?? '0');
+                return Response.json({ balance, gmtBalance, ok: true });
             }
             lastStatus = res.status;
             // Only fall through to the next key on rate-limit / server errors. Other errors

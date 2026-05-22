@@ -44,6 +44,7 @@ let userFetched = false;
 if (persistedBalance || persistedVip || persistedNfts) {
     cachedData = {
         balance: persistedBalance?.balance ?? 0,
+        gmtBalance: persistedBalance?.gmtBalance ?? 0,
         vipLevel: persistedVip?.vipLevel ?? 0,
         nfts: persistedNfts?.nfts ?? [],
     };
@@ -66,7 +67,7 @@ function getAuthData() {
 
 function notify() { listeners.forEach(fn => fn(cachedData)); }
 function applyData(patch) {
-    cachedData = { ...(cachedData || { balance: 0, vipLevel: 0, nfts: [] }), ...patch };
+    cachedData = { ...(cachedData || { balance: 0, gmtBalance: 0, vipLevel: 0, nfts: [] }), ...patch };
     notify();
 }
 
@@ -92,9 +93,10 @@ async function fetchBalance(force = false) {
                 return;
             }
             const balance = res.data?.balance ?? 0;
+            const gmtBalance = res.data?.gmtBalance ?? 0;
             lastBalanceFetchAt = Date.now();
-            saveJSON('omenx_balance_cache', { balance, timestamp: lastBalanceFetchAt });
-            applyData({ balance });
+            saveJSON('omenx_balance_cache', { balance, gmtBalance, timestamp: lastBalanceFetchAt });
+            applyData({ balance, gmtBalance });
         } catch (e) {
             console.error('[playerDataCache] balance fetch failed:', e?.message);
         } finally {
@@ -326,6 +328,7 @@ export function subscribePlayerData(fn) {
             const freshNfts = loadJSON('omenx_nft_cache');
             cachedData = {
                 balance: 0,
+                gmtBalance: 0,
                 vipLevel: freshVip?.vipLevel ?? 0,
                 nfts: freshNfts?.nfts ?? [],
             };

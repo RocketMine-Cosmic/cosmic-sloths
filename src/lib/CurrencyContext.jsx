@@ -7,6 +7,7 @@ const CurrencyContext = createContext();
 export const CurrencyProvider = ({ children }) => {
   const [save, setSave] = useState(SaveManager.load());
   const [omenxBalance, setOmenxBalance] = useState(null);
+  const [gmtBalance, setGmtBalance] = useState(null);
   const [vipLevel, setVipLevel] = useState(0);
   const [nfts, setNfts] = useState([]);
   const [omenxUser, setOmenxUser] = useState(null);
@@ -16,6 +17,7 @@ export const CurrencyProvider = ({ children }) => {
     const unsub = subscribePlayerData((data) => {
       if (data) {
         setOmenxBalance(data.balance ?? null);
+        setGmtBalance(data.gmtBalance ?? null);
         setVipLevel(data.vipLevel ?? 0);
         setNfts(data.nfts ?? []);
         if (data.user) setOmenxUser(data.user);
@@ -105,7 +107,7 @@ export const CurrencyProvider = ({ children }) => {
   }, [omenxUser, save]);
 
   return (
-    <CurrencyContext.Provider value={{ save, omenxBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, nfts, omenxUser }}>
+    <CurrencyContext.Provider value={{ save, omenxBalance, gmtBalance, loading, refresh: () => fetchPlayerData(true), vipLevel, nfts, omenxUser }}>
       {children}
     </CurrencyContext.Provider>
   );

@@ -13,7 +13,7 @@ import { getCosmeticSku } from '@/lib/skuMap';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import OmenXGate from '../components/game/OmenXGate';
 import SpaceBackground from '../components/game/SpaceBackground';
-import GmtHeader from '../components/cosmetics/GmtHeader';
+import CurrencyHeader from '../components/game/CurrencyHeader';
 import CosmeticPreview from '../components/game/CosmeticPreview';
 import CosmeticGrid from '../components/cosmetics/CosmeticGrid';
 import SkinGrid from '../components/cosmetics/SkinGrid';
@@ -286,7 +286,7 @@ export default function Cosmetics({ isCarousel }) {
                             </h1>
                             <p className="text-slate-400 mt-0.5 md:text-sm text-xs tracking-widest uppercase">Trails, kill effects &amp; pilot skins.</p>
                         </div>
-                        <GmtHeader />
+                        <CurrencyHeader omenxAs="GMT" />
                     </header>
 
                     {/* Dev-support banner — sets the cosmetics-as-tip framing per
