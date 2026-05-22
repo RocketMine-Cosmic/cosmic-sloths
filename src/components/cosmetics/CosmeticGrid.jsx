@@ -1,5 +1,4 @@
 import React from 'react';
-import { Coins } from 'lucide-react';
 
 function GmtIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6e704606_4694-1734211863980.webp" className={className} alt="GMT" />;
@@ -60,37 +59,24 @@ export default function CosmeticGrid({
                                 >
                                     👁 Preview
                                 </button>
-                                <div className="flex gap-1.5">
-                                    <button
-                                        onClick={() => onBuy(cosmetic, slot, 'gold')}
-                                        disabled={!canAffordGold || purchasing}
-                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                            canAffordGold && !purchasing
-                                                ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900'
-                                                : 'bg-slate-900 text-slate-500 border border-slate-700'
-                                        }`}
-                                    >
-                                        <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
-                                    </button>
-                                    {cosmetic.tokenCost > 0 && (() => {
-                                        // Flat GMT pricing — same GMT amount for every cosmetic.
-                                        const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
-                                        return (
-                                            <button
-                                                onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(cosmetic, slot)}
-                                                disabled={!canAffordGmt || purchasing || omenxBlocked}
-                                                title={omenxBlocked ? (omenxBlockedMsg || 'GMT purchases are temporarily disabled.') : undefined}
-                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                                    omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
-                                                    canAffordGmt && !purchasing ? 'bg-orange-600 hover:bg-orange-500 text-white' :
-                                                    'bg-slate-900 text-slate-500 border border-slate-700'
-                                                }`}
-                                            >
-                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-6 h-6" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
-                                            </button>
-                                        );
-                                    })()}
-                                </div>
+                                {cosmetic.tokenCost > 0 && (() => {
+                                    // Flat GMT pricing — same GMT amount for every cosmetic.
+                                    const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
+                                    return (
+                                        <button
+                                            onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(cosmetic, slot)}
+                                            disabled={!canAffordGmt || purchasing || omenxBlocked}
+                                            title={omenxBlocked ? (omenxBlockedMsg || 'GMT purchases are temporarily disabled.') : undefined}
+                                            className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
+                                                canAffordGmt && !purchasing ? 'bg-orange-600 hover:bg-orange-500 text-white' :
+                                                'bg-slate-900 text-slate-500 border border-slate-700'
+                                            }`}
+                                        >
+                                            {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-12 h-12" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
+                                        </button>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>

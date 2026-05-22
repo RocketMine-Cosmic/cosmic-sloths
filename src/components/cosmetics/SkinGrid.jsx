@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Coins, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { CHARACTERS, SKIN_COSMETICS } from '../../game/Constants';
 import { SoundManager } from '../../game/SoundManager';
 
@@ -84,8 +84,6 @@ export default function SkinGrid({
                 {charSkins.map(skin => {
                     const isOwned = skin.goldCost === 0 || unlockedSkins.includes(skin.id);
                     const isEquipped = equippedSkinId === skin.id;
-                    const canAffordGold = save.gold >= skin.goldCost;
-                    const canAffordToken = (omenxBalance ?? 0) >= skin.tokenCost;
 
                     return (
                         <div key={skin.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
@@ -136,35 +134,24 @@ export default function SkinGrid({
                                                 {isClaimingThis ? '…' : canClaim ? <>🏆 Claim ({QUEST_POINTS_PER_SKIN} Pts)</> : <><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {points} / {QUEST_POINTS_PER_SKIN} Pts</>}
                                             </button>
                                         );
-                                    })() : (
-                                        <div className="flex gap-1.5">
+                                    })() : (skin.tokenCost > 0 && (() => {
+                                        // Flat GMT pricing — same GMT amount for every cosmetic.
+                                        const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
+                                        return (
                                             <button
-                                                onClick={() => onBuy(skin, 'skin', 'gold')}
-                                                disabled={!canAffordGold || purchasing}
-                                                className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
+                                                onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(skin, 'skin')}
+                                                disabled={!canAffordGmt || purchasing || omenxBlocked}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'GMT purchases are temporarily disabled.') : undefined}
+                                                className={`w-full py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
+                                                    omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
+                                                    canAffordGmt && !purchasing ? 'bg-orange-600 hover:bg-orange-500 text-white' :
+                                                    'bg-slate-900 text-slate-500 border border-slate-700'
+                                                }`}
                                             >
-                                                <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
+                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-12 h-12" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
                                             </button>
-                                            {skin.tokenCost > 0 && (() => {
-                                                // Flat GMT pricing — same GMT amount for every cosmetic.
-                                                const canAffordGmt = (omenxBalance ?? 0) >= gmtCost;
-                                                return (
-                                                    <button
-                                                        onClick={() => !purchasing && !omenxBlocked && onConfirmTokenPurchase(skin, 'skin')}
-                                                        disabled={!canAffordGmt || purchasing || omenxBlocked}
-                                                        title={omenxBlocked ? (omenxBlockedMsg || 'GMT purchases are temporarily disabled.') : undefined}
-                                                        className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
-                                                            omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
-                                                            canAffordGmt && !purchasing ? 'bg-orange-600 hover:bg-orange-500 text-white' :
-                                                            'bg-slate-900 text-slate-500 border border-slate-700'
-                                                        }`}
-                                                    >
-                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-6 h-6" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
-                                                    </button>
-                                                );
-                                            })()}
-                                        </div>
-                                    )}
+                                        );
+                                    })())}
                                 </div>
                             )}
                         </div>
