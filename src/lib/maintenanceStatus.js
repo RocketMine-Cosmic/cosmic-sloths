@@ -66,7 +66,12 @@ async function fetchWithRetry() {
             lastErr = err;
             const status = err?.response?.status || err?.status;
             const msg = String(err?.message || '').toLowerCase();
-            const isTransient = status === 429 || status === 502 || status === 503 || status === 504 || msg.includes('rate limit');
+            // 404 is classified as transient: per Base44 docs, an existing function
+            // can briefly 404 during the app-redeploy routing-table swap window or
+            // when a Deno isolate cold-start fails (ISOLATE_INTERNAL_FAILURE). The
+            // function code itself is fine — a quick retry resolves it.
+            const isTransient = status === 404 || status === 429 || status === 502 || status === 503 || status === 504
+                || msg.includes('rate limit') || msg.includes('not found');
             if (!isTransient || attempt === delays.length) throw err;
             await new Promise(r => setTimeout(r, delays[attempt]));
         }

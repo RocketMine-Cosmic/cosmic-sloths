@@ -152,7 +152,34 @@ export const SaveManager = {
           return;
         }
 
-        const res = await base44.functions.invoke('loadSave', {});
+        // loadSave can briefly 404 during the app-redeploy routing-table swap
+        // window or when a Deno isolate cold-start fails. Without a retry, a
+        // single transient 404 here leaves the player on local-only data for
+        // the entire session (very bad — they don't see their cloud progress).
+        // Mirrors the retry policy used in lib/maintenanceStatus.js.
+        let res;
+        {
+            const retryDelays = [400, 900, 1800];
+            let lastErr = null;
+            for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
+                try {
+                    res = await base44.functions.invoke('loadSave', {});
+                    lastErr = null;
+                    break;
+                } catch (err) {
+                    lastErr = err;
+                    const status = err?.status || err?.response?.status;
+                    const msg = String(err?.message || '').toLowerCase();
+                    const isTransient = status === 404 || status === 429
+                        || (status >= 502 && status <= 504)
+                        || msg.includes('rate limit') || msg.includes('not found');
+                    if (!isTransient || attempt === retryDelays.length) throw err;
+                    console.warn(`[SaveManager] loadSave transient ${status || msg} — retry ${attempt + 1}/${retryDelays.length}`);
+                    await new Promise(r => setTimeout(r, retryDelays[attempt] + Math.random() * 200));
+                }
+            }
+            if (lastErr) throw lastErr;
+        }
         const response = res.data;
 
         // ---- Wipe-epoch check ----
@@ -331,22 +358,35 @@ export const SaveManager = {
       for (const k of SERVER_OWNED) delete payload[k];
 
       const { base44 } = await import('@/api/base44Client');
-      // 429-aware retry: if Base44 rate-limits us, back off briefly and try
-      // ONCE more before giving up. Avoids "syncFailed" banners flashing for
-      // players when the dashboard or another admin is hammering the API.
+      // Transient-aware retry: 429 (rate limit), 404 (function temporarily
+      // unreachable during app redeploy / isolate cold-start), and 502-504
+      // (upstream hiccup) all back off and retry. Previously only 429 was
+      // handled, so a single 404 during a deploy window would count toward the
+      // 3-strike syncFailed counter and flash a "sync failed" banner at the
+      // player even though the function code itself is fine. Backoff matches
+      // maintenanceStatus / syncSave server-side: 400/900/1800ms + jitter.
       let res;
-      try {
-        res = await base44.functions.invoke('syncSave', { saveData: payload });
-      } catch (err) {
-        const status = err?.status || err?.response?.status;
-        const msg = String(err?.message || '').toLowerCase();
-        const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
-        if (is429) {
-          await new Promise(r => setTimeout(r, 1500 + Math.random() * 1000));
-          res = await base44.functions.invoke('syncSave', { saveData: payload });
-        } else {
-          throw err;
+      {
+        const retryDelays = [400, 900, 1800];
+        let lastErr = null;
+        for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
+          try {
+            res = await base44.functions.invoke('syncSave', { saveData: payload });
+            lastErr = null;
+            break;
+          } catch (err) {
+            lastErr = err;
+            const status = err?.status || err?.response?.status;
+            const msg = String(err?.message || '').toLowerCase();
+            const isTransient = status === 404 || status === 429
+              || (status >= 502 && status <= 504)
+              || msg.includes('rate limit') || msg.includes('not found');
+            if (!isTransient || attempt === retryDelays.length) throw err;
+            console.warn(`[SaveManager] syncSave transient ${status || msg} — retry ${attempt + 1}/${retryDelays.length}`);
+            await new Promise(r => setTimeout(r, retryDelays[attempt] + Math.random() * 200));
+          }
         }
+        if (lastErr) throw lastErr;
       }
       if (res.data?.error) {
         console.warn('[SaveManager] Sync failed:', res.data.error);
