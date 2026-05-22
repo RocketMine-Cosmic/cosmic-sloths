@@ -87,6 +87,18 @@ function isInRunSku(skuId) {
     return IN_RUN_SKU_PREFIXES.some(p => skuId === p || skuId.startsWith(p));
 }
 
+// GMT-denominated SKUs (cosmetics + dev-support donations). These are priced
+// in GMT on the OmenX dev portal, charged in GMT at settlement, and excluded
+// from the OMENX player/staff payout pool. SKU naming convention: any SKU id
+// containing '-gmt-' or starting with 'gmt-donation-'.
+const GMT_SKU_PREFIXES = ['cosmetic-gmt-', 'gmt-donation-'];
+function isGmtSku(skuId) {
+    return GMT_SKU_PREFIXES.some(p => skuId.startsWith(p));
+}
+function getSkuCurrency(skuId) {
+    return isGmtSku(skuId) ? 'GMT' : 'OMENX';
+}
+
 // OmenX error code semantics (per OmenX docs, refreshed 2026-05-18):
 //   502 PAYMENT_PENDING       — on-chain tx broadcast, receipt not yet seen. Retry with same idempotencyKey.
 //   503 BALANCE_CHECK_FAILED  — RPC error reading balance. Retry-safe.
@@ -259,7 +271,7 @@ function getPaymentKeys() {
     return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
 }
 
-async function getSkuPrice(skuId, apiBaseUrl, apiKeys, forceRefresh = false) {
+async function getSkuPrice(skuId, apiBaseUrl, apiKeys, currency = 'OMENX', forceRefresh = false) {
     const now = Date.now();
     if (forceRefresh || !skuPriceCache || now >= skuPriceCacheExpiresAt) {
         let res, lastStatus = 0;
@@ -279,15 +291,18 @@ async function getSkuPrice(skuId, apiBaseUrl, apiKeys, forceRefresh = false) {
         skuPriceCache = {};
         for (const sku of list) {
             const id = sku.sku || sku.skuId || sku.id || sku.productId;
-            const price = parseFloat(
-                sku.pricesInCurrency?.OMENX ?? sku.priceInOmenx ?? sku.price ?? 0
-            );
-            if (id && price > 0) skuPriceCache[id] = price;
+            // Cache prices in BOTH currencies — OMENX for legacy SKUs, GMT for
+            // cosmetics/donations. OmenX dev portal returns `pricesInCurrency.{CCY}`.
+            const omenxPrice = parseFloat(sku.pricesInCurrency?.OMENX ?? sku.priceInOmenx ?? sku.price ?? 0);
+            const gmtPrice = parseFloat(sku.pricesInCurrency?.GMT ?? 0);
+            if (id && (omenxPrice > 0 || gmtPrice > 0)) {
+                skuPriceCache[id] = { OMENX: omenxPrice, GMT: gmtPrice };
+            }
         }
         skuPriceCacheExpiresAt = now + SKU_CACHE_TTL;
         console.log(`[purchaseSku] SKU price cache refreshed (${Object.keys(skuPriceCache).length} entries)`);
     }
-    return skuPriceCache[skuId] || 0;
+    return skuPriceCache[skuId]?.[currency] || 0;
 }
 
 // Cosmetic SKU ↔ slot binding — MUST mirror lib/skuMap.js. Flat GMT pricing
@@ -526,13 +541,16 @@ Deno.serve(async (req) => {
         // we WANT idempotency to prevent double-charge).
         let idempotencyKey = `${walletAddress}-${skuId}-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)}`;
 
-        console.log(`[purchaseSku] SKU: ${skuId} x${quantity} wallet: ${walletAddress} grant: ${grantInfo?.type || 'none'}`);
+        // Determine settlement currency from SKU id. GMT-denominated SKUs
+        // (cosmetics + donations) charge GMT; everything else charges OMENX.
+        const paymentCurrency = getSkuCurrency(skuId);
+        console.log(`[purchaseSku] SKU: ${skuId} x${quantity} currency: ${paymentCurrency} wallet: ${walletAddress} grant: ${grantInfo?.type || 'none'}`);
 
         // Look up unit price BEFORE purchase so paymentAmount > 0 triggers on-chain settle.
-        const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys);
+        const unitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys, paymentCurrency);
         if (!unitPrice || unitPrice <= 0) {
             const sampleKeys = skuPriceCache ? Object.keys(skuPriceCache).slice(0, 5) : [];
-            console.error('[purchaseSku] Unknown SKU price for:', skuId, 'cache size:', skuPriceCache ? Object.keys(skuPriceCache).length : 'null', 'sample keys:', sampleKeys);
+            console.error('[purchaseSku] Unknown SKU price for:', skuId, 'currency:', paymentCurrency, 'cache size:', skuPriceCache ? Object.keys(skuPriceCache).length : 'null', 'sample keys:', sampleKeys);
             return Response.json({ error: 'This item isn\'t available right now. Please try again shortly.', skuId }, { status: 500 });
         }
         const totalAmount = unitPrice * quantity;
@@ -629,7 +647,7 @@ Deno.serve(async (req) => {
                         skuId,
                         quantity,
                         idempotencyKey,
-                        paymentCurrency: 'OMENX',
+                        paymentCurrency,
                         paymentAmount: totalAmount,
                     }),
                     SDK_CALL_TIMEOUT_MS,
@@ -738,7 +756,7 @@ Deno.serve(async (req) => {
                     if (!didPriceRecheck) {
                         didPriceRecheck = true;
                         try {
-                            const freshUnitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys, true);
+                            const freshUnitPrice = await getSkuPrice(skuId, apiBaseUrl, apiKeys, paymentCurrency, true);
                             console.warn(`[purchaseSku] OmenX 422 — refreshed price for ${skuId}: cached=${unitPrice} fresh=${freshUnitPrice}`);
                             if (freshUnitPrice > 0 && freshUnitPrice !== unitPrice) {
                                 postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
@@ -888,8 +906,10 @@ Deno.serve(async (req) => {
             }
         } else {
             try {
-                // Cosmetics are always pool-excluded (set earlier in applyGrant)
-                const excludeFromPool = isAdminPurchase || (grantInfo?.type === 'cosmetic');
+                // GMT SKUs (cosmetics + donations) are ALWAYS excluded from the
+                // OMENX player/staff payout pool — they're priced in a different
+                // currency and revenue goes to dev support, not the pool.
+                const excludeFromPool = isAdminPurchase || isGmtSku(skuId) || (grantInfo?.type === 'cosmetic') || (grantInfo?.type === 'donation');
                 await base44.asServiceRole.entities.TokenSpendLog.create({
                     user_id: me.id,
                     player_name: playerNameParam || me.full_name || walletAddress,
@@ -920,8 +940,9 @@ Deno.serve(async (req) => {
         }
 
         // Update TokenPool (non-fatal). Skipped entirely for admin wallets so admin
-        // self-purchases don't inflate the player/staff payout pool.
-        if (!isAdminPurchase) {
+        // self-purchases don't inflate the player/staff payout pool. Also skipped
+        // for GMT SKUs (cosmetics/donations) — the pool tracks OMENX only.
+        if (!isAdminPurchase && !isGmtSku(skuId)) {
             try {
                 const [weeklyPools, seasonalPools] = await Promise.all([
                     base44.asServiceRole.entities.TokenPool.filter({ period_id: week_id, period_type: 'weekly' }),
