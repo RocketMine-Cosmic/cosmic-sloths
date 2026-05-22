@@ -16,7 +16,13 @@ const S6_VISUAL_RADIUS_CAP = {
     shieldBubble:   320,
     burningBarrier: 280,
     hellfire:       240,
-    quantumCollapse: 180,
+    // quantumCollapse: bumped 180 → 350 (2026-05-22, Anubis Discord).
+    // QC is an expanding *pulse* (life 1.0s, grows at 500px/s) — the 180
+    // cap was tuned for static AoE and made the rings cap at character
+    // size, looking like they barely left the player. 350 matches the
+    // other pulse weapons (novaPulse 350, laserNova 400) and lets the
+    // rings actually expand to a satisfying size before clamping.
+    quantumCollapse: 350,
     toxicCloud:     200,
     napalm:         180,
     // Expanding pulse rings — these grow at 500px/s in ProjectileSystem so the
