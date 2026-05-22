@@ -7,6 +7,10 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
+function GmtIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6e704606_4694-1734211863980.webp" className={className} alt="GMT" />;
+}
+
 export default function CurrencyHeader({ omenxAs = 'OMENX' }) {
     const { save, omenxBalance, gmtBalance, loading: omenxLoading } = useCurrency();
     // Cosmetics page swaps the OMENX pill for a GMT pill so users see their
@@ -33,7 +37,7 @@ export default function CurrencyHeader({ omenxAs = 'OMENX' }) {
                 className={`flex items-center gap-1.5 text-xs md:text-sm lg:text-base font-black text-purple-300 bg-purple-950/60 backdrop-blur px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg border border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-all ${omenxLoading ? 'opacity-60' : ''}`}
                 title={tooltip}
             >
-                <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" />
+                {showGmt ? <GmtIcon className="w-4 h-4 md:w-5 md:h-5" /> : <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" />}
                 <span className={displayedBalance === null ? 'opacity-40' : ''}>
                     {omenxLoading && displayedBalance === null ? '…' : formatBalance(displayedBalance)}
                 </span>

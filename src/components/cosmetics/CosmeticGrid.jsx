@@ -1,8 +1,8 @@
 import React from 'react';
 import { Coins } from 'lucide-react';
 
-function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+function GmtIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6e704606_4694-1734211863980.webp" className={className} alt="GMT" />;
 }
 
 /**
@@ -86,7 +86,7 @@ export default function CosmeticGrid({
                                                     'bg-slate-900 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toFixed(2)} GMT</> : 'Loading…'}
+                                                {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-3 h-3" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
                                             </button>
                                         );
                                     })()}

@@ -3,8 +3,8 @@ import { ChevronLeft, ChevronRight, Coins, Star } from 'lucide-react';
 import { CHARACTERS, SKIN_COSMETICS } from '../../game/Constants';
 import { SoundManager } from '../../game/SoundManager';
 
-function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+function GmtIcon({ className }) {
+    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6e704606_4694-1734211863980.webp" className={className} alt="GMT" />;
 }
 
 const QUEST_POINTS_PER_SKIN = 100;
@@ -159,7 +159,7 @@ export default function SkinGrid({
                                                             'bg-slate-900 text-slate-500 border border-slate-700'
                                                         }`}
                                                     >
-                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <>{gmtCost.toFixed(2)} GMT</> : 'Loading…'}
+                                                        {omenxBlocked ? '🔒 PAUSED' : gmtCost > 0 ? <><GmtIcon className="w-3 h-3" /> {gmtCost.toFixed(2)} GMT</> : 'Loading…'}
                                                     </button>
                                                 );
                                             })()}
