@@ -25,6 +25,7 @@ import Profile from './Profile';
 import Jukebox from './Jukebox';
 import Titles from './Titles';
 import SquadWars from './SquadWars';
+import Cosmetics from './Cosmetics';
 
 const SLIDE_LABELS = [
     { name: 'Main Menu', color: 'text-white' },
@@ -43,6 +44,7 @@ const SLIDE_LABELS = [
     { name: 'Pilot Profile', color: 'text-violet-300' },
     { name: 'Stellar Jukebox', color: 'text-fuchsia-300' },
     { name: 'Star Callsigns', color: 'text-amber-300' },
+    { name: 'Cosmic Wardrobe', color: 'text-pink-300' },
 ];
 
 // Renders a slide ONLY when it's active or adjacent. Off-screen slides stay
@@ -69,9 +71,12 @@ export default function PlayCarousel() {
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
     // Initialize from ?slide= so deep-links and the back button restore the right page.
+    // Use SLIDE_LABELS.length as the upper bound so adding new slides doesn't require
+    // touching the bounds checks (previously hardcoded — caused off-by-one when adding
+    // Cosmic Wardrobe 2026-05-22).
     const initialSlide = (() => {
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        return Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
+        return Number.isFinite(raw) && raw >= 0 && raw < SLIDE_LABELS.length ? raw : 0;
     })();
     const [selectedIndex, setSelectedIndex] = useState(initialSlide);
     // Tracks whether a slide change came from the URL (popstate / back button)
@@ -106,7 +111,7 @@ export default function PlayCarousel() {
     useEffect(() => {
         if (!emblaApi) return;
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        const target = Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
+        const target = Number.isFinite(raw) && raw >= 0 && raw < SLIDE_LABELS.length ? raw : 0;
         if (target !== emblaApi.selectedScrollSnap()) {
             syncingFromUrlRef.current = true;
             emblaApi.scrollTo(target, true);
@@ -198,6 +203,7 @@ export default function PlayCarousel() {
                     <LazySlide shouldMount={isNear(13)}><Profile isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(14)}><Jukebox isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(15)}><Titles isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(16)}><Cosmetics isCarousel={true} /></LazySlide>
                 </div>
             </div>
 
