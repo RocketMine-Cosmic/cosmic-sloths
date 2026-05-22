@@ -138,15 +138,36 @@ async function getOmenXPurchasesDisabled(base44) {
     if (_purchasesDisabledCache && now < _purchasesDisabledExpiresAt) {
         return _purchasesDisabledCache;
     }
-    const records = await base44.asServiceRole.entities.AppConfig.filter({ key: 'omenx_purchases_disabled' });
-    const v = records[0]?.value || {};
-    const result = {
-        disabled: !!v.disabled,
-        message: v.message || DEFAULT_DISABLED_MSG,
-    };
-    _purchasesDisabledCache = result;
-    _purchasesDisabledExpiresAt = now + PURCHASES_FLAG_TTL_MS;
-    return result;
+    try {
+        const records = await base44.asServiceRole.entities.AppConfig.filter({ key: 'omenx_purchases_disabled' });
+        const v = records[0]?.value || {};
+        const result = {
+            disabled: !!v.disabled,
+            message: v.message || DEFAULT_DISABLED_MSG,
+        };
+        _purchasesDisabledCache = result;
+        _purchasesDisabledExpiresAt = now + PURCHASES_FLAG_TTL_MS;
+        return result;
+    } catch (err) {
+        // Base44 platform 429 / AppConfig read failure. DO NOT fail closed —
+        // a Base44 rate-limit doesn't mean OmenX is down, and blocking ALL
+        // purchases on a transient platform read is way too aggressive (Hugo
+        // bug 2026-05-22: every cosmetic purchase showed "Something went wrong"
+        // because Base44 was rate-limiting the org).
+        //
+        // Preferred: serve last-known-good (stale) cache and extend TTL briefly
+        // so we don't immediately retry and amplify the storm. Fallback: assume
+        // not disabled (same default as the "no AppConfig row exists" case) —
+        // the auto-toggle automation that flips this flag runs every 5 min and
+        // hits OmenX directly, so real outages still get caught upstream.
+        if (_purchasesDisabledCache) {
+            console.warn('[purchaseSku] disabled-flag read failed — serving stale cache:', err?.message);
+            _purchasesDisabledExpiresAt = now + 30_000; // re-try in 30s, don't hammer
+            return _purchasesDisabledCache;
+        }
+        console.warn('[purchaseSku] disabled-flag read failed (no cache yet) — allowing purchase:', err?.message);
+        return { disabled: false, message: DEFAULT_DISABLED_MSG };
+    }
 }
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
