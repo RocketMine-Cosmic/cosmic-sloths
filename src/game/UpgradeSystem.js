@@ -119,6 +119,13 @@ export function levelUp(engine) {
     }
 
     engine.isPaused = true;
+    // Signal to all auto-resume paths (visibility, focus, self-heal loop) that a
+    // level-up modal is open and isPaused MUST stay latched true until the player
+    // picks. Without this, iPhone Chrome's aggressive backgrounding can fire a
+    // phantom focus/visibility event that flips isPaused back to false while the
+    // modal is still on screen — player keeps taking damage mid-pick (Simon +
+    // Anubis bug 2026-05-23 Discord).
+    engine._levelUpPending = true;
 
     if (engine.time > 0.5 && engine.arena.id !== 'world_boss_arena') {
         SFXManager.playLevelUp();
@@ -304,6 +311,7 @@ export function applyUpgrade(engine, upgrade) {
                 // player keeps playing; their pick was a no-op but the game
                 // continues. Should be impossible to reach in practice now that
                 // capped ids are filtered out of the pool in generateChoices.
+                engine._levelUpPending = false;
                 engine.isPaused = false;
                 return;
             }
@@ -337,6 +345,7 @@ export function applyUpgrade(engine, upgrade) {
         if (engine.checkEvolutions) engine.checkEvolutions();
         checkSynergies(engine);
     }
+    engine._levelUpPending = false;
     engine.isPaused = false;
 
     // Squad Meteor starter stack — 10 guaranteed level-ups at run start,

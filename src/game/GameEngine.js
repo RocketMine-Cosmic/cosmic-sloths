@@ -479,6 +479,11 @@ export class GameEngine {
     }
 
     takeDamage(amount, sourceName = null) {
+        // Hard gate: never apply damage while a level-up modal is open. This is
+        // checked BEFORE isPaused because iPhone Chrome can race-flip isPaused
+        // back to false via phantom focus events (Simon + Anubis bug 2026-05-23).
+        // Belt-and-braces — the auto-resume paths below also guard on this flag.
+        if (this._levelUpPending) return;
         // Defense-in-depth: never apply damage while the engine is paused.
         // The update() loop is already gated by isPaused, but takeDamage can be
         // reached via async paths (deferred contact ticks, confirmation modals
@@ -638,6 +643,10 @@ export class GameEngine {
                 this._pendingHidePause = setTimeout(() => {
                     this._pendingHidePause = null;
                     if (!document.hidden) return; // Safari flicker — abort.
+                    // Don't latch _wasAutoPaused if a level-up modal is already
+                    // open — otherwise the resume path below would clear isPaused
+                    // while the modal is still showing (player dies mid-pick).
+                    if (this._levelUpPending) return;
                     this._wasAutoPaused = !this.isPaused;
                     this.isPaused = true;
                 }, 350);
@@ -647,7 +656,7 @@ export class GameEngine {
                     clearTimeout(this._pendingHidePause);
                     this._pendingHidePause = null;
                 }
-                if (this._wasAutoPaused) {
+                if (this._wasAutoPaused && !this._levelUpPending) {
                     this._wasAutoPaused = false;
                     this.lastTime = performance.now(); // prevent dt spike on resume
                     this.isPaused = false;
@@ -664,7 +673,9 @@ export class GameEngine {
         // auto-pause stays purely tied to actual document visibility — the right
         // semantic for a "browser put the tab to sleep" recovery net.
         this.handleAutoResume = () => {
-            if (this._wasAutoPaused && !document.hidden) {
+            // Skip auto-resume while a level-up modal is open — the player is
+            // mid-pick and the engine must stay frozen until they commit.
+            if (this._wasAutoPaused && !document.hidden && !this._levelUpPending) {
                 this._wasAutoPaused = false;
                 this.lastTime = performance.now();
                 this.isPaused = false;
@@ -718,7 +729,7 @@ export class GameEngine {
             // also have run and unpaused us, so the engine should already be
             // moving. Belt-and-braces (Lucifer 2026-05-14, Thom 2026-05-15).
             if (this._wasAutoPaused && this.isPaused && !document.hidden
-                && !this.isGameOver && !this.isVictory) {
+                && !this.isGameOver && !this.isVictory && !this._levelUpPending) {
                 this._wasAutoPaused = false;
                 this.lastTime = timestamp;
                 this.isPaused = false;
@@ -1058,6 +1069,7 @@ export class GameEngine {
         // blow to a player who's mid-reroll, triggering the revive modal
         // ON TOP of the still-open LevelUpModal (Tijckers bug 2026-05-14).
         this.isPaused = true;
+        this._levelUpPending = true;
         this.callbacks.onLevelUp(generateChoicesLogic(this));
     }
     generateChoices() { return generateChoicesLogic(this); }
