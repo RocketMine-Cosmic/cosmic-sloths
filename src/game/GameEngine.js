@@ -479,6 +479,14 @@ export class GameEngine {
     }
 
     takeDamage(amount, sourceName = null) {
+        // Defense-in-depth: never apply damage while the engine is paused.
+        // The update() loop is already gated by isPaused, but takeDamage can be
+        // reached via async paths (deferred contact ticks, confirmation modals
+        // briefly flipping pause state, hazard timers firing across pause edges)
+        // — Simon reported dying mid-pick on the LevelUpModal (2026-05-23 Discord).
+        // rerollChoices() already calls out this same race in its own comment.
+        // One line here closes the entire bug class without auditing every path.
+        if (this.isPaused) return;
         if (this.player.invincibleTimer > 0 || this.player.iFrames > 0) return;
         // Remember whatever last hurt the player so we can show "killed by X" on game over.
         if (sourceName) this._lastDamageSource = sourceName;
