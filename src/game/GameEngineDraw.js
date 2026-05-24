@@ -313,7 +313,7 @@ export function renderGame() {
             this.ctx.rotate(this.time * -4);
             
             this.ctx.globalCompositeOperation = 'lighter';
-            this.ctx.fillStyle = '#ff00ff';
+            this.ctx.fillStyle = '#00ff44';
             this.ctx.globalAlpha = 0.2;
             this.ctx.beginPath(); this.ctx.arc(0, 0, 25, 0, Math.PI * 2); this.ctx.fill();
             this.ctx.globalAlpha = 1.0;
@@ -327,7 +327,7 @@ export function renderGame() {
             this.ctx.lineTo(0, -15);
             this.ctx.fill();
             
-            this.ctx.strokeStyle = '#ff00ff';
+            this.ctx.strokeStyle = '#00ff44';
             this.ctx.lineWidth = 3;
             this.ctx.stroke();
             
