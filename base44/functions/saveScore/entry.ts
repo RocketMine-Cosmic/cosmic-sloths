@@ -651,7 +651,8 @@ Deno.serve(async (req) => {
         let weeklySectorKills = storedKillsWeek === _currentWeekId
             ? (Number(saveRecord.weekly_sector_kills) || 0)
             : 0;
-        if (isSectorRun) weeklySectorKills += validation.killsForLedger;
+        // Hold W21 at 0 until rollover; resume counting on W22+
+        if (isSectorRun && _currentWeekId !== '2026-W21') weeklySectorKills += validation.killsForLedger;
 
         await with429Retry(
             () => base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
