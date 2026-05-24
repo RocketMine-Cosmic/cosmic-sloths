@@ -424,7 +424,7 @@ export default function Leaderboard() {
                         className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         title="Total kills from sector runs this week"
                     >
-                        Weekly Kills
+                        Weekly Sector Kills
                     </button>
 
                     <button 
