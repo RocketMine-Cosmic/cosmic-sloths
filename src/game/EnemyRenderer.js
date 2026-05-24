@@ -6,33 +6,7 @@ export function drawEnemy(ctx, e, time, playerX) {
         ctx.scale(-1, 1);
     }
 
-    if (e.spriteImage && e.spriteImage.complete && e.spriteImage.naturalWidth > 0) {
-        const SPRITE_FRAMES = e.frameCount || 16;
-        const speed = e.animationSpeed || 0.15;
-        const frame = Math.floor(time / speed) % SPRITE_FRAMES;
-        
-        const cols = Math.ceil(Math.sqrt(SPRITE_FRAMES));
-        const rows = Math.ceil(SPRITE_FRAMES / cols);
-        const col = frame % cols;
-        const row = Math.floor(frame / cols);
-        
-        const frameWidth = e.spriteImage.width / cols;
-        const frameHeight = e.spriteImage.height / rows;
-        
-        const drawSize = e.radius * 3.5;
-        const bob = Math.sin(time * 3 + e.id.length) * (e.radius * 0.1);
-        
-        ctx.drawImage(
-            e.spriteImage,
-            col * frameWidth, row * frameHeight, frameWidth, frameHeight,
-            -drawSize/2, -drawSize/2 + bob, drawSize, drawSize
-        );
-        
-        ctx.restore();
-        return;
-    }
-
-    // Elite aura — drawn before the enemy body
+    // Elite aura — drawn first (behind sprite/body)
     if (e.isElite) {
         const eliteT = time * 4;
         const elitePulse = 0.6 + Math.sin(eliteT * 2) * 0.25;
@@ -62,6 +36,32 @@ export function drawEnemy(ctx, e, time, playerX) {
         ctx.restore();
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
+    }
+
+    if (e.spriteImage && e.spriteImage.complete && e.spriteImage.naturalWidth > 0) {
+        const SPRITE_FRAMES = e.frameCount || 16;
+        const speed = e.animationSpeed || 0.15;
+        const frame = Math.floor(time / speed) % SPRITE_FRAMES;
+        
+        const cols = Math.ceil(Math.sqrt(SPRITE_FRAMES));
+        const rows = Math.ceil(SPRITE_FRAMES / cols);
+        const col = frame % cols;
+        const row = Math.floor(frame / cols);
+        
+        const frameWidth = e.spriteImage.width / cols;
+        const frameHeight = e.spriteImage.height / rows;
+        
+        const drawSize = e.radius * 3.5;
+        const bob = Math.sin(time * 3 + e.id.length) * (e.radius * 0.1);
+        
+        ctx.drawImage(
+            e.spriteImage,
+            col * frameWidth, row * frameHeight, frameWidth, frameHeight,
+            -drawSize/2, -drawSize/2 + bob, drawSize, drawSize
+        );
+        
+        ctx.restore();
+        return;
     }
 
     const t = time * 5 + e.x * 0.01;
