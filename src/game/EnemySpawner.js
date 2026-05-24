@@ -213,7 +213,14 @@ export function spawnEnemies(engine, dt) {
         const ddMult = engine.dynamicDifficulty?.spawnRateMult || 1.0;
         const eliteDDBoost = (engine._isS6 && ddMult > 1.0) ? ddMult : 1.0;
         if (engine.time > 60 && Math.random() < (0.01 + (progress * 0.04)) * eliteDDBoost) {
-            const elites = ENEMIES.filter(e => !e.isBoss && e.tier === Math.min(10, maxTier + 2));
+            // Elite candidates are pulled from a RANGE (tier ≥ eliteMin) instead of a single
+            // exact tier. The old `tier === Math.min(10, maxTier + 2)` collapsed to tier-10 only
+            // for late-game / endless players — and only 2 non-boss enemies exist at tier 10,
+            // so maxed players were almost never seeing elites spawn variety. Clamping the
+            // minimum at 9 means late game always has 4 candidates (t9 + t10), and early
+            // game still scales naturally above the current spawn tier.
+            const eliteMin = Math.min(9, Math.max(2, maxTier + 1));
+            const elites = ENEMIES.filter(e => !e.isBoss && e.tier >= eliteMin);
             if (elites.length > 0) {
                 const elite = elites[Math.floor(Math.random() * elites.length)];
                 let newElite = engine.enemyPool.length > 0 ? engine.enemyPool.pop() : {};
