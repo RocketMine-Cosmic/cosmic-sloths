@@ -640,10 +640,25 @@ Deno.serve(async (req) => {
             delete updatedSave.pendingRunSnapshot;
         }
 
+        // Weekly sector kill counter — top-level field on PlayerSave so the
+        // weekly-kills leaderboard can sort server-side without scanning save_data.
+        // Only sector runs count (excludes endless / raid / meteor). Resets when
+        // the stored week id no longer matches the current ISO week. RunScore is
+        // unreliable here because it gets soft-deleted by the keep-top-scores cron.
+        const { week_id: _currentWeekId } = getCurrentPeriodIds();
+        const isSectorRun = !validation.isEndless && !validation.isRaidRun && !validation.isMeteorRun;
+        const storedKillsWeek = saveRecord.weekly_sector_kills_week || '';
+        let weeklySectorKills = storedKillsWeek === _currentWeekId
+            ? (Number(saveRecord.weekly_sector_kills) || 0)
+            : 0;
+        if (isSectorRun) weeklySectorKills += validation.killsForLedger;
+
         await with429Retry(
             () => base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {
                 save_data: updatedSave,
-                updated_at: Date.now()
+                updated_at: Date.now(),
+                weekly_sector_kills: weeklySectorKills,
+                weekly_sector_kills_week: _currentWeekId,
             }),
             'PlayerSave.update'
         );

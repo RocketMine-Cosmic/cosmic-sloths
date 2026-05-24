@@ -79,7 +79,7 @@ export default function Leaderboard() {
     useEffect(() => {
         const updateTimer = () => {
             const now = new Date();
-            if (view === 'weekly' || view === 'squads') {
+            if (view === 'weekly' || view === 'squads' || view === 'all_time') {
                 // Count down to Sunday 23:59 UTC — last moment of the current ISO week.
                 // ISO week ends on Sunday, so when today IS Sunday we want 0 days added,
                 // not 7 (the old `|| 7` bug rolled the timer forward an entire week).
@@ -260,6 +260,46 @@ export default function Leaderboard() {
             // the weekly/seasonal boards (was leaking S5 runs into S6 view because
             // it filtered on arena only). All-time view is unchanged (intentionally
             // includes every season).
+            // Weekly Kills view (previously "All Time") — reads PlayerSave's
+            // server-authoritative weekly_sector_kills counter via dedicated
+            // backend function. Doesn't use RunScore (gets soft-deleted by the
+            // keep-top-scores cron, would under-count).
+            if (view === 'all_time') {
+                try {
+                    const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: payoutCfg.top_n });
+                    setScores(res?.data?.players || []);
+                } catch (e) {
+                    console.error('[Leaderboard] weekly kills fetch failed:', e?.message);
+                    setScores([]);
+                }
+                setCurrentPool(0);
+                setTotalRankedPlayers(0);
+                setLastUpdated(Date.now());
+
+                // Squad badge lookup for the displayed players (same pattern as below).
+                try {
+                    const players = (await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: payoutCfg.top_n }))?.data?.players || [];
+                    const wallets = [...new Set(players.map(p => (p.wallet_address || '').toLowerCase()).filter(Boolean))];
+                    if (wallets.length > 0) {
+                        const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
+                        const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];
+                        const squads = squadIds.length > 0 ? await base44.entities.Squad.filter({ id: { $in: squadIds } }) : [];
+                        const squadMap = Object.fromEntries(squads.map(s => [s.id, s]));
+                        const result = {};
+                        for (const m of members) {
+                            const s = squadMap[m.squad_id];
+                            if (s) result[(m.wallet_address || '').toLowerCase()] = { tag: s.tag, name: s.name, icon: s.icon };
+                        }
+                        setSquadByWallet(result);
+                    } else {
+                        setSquadByWallet({});
+                    }
+                } catch (_) {}
+
+                if (!silent) setLoading(false);
+                return;
+            }
+
             const filter = view === 'weekly' ? { week_id } : view === 'seasonal' ? { season_id } : view === 'endless' ? { arena_id: 'endless', season_id } : {};
             
             if (view === 'squads') {
@@ -382,8 +422,9 @@ export default function Leaderboard() {
                     <button 
                         onClick={() => setView('all_time')}
                         className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        title="Total kills from sector runs this week"
                     >
-                        All Time
+                        Weekly Kills
                     </button>
 
                     <button 
@@ -536,18 +577,27 @@ export default function Leaderboard() {
 
                                         {/* Stats */}
                                         <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto text-sm bg-slate-950/50 p-3 rounded-lg sm:bg-transparent sm:p-0">
-                                            <div className="text-center sm:text-right">
-                                                <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Score</div>
-                                                <div className="font-mono text-cyan-400 font-bold text-lg md:text-xl">{(score.score || 0).toLocaleString()}</div>
-                                            </div>
-                                            <div className="text-center sm:text-right">
-                                                <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Time</div>
-                                                <div className="text-slate-300 font-mono text-base md:text-lg">{formatTime(score.time_survived || 0)}</div>
-                                            </div>
-                                            <div className="text-center sm:text-right">
-                                                <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Level</div>
-                                                <div className="text-slate-300 font-mono text-base md:text-lg">Lv.{score.level || 1}</div>
-                                            </div>
+                                            {view === 'all_time' ? (
+                                                <div className="text-center sm:text-right">
+                                                    <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Weekly Kills</div>
+                                                    <div className="font-mono text-orange-400 font-bold text-lg md:text-xl">{(score.kills || 0).toLocaleString()}</div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="text-center sm:text-right">
+                                                        <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Score</div>
+                                                        <div className="font-mono text-cyan-400 font-bold text-lg md:text-xl">{(score.score || 0).toLocaleString()}</div>
+                                                    </div>
+                                                    <div className="text-center sm:text-right">
+                                                        <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Time</div>
+                                                        <div className="text-slate-300 font-mono text-base md:text-lg">{formatTime(score.time_survived || 0)}</div>
+                                                    </div>
+                                                    <div className="text-center sm:text-right">
+                                                        <div className="text-slate-500 text-[10px] uppercase font-bold sm:hidden mb-1">Level</div>
+                                                        <div className="text-slate-300 font-mono text-base md:text-lg">Lv.{score.level || 1}</div>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 );

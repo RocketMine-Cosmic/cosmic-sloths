@@ -24,6 +24,15 @@
     },
     "updated_at": {
       "type": "number"
+    },
+    "weekly_sector_kills": {
+      "type": "number",
+      "default": 0,
+      "description": "Cumulative kills from sector runs in the current ISO week. Top-level (not nested in save_data) so the weekly kill leaderboard can sort on it server-side. Server-authoritative: only saveScore writes this, only counts sector runs (excludes endless, raid, meteor). Resets to 0 when weekly_sector_kills_week != current week (lazy reset on next save)."
+    },
+    "weekly_sector_kills_week": {
+      "type": "string",
+      "description": "ISO week id (e.g. 2026-W22) that weekly_sector_kills applies to. Once we're past this week, the counter is effectively expired and the leaderboard query (which filters on current week_id) naturally excludes it."
     }
   },
   "required": [
