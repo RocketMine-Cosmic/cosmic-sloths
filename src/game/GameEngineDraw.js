@@ -352,45 +352,8 @@ export function renderGame() {
     // that read clearly over the larger XP/gold icons.
     drawPickups(this.ctx, this.pickups, this.time, 'minor');
 
-    // LAYER 2: Enemy projectiles render AFTER player particles/AoE pools so dangerous
-    // bullets stay visible through Hellfire/Quantum Collapse/Aegis effects
-    // (player request 2026-05-13). Sit on the same conceptual layer as XP/gold so
-    // the player can still parse them in the chaos.
-    if (this.enemyProjectiles) {
-        this.ctx.globalCompositeOperation = 'screen';
-        const texStar = this.particleManager?.textures?.star;
-        this.enemyProjectiles.forEach(p => {
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            if (p.vx || p.vy) {
-                this.ctx.rotate(Math.atan2(p.vy, p.vx));
-            }
-            
-            this.ctx.globalCompositeOperation = 'lighter';
-            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 3));
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, p.color || '#ff0000');
-            grad.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = grad;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 3), 0, Math.PI * 2);
-            this.ctx.fill();
-
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, Math.max(0.1, p.radius * 0.8), 0, Math.PI * 2);
-            this.ctx.fill();
-
-            if (texStar && texStar.isReady) {
-                this.ctx.globalAlpha = 0.8;
-                this.ctx.drawImage(texStar, -p.radius*2.5, -p.radius*2.5, p.radius*5, p.radius*5);
-                this.ctx.globalAlpha = 1.0;
-            }
-            this.ctx.globalCompositeOperation = 'screen';
-            this.ctx.restore();
-        });
-        this.ctx.globalCompositeOperation = 'source-over';
-    }
+    // (Enemy projectiles now render at the very end of the world pass —
+    // see block after the invincibility ring below.)
 
     // LAYER 3 (top): Major pickups — magnets, shields, nukes, relic fragments,
     // chests, power-ups with custom icons. These are rare/high-value drops the
@@ -640,6 +603,48 @@ export function renderGame() {
         this.ctx.stroke();
         this.ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
         this.ctx.fill();
+    }
+
+    // Enemy projectiles — drawn LAST inside the world transform so they sit on
+    // TOP of every player VFX layer (orbitals, AoE pools, trails, buff auras,
+    // kill effects, invincibility rings). Uses a saturated hostile-red palette
+    // with NO white core and NO 'lighter' blend so they never read as a player
+    // laser (Anubis request 2026-05-23 — bullets were getting hidden under his
+    // own upgrade animations and looking too much like his own projectiles).
+    // Damage text still renders above this block so combat feedback stays legible.
+    if (this.enemyProjectiles) {
+        this.ctx.globalCompositeOperation = 'source-over';
+        const pulse = 0.7 + Math.sin(this.time * 14) * 0.3;
+        this.enemyProjectiles.forEach(p => {
+            const r = Math.max(0.1, p.radius);
+            // Outer warning halo — pulsing red gradient, wider than the bullet itself.
+            const haloR = r * 3.5;
+            const halo = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloR);
+            halo.addColorStop(0, `rgba(255, 60, 20, ${0.55 * pulse})`);
+            halo.addColorStop(0.5, `rgba(255, 20, 0, ${0.25 * pulse})`);
+            halo.addColorStop(1, 'rgba(120, 0, 0, 0)');
+            this.ctx.fillStyle = halo;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, haloR, 0, Math.PI * 2);
+            this.ctx.fill();
+            // Dark outline for contrast against bright AoE pools / environments.
+            this.ctx.strokeStyle = 'rgba(60, 0, 0, 0.95)';
+            this.ctx.lineWidth = 1.5;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, r * 1.5, 0, Math.PI * 2);
+            this.ctx.stroke();
+            // Solid saturated red core — unambiguously hostile.
+            this.ctx.fillStyle = '#ff2a1a';
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, r * 1.4, 0, Math.PI * 2);
+            this.ctx.fill();
+            // Inner highlight kept yellow-orange (not white) to stay visually distinct
+            // from the white/cyan cores used by most player projectiles.
+            this.ctx.fillStyle = '#ffd24a';
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, r * 0.5, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
     }
 
     this.ctx.textAlign = 'center';
