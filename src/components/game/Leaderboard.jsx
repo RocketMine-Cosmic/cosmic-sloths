@@ -266,7 +266,7 @@ export default function Leaderboard() {
             // keep-top-scores cron, would under-count).
             if (view === 'all_time') {
                 try {
-                    const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: payoutCfg.top_n });
+                    const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: 1000 });
                     setScores(res?.data?.players || []);
                 } catch (e) {
                     console.error('[Leaderboard] weekly kills fetch failed:', e?.message);
