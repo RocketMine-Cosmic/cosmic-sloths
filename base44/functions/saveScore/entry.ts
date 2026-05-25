@@ -781,10 +781,6 @@ Deno.serve(async (req) => {
                     const patch = isSideA
                         ? { kills_a: (myWar.kills_a || 0) + killsToAdd }
                         : { kills_b: (myWar.kills_b || 0) + killsToAdd };
-                    // Wrap in with429Retry — previously a silent .catch swallowed
-                    // transient rate-limit errors, causing the war's kills_a/kills_b
-                    // to fall behind Squad.weekly_kills (Crybel/MiSFiTS bug 2026-05-18:
-                    // squad row showed 1,415 kills but war row stuck at 680).
                     writes.push(
                         with429Retry(
                             () => base44.asServiceRole.entities.SquadWar.update(myWar.id, patch),
@@ -793,6 +789,45 @@ Deno.serve(async (req) => {
                             console.error('[saveScore] SquadWar update failed after retries:', warErr.message);
                         })
                     );
+
+                    // Per-member war contribution — incremental upsert into
+                    // SquadWarMemberKill. Keeps an accurate breakdown that survives
+                    // RunScore cleanup. Filter→create-or-update by (war_id, wallet).
+                    writes.push((async () => {
+                        try {
+                            const existing = await with429Retry(
+                                () => base44.asServiceRole.entities.SquadWarMemberKill.filter({
+                                    war_id: myWar.id,
+                                    wallet_address: walletLower,
+                                }, '-created_date', 1),
+                                'SquadWarMemberKill.filter'
+                            );
+                            if (existing && existing.length > 0) {
+                                const row = existing[0];
+                                await with429Retry(
+                                    () => base44.asServiceRole.entities.SquadWarMemberKill.update(row.id, {
+                                        kills: (Number(row.kills) || 0) + killsToAdd,
+                                        player_name: safeName,
+                                    }),
+                                    'SquadWarMemberKill.update'
+                                );
+                            } else {
+                                await with429Retry(
+                                    () => base44.asServiceRole.entities.SquadWarMemberKill.create({
+                                        war_id: myWar.id,
+                                        squad_id: squadIdToUpdate,
+                                        week_id,
+                                        wallet_address: walletLower,
+                                        player_name: safeName,
+                                        kills: killsToAdd,
+                                    }),
+                                    'SquadWarMemberKill.create'
+                                );
+                            }
+                        } catch (mkErr) {
+                            console.error('[saveScore] SquadWarMemberKill upsert failed:', mkErr.message);
+                        }
+                    })());
                 }
                 await Promise.all(writes);
 

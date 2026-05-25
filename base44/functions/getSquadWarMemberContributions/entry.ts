@@ -55,9 +55,49 @@ Deno.serve(async (req) => {
             return Response.json(cached.payload);
         }
 
-        // Members + their RunScores this week, in parallel.
+        // PRIMARY SOURCE: SquadWarMemberKill (incrementally written by saveScore).
+        // Survives RunScore cleanup, so finished wars keep accurate per-member splits.
+        // Find the current active war for this squad, then load its per-member rows.
+        // Falls back to RunScore aggregation below if no war / no rows exist (legacy).
         const members = await base44.asServiceRole.entities.SquadMember.filter({ squad_id: squadId });
         const wallets = members.map(m => (m.wallet_address || '').toLowerCase()).filter(Boolean);
+
+        let primaryRows = [];
+        try {
+            const activeWars = await base44.asServiceRole.entities.SquadWar.filter({
+                week_id: weekId,
+                is_resolved: false,
+            });
+            const myWar = activeWars.find(w => w.squad_a_id === squadId || w.squad_b_id === squadId);
+            if (myWar) {
+                primaryRows = await base44.asServiceRole.entities.SquadWarMemberKill.filter({ war_id: myWar.id }, '-kills', 100);
+            }
+        } catch (e) {
+            console.warn('[getSquadWarMemberContributions] primary source lookup failed, falling back:', e.message);
+        }
+
+        if (primaryRows && primaryRows.length > 0) {
+            const killsMap = new Map();
+            for (const r of primaryRows) {
+                killsMap.set((r.wallet_address || '').toLowerCase(), Number(r.kills) || 0);
+            }
+            const contributions = members.map(m => {
+                const w = (m.wallet_address || '').toLowerCase();
+                return {
+                    wallet_address: w,
+                    player_name: m.player_name || `Pilot_${w.slice(-6).toUpperCase()}`,
+                    player_title: m.player_title || '',
+                    role: m.role || 'member',
+                    war_kills: killsMap.get(w) || 0,
+                };
+            }).sort((a, b) => b.war_kills - a.war_kills);
+            const payload = { success: true, weekId, contributions, source: 'squad_war_member_kill' };
+            cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
+            return Response.json(payload);
+        }
+
+        // FALLBACK: legacy RunScore + DeletedRunScore aggregation (pre-feature wars).
+
         if (wallets.length === 0) {
             const payload = { success: true, weekId, contributions: [] };
             cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
