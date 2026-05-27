@@ -351,6 +351,13 @@ export function updateProjectiles(engine, dt) {
                             if (p.isMastered && p.weaponId === 'napalm') {
                                 e.slowTimer = 1.5;
                             }
+                            // Hellfire (evolved Napalm) inherits the slow — evolutions
+                            // should retain their parent's mastery effects. Slightly
+                            // longer than Napalm's 1.5s so the upgrade feels meaningful
+                            // (Anubis bug 2026-05-27).
+                            if (p.weaponId === 'hellfire') {
+                                e.slowTimer = 2.0;
+                            }
                         }
                     });
                 }
