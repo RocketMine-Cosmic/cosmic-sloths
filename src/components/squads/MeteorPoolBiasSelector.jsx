@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Wand2, Check, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { SaveManager } from '../../game/SaveManager';
+import MeteorPoolBiasCustomEditor from './MeteorPoolBiasCustomEditor';
 import { SoundManager } from '../../game/SoundManager';
 import { POOL_BIAS_PRESETS, buildPresetAllocation } from '@/lib/poolBiasPresets';
 import { getTotalBiasPoints } from '@/lib/poolBias';
@@ -110,6 +111,7 @@ export default function MeteorPoolBiasSelector() {
                     <X className="w-3 h-3" /> Use Main
                 </button>
             </div>
+            <MeteorPoolBiasCustomEditor save={save} setSave={setSave} />
         </div>
     );
 }
