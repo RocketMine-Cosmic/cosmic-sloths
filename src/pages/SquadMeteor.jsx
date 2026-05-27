@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SquadMeteorPanel from '../components/squads/SquadMeteorPanel';
+import MeteorPoolBiasSelector from '../components/squads/MeteorPoolBiasSelector';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
@@ -46,7 +47,8 @@ export default function SquadMeteor() {
                         <CurrencyHeader />
                     </header>
 
-                    <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)] rounded-xl flex flex-col overflow-hidden min-h-0">
+                    <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)] rounded-xl flex flex-col overflow-hidden min-h-0 p-3 md:p-4">
+                        <MeteorPoolBiasSelector />
                         <SquadMeteorPanel />
                     </div>
                 </div>
