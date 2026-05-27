@@ -1,74 +1,114 @@
 import React, { useState, useEffect } from 'react';
+import { Wand2, Check, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { POOL_BIAS_PRESETS } from '@/lib/poolBiasPresets';
+import { SaveManager } from '../../game/SaveManager';
+import { SoundManager } from '../../game/SoundManager';
+import { POOL_BIAS_PRESETS, buildPresetAllocation } from '@/lib/poolBiasPresets';
+import { getTotalBiasPoints } from '@/lib/poolBias';
 
+// Same preset buttons as the Loadouts page, but saves to a SEPARATE field
+// (meteorPoolBiasAllocations). GameEngine swaps poolBiasAllocations for this
+// value when the run's arena is quantum_meteor, then reverts after the run.
+// Players no longer have to manually respec before/after every meteor run.
 export default function MeteorPoolBiasSelector() {
-    const [meteorBias, setMeteorBias] = useState(null);
+    const [save, setSave] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let cancelled = false;
+        const local = SaveManager.load();
+        if (local) { setSave(local); setLoading(false); }
+        // Refresh from cloud in case local was missing the meteor field.
         (async () => {
             try {
                 const user = await base44.auth.me();
                 if (!user) return;
-                const walletLower = (user.wallet_address || '').toLowerCase();
-                const saves = await base44.entities.PlayerSave.filter({ wallet_address: walletLower });
-                if (saves.length > 0) {
-                    setMeteorBias(saves[0].save_data?.meteorPoolBias || null);
+                const w = (user.wallet_address || '').toLowerCase();
+                const rows = await base44.entities.PlayerSave.filter({ wallet_address: w });
+                if (rows.length > 0 && !cancelled) {
+                    const sd = typeof rows[0].save_data === 'string' ? JSON.parse(rows[0].save_data) : rows[0].save_data;
+                    setSave(sd);
                 }
-            } catch (e) {
-                console.error('[MeteorPoolBiasSelector] load failed:', e.message);
-            }
-            setLoading(false);
+            } catch (_) {}
+            if (!cancelled) setLoading(false);
         })();
+        return () => { cancelled = true; };
     }, []);
 
-    const handleChange = async (newBias) => {
-        setMeteorBias(newBias);
-        try {
-            const user = await base44.auth.me();
-            if (!user) return;
-            const walletLower = (user.wallet_address || '').toLowerCase();
-            const saves = await base44.entities.PlayerSave.filter({ wallet_address: walletLower });
-            if (saves.length > 0) {
-                const save = saves[0];
-                const saveData = typeof save.save_data === 'string' ? JSON.parse(save.save_data) : save.save_data;
-                saveData.meteorPoolBias = newBias;
-                await base44.entities.PlayerSave.update(save.id, { save_data: saveData });
-            }
-        } catch (e) {
-            console.error('[MeteorPoolBiasSelector] save failed:', e.message);
-        }
+    if (loading || !save) return null;
+
+    const totalPoints = getTotalBiasPoints(save);
+    const currentMeteor = save.meteorPoolBiasAllocations || null;
+    const activePresetId = currentMeteor && Object.keys(currentMeteor).length > 0
+        ? POOL_BIAS_PRESETS.find(p => {
+            const expected = buildPresetAllocation(p.weights, totalPoints);
+            return JSON.stringify(expected) === JSON.stringify(currentMeteor);
+        })?.id || 'custom'
+        : null;
+
+    const apply = (preset) => {
+        SoundManager.playUIClick();
+        const allocation = buildPresetAllocation(preset.weights, totalPoints);
+        const next = { ...save, meteorPoolBiasAllocations: allocation };
+        SaveManager.save(next);
+        setSave(next);
     };
 
-    const getPresetLabel = (bias) => {
-        const preset = Object.values(POOL_BIAS_PRESETS).find(p => 
-            JSON.stringify(p.bias) === JSON.stringify(bias)
-        );
-        return preset?.label || 'Custom';
+    const clear = () => {
+        SoundManager.playUIClick();
+        const next = { ...save };
+        delete next.meteorPoolBiasAllocations;
+        SaveManager.save(next);
+        setSave(next);
     };
-
-    if (loading) return null;
 
     return (
-        <div className="mb-4 p-3 md:p-4 bg-slate-900/40 border border-purple-500/30 rounded-lg">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                    <h3 className="font-bold text-sm md:text-base text-white">Meteor Loadout</h3>
-                    <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">Auto-applies when you start a meteor run</p>
+        <div className="mb-3 p-3 bg-slate-900/40 border border-purple-500/30 rounded-lg">
+            <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5 text-fuchsia-300 font-bold text-xs uppercase tracking-wider">
+                    <Wand2 className="w-3.5 h-3.5" /> Meteor Loadout
                 </div>
-                <select
-                    value={meteorBias ? JSON.stringify(meteorBias) : ''}
-                    onChange={(e) => handleChange(e.target.value ? JSON.parse(e.target.value) : null)}
-                    className="px-3 py-1.5 md:px-3 md:py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
+                <div className="text-[10px] text-slate-400">
+                    {totalPoints > 0 ? `${totalPoints} pts available` : 'No bias points yet'}
+                </div>
+            </div>
+            <p className="text-[10px] text-slate-400 mb-2 leading-relaxed">
+                Auto-applies when you start a meteor run. Doesn't touch your main loadout.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                {POOL_BIAS_PRESETS.map(p => {
+                    const isActive = activePresetId === p.id;
+                    return (
+                        <button
+                            key={p.id}
+                            onClick={() => apply(p)}
+                            disabled={totalPoints <= 0}
+                            title={totalPoints <= 0 ? 'Earn bias points by leveling permanent upgrades' : p.desc}
+                            className={`flex items-start gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors border ${
+                                isActive
+                                    ? 'bg-fuchsia-900/40 border-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.3)]'
+                                    : 'bg-slate-900/60 hover:bg-fuchsia-900/30 border-slate-700 hover:border-fuchsia-500/60'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                            <span className="text-base shrink-0">{p.icon}</span>
+                            <div className="min-w-0 flex-1">
+                                <div className="text-[11px] font-bold text-fuchsia-200 truncate flex items-center gap-1">
+                                    {p.name}
+                                    {isActive && <Check className="w-3 h-3 text-emerald-400" />}
+                                </div>
+                                <div className="text-[9px] text-slate-400 leading-tight line-clamp-2">{p.desc}</div>
+                            </div>
+                        </button>
+                    );
+                })}
+                <button
+                    onClick={clear}
+                    disabled={!activePresetId}
+                    className="flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors border bg-slate-900/60 hover:bg-slate-800 border-slate-700 text-slate-300 text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Use your main loadout for meteor runs"
                 >
-                    <option value="">None (use main loadout)</option>
-                    {Object.entries(POOL_BIAS_PRESETS).map(([key, preset]) => (
-                        <option key={key} value={JSON.stringify(preset.bias)}>
-                            {preset.label}
-                        </option>
-                    ))}
-                </select>
+                    <X className="w-3 h-3" /> Use Main
+                </button>
             </div>
         </div>
     );

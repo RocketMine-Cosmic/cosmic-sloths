@@ -20,6 +20,18 @@ export class GameEngine {
         this.callbacks = callbacks;
         this.characterId = characterId;
         this.save = save;
+
+        // Meteor pool bias override — when entering the Squad Meteor arena, swap
+        // poolBiasAllocations for the dedicated meteorPoolBiasAllocations map (if
+        // set via the selector on /squad-meteor). Clones the save so we don't
+        // mutate the live PlayerSave reference — original allocations are restored
+        // automatically when the run ends and the next run is constructed from the
+        // freshly-loaded save. Saves players the chore of manual respec for meteor.
+        if (arenaId === 'quantum_meteor'
+            && save?.meteorPoolBiasAllocations
+            && Object.keys(save.meteorPoolBiasAllocations).length > 0) {
+            this.save = { ...save, poolBiasAllocations: save.meteorPoolBiasAllocations };
+        }
         this.worldBossId = worldBossId || 'world_boss_0';
         this.worldBossName = worldBossName || 'The World Eater';
         this.difficulty = { ...(DIFFICULTIES.find(d => d.id === difficultyId) || DIFFICULTIES[0]) };
