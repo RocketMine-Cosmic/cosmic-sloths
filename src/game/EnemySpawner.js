@@ -94,7 +94,9 @@ export function spawnEnemies(engine, dt) {
                 engine.isBossActive = true;
                 engine.enemies = [];
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.max(engine.canvas.width / engine.zoom, engine.canvas.height / engine.zoom) / 2 + 50;
+                // Clamp at 900 game units so fullscreen monitors don't get punished
+                // with long travel times. Matches ~1440px viewport at default zoom.
+                const dist = Math.min(900, Math.max(engine.canvas.width / engine.zoom, engine.canvas.height / engine.zoom) / 2 + 50);
                 const ex = engine.player.x + Math.cos(angle) * dist;
                 const ey = engine.player.y + Math.sin(angle) * dist;
                 const progress = engine.time / 300;
@@ -119,7 +121,8 @@ export function spawnEnemies(engine, dt) {
             const boss = selectBossForArena(engine.arena.id);
             if (boss) {
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.max(engine.canvas.width / engine.zoom, engine.canvas.height / engine.zoom) / 2 + 50;
+                // Clamp — see endless boss spawn above for rationale.
+                const dist = Math.min(900, Math.max(engine.canvas.width / engine.zoom, engine.canvas.height / engine.zoom) / 2 + 50);
                 const ex = engine.player.x + Math.cos(angle) * dist;
                 const ey = engine.player.y + Math.sin(angle) * dist;
 
@@ -170,7 +173,10 @@ export function spawnEnemies(engine, dt) {
 
     if (Math.random() < dt / spawnRate) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = Math.max(engine.canvas.width / engine.zoom, engine.canvas.height / engine.zoom) / 2 + 50;
+        // Clamp mob spawn distance at 900 game units — fullscreen monitors
+        // were previously getting up to 1600u spawn radius, which doubled
+        // travel time vs. windowed play and hurt finish scores.
+        const dist = Math.min(900, Math.max(engine.canvas.width / engine.zoom, engine.canvas.height / engine.zoom) / 2 + 50);
         const ex = engine.player.x + Math.cos(angle) * dist;
         const ey = engine.player.y + Math.sin(angle) * dist;
 
