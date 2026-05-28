@@ -174,7 +174,11 @@ export function spawnEnemies(engine, dt) {
     const progress = engine.arena.duration === Infinity ? engine.time / 300 : Math.min(1, engine.time / engine.arena.duration);
     const effectiveProgress = Math.min(1, progress);
     const dynamicRate = engine.envModifiers.enemySpawnRate * (engine.dynamicDifficulty?.spawnRateMult || 1.0);
-    let spawnRate = Math.max(0.05, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
+    // Spawn-interval floor lowered 0.05s → 0.025s (2026-05-28 whale-headroom patch).
+    // Combined with the raised DD ceiling (3.5×), this gives strong players actual
+    // headroom — was 20 spawns/sec cap, now 40 spawns/sec. Engine handles 200+
+    // enemies fine via spatial hash.
+    let spawnRate = Math.max(0.025, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
 
     // Post-nuke spawn boost — halve the spawn interval (≈ 2× rate) for ~5s after a nuke
     // so the wiped field repopulates fast. Set in PickupSystem when a nuke is collected.
@@ -186,7 +190,12 @@ export function spawnEnemies(engine, dt) {
     // so players can't farm kills/gold by hugging the timer. Endless skips this (no end).
     // For non-boss sectors there's nothing else to slow the wave; for boss sectors the
     // boss spawn at duration-30 already returns early via isBossActive — this is a no-op there.
-    if (engine.arena.duration !== Infinity) {
+    // Whale exemption (2026-05-28): players dominating the run (DD spawn mult ≥ 1.5×)
+    // skip the taper entirely. They've earned the wave by performing — choking spawns
+    // right before the boss was the worst possible 30s for fast clearers and a major
+    // source of the "my score is stuck" complaint from top players.
+    const ddSpawnMult = engine.dynamicDifficulty?.spawnRateMult || 1.0;
+    if (engine.arena.duration !== Infinity && ddSpawnMult < 1.5) {
         const timeLeft = engine.arena.duration - engine.time;
         if (timeLeft < 30) {
             // Ramp from 1× at 30s left → 6× spawn interval (≈ 1/6 spawn rate) at 0s left.
@@ -277,5 +286,24 @@ export function spawnEnemies(engine, dt) {
 
         engine.enemies.push(newEnemy);
         engine.encounteredEnemies.add(type.id);
+
+        // Burst-spawn at max DD (2026-05-28 whale-headroom patch): when the player
+        // is fully dominating (DD spawn mult ≥ 3.0×), spawn a SECOND mob from the
+        // same tier band at a nearby offset angle. Gives a visible "the screen is
+        // filling up" feel that matches the power fantasy at peak DD. Average
+        // players never reach this threshold so they see no change.
+        if (ddSpawnMult >= 3.0) {
+            const offsetAngle = angle + (Math.random() - 0.5) * 0.8;
+            const ex2 = engine.player.x + Math.cos(offsetAngle) * dist;
+            const ey2 = engine.player.y + Math.sin(offsetAngle) * dist;
+            let extra = engine.enemyPool.length > 0 ? engine.enemyPool.pop() : {};
+            Object.assign(extra, type);
+            extra.x = ex2; extra.y = ey2;
+            extra.speed = type.speed * spdMult;
+            extra.maxHp = type.hp * hpMult;
+            extra.hp = extra.maxHp;
+            extra.damage = type.damage * dmgMult;
+            engine.enemies.push(extra);
+        }
     }
 }

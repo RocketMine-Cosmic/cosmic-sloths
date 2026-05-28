@@ -777,15 +777,21 @@ export class GameEngine {
             // S6+ Option 2: asymmetric ramp — strong play climbs FAST (+0.15/cycle),
             // struggling decays SLOW (-0.05/cycle). One good 15s window matters more
             // than one bad one. Rewards consistency for top players. S5 keeps the
-            // legacy symmetric ±0.1 ramp. Same 0.7×–2.0× caps either way.
+            // legacy symmetric ±0.1 ramp.
+            // Whale-headroom patch (2026-05-28 — Simon/Anubis/ReZuM Discord feedback):
+            // top players were hitting the previous 2.0× ceiling and seeing no score
+            // gain from further investment. Spawn ceiling raised 2.0× → 3.5×, enemy
+            // speed ceiling 2.0× → 2.5×. Floor (0.7×) unchanged — strugglers protected.
             const upStep   = this._isS6 ? 0.15 : 0.1;
             const downStep = this._isS6 ? 0.05 : 0.1;
+            const spawnCap = this._isS6 ? 3.5 : 2.0;
+            const speedCap = this._isS6 ? 2.5 : 2.0;
             if (this.dynamicDifficulty.damageTaken > this.player.maxHp * 0.3) {
                 this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - downStep);
                 this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - downStep);
             } else if (killsDelta > 30 && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
-                this.dynamicDifficulty.speedMult = Math.min(2.0, this.dynamicDifficulty.speedMult + upStep);
-                this.dynamicDifficulty.spawnRateMult = Math.min(2.0, this.dynamicDifficulty.spawnRateMult + upStep);
+                this.dynamicDifficulty.speedMult = Math.min(speedCap, this.dynamicDifficulty.speedMult + upStep);
+                this.dynamicDifficulty.spawnRateMult = Math.min(spawnCap, this.dynamicDifficulty.spawnRateMult + upStep);
             }
             this.dynamicDifficulty.lastKills = this.kills;
             this.dynamicDifficulty.damageTaken = 0;
