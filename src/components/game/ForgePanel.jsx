@@ -38,7 +38,7 @@ const CHAR_AUGMENTS = {
     novabyte:    [
         { id: 'nova_aoe',    name: 'Overpressure Warhead',  desc: '+20% explosion area permanently',       cost: 5,  rarity: 'Common' },
         { id: 'nova_chain',  name: 'Fragmentation Protocol',desc: 'Explosions spawn 2 mini-missiles',      cost: 15, rarity: 'Rare'   },
-        { id: 'nova_nuke',   name: 'Tactical Nuke',         desc: 'Boss kills drop a Nuke pickup',         cost: 30, rarity: 'Epic'   },
+        { id: 'nova_nuke',   name: 'Tactical Nuke',         desc: 'Boss spawns trigger 7% max HP nova burst', cost: 30, rarity: 'Epic'   },
     ],
     glitch:      [
         { id: 'glt_phase',   name: 'Phase Shift',           desc: '10% chance to phase through damage',    cost: 5,  rarity: 'Common' },
