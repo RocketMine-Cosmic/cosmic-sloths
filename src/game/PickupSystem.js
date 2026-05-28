@@ -7,6 +7,22 @@ import { isS6OrLater } from '@/lib/seasonGate';
 // happens at the W20→W21 boundary; nobody is mid-run at exactly Sun 23:59 UTC.
 const _IS_S6 = isS6OrLater();
 
+// Shared nuke effect — one-shots every non-boss enemy on screen, big screen
+// shake, 5s post-nuke spawn boost. Extracted so the NovaByte 'nova_nuke'
+// boss-kill augment can fire the effect instantly (without dropping a pickup
+// the player can't reach in sectors — Simon/RocketMine ask 2026-05-28).
+export function triggerNukeEffect(engine) {
+    SFXManager.playWeaponFire('novaPulse');
+    engine.enemies.forEach(e => {
+        if (!e.isBoss) {
+            engine.damageEnemy(e, e.maxHp * 10, { weaponId: 'nukePickup' });
+        }
+    });
+    engine.addDamageText(engine.player.x, engine.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
+    engine.shake(1.0);
+    engine.postNukeSpawnBoostUntil = (engine.time || 0) + 5.0;
+}
+
 export function updatePickups(engine, dt) {
     engine.pickups = engine.pickups.filter(p => {
         if (engine.frameCount % 10 === 0 && p.type === 'xp') {
@@ -67,23 +83,8 @@ export function updatePickups(engine, dt) {
                 if (engine.callbacks.onFragmentFound) engine.callbacks.onFragmentFound(finalFrags);
                 engine.addDamageText(engine.player.x, engine.player.y - 40, `+${finalFrags} Relic Fragment!`, '#a855f7');
             } else if (p.type === 'nuke') {
-                SFXManager.playWeaponFire('novaPulse');
-                engine.enemies.forEach(e => {
-                    if (!e.isBoss) {
-                        // Tag nuke pickup damage so it shows up in the post-run
-                        // breakdown. Nukes one-shot every non-boss on screen and
-                        // can stack into MASSIVE untracked damage in long runs
-                        // (drops from elites + nova_nuke augment on boss kills).
-                        engine.damageEnemy(e, e.maxHp * 10, { weaponId: 'nukePickup' });
-                    }
-                });
-                engine.addDamageText(engine.player.x, engine.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
-                engine.shake(1.0);
-                // Post-nuke spawn boost: for the next 5 seconds enemies spawn at ~2× rate
-                // so the empty field repopulates quickly (enemies spawn off-screen and need
-                // time to close the distance). Spawn distance + enemy strength are unchanged
-                // — safe for new players, satisfying for veterans.
-                engine.postNukeSpawnBoostUntil = (engine.time || 0) + 5.0;
+                // Shared with the NovaByte 'nova_nuke' boss-kill augment.
+                triggerNukeEffect(engine);
             } else if (p.type === 'magnet_power') {
                 SFXManager.playMagnetPickup();
                 // Flag every XP/gold pickup so the magnet block below pulls them in
