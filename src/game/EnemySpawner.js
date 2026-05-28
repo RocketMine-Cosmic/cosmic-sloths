@@ -2,7 +2,21 @@
 import { ENEMIES, ARENAS, QUANTUM_METEOR_SPRITE } from './Constants';
 import { SFXManager } from './SFXManager';
 import { selectBossForArena } from './BossSystem';
-import { triggerNukeEffect } from './PickupSystem';
+
+// NovaByte 'nova_nuke' augment effect — fires when a boss spawns. Deals 7% of
+// the boss's max HP as a nova explosion centered on the boss. Frontloaded
+// damage that scales fairly with boss tier and doesn't touch mob spawns/gold
+// (previous designs nuked the field, which became a runaway XP/gold faucet in
+// endless — Texxy 2026-05-28).
+function triggerBossBurst(engine, boss) {
+    const burstDmg = boss.maxHp * 0.07;
+    engine.damageEnemy(boss, burstDmg, { weaponId: 'novaBurst' });
+    engine.particleManager.createExplosion(boss.x, boss.y, '#ff6b00', 3.5, 'default');
+    engine.addParticle(boss.x, boss.y, '#ff6b00', 1, 'shockwave', 4.0, { growthRate: 1200, lineWidth: 12 });
+    engine.shake(1.0);
+    engine.addDamageText(boss.x, boss.y - 60, 'NOVA BURST!', '#ff6b00', true);
+    SFXManager.playWeaponFire('novaPulse');
+}
 
 // Lazy-load the meteor sprite sheet exactly once per session (shared across runs).
 let _meteorSpriteImage = null;
@@ -93,13 +107,6 @@ export function spawnEnemies(engine, dt) {
             const boss = selectBossForArena(engine.arena.id);
             if (boss) {
                 engine.isBossActive = true;
-                // NovaByte 'nova_nuke' augment — nuke the field BEFORE the boss-spawn
-                // wipe so the mobs about to be deleted instead drop XP/gold via normal
-                // kill processing. Boss-death timing was useless (no mobs left to kill
-                // — Simon/RocketMine bug 2026-05-28).
-                if (engine.player.charAugments?.includes('nova_nuke')) {
-                    triggerNukeEffect(engine);
-                }
                 engine.enemies = [];
                 const angle = Math.random() * Math.PI * 2;
                 // Clamp at 900 game units so fullscreen monitors don't get punished
@@ -111,10 +118,15 @@ export function spawnEnemies(engine, dt) {
                 const bossHpMult = 1.0 * engine.difficulty.enemyHpMult * (1.0 + progress * 0.5) * (engine.bossModifiers.hide ? 1.5 : 1.0);
                 const bossDmgMult = 1.0 * engine.difficulty.enemyDmgMult * (1.0 + progress * 0.5) * (engine.bossModifiers.fury ? 1.3 : 1.0);
                 const speedMult = engine.bossModifiers.frenzy ? 1.3 : 1.0;
-                engine.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
+                const spawnedBoss = { ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult };
+                engine.enemies.push(spawnedBoss);
                 engine.encounteredEnemies.add(boss.id);
                 engine.addDamageText(engine.player.x, engine.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
                 SFXManager.playBossSpawn();
+                // NovaByte 'nova_nuke' augment — 7% max HP nova burst on boss spawn.
+                if (engine.player.charAugments?.includes('nova_nuke')) {
+                    triggerBossBurst(engine, spawnedBoss);
+                }
             }
         }
     } else if (engine.time >= engine.arena.duration - 30 && !engine.bossSpawned) {
@@ -125,10 +137,6 @@ export function spawnEnemies(engine, dt) {
 
         if (isBossArena) {
             engine.isBossActive = true;
-            // NovaByte 'nova_nuke' augment — see endless boss-spawn above for rationale.
-            if (engine.player.charAugments?.includes('nova_nuke')) {
-                triggerNukeEffect(engine);
-            }
             engine.enemies = [];
             const boss = selectBossForArena(engine.arena.id);
             if (boss) {
@@ -143,10 +151,15 @@ export function spawnEnemies(engine, dt) {
                 const bossHpMult = 1.0 * engine.difficulty.enemyHpMult * (engine.bossModifiers.hide ? 1.5 : 1.0) * sectorDifficultyScale;
                 const bossDmgMult = 1.0 * engine.difficulty.enemyDmgMult * (engine.bossModifiers.fury ? 1.3 : 1.0) * sectorDifficultyScale;
                 const speedMult = engine.bossModifiers.frenzy ? 1.3 : 1.0;
-                engine.enemies.push({ ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult });
+                const spawnedBoss = { ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult };
+                engine.enemies.push(spawnedBoss);
                 engine.encounteredEnemies.add(boss.id);
                 engine.addDamageText(engine.player.x, engine.player.y - 60, `WARNING: ${boss.name} APPROACHING!`, '#ff0000');
                 SFXManager.playBossSpawn();
+                // NovaByte 'nova_nuke' augment — 7% max HP nova burst on boss spawn.
+                if (engine.player.charAugments?.includes('nova_nuke')) {
+                    triggerBossBurst(engine, spawnedBoss);
+                }
             }
         }
     }
