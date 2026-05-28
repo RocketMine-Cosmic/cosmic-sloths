@@ -123,8 +123,16 @@ function getLevelInfo(upgrade, player) {
         return { current: currentLvl, projected, isNew: currentLvl === 0 };
     }
     if (upgrade.type === 'passive') {
+        // Character-buff "passives" (e.g. HoloDrift's Hyperdrive Fuel) are one-shot
+        // stat tweaks without a stable id/level — they don't actually stack in
+        // player.passives, so owned.level is undefined and the badge would render
+        // as "Lv. → NaN" (Simon bug 2026-05-27). Skip the badge entirely when we
+        // can't compute clean numbers.
+        if (!upgrade.id) return null;
         const owned = (player.passives || []).find(p => p.id === upgrade.id);
-        const currentLvl = owned ? owned.level : 0;
+        const rawLvl = owned ? Number(owned.level) : 0;
+        if (!Number.isFinite(rawLvl)) return null;
+        const currentLvl = rawLvl;
         // Passives level up by 1 per pick (handled in UpgradeSystem).
         const projected = currentLvl + 1;
         return { current: currentLvl, projected, isNew: currentLvl === 0 };
