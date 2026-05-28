@@ -4,7 +4,6 @@ import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
 import { updateBossAbilities } from './BossSystem';
 import { isS6OrLater, isBossVacuumEnabled } from '@/lib/seasonGate';
-import { triggerNukeEffect } from './PickupSystem';
 
 // Cached at module load — see PickupSystem for rationale.
 const _IS_S6 = isS6OrLater();
@@ -112,21 +111,9 @@ export function updateEnemies(engine, dt) {
                     engine.addParticle(e.x, e.y, '#a855f7', 20, 'glow', 2);
                 }
 
-                if (engine.player.charAugments?.includes('nova_nuke')) {
-                    // Fire the nuke effect INSTANTLY instead of dropping a pickup the
-                    // player can't reach in sectors (Simon/RocketMine bug 2026-05-28).
-                    // In endless this clears the field + grants the 5s spawn boost.
-                    // In sectors the boss is end-of-run with no mobs left to nuke, so
-                    // also credit a +500 gold bonus so the perk delivers tangible value.
-                    triggerNukeEffect(engine);
-                    const isSectorBoss = engine.arena.duration !== Infinity && engine.arena.id !== 'world_boss_arena';
-                    if (isSectorBoss) {
-                        const bonus = 500;
-                        engine.gold += bonus;
-                        engine.callbacks.onGoldChange(engine.gold);
-                        engine.addDamageText(engine.player.x, engine.player.y - 130, `+${bonus} NUKE BONUS`, '#ff6b6b', true);
-                    }
-                }
+                // NovaByte 'nova_nuke' augment is handled at boss SPAWN now (see
+                // EnemySpawner.js) — boss-death timing was useless because the
+                // boss-spawn code wipes all mobs, leaving nothing to nuke at death.
 
                 let extraGold = 1000;
                 if (engine.bossModifiers.fury) extraGold += 500;

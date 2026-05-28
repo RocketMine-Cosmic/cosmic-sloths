@@ -2,6 +2,7 @@
 import { ENEMIES, ARENAS, QUANTUM_METEOR_SPRITE } from './Constants';
 import { SFXManager } from './SFXManager';
 import { selectBossForArena } from './BossSystem';
+import { triggerNukeEffect } from './PickupSystem';
 
 // Lazy-load the meteor sprite sheet exactly once per session (shared across runs).
 let _meteorSpriteImage = null;
@@ -92,6 +93,13 @@ export function spawnEnemies(engine, dt) {
             const boss = selectBossForArena(engine.arena.id);
             if (boss) {
                 engine.isBossActive = true;
+                // NovaByte 'nova_nuke' augment — nuke the field BEFORE the boss-spawn
+                // wipe so the mobs about to be deleted instead drop XP/gold via normal
+                // kill processing. Boss-death timing was useless (no mobs left to kill
+                // — Simon/RocketMine bug 2026-05-28).
+                if (engine.player.charAugments?.includes('nova_nuke')) {
+                    triggerNukeEffect(engine);
+                }
                 engine.enemies = [];
                 const angle = Math.random() * Math.PI * 2;
                 // Clamp at 900 game units so fullscreen monitors don't get punished
@@ -117,6 +125,10 @@ export function spawnEnemies(engine, dt) {
 
         if (isBossArena) {
             engine.isBossActive = true;
+            // NovaByte 'nova_nuke' augment — see endless boss-spawn above for rationale.
+            if (engine.player.charAugments?.includes('nova_nuke')) {
+                triggerNukeEffect(engine);
+            }
             engine.enemies = [];
             const boss = selectBossForArena(engine.arena.id);
             if (boss) {
