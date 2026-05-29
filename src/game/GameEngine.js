@@ -772,7 +772,15 @@ export class GameEngine {
         }
         this.dynamicDifficulty.lastHp = this.player.hp;
 
-        if (this.dynamicDifficulty.timer >= 15) {
+        // Early-game DD reactivity (Anubis feedback 2026-05-29): first 60s of a run
+        // evaluates DD every 5s instead of 15s, so strong players see spawns ramp
+        // within seconds of clearing the field instead of standing around for half
+        // a minute. After 60s, normal 15s cadence resumes. Kill/damage thresholds
+        // are scaled down proportionally so the shorter window still requires
+        // sustained performance, not just one lucky burst.
+        const ddInterval = (this.time < 60) ? 5 : 15;
+        const killThreshold = (this.time < 60) ? 10 : 30;
+        if (this.dynamicDifficulty.timer >= ddInterval) {
             const killsDelta = this.kills - this.dynamicDifficulty.lastKills;
             // S6+ Option 2: asymmetric ramp — strong play climbs FAST (+0.15/cycle),
             // struggling decays SLOW (-0.05/cycle). One good 15s window matters more
@@ -789,7 +797,7 @@ export class GameEngine {
             if (this.dynamicDifficulty.damageTaken > this.player.maxHp * 0.3) {
                 this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - downStep);
                 this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - downStep);
-            } else if (killsDelta > 30 && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
+            } else if (killsDelta > killThreshold && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
                 this.dynamicDifficulty.speedMult = Math.min(speedCap, this.dynamicDifficulty.speedMult + upStep);
                 this.dynamicDifficulty.spawnRateMult = Math.min(spawnCap, this.dynamicDifficulty.spawnRateMult + upStep);
             }

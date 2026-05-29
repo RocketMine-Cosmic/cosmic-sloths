@@ -180,6 +180,26 @@ export function spawnEnemies(engine, dt) {
     // enemies fine via spatial hash.
     let spawnRate = Math.max(0.025, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
 
+    // Early-game DPS-aware boost (Anubis feedback 2026-05-29): strong players
+    // clear the opening wave in seconds and then wait ~15-30s for DD to catch
+    // up. Use the engine's rolling 10s DPS to shorten spawn intervals during
+    // the first 90s ONLY when the player is actually outputting damage fast.
+    // Low-DPS / new players see ZERO change — the boost is gated by a DPS
+    // floor and scales smoothly up to a 0.5× interval (≈ 2× spawn rate) at
+    // peak early-game performance. After 90s the normal curve + DD take over.
+    if (engine.arena.duration !== Infinity && engine.time < 90 && engine.getRollingDps) {
+        const dps = engine.getRollingDps();
+        // Floor: ~150 DPS (a clearing player). Cap: ~600 DPS (a stomping player).
+        const dpsScalar = Math.max(0, Math.min(1, (dps - 150) / 450));
+        if (dpsScalar > 0) {
+            // Taper boost out as we approach 90s so the transition to normal
+            // pacing is smooth, not a cliff.
+            const timeTaper = 1 - (engine.time / 90);
+            const boost = 1 - (0.5 * dpsScalar * timeTaper); // 1.0 → 0.5
+            spawnRate *= boost;
+        }
+    }
+
     // Post-nuke spawn boost — halve the spawn interval (≈ 2× rate) for ~5s after a nuke
     // so the wiped field repopulates fast. Set in PickupSystem when a nuke is collected.
     if (engine.postNukeSpawnBoostUntil && engine.time < engine.postNukeSpawnBoostUntil) {
