@@ -11,6 +11,9 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
     const [showStats, setShowStats] = useState(false);
+    const [lowFx, setLowFx] = useState(() => {
+        try { return localStorage.getItem('cosmic_low_fx_mode') === '1'; } catch { return false; }
+    });
     // Live tick so the "X:XX left" countdown updates while the menu is open.
     const [now, setNow] = useState(Date.now());
     useEffect(() => {
@@ -71,6 +74,21 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                         className="w-full bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors shadow-[0_0_15px_rgba(51,65,85,0.4)]"
                     >
                         Settings
+                    </button>
+                    <button
+                        onClick={() => {
+                            const next = !lowFx;
+                            setLowFx(next);
+                            try { localStorage.setItem('cosmic_low_fx_mode', next ? '1' : '0'); } catch {}
+                        }}
+                        className={`w-full px-6 py-3 rounded-lg font-bold text-sm md:text-base transition-colors border ${
+                            lowFx
+                                ? 'bg-cyan-900/60 border-cyan-500 text-cyan-200 hover:bg-cyan-900/80'
+                                : 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
+                        }`}
+                        title="Reduce particle effects to keep phone cool"
+                    >
+                        {lowFx ? '✓ Low FX ON' : '✕ Low FX OFF'}
                     </button>
                     {onBuyXpBuff && (
                         buffActive ? (
