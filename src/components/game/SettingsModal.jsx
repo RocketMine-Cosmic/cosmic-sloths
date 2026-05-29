@@ -11,6 +11,16 @@ export default function SettingsModal({ onClose }) {
     const [currentTrack, setCurrentTrack] = useState(SoundManager.getCurrentTrack());
     const [isPlaying, setIsPlaying] = useState(!SoundManager.bgm.paused);
     const [sfxCats, setSfxCats] = useState({ ...SFXManager.categories });
+    const [lowFx, setLowFx] = useState(() => {
+        try { return localStorage.getItem('cosmic_low_fx_mode') === '1'; } catch { return false; }
+    });
+
+    const toggleLowFx = () => {
+        const next = !lowFx;
+        setLowFx(next);
+        try { localStorage.setItem('cosmic_low_fx_mode', next ? '1' : '0'); } catch {}
+        SFXManager.playUIClick();
+    };
 
     const toggleCat = (cat) => {
         const next = !sfxCats[cat];
@@ -187,6 +197,21 @@ export default function SettingsModal({ onClose }) {
                                     );
                                 })}
                             </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="flex justify-between mb-2 items-center">
+                            <label className="font-bold text-slate-300">Low FX Mode</label>
+                            <button
+                                onClick={toggleLowFx}
+                                className={`text-xs font-bold px-3 py-1.5 rounded border transition-colors ${lowFx ? 'bg-cyan-900/60 border-cyan-500 text-cyan-200' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                            >
+                                {lowFx ? '✓ ON' : '✕ OFF'}
+                            </button>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                            Reduces particle effects and explosion visuals to keep your phone cool. Recommended on mobile during heavy runs.
                         </div>
                     </div>
                 </div>

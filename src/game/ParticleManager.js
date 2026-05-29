@@ -39,6 +39,21 @@ const loadTexture = (url, name) => {
 
 let proceduralSpriteSheetsCache = null;
 
+// Low-FX mode (set via Settings → Low FX Mode toggle). Slashes particle counts
+// and skips the procedural sprite-sheet animations — the two biggest thermal
+// drivers on mobile per Texxy's 2026-05-29 report. Cached for 1s so we don't
+// hit localStorage on every single particle spawn.
+let _lowFxCache = false;
+let _lowFxCacheAt = 0;
+function isLowFx() {
+    if (typeof window === 'undefined') return false;
+    const now = performance.now();
+    if (now - _lowFxCacheAt < 1000) return _lowFxCache;
+    try { _lowFxCache = localStorage.getItem('cosmic_low_fx_mode') === '1'; } catch { _lowFxCache = false; }
+    _lowFxCacheAt = now;
+    return _lowFxCache;
+}
+
 export class ParticleManager {
     constructor() {
         this.particles = [];
@@ -464,6 +479,9 @@ export class ParticleManager {
     }
 
     addAnim(x, y, animName, scale = 1, rotation = 0, color = null) {
+        // Low FX mode: skip procedural sprite-sheet animations entirely. These
+        // are the heaviest single per-frame draws (16-frame 128px sprite plays).
+        if (isLowFx()) return;
         const sheet = this.spriteSheets[animName];
         if (!sheet) return;
         
@@ -490,6 +508,9 @@ export class ParticleManager {
     }
 
     addParticle(x, y, color, count, type = 'star', sizeMult = 1, options = {}) {
+        // Low FX mode: spawn ~30% of the requested particles. Player still gets
+        // visual feedback on hits/explosions, just much less GPU/CPU load.
+        if (isLowFx()) count = Math.max(1, Math.ceil(count * 0.3));
         for (let i = 0; i < count; i++) {
             const angle = options.angle !== undefined ? options.angle + (Math.random() - 0.5) * 0.8 : Math.random() * Math.PI * 2;
             const speed = options.speed !== undefined ? options.speed * (0.7 + Math.random() * 0.6) : Math.random() * 150 * sizeMult + 50;
