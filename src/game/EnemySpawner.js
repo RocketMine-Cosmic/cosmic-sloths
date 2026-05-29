@@ -180,22 +180,26 @@ export function spawnEnemies(engine, dt) {
     // enemies fine via spatial hash.
     let spawnRate = Math.max(0.025, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
 
-    // Early-game DPS-aware boost (Anubis feedback 2026-05-29): strong players
-    // clear the opening wave in seconds and then wait ~15-30s for DD to catch
-    // up. Use the engine's rolling 10s DPS to shorten spawn intervals during
-    // the first 90s ONLY when the player is actually outputting damage fast.
-    // Low-DPS / new players see ZERO change — the boost is gated by a DPS
-    // floor and scales smoothly up to a 0.5× interval (≈ 2× spawn rate) at
-    // peak early-game performance. After 90s the normal curve + DD take over.
-    if (engine.arena.duration !== Infinity && engine.time < 90 && engine.getRollingDps) {
-        const dps = engine.getRollingDps();
-        // Floor: ~150 DPS (a clearing player). Cap: ~600 DPS (a stomping player).
-        const dpsScalar = Math.max(0, Math.min(1, (dps - 150) / 450));
-        if (dpsScalar > 0) {
-            // Taper boost out as we approach 90s so the transition to normal
-            // pacing is smooth, not a cliff.
+    // Early-game empty-field boost (Anubis feedback 2026-05-29, revised after
+    // Texxy follow-up 2026-05-29): the original version gated on rolling DPS,
+    // but tier-1 mobs only have 8-14 HP — a player who one-shots them generates
+    // tiny DPS totals even while dominating, so the boost never triggered.
+    //
+    // The real signal is "the field is empty" — if there's nothing on screen
+    // in the first 90s and the player has SOME kills (i.e. they're alive and
+    // playing), ramp spawns hard so they always have targets. A brand-new
+    // struggling player won't have an empty field (mobs pile up faster than
+    // they can kill them), so they naturally see no boost. Self-balancing.
+    if (engine.arena.duration !== Infinity && engine.time > 5 && engine.time < 90 && engine.kills > 0) {
+        // Density: how full the field is on a 0–1 scale. 8+ alive enemies = full,
+        // 0 = totally empty. Strong clearers will sit near 0 most of the time.
+        const density = Math.min(1, engine.enemies.length / 8);
+        const emptiness = 1 - density;
+        if (emptiness > 0) {
+            // Taper out toward 90s so the transition to normal pacing is smooth.
             const timeTaper = 1 - (engine.time / 90);
-            const boost = 1 - (0.5 * dpsScalar * timeTaper); // 1.0 → 0.5
+            // Up to 0.4× spawn interval at fully empty + earliest time (≈ 2.5× rate).
+            const boost = 1 - (0.6 * emptiness * timeTaper);
             spawnRate *= boost;
         }
     }
