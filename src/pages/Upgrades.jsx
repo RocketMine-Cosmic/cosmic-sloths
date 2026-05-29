@@ -10,6 +10,7 @@ function OmenXIcon({ className }) {
 }
 import { useCurrency } from '@/lib/CurrencyContext';
 import { ensureNftsFetched } from '@/lib/playerDataCache';
+import { normalizeNftCharacterName } from '@/lib/nftNameNormalize';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import { useOmenXPurchasesDisabled } from '@/hooks/useOmenXPurchasesDisabled';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
@@ -60,15 +61,18 @@ export default function Upgrades({ isCarousel }) {
     // Make sure NFTs are loaded so NFT-unlocked characters appear in the talents tab
     React.useEffect(() => { ensureNftsFetched(); }, []);
 
-    // NFT-unlocked characters (UI only — server is authoritative for save.unlockedCharacters)
+    // NFT-unlocked characters (UI only — server is authoritative for save.unlockedCharacters).
+    // Use normalizeNftCharacterName so VIP/NFT names with prefixes, spaces, etc. resolve to
+    // the matching CHARACTERS id — same logic Hub uses (without it, VIP-unlocked characters
+    // showed up in Hub but were missing from Armory tabs).
     const nftUnlockedChars = React.useMemo(() => {
         return (nfts || [])
-            .map(nft => nft.metadata?.name?.toLowerCase())
+            .map(nft => normalizeNftCharacterName(nft.metadata?.name))
             .filter(charId => charId && CHARACTERS.find(c => c.id === charId));
     }, [nfts]);
 
     const effectiveUnlockedCharacters = React.useMemo(() => {
-        return [...new Set([...(save.unlockedCharacters || ['neobyte']), ...nftUnlockedChars])];
+        return [...new Set(['neobyte', ...(save.unlockedCharacters || []), ...nftUnlockedChars])];
     }, [save.unlockedCharacters, nftUnlockedChars]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('upgrades-page');
     // Hard-gate every OMENX button when admins flip the kill-switch — previously
