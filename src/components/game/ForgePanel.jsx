@@ -5,6 +5,7 @@ import { SoundManager } from '../../game/SoundManager';
 import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star, Coins, Hexagon } from 'lucide-react';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { normalizeNftCharacterName } from '@/lib/nftNameNormalize';
 import MysteryForgeCard from './MysteryForgeCard';
 
 const GOLD_PER_FRAGMENT = 10000;
@@ -196,13 +197,15 @@ export default function ForgePanel({ save, setSave }) {
     // Server's ownsCharacter() already accepts NFT owners, but the client cycler was
     // hiding them from the list — players couldn't pick them to forge augments.
     const { nfts } = useCurrency();
+    // Use normalizeNftCharacterName so VIP/NFT names with prefixes resolve to the
+    // matching CHARACTERS id — same fix as Hub/Armory (Texxy bug 2026-05-29).
     const nftUnlockedChars = React.useMemo(() => (
         (nfts || [])
-            .map(nft => nft.metadata?.name?.toLowerCase())
+            .map(nft => normalizeNftCharacterName(nft.metadata?.name))
             .filter(charId => charId && CHARACTERS.find(c => c.id === charId))
     ), [nfts]);
     const unlockedChars = React.useMemo(() => (
-        [...new Set([...(save.unlockedCharacters || ['neobyte']), ...nftUnlockedChars])]
+        [...new Set(['neobyte', ...(save.unlockedCharacters || []), ...nftUnlockedChars])]
     ), [save.unlockedCharacters, nftUnlockedChars]);
     const currentCharId = unlockedChars[selectedCharIndex % unlockedChars.length] || 'neobyte';
     const currentChar = CHARACTERS.find(c => c.id === currentCharId) || CHARACTERS[0];
