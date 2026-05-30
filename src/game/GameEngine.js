@@ -802,7 +802,14 @@ export class GameEngine {
             if (this.dynamicDifficulty.damageTaken > this.player.maxHp * downThreshold) {
                 this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - downStep);
                 this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - downStep);
-            } else if (killsDelta > killThreshold && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
+            } else if (killsDelta > killThreshold) {
+                // DD ramp-UP gate (2026-05-30 Simon bug): removed the
+                // <5% maxHp damage constraint. Top players in AoE swarms take
+                // unavoidable chip damage and were never qualifying for ramp-up,
+                // even at 266+ kills/min. Kills alone now drive DD up — the
+                // ramp-DOWN branch above still throttles anyone actually getting
+                // hammered (>downThreshold maxHp in the window), so strugglers
+                // are still protected. Strong play finally gets rewarded.
                 this.dynamicDifficulty.speedMult = Math.min(speedCap, this.dynamicDifficulty.speedMult + upStep);
                 this.dynamicDifficulty.spawnRateMult = Math.min(spawnCap, this.dynamicDifficulty.spawnRateMult + upStep);
             }
