@@ -93,7 +93,7 @@ The **Synergy Codex** in the hub lists every known recipe so players can plan bu
 - **Endless** — No timer, no win condition. Time-based gold accrual; difficulty ramps continuously. The ultimate score-chase mode.
 - **Leviathan Trials** — Modifier-stacked challenge runs. Each modifier amps risk and reward.
 - **Global Raid** — Server-wide cooperative boss. Every player chips at a shared HP pool; rewards scale with damage contribution and milestone tiers.
-- **Squad Meteor** — A 3-minute DPS-check arena unlocked through squad play. Squad members vote on a shared meteor target; their cumulative damage funds squad-wide weekly buffs.
+- **Squad Meteor** — A 1.5-minute DPS-check arena unlocked through squad play. Squad members vote on a shared meteor target; their cumulative damage funds squad-wide weekly buffs.
 - **World Boss Arena** — Special raid encounter with weekly resets.
 
 ### 3.6 Dynamic difficulty
@@ -202,7 +202,7 @@ Score is **never** trusted from the client. The server recomputes score from a s
 
 ### 6.3 Payouts
 
-A configurable percentage of the leaderboard payout pool is paid out weekly to the top N players (admin-configurable; typically top 20). Staff payouts are a separate fixed percentage per authorized admin wallet. Squad Champions pay out at season end. All payouts go through the Omen Foundation rewards API and are logged immutably in PayoutLog and SquadChampionsPayoutLog entities.
+A percentage of the leaderboard payout pool is paid out weekly to the top 30 players. Squad Champions pay out at season end. All payouts go through the Omen Foundation rewards API and are logged immutably in PayoutLog and SquadChampionsPayoutLog entities.
 
 ---
 
@@ -333,7 +333,7 @@ A maintenance kill switch lets admins flip the game into SOFT (warning banner) o
 
 ### Shipped (Season 1–6)
 
-- Full character roster (eight playable pilots with unique mechanics)
+- Full character roster (Ten playable pilots with unique mechanics)
 - Sector progression + endless mode + Leviathan Trials + Global Raid
 - Squad system with Wars, Treasury, Daily Goals, Meteor, Champions
 - Mastery, talents, relics, forge augments, prestige relics
@@ -344,25 +344,6 @@ A maintenance kill switch lets admins flip the game into SOFT (warning banner) o
 - Mobile-first reload + forced-update gate
 - Comprehensive admin tooling (refunds, NFT refresh, gold audits, blacklists, mute, score validation)
 
-### Near-term (Season 7–8)
-
-- Expanded character roster
-- Per-arena environmental boss variants
-- Friend invites and direct squad recruitment links
-- Mobile app wrappers (iOS App Store, Google Play) via Capacitor
-- Spectator mode for top-leaderboard runs
-- Pilot replays / share clips
-
-### Long-term
-
-- Cross-game NFT identity (shared with future Omen Foundation titles)
-- Player-run tournaments with custom prize pools
-- Seasonal lore-driven story content
-- Cross-chain $OMENX support
-- Voice and text chat in squads
-- Native macOS / Windows desktop client
-
----
 
 ## 11. Team
 
