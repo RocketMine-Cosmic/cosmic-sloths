@@ -88,7 +88,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 <span className="text-slate-300/90 text-sm md:text-base font-bold tracking-widest uppercase">
                     SlowBurn Studios
                 </span>
-                <span className="text-slate-500/70 text-[10px] md:text-xs tracking-wider uppercase">
+                <span className="text-slate-300/90 text-sm md:text-base font-bold tracking-widest uppercase">
                     v1.0.0
                 </span>
             </div>
