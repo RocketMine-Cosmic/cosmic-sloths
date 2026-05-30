@@ -89,7 +89,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                     SlowBurn Studios
                 </span>
                 <span className="text-slate-300/90 text-sm md:text-base font-bold tracking-widest uppercase">
-                    v1.0.0
+                    v1.0.1
                 </span>
             </div>
 
