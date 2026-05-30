@@ -204,10 +204,6 @@ Score is **never** trusted from the client. The server recomputes score from a s
 
 A configurable percentage of the leaderboard payout pool is paid out weekly to the top N players (admin-configurable; typically top 20). Staff payouts are a separate fixed percentage per authorized admin wallet. Squad Champions pay out at season end. All payouts go through the Omen Foundation rewards API and are logged immutably in PayoutLog and SquadChampionsPayoutLog entities.
 
-### 6.4 Anti-takeover alerts
-
-A scheduled job watches for sudden leaderboard takeovers and posts a Discord alert when one happens, so admins can investigate suspicious score spikes in near real time.
-
 ---
 
 ## 7. Economy
