@@ -9,9 +9,11 @@ import { isS6OrLater } from '@/lib/seasonGate';
 // is reached. 1.5M gold + 100 relic fragments per prestige tier (PL1–PL5),
 // each adding +5% to the relic's effect. Hard-gated to S6+ via seasonGate.
 // Fragment cost added 2026-05-08 to drain existing fragment stockpiles.
-const PRESTIGE_GOLD_COST = 1_500_000;
+// Tiered prestige costs — MUST match functions/prestigeRelic.js PRESTIGE_GOLD_COSTS.
+const PRESTIGE_GOLD_COSTS = [500_000, 1_000_000, 1_500_000, 2_000_000, 2_500_000];
 const PRESTIGE_FRAGMENT_COST = 100;
 const PRESTIGE_MAX = 5;
+const getPrestigeCost = (tier) => PRESTIGE_GOLD_COSTS[Math.min(tier, PRESTIGE_MAX - 1)];
 
 export default function RelicPrestigeBadge({ relic, save, setSave }) {
     const [busy, setBusy] = useState(false);
@@ -27,7 +29,8 @@ export default function RelicPrestigeBadge({ relic, save, setSave }) {
 
     const prestige = (save.relicPrestige || {})[relic.id] || 0;
     const isMaxPrestige = prestige >= PRESTIGE_MAX;
-    const hasGold = (save.gold || 0) >= PRESTIGE_GOLD_COST;
+    const nextCost = getPrestigeCost(prestige);
+    const hasGold = (save.gold || 0) >= nextCost;
     const hasFragments = (save.relicFragments || 0) >= PRESTIGE_FRAGMENT_COST;
     const canAfford = hasGold && hasFragments;
 
@@ -36,7 +39,7 @@ export default function RelicPrestigeBadge({ relic, save, setSave }) {
         return (
             <div className="mt-2 px-2 py-1.5 rounded-lg border border-slate-700 bg-slate-900/40 flex items-center gap-2 text-[11px]">
                 <Lock className="w-3 h-3 text-slate-500 shrink-0" />
-                <span className="text-slate-400 flex-1">Prestige unlocks Season 6 — 1.5M gold + 100 frags per tier, +5% effect (PL1–PL5)</span>
+                <span className="text-slate-400 flex-1">Prestige unlocks Season 6 — 500K → 2.5M gold + 100 frags per tier, +5% effect (PL1–PL5)</span>
             </div>
         );
     }
@@ -117,7 +120,7 @@ export default function RelicPrestigeBadge({ relic, save, setSave }) {
                         {busy ? 'Prestiging…' : <>Prestige to PL{prestige + 1}</>}
                         <span className={`flex items-center gap-0.5 bg-black/30 px-1.5 py-0.5 rounded ml-1 ${!hasGold ? 'text-red-300' : ''}`}>
                             <Coins className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                            {(PRESTIGE_GOLD_COST / 1_000_000).toFixed(1)}M
+                            {(nextCost / 1_000_000).toFixed(1)}M
                         </span>
                         <span className={`flex items-center gap-0.5 bg-black/30 px-1.5 py-0.5 rounded ${!hasFragments ? 'text-red-300' : ''}`}>
                             <Puzzle className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" />
