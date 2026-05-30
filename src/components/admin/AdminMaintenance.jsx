@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Wrench, CheckCircle2, Coins } from 'lucide-react';
+import AdminMinClientVersion from './AdminMinClientVersion';
 
 // Three-state maintenance toggle — manual flip only, no automation.
 // Recommended flow for S6 rollover (May 18, 00:00 UTC):
@@ -254,6 +255,8 @@ export default function AdminMaintenance() {
                     ⚠️ OFF is always manual — there's no auto-revert. If you flip HARD and walk away, it stays HARD until someone clears it. This is intentional: better stuck-closed than stuck-broken.
                 </div>
             </div>
+
+            <AdminMinClientVersion />
         </div>
     );
 }
