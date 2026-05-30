@@ -784,7 +784,14 @@ export class GameEngine {
         // mid-run only produces ~60-90 kills/min for top players — they could
         // NEVER hit the bar, so DD stayed pinned at 1.0× even on flawless runs.
         // New threshold of 15/15s = 60/min, which strong players clear easily.
-        const killThreshold = (this.time < 60) ? 7 : 15;
+        // Mid-tier ramp-up assist (2026-05-30): when DD hasn't ramped past 1.0×
+        // yet (player is still in the basement), drop the threshold further so
+        // mid-tier players can climb out faster. Once they hit 1.0× the normal
+        // thresholds resume — so top players are unaffected.
+        const ddRamped = (this.dynamicDifficulty.spawnRateMult || 1.0) >= 1.0;
+        const lowDDThreshold = (this.time < 60) ? 4 : 8;
+        const normalThreshold = (this.time < 60) ? 7 : 15;
+        const killThreshold = (this._isS6 && !ddRamped) ? lowDDThreshold : normalThreshold;
         if (this.dynamicDifficulty.timer >= ddInterval) {
             const killsDelta = this.kills - this.dynamicDifficulty.lastKills;
             // S6+ Option 2: asymmetric ramp — strong play climbs FAST (+0.15/cycle),
@@ -808,9 +815,12 @@ export class GameEngine {
             // shouldn't immediately throttle spawns and make the field feel dead
             // (Anubis feedback 2026-05-30).
             const downThreshold = (this.time < 60) ? 0.5 : 0.3;
+            // DD floor raised to 0.85× on S6 (2026-05-30): even players taking heavy
+            // damage keep a fuller field. Top players unaffected — they're above 1.0×.
+            const ddFloor = this._isS6 ? 0.85 : 0.7;
             if (this.dynamicDifficulty.damageTaken > this.player.maxHp * downThreshold) {
-                this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - downStep);
-                this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - downStep);
+                this.dynamicDifficulty.speedMult = Math.max(ddFloor, this.dynamicDifficulty.speedMult - downStep);
+                this.dynamicDifficulty.spawnRateMult = Math.max(ddFloor, this.dynamicDifficulty.spawnRateMult - downStep);
             } else if (killsDelta > killThreshold) {
                 // DD ramp-UP gate (2026-05-30 Simon bug): removed the
                 // <5% maxHp damage constraint. Top players in AoE swarms take
