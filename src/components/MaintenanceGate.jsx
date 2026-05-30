@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { subscribe as subscribeMaintenance, getStatus as getMaintenanceStatus } from '@/lib/maintenanceStatus';
-import { AlertTriangle, Wrench } from 'lucide-react';
+import { AlertTriangle, Wrench, RefreshCw } from 'lucide-react';
+import { APP_VERSION, compareVersions, reloadToLatest } from '@/lib/version';
 
 // Wraps the app and shows either a top banner ('soft') or a full-screen overlay
 // blocking /game ('hard'). Polls every 30s. Fails OPEN — if the function errors
@@ -14,7 +15,12 @@ import { AlertTriangle, Wrench } from 'lucide-react';
 export default function MaintenanceGate() {
     const [state, setState] = useState(() => {
         const s = getMaintenanceStatus();
-        return { mode: s.mode || 'off', message: s.message || '' };
+        return {
+            mode: s.mode || 'off',
+            message: s.message || '',
+            minClientVersion: s.minClientVersion || '',
+            minClientVersionMessage: s.minClientVersionMessage || '',
+        };
     });
     // Admins bypass the HARD gate so they can smoke-test runs during a rollover
     // (otherwise nobody could verify the rollover worked). Checked once on mount —
@@ -28,7 +34,12 @@ export default function MaintenanceGate() {
     // the other 3 callers that was the bulk of the 429 storm.
     useEffect(() => {
         const unsub = subscribeMaintenance(s => {
-            setState({ mode: s.mode || 'off', message: s.message || '' });
+            setState({
+                mode: s.mode || 'off',
+                message: s.message || '',
+                minClientVersion: s.minClientVersion || '',
+                minClientVersionMessage: s.minClientVersionMessage || '',
+            });
         });
         // One-shot admin check.
         let cancelled = false;
@@ -45,6 +56,44 @@ export default function MaintenanceGate() {
             navigate('/hub', { replace: true });
         }
     }, [state.mode, location.pathname, navigate, isAdmin]);
+
+    // Version gate — checked BEFORE the maintenance-mode early return so an
+    // outdated client gets pushed to update even when maintenance is 'off'.
+    // Admins bypass (same rationale as the hard maintenance gate — they need to
+    // be able to verify a build pre-rollout). Empty server config = no gate.
+    const versionOutdated = !!state.minClientVersion
+        && compareVersions(APP_VERSION, state.minClientVersion) < 0;
+    if (versionOutdated && !isAdmin) {
+        return (
+            <div className="fixed inset-0 z-[10000] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-[#0b0416] border-2 border-cyan-500 rounded-xl p-6 md:p-8 text-center shadow-[0_0_40px_rgba(6,182,212,0.3)]">
+                    <div className="flex justify-center mb-4">
+                        <div className="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                            <RefreshCw className="w-8 h-8 text-cyan-300 animate-spin" style={{ animationDuration: '3s' }} />
+                        </div>
+                    </div>
+                    <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-cyan-300 mb-3">
+                        Update Required
+                    </h1>
+                    <p className="text-slate-200 text-sm md:text-base mb-2 leading-relaxed">
+                        {state.minClientVersionMessage || 'A new version of Cosmic Sloths is available. Please reload to continue playing.'}
+                    </p>
+                    <p className="text-xs text-slate-500 mb-5">
+                        Your version: <span className="text-slate-300 font-mono">v{APP_VERSION}</span>
+                        {' — '}
+                        Required: <span className="text-cyan-300 font-mono">v{state.minClientVersion}</span>
+                    </p>
+                    <button
+                        onClick={reloadToLatest}
+                        className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-black tracking-widest uppercase py-3 rounded-lg transition-colors shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                        Reload Now
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (state.mode === 'off') return null;
 

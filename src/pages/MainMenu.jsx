@@ -7,6 +7,7 @@ import SettingsModal from '../components/game/SettingsModal';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
+import { APP_VERSION } from '@/lib/version';
 
 
 export default function MainMenu({ isCarousel, onNavigateToPlay }) {
@@ -89,7 +90,7 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                     SlowBurn Studios
                 </span>
                 <span className="text-slate-300/90 text-sm md:text-base font-bold tracking-widest uppercase">
-                    v1.0.1
+                    v{APP_VERSION}
                 </span>
             </div>
 

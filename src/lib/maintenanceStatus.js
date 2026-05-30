@@ -30,6 +30,8 @@ let _status = readPersisted() || {
     mode: 'normal',
     message: '',
     globalXpBuff: null,
+    minClientVersion: '',
+    minClientVersionMessage: '',
     _loadedAt: 0,
 };
 let _inFlight = null;
@@ -90,6 +92,8 @@ async function doFetch() {
                 mode: data?.mode || 'normal',
                 message: data?.message || '',
                 globalXpBuff: data?.globalXpBuff || null,
+                minClientVersion: data?.minClientVersion || '',
+                minClientVersionMessage: data?.minClientVersionMessage || '',
                 _loadedAt: Date.now(),
             };
             writePersisted(_status);
