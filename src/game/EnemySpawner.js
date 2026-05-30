@@ -190,7 +190,7 @@ export function spawnEnemies(engine, dt) {
     // playing), ramp spawns hard so they always have targets. A brand-new
     // struggling player won't have an empty field (mobs pile up faster than
     // they can kill them), so they naturally see no boost. Self-balancing.
-    if (engine.arena.duration !== Infinity && engine.time > 5 && engine.time < 90 && engine.kills > 0) {
+    if (engine.arena.duration !== Infinity && engine.time > 5 && engine.time < 90) {
         // Density: how full the field is on a 0–1 scale. 8+ alive enemies = full,
         // 0 = totally empty. Strong clearers will sit near 0 most of the time.
         const density = Math.min(1, engine.enemies.length / 8);

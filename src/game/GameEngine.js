@@ -794,7 +794,12 @@ export class GameEngine {
             const downStep = this._isS6 ? 0.05 : 0.1;
             const spawnCap = this._isS6 ? 3.5 : 2.0;
             const speedCap = this._isS6 ? 2.5 : 2.0;
-            if (this.dynamicDifficulty.damageTaken > this.player.maxHp * 0.3) {
+            // Early game (<60s) uses a more forgiving ramp-down threshold (0.5×
+            // maxHp instead of 0.3×) — a couple of unlucky hits in the opening
+            // shouldn't immediately throttle spawns and make the field feel dead
+            // (Anubis feedback 2026-05-30).
+            const downThreshold = (this.time < 60) ? 0.5 : 0.3;
+            if (this.dynamicDifficulty.damageTaken > this.player.maxHp * downThreshold) {
                 this.dynamicDifficulty.speedMult = Math.max(0.7, this.dynamicDifficulty.speedMult - downStep);
                 this.dynamicDifficulty.spawnRateMult = Math.max(0.7, this.dynamicDifficulty.spawnRateMult - downStep);
             } else if (killsDelta > killThreshold && this.dynamicDifficulty.damageTaken < this.player.maxHp * 0.05) {
