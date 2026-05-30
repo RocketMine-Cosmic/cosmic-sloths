@@ -779,7 +779,12 @@ export class GameEngine {
         // are scaled down proportionally so the shorter window still requires
         // sustained performance, not just one lucky burst.
         const ddInterval = (this.time < 60) ? 5 : 15;
-        const killThreshold = (this.time < 60) ? 10 : 30;
+        // Kill thresholds halved (2026-05-30 Anubis bug): the old 30-per-15s
+        // threshold required 120 kills/min to qualify, but base spawn rate at
+        // mid-run only produces ~60-90 kills/min for top players — they could
+        // NEVER hit the bar, so DD stayed pinned at 1.0× even on flawless runs.
+        // New threshold of 15/15s = 60/min, which strong players clear easily.
+        const killThreshold = (this.time < 60) ? 7 : 15;
         if (this.dynamicDifficulty.timer >= ddInterval) {
             const killsDelta = this.kills - this.dynamicDifficulty.lastKills;
             // S6+ Option 2: asymmetric ramp — strong play climbs FAST (+0.15/cycle),
@@ -790,7 +795,11 @@ export class GameEngine {
             // top players were hitting the previous 2.0× ceiling and seeing no score
             // gain from further investment. Spawn ceiling raised 2.0× → 3.5×, enemy
             // speed ceiling 2.0× → 2.5×. Floor (0.7×) unchanged — strugglers protected.
-            const upStep   = this._isS6 ? 0.15 : 0.1;
+            // upStep doubled on S6 (2026-05-30 Anubis bug): old 0.15/window
+            // needed 17 windows (4+ min) to reach the 3.5× spawn cap. New 0.30
+            // reaches cap in ~8 windows (2 min) — strong players actually feel
+            // the field fill up within a single sector run.
+            const upStep   = this._isS6 ? 0.30 : 0.1;
             const downStep = this._isS6 ? 0.05 : 0.1;
             const spawnCap = this._isS6 ? 3.5 : 2.0;
             const speedCap = this._isS6 ? 2.5 : 2.0;
