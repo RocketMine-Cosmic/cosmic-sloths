@@ -180,6 +180,17 @@ export function spawnEnemies(engine, dt) {
     // enemies fine via spatial hash.
     let spawnRate = Math.max(0.025, (1.2 - (1.1 * Math.pow(effectiveProgress, 1.5))) / dynamicRate);
 
+    // Opening-60s base interval cut (sectors only) — base was 1.2s at t=0, which
+    // with the 900u spawn-radius clamp left AoE clearers staring at an empty field
+    // for the first minute (Anubis + Simon feedback 2026-05-30). Knocks ~33% off
+    // the interval for the first 60s of sector runs only; endless and world-boss
+    // pacing untouched. Ramps back to normal linearly by t=60.
+    if (engine.arena.duration !== Infinity && engine.time < 60) {
+        const openingBlend = engine.time / 60; // 0 → 1 across the first 60s
+        const openingMult = 0.67 + (0.33 * openingBlend); // 0.67 → 1.0
+        spawnRate *= openingMult;
+    }
+
     // Early-game empty-field boost (Anubis feedback 2026-05-29, revised after
     // Texxy follow-up 2026-05-29): the original version gated on rolling DPS,
     // but tier-1 mobs only have 8-14 HP — a player who one-shots them generates
