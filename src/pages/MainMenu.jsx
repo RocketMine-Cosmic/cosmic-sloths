@@ -84,13 +84,13 @@ export default function MainMenu({ isCarousel, onNavigateToPlay }) {
                 </div>
             </motion.div>
             
-            <div className="absolute bottom-6 md:bottom-8 flex flex-col items-center gap-1 z-10">
-                <div className="text-slate-300/90 text-sm md:text-base font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(148,113,247,0.4)]">
+            <div className="absolute bottom-1 md:bottom-2 flex items-baseline gap-2 z-10">
+                <span className="text-slate-300/90 text-sm md:text-base font-bold tracking-widest uppercase">
                     SlowBurn Studios
-                </div>
-                <div className="text-slate-500/70 text-[10px] md:text-xs tracking-wider uppercase">
+                </span>
+                <span className="text-slate-500/70 text-[10px] md:text-xs tracking-wider uppercase">
                     v1.0.0
-                </div>
+                </span>
             </div>
 
             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
