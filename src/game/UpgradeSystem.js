@@ -268,14 +268,22 @@ export function generateChoices(engine) {
     // S5 keeps the legacy single-option behaviour so learned strategies survive.
     if (choices.length < 3) {
         const isS6 = isS6OrLater();
-        const fillerPool = isS6 ? OVERCHARGE_FILLERS : [{
+        const consolation = {
             id: 'consolation_hp',
             name: 'Emergency Repair Kit',
             desc: '+25 Max HP (no upgrades left in pool)',
             type: 'passive',
             stat: 'maxHp',
             value: 25,
-        }];
+        };
+        // Respect banishes for Overcharge fillers too — without this, banishing
+        // an uncapped pick (e.g. 'oc_dmg') let it reappear immediately on the
+        // next level-up because this fallback ignored engine.banishedUpgrades
+        // (Tijckers bug 2026-05-31 Discord). If every filler is banished, fall
+        // back to the consolation HP pick so the player never gets a blank modal.
+        const rawPool = isS6 ? OVERCHARGE_FILLERS : [consolation];
+        let fillerPool = rawPool.filter(f => !engine.banishedUpgrades.has(f.id));
+        if (fillerPool.length === 0) fillerPool = [consolation];
         while (choices.length < 3) {
             const base = fillerPool[Math.floor(Math.random() * fillerPool.length)];
             const rarity = isS6 ? getRarity() : { name: 'Common', mult: 1 };
