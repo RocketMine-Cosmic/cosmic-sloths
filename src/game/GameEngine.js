@@ -792,7 +792,14 @@ export class GameEngine {
         const lowDDThreshold = (this.time < 60) ? 4 : 8;
         const normalThreshold = (this.time < 60) ? 7 : 15;
         const killThreshold = (this._isS6 && !ddRamped) ? lowDDThreshold : normalThreshold;
-        if (this.dynamicDifficulty.timer >= ddInterval) {
+        // S6+ — gate the aggressive ramp to Cosmic only. Easy/Normal/Hard players
+        // were finding the field too punishing once DD started climbing past 1.0×,
+        // so on those difficulties we leave spawnRateMult/speedMult pinned at 1.0×
+        // (set in the init block above) and skip both ramp-up and ramp-down entirely.
+        // Cosmic keeps the full DD behaviour for the top-end whales who asked for it.
+        // S5 is untouched (legacy mild ±0.1 ramp applies on all difficulties).
+        const ddEnabled = !this._isS6 || this.difficulty.id === 'cosmic';
+        if (ddEnabled && this.dynamicDifficulty.timer >= ddInterval) {
             const killsDelta = this.kills - this.dynamicDifficulty.lastKills;
             // S6+ Option 2: asymmetric ramp — strong play climbs FAST (+0.15/cycle),
             // struggling decays SLOW (-0.05/cycle). One good 15s window matters more
