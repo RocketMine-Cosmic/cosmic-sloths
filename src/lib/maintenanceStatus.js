@@ -21,7 +21,7 @@
 import { base44 } from '@/api/base44Client';
 
 const LS_KEY = 'omenx_maintenance_status_v1';
-const POLL_INTERVAL_MS = 60_000; // 1 min — server cache TTL is 15s, this is plenty
+const POLL_INTERVAL_MS = 5 * 60_000; // 5 min — server cache TTL is 60s, this is plenty
 const STALE_AFTER_MS = 30 * 60 * 1000; // 30 min — older cache is ignored on boot
 
 let _status = readPersisted() || {
@@ -115,12 +115,19 @@ function startPollerOnce() {
     _pollerStarted = true;
     // Initial fetch (only if cache is missing or stale).
     if (Date.now() - _status._loadedAt > 30_000) doFetch();
-    setInterval(doFetch, POLL_INTERVAL_MS);
+    // Skip the poll entirely when the tab is hidden — backgrounded tabs were
+    // a huge chunk of baseline QPS. The visibilitychange listener below will
+    // do a fresh fetch as soon as the player comes back, so they'll still see
+    // admin flag changes promptly.
+    setInterval(() => {
+        if (typeof document !== 'undefined' && document.hidden) return;
+        doFetch();
+    }, POLL_INTERVAL_MS);
     // Re-fetch when the tab regains focus so admins flipping the switch get
     // picked up promptly when the player comes back from another tab.
     if (typeof document !== 'undefined') {
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && Date.now() - _status._loadedAt > 15_000) doFetch();
+            if (!document.hidden && Date.now() - _status._loadedAt > 60_000) doFetch();
         });
     }
 }

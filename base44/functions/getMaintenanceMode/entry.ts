@@ -12,7 +12,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 let cached = null;
 let cacheExpiresAt = 0;
-const CACHE_TTL_MS = 15 * 1000;
+const CACHE_TTL_MS = 60 * 1000;
 
 Deno.serve(async (req) => {
     try {
