@@ -249,11 +249,13 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
 
             {/* Buffs */}
             <div className="bg-[#0b0416]/70 backdrop-blur-xl rounded-xl border border-amber-700/40 p-3 md:p-4">
-                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                    <h4 className="font-black text-xs md:text-sm uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
-                        <Award className="w-3.5 h-3.5" /> Activate Buff
-                    </h4>
-                    <span className="text-[10px] text-slate-500">Lasts 1 week · applies week {treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next'}</span>
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div>
+                        <h4 className="font-black text-xs md:text-sm uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
+                            <Award className="w-3.5 h-3.5" /> Squad Wars Buff (Next Week)
+                        </h4>
+                        <p className="text-[10px] text-slate-500 mt-1">Active during week {treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next'} squad wars only</p>
+                    </div>
                 </div>
 
                 {!canActivate && (
@@ -358,7 +360,7 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                                 </div>
                             </div>
                             <p className="text-[11px] text-slate-500 italic mb-4">
-                                Buff applies to week <span className="text-slate-300 font-bold">{activeTierObj ? treasury.active_buff_week_id : (treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next')}</span> and lasts the full week.
+                                This buff is <span className="text-amber-300 font-bold">active only during next week's squad wars</span> (week <span className="text-slate-300 font-bold">{activeTierObj ? treasury.active_buff_week_id : (treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next')}</span>).
                             </p>
                             <div className="flex gap-2">
                                 <button
