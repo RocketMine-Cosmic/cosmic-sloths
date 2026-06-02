@@ -6,9 +6,10 @@ const IS_DESKTOP = typeof window !== 'undefined'
     && window.matchMedia
     && !window.matchMedia('(pointer: coarse)').matches;
 
-// Mobile: 1.15× (was already bumped from 1.0). Desktop: 1.5× — players asked for
-// pickups to read more clearly on bigger screens.
-const PICKUP_SCALE = IS_DESKTOP ? 1.5 : 1.15;
+// Unified pickup scale across all devices — used to be 1.5× desktop / 1.15×
+// mobile, which made the same pickup look different on phone vs PC. Now a
+// single value so a shield looks like a shield everywhere.
+const PICKUP_SCALE = 1.35;
 
 // Layer filter — draw only a subset of pickup types per pass so we can stack
 // XP/gold BELOW enemy projectiles and main power-up pickups ABOVE them. Lets
@@ -213,42 +214,71 @@ export function drawPickups(ctx, pickups, time, layer) {
             ctx.stroke();
 
         } else if (p.type === 'shield_power') {
+            // Matches the Shield Overcharge card art: silver outer rim,
+            // red heater-shield body with a vertical seam highlight + pulsing
+            // cyan glow so it pops against busy combat backgrounds.
             const bounce = Math.sin(time * 6 + p.x) * 4;
             ctx.translate(0, bounce);
 
+            const pulse = 1 + Math.sin(time * 6) * 0.15;
+
+            // Cyan outer glow
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
-            grad.addColorStop(0, 'rgba(255, 230, 80, 0.7)');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 34);
+            grad.addColorStop(0, 'rgba(120, 200, 255, 0.85)');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(0, 0, 30, 0, Math.PI * 2);
+            ctx.arc(0, 0, 34, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.globalCompositeOperation = 'source-over';
 
-            // Shield shape
-            ctx.fillStyle = '#fbbf24';
+            // Pulsing cyan ring — visual consistency with magnet/nuke
+            ctx.strokeStyle = '#7dd3fc';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(0, -13);
-            ctx.lineTo(11, -8);
-            ctx.lineTo(11, 4);
-            ctx.quadraticCurveTo(11, 12, 0, 14);
-            ctx.quadraticCurveTo(-11, 12, -11, 4);
-            ctx.lineTo(-11, -8);
+            ctx.arc(0, 0, 19 * pulse, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Heater shield silhouette path (reused for rim + body + clip)
+            const shieldPath = () => {
+                ctx.beginPath();
+                ctx.moveTo(0, -14);
+                ctx.lineTo(12, -9);
+                ctx.lineTo(12, 4);
+                ctx.quadraticCurveTo(12, 13, 0, 16);
+                ctx.quadraticCurveTo(-12, 13, -12, 4);
+                ctx.lineTo(-12, -9);
+                ctx.closePath();
+            };
+
+            // Silver outer rim
+            ctx.fillStyle = '#e5e7eb';
+            shieldPath();
+            ctx.fill();
+
+            // Red shield body (inset)
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.moveTo(0, -11);
+            ctx.lineTo(9, -7);
+            ctx.lineTo(9, 3);
+            ctx.quadraticCurveTo(9, 10, 0, 12);
+            ctx.quadraticCurveTo(-9, 10, -9, 3);
+            ctx.lineTo(-9, -7);
             ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = '#fef3c7';
-            ctx.beginPath();
-            ctx.moveTo(0, -9);
-            ctx.lineTo(7, -5);
-            ctx.lineTo(7, 3);
-            ctx.quadraticCurveTo(7, 8, 0, 10);
-            ctx.quadraticCurveTo(-7, 8, -7, 3);
-            ctx.lineTo(-7, -5);
-            ctx.closePath();
-            ctx.fill();
+            // Vertical seam highlight down the center
+            ctx.fillStyle = '#fca5a5';
+            ctx.fillRect(-0.8, -10, 1.6, 21);
+
+            // Dark outline on the rim for definition
+            ctx.strokeStyle = '#1f2937';
+            ctx.lineWidth = 1.2;
+            shieldPath();
+            ctx.stroke();
 
         } else if (p.icon) {
             ctx.font = '42px Arial';
