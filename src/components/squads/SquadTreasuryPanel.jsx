@@ -262,7 +262,10 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                     <p className="text-[11px] text-slate-500 mb-2 italic">Only the leader or officers can activate buffs.</p>
                 )}
                 {canActivate && !!treasury.active_buff_tier && (
-                    <p className="text-[11px] text-cyan-300/90 mb-2">💡 You can upgrade to a higher tier by paying the cost <em>difference</em>.</p>
+                    <p className="text-[11px] text-cyan-300/90 mb-2">💡 You can upgrade to a higher tier by paying the cost <em>difference</em> — not the full price.</p>
+                )}
+                {!treasury.active_buff_tier && (
+                    <p className="text-[11px] text-slate-400 mb-2">No buff active yet for next week's wars. Pick a tier below ↓</p>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -277,10 +280,14 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                         const enough = (treasury.treasury_gold || 0) >= chargeCost;
                         const lockedByDowngrade = isDowngrade; // can't downgrade
                         return (
-                            <div key={tier.key} className={`p-2.5 rounded-lg border-2 ${tier.border} bg-gradient-to-br ${tier.color} bg-opacity-10 flex flex-col`}>
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className={`font-black text-xs uppercase tracking-widest ${tier.text}`}>{tier.label}</span>
-                                    {isActive && <ShieldCheck className="w-4 h-4 text-emerald-300" />}
+                            <div key={tier.key} className={`relative p-2.5 rounded-lg border-2 ${isActive ? 'border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.5)] ring-2 ring-emerald-400/30' : tier.border} bg-gradient-to-br ${tier.color} bg-opacity-10 flex flex-col`}>
+                                {isActive && (
+                                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-emerald-300 shadow-lg whitespace-nowrap flex items-center gap-1">
+                                        <ShieldCheck className="w-3 h-3" /> Active Next Week
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between mb-1 mt-1">
+                                    <span className={`font-black text-xs uppercase tracking-widest ${isActive ? 'text-emerald-200' : tier.text}`}>{tier.label}</span>
                                 </div>
                                 <p className="text-[10px] text-white/80 leading-snug mb-2 flex-1">{tier.desc}</p>
                                 <button
