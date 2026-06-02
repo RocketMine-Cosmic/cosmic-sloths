@@ -960,8 +960,16 @@ Deno.serve(async (req) => {
                 return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
             })();
 
-            // Lazy expiry — if the active buff is from a past week, treat it as cleared.
-            const liveBuffTier = (squad.active_buff_week_id === currentWeekId) ? (squad.active_buff_tier || '') : '';
+            // Lazy expiry — a buff is "live" if its target week is the current week
+            // OR a future week (buffs are activated for NEXT week, so a Platinum bought
+            // on Tuesday is stamped with next week's id and must still count as live
+            // to block officers from overwriting it with a cheaper tier afterwards).
+            // Bug fix 2026-06-02: previously only matched currentWeekId, so any buff
+            // bought for next week was treated as cleared — letting an officer downgrade
+            // a leader's Platinum to Bronze hours later (squad-war griefing vector).
+            const liveBuffTier = (squad.active_buff_week_id && squad.active_buff_week_id >= currentWeekId)
+                ? (squad.active_buff_tier || '')
+                : '';
 
             if (action === 'getTreasury') {
                 return Response.json({
