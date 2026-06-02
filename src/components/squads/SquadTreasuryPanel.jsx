@@ -261,8 +261,11 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                 {!canActivate && (
                     <p className="text-[11px] text-slate-500 mb-2 italic">Only the leader or officers can activate buffs.</p>
                 )}
+                <div className="text-[11px] text-amber-200/90 bg-amber-950/30 border border-amber-700/40 rounded p-2 mb-3 leading-snug">
+                    ℹ️ <span className="font-bold">Only one buff is active at a time</span> — the highest tier you've bought. You can <span className="font-bold text-cyan-300">upgrade</span> later by buying the next tier and only paying the <em>difference</em> in cost (not the full price).
+                </div>
                 {canActivate && !!treasury.active_buff_tier && (
-                    <p className="text-[11px] text-cyan-300/90 mb-2">💡 You can upgrade to a higher tier by paying the cost <em>difference</em> — not the full price.</p>
+                    <p className="text-[11px] text-cyan-300/90 mb-2">💡 Tap a higher tier to upgrade — you'll only be charged the difference.</p>
                 )}
                 {!treasury.active_buff_tier && (
                     <p className="text-[11px] text-slate-400 mb-2">No buff active yet for next week's wars. Pick a tier below ↓</p>
