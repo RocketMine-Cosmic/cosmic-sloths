@@ -252,9 +252,9 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div>
                         <h4 className="font-black text-xs md:text-sm uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
-                            <Award className="w-3.5 h-3.5" /> Squad Wars Buff (Next Week)
+                            <Award className="w-3.5 h-3.5" /> Squad Wars Buff {treasury.active_buff_tier && treasury.active_buff_week_id === treasury.current_week_id ? '(This Week)' : '(Next Week)'}
                         </h4>
-                        <p className="text-[10px] text-slate-500 mt-1">Active during week {treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next'} squad wars only</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Active during week {treasury.active_buff_tier && treasury.active_buff_week_id ? treasury.active_buff_week_id : (treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next')} squad wars only</p>
                     </div>
                 </div>
 
@@ -286,7 +286,7 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                             <div key={tier.key} className={`relative p-2.5 rounded-lg border-2 ${isActive ? 'border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.5)] ring-2 ring-emerald-400/30' : tier.border} bg-gradient-to-br ${tier.color} bg-opacity-10 flex flex-col`}>
                                 {isActive && (
                                     <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-emerald-300 shadow-lg whitespace-nowrap flex items-center gap-1">
-                                        <ShieldCheck className="w-3 h-3" /> Active Next Week
+                                        <ShieldCheck className="w-3 h-3" /> {treasury.active_buff_week_id === treasury.current_week_id ? 'Active This Week' : 'Active Next Week'}
                                     </div>
                                 )}
                                 <div className="flex items-center justify-between mb-1 mt-1">
