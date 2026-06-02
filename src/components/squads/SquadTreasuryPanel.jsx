@@ -187,7 +187,7 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                     <div className={`mt-3 p-2 rounded-lg border-2 ${activeTier.border} bg-gradient-to-r ${activeTier.color} bg-opacity-20 flex items-start gap-2`}>
                         <Sparkles className="w-4 h-4 shrink-0 text-white mt-0.5" />
                         <div className="flex-1 min-w-0">
-                            <div className="text-[10px] uppercase tracking-widest font-black text-white/90">Active buff · week {treasury.active_buff_week_id}</div>
+                            <div className="text-[10px] uppercase tracking-widest font-black text-white/90">Active buff this week</div>
                             <div className="font-black text-sm text-white">{activeTier.label}</div>
                             <div className="text-[11px] text-white/80 leading-snug">{activeTier.desc}</div>
                         </div>
