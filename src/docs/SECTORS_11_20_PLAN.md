@@ -358,11 +358,9 @@ Difficulty + cap + score curves locked (audit 2026-06-03). All 5 unverified clai
 
 ### Engine
 4. **`game/GameEngine.js`** — sector-scaled cap-lift block in constructor (~20 lines, see "Player power cap lifts" — cooldownMult NOT lifted, dead code). Vampiric Lash heal cap 5%→10% on S11+. Forge augment stacking allows 2-of-same on S11+.
-5. **`game/EnemySpawner.js`** — replace `Math.pow(1.2, arenaIndex)` for S11+ with the locked difficulty lookup table (S11 base 1.05 → S20 base 54.17). Raise tier cap to 14. Spawn density +10% on S15-S20. Boss pool rotation: random across 7 bosses for S11-S19; Pulsar Guardian guaranteed on S20.
-   - ⚠️ **OPEN: sector boss spawn pattern**. Current code only spawns sector bosses on indexes [1,3,5,7,9] = sectors 2,4,6,8,10 (every other). For Outer Galaxy, options:
-     - **(a) Match current pattern**: bosses on S12/S14/S16/S18/S20 only. Half the new sectors have no boss → weaker climb feel.
-     - **(b) Boss on every Outer Galaxy sector** (S11-S20). Means extending the `isBossArena` check. Better climb but more boss-fight engineering.
-     - Recommend (b) — Outer Galaxy is endgame, every sector should feel boss-worthy. Decide at implementation.
+5. **`game/EnemySpawner.js`** — replace `Math.pow(1.2, arenaIndex)` for S11+ with the locked difficulty lookup table (S11 base 1.05 → S20 base 54.17). Raise tier cap to 14. Spawn density +10% on S15-S20. Boss pool rotation: random across 7 bosses for S12/S14/S16/S18; Pulsar Guardian guaranteed on S20.
+   - ✅ **Sector boss spawn pattern — LOCKED: option (a)**. Match current Inner Galaxy cadence — bosses on indexes [11,13,15,17,19] = sectors **S12, S14, S16, S18, S20** only. Odd-indexed Outer Galaxy sectors (S11, S13, S15, S17, S19) ship boss-free, same as today's S1/S3/S5/S7/S9. Keeps the `isBossArena` check unchanged (just extend the index array) and avoids the engineering cost of designing 5 extra boss encounters.
+   - 🔮 **Follow-up ticket**: "random boss on any sector" mechanic is a separate design pass. Once that lands, every Outer Galaxy sector (odd indices included) gets a boss via the new system. Outer Galaxy ships with option (a) until then.
 6. **Arena effects** — pick 4-5 of the 5 proposed new effects (`ion_storm`, `void_pulse`, `eclipse_dim`, `gravity_well`, `aurora_drift`) and implement in the effects layer. Remaining sectors reuse existing 4.
 
 ### Frontend
