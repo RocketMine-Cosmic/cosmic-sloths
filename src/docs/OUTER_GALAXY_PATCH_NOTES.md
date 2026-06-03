@@ -46,8 +46,8 @@ The Outer Galaxy is balanced as a true endgame wall. Each sector's Normal diffic
 ## 📢 POST 2 — Scoring, Rewards & New Mobs
 
 ```
-🏆 **SCORING — SAME FORMULA, BIGGER NUMBERS**
-The existing S6 score formula just extends naturally into S11-S20. No new bonuses, no inflation tricks — the sector value gets bigger and you'll kill more / level higher because the content is harder.
+🏆 **SCORING — SAME FORMULA, NATURAL GROWTH**
+The existing S6 score formula extends naturally into S11-S20. No new bonuses, no inflation tricks — sector value gets bigger AND you'll kill more / level higher because the content is harder and longer.
 
 **Formula (unchanged from S1-S10):**
 • Kills × 120
@@ -55,16 +55,14 @@ The existing S6 score formula just extends naturally into S11-S20. No new bonuse
 • Sector × 8,000
 • Victory bonus: Sector × 15,000
 
-**Approximate victory rewards:**
-• S10 victory bonus (formula only): ~230k
-• S15 victory bonus (formula only): ~345k
-• S20 victory bonus (formula only): ~460k
+**Real numbers (anchored to current S10 Cosmic peak ~2M+ on 7k-kill runs):**
+• S10 Cosmic peak today: ~2-2.5M
+• S15 Cosmic projected: ~3-5M
+• S20 Cosmic projected: ~6-10M (theoretical mythic ceiling — most players will land lower)
 
-Stack on top of kills + level scaling and a deep Outer Galaxy run lands in the **2-5M range**.
+The bulk of the score comes from **kills × 120 + level² × 100** — not the sector bonus. Tougher mobs + longer runs + more elites = more kills + higher level naturally. Harder difficulties (Hard / Cosmic) keep rewarding more score this way, no flat multiplier needed.
 
-**Score ceiling raised: 10M → 25M.** A few endless ceiling-pushers were already clipping the 10M cap on legit runs — combined with Outer Galaxy headroom, 25M gives everyone room to breathe without re-clipping legit play.
-
-Just like Inner Galaxy, harder difficulties (Hard / Cosmic) don't get a flat multiplier — they reward more naturally via more kills + higher level reached.
+**Score ceiling raised: 10M → 25M.** Endless ceiling-pushers were already clipping 10M, and a god-tier S20 Cosmic run could climb to 8-10M+. 25M leaves comfortable buffer without re-clipping legit play.
 
 💰 **GOLD DROPS — FLAT AT S10 VALUES**
 Gold income in S11-S20 stays exactly at S10 levels. The economy is healthy and we don't want Outer Galaxy to break it. XP scales with difficulty (you need it mid-run), gold does not.
