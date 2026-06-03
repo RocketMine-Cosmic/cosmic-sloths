@@ -1,6 +1,6 @@
 # Outer Galaxy Patch Notes — Discord Post Pack
 
-Condensed to 4 posts. Each under 2,000 chars so it fits a single Discord message.
+Condensed to 3 posts. Each under 2,000 chars so it fits a single Discord message.
 
 **Goes live:** TBD (set on launch day — Hub UI ship = launch)
 **Maintenance window:** none required — content rolls in invisibly behind sector-index gates, only the new Outer Galaxy tab triggers visibility.
@@ -43,46 +43,7 @@ The Outer Galaxy is balanced as a true endgame wall. Each sector's Normal diffic
 
 ---
 
-## 📢 POST 2 — Player Power Cap Lifts
-
-```
-💪 **YOUR CAPS ARE GETTING MASSIVELY LIFTED — IN OUTER GALAXY ONLY**
-
-You can't fight 35,000× difficulty with the current 6× damage ceiling. So when you enter an Outer Galaxy sector, your stat caps scale up *with* the difficulty curve.
-
-📊 **In-run multiplier ceilings (S1-S10 vs Outer Galaxy):**
-
-```
-Cap            S1-S10   S11    S13    S15    S17    S20
-damageMult     6.0×     15×    40×    100×   250×   800×
-areaMult       4.0×     6×     9×     13×    18×    25×
-xpMult         5.0×     10×    20×    40×    80×    150×
-cooldownMult   0.35     0.25   0.18   0.12   0.08   0.05
-goldMult       8.0×     8×     8×     8×     8×     8×
-```
-
-**goldMult is UNCHANGED.** Outer Galaxy doesn't inflate gold — bragging rights only.
-
-🩸 **Vampiric Lash heal cap: 5% → 10%** *(S11+ only)*
-Currently useless against late-game damage. Brings sustain builds back into viability.
-
-🔨 **Forge augment stacking: 2-of-same allowed** *(S11+ only)*
-You can stack `damage_3` twice on a single weapon for +120% instead of +60%. Endgame whale-only flex.
-
-**S1-S10 is untouched.** Same 6× damage cap, same 4× area cap, same Vampiric 5%, same single augment per stat. Nothing changes in the Inner Galaxy.
-
-**Why:** Without these lifts, the Outer Galaxy is literally unplayable for even the strongest builds. The cap-lift curve is *deliberately sublinear* vs the difficulty curve — you still do 44× LESS relative damage on S20 than you do on S10 today. That gap is the skill check.
-
-**What does NOT change:**
-• Talent stack factor (0.5/0.66) — anti-exploit, stays
-• Per-level stat growth caps — anti-Overcharge, stays
-• NFT perks at 15% — whale balance, stays
-• S1-S10 multiplier ceilings — frozen
-```
-
----
-
-## 📢 POST 3 — Scoring, Rewards & New Mobs
+## 📢 POST 2 — Scoring, Rewards & New Mobs
 
 ```
 🏆 **SCORING — OUTER GALAXY BONUS**
@@ -117,7 +78,7 @@ A black-armored juggernaut with a molten pulsar core. Joins the boss rotation po
 
 ---
 
-## 📢 POST 4 — UI & What Doesn't Change
+## 📢 POST 3 — UI & What Doesn't Change
 
 ```
 🖥️ **HUB UI — INNER vs OUTER GALAXY TABS**
