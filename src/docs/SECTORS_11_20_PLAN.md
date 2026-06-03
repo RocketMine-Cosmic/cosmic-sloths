@@ -102,8 +102,8 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    ✅ **Score formula contribution — locked**: **No new code, no exponential bonus, no inflation.** The existing S6 formula (`sectorIdx × 8,000` + victory `sectorIdx × 15,000`) already scales linearly through S11-S20 the moment we extend `ARENA_ORDER` from 10 → 20 entries. Harder difficulty (Easy/Normal/Hard/Cosmic) still rewards more score *naturally* via more kills + higher level reached + longer survival time — same as Inner Galaxy. Outer Galaxy victories outscore Inner Galaxy victories purely because the sector index is bigger AND the player kills/levels more in tougher content. No artificial multiplier needed.
 
-   **Anchor: real S6 top scores (checked 2026-06-03)**
-   - S10 Cosmic top runs already hitting **7k+ kills** → `7000 × 120 = 840k from kills alone`, plus level² scaling and sector bonus puts real S10 Cosmic peaks at **~2-2.5M**
+   **Anchor: real S6 top scores (checked 2026-06-03 — Texxy correction)**
+   - S10 Cosmic peak today: **~1-1.5M** (~5-6k kills, level ~85). Formula breakdown: `5500 × 120 = 660k from kills + 85² × 100 = 722k from level + 9 × 8000 = 72k sector + 9 × 15000 = 135k victory ≈ 1.6M`
    - Endless ceiling hits: 10M (Battle Toad, 73-min run) — endless is sandbox, NOT recalibrated here per Texxy's call
 
    **🔒 Kill → score is sacred.** Score formula stays `kills × 120` flat — no caps, no diminishing returns, no per-sector kill nerfs, no kill-rate penalty in Outer Galaxy. Every kill is worth the same 120 points whether it's a tier-1 swarm mob in S1 or a tier-14 elite in S20. More kills = more score, full stop. The cap lifts + longer durations + +10% spawn density on S15-S20 are specifically designed to let strong players rack up MORE kills per run, not fewer.
@@ -114,17 +114,17 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    | Sector | Formula bonus | vs S10 |
    |--------|---------------|--------|
-   | S10 | 230k | 1.0× |
-   | S15 | 345k | 1.50× |
-   | S20 | 460k | 2.0× |
+   | S10 | 207k | 1.0× |
+   | S15 | 322k | 1.55× |
+   | S20 | 437k | 2.1× |
 
-   **The real score drivers are kills × 120 and level² × 100.** Worked S20 Cosmic projection grounded in current S10 numbers — kill counts scale UP in Outer Galaxy (longer durations, more spawns on S15+, cap-lifted damage so whales still clear fast):
-   - S10 Cosmic top players today: ~7k kills, level ~100 → 840k + 1M + 230k = **~2-2.5M**
-   - S15 Cosmic projection: ~10k kills + level ~140 → 1.2M + 1.96M + 345k = **~3-4M**
-   - S20 Cosmic projection: ~12k kills + level ~180 → 1.44M + 3.24M + 460k = **~5-6M**
+   **The real score drivers are kills × 120 and level² × 100.** Worked projections from the real ~1-1.5M S10 Cosmic peak — kill counts scale UP in Outer Galaxy (longer durations, more spawns on S15+, cap-lifted damage so whales still clear fast):
+   - S10 Cosmic top players today: ~5-6k kills, level ~85 → 660k + 722k + 207k = **~1.5M**
+   - S15 Cosmic projection: ~7-8k kills + level ~120 → 900k + 1.44M + 322k = **~2.5M**
+   - S20 Cosmic projection: ~9-10k kills + level ~150 → 1.14M + 2.25M + 437k = **~3.8M**
    - Endless top runs already at 10M — that remains the ceiling-pusher
 
-   **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless is *already* clipping the 10M ceiling on legit long sessions. Outer Galaxy adds further pressure (a god-tier S15-S17 Cosmic plus stacked endless tail could push 7-10M). 25M gives comfortable headroom without going stupid.
+   **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless is *already* clipping the 10M ceiling on legit long sessions. Outer Galaxy realistic peak is ~3-4M (S20 Cosmic), but a god-tier endless tail layered on top could push 7-10M. 25M gives comfortable headroom without going stupid.
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
