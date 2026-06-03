@@ -84,7 +84,46 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    **Mid-builds** clear S11-S13, **fully-built** clear S15-S17, only **top-tier mythic** players touch S18-S20 Cosmic. S20 Cosmic ≈ 10× S1 baseline is the bragging-rights wall.
 
-   ⏳ **TBD — score formula contribution**: sector index needs to feed into the score formula so that clearing a harder sector ranks higher than grinding S1 endlessly. Separate ticket — wire up during implementation alongside `saveScore`.
+   ✅ **Score formula contribution — locked**: Outer Galaxy sectors stack a quadratic bonus on top of the existing S6 linear sector/victory terms. Score growth tracks the ~10× difficulty ramp from S10 → S20 Cosmic (NOT inflated to 25×) so a S20 victory is meaningfully harder *and* meaningfully more valuable than S10, without auto-winning the season for whoever clears it once.
+
+   **Anchor: real S6 top scores (checked 2026-06-03)**
+   - S10 Cosmic victory peak: **~1.6M** (Waeoo / Texxy on Dimension)
+   - Endless ceiling hits: 10M (Battle Toad, 73-min run) — endless is sandbox, NOT recalibrated here per Texxy's call ("not tied to Omen, players will run highest sector endless anyway")
+
+   **Formula change in `functions/saveScore.js` (S6 branch only, no S5 impact):**
+   ```js
+   // Sectors 1-10 — UNCHANGED
+   const sectorScore  = sectorIdxForBonus * 8000;
+   const victoryBonus = isVictory ? sectorIdxForBonus * 15000 : 0;
+
+   // Sectors 11-20 — quadratic ADDITIONAL bonus on top
+   let outerSectorBonus = 0;
+   let outerVictoryBonus = 0;
+   if (sectorIdxForBonus >= 10 && !isEndless && !isRaidRun) {
+       const outerStep = sectorIdxForBonus - 9;          // 1 for S11, 10 for S20
+       outerSectorBonus  = outerStep * outerStep * 15000;  // S11: +15k, S20: +1.5M
+       if (isVictory) {
+           outerVictoryBonus = outerStep * outerStep * 30000;  // S11: +30k, S20: +3M
+       }
+   }
+   const baseScore = killsScore + levelScore + sectorScore + victoryBonus
+                   + outerSectorBonus + outerVictoryBonus + endlessScore;
+   ```
+
+   **Projected Cosmic 2× victory scores:**
+
+   | Sector | Score | vs S10 (1.6M) | Difficulty ramp (Cosmic) |
+   |--------|-------|---------------|--------------------------|
+   | S10 | 1.6M | 1.0× | 1.0× |
+   | S11 | 1.8M | 1.1× | 1.15× |
+   | S12 | 2.1M | 1.3× | 1.32× |
+   | S15 | 5M | 3.1× | 2.0× |
+   | S18 | 11M | 6.9× | 6.6× |
+   | S20 | **17M** | **10.6×** | **~10×** ✅ matches difficulty curve |
+
+   Each Outer Galaxy sector clearly outscores the previous; growth is *proportional* to the HP/dmg ramp rather than multiplied on top of it. No "clear S20 once and own the leaderboard forever" trap.
+
+   **Required `SCORE_HARD_CEILING` bump**: 10M → **35M** (S20 Cosmic lands ~17M; 35M leaves buffer for stacked talents/relics/admin buffs on a perfect S20 run without re-clipping legit play).
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
