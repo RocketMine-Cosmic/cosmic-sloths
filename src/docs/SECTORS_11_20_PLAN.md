@@ -85,7 +85,7 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    **Reality check**: S20 Cosmic ≈ 35,000× S1 baseline — explicit "no human will clear this without a perfect maxed-out build" territory. That's by design. S11-S13 is the realistic chase for fully-built whales, S14-S16 is "show me your absolute peak build", S17+ is mythic / theoretical / streamer-flex territory.
 
-   ✅ **Score formula contribution — locked**: Outer Galaxy sectors get an **exponential bonus** that tracks the 2.6× per-sector difficulty ramp. Score growth is NOT linear with difficulty (35,000× would inflate scores absurdly) — instead we use a tamed exponential (~1.7× per sector) so each Outer Galaxy victory clearly outscores the previous without anyone needing to rewrite the leaderboard.
+   ✅ **Score formula contribution — locked**: Outer Galaxy sectors get an **exponential bonus per sector index** (no difficulty multiplier — mirrors S1-S10, which also ignore Easy/Normal/Hard/Cosmic in the formula). Harder difficulty still rewards more score *naturally* via more kills, higher level reached, and longer survival time — same as today. The exponential (~1.7× per sector) ensures each Outer Galaxy victory clearly outscores the previous without anyone needing to rewrite the leaderboard.
 
    **Anchor: real S6 top scores (checked 2026-06-03)**
    - S10 Cosmic victory peak: **~1.6M** (Waeoo / Texxy on Dimension)
@@ -114,23 +114,25 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
                    + outerSectorBonus + outerVictoryBonus + endlessScore;
    ```
 
-   **Projected Cosmic 2× victory scores (approx, before kills/level/time contribution):**
+   **Projected victory bonus by sector** (`sectorScore + victoryBonus + outerSectorBonus + outerVictoryBonus` only — kills/level contribution stacks on top and varies by difficulty since harder runs = more kills + higher level):
 
-   | Sector | Score (Cosmic victory) | vs S10 (1.6M) | Difficulty ramp |
-   |--------|------------------------|---------------|-----------------|
-   | S10 | 1.6M | 1.0× | 1.0× |
-   | S11 | 1.9M | 1.2× | 2.6× |
-   | S12 | 2.3M | 1.4× | 6.8× |
-   | S13 | 3.0M | 1.9× | 17.6× |
-   | S15 | 7.4M | 4.6× | 119× |
-   | S17 | 24M | 15× | 803× |
-   | S18 | 41M | 25× | 2,089× |
-   | S19 | 70M | 44× | 5,432× |
-   | S20 | **~120M (clipped to 150M ceiling)** | **~75×** | 14,123× |
+   | Sector | Bonus from formula | vs S10 bonus |
+   |--------|--------------------|--------------|
+   | S10 | 230k | 1.0× |
+   | S11 | 380k | 1.7× |
+   | S12 | 575k | 2.5× |
+   | S13 | 905k | 3.9× |
+   | S15 | 2.2M | 9.5× |
+   | S17 | 6.3M | 27× |
+   | S18 | 10.6M | 46× |
+   | S19 | 18M | 78× |
+   | S20 | **30M** | **130×** |
 
-   Score growth is heavily *sublinear* vs difficulty — intentional, so the leaderboard stays meaningful instead of collapsing into "whoever cleared the highest sector wins by 1000×". S20 victory ≈ ~75× a S10 victory, which feels mythic without being insane.
+   Add typical kills/level contribution (~500k-1.5M on S10 Cosmic, scaling with sector since enemies/spawns grow) and a S20 Cosmic victory probably lands somewhere in the **40-80M** range, with bigger spread depending on how long the player survives + final level.
 
-   **Required `SCORE_HARD_CEILING` bump**: 10M → **150M** (S19 victory lands ~70M, S20 victory caps near 120M; 150M leaves buffer for stacked kills/level on a god-tier run without re-clipping legit play). Old 35M proposal was based on the 1.15× ramp and is no longer enough.
+   Score growth is *sublinear* vs difficulty (130× score vs 14,000× difficulty) — intentional, so the leaderboard stays meaningful instead of collapsing into "whoever cleared the highest sector wins by 1000×".
+
+   **Required `SCORE_HARD_CEILING` bump**: 10M → **100M** (S20 victory bonus is 30M; add big kills/level on a god-tier run gets us to ~50-80M, so 100M leaves comfortable buffer without re-clipping legit play). Old 35M proposal was based on the 1.15× ramp and is no longer enough.
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
@@ -309,7 +311,7 @@ All open questions resolved (audit 2026-06-03). Implementation checklist:
    - Extend `ARENA_ORDER` array from 10 → 20 ids
    - Extend `ARENA_DURATIONS` map with the 10 new durations (8:00 → 12:30)
    - Add the Outer Galaxy quadratic score bonus block (S6 branch only — see formula in section 6)
-   - Bump `SCORE_HARD_CEILING` from 10M → 150M
+   - Bump `SCORE_HARD_CEILING` from 10M → 100M
    - `unlockedArenasByCharacter` self-heal already walks `ARENA_ORDER` → automatically extends ✅ no change needed
 
 ### Engine
