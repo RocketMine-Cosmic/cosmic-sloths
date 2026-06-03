@@ -51,7 +51,28 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    - Outer Galaxy tab should have a subtle distinct visual treatment (e.g. cosmic glow on the tab itself, or a "★ NEW" badge if the player hasn't unlocked anything in it yet) so the new content is discoverable.
 4. **Bestiary / Lore** — no new enemies required for first pass; we reuse the existing 30 mob roster but emphasise different tiers per sector via spawn weights. Bosses too — keep the 6 existing bosses but assign different ones per sector.
 5. **Effects** — first pass uses only the 4 existing effects so no engine work. If we want unique effects per new sector (e.g. `ion_storm`, `void_pulse`, `eclipse_dim`), that's a separate ticket.
-6. **Difficulty curve** — verify HP/dmg scaling formula in `EnemySpawner.js` doesn't break past sector index 10. Likely needs a clamp or a fresh tier coefficient for sectors 11-20.
+6. **Difficulty curve** — sectors 11-20 abandon the linear scaling of 1-10 and use an **exponential per-sector ramp**:
+   - **Sector 11 Normal = Sector 10 Cosmic × 1.2**
+   - **Sector N Normal = Sector (N-1) Cosmic × 1.2** for all N ≥ 11
+   - The 4 difficulty tiers (Easy 0.7×/0.6×, Normal 1.0×, Hard 1.5×, Cosmic 2.5×) still apply *within* each sector on top of the base.
+   - **Net effect**: Normal difficulty grows **3.0× per sector** at the Normal tier (1.2 × 2.5 chain). Brutal by design — this is the mythic endgame wall.
+
+   Worked example (HP/dmg multiplier vs Sector 1 Normal baseline = 1.0×):
+   | Sector | Normal | Cosmic |
+   |--------|--------|--------|
+   | 10     | 1.0×   | 2.5×   |
+   | 11     | 3.0×   | 7.5×   |
+   | 12     | 9.0×   | 22.5×  |
+   | 13     | 27×    | 67.5×  |
+   | 14     | 81×    | 202.5× |
+   | 15     | 243×   | 607.5× |
+   | 16     | 729×   | 1822×  |
+   | 17     | 2187×  | 5467×  |
+   | 18     | 6561×  | 16402× |
+   | 19     | 19683× | 49207× |
+   | 20     | 59049× | 147622×|
+
+   ⚠️ **Open balance question**: this curve is intentionally steep but by Sector 20 Cosmic, enemy HP is ~147k× S1 baseline — only feasible for fully-built mythic players with all relics maxed. Confirm you want this full curve, or whether to cap the per-sector multiplier (e.g. ×1.15 instead of ×1.2 → 23000× at S20 Cosmic) or floor it at S15.
 7. **Rewards** — sectors 16-20 likely need a gold/XP bump above the base curve to feel mythic-tier. Suggest +10% per sector past 15.
 8. **Unlocks** — gating? Sector 11 unlocks when sector 10 cleared on Normal? Or all unlocked at once? Decision needed.
 
