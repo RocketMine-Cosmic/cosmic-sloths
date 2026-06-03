@@ -118,9 +118,9 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    **The real score drivers are kills × 120 and level² × 100.** Worked S20 Cosmic projection grounded in current S10 numbers + the steep no-overlap ramp:
    - S10 Cosmic top players today: ~7k kills, level ~100 → 840k + 1M + 230k = **~2-2.5M**
-   - S20 Cosmic projection: enemies have 14,125× S10C HP, player has ~133× more damage cap (800/6) → DPS ratio is **~18× worse** than S10 Cosmic. Kill counts will crater. But longer duration (12:30 vs 7:30), 4× XP elite spawns, and level² compounding keep score climbing.
-     - Realistic S20 victory: ~2k kills + level ~150 → 240k + 2.25M + 460k = **~3M**
-     - Theoretical mythic peak: ~4k kills + level 220 → 480k + 4.84M + 460k = **~6M**
+   - S20 Cosmic projection: enemies have 14,125× S10C HP, player has ~133× more damage cap (800/6). Longer duration (12:30 vs 7:30), 4× XP elite spawns, and level² compounding all keep score climbing.
+     - Realistic S20 victory: ~3k kills + level ~150 → 360k + 2.25M + 460k = **~3-4M**
+     - Theoretical mythic peak: ~5k kills + level 220 → 600k + 4.84M + 460k = **~5-6M**
    - S15-S17 Cosmic is where the realistic chase lives: 3-5M range as kill rates haven't collapsed yet
    - Endless top runs already at 10M — that remains the ceiling-pusher
 
