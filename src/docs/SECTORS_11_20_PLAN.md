@@ -327,9 +327,40 @@ Density scales mildly on top of the exponential HP/dmg curve — keeps the scree
 
 (Replaces the earlier "+25% on S14" note — too punishing on top of the 1.2× HP ramp.)
 
+## Implementation & Rollout Strategy — Seamless Player Experience
+
+**Silent rollout (no maintenance required).** The Outer Galaxy content is deployed behind sector-index gates — meaning the new arenas, enemies, and balance logic ship in the code but are mathematically unreachable by players until the Hub UI update lands.
+
+**Phased deployment (recommended):**
+1. **Backend + Engine pass (day 1–2)**: Code merges for Constants.js (10 new ARENAS + 20 new enemies + Pulsar Guardian), GameEngine.js cap-lifts, EnemySpawner.js difficulty lookup table, saveScore.js (ARENA_ORDER extension + bonus mult), all behind sector-index checks. Game still boots and plays normally — no visible change.
+2. **Frontend rollout (day 3, the "launch moment")**: Hub page ships with Inner/Outer Galaxy tab split. Inner Galaxy tab is the default. Players who've cleared S10 suddenly see "Outer Galaxy" tab become available (gated by their save data). First player action = first visibility.
+3. **No downtime, no "coming soon" banner, no maintenance window.** The content was invisibly live the whole time; the UI is just the moment it becomes reachable.
+
+**Player experience:**
+- **Casual players** (still grinding S1–S10): Nothing changes. Their default tab is Inner Galaxy. They see the Outer Galaxy tab but it says "locked — clear Sector 10 first."
+- **Endgame players** (S10 clear): Log in, Hub now has the Outer Galaxy tab available by default (or remembered from their last session). Click it → S11 awaits. First S11 run feels like stepping through an invisible wall that was built weeks ago.
+- **Day-1 launch message** (Discord post): Brief "Outer Galaxy unlocked" announcement. No hype, just factual — "if you've beaten S10, head to the Hub and check the Outer Galaxy tab." Players discover the 10-sector ladder naturally.
+
+**Technical safety:**
+- All 5 arenas + 20 mobs + 1 boss are shipped as new entries in Constants.js (no edits to existing T1–T10 roster — zero risk of breaking S1–S10 spawn logic).
+- Difficulty lookup tables apply only to `sectorIdx >= 11` (check at the top of EnemySpawner functions).
+- Score bonus multiplier is conditional on `sectorIdxForBonus >= 15` in saveScore.js.
+- Cap-lifts are gated by `if (this._isS6 && OUTER_GALAXY_CAPS[sectorIdx])` — S1–S10 caps untouched.
+- RunScore creation is untouched except for the `ARENA_ORDER` extension (existing logic walks it naturally).
+- **No player data migration, no backfill, no flag resets.** Just code, live immediately.
+
+**Day-1 launch checklist:**
+- [ ] Backend + Engine merge (Constants, GameEngine, EnemySpawner, saveScore)
+- [ ] Frontend merge (Hub UI tabs + localStorage persist)
+- [ ] Post launch Discord message (brief, matter-of-fact tone)
+- [ ] Monitor first 24h: watch for 429s on RunScore creation, cap-lift edge cases, any logic gaps in the difficulty lookup (should be none, but runtime is the real test)
+- [ ] If hotfix needed: code is in, feature is live, just adjust numbers in the lookup table or cap thresholds and redeploy
+
+---
+
 ## Status — ✅ READY TO IMPLEMENT
 
-Difficulty + cap + score curves locked (audit 2026-06-03). All 5 unverified claims confirmed by direct code read (2026-06-03). One open decision remains — sector boss spawn pattern (see Engine item 5).
+Difficulty + cap + score curves locked (audit 2026-06-03). All 5 unverified claims confirmed by direct code read (2026-06-03). Boss spawn pattern locked (option a, S12/S14/S16/S18/S20 only). Rollout strategy planned for seamless silent deployment.
 
 ### ✅ Verified in code 2026-06-03
 - **`SCORE_HARD_CEILING = 10_000_000`** in `functions/saveScore.js` line 82 — assumption holds, bump to 25M is a one-line edit.
