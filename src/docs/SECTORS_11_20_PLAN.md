@@ -62,28 +62,29 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    - `gravity_well` — subtle pull toward random screen point that drifts every 8s, affects player + projectiles + pickups (suggested for S11 Galactic Core or S13 Saturnian Reach)
    - `aurora_drift` — soft directional wind pushing all entities slowly (suggested for S16 Harmony Drift)
    - Reuse existing 4 for the remaining sectors so we don't need 10 new effects on day one. Pick which 4-5 ship at launch when we build.
-6. **Difficulty curve** — sectors 11-20 abandon the linear scaling of 1-10 and use an **exponential per-sector ramp**:
-   - **Sector 11 Normal = Sector 10 Cosmic × 1.2**
-   - **Sector N Normal = Sector (N-1) Cosmic × 1.2** for all N ≥ 11
+6. **Difficulty curve** — ✅ **Locked: Option B — 1.15× per-sector ramp**.
+   - **Sector N Normal HP = Sector 10 Normal × 1.15^(N-10)** for all N ≥ 11
    - The 4 difficulty tiers (Easy 0.7×/0.6×, Normal 1.0×, Hard 1.5×, Cosmic 2.5×) still apply *within* each sector on top of the base.
-   - **Net effect**: Normal difficulty grows **3.0× per sector** at the Normal tier (1.2 × 2.5 chain). Brutal by design — this is the mythic endgame wall.
+   - **Net effect**: smooth, predictable progression. Whales steamrolled S10 — now they have a real ladder.
 
    Worked example (HP/dmg multiplier vs Sector 1 Normal baseline = 1.0×):
    | Sector | Normal | Cosmic |
    |--------|--------|--------|
    | 10     | 1.0×   | 2.5×   |
-   | 11     | 3.0×   | 7.5×   |
-   | 12     | 9.0×   | 22.5×  |
-   | 13     | 27×    | 67.5×  |
-   | 14     | 81×    | 202.5× |
-   | 15     | 243×   | 607.5× |
-   | 16     | 729×   | 1822×  |
-   | 17     | 2187×  | 5467×  |
-   | 18     | 6561×  | 16402× |
-   | 19     | 19683× | 49207× |
-   | 20     | 59049× | 147622×|
+   | 11     | 1.15×  | 2.9×   |
+   | 12     | 1.32×  | 3.3×   |
+   | 13     | 1.52×  | 3.8×   |
+   | 14     | 1.75×  | 4.4×   |
+   | 15     | 2.01×  | 5.0×   |
+   | 16     | 2.31×  | 5.8×   |
+   | 17     | 2.66×  | 6.6×   |
+   | 18     | 3.06×  | 7.6×   |
+   | 19     | 3.52×  | 8.8×   |
+   | 20     | 4.05×  | 10.1×  |
 
-   ✅ **Locked**: full 1.2× curve confirmed. Players already steamrolled S10 on launch — the steepness is the point. Sector 20 Cosmic ≈ 147,000× S1 baseline is the mythic wall, only reachable by fully-built whales with all relics maxed.
+   **Mid-builds** clear S11-S13, **fully-built** clear S15-S17, only **top-tier mythic** players touch S18-S20 Cosmic. S20 Cosmic ≈ 10× S1 baseline is the bragging-rights wall.
+
+   ⏳ **TBD — score formula contribution**: sector index needs to feed into the score formula so that clearing a harder sector ranks higher than grinding S1 endlessly. Separate ticket — wire up during implementation alongside `saveScore`.
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
