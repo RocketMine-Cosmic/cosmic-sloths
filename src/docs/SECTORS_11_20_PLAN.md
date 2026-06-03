@@ -77,7 +77,7 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
    - **No bonus reward multipliers** for the new tier — the prestige comes from the challenge + cosmetic/title rewards (TBD), not gold/XP inflation.
-8. **Unlocks** — gating? Sector 11 unlocks when sector 10 cleared on Normal? Or all unlocked at once? Decision needed.
+8. **Unlocks** — same per-character chain as sectors 1-10: clear sector N on **Normal** with a given character to unlock sector N+1 for that character. Sector 11 unlocks for a character once they've cleared Sector 10 on Normal. No bulk unlock, no shortcut — each character grinds their own ladder through the Outer Galaxy.
 
 ---
 
@@ -158,5 +158,4 @@ Pairing each new arena with 2 signature mobs from the roster above. Existing tie
    - **(b) New tier 11-15** — fresh roster (4 new tiers × ~5 mobs each), tier-10 mobs retire from sectors 11-20.
    - **(c) Fill existing gaps** — bolster tiers 5-10 across all sectors.
 3. **New boss role** — anchor of Sector 20 only, or also rotate into Sectors 16-19? (Existing 6 bosses cycle the rest either way.)
-4. **Unlock gating** — clear-to-unlock chain (must beat sector 10 on Normal to unlock 11), or all 20 available at once on launch?
-5. **Difficulty scaling** — sectors 11-20 likely need a fresh HP/dmg coefficient block (current formula in `EnemySpawner.js` is tuned for 1-10). Want me to draft new scaling values when we get to implementation?
+4. **Difficulty scaling** — sectors 11-20 use the exponential 1.2× ramp documented in note 6 above. Want me to draft new scaling values for `EnemySpawner.js` when we get to implementation?
