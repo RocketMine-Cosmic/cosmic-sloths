@@ -338,14 +338,8 @@ Difficulty + cap + score curves locked (audit 2026-06-03). All 5 unverified clai
 - **Top kill milestone is `160000`** in `game/CharacterUnlocks.js` line 18 (and mirrored in `saveScore.js` line 106). Full 10-char roster unlocked at 160k kills — Outer Galaxy players will have long since hit this.
 - **S6 cap-clamp block** confirmed in `game/GameEngine.js` — single `if (this._isS6) { ... }` block clamping `damageMult`/`goldMult`/`areaMult`/`xpMult` + `cooldownMult` floor at 0.35. `updateWeapons` per-weapon `Math.max(0.35, this.player.cooldownMult)` confirms the dead-code finding — lifting the constructor `cooldownMult` floor without ALSO patching the per-weapon line would do literally nothing. Plan stays correct: don't touch it.
 
-### ⚠️ Side-effect to decide at implementation
-**NG+ trigger moves with `ARENA_ORDER`.** `saveScore.js` lines 481-483 sets `s.newGamePlusUnlocked = true` on victory at the LAST arena in `ARENA_ORDER`. After extending to 20 entries, the trigger moves from S10 → S20.
-- Existing players who beat S10 pre-patch keep their flag (no regression).
-- Post-patch, S10 victories no longer set NG+ — only S20 victories do.
-- Two options at implementation:
-  - **(a)** Leave as-is. NG+ becomes a true endgame flex tied to S20 clear. Aligns with the "mythic finale" framing.
-  - **(b)** Pin the NG+ trigger to S10 explicitly (`if (idx === 9)` instead of `idx === ARENA_ORDER.length - 1`). Preserves current behavior, S20 doesn't need its own special unlock.
-- Recommend **(a)** unless NG+ has gameplay surface the player would miss between S10 and S20. Check NG+ usage at implementation; trivial 2-line patch either way.
+### 🧹 Optional cleanup at implementation
+**Dead NG+ write in `saveScore.js` lines 481-483.** NG+ was removed from the game, so `s.newGamePlusUnlocked = true` writes a flag nothing reads anymore. Once `ARENA_ORDER` is extended to 20 entries, the trigger moves S10 → S20 — but it's a no-op either way. Recommend deleting the dead `else if (idx === ARENA_ORDER.length - 1)` branch entirely while we're in the file. Trivial 3-line cleanup, zero gameplay impact.
 
 
 
