@@ -23,18 +23,20 @@ Each playable on Easy / Normal / Hard / Cosmic (defined in `DIFFICULTIES`). Tier
 
 Continuing **+30s per sector** (8:00 → 12:30). Endgame tier — sectors 11-15 = post-game, 16-20 = mythic/prestige tier. Effects rotate the existing 4 (`neon_rain` / `fog` / `solar_flare` / `none`) so we don't need new engine code on day one.
 
-| #  | Proposed id     | Name                  | Duration | Effect       | Theme / hook |
-|----|-----------------|-----------------------|----------|--------------|--------------|
-| 11 | frostfield      | Glacial Expanse       | 8:00     | fog          | Frozen graveyard of dead capital ships. Frost Wyrm / Frost Specter heavy spawns. Slow-tempo opener for the post-game tier. |
-| 12 | infernum        | Solar Furnace         | 8:30     | solar_flare  | Inside a dying star's corona. Flame Wyrmling + Lava Rock Blob density spike. Hard counter to ice/regen builds. |
-| 13 | bonefield       | Wreckage Field        | 9:00     | none         | Centuries of dead fleets. Heavy Rock Fragment / Gear Swarm. Clean visual — no effect — so players can read the chaos. |
-| 14 | hivecluster     | The Hive Cluster      | 9:30     | fog          | Bio-Bloom super-organism. Spawn density +25%, smaller mobs only — a swarm DPS check. |
-| 15 | mindspire       | Mindspire Citadel     | 10:00    | neon_rain    | Whispering Void temple. Heavy ranged enemy mix — punishes squishy glass cannons. |
-| 16 | warpgate        | Warpgate Anomaly      | 10:30    | solar_flare  | A torn portal pulsing with mid-warp horrors. Mixed-tier spawns (random t6–t10). Chaos arena. |
-| 17 | mythos          | Mythos Garden         | 11:00    | fog          | Ancient sentient asteroid garden. Crystal Floater / Coral Bloom / Stellar Starfish — pure crystal/coral theme. Visually distinct. |
-| 18 | eclipse         | Total Eclipse         | 11:30    | none         | Pitch-black arena. Visual readability reduced — leans into Shadow Stalker spawns. Cosmic-only might disable HUD glow. |
-| 19 | apex            | Apex Predator Realm   | 12:00    | neon_rain    | Only tier 8-10 mobs spawn — no tier 1-4 trash. Pure endgame DPS check. Best XP/gold rate in the game. |
-| 20 | ascendant       | The Ascendant Throne  | 12:30    | solar_flare  | Final mythic arena. Multi-boss finale: spawn 2 random bosses simultaneously at the end. Top-tier mastery flex. |
+Background art is **uploaded and ready** (URLs below). Enemy sprites + boss sprite pending.
+
+| #  | Arena id        | Name                  | Duration | Effect       | Theme / hook | Background |
+|----|-----------------|-----------------------|----------|--------------|--------------|------------|
+| 11 | galactic_core   | The Galactic Core     | 8:00     | fog          | Dust-choked Milky Way heart — the gate to the post-game tier. Slower spawns, larger tank mobs (Frost Wyrm / Lava Blob mix). | [MilkyWay_Starfield](https://media.base44.com/images/public/69de258a7e072380b89d66e3/069d2b286_MilkyWay_Starfield.png) |
+| 12 | pillars         | Pillars of Creation   | 8:30     | neon_rain    | Hubble-style nebula pillars. Heavy ranged mix (Chain Eye / Crystal Vortex) — punishes glass cannons. | [Nubula_Pillars](https://media.base44.com/images/public/69de258a7e072380b89d66e3/5e69ed395_Nubula_Pillars.png) |
+| 13 | saturnian       | Saturnian Reach       | 9:00     | none         | Field of ringed worlds + drifting asteroids. Rock Fragment / Stellar Starfish density spike. Clean visual — no effect — to read the chaos. | [Ringed_planets](https://media.base44.com/images/public/69de258a7e072380b89d66e3/28e6f3f01_Ringed_planets.png) |
+| 14 | andromeda       | Andromeda's Edge      | 9:30     | fog          | Pristine spiral arms. Spawn density +25%, smaller swarm mobs only — pure DPS check. | [Spiral_Galaxy](https://media.base44.com/images/public/69de258a7e072380b89d66e3/4300cbae0_Spiral_Galaxy.png) |
+| 15 | painters_spiral | The Painter's Spiral  | 10:00    | solar_flare  | Marbled blue-gold cosmic painting. Whispering Void / Ribbon Phantom heavy — ethereal, surreal tier. | [Majestic_spiral](https://media.base44.com/images/public/69de258a7e072380b89d66e3/b2890294e_Majestic_spiral.png) |
+| 16 | harmony         | Harmony Drift         | 10:30    | neon_rain    | Cyan-pink aurora streaks. First mythic-tier arena. Mixed-tier spawns (random t7–t10). | [Harmony](https://media.base44.com/images/public/69de258a7e072380b89d66e3/04713b746_Harmony.png) |
+| 17 | chromatic       | Chromatic Tides       | 11:00    | fog          | Pink/teal/orange swirling clouds. Cosmic Ray Fish / Plasma Jelly Swarm — fast and chaotic. | [Swirling_nebulae](https://media.base44.com/images/public/69de258a7e072380b89d66e3/8717e0950_Swirling_nebulae.png) |
+| 18 | stormfront      | Stormfront Nebula     | 11:30    | solar_flare  | Cyan lightning-burst nebula. Thunder Sphere / Frost Specter heavy. Electric chaos. | [Cosmic_Storm](https://media.base44.com/images/public/69de258a7e072380b89d66e3/c0893d46c_Cosmic_Storm.png) |
+| 19 | supernova       | Supernova Heart       | 12:00    | solar_flare  | Pink-cyan supernova rays. Only tier 8-10 mobs spawn — no trash. Best XP/gold rate in the game. | [SuperNova_Burst](https://media.base44.com/images/public/69de258a7e072380b89d66e3/c6b90fc36_SuperNova_Burst.png) |
+| 20 | devourer        | The Devourer          | 12:30    | none         | Black hole consuming a planet. Mythic finale. Anchors the **NEW BOSS** (sprite pending). Optional: spawn 1 existing boss alongside the new one for true endgame flex. | [Cosmic_BlackHole](https://media.base44.com/images/public/69de258a7e072380b89d66e3/9161fafb4_Cosmic_BlackHole.png) |
 
 ---
 
@@ -51,10 +53,19 @@ Continuing **+30s per sector** (8:00 → 12:30). Endgame tier — sectors 11-15 
 
 ---
 
+## Asset status
+
+- ✅ **Backgrounds** — all 10 uploaded (URLs in table above)
+- ⏳ **Enemy sprites** — 20 sheets ready to upload (filenames pending)
+- ⏳ **New boss sprite** — 1 sheet ready to upload (anchors Sector 20 "The Devourer", name pending)
+
 ## Open questions for you
 
-1. **Background art** — generate via AI per sector, or reuse/recolor existing maps?
-2. **New enemies** — do we want any new tier-11+ enemies, or stick with the existing 30-mob roster for first pass?
-3. **New bosses** — 1-2 new mythic bosses for sectors 19-20 (and Ascendant Throne finale), or reuse existing 6?
-4. **Unlock gating** — clear-to-unlock chain, or all 20 available at once?
-5. **Names** — happy with these or want a re-pass? I tried to keep the style consistent with existing names.
+1. **Sector ordering** — happy with the 11→20 progression above, or want to swap any? (The Devourer at 20 feels right as the mythic finale.)
+2. **Enemy distribution** — preferred split for the 20 new sprites:
+   - **(a) Themed per sector** — 2 new mobs each for 10 sectors (each arena has signature enemies). My recommendation.
+   - **(b) New tier 11-15** — fresh roster (4 new tiers × ~5 mobs each), tier-10 mobs retire from sectors 11-20.
+   - **(c) Fill existing gaps** — bolster tiers 5-10 across all sectors.
+3. **New boss role** — anchor of Sector 20 only, or also rotate into Sectors 16-19? (Existing 6 bosses cycle the rest either way.)
+4. **Unlock gating** — clear-to-unlock chain (must beat sector 10 on Normal to unlock 11), or all 20 available at once on launch?
+5. **Difficulty scaling** — sectors 11-20 likely need a fresh HP/dmg coefficient block (current formula in `EnemySpawner.js` is tuned for 1-10). Want me to draft new scaling values when we get to implementation?
