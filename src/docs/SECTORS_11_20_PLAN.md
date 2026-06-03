@@ -103,8 +103,10 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    ✅ **Score formula contribution — locked**: **No new code, no exponential bonus, no inflation.** The existing S6 formula (`sectorIdx × 8,000` + victory `sectorIdx × 15,000`) already scales linearly through S11-S20 the moment we extend `ARENA_ORDER` from 10 → 20 entries. Harder difficulty (Easy/Normal/Hard/Cosmic) still rewards more score *naturally* via more kills + higher level reached + longer survival time — same as Inner Galaxy. Outer Galaxy victories outscore Inner Galaxy victories purely because the sector index is bigger AND the player kills/levels more in tougher content. No artificial multiplier needed.
 
    **Anchor: real S6 top scores (checked 2026-06-03)**
-   - S10 Cosmic top runs already hitting **7k+ kills** → `7000 × 120 = 840k from kills alone`, plus level² scaling and sector bonus puts real S10 Cosmic peaks at **~2-2.5M** (not the 1.6M I had cached — that was from earlier in the season before whales optimised builds)
+   - S10 Cosmic top runs already hitting **7k+ kills** → `7000 × 120 = 840k from kills alone`, plus level² scaling and sector bonus puts real S10 Cosmic peaks at **~2-2.5M**
    - Endless ceiling hits: 10M (Battle Toad, 73-min run) — endless is sandbox, NOT recalibrated here per Texxy's call
+
+   **🔒 Kill → score is sacred.** Score formula stays `kills × 120` flat — no caps, no diminishing returns, no per-sector kill nerfs, no kill-rate penalty in Outer Galaxy. Every kill is worth the same 120 points whether it's a tier-1 swarm mob in S1 or a tier-14 elite in S20. More kills = more score, full stop. The cap lifts + longer durations + +10% spawn density on S15-S20 are specifically designed to let strong players rack up MORE kills per run, not fewer.
 
    **No formula change required in `functions/saveScore.js`.** Just extending `ARENA_ORDER` from 10 → 20 entries makes `sectorIdxForBonus` naturally take values 10-19 for S11-S20 runs, and the existing lines `sectorScore = sectorIdxForBonus * 8000` + `victoryBonus = sectorIdxForBonus * 15000` do the rest. Zero new branches, zero new constants.
 
@@ -116,12 +118,10 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    | S15 | 345k | 1.50× |
    | S20 | 460k | 2.0× |
 
-   **The real score drivers are kills × 120 and level² × 100.** Worked S20 Cosmic projection grounded in current S10 numbers + the steep no-overlap ramp:
+   **The real score drivers are kills × 120 and level² × 100.** Worked S20 Cosmic projection grounded in current S10 numbers — kill counts scale UP in Outer Galaxy (longer durations, more spawns on S15+, cap-lifted damage so whales still clear fast):
    - S10 Cosmic top players today: ~7k kills, level ~100 → 840k + 1M + 230k = **~2-2.5M**
-   - S20 Cosmic projection: enemies have 14,125× S10C HP, player has ~133× more damage cap (800/6). Longer duration (12:30 vs 7:30), 4× XP elite spawns, and level² compounding all keep score climbing.
-     - Realistic S20 victory: ~3k kills + level ~150 → 360k + 2.25M + 460k = **~3-4M**
-     - Theoretical mythic peak: ~5k kills + level 220 → 600k + 4.84M + 460k = **~5-6M**
-   - S15-S17 Cosmic is where the realistic chase lives: 3-5M range as kill rates haven't collapsed yet
+   - S15 Cosmic projection: ~10k kills + level ~140 → 1.2M + 1.96M + 345k = **~3-4M**
+   - S20 Cosmic projection: ~12k kills + level ~180 → 1.44M + 3.24M + 460k = **~5-6M**
    - Endless top runs already at 10M — that remains the ceiling-pusher
 
    **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless is *already* clipping the 10M ceiling on legit long sessions. Outer Galaxy adds further pressure (a god-tier S15-S17 Cosmic plus stacked endless tail could push 7-10M). 25M gives comfortable headroom without going stupid.
