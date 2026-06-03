@@ -73,7 +73,10 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    | 20     | 59049× | 147622×|
 
    ⚠️ **Open balance question**: this curve is intentionally steep but by Sector 20 Cosmic, enemy HP is ~147k× S1 baseline — only feasible for fully-built mythic players with all relics maxed. Confirm you want this full curve, or whether to cap the per-sector multiplier (e.g. ×1.15 instead of ×1.2 → 23000× at S20 Cosmic) or floor it at S15.
-7. **Rewards** — sectors 16-20 likely need a gold/XP bump above the base curve to feel mythic-tier. Suggest +10% per sector past 15.
+7. **Rewards** —
+   - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
+   - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
+   - **No bonus reward multipliers** for the new tier — the prestige comes from the challenge + cosmetic/title rewards (TBD), not gold/XP inflation.
 8. **Unlocks** — gating? Sector 11 unlocks when sector 10 cleared on Normal? Or all unlocked at once? Decision needed.
 
 ---
