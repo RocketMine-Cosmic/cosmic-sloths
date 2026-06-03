@@ -44,7 +44,11 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
 1. **Drop into `ARENAS` in `game/Constants.js`** — same shape as existing entries. Need 10 new background images uploaded to base44 storage.
 2. **Spawn tables** — `EnemySpawner.js` already weights spawns by sector index. Confirm tier-10 ceiling holds for sectors 11-15, then add a fresh weighting block for 16-20 (mixed/elite-only).
-3. **Hub UI (`pages/Hub`)** — sector grid will need to wrap into a 2nd page or scroll. Quick check needed.
+3. **Hub UI (`pages/Hub`)** — split into two tabs:
+   - **Inner Galaxy** — sectors 1-10 (existing post-game tier)
+   - **Outer Galaxy** — sectors 11-20 (new endgame + mythic tier)
+   - Tab control sits above the sector grid. Default tab = Inner Galaxy on first visit; remember last-selected tab in localStorage so endgame players land back on Outer Galaxy.
+   - Outer Galaxy tab should have a subtle distinct visual treatment (e.g. cosmic glow on the tab itself, or a "★ NEW" badge if the player hasn't unlocked anything in it yet) so the new content is discoverable.
 4. **Bestiary / Lore** — no new enemies required for first pass; we reuse the existing 30 mob roster but emphasise different tiers per sector via spawn weights. Bosses too — keep the 6 existing bosses but assign different ones per sector.
 5. **Effects** — first pass uses only the 4 existing effects so no engine work. If we want unique effects per new sector (e.g. `ion_storm`, `void_pulse`, `eclipse_dim`), that's a separate ticket.
 6. **Difficulty curve** — verify HP/dmg scaling formula in `EnemySpawner.js` doesn't break past sector index 10. Likely needs a clamp or a fresh tier coefficient for sectors 11-20.
