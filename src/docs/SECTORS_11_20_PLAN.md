@@ -85,54 +85,28 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    **Reality check**: S20 Cosmic ≈ 35,000× S1 baseline — explicit "no human will clear this without a perfect maxed-out build" territory. That's by design. S11-S13 is the realistic chase for fully-built whales, S14-S16 is "show me your absolute peak build", S17+ is mythic / theoretical / streamer-flex territory.
 
-   ✅ **Score formula contribution — locked**: Outer Galaxy sectors get an **exponential bonus per sector index** (no difficulty multiplier — mirrors S1-S10, which also ignore Easy/Normal/Hard/Cosmic in the formula). Harder difficulty still rewards more score *naturally* via more kills, higher level reached, and longer survival time — same as today. The exponential (~1.7× per sector) ensures each Outer Galaxy victory clearly outscores the previous without anyone needing to rewrite the leaderboard.
+   ✅ **Score formula contribution — locked**: **No new code, no exponential bonus, no inflation.** The existing S6 formula (`sectorIdx × 8,000` + victory `sectorIdx × 15,000`) already scales linearly through S11-S20 the moment we extend `ARENA_ORDER` from 10 → 20 entries. Harder difficulty (Easy/Normal/Hard/Cosmic) still rewards more score *naturally* via more kills + higher level reached + longer survival time — same as Inner Galaxy. Outer Galaxy victories outscore Inner Galaxy victories purely because the sector index is bigger AND the player kills/levels more in tougher content. No artificial multiplier needed.
 
    **Anchor: real S6 top scores (checked 2026-06-03)**
    - S10 Cosmic victory peak: **~1.6M** (Waeoo / Texxy on Dimension)
-   - Endless ceiling hits: 10M (Battle Toad, 73-min run) — endless is sandbox, NOT recalibrated here per Texxy's call ("not tied to Omen, players will run highest sector endless anyway")
+   - Endless ceiling hits: 10M (Battle Toad, 73-min run) — endless is sandbox, NOT recalibrated here per Texxy's call
 
-   **Formula change in `functions/saveScore.js` (S6 branch only, no S5 impact):**
-   ```js
-   // Sectors 1-10 — UNCHANGED
-   const sectorScore  = sectorIdxForBonus * 8000;
-   const victoryBonus = isVictory ? sectorIdxForBonus * 15000 : 0;
+   **No formula change required in `functions/saveScore.js`.** Just extending `ARENA_ORDER` from 10 → 20 entries makes `sectorIdxForBonus` naturally take values 10-19 for S11-S20 runs, and the existing line `sectorScore = sectorIdxForBonus * 8000` + `victoryBonus = sectorIdxForBonus * 15000` does the rest. Zero new branches, zero new constants.
 
-   // Sectors 11-20 — exponential ADDITIONAL bonus on top.
-   // 1.7× per sector means S20 scores ~200× S10's bonus — big enough to feel
-   // mythic, small enough to not break the leaderboard or hit the ceiling.
-   let outerSectorBonus = 0;
-   let outerVictoryBonus = 0;
-   if (sectorIdxForBonus >= 10 && !isEndless && !isRaidRun) {
-       const outerStep = sectorIdxForBonus - 9;             // 1 for S11, 10 for S20
-       const expo = Math.pow(1.7, outerStep - 1);            // 1× for S11, ~131× for S20
-       outerSectorBonus = Math.floor(50_000 * expo);         // S11: 50k, S20: ~6.5M
-       if (isVictory) {
-           outerVictoryBonus = Math.floor(100_000 * expo);   // S11: 100k, S20: ~13M
-       }
-   }
-   const baseScore = killsScore + levelScore + sectorScore + victoryBonus
-                   + outerSectorBonus + outerVictoryBonus + endlessScore;
-   ```
+   **Projected formula-only victory bonus by sector** (`sectorScore + victoryBonus` only — kills/level contribution stacks on top and grows naturally with harder content):
 
-   **Projected victory bonus by sector** (`sectorScore + victoryBonus + outerSectorBonus + outerVictoryBonus` only — kills/level contribution stacks on top and varies by difficulty since harder runs = more kills + higher level):
-
-   | Sector | Bonus from formula | vs S10 bonus |
-   |--------|--------------------|--------------|
+   | Sector | Formula bonus | vs S10 |
+   |--------|---------------|--------|
    | S10 | 230k | 1.0× |
-   | S11 | 380k | 1.7× |
-   | S12 | 575k | 2.5× |
-   | S13 | 905k | 3.9× |
-   | S15 | 2.2M | 9.5× |
-   | S17 | 6.3M | 27× |
-   | S18 | 10.6M | 46× |
-   | S19 | 18M | 78× |
-   | S20 | **30M** | **130×** |
+   | S11 | 253k | 1.10× |
+   | S13 | 299k | 1.30× |
+   | S15 | 345k | 1.50× |
+   | S17 | 391k | 1.70× |
+   | S20 | **460k** | **2.0×** |
 
-   Add typical kills/level contribution (~500k-1.5M on S10 Cosmic, scaling with sector since enemies/spawns grow) and a S20 Cosmic victory probably lands somewhere in the **40-80M** range, with bigger spread depending on how long the player survives + final level.
+   The formula bonus only doubles from S10 → S20 — that's intentional. The **real** score growth comes from kills + level: an S20 Cosmic run might see 8k+ kills (= +960k score from kills × 120) and reach level 150+ (= +2.25M from level² × 100). So a full S20 Cosmic victory probably lands in the **2-5M range**, comfortably above S10's ~1.6M peak but nowhere near runaway-inflation territory.
 
-   Score growth is *sublinear* vs difficulty (130× score vs 14,000× difficulty) — intentional, so the leaderboard stays meaningful instead of collapsing into "whoever cleared the highest sector wins by 1000×".
-
-   **Required `SCORE_HARD_CEILING` bump**: 10M → **100M** (S20 victory bonus is 30M; add big kills/level on a god-tier run gets us to ~50-80M, so 100M leaves comfortable buffer without re-clipping legit play). Old 35M proposal was based on the 1.15× ramp and is no longer enough.
+   **`SCORE_HARD_CEILING` stays at 10M.** No bump needed — even a perfect S20 Cosmic run with insane kills/level peaks well under 10M, and the endless ceiling-hits at 10M are pre-S6 tampered runs that won't recur under the current formula.
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
@@ -307,12 +281,12 @@ All open questions resolved (audit 2026-06-03). Implementation checklist:
 2. **`game/Lore.js`** — append lore lines for the 20 new mobs + Pulsar Guardian.
 
 ### Backend (saveScore.js)
-3. **`functions/saveScore.js`** — 4 coordinated edits:
+3. **`functions/saveScore.js`** — 2 minimal edits (no formula or ceiling changes):
    - Extend `ARENA_ORDER` array from 10 → 20 ids
    - Extend `ARENA_DURATIONS` map with the 10 new durations (8:00 → 12:30)
-   - Add the Outer Galaxy quadratic score bonus block (S6 branch only — see formula in section 6)
-   - Bump `SCORE_HARD_CEILING` from 10M → 100M
-   - `unlockedArenasByCharacter` self-heal already walks `ARENA_ORDER` → automatically extends ✅ no change needed
+   - ✅ Score formula auto-scales — existing `sectorIdxForBonus * 8000` and `* 15000` lines pick up the new sectors naturally
+   - ✅ `SCORE_HARD_CEILING` stays at 10M — peak Outer Galaxy runs land at 2-5M, comfortable headroom
+   - ✅ `unlockedArenasByCharacter` self-heal already walks `ARENA_ORDER` → automatically extends
 
 ### Engine
 4. **`game/GameEngine.js`** — sector-scaled cap-lift block in constructor (~20 lines, see section "Player power cap lifts"). Vampiric Lash heal cap 5%→10% on S11+. Forge augment stacking allows 2-of-same on S11+.
