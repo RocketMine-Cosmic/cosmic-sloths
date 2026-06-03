@@ -52,7 +52,7 @@ Anchored to **what you actually play today** (S10 Cosmic = 1.0×):
 
 ```
 🏆 **SCORING — SAME FORMULA, NATURAL GROWTH**
-The existing S6 score formula extends naturally into S11-S20. No new bonuses, no inflation tricks — sector value gets bigger AND you'll kill more / level higher because the content is harder and longer.
+The existing S6 score formula extends naturally into S11-S20. 
 
 **Formula (unchanged from S1-S10):**
 • Kills × 120
