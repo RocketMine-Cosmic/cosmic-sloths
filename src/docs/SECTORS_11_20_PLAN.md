@@ -162,6 +162,61 @@ Pairing each new arena with 2 signature mobs from the roster above. Existing tie
 | 19 — Supernova Heart         | Nebula Panther, Void Shark |
 | 20 — The Devourer            | **Pulsar Guardian** (boss) + Cosmic Manta Ray + Plasma Wyrm rotation |
 
+## Player power cap lifts (locked)
+
+To match the 1.15× per-sector HP/dmg ramp, the existing S6 player-stat ceilings in `GameEngine.js` (lines 316-324) are **raised** when the player enters an Outer Galaxy sector. Without this, fully-built whales hit the existing 6.0× damage / 4.0× area walls and have no headroom to scale into S15+.
+
+### Sector-scaled ceilings (in-run only — does not affect S1-S10 balance)
+
+| Cap | S1-S10 (today) | S11 | S15 | S20 |
+|-----|----------------|-----|-----|-----|
+| `damageMult` ceiling | 6.0  | 7.5 | 12.0 | 18.0 |
+| `areaMult` ceiling   | 4.0  | 5.0 |  7.0 | 10.0 |
+| `xpMult` ceiling     | 5.0  | 6.0 |  9.0 | 14.0 |
+| `goldMult` ceiling   | 8.0  | 8.0 |  8.0 |  8.0 | ← unchanged (Outer Galaxy gold stays flat at S10 values per the rewards rule)
+| `cooldownMult` floor | 0.35 | 0.30 | 0.25 | 0.20 |
+
+**Math check**: a fully-capped whale on S20 gets 3× their current damage output — almost exactly matching the 3× difficulty ramp from S10 → S20 Normal. So they fight at the same *relative* challenge they fight S10 today, just with bigger numbers on both sides.
+
+### Two quality-of-life cap lifts on Sector 11+
+
+1. **Vampiric Lash heal cap**: 5% → **10% Max HP per swing** on Outer Galaxy sectors. Currently useless against S15+ enemy damage; this brings sustain builds back into viability.
+2. **Forge augment stacking**: allow **2 augments of the same stat per weapon** on Outer Galaxy sectors (so a whale can stack `damage_3` twice = +120% instead of +60% on their endgame weapon).
+
+### What stays untouched
+
+- **`STACK_FACTOR` 0.5 / 0.66** (weapon mastery + passive stats + talents) — these protect the S1-S10 leaderboard from the May 2026 stacking exploits. Don't touch.
+- **Per-level growth caps in `levelUp()`** (5.0 dmg / 2000 HP / 30 armor / weapon level 20 / passive level 5) — these protect against Overcharge spam in 90-min endless. Don't touch.
+- **NFT perks at 15%** — tied to whale spend; bumping invites complaints. Don't touch.
+
+### Implementation note
+
+Single ~20-line block in `GameEngine.js` constructor that replaces the existing 4-line clamp when `this.arena` is sectors 11-20. Sector index is the only gate; everything else stays exactly as-is. Fully reversible.
+
+```js
+// Pseudo — final code in implementation pass
+const sectorIdx = ARENAS.findIndex(a => a.id === this.arena.id) + 1;
+if (this._isS6 && sectorIdx >= 11 && sectorIdx <= 20) {
+    const t = (sectorIdx - 10) / 10; // 0.1 at S11 → 1.0 at S20
+    const dmgCap  = 6.0 + 12.0 * t;   // 7.2 → 18.0
+    const areaCap = 4.0 +  6.0 * t;   // 4.6 → 10.0
+    const xpCap   = 5.0 +  9.0 * t;   // 5.9 → 14.0
+    const cdFloor = 0.35 - 0.15 * t;  // 0.335 → 0.20
+    this.player.damageMult   = Math.min(dmgCap,  this.player.damageMult);
+    this.player.areaMult     = Math.min(areaCap, this.player.areaMult);
+    this.player.xpMult       = Math.min(xpCap,   this.player.xpMult);
+    this.player.cooldownMult = Math.max(cdFloor, this.player.cooldownMult);
+    // goldMult stays at the existing 8.0 cap — Outer Galaxy doesn't inflate gold.
+} else if (this._isS6) {
+    // existing S1-S10 clamps — unchanged
+    this.player.damageMult = Math.min(6.0, this.player.damageMult);
+    this.player.areaMult   = Math.min(4.0, this.player.areaMult);
+    this.player.xpMult     = Math.min(5.0, this.player.xpMult);
+    this.player.cooldownMult = Math.max(0.35, this.player.cooldownMult);
+}
+this.player.goldMult = Math.min(8.0, this.player.goldMult);
+```
+
 ## Spawn density per sector (locked)
 
 Density scales mildly on top of the exponential HP/dmg curve — keeps the screen reading-friendly while still ramping pressure:
