@@ -57,7 +57,18 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
 - ✅ **Backgrounds** — all 10 uploaded (URLs in table above)
 - ✅ **Enemy sprites** — all 20 uploaded (roster below)
-- ⏳ **New boss sprite** — 1 sheet pending upload (anchors Sector 20 "The Devourer", name pending)
+- ✅ **New boss sprite** — Pulsar Guardian uploaded ([sheet](https://media.base44.com/images/public/69de258a7e072380b89d66e3/83baa9440_Pulsar_Guardian_Sheet.png)) — 5×5 / 25-frame format matches existing bosses
+
+### Boss: Pulsar Guardian
+
+- **Visual**: Armored juggernaut, black plating with molten orange-gold cracks, glowing yellow pulsar core in its chest, flame-spike crown.
+- **Sprite format**: 5 rows × 5 cols = 25 frames (same as existing bosses → `frameCount: 25, animationSpeed: 0.12`).
+- **Suggested id**: `boss_pulsar_guardian`
+- **Suggested stats** (slot above Nexus Annihilator as the new endgame king):
+  - hp ~22000, speed 0.7, damage 110, radius ~150, xp 1700
+  - weakSide: `back` — "Attack from behind" (pulsar core is shielded from the front)
+- **Lore hook** (Bestiary): *"The last sentinel of a collapsed star. Its core still pulses with the rhythm of a sun long dead, and its rage radiates outward in waves of pure stellar fury."*
+- **Sector role**: anchors **Sector 20 — The Devourer** (its pulsar core being consumed by the black hole). Other 6 existing bosses still rotate through sectors 11-19.
 
 ### Enemy roster — 20 new sprites
 
@@ -109,7 +120,7 @@ Pairing each new arena with 2 signature mobs from the roster above. Existing tie
 | 17 — Chromatic Tides         | Nebula Serpent, Comet Ray |
 | 18 — Stormfront Nebula       | Plasma Raptor, Plasma Wyrm |
 | 19 — Supernova Heart         | Nebula Panther, Void Shark |
-| 20 — The Devourer            | **NEW BOSS** + Cosmic Manta Ray + Plasma Wyrm rotation |
+| 20 — The Devourer            | **Pulsar Guardian** (boss) + Cosmic Manta Ray + Plasma Wyrm rotation |
 
 ## Open questions for you
 
