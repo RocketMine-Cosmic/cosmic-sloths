@@ -30,7 +30,7 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 | 11 | galactic_core   | The Galactic Core     | 8:00     | fog          | Dust-choked Milky Way heart — the gate to the post-game tier. Slower spawns, larger tank mobs (Frost Wyrm / Lava Blob mix). | [MilkyWay_Starfield](https://media.base44.com/images/public/69de258a7e072380b89d66e3/069d2b286_MilkyWay_Starfield.png) |
 | 12 | pillars         | Pillars of Creation   | 8:30     | neon_rain    | Hubble-style nebula pillars. Heavy ranged mix (Chain Eye / Crystal Vortex) — punishes glass cannons. | [Nubula_Pillars](https://media.base44.com/images/public/69de258a7e072380b89d66e3/5e69ed395_Nubula_Pillars.png) |
 | 13 | saturnian       | Saturnian Reach       | 9:00     | none         | Field of ringed worlds + drifting asteroids. Rock Fragment / Stellar Starfish density spike. Clean visual — no effect — to read the chaos. | [Ringed_planets](https://media.base44.com/images/public/69de258a7e072380b89d66e3/28e6f3f01_Ringed_planets.png) |
-| 14 | andromeda       | Andromeda's Edge      | 9:30     | fog          | Pristine spiral arms. Spawn density +25%, smaller swarm mobs only — pure DPS check. | [Spiral_Galaxy](https://media.base44.com/images/public/69de258a7e072380b89d66e3/4300cbae0_Spiral_Galaxy.png) |
+| 14 | andromeda       | Andromeda's Edge      | 9:30     | fog          | Pristine spiral arms. Spawn density +10%, smaller swarm mobs only — pure DPS check. | [Spiral_Galaxy](https://media.base44.com/images/public/69de258a7e072380b89d66e3/4300cbae0_Spiral_Galaxy.png) |
 | 15 | painters_spiral | The Painter's Spiral  | 10:00    | solar_flare  | Marbled blue-gold cosmic painting. Whispering Void / Ribbon Phantom heavy — ethereal, surreal tier. | [Majestic_spiral](https://media.base44.com/images/public/69de258a7e072380b89d66e3/b2890294e_Majestic_spiral.png) |
 | 16 | harmony         | Harmony Drift         | 10:30    | neon_rain    | Cyan-pink aurora streaks. First mythic-tier arena. Mixed-tier spawns (random t7–t10). | [Harmony](https://media.base44.com/images/public/69de258a7e072380b89d66e3/04713b746_Harmony.png) |
 | 17 | chromatic       | Chromatic Tides       | 11:00    | fog          | Pink/teal/orange swirling clouds. Cosmic Ray Fish / Plasma Jelly Swarm — fast and chaotic. | [Swirling_nebulae](https://media.base44.com/images/public/69de258a7e072380b89d66e3/8717e0950_Swirling_nebulae.png) |
@@ -43,14 +43,25 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 ## Implementation notes (when ready to build)
 
 1. **Drop into `ARENAS` in `game/Constants.js`** — same shape as existing entries. Need 10 new background images uploaded to base44 storage.
-2. **Spawn tables** — `EnemySpawner.js` already weights spawns by sector index. Confirm tier-10 ceiling holds for sectors 11-15, then add a fresh weighting block for 16-20 (mixed/elite-only).
+2. **Spawn tables** — `EnemySpawner.js` already weights spawns by sector index. ✅ **Tier cap raised** — the 20 new mob sprites add fresh tiers above 10. Suggested:
+   - **Tier 11** — Asteroid Crab, Cosmic Jellyfish, Galaxy Mantis, Spectral Mothlet, Star Scarab Beetle, Void Bat, Void Eel, Shadow Mantling (the new T6-T8 entries get bumped up)
+   - **Tier 12** — Nebula Octopus, Nebula Scorpion, Aurora Moth, Galaxy Wasp (former T6-T8 elites)
+   - **Tier 13** — Aurora Serpent, Comet Ray, Nebula Serpent, Plasma Raptor, Void Shark (former T9s)
+   - **Tier 14** — Cosmic Manta Ray, Nebula Panther, Plasma Wyrm (former T10 elites — true endgame mythics)
+   - Sectors 11-15 = mix of T8-T12, sectors 16-20 = T11-T14 only (no more trash mobs in the mythic tier). Rebalance the tier-mapping table further down once we wire this up.
 3. **Hub UI (`pages/Hub`)** — split into two tabs:
    - **Inner Galaxy** — sectors 1-10 (existing post-game tier)
    - **Outer Galaxy** — sectors 11-20 (new endgame + mythic tier)
    - Tab control sits above the sector grid. Default tab = Inner Galaxy on first visit; remember last-selected tab in localStorage so endgame players land back on Outer Galaxy.
    - Outer Galaxy tab should have a subtle distinct visual treatment (e.g. cosmic glow on the tab itself, or a "★ NEW" badge if the player hasn't unlocked anything in it yet) so the new content is discoverable.
 4. **Bestiary / Lore** — no new enemies required for first pass; we reuse the existing 30 mob roster but emphasise different tiers per sector via spawn weights. Bosses too — keep the 6 existing bosses but assign different ones per sector.
-5. **Effects** — first pass uses only the 4 existing effects so no engine work. If we want unique effects per new sector (e.g. `ion_storm`, `void_pulse`, `eclipse_dim`), that's a separate ticket.
+5. **Effects** — ✅ **New effects requested** (Outer Galaxy deserves to *feel* different from Inner Galaxy). First pass spec — separate engine ticket but blocking for full mythic feel:
+   - `ion_storm` — periodic horizontal lightning sweeps that briefly slow the player and reveal a screen-edge crackle (suggested for S18 Stormfront Nebula)
+   - `void_pulse` — rhythmic dark-energy contractions from screen center, drag the camera inward visually, increase enemy speed during pulse (suggested for S20 The Devourer)
+   - `eclipse_dim` — periodic light/dark cycle where visibility drops to ~30% for 4s every 20s (suggested for S15 Painter's Spiral or S17 Chromatic Tides)
+   - `gravity_well` — subtle pull toward random screen point that drifts every 8s, affects player + projectiles + pickups (suggested for S11 Galactic Core or S13 Saturnian Reach)
+   - `aurora_drift` — soft directional wind pushing all entities slowly (suggested for S16 Harmony Drift)
+   - Reuse existing 4 for the remaining sectors so we don't need 10 new effects on day one. Pick which 4-5 ship at launch when we build.
 6. **Difficulty curve** — sectors 11-20 abandon the linear scaling of 1-10 and use an **exponential per-sector ramp**:
    - **Sector 11 Normal = Sector 10 Cosmic × 1.2**
    - **Sector N Normal = Sector (N-1) Cosmic × 1.2** for all N ≥ 11
@@ -72,7 +83,7 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    | 19     | 19683× | 49207× |
    | 20     | 59049× | 147622×|
 
-   ⚠️ **Open balance question**: this curve is intentionally steep but by Sector 20 Cosmic, enemy HP is ~147k× S1 baseline — only feasible for fully-built mythic players with all relics maxed. Confirm you want this full curve, or whether to cap the per-sector multiplier (e.g. ×1.15 instead of ×1.2 → 23000× at S20 Cosmic) or floor it at S15.
+   ✅ **Locked**: full 1.2× curve confirmed. Players already steamrolled S10 on launch — the steepness is the point. Sector 20 Cosmic ≈ 147,000× S1 baseline is the mythic wall, only reachable by fully-built whales with all relics maxed.
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
@@ -96,7 +107,7 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
   - hp ~22000, speed 0.7, damage 110, radius ~150, xp 1700
   - weakSide: `back` — "Attack from behind" (pulsar core is shielded from the front)
 - **Lore hook** (Bestiary): *"The last sentinel of a collapsed star. Its core still pulses with the rhythm of a sun long dead, and its rage radiates outward in waves of pure stellar fury."*
-- **Sector role**: anchors **Sector 20 — The Devourer** (its pulsar core being consumed by the black hole). Other 6 existing bosses still rotate through sectors 11-19.
+- **Sector role**: ✅ **Locked** — Pulsar Guardian joins the **shared boss pool** alongside the existing 6. It anchors S20 (its pulsar core being consumed by the black hole = lore tie) but is also eligible to spawn in sectors 11-19 via the existing boss rotation. Gives the new art maximum visibility instead of locking it to a single sector.
 
 ### Enemy roster — 20 new sprites
 
@@ -150,12 +161,23 @@ Pairing each new arena with 2 signature mobs from the roster above. Existing tie
 | 19 — Supernova Heart         | Nebula Panther, Void Shark |
 | 20 — The Devourer            | **Pulsar Guardian** (boss) + Cosmic Manta Ray + Plasma Wyrm rotation |
 
-## Open questions for you
+## Spawn density per sector (locked)
 
-1. **Sector ordering** — happy with the 11→20 progression above, or want to swap any? (The Devourer at 20 feels right as the mythic finale.)
-2. **Enemy distribution** — preferred split for the 20 new sprites:
-   - **(a) Themed per sector** — 2 new mobs each for 10 sectors (each arena has signature enemies). My recommendation.
-   - **(b) New tier 11-15** — fresh roster (4 new tiers × ~5 mobs each), tier-10 mobs retire from sectors 11-20.
-   - **(c) Fill existing gaps** — bolster tiers 5-10 across all sectors.
-3. **New boss role** — anchor of Sector 20 only, or also rotate into Sectors 16-19? (Existing 6 bosses cycle the rest either way.)
-4. **Difficulty scaling** — sectors 11-20 use the exponential 1.2× ramp documented in note 6 above. Want me to draft new scaling values for `EnemySpawner.js` when we get to implementation?
+Density scales mildly on top of the exponential HP/dmg curve — keeps the screen reading-friendly while still ramping pressure:
+
+| Sectors | Spawn density |
+|---------|---------------|
+| 11–14   | baseline (same as S10) |
+| 15–20   | +10% spawn density |
+
+(Replaces the earlier "+25% on S14" note — too punishing on top of the 1.2× HP ramp.)
+
+## Status — ready to implement
+
+All open questions resolved. Next step: when you say go, I'll wire up:
+1. New `ARENAS` entries + tier 11-14 enemy entries in `game/Constants.js`
+2. Pulsar Guardian as the 7th entry in the boss pool
+3. `EnemySpawner.js` — exponential 1.2× ramp + raised tier cap + density bumps
+4. `pages/Hub` — Inner/Outer Galaxy tab split
+5. Bestiary entries + lore for the 20 new mobs + Pulsar Guardian
+6. Effects engine work for the 4-5 new arena effects you pick to ship at launch
