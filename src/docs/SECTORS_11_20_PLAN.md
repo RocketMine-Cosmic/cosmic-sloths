@@ -102,10 +102,22 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    ✅ **Score formula contribution — locked**: **No new code, no exponential bonus, no inflation.** The existing S6 formula (`sectorIdx × 8,000` + victory `sectorIdx × 15,000`) already scales linearly through S11-S20 the moment we extend `ARENA_ORDER` from 10 → 20 entries. Harder difficulty (Easy/Normal/Hard/Cosmic) still rewards more score *naturally* via more kills + higher level reached + longer survival time — same as Inner Galaxy. Outer Galaxy victories outscore Inner Galaxy victories purely because the sector index is bigger AND the player kills/levels more in tougher content. No artificial multiplier needed.
 
-   **Anchor: actual S6 RunScore data (checked 2026-06-03 — Texxy correction #2)**
-   - S10 Cosmic peak today: **~1.5M** with **~7k kills, level ~67**. Formula breakdown: `7000 × 120 = 840k from kills + 67² × 100 = 449k from level + 9 × 8000 = 72k sector + 9 × 15000 = 135k victory ≈ 1.5M` ✓
-   - Key insight: real runs are **kill-heavy, level-light** — level² caps out around 65-70 in a 7:30 sector run, but kills keep accumulating. Outer Galaxy's longer durations scale kills proportionally, NOT level (which is XP-gated and naturally plateaus).
-   - Endless ceiling hits: 10M (Battle Toad, 73-min run) — endless is sandbox, NOT recalibrated here per Texxy's call
+   **Anchor: ACTUAL RunScore data (queried 2026-06-03)**
+
+   Top 11 S10 Cosmic (arena_id `dimension`) runs all in the **1.50M-1.58M** band. The peak:
+   - **Waeoo** — 1,578,100 score, **9,585 kills, level 47**, 7:09 survival, SynthBeats
+   - **Texxy** — 1,574,200 score, 9,310 kills, level 50, 7:07 survival, NovaByte
+
+   Formula verification: `9585 × 120 = 1,150,200 + 47² × 100 = 220,900 + 9 × 8000 = 72,000 + 9 × 15000 = 135,000 = 1,578,100` ✓ exact match.
+
+   **Score composition at the peak**:
+   - Kills: 1.15M (**73%**)
+   - Level²: 221k (**14%**)
+   - Sector + victory bonus: 207k (**13%**)
+
+   **Critical insight: players aren't past level 50.** Sector runs are 7:30 max and the XP curve outpaces what mobs can pay back in that window — level plateaus at 45-50 even on optimised builds. So in projections, **level barely moves between S10 and S20**; the longer durations buy more kills, not more level.
+
+   - Endless top runs already at 10M (Battle Toad, 73-min run) — endless is sandbox, NOT recalibrated here per Texxy's call
 
    **🔒 Kill → score is sacred.** Score formula stays `kills × 120` flat — no caps, no diminishing returns, no per-sector kill nerfs, no kill-rate penalty in Outer Galaxy. Every kill is worth the same 120 points whether it's a tier-1 swarm mob in S1 or a tier-14 elite in S20. More kills = more score, full stop. The cap lifts + longer durations + +10% spawn density on S15-S20 are specifically designed to let strong players rack up MORE kills per run, not fewer.
 
@@ -119,13 +131,13 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    | S15 | 322k | 1.55× |
    | S20 | 437k | 2.1× |
 
-   **Score is kill-driven.** Real data shows S10 Cosmic peaks at ~1.5M with 7k kills and level ~67 — level plateaus, kills keep climbing. Outer Galaxy projections scale kills with duration (S15 is +33% time, S20 is +67% time) and level modestly (longer runs = a bit more XP):
-   - S10 Cosmic top players today: ~7k kills, level ~67 → 840k + 449k + 207k = **~1.5M**
-   - S15 Cosmic projection: ~10k kills + level ~80 → 1.2M + 640k + 322k = **~2.2M**
-   - S20 Cosmic projection: ~12-13k kills + level ~95 → 1.5M + 902k + 437k = **~2.8M**
+   **Score is kill-driven.** Real data: S10 Cosmic peak is 1.58M with 9,585 kills, level 47. Level plateaus around 45-50 because sectors are XP-time-gated. Outer Galaxy's longer durations buy more kills (linear) but only marginal level gain.
+   - S10 Cosmic top today (Waeoo): 9,585 kills, level 47 → 1.15M + 221k + 207k = **~1.58M** ✓ actual
+   - S15 Cosmic projection (+33% duration): ~12,500 kills, level ~50 → 1.5M + 250k + 322k = **~2.1M**
+   - S20 Cosmic projection (+67% duration): ~15,500 kills, level ~55 → 1.86M + 302k + 437k = **~2.6M**
    - Endless top runs already at 10M — that remains the ceiling-pusher
 
-   **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless is *already* clipping the 10M ceiling on legit long sessions. Outer Galaxy realistic peak is ~2.5-3M (S20 Cosmic), but a god-tier endless tail layered on top could push 7-10M. 25M gives comfortable headroom without going stupid.
+   **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless is *already* clipping the 10M ceiling on legit long sessions. Outer Galaxy realistic peak is ~2.6M (S20 Cosmic), but a god-tier endless tail could push 7-10M. 25M gives comfortable headroom without going stupid.
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
