@@ -60,7 +60,9 @@ The existing S6 score formula just extends naturally into S11-S20. No new bonuse
 • S15 victory bonus (formula only): ~345k
 • S20 victory bonus (formula only): ~460k
 
-Stack on top of kills + level scaling and a deep Outer Galaxy run lands in the **2-5M range**. Score ceiling stays at **10M** — only the most insane runs will get close.
+Stack on top of kills + level scaling and a deep Outer Galaxy run lands in the **2-5M range**.
+
+**Score ceiling raised: 10M → 25M.** A few endless ceiling-pushers were already clipping the 10M cap on legit runs — combined with Outer Galaxy headroom, 25M gives everyone room to breathe without re-clipping legit play.
 
 Just like Inner Galaxy, harder difficulties (Hard / Cosmic) don't get a flat multiplier — they reward more naturally via more kills + higher level reached.
 

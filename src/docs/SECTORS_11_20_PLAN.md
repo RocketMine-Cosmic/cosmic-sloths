@@ -106,7 +106,7 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    The formula bonus only doubles from S10 → S20 — that's intentional. The **real** score growth comes from kills + level: an S20 Cosmic run might see 8k+ kills (= +960k score from kills × 120) and reach level 150+ (= +2.25M from level² × 100). So a full S20 Cosmic victory probably lands in the **2-5M range**, comfortably above S10's ~1.6M peak but nowhere near runaway-inflation territory.
 
-   **`SCORE_HARD_CEILING` stays at 10M.** No bump needed — even a perfect S20 Cosmic run with insane kills/level peaks well under 10M, and the endless ceiling-hits at 10M are pre-S6 tampered runs that won't recur under the current formula.
+   **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless runs are *already* clipping the 10M ceiling on legit long sessions (Battle Toad 73-min run, plus a handful of other S6 endless top scores). Outer Galaxy adds further pressure — a S20 Cosmic run pushing 8k+ kills + level 150+ would land in the 3-5M range, but stacked with a long-tail endless or relic/talent-stacked build could climb higher. 25M gives comfortable headroom for both endless ceiling-pushers and Outer Galaxy peak runs, without going stupid (the old 100M proposal was way overshoot once we dropped the exponential bonus).
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
@@ -281,11 +281,11 @@ All open questions resolved (audit 2026-06-03). Implementation checklist:
 2. **`game/Lore.js`** — append lore lines for the 20 new mobs + Pulsar Guardian.
 
 ### Backend (saveScore.js)
-3. **`functions/saveScore.js`** — 2 minimal edits (no formula or ceiling changes):
+3. **`functions/saveScore.js`** — 3 minimal edits (no formula changes):
    - Extend `ARENA_ORDER` array from 10 → 20 ids
    - Extend `ARENA_DURATIONS` map with the 10 new durations (8:00 → 12:30)
+   - Bump `SCORE_HARD_CEILING` from 10M → 25M (endless already clipping, Outer Galaxy adds pressure)
    - ✅ Score formula auto-scales — existing `sectorIdxForBonus * 8000` and `* 15000` lines pick up the new sectors naturally
-   - ✅ `SCORE_HARD_CEILING` stays at 10M — peak Outer Galaxy runs land at 2-5M, comfortable headroom
    - ✅ `unlockedArenasByCharacter` self-heal already walks `ARENA_ORDER` → automatically extends
 
 ### Engine
