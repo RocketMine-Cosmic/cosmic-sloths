@@ -37,11 +37,13 @@ S20 — **The Devourer** *(mythic finale — anchored by a new boss)*
 The Outer Galaxy is balanced as a true endgame wall with a **strict no-overlap rule**: every sector's Normal mobs are tougher than the previous sector's Cosmic mobs. You cannot skip tiers. Clearing S11 Cosmic does NOT make S12 Normal feel easy — those S12 Normal mobs are tougher than the S11 Cosmic mobs you just killed.
 
 Anchored to **what you actually play today** (S10 Cosmic = 1.0×):
-• S11 Cosmic ≈ 2.6× S10 Cosmic
-• S15 Cosmic ≈ ~120× S10 Cosmic
-• S20 Cosmic ≈ ~14,000× S10 Cosmic ← yes really, and yes intentional
+• S11 Cosmic ≈ 1.58× S10 Cosmic
+• S15 Cosmic ≈ ~9× S10 Cosmic
+• S20 Cosmic ≈ **~81× S10 Cosmic** ← near-impossible by design
 
-**Translation:** S11-S13 is the realistic chase for fully-built whales. S14-S17 is "show me your absolute peak build." S18-S20 is mythic / streamer-flex / "good luck even surviving" territory. The player power caps have been MASSIVELY lifted on Outer Galaxy sectors (damageMult up to 800×, areaMult up to 25× at S20) to give whales the headroom to actually fight — without those lifts, nobody would clear even S12.
+Every sector's Normal difficulty is tougher than the previous sector's Cosmic. **No skipping.** Each step is a real wall.
+
+**Translation:** S11-S12 is the realistic chase for fully-built whales — feels like S10 Cosmic but at higher numbers. S13-S15 demands optimised builds. S16-S19 punishes any imperfection. S20 is "everything has to go right." Player power caps lifted on Outer Galaxy sectors (damageMult ceiling raised 6× → 80× at S20, areaMult 4× → 12×) so whales can actually fight — without those lifts, nobody would clear S12.
 
 **Inner Galaxy (S1-S10) is completely untouched.** Same balance, same difficulty, same gold drops. Outer Galaxy is purely additional content.
 ```
@@ -60,16 +62,23 @@ The existing S6 score formula extends naturally into S11-S20.
 • Sector × 8,000
 • Victory bonus: Sector × 15,000
 
-**Real numbers (queried from RunScore on 2026-06-03):**
+**Real numbers (queried from RunScore on 2026-06-03 + math-checked projections):**
 • S10 Cosmic peak today: **1.58M** (Waeoo, 9,585 kills, level 47, 7:09 survival)
-• S15 Cosmic projected: ~2.1M (~12.5k kills, ~level 50)
-• S20 Cosmic projected: ~2.6M (~15.5k kills, ~level 55)
+• S11 Cosmic projected: ~2.0M (~13k kills, ~level 50)
+• S15 Cosmic projected: ~2.0M (~7k kills + 2× bonus, ~level 50)
+• S20 Cosmic projected: **~2.2M** (~2.7k kills + 3.5× bonus, ~level 55) — the badge run
 
-Levels plateau hard in the 45-50 range — sector duration runs out of XP gain before XP² becomes the dominant score driver. Kills are doing 75% of the work, level² is doing 15%. Outer Galaxy's longer durations scale kills linearly; level barely moves.
+🔒 **KILL = SCORE. ALWAYS.** Every kill is worth a flat 120 score points — no caps, no diminishing returns, no per-sector kill nerfs. A swarm mob in S1 and a tier-14 mythic in S20 both pay out the same 120 per kill.
 
-🔒 **KILL = SCORE. ALWAYS.** Every kill is worth a flat 120 score points — no caps, no diminishing returns, no per-sector kill nerfs. A swarm mob in S1 and a tier-14 mythic in S20 both pay out the same 120 per kill. The cap lifts + longer durations (12:30 at S20 vs 7:30 at S10) + +10% spawn density on S15-S20 are designed to let strong players rack up MORE kills per run, not fewer. Harder difficulties (Hard / Cosmic) keep paying more because you'll kill more, level higher, and survive longer — same formula as Inner Galaxy.
+**Climb bonus on S15+.** At higher sectors, enemies are tougher and kill rate naturally drops. To keep the climb rewarding, the sector + victory bonus portion of your score (already part of the existing formula) gets multiplied at high sectors:
+• S1-S14: 1× (no change)
+• S15-S17: 2× bonus
+• S18-S19: 2.5× bonus
+• S20: **3.5× bonus**
 
-**Score ceiling raised: 10M → 25M.** Endless ceiling-pushers were already clipping 10M, and a god-tier S20 Cosmic run could climb to 8-10M+. 25M leaves comfortable buffer without re-clipping legit play.
+This means reaching S20 is worth chasing for score, not just bragging rights. Top whales can pick their poison — farm S11-S12 fast for ~2M, or grind S20 for the badge + ~2.2M flex.
+
+**Score ceiling raised: 10M → 25M.** Endless ceiling-pushers were already clipping 10M, and the 25M cap gives headroom for endless + future-proofs the Outer Galaxy bonus mult.
 
 💰 **GOLD DROPS — FLAT AT S10 VALUES**
 Gold income in S11-S20 stays exactly at S10 levels. The economy is healthy and we don't want Outer Galaxy to break it. XP scales with difficulty (you need it mid-run), gold does not.
