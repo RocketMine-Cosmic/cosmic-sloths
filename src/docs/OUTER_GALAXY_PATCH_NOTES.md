@@ -57,10 +57,10 @@ The existing S6 score formula extends naturally into S11-S20. No new bonuses, no
 
 **Real numbers (anchored to current S10 Cosmic peak ~2M+ on 7k-kill runs):**
 • S10 Cosmic peak today: ~2-2.5M
-• S15 Cosmic projected: ~3-5M
-• S20 Cosmic projected: ~6-10M (theoretical mythic ceiling — most players will land lower)
+• S15 Cosmic projected: ~3-4M (chase territory for fully-built whales)
+• S20 Cosmic projected: ~5-6M (theoretical mythic peak — most players will land much lower)
 
-The bulk of the score comes from **kills × 120 + level² × 100** — not the sector bonus. Tougher mobs + longer runs + more elites = more kills + higher level naturally. Harder difficulties (Hard / Cosmic) keep rewarding more score this way, no flat multiplier needed.
+The bulk of score comes from **kills × 120 + level² × 100** — not the sector bonus. Outer Galaxy mobs are MUCH tougher (the whole point — S1-S10 was too easy and players got bored), so kill rates per minute will be LOWER than S10, but longer durations + 4× XP elite swarms keep level climbing fast. Harder difficulties (Hard / Cosmic) keep rewarding more score this way, no flat multiplier needed.
 
 **Score ceiling raised: 10M → 25M.** Endless ceiling-pushers were already clipping 10M, and a god-tier S20 Cosmic run could climb to 8-10M+. 25M leaves comfortable buffer without re-clipping legit play.
 

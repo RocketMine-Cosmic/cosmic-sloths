@@ -62,20 +62,31 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    - `gravity_well` — subtle pull toward random screen point that drifts every 8s, affects player + projectiles + pickups (suggested for S11 Galactic Core or S13 Saturnian Reach)
    - `aurora_drift` — soft directional wind pushing all entities slowly (suggested for S16 Harmony Drift)
    - Reuse existing 4 for the remaining sectors so we don't need 10 new effects on day one. Pick which 4-5 ship at launch when we build.
-6. **Difficulty curve** — ✅ **Locked: NO NEW CODE — engine already scales 1.2× per sector index.**
+6. **Difficulty curve** — ✅ **Locked: Option B — 2.6× per-sector Normal jump (steep ramp). DELIBERATE — S1-S10 was too easy.**
 
-   The existing engine code (`EnemySpawner.js` L277) already applies `sectorDifficultyScale = Math.pow(1.2, arenaIndex)` to mob HP/dmg, plus `Math.pow(1.15, arenaIndex)` to boss HP/dmg. Just extending `ARENA_ORDER` from 10 → 20 ids makes this scaling pick up the new sectors naturally — same as the score formula extension.
+   Players have been speed-running S1-S10 and complaining of boredom. Outer Galaxy is the answer: a true endgame wall where each new sector's Normal tier starts *above* the previous sector's hardest difficulty. No overlap between tiers.
 
-   **Actual difficulty curve (vs S1 baseline = 1.0×):**
-   | Sector | Normal mob HP/dmg | Cosmic mob HP/dmg | Boss HP/dmg (Cosmic) |
-   |--------|-------------------|--------------------|----------------------|
-   | 10 | 5.2× | 13.0× | 9.0× |
-   | 15 | 12.8× | 32.1× | 18.1× |
-   | 20 | 31.9× | 79.8× | 36.4× |
+   - **Rule**: Sector N Normal HP/dmg > Sector (N-1) Cosmic
+   - **Formula**: each sector's Normal = previous sector's Cosmic × 1.04 (small buffer above Cosmic). Net effect = Normal grows 2.6× per sector — replaces the existing engine's gentle 1.2^N curve for S11+ only.
+   - The 4 difficulty tiers (Easy 0.6×, Normal 1.0×, Hard 1.5×, Cosmic 2.5×) still apply *within* each sector on top of the base.
+   - **Implementation**: in `EnemySpawner.js`, override the existing `Math.pow(1.2, arenaIndex)` with a sector-11+ specific curve. S1-S10 keeps the existing 1.2^N scaling, untouched.
 
-   The 4 difficulty tiers (Easy 0.6×, Normal 1.0×, Hard 1.5×, Cosmic 2.5×) still apply *within* each sector on top of the base.
+   Worked example (HP/dmg multiplier vs Sector 1 Normal baseline = 1.0×):
+   | Sector | Normal | Hard | Cosmic |
+   |--------|--------|------|--------|
+   | 10 | 5.2× (existing 1.2^9) | 7.8× | 12.9× |
+   | 11 | 13.4× | 20.1× | 33.6× |
+   | 12 | 34.9× | 52.4× | 87.3× |
+   | 13 | 90.7× | 136.1× | 226.9× |
+   | 14 | 235.9× | 353.8× | 589.7× |
+   | 15 | 613.3× | 920.0× | 1,533× |
+   | 16 | 1,594× | 2,392× | 3,986× |
+   | 17 | 4,145× | 6,217× | 10,362× |
+   | 18 | 10,777× | 16,166× | 26,943× |
+   | 19 | 28,020× | 42,030× | 70,051× |
+   | 20 | 72,853× | 109,279× | **182,132×** |
 
-   **Reality check**: S20 Cosmic ≈ 80× S1 baseline — not the runaway 35,000× I previously claimed. The engine's `1.2^N` curve is gentle enough that fully-built whales can realistically chase S15-S18, and S20 Cosmic is the absolute peak-build mythic flex (not literally impossible). DD spawn-cap 3.5× + elite swarms + 1.5-2.5× difficulty mults keep the pressure on without needing a new ramp.
+   **Reality check**: S20 Cosmic ≈ 182,000× S1 baseline — explicit "no human will clear this without a perfect maxed-out build" territory. That's by design. S11-S13 is the realistic chase for fully-built whales, S14-S17 is "show me your absolute peak build", S18-S20 is mythic / theoretical / streamer-flex territory. The whole point of the player power cap lifts (next section) is to give whales the headroom to actually survive this ramp.
 
    ✅ **Score formula contribution — locked**: **No new code, no exponential bonus, no inflation.** The existing S6 formula (`sectorIdx × 8,000` + victory `sectorIdx × 15,000`) already scales linearly through S11-S20 the moment we extend `ARENA_ORDER` from 10 → 20 entries. Harder difficulty (Easy/Normal/Hard/Cosmic) still rewards more score *naturally* via more kills + higher level reached + longer survival time — same as Inner Galaxy. Outer Galaxy victories outscore Inner Galaxy victories purely because the sector index is bigger AND the player kills/levels more in tougher content. No artificial multiplier needed.
 
@@ -93,14 +104,15 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    | S15 | 345k | 1.50× |
    | S20 | 460k | 2.0× |
 
-   **The real score drivers are kills × 120 and level² × 100.** Worked S20 Cosmic projection grounded in current S10 numbers:
-   - S10 Cosmic top players: ~7k kills, level ~100 → 840k + 1M + 230k = **~2-2.5M**
-   - S20 Cosmic projection: longer duration (12:30 vs 7:30 = +67%), DD-driven elite swarms scale with player power, mobs hit ~32× S1 base but cap lifts keep DPS up
-     - Realistic peak: ~12k kills + level ~150 → 1.44M + 2.25M + 460k = **~4-5M**
-     - Theoretical mythic: ~15k+ kills + level 200+ → 1.8M + 4M + 460k = **~6-8M+**
-   - Endless top runs already at 10M — Outer Galaxy peaks land in the 4-10M zone
+   **The real score drivers are kills × 120 and level² × 100.** Worked S20 Cosmic projection grounded in current S10 numbers + the steep difficulty ramp:
+   - S10 Cosmic top players today: ~7k kills, level ~100 → 840k + 1M + 230k = **~2-2.5M**
+   - S20 Cosmic projection: kills/min will be **lower** than S10 (mobs are 182,000× tougher; even with cap-lifts giving 800× damage, players do ~44× less *relative* damage), but duration is longer (12:30 vs 7:30) and elite spawns give 4× XP so level still climbs
+     - Realistic S20 victory: ~5k kills + level ~120 → 600k + 1.44M + 460k = **~2.5-3.5M**
+     - Theoretical mythic peak: ~8k kills + level 180 → 960k + 3.24M + 460k = **~5-6M**
+   - Endless top runs already at 10M — that remains the ceiling-pusher
+   - S15-S17 Cosmic likely lands in the 3-4M range — chase territory for fully-built whales
 
-   **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless is *already* clipping the 10M ceiling on legit long sessions, and a god-tier S20 Cosmic run could push 8-10M+ (kills + level² do the heavy lifting once you account for 7k+ kill performance already happening on S10). 25M gives comfortable headroom for both endless ceiling-pushers and Outer Galaxy peaks without going stupid.
+   **`SCORE_HARD_CEILING` bump: 10M → 25M.** Endless is *already* clipping the 10M ceiling on legit long sessions. Outer Galaxy adds further pressure (a god-tier S20 Cosmic could push 5-6M, stacked with long endless tail could go higher). 25M gives comfortable headroom for both endless ceiling-pushers and Outer Galaxy peaks without going stupid.
 7. **Rewards** —
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
@@ -183,25 +195,27 @@ Pairing each new arena with 2 signature mobs from the roster above. Existing tie
 | 19 — Supernova Heart         | Nebula Panther, Void Shark |
 | 20 — The Devourer            | **Pulsar Guardian** (boss) + Cosmic Manta Ray + Plasma Wyrm rotation |
 
-## Player power cap lifts (locked — recalibrated 2026-06-03)
+## Player power cap lifts (locked)
 
-Now that we're working against the **real** difficulty curve (S20 = 80× S1, not 35,000×), the player cap lifts are *much* gentler than the previous draft. The existing S6 ceilings (damageMult 6×, areaMult 4×, xpMult 5×, cdMult 0.35) are perfectly playable through S10 Cosmic today — Outer Galaxy just needs a moderate stretch to keep that experience consistent as mob HP grows by another 6× from S10 → S20.
+To match the 2.6× per-sector HP/dmg ramp, the existing S6 player-stat ceilings in `GameEngine.js` (lines 316-324) are **massively raised** when the player enters an Outer Galaxy sector. Without this, fully-built whales hit the existing 6.0× damage / 4.0× area walls and have ZERO chance of clearing even S12, let alone S20. The whole point of the Outer Galaxy is to give whales the headroom they don't have today.
 
 ### Sector-scaled ceilings (in-run only — does not affect S1-S10 balance)
 
+The caps scale with the difficulty ramp itself, NOT linearly. We can't realistically give players 182,000× damage on S20 — that breaks rendering and trivialises enemies. Instead we give them enough headroom that **a perfectly built player can sustain ~1-2 sectors above their previous best**, gating progression to skill + build optimization rather than raw stat ceilings.
+
 | Cap | S1-S10 (today) | S11 | S13 | S15 | S17 | S20 |
 |-----|----------------|-----|-----|-----|-----|-----|
-| `damageMult` ceiling | 6.0 | 7.0  | 10.0 | 14.0 | 19.0 | 25.0 |
-| `areaMult` ceiling   | 4.0 | 4.5  | 5.5  | 6.5  | 7.5  | 9.0  |
-| `xpMult` ceiling     | 5.0 | 5.5  | 6.5  | 8.0  | 10.0 | 12.0 |
-| `goldMult` ceiling   | 8.0 | 8.0  | 8.0  | 8.0  | 8.0  | 8.0  | ← unchanged (Outer Galaxy gold stays flat per the rewards rule)
-| `cooldownMult` floor | 0.35 | 0.32 | 0.28 | 0.24 | 0.20 | 0.18 |
+| `damageMult` ceiling | 6.0 | 15.0 | 40.0 | 100.0 | 250.0 | 800.0 |
+| `areaMult` ceiling   | 4.0 | 6.0  | 9.0  | 13.0  | 18.0  | 25.0  |
+| `xpMult` ceiling     | 5.0 | 10.0 | 20.0 | 40.0  | 80.0  | 150.0 |
+| `goldMult` ceiling   | 8.0 | 8.0  | 8.0  | 8.0   | 8.0   | 8.0   | ← unchanged (Outer Galaxy gold stays flat at S10 values per the rewards rule)
+| `cooldownMult` floor | 0.35 | 0.25 | 0.18 | 0.12 | 0.08 | 0.05 |
 
-**Reasoning**: mob HP scales 1.2^N per sector — S10 → S20 is roughly 1.2^10 = **6.2× more HP**. So a 4× damage-cap lift (6 → 25) and a 2× cooldown-floor cut (0.35 → 0.18) keeps effective DPS roughly proportional to mob HP across the new tier. Cosmic difficulty's 2.5× enemy HP multiplier still applies on top, gating S20 Cosmic to fully-built endgame players.
+**Math check**: even with 800× damage on S20, the player still does ~44× less damage *relative* to enemies than they do on S10 today (800/182,000 vs 6/12.9). That's the intended gating — you NEED a perfect build + every relic + max mastery + NFT perks just to survive, and even then the very top of the curve (S19-S20 Cosmic) is theoretical / mythic. S11-S13 is the realistic chase for fully-built whales, S14-S17 is the absolute peak-build wall.
 
 ### Scaling formula (per sector index)
 
-Linear interpolation between the breakpoints above. Code skeleton at the end of this section.
+Lookup table per sector — code skeleton at the end of this section.
 
 ### Two quality-of-life cap lifts on Sector 11+
 
@@ -219,20 +233,20 @@ Linear interpolation between the breakpoints above. Code skeleton at the end of 
 Single ~20-line block in `GameEngine.js` constructor that replaces the existing 4-line clamp when `this.arena` is sectors 11-20. Sector index is the only gate; everything else stays exactly as-is. Fully reversible.
 
 ```js
-// Pseudo — final code in implementation pass. Lookup-table approach is cleaner
-// than a smooth curve at this scale and trivially tunable.
+// Pseudo — final code in implementation pass. Lookup-table approach for the
+// steep ramp is cleaner than a single formula at this scale.
 const OUTER_GALAXY_CAPS = {
     // sectorIdx: { dmg, area, xp, cdFloor }
-    11: { dmg: 7,   area: 4.5, xp: 5.5,  cdFloor: 0.32 },
-    12: { dmg: 8.5, area: 5,   xp: 6,    cdFloor: 0.30 },
-    13: { dmg: 10,  area: 5.5, xp: 6.5,  cdFloor: 0.28 },
-    14: { dmg: 12,  area: 6,   xp: 7,    cdFloor: 0.26 },
-    15: { dmg: 14,  area: 6.5, xp: 8,    cdFloor: 0.24 },
-    16: { dmg: 16,  area: 7,   xp: 9,    cdFloor: 0.22 },
-    17: { dmg: 19,  area: 7.5, xp: 10,   cdFloor: 0.20 },
-    18: { dmg: 21,  area: 8,   xp: 11,   cdFloor: 0.19 },
-    19: { dmg: 23,  area: 8.5, xp: 11.5, cdFloor: 0.185 },
-    20: { dmg: 25,  area: 9,   xp: 12,   cdFloor: 0.18 },
+    11: { dmg: 15,  area: 6,  xp: 10,  cdFloor: 0.25 },
+    12: { dmg: 25,  area: 7,  xp: 14,  cdFloor: 0.21 },
+    13: { dmg: 40,  area: 9,  xp: 20,  cdFloor: 0.18 },
+    14: { dmg: 65,  area: 11, xp: 28,  cdFloor: 0.15 },
+    15: { dmg: 100, area: 13, xp: 40,  cdFloor: 0.12 },
+    16: { dmg: 160, area: 15, xp: 55,  cdFloor: 0.10 },
+    17: { dmg: 250, area: 18, xp: 80,  cdFloor: 0.08 },
+    18: { dmg: 400, area: 21, xp: 110, cdFloor: 0.07 },
+    19: { dmg: 600, area: 23, xp: 130, cdFloor: 0.06 },
+    20: { dmg: 800, area: 25, xp: 150, cdFloor: 0.05 },
 };
 
 const sectorIdx = ARENAS.findIndex(a => a.id === this.arena.id) + 1;
