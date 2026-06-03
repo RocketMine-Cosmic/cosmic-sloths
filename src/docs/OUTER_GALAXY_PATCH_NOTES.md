@@ -43,7 +43,7 @@ Anchored to **what you actually play today** (S10 Cosmic = 1.0×):
 
 Every sector's Normal difficulty is tougher than the previous sector's Cosmic. **No skipping.** Each step is a real wall.
 
-**Translation:** S11-S12 is the realistic chase for fully-built whales — feels like S10 Cosmic but at higher numbers. S13-S15 demands optimised builds. S16-S19 punishes any imperfection. S20 is "everything has to go right." Player power caps lifted on Outer Galaxy sectors (damageMult ceiling raised 6× → 80× at S20, areaMult 4× → 12×) so whales can actually fight — without those lifts, nobody would clear S12.
+**Translation:** S11-S12 is the realistic chase for fully-built whales — feels like S10 Cosmic but at higher numbers. S13-S15 demands optimised builds. S16-S19 punishes any imperfection. S20 is "everything has to go right." 
 
 **Inner Galaxy (S1-S10) is completely untouched.** Same balance, same difficulty, same gold drops. Outer Galaxy is purely additional content.
 ```
