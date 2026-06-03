@@ -56,8 +56,60 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 ## Asset status
 
 - ✅ **Backgrounds** — all 10 uploaded (URLs in table above)
-- ⏳ **Enemy sprites** — 20 sheets ready to upload (filenames pending)
-- ⏳ **New boss sprite** — 1 sheet ready to upload (anchors Sector 20 "The Devourer", name pending)
+- ✅ **Enemy sprites** — all 20 uploaded (roster below)
+- ⏳ **New boss sprite** — 1 sheet pending upload (anchors Sector 20 "The Devourer", name pending)
+
+### Enemy roster — 20 new sprites
+
+All sheets follow the existing 4×4 / 16-frame format. Suggested tier assignments below assume **Option C themed-per-sector** distribution (recommended). Final tier + stats need balance tuning when we implement.
+
+| # | Name | Visual | Suggested tier | Sheet URL |
+|---|------|--------|----------------|-----------|
+| 1 | Asteroid Crab | Blue armored crab, glowing eyes | T8 tank | [Asteroid_Crab](https://media.base44.com/images/public/69de258a7e072380b89d66e3/d058a4791_Asteroid_Crab_Sheet.png) |
+| 2 | Aurora Moth | Green-purple iridescent moth | T6 swarm | [Aurora_Moth](https://media.base44.com/images/public/69de258a7e072380b89d66e3/f3a323dae_Aurora_Moth_Sheet.png) |
+| 3 | Aurora Serpent | Cyan-purple celestial dragon | T9 elite | [Aurora_Serpent](https://media.base44.com/images/public/69de258a7e072380b89d66e3/a982ba85c_Aurora_Serpent_Sheet.png) |
+| 4 | Comet Ray (phoenix form) | Fiery orange/cyan-winged spirit | T9 ranged | [Comit_Ray](https://media.base44.com/images/public/69de258a7e072380b89d66e3/c9ca34e78_Comit_Ray_Sheet.png) |
+| 5 | Cosmic Jellyfish | Blue-pink starry jellyfish | T7 floater | [Cosmic_Jellyfish](https://media.base44.com/images/public/69de258a7e072380b89d66e3/93adad41e_Cosmic_Jellyfish_Sheet.png) |
+| 6 | Cosmic Manta Ray | Galaxy-skinned manta, large | T10 elite | [Cosmic_Manta_Ray](https://media.base44.com/images/public/69de258a7e072380b89d66e3/aa4cd6eb7_Cosmic_Manta_Ray_Sheet.png) |
+| 7 | Galaxy Mantis | Blue-teal mantis insect | T7 ranged | [Galaxy_Mantis](https://media.base44.com/images/public/69de258a7e072380b89d66e3/a0c3ffe18_Galaxy_Mantis_Sheet.png) |
+| 8 | Galaxy Wasp | Purple cosmic wasp w/ stinger | T6 ranged | [Galaxy_Wasp](https://media.base44.com/images/public/69de258a7e072380b89d66e3/1779a4a15_Galaxy_Wasp_Sheet.png) |
+| 9 | Nebula Octopus | Purple-cyan starry octopus | T8 elite | [Nebula_Octopus](https://media.base44.com/images/public/69de258a7e072380b89d66e3/78215c244_Nebula_Octopus_Sheet.png) |
+| 10 | Nebula Panther | Purple flaming feline stalker | T10 elite | [Nebula_Panther](https://media.base44.com/images/public/69de258a7e072380b89d66e3/37f8125b9_Nebula_Panther_Sheet.png) |
+| 11 | Nebula Scorpion | Purple-pink scorpion | T8 ranged | [Nebula_Scorpion](https://media.base44.com/images/public/69de258a7e072380b89d66e3/9a42c9c27_Nebula_Scorpion_Sheet.png) |
+| 12 | Nebula Serpent | Purple-cyan flame dragon | T9 elite | [Nebula_Serpent](https://media.base44.com/images/public/69de258a7e072380b89d66e3/2f0782efb_Nebula_Serpent_Sheet.png) |
+| 13 | Neon Mothra (?) | Small pink/teal butterfly | T4 swarm — **see note** | [neon_mothra (new hash)](https://media.base44.com/images/public/69de258a7e072380b89d66e3/da4b6bf5a_neon_mothra_sheet.png) |
+| 14 | Plasma Raptor | Fiery orange/cyan raptor | T9 fast | [Plasma_Raptor](https://media.base44.com/images/public/69de258a7e072380b89d66e3/7a54d1f3f_Plasma_Raptor_Sheet.png) |
+| 15 | Plasma Wyrm | Orange-blue fiery wyrm | T10 elite | [Plasma_Wyrm](https://media.base44.com/images/public/69de258a7e072380b89d66e3/68e0a16db_Plasma_Wyrm_Sheet.png) |
+| 16 | Star Scarab Beetle | Blue armored beetle | T7 swarm | [Star_Scarab_Beetle](https://media.base44.com/images/public/69de258a7e072380b89d66e3/150bb4721_Star_Scarab_Beetle_Sheet.png) |
+| 17 | Void Bat | Purple cosmic bat | T6 swarm | [Void_Bat](https://media.base44.com/images/public/69de258a7e072380b89d66e3/d6da65840_Void_Bat_Sheet.png) |
+| 18 | Void Eel | Dark teal/purple eel | T7 fast | [Void_Eel](https://media.base44.com/images/public/69de258a7e072380b89d66e3/b9f304545_Void_Eel_Sheet.png) |
+| 19 | Void Manta (?) | Small dark manta | T3 — **see note** | [void_mantra (new hash)](https://media.base44.com/images/public/69de258a7e072380b89d66e3/ec5f8466f_void_mantra_sheet.png) |
+| 20 | Void Shark | Purple cosmic shark | T9 fast | [Void_Shark](https://media.base44.com/images/public/69de258a7e072380b89d66e3/33a8cf065_Void_Shark_Sheet.png) |
+
+### ⚠️ Filename collisions to resolve
+
+Two new uploads share filenames with existing in-game sprites (different hashes, so they're separate files):
+- `void_mantra_sheet.png` — **existing** T3 `t3_manta` uses hash `9842135cf`; **new upload** is hash `ec5f8466f`.
+- `neon_mothra_sheet.png` — **existing** T4 `t4_mothra` uses hash `23d933892`; **new upload** is hash `da4b6bf5a`.
+
+**Decision needed:** are these art refreshes for T3/T4 (swap into existing constants) OR new variants for sectors 11-20 (treat as fresh enemies)?
+
+### Sector → enemy mapping (draft — themed Option C)
+
+Pairing each new arena with 2 signature mobs from the roster above. Existing tier-appropriate mobs still spawn alongside for variety.
+
+| Sector | Signature mobs |
+|--------|----------------|
+| 11 — The Galactic Core       | Asteroid Crab, Star Scarab Beetle |
+| 12 — Pillars of Creation     | Aurora Moth, Galaxy Wasp |
+| 13 — Saturnian Reach         | Cosmic Jellyfish, Nebula Octopus |
+| 14 — Andromeda's Edge        | Galaxy Mantis, Void Bat |
+| 15 — The Painter's Spiral    | Aurora Serpent, Cosmic Manta Ray |
+| 16 — Harmony Drift           | Nebula Scorpion, Void Eel |
+| 17 — Chromatic Tides         | Nebula Serpent, Comet Ray |
+| 18 — Stormfront Nebula       | Plasma Raptor, Plasma Wyrm |
+| 19 — Supernova Heart         | Nebula Panther, Void Shark |
+| 20 — The Devourer            | **NEW BOSS** + Cosmic Manta Ray + Plasma Wyrm rotation |
 
 ## Open questions for you
 
