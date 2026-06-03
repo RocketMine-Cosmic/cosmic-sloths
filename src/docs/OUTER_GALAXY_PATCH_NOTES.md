@@ -34,7 +34,9 @@ S20 — **The Devourer** *(mythic finale — anchored by a new boss)*
 • 10 characters × 10 new sectors = a long-term roster goal
 
 ⚠️ **Important — this is NOT casual content**
-The Outer Galaxy is balanced as a true endgame wall. **S11 Normal kicks off slightly tougher than S10 Cosmic** — so the new tier is an immediate gear-check — then each sector after that is ~1.4× harder than the last. By S20, enemies are roughly **700× tougher than S1 baseline** (~54× tougher than S10 Cosmic).
+The Outer Galaxy is balanced as a true endgame wall with a **strict no-overlap rule**: every sector's Normal mobs are tougher than the previous sector's Cosmic mobs. You cannot skip tiers. Clearing S11 Cosmic does NOT make S12 Normal feel easy — those S12 Normal mobs are tougher than the S11 Cosmic mobs you just killed.
+
+By S20, enemies are roughly **260× tougher than S1 baseline** (~20× tougher than S10 Cosmic). Difficulty-tier spreads are tighter in Outer Galaxy (Cosmic = 1.3× Normal here, vs 2.5× Normal in Inner Galaxy) — the per-sector ramp does the heavy lifting instead of the difficulty tier multipliers.
 
 **Translation:** S11-S13 is the realistic chase for fully-built whales. S14-S17 is "show me your absolute peak build." S18-S20 is mythic territory — clearable with a perfect build, every relic, max mastery, and a tight run, but no faceroll.
 
@@ -57,8 +59,8 @@ The existing S6 score formula extends naturally into S11-S20. No new bonuses, no
 
 **Real numbers (anchored to current S10 Cosmic peak ~2M+ on 7k-kill runs):**
 • S10 Cosmic peak today: ~2-2.5M
-• S15 Cosmic projected: ~2.5-3.5M (chase territory for fully-built whales)
-• S20 Cosmic projected: ~5-6M (theoretical mythic peak — most players will land much lower)
+• S15 Cosmic projected: ~2-3M (chase territory for fully-built whales)
+• S20 Cosmic projected: ~4-5M (theoretical mythic peak — most players will land much lower)
 
 The bulk of score comes from **kills × 120 + level² × 100** — not the sector bonus. Outer Galaxy mobs are tougher (the whole point — S1-S10 was too easy and players got bored), so kill rates per minute will be LOWER than S10, but longer durations + 4× XP elite swarms keep level climbing fast. Harder difficulties (Hard / Cosmic) keep rewarding more score this way, no flat multiplier needed.
 
