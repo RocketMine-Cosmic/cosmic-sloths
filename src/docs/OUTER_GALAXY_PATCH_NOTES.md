@@ -36,9 +36,12 @@ S20 — **The Devourer** *(mythic finale — anchored by a new boss)*
 ⚠️ **Important — this is NOT casual content**
 The Outer Galaxy is balanced as a true endgame wall with a **strict no-overlap rule**: every sector's Normal mobs are tougher than the previous sector's Cosmic mobs. You cannot skip tiers. Clearing S11 Cosmic does NOT make S12 Normal feel easy — those S12 Normal mobs are tougher than the S11 Cosmic mobs you just killed.
 
-By S20, enemies are roughly **260× tougher than S1 baseline** (~20× tougher than S10 Cosmic). Difficulty-tier spreads are tighter in Outer Galaxy (Cosmic = 1.3× Normal here, vs 2.5× Normal in Inner Galaxy) — the per-sector ramp does the heavy lifting instead of the difficulty tier multipliers.
+Anchored to **what you actually play today** (S10 Cosmic = 1.0×):
+• S11 Cosmic ≈ 2.6× S10 Cosmic
+• S15 Cosmic ≈ ~120× S10 Cosmic
+• S20 Cosmic ≈ ~14,000× S10 Cosmic ← yes really, and yes intentional
 
-**Translation:** S11-S13 is the realistic chase for fully-built whales. S14-S17 is "show me your absolute peak build." S18-S20 is mythic territory — clearable with a perfect build, every relic, max mastery, and a tight run, but no faceroll.
+**Translation:** S11-S13 is the realistic chase for fully-built whales. S14-S17 is "show me your absolute peak build." S18-S20 is mythic / streamer-flex / "good luck even surviving" territory. The player power caps have been MASSIVELY lifted on Outer Galaxy sectors (damageMult up to 800×, areaMult up to 25× at S20) to give whales the headroom to actually fight — without those lifts, nobody would clear even S12.
 
 **Inner Galaxy (S1-S10) is completely untouched.** Same balance, same difficulty, same gold drops. Outer Galaxy is purely additional content.
 ```
@@ -59,8 +62,8 @@ The existing S6 score formula extends naturally into S11-S20. No new bonuses, no
 
 **Real numbers (anchored to current S10 Cosmic peak ~2M+ on 7k-kill runs):**
 • S10 Cosmic peak today: ~2-2.5M
-• S15 Cosmic projected: ~2-3M (chase territory for fully-built whales)
-• S20 Cosmic projected: ~4-5M (theoretical mythic peak — most players will land much lower)
+• S15 Cosmic projected: ~3-5M (chase territory for fully-built whales — sweet spot)
+• S20 Cosmic projected: ~3-6M (mythic — kill rates crater so high score comes from level² not kills)
 
 The bulk of score comes from **kills × 120 + level² × 100** — not the sector bonus. Outer Galaxy mobs are tougher (the whole point — S1-S10 was too easy and players got bored), so kill rates per minute will be LOWER than S10, but longer durations + 4× XP elite swarms keep level climbing fast. Harder difficulties (Hard / Cosmic) keep rewarding more score this way, no flat multiplier needed.
 
