@@ -54,7 +54,7 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    - **Outer Galaxy** — sectors 11-20 (new endgame + mythic tier)
    - Tab control sits above the sector grid. Default tab = Inner Galaxy on first visit; remember last-selected tab in localStorage so endgame players land back on Outer Galaxy.
    - Outer Galaxy tab should have a subtle distinct visual treatment (e.g. cosmic glow on the tab itself, or a "★ NEW" badge if the player hasn't unlocked anything in it yet) so the new content is discoverable.
-4. **Bestiary / Lore** — no new enemies required for first pass; we reuse the existing 30 mob roster but emphasise different tiers per sector via spawn weights. Bosses too — keep the 6 existing bosses but assign different ones per sector.
+4. **Bestiary / Lore** — ✅ **Locked: ship all 20 new mob entries on day one** with new ids (e.g. `t11_asteroid_crab`, `t14_plasma_wyrm`). New tier 11-14 entries in `Constants.js` + matching lore lines in `Lore.js` + Bestiary card rendering. Existing 30-mob roster stays untouched (still spawns in S1-S10). Boss pool: ✅ **random rotation across all 7 bosses** in S11-S19 (existing 6 + Pulsar Guardian eligible everywhere), Pulsar Guardian **guaranteed spawn on S20** as the mythic finale anchor.
 5. **Effects** — ✅ **New effects requested** (Outer Galaxy deserves to *feel* different from Inner Galaxy). First pass spec — separate engine ticket but blocking for full mythic feel:
    - `ion_storm` — periodic horizontal lightning sweeps that briefly slow the player and reveal a screen-edge crackle (suggested for S18 Stormfront Nebula)
    - `void_pulse` — rhythmic dark-energy contractions from screen center, drag the camera inward visually, increase enemy speed during pulse (suggested for S20 The Devourer)
@@ -128,7 +128,12 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
    - **Gold drops: FLAT at sector 10 values** for all of sectors 11-20. Player economy already has a surplus; we do NOT want to inflate gold further with the new content. Implementation: clamp `goldDropMult` at sector index 10's value when computing drops for sectors 11+.
    - **XP scaling**: keep XP drops scaling with the new exponential difficulty curve — players need the XP to level mid-run to survive the HP walls, and XP doesn't feed the persistent economy.
    - **No bonus reward multipliers** for the new tier — the prestige comes from the challenge + cosmetic/title rewards (TBD), not gold/XP inflation.
-8. **Unlocks** — same per-character chain as sectors 1-10: clear sector N on **Normal** with a given character to unlock sector N+1 for that character. Sector 11 unlocks for a character once they've cleared Sector 10 on Normal. No bulk unlock, no shortcut — each character grinds their own ladder through the Outer Galaxy.
+8. **Unlocks** — ✅ **Locked: per-character chain, any-difficulty clear unlocks next sector** (matches existing S1-S10 behavior exactly). Sector 11 unlocks for a character once they've cleared Sector 10 on *any* difficulty. Each character grinds their own ladder through the Outer Galaxy — 10 chars × 10 sectors = a long-term roster goal. No bulk unlock, no shortcut, no Normal-only gate (consistency with S1-S10 wins over restrictiveness).
+
+9. **Character roster access (NFT + non-NFT)** — ✅ **No new unlock gates needed**:
+   - **NFT holders**: already get instant access to every character via `NFTPerks.js` + `_am` suffix normalization in `nftNameNormalize.js`. Outer Galaxy adds nothing here.
+   - **Non-NFT via kill milestones**: top milestone is 160k total kills = full 10-char roster. Outer Galaxy *accelerates* kill counts (a S20 Cosmic run can do 8-10k kills), so anyone reaching S11+ will have long since unlocked everything. ✅ Already handled.
+   - **Outer Galaxy chase reward**: ✅ **Locked option (a) — nothing extra**. Outer Galaxy is *purely about score and bragging rights*, not a new currency/unlock track. Keeps the design honest: harder content = bigger leaderboard number, period. Cosmetic rewards can be a later patch ticket if Texxy wants them, but they're not blocking launch.
 
 ---
 
@@ -267,12 +272,37 @@ Density scales mildly on top of the exponential HP/dmg curve — keeps the scree
 
 (Replaces the earlier "+25% on S14" note — too punishing on top of the 1.2× HP ramp.)
 
-## Status — ready to implement
+## Status — ✅ READY TO IMPLEMENT
 
-All open questions resolved. Next step: when you say go, I'll wire up:
-1. New `ARENAS` entries + tier 11-14 enemy entries in `game/Constants.js`
-2. Pulsar Guardian as the 7th entry in the boss pool
-3. `EnemySpawner.js` — exponential 1.2× ramp + raised tier cap + density bumps
-4. `pages/Hub` — Inner/Outer Galaxy tab split
-5. Bestiary entries + lore for the 20 new mobs + Pulsar Guardian
-6. Effects engine work for the 4-5 new arena effects you pick to ship at launch
+All open questions resolved (audit 2026-06-03). Implementation checklist:
+
+### Constants & data
+1. **`game/Constants.js`** — append 10 new `ARENAS` entries (S11-S20) with backgrounds from the table above. Append 20 new tier 11-14 enemy entries with new ids. Append Pulsar Guardian to the boss pool (7th entry, sprite sheet 5×5/25-frame).
+2. **`game/Lore.js`** — append lore lines for the 20 new mobs + Pulsar Guardian.
+
+### Backend (saveScore.js)
+3. **`functions/saveScore.js`** — 4 coordinated edits:
+   - Extend `ARENA_ORDER` array from 10 → 20 ids
+   - Extend `ARENA_DURATIONS` map with the 10 new durations (8:00 → 12:30)
+   - Add the Outer Galaxy quadratic score bonus block (S6 branch only — see formula in section 6)
+   - Bump `SCORE_HARD_CEILING` from 10M → 35M
+   - `unlockedArenasByCharacter` self-heal already walks `ARENA_ORDER` → automatically extends ✅ no change needed
+
+### Engine
+4. **`game/GameEngine.js`** — sector-scaled cap-lift block in constructor (~20 lines, see section "Player power cap lifts"). Vampiric Lash heal cap 5%→10% on S11+. Forge augment stacking allows 2-of-same on S11+.
+5. **`game/EnemySpawner.js`** — 1.15× per-sector HP/dmg ramp for S11+. Raise tier cap to 14. Spawn density +10% on S15-S20. Boss pool rotation: random across 7 bosses for S11-S19; Pulsar Guardian guaranteed on S20.
+6. **Arena effects** — pick 4-5 of the 5 proposed new effects (`ion_storm`, `void_pulse`, `eclipse_dim`, `gravity_well`, `aurora_drift`) and implement in the effects layer. Remaining sectors reuse existing 4.
+
+### Frontend
+7. **`pages/Hub`** — Inner/Outer Galaxy tab split. localStorage remembers last-selected tab. Outer Galaxy tab gets cosmic-glow treatment + "★ NEW" badge if player has zero S11+ clears.
+8. **Bestiary page** — auto-picks up the 20 new mob entries from Constants/Lore. No layout work expected.
+
+### NOT changing (confirmed by audit)
+- `STACK_FACTOR` (0.5 / 0.66) — protects S1-S10 leaderboard, untouched
+- Per-level growth caps in `levelUp()` — anti-Overcharge, untouched
+- NFT perks at 15% — whale-tied, untouched
+- Character unlock chain — NFT instant + 160k-kill milestone roster already covers Outer Galaxy players
+- Gold drops in S11-S20 — flat at S10 values (rewards rule)
+- Endless / raid / meteor score formulas — sandbox, untouched
+
+**Effort estimate**: ~1 focused implementation pass for items 1-3 + 7 (the "must-ship" core). Items 4-5 are the medium pass. Item 6 (new effects) is the longest tail — recommend shipping with **2 new effects + 8 reused** at launch, then patching in the other 2-3 over the following weeks.
