@@ -327,18 +327,25 @@ Density scales mildly on top of the exponential HP/dmg curve — keeps the scree
 
 (Replaces the earlier "+25% on S14" note — too punishing on top of the 1.2× HP ramp.)
 
-## Status — ✅ READY TO IMPLEMENT (with caveats)
+## Status — ✅ READY TO IMPLEMENT
 
-Difficulty + cap + score curves locked (audit 2026-06-03). One open decision (sector boss spawn pattern — see Engine item 5) and a handful of unverified-but-trivial claims to confirm at implementation time. Implementation checklist:
+Difficulty + cap + score curves locked (audit 2026-06-03). All 5 unverified claims confirmed by direct code read (2026-06-03). One open decision remains — sector boss spawn pattern (see Engine item 5).
 
-### ⚠️ Verify in code BEFORE writing
-- Current `SCORE_HARD_CEILING` value in `functions/saveScore.js` (assumed 10M)
-- Current `ARENA_ORDER` / `ARENA_DURATIONS` shape in `functions/saveScore.js`
-- `unlockedArenasByCharacter` self-heal really walks `ARENA_ORDER`
-- Real character unlock kill milestone in `game/CharacterUnlocks.js` (claimed 160k)
-- Exact line range of the S6 cap-clamp block in `game/GameEngine.js` (claimed 316-324)
+### ✅ Verified in code 2026-06-03
+- **`SCORE_HARD_CEILING = 10_000_000`** in `functions/saveScore.js` line 82 — assumption holds, bump to 25M is a one-line edit.
+- **`ARENA_ORDER`** is a simple array in `saveScore.js` line 87 (10 arena ids). **`ARENA_DURATIONS`** is a `{id: seconds}` map at lines 94-97. Both extend trivially to 20 entries.
+- **`unlockedArenasByCharacter` self-heal** confirmed in `saveScore.js` lines 470-475 — `for (let i = 0; i <= idx + 1; i++)` walks `ARENA_ORDER` directly, so extending the array auto-extends the unlock chain. No code change needed there.
+- **Top kill milestone is `160000`** in `game/CharacterUnlocks.js` line 18 (and mirrored in `saveScore.js` line 106). Full 10-char roster unlocked at 160k kills — Outer Galaxy players will have long since hit this.
+- **S6 cap-clamp block** confirmed in `game/GameEngine.js` — single `if (this._isS6) { ... }` block clamping `damageMult`/`goldMult`/`areaMult`/`xpMult` + `cooldownMult` floor at 0.35. `updateWeapons` per-weapon `Math.max(0.35, this.player.cooldownMult)` confirms the dead-code finding — lifting the constructor `cooldownMult` floor without ALSO patching the per-weapon line would do literally nothing. Plan stays correct: don't touch it.
 
-These were assumed, not directly read. None block design — but read them first when starting implementation so we don't ship bad assumptions.
+### ⚠️ Side-effect to decide at implementation
+**NG+ trigger moves with `ARENA_ORDER`.** `saveScore.js` lines 481-483 sets `s.newGamePlusUnlocked = true` on victory at the LAST arena in `ARENA_ORDER`. After extending to 20 entries, the trigger moves from S10 → S20.
+- Existing players who beat S10 pre-patch keep their flag (no regression).
+- Post-patch, S10 victories no longer set NG+ — only S20 victories do.
+- Two options at implementation:
+  - **(a)** Leave as-is. NG+ becomes a true endgame flex tied to S20 clear. Aligns with the "mythic finale" framing.
+  - **(b)** Pin the NG+ trigger to S10 explicitly (`if (idx === 9)` instead of `idx === ARENA_ORDER.length - 1`). Preserves current behavior, S20 doesn't need its own special unlock.
+- Recommend **(a)** unless NG+ has gameplay surface the player would miss between S10 and S20. Check NG+ usage at implementation; trivial 2-line patch either way.
 
 
 
