@@ -10,7 +10,22 @@ export function getArenaTier(arenaId) {
 export function selectBossForArena(arenaId) {
     const tier = getArenaTier(arenaId);
     const allBosses = ENEMIES.filter(e => e.isBoss);
-    // Map arenas to specific bosses so higher arenas get harder bosses
+
+    // S20 (The Devourer) — guaranteed Pulsar Guardian as the mythic finale anchor.
+    // Lore tie: its pulsar core being consumed by the black hole.
+    if (arenaId === 'devourer') {
+        const pulsar = allBosses.find(b => b.id === 'boss_pulsar_guardian');
+        if (pulsar) return pulsar;
+    }
+
+    // Outer Galaxy (tier >= 10 → sectors S11-S19, excluding S20 which is handled
+    // above). Random rotation across the full boss pool so the new Pulsar Guardian
+    // gets visibility everywhere alongside the existing 6. See SECTORS_11_20_PLAN.md.
+    if (tier >= 10) {
+        return allBosses[Math.floor(Math.random() * allBosses.length)];
+    }
+
+    // Inner Galaxy (S1-S10) — fixed boss-per-tier mapping (unchanged from S5/S6).
     const bossOrder = [
         'boss_nebula_devourer',   // tier 0-1 (azure expanse)
         'boss_plasma_kraken',     // tier 2-3 (mystic cosmos / ethereal nebula)

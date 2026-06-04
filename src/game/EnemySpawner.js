@@ -3,6 +3,42 @@ import { ENEMIES, ARENAS, QUANTUM_METEOR_SPRITE } from './Constants';
 import { SFXManager } from './SFXManager';
 import { selectBossForArena } from './BossSystem';
 
+// ============================================================================
+// OUTER GALAXY (S11-S20) — difficulty + tier configuration, added 2026-06-04.
+// See docs/SECTORS_11_20_PLAN.md for the design rationale + locked numbers.
+// ============================================================================
+
+// Absolute HP/dmg multiplier per sector. Replaces the stock Math.pow(1.2, arenaIndex)
+// curve on S11+. Anchored so every sector's Normal mobs are tougher than the
+// previous sector's Cosmic mobs (the no-overlap rule). Per-sector growth ≈ 1.55×.
+//
+// Values = (plan's "vs S10 Cosmic" multiplier) × (stock S10 Cosmic absolute = 12.9).
+// e.g. S20 = 54.17 × 12.9 ≈ 698.79.
+//
+// Cosmic in Outer Galaxy uses a tighter 1.5× multiplier on top (vs stock 2.5×).
+// Combined: S20 Cosmic = 698.79 × 1.5 ≈ 1048 absolute (matches plan's 81.25× S10C).
+const OUTER_GALAXY_HP_MULT = {
+    11: 13.55,  12: 21.03,  13: 32.51,  14: 50.44,  15: 78.17,
+    16: 121.13, 17: 187.70, 18: 290.90, 19: 450.85, 20: 698.79,
+};
+
+// Per-sector mob tier bands. Tightens as sectors progress — S11-S12 still see
+// some T8 mobs (entry-level Outer Galaxy), S18-S20 spawn ONLY T11-T14 mythic-tier.
+// Replaces the stock arenaIndex-based tier formula on S11+.
+const OUTER_GALAXY_TIER_BANDS = {
+    11: { min: 7,  max: 11 }, 12: { min: 8,  max: 11 },
+    13: { min: 9,  max: 12 }, 14: { min: 9,  max: 12 },
+    15: { min: 10, max: 13 }, 16: { min: 10, max: 13 },
+    17: { min: 11, max: 13 }, 18: { min: 11, max: 14 },
+    19: { min: 12, max: 14 }, 20: { min: 12, max: 14 },
+};
+
+// Helper: returns sector index 1-20 for the current arena, or 0 if not a sector.
+function getSectorNumber(arenaId) {
+    const idx = ARENAS.findIndex(a => a.id === arenaId);
+    return idx >= 0 ? idx + 1 : 0;
+}
+
 // NovaByte 'nova_nuke' augment effect — fires when a boss spawns. Deals 7% of
 // the boss's max HP as a nova explosion centered on the boss. Frontloaded
 // damage that scales fairly with boss tier and doesn't touch mob spawns/gold
@@ -133,7 +169,11 @@ export function spawnEnemies(engine, dt) {
         engine.bossSpawned = true;
 
         const arenaIndex = ARENAS.findIndex(a => a.id === engine.arena.id);
-        const isBossArena = [1, 3, 5, 7, 9].includes(arenaIndex);
+        // Boss sectors — Inner Galaxy: S2/S4/S6/S8/S10 (indices 1,3,5,7,9).
+        // Outer Galaxy: S12/S14/S16/S18/S20 (indices 11,13,15,17,19) per the
+        // locked option-(a) cadence. S20 = guaranteed Pulsar Guardian, others
+        // = random rotation handled by selectBossForArena.
+        const isBossArena = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19].includes(arenaIndex);
 
         if (isBossArena) {
             engine.isBossActive = true;
@@ -146,10 +186,24 @@ export function spawnEnemies(engine, dt) {
                 const ex = engine.player.x + Math.cos(angle) * dist;
                 const ey = engine.player.y + Math.sin(angle) * dist;
 
-                const sectorDifficultyScale = Math.pow(1.15, arenaIndex);
+                // Outer Galaxy bosses use the per-sector lookup × 0.3 — bosses
+                // have 30-40× the base HP of a mob already, so applying the full
+                // mob multiplier would create a 23M-HP S20 boss that runs out
+                // the clock. The 0.3 factor keeps S20 boss kill time around
+                // 5 min (mythic but not infinite). Inner Galaxy unchanged.
+                const sectorNum = arenaIndex + 1;
+                const sectorDifficultyScale = OUTER_GALAXY_HP_MULT[sectorNum]
+                    ? OUTER_GALAXY_HP_MULT[sectorNum] * 0.3
+                    : Math.pow(1.15, arenaIndex);
 
-                const bossHpMult = 1.0 * engine.difficulty.enemyHpMult * (engine.bossModifiers.hide ? 1.5 : 1.0) * sectorDifficultyScale;
-                const bossDmgMult = 1.0 * engine.difficulty.enemyDmgMult * (engine.bossModifiers.fury ? 1.3 : 1.0) * sectorDifficultyScale;
+                // Cosmic tier spread tightens to 1.5× (vs stock 2.5×) inside
+                // Outer Galaxy — the no-overlap rule needs the tier spread compressed.
+                const outerCosmic = sectorNum >= 11 && engine.difficulty.id === 'cosmic';
+                const enemyHpMult = outerCosmic ? 1.5 : engine.difficulty.enemyHpMult;
+                const enemyDmgMult = outerCosmic ? 1.5 : engine.difficulty.enemyDmgMult;
+
+                const bossHpMult = 1.0 * enemyHpMult * (engine.bossModifiers.hide ? 1.5 : 1.0) * sectorDifficultyScale;
+                const bossDmgMult = 1.0 * enemyDmgMult * (engine.bossModifiers.fury ? 1.3 : 1.0) * sectorDifficultyScale;
                 const speedMult = engine.bossModifiers.frenzy ? 1.3 : 1.0;
                 const spawnedBoss = { ...boss, x: ex, y: ey, maxHp: boss.hp * bossHpMult, hp: boss.hp * bossHpMult, damage: boss.damage * bossDmgMult, speedMult };
                 engine.enemies.push(spawnedBoss);
@@ -221,6 +275,14 @@ export function spawnEnemies(engine, dt) {
         spawnRate *= 0.5;
     }
 
+    // Outer Galaxy spawn density — +10% on S15-S20 (mythic tier). Locked at
+    // sectors 15-20 per the plan. spawnRate is the INTERVAL (lower = faster
+    // spawns), so divide by 1.1 to get +10% density. Inner Galaxy untouched.
+    const _sectorForDensity = getSectorNumber(engine.arena.id);
+    if (_sectorForDensity >= 15 && _sectorForDensity <= 20) {
+        spawnRate /= 1.1;
+    }
+
     // End-of-run grace: in the final 30 seconds of a sector run, ramp spawn rate down
     // so players can't farm kills/gold by hugging the timer. Endless skips this (no end).
     // For non-boss sectors there's nothing else to slow the wave; for boss sectors the
@@ -252,14 +314,24 @@ export function spawnEnemies(engine, dt) {
         const isEndless = engine.arena.duration === Infinity;
         // Endless: smoother continuous tier growth instead of stair-step jumps every 60s.
         const arenaIndex = isEndless ? Math.min(9, progress * 4) : ARENAS.findIndex(a => a.id === engine.arena.id);
-        let minTier = Math.max(1, Math.floor(arenaIndex));
-        let maxTier = Math.floor(arenaIndex) + 1;
+        const sectorNum = !isEndless && arenaIndex >= 0 ? arenaIndex + 1 : 0;
+        const outerBand = OUTER_GALAXY_TIER_BANDS[sectorNum];
 
-        if (effectiveProgress > 0.33) maxTier += 1;
-        if (effectiveProgress > 0.66) maxTier += 1;
-        if (isEndless) maxTier += Math.floor(progress * 2);
-
-        maxTier = Math.min(10, maxTier);
+        let minTier, maxTier;
+        if (outerBand) {
+            // Outer Galaxy (S11-S20) — explicit per-sector tier band, no progress-based
+            // scaling (bands are already tight by design). T11-T14 mobs land here.
+            minTier = outerBand.min;
+            maxTier = outerBand.max;
+        } else {
+            // Inner Galaxy + endless — stock tier formula.
+            minTier = Math.max(1, Math.floor(arenaIndex));
+            maxTier = Math.floor(arenaIndex) + 1;
+            if (effectiveProgress > 0.33) maxTier += 1;
+            if (effectiveProgress > 0.66) maxTier += 1;
+            if (isEndless) maxTier += Math.floor(progress * 2);
+            maxTier = Math.min(10, maxTier);
+        }
 
         let availableEnemies = ENEMIES.filter(e =>
             !e.isBoss &&
@@ -272,13 +344,25 @@ export function spawnEnemies(engine, dt) {
 
         const type = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
 
-        // Endless uses a gentler sector scale (1.12) to avoid the huge jump after the first boss.
-        // Normal arenas keep the original 1.2 curve.
-        const sectorBase = isEndless ? 1.12 : 1.2;
-        const sectorDifficultyScale = Math.pow(sectorBase, arenaIndex);
+        // Sector difficulty scale — Outer Galaxy uses the locked exponential lookup
+        // (S11≈13.55 → S20≈698.79); Inner Galaxy / endless keep the stock curve.
+        let sectorDifficultyScale;
+        if (OUTER_GALAXY_HP_MULT[sectorNum]) {
+            sectorDifficultyScale = OUTER_GALAXY_HP_MULT[sectorNum];
+        } else {
+            const sectorBase = isEndless ? 1.12 : 1.2;
+            sectorDifficultyScale = Math.pow(sectorBase, arenaIndex);
+        }
 
-        const hpMult = (1.0 + (2.1 * Math.pow(progress, 1.6))) * engine.difficulty.enemyHpMult * sectorDifficultyScale;
-        const dmgMult = (1.0 + (1.6 * Math.pow(progress, 1.4))) * engine.difficulty.enemyDmgMult * sectorDifficultyScale;
+        // Cosmic tier spread tightens to 1.5× inside Outer Galaxy (vs stock 2.5×).
+        // Compresses the Normal→Cosmic gap so the no-overlap rule mathematically holds
+        // — every sector's Normal mobs > previous sector's Cosmic mobs.
+        const outerCosmic = sectorNum >= 11 && engine.difficulty.id === 'cosmic';
+        const _hpMult = outerCosmic ? 1.5 : engine.difficulty.enemyHpMult;
+        const _dmgMult = outerCosmic ? 1.5 : engine.difficulty.enemyDmgMult;
+
+        const hpMult = (1.0 + (2.1 * Math.pow(progress, 1.6))) * _hpMult * sectorDifficultyScale;
+        const dmgMult = (1.0 + (1.6 * Math.pow(progress, 1.4))) * _dmgMult * sectorDifficultyScale;
         const spdMult = engine.difficulty.speedMult || 1.0;
 
         // S6+ Option 3: when DD has ramped UP (player is stomping), boost elite
@@ -288,7 +372,10 @@ export function spawnEnemies(engine, dt) {
         const ddMult = engine.dynamicDifficulty?.spawnRateMult || 1.0;
         const eliteDDBoost = (engine._isS6 && ddMult > 1.0) ? ddMult : 1.0;
         if (engine.time > 60 && Math.random() < (0.01 + (progress * 0.04)) * eliteDDBoost) {
-            const eliteMin = Math.min(9, Math.max(2, maxTier + 1));
+            // Elite tier cap lifts to 14 inside Outer Galaxy so mythic-tier mobs
+            // can spawn as elites; Inner Galaxy keeps the existing cap at 9.
+            const eliteTierCap = outerBand ? 14 : 9;
+            const eliteMin = Math.min(eliteTierCap, Math.max(2, maxTier + 1));
             const elites = ENEMIES.filter(e => !e.isBoss && e.tier >= eliteMin);
             if (elites.length > 0) {
                 const elite = elites[Math.floor(Math.random() * elites.length)];
