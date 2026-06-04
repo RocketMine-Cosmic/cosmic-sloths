@@ -63,12 +63,10 @@ The existing S6 score formula extends naturally into S11-S20.
 • Victory bonus: Sector × 15,000
 
 **Real numbers (queried from RunScore on 2026-06-03 + math-checked projections):**
-• S10 Cosmic peak today: **1.58M** (Waeoo, 9,585 kills, level 47, 7:09 survival)
+• S10 Cosmic peak today: **1.58M** (9,585 kills, level 47, 7:09 survival)
 • S11 Cosmic projected: ~2.0M (~13k kills, ~level 50)
 • S15 Cosmic projected: ~2.0M (~7k kills + 2× bonus, ~level 50)
 • S20 Cosmic projected: **~2.2M** (~2.7k kills + 3.5× bonus, ~level 55) — the badge run
-
-🔒 **KILL = SCORE. ALWAYS.** Every kill is worth a flat 120 score points — no caps, no diminishing returns, no per-sector kill nerfs. A swarm mob in S1 and a tier-14 mythic in S20 both pay out the same 120 per kill.
 
 **Climb bonus on S15+.** At higher sectors, enemies are tougher and kill rate naturally drops. To keep the climb rewarding, the sector + victory bonus portion of your score (already part of the existing formula) gets multiplied at high sectors:
 • S1-S14: 1× (no change)
@@ -119,7 +117,7 @@ Outer Galaxy is **purely about score and bragging rights** — no exclusive curr
 • Endless / Raid / Meteor scoring — **untouched**
 • Daily bounties, daily tasks, login rewards — **untouched**
 
-🚀 **See you in the Outer Galaxy, pilots.**
+🚀 **See you in the Outer Galaxy, Sloths.**
 ```
 
 ---
