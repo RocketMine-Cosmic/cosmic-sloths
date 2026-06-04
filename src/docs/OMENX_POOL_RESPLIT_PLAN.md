@@ -146,6 +146,7 @@ answer = correct
 
 **Q6. Transition timing**
 Recommend deploying on a **Monday 00:00 UTC** boundary so the new % applies cleanly to the entire week. Live preview/admin tools should reflect the new % the moment we deploy, even if the next distribution is days away.
+asnswer = yes gate it to a weekly/season Reset
 
 **Q7. Backwards compatibility**
 Existing `PayoutLog` entries with `period_type='weekly'` (score) are untouched. New `period_type='weekly_kills'` rows are net-new — no migration needed. ✅
