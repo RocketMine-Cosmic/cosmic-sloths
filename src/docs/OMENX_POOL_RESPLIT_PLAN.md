@@ -122,6 +122,7 @@ That's **50,000 OMENX per season** redirected back into the treasury / runway.
 
 **Q1. How many ranks pay out on the weekly kill leaderboard?**
 Options: top 10, top 20, top 30. Recommend **top 20** — meaningful enough to chase, small enough that individual prizes aren't dust.
+top 20
 
 **Q2. What's the rank tier distribution for the kill pool?**
 Should top 1 get a huge share (concentrated, like score) or be flatter (more grinder-friendly)?
