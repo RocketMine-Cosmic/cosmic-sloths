@@ -445,13 +445,26 @@ export function fireWeaponLogic(engine, w) {
             });
             
             // Guaranteed plasma-whip lash — the weapon's signature mechanic.
+            // Lash radius bumped 120 → 170 (2026-06-04, Anubis Discord) so the
+            // kill-zones around adjacent drones overlap and there are no "dead
+            // lanes" between drones that enemies could slip through.
             engine.enemies.forEach(e => {
-                if (Math.hypot(e.x - px, e.y - py) < 120 * area) {
+                if (Math.hypot(e.x - px, e.y - py) < 170 * area) {
                     engine.damageEnemy(e, dmg * 0.6, { weaponId: w.id });
                     if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 10);
                 }
             });
         }
+        // Player-centered plasma aura (2026-06-04, Anubis Discord). Small
+        // continuous tick around the player so close-range enemies that get
+        // inside the drone orbit aren't ignored. Lower DPS than the lashes
+        // — fixes the "feels useless at point-blank" complaint without
+        // turning the weapon into a no-fly ring.
+        engine.enemies.forEach(e => {
+            if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 90 * area) {
+                engine.damageEnemy(e, dmg * 0.25, { weaponId: w.id });
+            }
+        });
     }
     else if (w.id === 'orbitalLasers') {
         // Drone count capped at 7 (was 14 at lvl 25). Each drone runs TWO full
