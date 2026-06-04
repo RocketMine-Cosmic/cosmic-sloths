@@ -2,7 +2,7 @@
 import { UPGRADES, WEAPONS, SYNERGIES, EVOLUTIONS } from './Constants';
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
-import { getBiasMultiplier } from '@/lib/poolBias';
+import { getBiasMultiplier, getAllocations, getUpgradeTargetId } from '@/lib/poolBias';
 import { getWeaponLevelUpEffect } from './WeaponLevelEffects';
 import { isS6OrLater } from '@/lib/seasonGate';
 
@@ -158,6 +158,24 @@ export function generateChoices(engine) {
         return rarities[0];
     };
 
+    // Subtle Pool Bias rarity tilt — for upgrades the player has invested bias
+    // points into, give a small chance to bump the rolled rarity up one tier.
+    // +1% per allocated point on that target, capped at 10% so heavy investment
+    // helps slightly but doesn't replace the main frequency benefit. Untouched
+    // upgrades (0 pts) roll the stock rarity table unchanged. Overcharge fillers
+    // bypass this — they're emergency fallback picks with no bias target.
+    const maybeBumpRarity = (rarity, baseUpgrade) => {
+        const targetId = getUpgradeTargetId(baseUpgrade);
+        if (!targetId) return rarity;
+        const pts = Number(getAllocations(engine.save)[targetId] || 0);
+        if (pts <= 0) return rarity;
+        const bumpChance = Math.min(0.10, pts * 0.01);
+        if (Math.random() >= bumpChance) return rarity;
+        const idx = rarities.indexOf(rarity);
+        if (idx < 0 || idx >= rarities.length - 1) return rarity;
+        return rarities[idx + 1];
+    };
+
     const MAX_PASSIVE_LEVEL = 5;
     const isEndless = engine.arena?.duration === Infinity;
     const isRaid = engine.arena?.id === 'world_boss_arena';
@@ -217,7 +235,7 @@ export function generateChoices(engine) {
         const baseUpgrade = weightedPickAndRemove(pool, weights);
         if (!baseUpgrade) break;
 
-        const rarity = getRarity();
+        const rarity = maybeBumpRarity(getRarity(), baseUpgrade);
         const uniqueName = `${engine.player.name}'s ${baseUpgrade.name}`;
 
         let newValue = baseUpgrade.value;
