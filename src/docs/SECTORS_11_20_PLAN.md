@@ -102,18 +102,20 @@ Background art is **uploaded and ready** (URLs below). Enemy sprites + boss spri
 
    | Sector | Bonus multiplier |
    |--------|------------------|
-   | S1-S14 | 1× (stock — no change) |
+   | S1-S10 | 1× (stock — no change) |
+   | S11-S14 | **1.5×** *(bumped 2026-06-04 — was 1×, players struggling to beat S10 highs on early Outer Galaxy)* |
    | S15-S17 | 2× |
    | S18-S19 | 2.5× |
    | S20 | **3.5×** |
 
-   This compensates for the fact that DPS ratio drops at S15+ (kill rate falls, so kill-count score falls). Without it, S20 Cosmic would score LOWER than S10 Cosmic — which would defeat the whole climb. The escalating bonus turns reaching the wall into the reward.
+   This compensates for the fact that DPS ratio drops at S15+ (kill rate falls, so kill-count score falls). Without it, S20 Cosmic would score LOWER than S10 Cosmic — which would defeat the whole climb. The escalating bonus turns reaching the wall into the reward. S11-S14 also gets a smaller 1.5× boost because kill rates drop the moment you cross the Inner→Outer wall (tighter Cosmic spread + harder enemies), and without it players were finishing S11-S14 runs with lower scores than their S10 Cosmic PB.
 
    **Implementation**: one added line in `functions/saveScore.js` after `victoryBonus` is computed:
    ```js
    const bonusMult = sectorIdxForBonus >= 19 ? 3.5
                    : sectorIdxForBonus >= 17 ? 2.5
                    : sectorIdxForBonus >= 14 ? 2
+                   : sectorIdxForBonus >= 10 ? 1.5
                    : 1;
    const scaledBonus = (sectorScore + victoryBonus) * bonusMult;
    ```

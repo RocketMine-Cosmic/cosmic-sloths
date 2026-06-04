@@ -257,10 +257,14 @@ function validateAndRecompute(scoreData) {
         // Outer Galaxy climb bonus (2026-06-04). Escalating multiplier on the
         // sector + victory portion ONLY — kill score stays sacred (flat 120/kill).
         // Compensates for kill-rate drop at high sectors so S20 still scores
-        // higher than farming S10. sectorIdxForBonus is 0-indexed: S15=14, S18=17, S20=19.
+        // higher than farming S10. sectorIdxForBonus is 0-indexed: S11=10, S15=14, S18=17, S20=19.
+        // S11-S14 bumped from 1× → 1.5× on 2026-06-04 — players were struggling to
+        // beat their S10 high scores on the early Outer Galaxy sectors because kill
+        // rates drop immediately on entry while the bonus didn't kick in until S15.
         const bonusMult = sectorIdxForBonus >= 19 ? 3.5
                         : sectorIdxForBonus >= 17 ? 2.5
                         : sectorIdxForBonus >= 14 ? 2
+                        : sectorIdxForBonus >= 10 ? 1.5
                         : 1;
         const scaledSectorBonus = (sectorScore + victoryBonus) * bonusMult;
         const endlessScore = isEndless ? Math.floor(time / 60) * 10000 : 0;
