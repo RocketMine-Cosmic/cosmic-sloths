@@ -153,7 +153,7 @@ Existing `PayoutLog` entries with `period_type='weekly'` (score) are untouched. 
 
 **Q8. Should pool % move to AppConfig?**
 Currently hard-coded in 3 files. If we're touching all three anyway, it's a good moment to lift `weekly_pool_pct`/`seasonal_pool_pct`/`kill_pool_pct` into `AppConfig.leaderboard_payout_config` so future changes are zero-deploy. **Recommended** — small refactor, big future-proofing win.
-
+answer yes please
 ---
 
 ## Risks
@@ -162,7 +162,7 @@ Currently hard-coded in 3 files. If we're touching all three anyway, it's a good
 - **Lower seasonal payouts (30→20%)** — bigger optics hit. Frame as "runway extension that keeps the game payable for everyone long-term," tie to the OMENX treasury health if possible.
 - **Kill-leaderboard farming** — high-kill builds (e.g. burst-spawn AoE clearers) may dominate the kill board. Could be intended (rewards effective builds) or undesired (homogenises the meta). Watch the first 2 weeks of data; if one playstyle sweeps top 5, consider tuning.
 - **Audit complexity** — `AdminWeeklyTopup` and `AdminStaffPayouts` need to handle a third payout type cleanly. If we skip the AppConfig refactor (Q8), this complexity compounds every time we tweak %s.
-
+they dont know the %spend split so they wont notice 
 ---
 
 ## Recommended decision path
