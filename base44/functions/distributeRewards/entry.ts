@@ -9,6 +9,30 @@ import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 // staff payouts never fired. Now uses asServiceRole which bypasses RLS.
 let db = null;
 
+// S7 pool re-split gate (2026-06-04). Periods >= S7 use AppConfig-driven pool
+// %s (15% weekly + 20% seasonal + new 5% weekly kill pool); earlier periods
+// keep the legacy 20/30 / no kill pool split untouched. See docs/OMENX_POOL_RESPLIT_PLAN.md.
+const NEW_POOL_SEASON = '2026-S7';
+function getPeriodSeason(period_id, period_type) {
+    if (period_type === 'seasonal') return period_id;
+    const m = String(period_id || '').match(/^(\d{4})-W(\d{1,2})$/);
+    if (!m) return null;
+    const seasonNum = Math.floor((Number(m[2]) - 1) / 4) + 1;
+    return m[1] + '-S' + seasonNum;
+}
+function isNewPoolPeriod(period_id, period_type) {
+    const s = getPeriodSeason(period_id, period_type);
+    if (!s) return false;
+    // Numeric compare — string compare breaks at 2026-S10 vs 2026-S7 ('1' < '7').
+    const m = s.match(/^(\d{4})-S(\d{1,2})$/);
+    if (!m) return false;
+    const year = Number(m[1]);
+    const seas = Number(m[2]);
+    if (year > 2026) return true;
+    if (year < 2026) return false;
+    return seas >= 7;
+}
+
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
@@ -131,6 +155,9 @@ Deno.serve(async (req) => {
 // functions/leaderboardPayoutConfig (admin panel: AdminLeaderboardPayoutConfig).
 const DEFAULT_PAYOUT_CONFIG = {
     top_n: 20,
+    weekly_pool_pct: 0.15,
+    seasonal_pool_pct: 0.20,
+    kill_pool_pct: 0.05,
     weekly_tiers: [
         { min: 1,  max: 1,  pct: 0.10 },
         { min: 2,  max: 2,  pct: 0.08 },
@@ -144,6 +171,13 @@ const DEFAULT_PAYOUT_CONFIG = {
         { min: 3,  max: 3,  pct: 0.06 },
         { min: 4,  max: 10, pct: 0.032 },
         { min: 11, max: 20, pct: 0.022 },
+    ],
+    weekly_kill_tiers: [
+        { min: 1,  max: 1,  pct: 0.15 },
+        { min: 2,  max: 2,  pct: 0.10 },
+        { min: 3,  max: 3,  pct: 0.08 },
+        { min: 4,  max: 10, pct: 0.05 },
+        { min: 11, max: 20, pct: 0.025 },
     ],
 };
 
@@ -295,12 +329,16 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
          const v = Number(cfg[0]?.value?.pct);
          if (isFinite(v) && v >= 0 && v <= 0.10) STAFF_PCT_PER_WALLET = v;
      } catch {}
-     const rewardPool = Math.floor(pool.total_spent * 0.20);
+     // S7 gate — periods >= S7 use config-driven pool %; earlier use legacy 20%.
+     const useNewPools = isNewPoolPeriod(pool.period_id, 'weekly');
+     const cfg = await loadPayoutConfig();
+     const weeklyPoolPct = useNewPools
+         ? (Number.isFinite(Number(cfg.weekly_pool_pct)) ? Number(cfg.weekly_pool_pct) : 0.15)
+         : 0.20;
+     const rewardPool = Math.floor(pool.total_spent * weeklyPoolPct);
      const allScores = await db.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     // Top N + per-rank percentages loaded from AppConfig (admin-configurable).
-     const cfg = await loadPayoutConfig();
      const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.weekly_tiers), cfg.top_n);
     // Per-wallet override on AdminWallet.payout_pct_override (number, 0–0.10)
     // takes priority over the global STAFF_PCT_PER_WALLET — lets owners set
@@ -316,23 +354,73 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
         .filter(a => a.wallet_address)
         .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * resolveStaffPct(a)), player_name: a.admin_name || a.wallet_address, isStaff: true }))
         .filter(p => p.amount >= 1);
-    if (payments.length === 0 && staffPayments.length === 0) {
+
+    // S7+ weekly kill leaderboard pool — paid in addition to score + staff.
+    // Uses PlayerSave.weekly_sector_kills (server-authoritative, sector runs only).
+    let killPayments = [];
+    if (useNewPools) {
+        const killPoolPct = Number.isFinite(Number(cfg.kill_pool_pct)) ? Number(cfg.kill_pool_pct) : 0.05;
+        const killRewardPool = Math.floor(pool.total_spent * killPoolPct);
+        if (killRewardPool > 0) {
+            const killRows = await db.entities.PlayerSave.filter(
+                { weekly_sector_kills_week: pool.period_id },
+                '-weekly_sector_kills',
+                100
+            );
+            const killCandidates = killRows
+                .filter(p => (p.weekly_sector_kills || 0) > 0 && p.wallet_address)
+                .map(p => ({
+                    wallet_address: p.wallet_address,
+                    player_name: p.player_name || p.wallet_address,
+                    score: p.weekly_sector_kills,
+                    user_id: null,
+                }));
+            killPayments = buildRankedPayments(
+                killCandidates,
+                killRewardPool,
+                makeTierLookup(cfg.weekly_kill_tiers || []),
+                cfg.top_n
+            );
+        }
+    }
+
+    if (payments.length === 0 && staffPayments.length === 0 && killPayments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
     // Players: one batch per rank tier so OmenX TX history shows the exact rank/band.
     // Staff: separate single batch (rank doesn't apply — they're not on the leaderboard).
+    // Kill leaderboard (S7+): separate tiered batch so its TX history is independent.
     const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
     const { txId: playerTxId, chunks: playerChunks } = await grantTieredBatches(payments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, playerBase);
     const { txId: staffTxId, chunks: staffChunks } = await grantBatchChunked(staffPayments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `Cosmic Sloths weekly payout ${pool.period_id} — Staff share`);
-    const txId = [playerTxId, staffTxId].filter(Boolean).join(',');
-    const chunks = playerChunks + staffChunks;
+    let killTxId = '';
+    let killChunks = 0;
+    if (killPayments.length > 0) {
+        const r = await grantTieredBatches(killPayments, apiBaseUrl, rewardsKeys, GAME_ID, GAME_NAME, `Cosmic Sloths weekly KILL payout ${pool.period_id}`);
+        killTxId = r.txId;
+        killChunks = r.chunks;
+    }
+    const txId = [playerTxId, staffTxId, killTxId].filter(Boolean).join(',');
+    const chunks = playerChunks + staffChunks + killChunks;
     await Promise.all([
         db.entities.TokenPool.update(pool.id, { distributed: true }),
         ...payments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'weekly', wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress, amount: p.amount, rank: p.rank, tx_id: txId })),
         ...staffPayments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'staff_weekly', wallet_address: p.walletAddress, player_name: p.player_name, amount: p.amount, rank: 0, tx_id: txId })),
+        ...killPayments.map(p => db.entities.PayoutLog.create({ period_id: pool.period_id, period_type: 'weekly_kills', wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress, amount: p.amount, rank: p.rank, tx_id: killTxId || txId })),
     ]);
-    return { paid: payments.length, staff_paid: staffPayments.length, chunks, totalOmenx: payments.reduce((s, p) => s + p.amount, 0), staffOmenx: staffPayments.reduce((s, p) => s + p.amount, 0), payments, staffPayments };
+    return {
+        paid: payments.length,
+        staff_paid: staffPayments.length,
+        kill_paid: killPayments.length,
+        chunks,
+        totalOmenx: payments.reduce((s, p) => s + p.amount, 0),
+        staffOmenx: staffPayments.reduce((s, p) => s + p.amount, 0),
+        killOmenx: killPayments.reduce((s, p) => s + p.amount, 0),
+        payments,
+        staffPayments,
+        killPayments,
+    };
 }
 
 async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
@@ -340,14 +428,17 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
          await db.entities.TokenPool.update(pool.id, { distributed: true });
          return { paid: 0, skipped: 'zero spend' };
      }
-     // Seasonal pool split: 30% to top players (this fn), 10% to Squad Wars Champions
-     // (`distributeSquadChampions`). Remaining 60% is retained.
-     const rewardPool = Math.floor(pool.total_spent * 0.30);
+     // Seasonal pool split: pre-S7 = 30% top players, S7+ = 20% (config-driven).
+     // 10% Squad Wars Champions (`distributeSquadChampions`) unchanged regardless.
+     const useNewPools = isNewPoolPeriod(pool.period_id, 'seasonal');
+     const cfg = await loadPayoutConfig();
+     const seasonalPoolPct = useNewPools
+         ? (Number.isFinite(Number(cfg.seasonal_pool_pct)) ? Number(cfg.seasonal_pool_pct) : 0.20)
+         : 0.30;
+     const rewardPool = Math.floor(pool.total_spent * seasonalPoolPct);
      const allScores = await db.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 10000);
      // Endless mode runs are NOT eligible for OMENX payouts (display-only leaderboard)
      const scores = allScores.filter(s => s.arena_id !== 'endless');
-     // Top N + per-rank percentages loaded from AppConfig (admin-configurable).
-     const cfg = await loadPayoutConfig();
      const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.seasonal_tiers), cfg.top_n);
     if (payments.length === 0) {
         await db.entities.TokenPool.update(pool.id, { distributed: true });

@@ -5,6 +5,30 @@ const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 
+// S7 pool re-split gate (2026-06-04). Periods >= S7 use AppConfig-driven pool
+// %s (15% weekly + 20% seasonal + 5% weekly kill pool); earlier periods keep
+// the legacy 20/30 / no-kill split untouched. See docs/OMENX_POOL_RESPLIT_PLAN.md.
+const NEW_POOL_SEASON = '2026-S7';
+function getPeriodSeason(period_id, period_type) {
+    if (period_type === 'seasonal') return period_id;
+    const m = String(period_id || '').match(/^(\d{4})-W(\d{1,2})$/);
+    if (!m) return null;
+    const seasonNum = Math.floor((Number(m[2]) - 1) / 4) + 1;
+    return m[1] + '-S' + seasonNum;
+}
+function isNewPoolPeriod(period_id, period_type) {
+    const s = getPeriodSeason(period_id, period_type);
+    if (!s) return false;
+    // Numeric compare — string compare breaks at 2026-S10 vs 2026-S7 ('1' < '7').
+    const m = s.match(/^(\d{4})-S(\d{1,2})$/);
+    if (!m) return false;
+    const year = Number(m[1]);
+    const seas = Number(m[2]);
+    if (year > 2026) return true;
+    if (year < 2026) return false;
+    return seas >= 7;
+}
+
 // Auth: Base44 session + 'distribute_rewards' permission, OR emergency master key.
 
 Deno.serve(async (req) => {
@@ -72,6 +96,9 @@ Deno.serve(async (req) => {
 // distributeRewards.js. Admin edits via functions/leaderboardPayoutConfig.
 const DEFAULT_PAYOUT_CONFIG = {
     top_n: 20,
+    weekly_pool_pct: 0.15,
+    seasonal_pool_pct: 0.20,
+    kill_pool_pct: 0.05,
     weekly_tiers: [
         { min: 1,  max: 1,  pct: 0.10 },
         { min: 2,  max: 2,  pct: 0.08 },
@@ -85,6 +112,13 @@ const DEFAULT_PAYOUT_CONFIG = {
         { min: 3,  max: 3,  pct: 0.06 },
         { min: 4,  max: 10, pct: 0.032 },
         { min: 11, max: 20, pct: 0.022 },
+    ],
+    weekly_kill_tiers: [
+        { min: 1,  max: 1,  pct: 0.15 },
+        { min: 2,  max: 2,  pct: 0.10 },
+        { min: 3,  max: 3,  pct: 0.08 },
+        { min: 4,  max: 10, pct: 0.05 },
+        { min: 11, max: 20, pct: 0.025 },
     ],
 };
 
@@ -198,18 +232,28 @@ async function postTieredBatches(payments, apiBaseUrl, apiKey, baseNote, already
 }
 
 async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
-    const rewardPool = Math.floor(pool.total_spent * 0.20);
+    // S7 gate — periods >= S7 use config-driven pool % (15%); earlier use 20%.
+    const useNewPools = isNewPoolPeriod(pool.period_id, 'weekly');
+    const cfg = await loadPayoutConfig(base44);
+    const weeklyPoolPct = useNewPools
+        ? (Number.isFinite(Number(cfg.weekly_pool_pct)) ? Number(cfg.weekly_pool_pct) : 0.15)
+        : 0.20;
+    const rewardPool = Math.floor(pool.total_spent * weeklyPoolPct);
     const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
-    const cfg = await loadPayoutConfig(base44);
     const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.weekly_tiers), cfg.top_n);
 
     // RESUME-SAFE: if a previous attempt partially paid this period, skip wallets
-    // that already have a PayoutLog row so we don't double-pay.
-    const existingLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'weekly' }, '-created_date', 1000);
-    const existingStaffLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'staff_weekly' }, '-created_date', 1000);
+    // that already have a PayoutLog row so we don't double-pay. Three buckets:
+    // weekly (score), staff_weekly, and weekly_kills (S7+ only).
+    const [existingLogs, existingStaffLogs, existingKillLogs] = await Promise.all([
+        base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'weekly' }, '-created_date', 1000),
+        base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'staff_weekly' }, '-created_date', 1000),
+        base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'weekly_kills' }, '-created_date', 1000),
+    ]);
     const alreadyPaidWallets = new Set(existingLogs.map(l => (l.wallet_address || '').toLowerCase()));
     const alreadyPaidStaff = new Set(existingStaffLogs.map(l => (l.wallet_address || '').toLowerCase()));
+    const alreadyPaidKills = new Set(existingKillLogs.map(l => (l.wallet_address || '').toLowerCase()));
 
     // Staff payments — mirrors distributeRewards. Global default via AppConfig
     // (staff_pct_per_wallet), with per-wallet AdminWallet.payout_pct_override taking priority.
@@ -232,7 +276,36 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
         .map(a => ({ walletAddress: a.wallet_address, amount: Math.floor(pool.total_spent * resolveStaffPct(a)), player_name: a.admin_name || a.wallet_address, isStaff: true }))
         .filter(p => p.amount >= 1);
 
-    if (payments.length === 0 && staffPayments.length === 0) {
+    // S7+ weekly kill leaderboard pool — built here so the early-return below
+    // also accounts for empty kill pools (rare but possible if no one ran sectors).
+    let killPayments = [];
+    if (useNewPools) {
+        const killPoolPct = Number.isFinite(Number(cfg.kill_pool_pct)) ? Number(cfg.kill_pool_pct) : 0.05;
+        const killRewardPool = Math.floor(pool.total_spent * killPoolPct);
+        if (killRewardPool > 0) {
+            const killRows = await base44.asServiceRole.entities.PlayerSave.filter(
+                { weekly_sector_kills_week: pool.period_id },
+                '-weekly_sector_kills',
+                100
+            );
+            const killCandidates = killRows
+                .filter(p => (p.weekly_sector_kills || 0) > 0 && p.wallet_address)
+                .map(p => ({
+                    wallet_address: p.wallet_address,
+                    player_name: p.player_name || p.wallet_address,
+                    score: p.weekly_sector_kills,
+                    user_id: null,
+                }));
+            killPayments = buildRankedPayments(
+                killCandidates,
+                killRewardPool,
+                makeTierLookup(cfg.weekly_kill_tiers || []),
+                cfg.top_n
+            );
+        }
+    }
+
+    if (payments.length === 0 && staffPayments.length === 0 && killPayments.length === 0) {
         await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
         return { paid: 0, skipped: 'no eligible wallets' };
     }
@@ -275,23 +348,51 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
         }
     }
 
+    // S7+ kill leaderboard payout — resume-safe via existing 'weekly_kills' PayoutLogs.
+    // Runs AFTER players + staff so a 502 here doesn't lose the player/staff audit trail.
+    let killTxId = '';
+    if (killPayments.length > 0) {
+        const killBase = `Cosmic Sloths weekly KILL payout ${pool.period_id}`;
+        const onKillTierSuccess = async (tierPayments, tierTxId) => {
+            for (const p of tierPayments) {
+                await base44.asServiceRole.entities.PayoutLog.create({
+                    period_id: pool.period_id, period_type: 'weekly_kills',
+                    wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+                    amount: p.amount, rank: p.rank, tx_id: tierTxId
+                });
+            }
+        };
+        const r = await postTieredBatches(killPayments, apiBaseUrl, apiKey, killBase, alreadyPaidKills, onKillTierSuccess);
+        killTxId = r.txId;
+    }
+    const remainingKills = killPayments.filter(p => !alreadyPaidKills.has(p.walletAddress.toLowerCase()));
+
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
     return {
         paid: payments.length - alreadyPaidWallets.size,
         skipped_already_paid: alreadyPaidWallets.size,
         staff_paid: remainingStaff.length,
         staff_skipped_already_paid: staffPayments.length - remainingStaff.length,
+        kill_paid: remainingKills.length,
+        kill_skipped_already_paid: killPayments.length - remainingKills.length,
         totalOmenx: payments.filter(p => !alreadyPaidWallets.has(p.walletAddress.toLowerCase())).reduce((s, p) => s + p.amount, 0),
         staffOmenx: remainingStaff.reduce((s, p) => s + p.amount, 0),
+        killOmenx: remainingKills.reduce((s, p) => s + p.amount, 0),
+        kill_tx_id: killTxId,
     };
 }
 
 async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
-    // Seasonal pool split: 30% to top players, 10% to Squad Wars Champions (separate fn).
-    const rewardPool = Math.floor(pool.total_spent * 0.30);
+    // Seasonal pool split: pre-S7 = 30% top players, S7+ = 20% (config-driven).
+    // 10% Squad Wars Champions (separate fn) unchanged regardless of season.
+    const useNewPools = isNewPoolPeriod(pool.period_id, 'seasonal');
+    const cfg = await loadPayoutConfig(base44);
+    const seasonalPoolPct = useNewPools
+        ? (Number.isFinite(Number(cfg.seasonal_pool_pct)) ? Number(cfg.seasonal_pool_pct) : 0.20)
+        : 0.30;
+    const rewardPool = Math.floor(pool.total_spent * seasonalPoolPct);
     const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: pool.period_id }, '-score', 1000);
     const scores = allScores.filter(s => s.arena_id !== 'endless');
-    const cfg = await loadPayoutConfig(base44);
     const payments = buildRankedPayments(scores, rewardPool, makeTierLookup(cfg.seasonal_tiers), cfg.top_n);
 
     if (payments.length === 0) {

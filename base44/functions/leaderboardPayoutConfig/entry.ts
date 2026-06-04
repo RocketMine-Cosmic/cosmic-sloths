@@ -28,6 +28,14 @@ const MAX_TIER_PCT = 0.50;
 // functions. Used when AppConfig has no entry yet (first launch).
 export const DEFAULT_CONFIG = {
     top_n: 20,
+    // Pool size %s — applied to weekly/seasonal payout periods starting at S7
+    // (2026-S7, ~2026-06-14). Pre-S7 distributions use legacy hardcoded values
+    // (0.20 weekly / 0.30 seasonal / no kill pool) and IGNORE these fields, so
+    // editing them won't retroactively affect closed S6 or earlier pools.
+    // See docs/OMENX_POOL_RESPLIT_PLAN.md.
+    weekly_pool_pct: 0.15,
+    seasonal_pool_pct: 0.20,
+    kill_pool_pct: 0.05,
     weekly_tiers: [
         { min: 1,  max: 1,  pct: 0.10 },
         { min: 2,  max: 2,  pct: 0.08 },
@@ -41,6 +49,15 @@ export const DEFAULT_CONFIG = {
         { min: 3,  max: 3,  pct: 0.06 },
         { min: 4,  max: 10, pct: 0.032 },
         { min: 11, max: 20, pct: 0.022 },
+    ],
+    // Flatter curve than score tiers — kills is a grind metric so rewarding
+    // effort beats over-concentrating at #1. Top 20 ranks paid.
+    weekly_kill_tiers: [
+        { min: 1,  max: 1,  pct: 0.15 },
+        { min: 2,  max: 2,  pct: 0.10 },
+        { min: 3,  max: 3,  pct: 0.08 },
+        { min: 4,  max: 10, pct: 0.05 },
+        { min: 11, max: 20, pct: 0.025 },
     ],
 };
 
@@ -104,10 +121,52 @@ Deno.serve(async (req) => {
             const seErr = validateTiers(seasonal_tiers);
             if (seErr) return Response.json({ error: `seasonal_tiers: ${seErr}` }, { status: 400 });
 
+            // S7 fields — all optional. If omitted, carry the current value over
+            // (lets the existing admin UI keep working without surfacing them yet).
+            const { weekly_pool_pct, seasonal_pool_pct, kill_pool_pct, weekly_kill_tiers } = body;
+            const validatePct = (label, v) => {
+                const num = Number(v);
+                if (!isFinite(num) || num < 0 || num > MAX_TIER_PCT) {
+                    return `${label} out of bounds (0..${MAX_TIER_PCT})`;
+                }
+                return null;
+            };
+            if (weekly_pool_pct !== undefined) {
+                const e = validatePct('weekly_pool_pct', weekly_pool_pct);
+                if (e) return Response.json({ error: e }, { status: 400 });
+            }
+            if (seasonal_pool_pct !== undefined) {
+                const e = validatePct('seasonal_pool_pct', seasonal_pool_pct);
+                if (e) return Response.json({ error: e }, { status: 400 });
+            }
+            if (kill_pool_pct !== undefined) {
+                const e = validatePct('kill_pool_pct', kill_pool_pct);
+                if (e) return Response.json({ error: e }, { status: 400 });
+            }
+            let resolvedKillTiers = currentConfig.weekly_kill_tiers || DEFAULT_CONFIG.weekly_kill_tiers;
+            if (weekly_kill_tiers) {
+                const kErr = validateTiers(weekly_kill_tiers);
+                if (kErr) return Response.json({ error: `weekly_kill_tiers: ${kErr}` }, { status: 400 });
+                resolvedKillTiers = weekly_kill_tiers.map(t => ({ min: Number(t.min), max: Number(t.max), pct: Number(t.pct) }));
+            }
+            const resolvedWkPoolPct = weekly_pool_pct !== undefined
+                ? Number(weekly_pool_pct)
+                : (currentConfig.weekly_pool_pct ?? DEFAULT_CONFIG.weekly_pool_pct);
+            const resolvedSeasPoolPct = seasonal_pool_pct !== undefined
+                ? Number(seasonal_pool_pct)
+                : (currentConfig.seasonal_pool_pct ?? DEFAULT_CONFIG.seasonal_pool_pct);
+            const resolvedKillPoolPct = kill_pool_pct !== undefined
+                ? Number(kill_pool_pct)
+                : (currentConfig.kill_pool_pct ?? DEFAULT_CONFIG.kill_pool_pct);
+
             const newConfig = {
                 top_n: n,
+                weekly_pool_pct: resolvedWkPoolPct,
+                seasonal_pool_pct: resolvedSeasPoolPct,
+                kill_pool_pct: resolvedKillPoolPct,
                 weekly_tiers: weekly_tiers.map(t => ({ min: Number(t.min), max: Number(t.max), pct: Number(t.pct) })),
                 seasonal_tiers: seasonal_tiers.map(t => ({ min: Number(t.min), max: Number(t.max), pct: Number(t.pct) })),
+                weekly_kill_tiers: resolvedKillTiers,
             };
 
             if (currentRecord) {

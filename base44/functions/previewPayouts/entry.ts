@@ -6,8 +6,35 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // for the same defaults + loader pattern).
 const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 
+// S7 pool re-split gate (2026-06-04). Periods >= S7 use AppConfig-driven pool
+// %s (15% weekly + 20% seasonal + new 5% weekly kill pool). Earlier periods
+// keep the legacy 20/30 / no kill pool split untouched. See docs/OMENX_POOL_RESPLIT_PLAN.md.
+const NEW_POOL_SEASON = '2026-S7';
+function getPeriodSeason(period_id, period_type) {
+    if (period_type === 'seasonal') return period_id;
+    const m = String(period_id || '').match(/^(\d{4})-W(\d{1,2})$/);
+    if (!m) return null;
+    const seasonNum = Math.floor((Number(m[2]) - 1) / 4) + 1;
+    return m[1] + '-S' + seasonNum;
+}
+function isNewPoolPeriod(period_id, period_type) {
+    const s = getPeriodSeason(period_id, period_type);
+    if (!s) return false;
+    // Numeric compare — string compare breaks at 2026-S10 vs 2026-S7 ('1' < '7').
+    const m = s.match(/^(\d{4})-S(\d{1,2})$/);
+    if (!m) return false;
+    const year = Number(m[1]);
+    const seas = Number(m[2]);
+    if (year > 2026) return true;
+    if (year < 2026) return false;
+    return seas >= 7;
+}
+
 const DEFAULT_PAYOUT_CONFIG = {
     top_n: 20,
+    weekly_pool_pct: 0.15,
+    seasonal_pool_pct: 0.20,
+    kill_pool_pct: 0.05,
     weekly_tiers: [
         { min: 1,  max: 1,  pct: 0.10 },
         { min: 2,  max: 2,  pct: 0.08 },
@@ -21,6 +48,13 @@ const DEFAULT_PAYOUT_CONFIG = {
         { min: 3,  max: 3,  pct: 0.06 },
         { min: 4,  max: 10, pct: 0.032 },
         { min: 11, max: 20, pct: 0.022 },
+    ],
+    weekly_kill_tiers: [
+        { min: 1,  max: 1,  pct: 0.15 },
+        { min: 2,  max: 2,  pct: 0.10 },
+        { min: 3,  max: 3,  pct: 0.08 },
+        { min: 4,  max: 10, pct: 0.05 },
+        { min: 11, max: 20, pct: 0.025 },
     ],
 };
 
@@ -90,8 +124,14 @@ Deno.serve(async (req) => {
         const pool = pools[0];
         let payments = [];
         let rewardPool = 0;
+        let killPayments = [];
+        let killRewardPool = 0;
 
         let staffPayments = [];
+
+        // S7 gate — periods >= S7 use config-driven pool %s (15/20 + 5% kill pool);
+        // earlier periods keep the legacy hardcoded split.
+        const useNewPools = isNewPoolPeriod(period_id, period_type);
 
         // Load admin-configurable payout settings (top_n + per-rank tiers)
         let payoutCfg = DEFAULT_PAYOUT_CONFIG;
@@ -101,7 +141,10 @@ Deno.serve(async (req) => {
         } catch {}
 
         if (period_type === 'weekly') {
-            rewardPool = Math.floor(pool.total_spent * 0.20);
+            const weeklyPoolPct = useNewPools
+                ? (Number.isFinite(Number(payoutCfg.weekly_pool_pct)) ? Number(payoutCfg.weekly_pool_pct) : 0.15)
+                : 0.20;
+            rewardPool = Math.floor(pool.total_spent * weeklyPoolPct);
             const allScores = await base44.asServiceRole.entities.RunScore.filter({ week_id: period_id }, '-score', 1000);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, makeTierLookup(payoutCfg.weekly_tiers), payoutCfg.top_n);
@@ -132,9 +175,41 @@ Deno.serve(async (req) => {
                     pct: resolveStaffPct(a),
                 }))
                 .filter(p => p.amount >= 1);
+
+            // S7+ only: weekly kill leaderboard pool. Uses PlayerSave.weekly_sector_kills
+            // (server-authoritative, sector runs only, endless/raid/meteor excluded).
+            if (useNewPools) {
+                const killPoolPct = Number.isFinite(Number(payoutCfg.kill_pool_pct)) ? Number(payoutCfg.kill_pool_pct) : 0.05;
+                killRewardPool = Math.floor(pool.total_spent * killPoolPct);
+                if (killRewardPool > 0) {
+                    const killRows = await base44.asServiceRole.entities.PlayerSave.filter(
+                        { weekly_sector_kills_week: period_id },
+                        '-weekly_sector_kills',
+                        100
+                    );
+                    const killCandidates = killRows
+                        .filter(p => (p.weekly_sector_kills || 0) > 0 && p.wallet_address)
+                        .map(p => ({
+                            wallet_address: p.wallet_address,
+                            player_name: p.player_name || `Pilot_${p.wallet_address.slice(-8).toUpperCase()}`,
+                            score: p.weekly_sector_kills,
+                            user_id: null,
+                        }));
+                    killPayments = buildRankedPayments(
+                        killCandidates,
+                        killRewardPool,
+                        makeTierLookup(payoutCfg.weekly_kill_tiers || []),
+                        payoutCfg.top_n
+                    );
+                }
+            }
         } else if (period_type === 'seasonal') {
-            // Seasonal pool split: 30% to top players, 10% to Squad Wars Champions (separate fn).
-            rewardPool = Math.floor(pool.total_spent * 0.30);
+            // Pool split: pre-S7 = 30% top players, S7+ = 20% (config-driven).
+            // 10% Squad Wars Champions (separate fn `distributeSquadChampions`) unchanged.
+            const seasonalPoolPct = useNewPools
+                ? (Number.isFinite(Number(payoutCfg.seasonal_pool_pct)) ? Number(payoutCfg.seasonal_pool_pct) : 0.20)
+                : 0.30;
+            rewardPool = Math.floor(pool.total_spent * seasonalPoolPct);
             const allScores = await base44.asServiceRole.entities.RunScore.filter({ season_id: period_id }, '-score', 1000);
             const scores = allScores.filter(s => s.arena_id !== 'endless');
             payments = buildRankedPayments(scores, rewardPool, makeTierLookup(payoutCfg.seasonal_tiers), payoutCfg.top_n);
@@ -150,9 +225,14 @@ Deno.serve(async (req) => {
         const alreadyPaidPlayers = new Set(existingPlayerLogs.map(l => (l.wallet_address || '').toLowerCase()));
 
         let alreadyPaidStaff = new Set();
+        let alreadyPaidKills = new Set();
         if (period_type === 'weekly') {
-            const existingStaffLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id, period_type: 'staff_weekly' }, '-created_date', 1000);
+            const [existingStaffLogs, existingKillLogs] = await Promise.all([
+                base44.asServiceRole.entities.PayoutLog.filter({ period_id, period_type: 'staff_weekly' }, '-created_date', 1000),
+                base44.asServiceRole.entities.PayoutLog.filter({ period_id, period_type: 'weekly_kills' }, '-created_date', 1000),
+            ]);
             alreadyPaidStaff = new Set(existingStaffLogs.map(l => (l.wallet_address || '').toLowerCase()));
+            alreadyPaidKills = new Set(existingKillLogs.map(l => (l.wallet_address || '').toLowerCase()));
         }
 
         // Annotate each payment so the UI can show paid vs pending rows.
@@ -164,34 +244,49 @@ Deno.serve(async (req) => {
             ...p,
             already_paid: alreadyPaidStaff.has((p.wallet_address || '').toLowerCase()),
         }));
+        const annotatedKills = killPayments.map(p => ({
+            ...p,
+            already_paid: alreadyPaidKills.has((p.wallet_address || '').toLowerCase()),
+        }));
 
         const playerPayout = payments.reduce((s, p) => s + p.amount, 0);
         const staffPayout = staffPayments.reduce((s, p) => s + p.amount, 0);
+        const killPayout = killPayments.reduce((s, p) => s + p.amount, 0);
         const pendingPlayerPayout = annotatedPayments.filter(p => !p.already_paid).reduce((s, p) => s + p.amount, 0);
         const pendingStaffPayout = annotatedStaff.filter(p => !p.already_paid).reduce((s, p) => s + p.amount, 0);
+        const pendingKillPayout = annotatedKills.filter(p => !p.already_paid).reduce((s, p) => s + p.amount, 0);
         const paidPlayerCount = annotatedPayments.filter(p => p.already_paid).length;
         const paidStaffCount = annotatedStaff.filter(p => p.already_paid).length;
+        const paidKillCount = annotatedKills.filter(p => p.already_paid).length;
 
         return Response.json({
             period_id, period_type,
             total_spent: pool.total_spent,
             reward_pool: rewardPool,
+            kill_reward_pool: killRewardPool,
             distributed: pool.distributed,
             total_payout: playerPayout,
             staff_payout: staffPayout,
-            grand_total: playerPayout + staffPayout,
+            kill_payout: killPayout,
+            grand_total: playerPayout + staffPayout + killPayout,
             player_count: payments.length,
             staff_count: staffPayments.length,
+            kill_count: killPayments.length,
             // New resume-aware fields
             paid_player_count: paidPlayerCount,
             paid_staff_count: paidStaffCount,
+            paid_kill_count: paidKillCount,
             pending_player_count: payments.length - paidPlayerCount,
             pending_staff_count: staffPayments.length - paidStaffCount,
+            pending_kill_count: killPayments.length - paidKillCount,
             pending_player_payout: pendingPlayerPayout,
             pending_staff_payout: pendingStaffPayout,
-            pending_grand_total: pendingPlayerPayout + pendingStaffPayout,
+            pending_kill_payout: pendingKillPayout,
+            pending_grand_total: pendingPlayerPayout + pendingStaffPayout + pendingKillPayout,
             payments: annotatedPayments,
             staff_payments: annotatedStaff,
+            kill_payments: annotatedKills,
+            uses_new_pools: useNewPools,
         });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
