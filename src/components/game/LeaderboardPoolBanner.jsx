@@ -5,22 +5,41 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
-// Live "Player Pool" banner shown on the Weekly + Seasonal leaderboards.
+// Live "Player Pool" banner shown on the Weekly + Seasonal + Weekly Kills leaderboards.
 // Mirrors the Champions Pool banner style so the player can see the running OMENX pot
 // they're competing for, what % of the total seasonal/weekly OMENX feeds it, and the
 // rank-by-rank split that determines payouts.
 export default function LeaderboardPoolBanner({ view, periodId, totalSpent, timeLeft }) {
     const isWeekly = view === 'weekly';
-    const poolPct = isWeekly ? 0.20 : 0.30; // mirrors distributeRewards.js
+    const isKills = view === 'weekly_kills';
+    const isSeasonal = view === 'seasonal';
+    
+    let poolPct, accent, numColor, subColor, chipBg, label;
+    
+    if (isWeekly) {
+        poolPct = 0.20;
+        accent = 'from-cyan-950/50 via-blue-950/50 to-cyan-950/50 border-cyan-500/50 shadow-[0_0_20px_rgba(34,211,238,0.18)] text-cyan-200';
+        numColor = 'text-cyan-100';
+        subColor = 'text-cyan-300';
+        chipBg = 'bg-cyan-500/30 text-cyan-100';
+        label = 'Weekly Player Pool';
+    } else if (isSeasonal) {
+        poolPct = 0.30;
+        accent = 'from-purple-950/50 via-fuchsia-950/50 to-purple-950/50 border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.18)] text-purple-200';
+        numColor = 'text-purple-100';
+        subColor = 'text-purple-300';
+        chipBg = 'bg-purple-500/30 text-purple-100';
+        label = 'Seasonal Player Pool';
+    } else if (isKills) {
+        poolPct = 0.05;
+        accent = 'from-orange-950/50 via-amber-950/50 to-orange-950/50 border-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.18)] text-orange-200';
+        numColor = 'text-orange-100';
+        subColor = 'text-orange-300';
+        chipBg = 'bg-orange-500/30 text-orange-100';
+        label = 'Weekly Kill Pool';
+    }
+    
     const playerPool = Math.floor((totalSpent || 0) * poolPct);
-
-    const accent = isWeekly
-        ? 'from-cyan-950/50 via-blue-950/50 to-cyan-950/50 border-cyan-500/50 shadow-[0_0_20px_rgba(34,211,238,0.18)] text-cyan-200'
-        : 'from-purple-950/50 via-fuchsia-950/50 to-purple-950/50 border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.18)] text-purple-200';
-    const numColor = isWeekly ? 'text-cyan-100' : 'text-purple-100';
-    const subColor = isWeekly ? 'text-cyan-300' : 'text-purple-300';
-    const chipBg = isWeekly ? 'bg-cyan-500/30 text-cyan-100' : 'bg-purple-500/30 text-purple-100';
-    const label = isWeekly ? 'Weekly Player Pool' : 'Seasonal Player Pool';
 
     return (
         <div className={`bg-gradient-to-r ${accent} border-2 rounded-xl p-4 mb-4`}>

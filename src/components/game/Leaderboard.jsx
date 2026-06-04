@@ -32,6 +32,13 @@ const DEFAULT_PAYOUT_CONFIG = {
         { min: 4,  max: 10, pct: 0.032 },
         { min: 11, max: 20, pct: 0.022 },
     ],
+    weekly_kill_tiers: [
+        { min: 1,  max: 1,  pct: 0.12 },
+        { min: 2,  max: 2,  pct: 0.10 },
+        { min: 3,  max: 3,  pct: 0.08 },
+        { min: 4,  max: 10, pct: 0.05 },
+        { min: 11, max: 20, pct: 0.03 },
+    ],
 };
 
 export default function Leaderboard() {
@@ -57,6 +64,7 @@ export default function Leaderboard() {
     };
     const getWeeklyRewardPercentage = tierLookup(payoutCfg.weekly_tiers);
     const getSeasonalRewardPercentage = tierLookup(payoutCfg.seasonal_tiers);
+    const getKillRewardPercentage = tierLookup(payoutCfg.weekly_kill_tiers);
 
     // Calculate actual payout amount (mirrors backend distributeRewards/previewPayouts EXACTLY).
     // Backend caps at payoutCfg.top_n ranked players and sums percentages over uniqueScores.length
@@ -234,12 +242,16 @@ export default function Leaderboard() {
             const { week_id, season_id } = getCurrentPeriodIds();
             const filter = view === 'weekly' 
                 ? { period_id: week_id, period_type: 'weekly' }
-                : { period_id: season_id, period_type: 'seasonal' };
+                : view === 'seasonal'
+                ? { period_id: season_id, period_type: 'seasonal' }
+                : view === 'all_time'
+                ? { period_id: week_id, period_type: 'weekly' }
+                : {};
             const pools = await base44.entities.TokenPool.filter(filter);
             return pools.length > 0 ? pools[0].total_spent : 0;
         },
         staleTime: 30000, // 30s — deduplicate within this window
-        enabled: view === 'weekly' || view === 'seasonal',
+        enabled: view === 'weekly' || view === 'seasonal' || view === 'all_time',
     });
 
     useEffect(() => {
@@ -452,6 +464,14 @@ export default function Leaderboard() {
                             timeLeft={timeLeft}
                         />
                     )}
+                    {view === 'all_time' && (
+                        <LeaderboardPoolBanner
+                            view="weekly_kills"
+                            periodId={week_id}
+                            totalSpent={currentPool}
+                            timeLeft={timeLeft}
+                        />
+                    )}
                     <div className="space-y-3">
                     {loading ? (
                         <div className="flex justify-center items-center h-32">
@@ -466,10 +486,14 @@ export default function Leaderboard() {
                             {scores.map((score, index) => {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
-                                const isEligibleForReward = view === 'weekly' || view === 'seasonal';
+                                const isEligibleForReward = view === 'weekly' || view === 'seasonal' || view === 'all_time';
                                 const rewardAmount = view === 'weekly'
                                     ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.20, totalRankedPlayers)
-                                    : calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.30, totalRankedPlayers);
+                                    : view === 'seasonal'
+                                    ? calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.30, totalRankedPlayers)
+                                    : view === 'all_time'
+                                    ? calculateRewardAmount(index + 1, currentPool, getKillRewardPercentage, 0.05, scores.length)
+                                    : 0;
 
                                 if (view === 'squads') {
                                     const squadLvl = getSquadLevel(score.xp || 0);
