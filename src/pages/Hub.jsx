@@ -12,6 +12,18 @@ import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS, TRAIL_COSMETICS, SKIN_COSMET
 //   - endless         → launched via the dedicated ENDLESS button, not this cycler
 const HUB_SECTOR_BLOCKLIST = new Set(['quantum_meteor', 'world_boss_arena', 'endless']);
 const SECTOR_ARENAS = ARENAS.filter(a => !HUB_SECTOR_BLOCKLIST.has(a.id));
+
+// Outer Galaxy (S11-S20) partition for the Hub sector tab split (added 2026-06-04).
+// IDs must match the 10 new ARENAS entries appended in game/Constants.js. The
+// Inner/Outer split powers the tabbed sector picker — players default to Inner
+// Galaxy on first visit; endgame players who last ran an Outer Galaxy sector
+// land back on the Outer tab automatically via the selection-sync effect.
+const OUTER_GALAXY_IDS = new Set([
+    'galactic_core', 'pillars', 'saturnian', 'andromeda', 'painters_spiral',
+    'harmony', 'chromatic', 'stormfront', 'supernova', 'devourer',
+]);
+const INNER_SECTOR_ARENAS = SECTOR_ARENAS.filter(a => !OUTER_GALAXY_IDS.has(a.id));
+const OUTER_SECTOR_ARENAS = SECTOR_ARENAS.filter(a => OUTER_GALAXY_IDS.has(a.id));
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Coins } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
@@ -177,6 +189,13 @@ export default function Hub({ isCarousel }) {
     const [selectedDifficulty, setSelectedDifficulty] = useState(save.lastSelectedDifficulty || 'normal');
     const [selectedWeapon, setSelectedWeapon] = useState(save.lastSelectedWeapon || 'neoBlaster');
     const [charTab, setCharTab] = useState('loadout');
+    // Inner/Outer Galaxy tab — persisted via localStorage so endgame players who
+    // last played Outer Galaxy land back on it. Also synced from save.lastSelectedArena
+    // on initial mount (see selection-apply effect below) — that takes precedence
+    // over localStorage so the tab tracks the player's actual last run.
+    const [galaxyTab, setGalaxyTab] = useState(() => {
+        try { return localStorage.getItem('hub_galaxy_tab') || 'inner'; } catch { return 'inner'; }
+    });
     const { toast } = useToast();
     const { omenxBalance } = useCurrency();
     const touchStartX = React.useRef(null);
@@ -221,6 +240,10 @@ export default function Hub({ isCarousel }) {
             // on a LOCKED tile they can't launch from.
             const safeArena = HUB_SECTOR_BLOCKLIST.has(save.lastSelectedArena) ? 'station' : save.lastSelectedArena;
             setSelectedArena(safeArena);
+            // Sync the Inner/Outer galaxy tab to match the loaded arena — overrides
+            // the localStorage default so endgame players whose last run was Outer
+            // Galaxy land directly on that tab without an extra click.
+            setGalaxyTab(OUTER_GALAXY_IDS.has(safeArena) ? 'outer' : 'inner');
         }
         if (save.lastSelectedDifficulty && save.lastSelectedDifficulty !== selectedDifficulty) setSelectedDifficulty(save.lastSelectedDifficulty);
         if (save.lastSelectedWeapon && save.lastSelectedWeapon !== selectedWeapon) setSelectedWeapon(save.lastSelectedWeapon);
@@ -281,7 +304,25 @@ export default function Hub({ isCarousel }) {
 
     const startGame = () => checkAndLaunch('normal');
 
-
+    // Inner/Outer Galaxy tab — derived data + switch handler.
+    // visibleSectorArenas is the list the sector cycler iterates through.
+    // showOuterNewBadge surfaces ★ NEW on the Outer tab until the selected
+    // character has unlocked at least one Outer Galaxy sector.
+    const visibleSectorArenas = galaxyTab === 'outer' ? OUTER_SECTOR_ARENAS : INNER_SECTOR_ARENAS;
+    const charUnlockedArenas = save?.unlockedArenasByCharacter?.[selectedChar] || ['station'];
+    const showOuterNewBadge = !charUnlockedArenas.some(id => OUTER_GALAXY_IDS.has(id));
+    const switchGalaxyTab = (tab) => {
+        if (tab === galaxyTab) return;
+        SoundManager.playUIClick();
+        setGalaxyTab(tab);
+        try { localStorage.setItem('hub_galaxy_tab', tab); } catch {}
+        // If the currently-selected sector isn't in the new galaxy, snap to its
+        // first sector so the cycler always starts on a valid entry.
+        const arenas = tab === 'outer' ? OUTER_SECTOR_ARENAS : INNER_SECTOR_ARENAS;
+        if (!arenas.find(a => a.id === selectedArena)) {
+            setSelectedArena(arenas[0].id);
+        }
+    };
 
     // If not logged in with OmenX, show a gate (bypass in preview)
     if (!syncReady) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
@@ -482,9 +523,42 @@ export default function Hub({ isCarousel }) {
                                         </div>
 
                                         <div>
-                                        <h3 className="text-xs md:text-sm text-slate-400 mb-1.5 md:mb-2">Select Sector</h3>
+                                        <div className="flex items-center justify-between mb-1.5 md:mb-2 gap-2">
+                                            <h3 className="text-xs md:text-sm text-slate-400">Select Sector</h3>
+                                            {/* Inner / Outer Galaxy tab buttons. Outer gets a violet glow when active
+                                                + a ★ NEW badge until the selected character unlocks any S11+ sector. */}
+                                            <div className="flex gap-1">
+                                                <button
+                                                    onClick={() => switchGalaxyTab('inner')}
+                                                    className={`text-[9px] md:text-[10px] font-bold px-2 md:px-3 py-1 md:py-1.5 rounded border transition-colors ${
+                                                        galaxyTab === 'inner'
+                                                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
+                                                            : 'bg-slate-800/50 text-slate-400 border-slate-700/50 hover:text-slate-200'
+                                                    }`}
+                                                >
+                                                    INNER
+                                                </button>
+                                                <button
+                                                    onClick={() => switchGalaxyTab('outer')}
+                                                    className={`text-[9px] md:text-[10px] font-bold px-2 md:px-3 py-1 md:py-1.5 rounded border transition-all relative ${
+                                                        galaxyTab === 'outer'
+                                                            ? 'bg-violet-500/20 text-violet-300 border-violet-500/50 shadow-[0_0_12px_rgba(139,92,246,0.4)]'
+                                                            : 'bg-slate-800/50 text-slate-400 border-slate-700/50 hover:text-slate-200'
+                                                    }`}
+                                                >
+                                                    OUTER
+                                                    {showOuterNewBadge && (
+                                                        <span className="ml-1 inline-block text-[7px] md:text-[8px] bg-fuchsia-500 text-white px-1 py-px rounded font-black align-middle">★ NEW</span>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
                                         <div 
-                                            className="relative bg-[#0b0416]/80 backdrop-blur-xl rounded-lg md:rounded-xl border border-cyan-500/50 hover:border-cyan-400 overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.2)] select-none touch-pan-y transition-colors"
+                                            className={`relative bg-[#0b0416]/80 backdrop-blur-xl rounded-lg md:rounded-xl border overflow-hidden select-none touch-pan-y transition-colors ${
+                                                galaxyTab === 'outer'
+                                                    ? 'border-violet-500/50 hover:border-violet-400 shadow-[0_0_20px_rgba(139,92,246,0.25)]'
+                                                    : 'border-cyan-500/50 hover:border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)]'
+                                            }`}
                                             onTouchStart={(e) => {
                                                 touchStartX.current = e.changedTouches[0].screenX;
                                             }}
@@ -493,12 +567,12 @@ export default function Hub({ isCarousel }) {
                                                 const touchEndX = e.changedTouches[0].screenX;
                                                 const diff = touchStartX.current - touchEndX;
                                                 if (diff > 50) {
-                                                    const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
-                                                    setSelectedArena(SECTOR_ARENAS[idx >= SECTOR_ARENAS.length - 1 ? 0 : idx + 1].id);
+                                                    const idx = visibleSectorArenas.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(visibleSectorArenas[idx >= visibleSectorArenas.length - 1 ? 0 : idx + 1].id);
                                                     SoundManager.playUIClick();
                                                 } else if (diff < -50) {
-                                                    const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
-                                                    setSelectedArena(SECTOR_ARENAS[idx <= 0 ? SECTOR_ARENAS.length - 1 : idx - 1].id);
+                                                    const idx = visibleSectorArenas.findIndex(a => a.id === selectedArena);
+                                                    setSelectedArena(visibleSectorArenas[idx <= 0 ? visibleSectorArenas.length - 1 : idx - 1].id);
                                                     SoundManager.playUIClick();
                                                 }
                                                 touchStartX.current = null;
@@ -506,16 +580,16 @@ export default function Hub({ isCarousel }) {
                                         >
                                             <div 
                                                 className="absolute inset-0 opacity-40 bg-cover bg-center transition-all duration-500"
-                                                style={{ backgroundImage: `url(${SECTOR_ARENAS.find(a => a.id === selectedArena)?.image})` }}
+                                                style={{ backgroundImage: `url(${visibleSectorArenas.find(a => a.id === selectedArena)?.image})` }}
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0416] via-[#0b0416]/70 to-transparent pointer-events-none" />
                                             
                                             <div className="relative flex items-center justify-between p-2 md:p-3 min-h-[72px] md:min-h-[96px]">
                                                 <button 
                                                     onClick={() => {
-                                                        const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
-                                                        const newIdx = idx <= 0 ? SECTOR_ARENAS.length - 1 : idx - 1;
-                                                        setSelectedArena(SECTOR_ARENAS[newIdx].id);
+                                                        const idx = visibleSectorArenas.findIndex(a => a.id === selectedArena);
+                                                        const newIdx = idx <= 0 ? visibleSectorArenas.length - 1 : idx - 1;
+                                                        setSelectedArena(visibleSectorArenas[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
                                                     className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
@@ -525,7 +599,7 @@ export default function Hub({ isCarousel }) {
                                                 
                                                 <div className="text-center z-10 flex-1 px-2 md:px-4">
                                                     <h4 className="text-lg md:text-xl font-bold text-white mb-0.5 md:mb-1 drop-shadow-md">
-                                                        {SECTOR_ARENAS.find(a => a.id === selectedArena)?.name}
+                                                        {visibleSectorArenas.find(a => a.id === selectedArena)?.name}
                                                     </h4>
                                                     {!((save?.unlockedArenasByCharacter?.[selectedChar] || ['station']).includes(selectedArena)) ? (
                                                         <span className="inline-flex items-center gap-1 text-rose-300 font-black tracking-widest text-[9px] md:text-[10px] bg-rose-950/60 px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-rose-500/50 backdrop-blur-sm shadow-[0_0_10px_rgba(244,63,94,0.2)]">
@@ -540,9 +614,9 @@ export default function Hub({ isCarousel }) {
 
                                                 <button 
                                                     onClick={() => {
-                                                        const idx = SECTOR_ARENAS.findIndex(a => a.id === selectedArena);
-                                                        const newIdx = idx >= SECTOR_ARENAS.length - 1 ? 0 : idx + 1;
-                                                        setSelectedArena(SECTOR_ARENAS[newIdx].id);
+                                                        const idx = visibleSectorArenas.findIndex(a => a.id === selectedArena);
+                                                        const newIdx = idx >= visibleSectorArenas.length - 1 ? 0 : idx + 1;
+                                                        setSelectedArena(visibleSectorArenas[newIdx].id);
                                                         SoundManager.playUIClick();
                                                     }}
                                                     className="p-1.5 md:p-2 bg-[#0b0416]/80 border border-cyan-500/30 rounded-full hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-100 transition-all z-10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
