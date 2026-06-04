@@ -436,24 +436,13 @@ export default function Leaderboard() {
                     >
                         Seasonal
                     </button>
-                    {isS7OrLater ? (
-                        <button 
-                            onClick={() => setView('all_time')}
-                            className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            title="Total kills from sector runs this week"
-                        >
-                            Weekly Sector Kills
-                        </button>
-                    ) : (
-                        <button 
-                            disabled
-                            className="flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base bg-slate-800 text-slate-600 cursor-not-allowed opacity-60"
-                            title="Available in Season 7"
-                        >
-                            Weekly Sector Kills
-                            <span className="text-[10px] md:text-xs block mt-0.5">Coming S7</span>
-                        </button>
-                    )}
+                    <button 
+                        onClick={() => setView('all_time')}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        title="Total kills from sector runs this week"
+                    >
+                        Weekly Sector Kills
+                    </button>
 
                     <button 
                         onClick={() => setView('endless')}
@@ -481,12 +470,21 @@ export default function Leaderboard() {
                         />
                     )}
                     {view === 'all_time' && (
-                        <LeaderboardPoolBanner
-                            view="weekly_kills"
-                            periodId={week_id}
-                            totalSpent={currentPool}
-                            timeLeft={timeLeft}
-                        />
+                        isS7OrLater ? (
+                            <LeaderboardPoolBanner
+                                view="weekly_kills"
+                                periodId={week_id}
+                                totalSpent={currentPool}
+                                timeLeft={timeLeft}
+                            />
+                        ) : (
+                            <div className="flex items-center justify-center w-full py-8 px-4 rounded-lg bg-slate-900 border border-slate-700 mb-4">
+                                <div className="text-center">
+                                    <p className="text-slate-400 font-semibold">Weekly Sector Kills Pool</p>
+                                    <p className="text-slate-500 text-sm mt-2">Coming in Season 7</p>
+                                </div>
+                            </div>
+                        )
                     )}
                     <div className="space-y-3">
                     {loading ? (
