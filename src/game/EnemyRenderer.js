@@ -51,7 +51,7 @@ export function drawEnemy(ctx, e, time, playerX) {
         const frameWidth = e.spriteImage.width / cols;
         const frameHeight = e.spriteImage.height / rows;
         
-        const drawSize = e.radius * 3.5;
+        const drawSize = e.radius * 2.45;
         const bob = Math.sin(time * 3 + e.id.length) * (e.radius * 0.1);
         
         ctx.drawImage(
