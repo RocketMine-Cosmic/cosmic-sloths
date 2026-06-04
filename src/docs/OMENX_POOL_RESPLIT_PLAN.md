@@ -146,7 +146,12 @@ answer = correct
 
 **Q6. Transition timing**
 Recommend deploying on a **Monday 00:00 UTC** boundary so the new % applies cleanly to the entire week. Live preview/admin tools should reflect the new % the moment we deploy, even if the next distribution is days away.
-asnswer = yes gate it to a weekly/season Reset
+**✅ LOCKED: gate to the next seasonal rollover (~10 days from 2026-06-04, the S6→S7 boundary).**
+- Code ships behind a `season_id >= NEW_POOL_SEASON` check — same pattern as the S5→S6 silent-buff cutoff already in `saveScore.js` (line 568-572).
+- Until the season boundary: live game runs the **current** %s (20% weekly score / 30% seasonal score / no kill pool).
+- From the rollover onward: new %s (15% / 20% / +5% kills) apply automatically — no second deploy needed, no admin toggle, no risk of mid-week change.
+- S6 final week's distribution uses the **old** %s (it's an S6 pool, paying out S6 spend). S7 W1 onwards uses the new %s.
+- Discord patch notes can be drafted now and scheduled to post 48h before rollover.
 
 **Q7. Backwards compatibility**
 Existing `PayoutLog` entries with `period_type='weekly'` (score) are untouched. New `period_type='weekly_kills'` rows are net-new — no migration needed. ✅
