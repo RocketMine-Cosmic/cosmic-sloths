@@ -1217,7 +1217,9 @@ export class GameEngine {
             if (w.timer <= 0) {
                 this.fireWeapon(w);
                 
-                const stats = getWeaponStatsAndMastery(this.save, w.id);
+                // 3rd arg = isOuterGalaxy — Outer Galaxy applies "Overforge" tier-3
+                // augment stacking (e.g. cd_3 × 2 = -70% CD instead of -35%).
+                const stats = getWeaponStatsAndMastery(this.save, w.id, this._outerGalaxyActive);
                 const cdMultiplier = stats.cdMult;
                 
                 w.timer = (w.baseCooldown / 60) * Math.max(0.35, this.player.cooldownMult) * Math.max(0.5, cdMultiplier);

@@ -287,20 +287,41 @@ Deno.serve(async (req) => {
         } else if (action === 'forgeWeaponAugment') {
             const weaponId = payload?.weaponId;
             const augmentId = payload?.augmentId;
+            const overforge = !!payload?.overforge;
             if (!VALID_WEAPON_IDS.has(weaponId)) {
                 return Response.json({ error: 'Invalid weaponId' }, { status: 400 });
             }
-            const cost = WEAPON_AUGMENT_COSTS[augmentId];
-            if (!cost) return Response.json({ error: 'Invalid augmentId' }, { status: 400 });
+            const baseCost = WEAPON_AUGMENT_COSTS[augmentId];
+            if (!baseCost) return Response.json({ error: 'Invalid augmentId' }, { status: 400 });
 
             const owned = save.forgeWeaponAugments?.[weaponId] || [];
-            if (owned.includes(augmentId)) {
-                return Response.json({ error: 'Augment already owned' }, { status: 400 });
-            }
-            // Tier gating — must own the previous tier of the same branch on this weapon.
-            const wPrereq = WEAPON_AUGMENT_PREREQS[augmentId];
-            if (wPrereq && !owned.includes(wPrereq)) {
-                return Response.json({ error: 'You need to forge the previous tier first.' }, { status: 400 });
+            let cost = baseCost;
+
+            if (overforge) {
+                // Outer Galaxy "Overforge": tier-3 only, max 2 copies, 2× fragment cost.
+                // The 2nd copy is stored as a duplicate ID in the array — engine's
+                // getWeaponStatsAndMastery counts duplicates on Outer Galaxy runs
+                // (Inner Galaxy still dedups via Set, so legacy balance is preserved).
+                if (!augmentId.endsWith('_3')) {
+                    return Response.json({ error: 'Only tier-3 augments can be overforged.' }, { status: 400 });
+                }
+                const ownCount = owned.filter(x => x === augmentId).length;
+                if (ownCount === 0) {
+                    return Response.json({ error: 'Forge the tier-3 augment first before overforging.' }, { status: 400 });
+                }
+                if (ownCount >= 2) {
+                    return Response.json({ error: 'Augment already overforged (max 2).' }, { status: 400 });
+                }
+                cost = baseCost * 2;
+            } else {
+                if (owned.includes(augmentId)) {
+                    return Response.json({ error: 'Augment already owned' }, { status: 400 });
+                }
+                // Tier gating — must own the previous tier of the same branch on this weapon.
+                const wPrereq = WEAPON_AUGMENT_PREREQS[augmentId];
+                if (wPrereq && !owned.includes(wPrereq)) {
+                    return Response.json({ error: 'You need to forge the previous tier first.' }, { status: 400 });
+                }
             }
             const fragments = Number(save.starFragments || 0);
             if (fragments < cost) {

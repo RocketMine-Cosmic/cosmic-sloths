@@ -62,7 +62,10 @@ function capDamageRadius(weaponId, radius) {
 
 export function fireWeaponLogic(engine, w) {
     SFXManager.playWeaponFire(w.id);
-    const stats = getWeaponStatsAndMastery(engine.save, w.id);
+    // 3rd arg = isOuterGalaxy — on S11+ runs, tier-3 forge augments can stack to 2×
+    // (the "Overforge" Outer Galaxy mechanic). Inner Galaxy passes false → existing
+    // behavior preserved.
+    const stats = getWeaponStatsAndMastery(engine.save, w.id, engine._outerGalaxyActive);
     
     const isMastered = stats.isMastered;
     const wDmgMult = stats.dmgMult;

@@ -172,13 +172,21 @@ export default function ForgePanel({ save, setSave }) {
         await callForge('convert', { amount });
     };
 
-    const handleForgeWeaponAugment = async (augment) => {
+    const handleForgeWeaponAugment = async (augment, overforge = false) => {
         if (busy) return;
         const owned = save.forgeWeaponAugments?.[selectedWeaponId] || [];
-        if (owned.includes(augment.id)) return;
-        if (fragments < augment.cost) return;
+        if (overforge) {
+            // Outer Galaxy overforge — tier 3 only, max 2 copies, 2× cost.
+            if (!augment.id.endsWith('_3')) return;
+            const ownCount = owned.filter(x => x === augment.id).length;
+            if (ownCount === 0 || ownCount >= 2) return;
+            if (fragments < augment.cost * 2) return;
+        } else {
+            if (owned.includes(augment.id)) return;
+            if (fragments < augment.cost) return;
+        }
         SoundManager.playUIClick();
-        await callForge('forgeWeaponAugment', { weaponId: selectedWeaponId, augmentId: augment.id });
+        await callForge('forgeWeaponAugment', { weaponId: selectedWeaponId, augmentId: augment.id, overforge });
     };
 
     const handleForgeCharAugment = async (charId, augment) => {
@@ -347,24 +355,46 @@ export default function ForgePanel({ save, setSave }) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {WEAPON_AUGMENTS.map(aug => {
                             const owned = save.forgeWeaponAugments?.[selectedWeaponId] || [];
-                            const isOwned = owned.includes(aug.id);
+                            const ownCount = owned.filter(x => x === aug.id).length;
+                            const isOwned = ownCount >= 1;
                             const canAfford = fragments >= aug.cost;
                             const prereqId = WEAPON_AUGMENT_PREREQS[aug.id];
                             const isLocked = prereqId && !owned.includes(prereqId);
                             const prereqName = prereqId ? WEAPON_AUGMENTS.find(a => a.id === prereqId)?.name : null;
                             const Icon = aug.weaponStat === 'damage' ? Zap : aug.weaponStat === 'area' ? Sparkles : Timer;
+                            // Overforge — Outer Galaxy mechanic. Tier 3 only, max 2 copies, 2× fragment cost.
+                            // Bonus stacks to 2× ONLY on S11+ runs; Inner Galaxy treats the 2nd copy as a no-op.
+                            const isOverforgeEligible = aug.id.endsWith('_3');
+                            const isOverforged = ownCount >= 2;
+                            const canOverforge = isOverforgeEligible && isOwned && !isOverforged;
+                            const overforgeCost = aug.cost * 2;
+                            const canAffordOverforge = fragments >= overforgeCost;
                             return (
-                                <div key={aug.id} className={`rounded-xl border-2 p-3 flex flex-col gap-2 ${isOwned ? 'border-yellow-500 bg-yellow-950/30' : isLocked ? 'border-slate-800 bg-slate-950/40 opacity-60' : `${RARITY_COLORS[aug.rarity].split(' ')[1]} ${RARITY_BG[aug.rarity]}`}`}>
+                                <div key={aug.id} className={`rounded-xl border-2 p-3 flex flex-col gap-2 ${isOverforged ? 'border-violet-500 bg-violet-950/40' : isOwned ? 'border-yellow-500 bg-yellow-950/30' : isLocked ? 'border-slate-800 bg-slate-950/40 opacity-60' : `${RARITY_COLORS[aug.rarity].split(' ')[1]} ${RARITY_BG[aug.rarity]}`}`}>
                                     <div className="flex items-center gap-2">
-                                        <Icon className={`w-4 h-4 shrink-0 ${isOwned ? 'text-yellow-400' : isLocked ? 'text-slate-600' : RARITY_COLORS[aug.rarity].split(' ')[0]}`} />
+                                        <Icon className={`w-4 h-4 shrink-0 ${isOverforged ? 'text-violet-300' : isOwned ? 'text-yellow-400' : isLocked ? 'text-slate-600' : RARITY_COLORS[aug.rarity].split(' ')[0]}`} />
                                         <div>
-                                            <div className={`font-bold text-sm leading-tight ${isOwned ? 'text-yellow-300' : isLocked ? 'text-slate-500' : 'text-white'}`}>{aug.name}</div>
+                                            <div className={`font-bold text-sm leading-tight ${isOverforged ? 'text-violet-200' : isOwned ? 'text-yellow-300' : isLocked ? 'text-slate-500' : 'text-white'}`}>{aug.name}</div>
                                             <div className={`text-[10px] font-bold uppercase ${RARITY_COLORS[aug.rarity].split(' ')[0]}`}>{aug.rarity}</div>
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-300 flex-1">{aug.desc}</p>
-                                    {isOwned ? (
-                                        <div className="text-xs font-bold text-yellow-400 text-center bg-yellow-900/30 py-1.5 rounded-lg border border-yellow-500/50">✓ FORGED</div>
+                                    {isOverforged ? (
+                                        <div className="text-xs font-bold text-violet-300 text-center bg-violet-900/40 py-1.5 rounded-lg border border-violet-500/60 shadow-[0_0_10px_rgba(139,92,246,0.3)]" title="2× bonus active on Outer Galaxy (S11+) sectors only.">★★ OVERFORGED</div>
+                                    ) : isOwned ? (
+                                        <>
+                                            <div className="text-xs font-bold text-yellow-400 text-center bg-yellow-900/30 py-1 rounded-lg border border-yellow-500/50">✓ FORGED</div>
+                                            {canOverforge && (
+                                                <button
+                                                    onClick={() => handleForgeWeaponAugment(aug, true)}
+                                                    disabled={!canAffordOverforge}
+                                                    title="Doubles this augment's bonus — but only on Outer Galaxy (S11+) sectors."
+                                                    className={`py-1.5 rounded-lg font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 ${canAffordOverforge ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_8px_rgba(139,92,246,0.4)]' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
+                                                >
+                                                    <Star className="w-3 h-3 fill-current" /> Overforge · {overforgeCost} <span className="text-[8px] opacity-80 font-black tracking-wider">S11+</span>
+                                                </button>
+                                            )}
+                                        </>
                                     ) : isLocked ? (
                                         <div className="text-[11px] font-bold text-slate-500 text-center bg-slate-900/60 py-1.5 rounded-lg border border-slate-800">🔒 Forge {prereqName} first</div>
                                     ) : (

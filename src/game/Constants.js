@@ -593,7 +593,7 @@ const EVOLUTION_PARENT = {
     venomLash:      ['toxicCloud', 'vineWhip'],
 };
 
-export const getWeaponStatsAndMastery = (save, wId) => {
+export const getWeaponStatsAndMastery = (save, wId, isOuterGalaxy = false) => {
     if (!save) return { dmgMult: 1, areaMult: 1, cdMult: 1, isMastered: false };
     // For evolved weapons (single parent) — direct lookup. For synergies (array of two
     // parents) — take the MAX of each tier across both parents. This rewards players
@@ -614,7 +614,15 @@ export const getWeaponStatsAndMastery = (save, wId) => {
     const week   = pickMax('weeklyWeaponUpgrades');
     const season = pickMax('seasonalWeaponUpgrades');
     // Forge augments: union of all augments forged on any parent (max tier per stat).
-    const forgeAugments = Array.from(new Set(parents.flatMap(id => save.forgeWeaponAugments?.[id] || [])));
+    // Inner Galaxy: dedup'd (legacy behavior — duplicates count as singletons).
+    // Outer Galaxy (S11-S20): tier-3 augments can be "overforged" to 2 copies for
+    // 2× bonus on that weapon (e.g. damage_3 × 2 = +120% instead of +60%). Tier 1/2
+    // and the isMastered check stay dedup'd. See docs/SECTORS_11_20_PLAN.md.
+    const allForgeAugments = parents.flatMap(id => save.forgeWeaponAugments?.[id] || []);
+    const forgeAugments = Array.from(new Set(allForgeAugments));
+    const forgeAugmentCounts = {};
+    for (const a of allForgeAugments) forgeAugmentCounts[a] = (forgeAugmentCounts[a] || 0) + 1;
+    const tier3Mult = (id) => isOuterGalaxy ? Math.min(2, forgeAugmentCounts[id] || 0) : 1;
     const lookupId = parents[0]; // for compatibility — only used by isMastered check below
     
     // Diminishing returns when all 3 period tiers stack. Tightened from 0.66 → 0.5
@@ -633,17 +641,17 @@ export const getWeaponStatsAndMastery = (save, wId) => {
     let forgeDmg = 0;
     if (forgeAugments.includes('damage_1')) forgeDmg += 0.15;
     if (forgeAugments.includes('damage_2')) forgeDmg += 0.35;
-    if (forgeAugments.includes('damage_3')) forgeDmg += 0.60;
+    if (forgeAugments.includes('damage_3')) forgeDmg += 0.60 * tier3Mult('damage_3');
 
     let forgeArea = 0;
     if (forgeAugments.includes('area_1')) forgeArea += 0.15;
     if (forgeAugments.includes('area_2')) forgeArea += 0.35;
-    if (forgeAugments.includes('area_3')) forgeArea += 0.60;
+    if (forgeAugments.includes('area_3')) forgeArea += 0.60 * tier3Mult('area_3');
     
     let forgeCd = 0;
     if (forgeAugments.includes('cd_1')) forgeCd += 0.10;
     if (forgeAugments.includes('cd_2')) forgeCd += 0.20;
-    if (forgeAugments.includes('cd_3')) forgeCd += 0.35;
+    if (forgeAugments.includes('cd_3')) forgeCd += 0.35 * tier3Mult('cd_3');
 
     // Mastery requires PERMANENT upgrades only (weekly/seasonal don't count toward mastery).
     const isMastered = ((perm.damage || 0) >= 5 && (perm.area || 0) >= 5 && (perm.cooldown || 0) >= 5) ||
