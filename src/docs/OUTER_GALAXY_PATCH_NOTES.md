@@ -119,11 +119,6 @@ Outer Galaxy is **purely about score and bragging rights** — no exclusive curr
 • Endless / Raid / Meteor scoring — **untouched**
 • Daily bounties, daily tasks, login rewards — **untouched**
 
-🛠️ **Launch process**
-Outer Galaxy content was being shipped silently over the past few weeks behind sector-index gates — meaning the new arenas/enemies/balance were in the code but mathematically unreachable. The Hub UI ship is the launch moment itself. No maintenance window required.
-
-If anything's off after launch, drop feedback in `#outer-galaxy-feedback` — we'll be watching closely for hotfixes in the first two weeks.
-
 🚀 **See you in the Outer Galaxy, pilots.**
 ```
 
