@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Pause, Heart, CircleDollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import { useAntiMashCooldown } from '@/hooks/useAntiMashCooldown';
+import DynamicDifficultyPill from './DynamicDifficultyPill';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -26,7 +27,7 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate, omenxPurchasesDisabled = false, arenaId = '' }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate, omenxPurchasesDisabled = false, arenaId = '', ddMult = 1.0 }) {
     // Squad Meteor runs don't feed the leaderboard — score has no meaning there,
     // so hide the row to avoid confusing players who think it matters.
     const isMeteorRun = arenaId === 'quantum_meteor';
@@ -148,6 +149,10 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                         <span>KILLS: {kills.toLocaleString()}</span>
                         {showKillsCapped && <span className="text-[7px] md:text-[9px] bg-red-500/20 text-red-300 px-1 rounded border border-red-500/40">MAX</span>}
                     </div>
+
+                    {/* Dynamic Difficulty pill — shows current spawn-rate tier so players
+                        can read when they've crossed into HEATED / FRENZY thresholds. */}
+                    <DynamicDifficultyPill mult={ddMult} />
 
                     {boss && boss.maxHp > 0 && (
                         <div className="mt-1 md:mt-2 pt-1 md:pt-2 border-t border-red-500/30">

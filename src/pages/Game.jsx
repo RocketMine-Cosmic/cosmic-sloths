@@ -721,6 +721,11 @@ export default function Game() {
                     if (b) boss = { name: b.name, hp: b.hp, maxHp: b.maxHp };
                 }
 
+                // Dynamic Difficulty multiplier — surfaced to the HUD pill so players
+                // can SEE when their performance has pushed the spawn rate into
+                // FRENZY / IN THE ZONE thresholds. Read-only — no engine mutation.
+                const ddMultForHud = engine.dynamicDifficulty?.spawnRateMult ?? 1.0;
+
                 setGameState(s => ({
                     ...s,
                     xp: engine.xp,
@@ -738,6 +743,7 @@ export default function Game() {
                     totalDamage: Math.floor(engine.totalDamageDealt || 0),
                     xpBuffActive: !!engine.player?.xpBuffActive,
                     xpBuffExpiry: engine.xpBuffExpiry || 0,
+                    ddMult: ddMultForHud,
                 }));
             }
         }, 100);
@@ -1266,7 +1272,7 @@ export default function Game() {
             
             {!hudHidden && <VirtualJoystick onChange={handleJoystickChange} />}
             
-            {!hudHidden && <UIOverlay {...gameState} arenaId={engineRef.current?.arena?.id || location.state?.arenaId || ''} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
+            {!hudHidden && <UIOverlay {...gameState} ddMult={gameState.ddMult ?? 1.0} arenaId={engineRef.current?.arena?.id || location.state?.arenaId || ''} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
             {!hudHidden && <SynergyBanner />}
             {!hudHidden && <SessionExpiredBanner />}
