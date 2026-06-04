@@ -114,8 +114,6 @@ The Outer Galaxy tab gets a subtle cosmic glow + ★ NEW badge until you clear y
 Outer Galaxy is **purely about score and bragging rights** — no exclusive currency, no extra cosmetic track, no battle pass. Just harder content for bigger leaderboard numbers. Keeps things honest: harder content = bigger score, period.
 
 ✅ **WHAT DOESN'T CHANGE**
-• S1-S10 balance, difficulty, gold drops, enemy stats — **frozen**
-• Score formula for S1-S10 — **frozen**
 • NFT perks — **15% unchanged**
 • Character roster unlocks — NFT instant + 160k-kill milestone path covers everything
 • Squad XP, war mechanics, treasury, meteor — **untouched**
