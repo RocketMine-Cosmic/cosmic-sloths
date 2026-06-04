@@ -27,6 +27,31 @@ function getCurrentPeriodIds() {
 const WEEKLY_KEYS = ['weeklyUpgrades', 'weeklyWeaponUpgrades', 'weeklyTalents'];
 const SEASONAL_KEYS = ['seasonalUpgrades', 'seasonalWeaponUpgrades', 'seasonalTalents'];
 
+// Outer Galaxy expansion backfill (2026-06-04). Players who had already cleared
+// S10 (`dimension`) BEFORE the Outer Galaxy patch landed have it in their unlock
+// list but no `galactic_core` — because the saveScore unlock chain only fires on
+// a NEW victory. Without this backfill they'd need to grind S10 again to access
+// S11, which Anubis + others reported as a bug 2026-06-04.
+//
+// Idempotent: only mutates when a character has `dimension` but lacks
+// `galactic_core`. Runs on every load until applied. After the first unlock the
+// normal saveScore self-heal takes over for S11 → S20 progression.
+function backfillOuterGalaxyUnlock(saveData) {
+    if (!saveData || typeof saveData !== 'object') return false;
+    const map = saveData.unlockedArenasByCharacter;
+    if (!map || typeof map !== 'object') return false;
+    let changed = false;
+    for (const charId of Object.keys(map)) {
+        const arenas = Array.isArray(map[charId]) ? map[charId] : null;
+        if (!arenas) continue;
+        if (arenas.includes('dimension') && !arenas.includes('galactic_core')) {
+            map[charId] = [...arenas, 'galactic_core'];
+            changed = true;
+        }
+    }
+    return changed;
+}
+
 function rollStalePeriods(saveData) {
     if (!saveData || typeof saveData !== 'object') return { saveData, rolled: false };
     const { week_id: currentWeek, season_id: currentSeason } = getCurrentPeriodIds();
@@ -124,15 +149,21 @@ Deno.serve(async (req) => {
                 // Roll stale weekly/seasonal containers forward and persist if changed.
                 const { saveData: rolledData, rolled } = rollStalePeriods(saveData);
                 saveData = rolledData;
-                if (rolled) {
+                // Outer Galaxy unlock backfill (2026-06-04) — see helper above.
+                const outerBackfilled = backfillOuterGalaxyUnlock(saveData);
+                if (outerBackfilled) {
+                    saveData.updated_at = Date.now();
+                }
+                if (rolled || outerBackfilled) {
                     try {
                         await base44.asServiceRole.entities.PlayerSave.update(row.id, {
                             save_data: saveData,
                             updated_at: saveData.updated_at,
                         });
-                        console.log(`[loadSave] Rolled stale period(s) for ${wallet}`);
+                        if (rolled) console.log(`[loadSave] Rolled stale period(s) for ${wallet}`);
+                        if (outerBackfilled) console.log(`[loadSave] Backfilled Outer Galaxy (galactic_core) for ${wallet}`);
                     } catch (e) {
-                        console.error('[loadSave] Persist rollover failed (non-fatal):', e.message);
+                        console.error('[loadSave] Persist load-time fixes failed (non-fatal):', e.message);
                     }
                 }
             }
