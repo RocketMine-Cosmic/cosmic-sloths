@@ -116,11 +116,14 @@ export default function AdminRewards({ walletAddress }) {
                         <div className="flex flex-wrap gap-3 mb-3">
                             {[
                                 { label: 'Total Spent', value: `${previewData.total_spent?.toFixed(2)} OMENX`, color: 'text-white' },
-                                { label: 'Reward Pool', value: `${previewData.reward_pool?.toFixed(2)} OMENX`, color: 'text-sky-400' },
+                                { label: 'Score Pool', value: `${previewData.reward_pool?.toFixed(2)} OMENX`, color: 'text-sky-400' },
+                                ...(previewData.kill_reward_pool > 0 ? [{ label: 'Kill Pool', value: `${previewData.kill_reward_pool?.toFixed(2)} OMENX`, color: 'text-orange-400' }] : []),
                                 { label: 'Player Payout', value: `${previewData.total_payout?.toFixed(2)} OMENX`, color: 'text-emerald-400' },
                                 ...(previewData.staff_payout > 0 ? [{ label: 'Staff Payout', value: `${previewData.staff_payout?.toFixed(2)} OMENX`, color: 'text-amber-400' }] : []),
+                                ...(previewData.kill_payout > 0 ? [{ label: 'Kill Payout', value: `${previewData.kill_payout?.toFixed(2)} OMENX`, color: 'text-orange-400' }] : []),
                                 ...(previewData.grand_total !== undefined ? [{ label: 'Grand Total', value: `${previewData.grand_total?.toFixed(2)} OMENX`, color: 'text-fuchsia-400' }] : []),
-                                { label: 'Recipients', value: `${previewData.player_count}${previewData.staff_count ? ` + ${previewData.staff_count} staff` : ''}`, color: 'text-white' },
+                                { label: 'Recipients', value: `${previewData.player_count}${previewData.staff_count ? ` + ${previewData.staff_count} staff` : ''}${previewData.kill_count ? ` + ${previewData.kill_count} kills` : ''}`, color: 'text-white' },
+                                ...(previewData.uses_new_pools !== undefined ? [{ label: 'Pool Model', value: previewData.uses_new_pools ? 'S7+ (config-driven)' : 'Pre-S7 (legacy)', color: previewData.uses_new_pools ? 'text-cyan-400' : 'text-slate-400' }] : []),
                             ].map(s => (
                                 <div key={s.label} className="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
                                     <div className="text-[10px] text-slate-500 uppercase">{s.label}</div>
@@ -183,6 +186,39 @@ export default function AdminRewards({ walletAddress }) {
                                 </tbody>
                             </table>
                         </div>
+
+                        {(previewData.kill_payments || []).length > 0 && (
+                            <div className="mt-4">
+                                <h3 className="text-xs font-bold text-orange-400 uppercase tracking-widest mb-2">Weekly Kill Payouts (S7+ — top sector kills)</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-700/50">
+                                            <tr>
+                                                <th className="p-2 text-center">Rank</th>
+                                                <th className="p-2">Player</th>
+                                                <th className="p-2">Wallet</th>
+                                                <th className="p-2 text-right">Kills</th>
+                                                <th className="p-2 text-right">Would Receive</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800/50">
+                                            {previewData.kill_payments.map(p => (
+                                                <tr key={p.rank} className={`hover:bg-slate-800/30 ${p.already_paid ? 'bg-amber-950/20 opacity-60' : ''}`}>
+                                                    <td className="p-2 text-center font-mono">{p.rank <= 3 ? ['🥇','🥈','🥉'][p.rank-1] : `#${p.rank}`}</td>
+                                                    <td className="p-2 font-bold text-white">
+                                                        {p.player_name}
+                                                        {p.already_paid && <span className="ml-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300 uppercase">Paid</span>}
+                                                    </td>
+                                                    <td className="p-2 text-slate-500 font-mono text-[10px]">{p.wallet_address ? `${p.wallet_address.slice(0,6)}...${p.wallet_address.slice(-4)}` : '-'}</td>
+                                                    <td className="p-2 text-right font-mono text-slate-300">{(p.score || 0).toLocaleString()}</td>
+                                                    <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-orange-400'}`}>{p.amount.toFixed(2)} OMENX</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
 
                         {(previewData.staff_payments || []).length > 0 && (
                             <div className="mt-4">

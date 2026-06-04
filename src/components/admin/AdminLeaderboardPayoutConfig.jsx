@@ -4,10 +4,15 @@ import { Trophy, Save, RotateCcw, Plus, Trash2, AlertTriangle } from 'lucide-rea
 
 // Owner-only panel for editing the leaderboard payout configuration.
 // - Dropdown to pick top N (1..50 quick picks, or custom)
-// - Editable per-rank-tier table for weekly + seasonal
+// - Editable pool %s (weekly score / seasonal score / weekly kill)
+// - Editable per-rank-tier table for weekly + seasonal + kill leaderboards
 // - Live preview showing what each rank would earn from a sample pool
 //
 // Backed by functions/leaderboardPayoutConfig.
+//
+// IMPORTANT: pool % fields ONLY apply to S7+ distributions (2026-S7 and later).
+// Pre-S7 weekly/seasonal payouts ignore them and use legacy hardcoded values
+// (20% weekly / 30% seasonal / no kill pool). See docs/OMENX_POOL_RESPLIT_PLAN.md.
 
 const TOP_N_PRESETS = [5, 10, 15, 20, 25, 30, 40, 45, 50];
 const SAMPLE_POOL = 1000; // OMENX, used for live preview
@@ -104,7 +109,7 @@ function TierEditor({ title, color, tiers, setTiers, poolMultiplier, topN }) {
 
             <div className="mt-3 bg-slate-950/60 rounded p-2 max-h-48 overflow-y-auto">
                 <div className="text-[10px] text-slate-500 uppercase mb-1 sticky top-0 bg-slate-950/90 py-0.5">
-                    Live preview (sample pool: {SAMPLE_POOL} OMENX × {(poolMultiplier * 100).toFixed(0)}% = {Math.floor(SAMPLE_POOL * poolMultiplier)} OMENX reward pool)
+                    Live preview (sample pool: {SAMPLE_POOL} OMENX × {(poolMultiplier * 100).toFixed(1)}% = {Math.floor(SAMPLE_POOL * poolMultiplier)} OMENX reward pool)
                 </div>
                 <table className="w-full text-[11px]">
                     <tbody>
@@ -126,6 +131,25 @@ function TierEditor({ title, color, tiers, setTiers, poolMultiplier, topN }) {
     );
 }
 
+// Small reusable input for a pool % field
+function PoolPctInput({ label, value, onChange, color, hint }) {
+    return (
+        <div className="flex flex-col gap-1">
+            <label className={`text-[10px] uppercase tracking-wider text-${color}-300 font-bold`}>{label}</label>
+            <div className="flex items-center gap-1.5">
+                <input
+                    type="number" min={0} max={50} step={0.1}
+                    value={(value * 100).toFixed(2)}
+                    onChange={e => onChange(Number(e.target.value) / 100)}
+                    className={`w-24 bg-slate-900 border border-${color}-800 text-white rounded px-2 py-1.5 text-sm font-mono`}
+                />
+                <span className="text-slate-500 text-xs">% of spend</span>
+            </div>
+            {hint && <div className="text-[10px] text-slate-500">{hint}</div>}
+        </div>
+    );
+}
+
 export default function AdminLeaderboardPayoutConfig({ isOwner }) {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -134,6 +158,10 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
     const [topN, setTopN] = useState(20);
     const [weeklyTiers, setWeeklyTiers] = useState([]);
     const [seasonalTiers, setSeasonalTiers] = useState([]);
+    const [killTiers, setKillTiers] = useState([]);
+    const [weeklyPoolPct, setWeeklyPoolPct] = useState(0.15);
+    const [seasonalPoolPct, setSeasonalPoolPct] = useState(0.20);
+    const [killPoolPct, setKillPoolPct] = useState(0.05);
     const [meta, setMeta] = useState(null);
 
     const loadConfig = async () => {
@@ -143,8 +171,12 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
             const cfg = res.data?.config;
             if (cfg) {
                 setTopN(cfg.top_n);
-                setWeeklyTiers(cfg.weekly_tiers);
-                setSeasonalTiers(cfg.seasonal_tiers);
+                setWeeklyTiers(cfg.weekly_tiers || []);
+                setSeasonalTiers(cfg.seasonal_tiers || []);
+                setKillTiers(cfg.weekly_kill_tiers || []);
+                if (cfg.weekly_pool_pct !== undefined) setWeeklyPoolPct(Number(cfg.weekly_pool_pct));
+                if (cfg.seasonal_pool_pct !== undefined) setSeasonalPoolPct(Number(cfg.seasonal_pool_pct));
+                if (cfg.kill_pool_pct !== undefined) setKillPoolPct(Number(cfg.kill_pool_pct));
             }
             setMeta(res.data);
         } catch (e) {
@@ -163,6 +195,10 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
                 top_n: topN,
                 weekly_tiers: weeklyTiers,
                 seasonal_tiers: seasonalTiers,
+                weekly_kill_tiers: killTiers,
+                weekly_pool_pct: weeklyPoolPct,
+                seasonal_pool_pct: seasonalPoolPct,
+                kill_pool_pct: killPoolPct,
             });
             if (res.data?.error) throw new Error(res.data.error);
             setMsg('✓ Saved — affects the next distribution');
@@ -202,6 +238,8 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
         return <div className="bg-[#0b0416]/80 border border-slate-700 rounded-xl p-6 text-center text-slate-500">Loading config…</div>;
     }
 
+    const totalPoolPct = weeklyPoolPct + killPoolPct;
+
     return (
         <div className="bg-[#0b0416]/80 border border-amber-900/50 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -225,10 +263,43 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
 
             <div className="bg-amber-950/30 border border-amber-700/40 rounded-lg p-3 mb-4 text-xs text-amber-200 leading-relaxed">
                 <div className="font-bold mb-1">How it works:</div>
-                Set the maximum number of paying ranks ("top N") and the percentage weight of each rank tier.
-                The backend re-scales weights so the full reward pool is always distributed (weekly = 20% of spend, seasonal = 30%).
-                Live previews on the right show exactly what each rank earns from a sample 1,000 OMENX pool.
-                Changes apply on the <span className="font-bold">next</span> Preview / Distribute action.
+                Pool % fields control how much of the weekly/seasonal OMENX spend goes to each leaderboard.
+                The backend re-scales the rank tier weights so each pool is always fully distributed.
+                <div className="mt-2 text-amber-300/80">
+                    <span className="font-bold">⚠️ Pool % fields only apply from Season 7 onwards (~2026-06-14).</span> Pre-S7 distributions ignore them and use legacy values (20% weekly / 30% seasonal / no kill pool). Tier % weights apply to all periods.
+                </div>
+            </div>
+
+            {/* Pool % fields */}
+            <div className="bg-slate-900/40 border border-slate-700/60 rounded-lg p-3 mb-4">
+                <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Pool Sizes (S7+)</div>
+                <div className="flex flex-wrap gap-6">
+                    <PoolPctInput
+                        label="Weekly Score Pool" color="cyan"
+                        value={weeklyPoolPct} onChange={setWeeklyPoolPct}
+                        hint="Default 15%"
+                    />
+                    <PoolPctInput
+                        label="Seasonal Score Pool" color="purple"
+                        value={seasonalPoolPct} onChange={setSeasonalPoolPct}
+                        hint="Default 20%"
+                    />
+                    <PoolPctInput
+                        label="Weekly Kill Pool" color="orange"
+                        value={killPoolPct} onChange={setKillPoolPct}
+                        hint="Default 5% (top 20 sector kills)"
+                    />
+                    <div className="flex flex-col gap-1 ml-auto bg-slate-950/60 border border-slate-700 rounded px-3 py-2">
+                        <div className="text-[10px] text-slate-500 uppercase">Total weekly outflow</div>
+                        <div className="font-mono font-bold text-sm text-white">
+                            {(totalPoolPct * 100).toFixed(2)}%
+                            <span className="text-slate-500 text-xs ml-1">+ staff cuts</span>
+                        </div>
+                        {totalPoolPct > 0.30 && (
+                            <div className="text-[10px] text-amber-400 mt-1">⚠ over 30% — verify runway</div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Top N picker */}
@@ -260,13 +331,16 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <TierEditor title="Weekly tiers (20% of weekly pool)" color="cyan"
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <TierEditor title={`Weekly Score (${(weeklyPoolPct * 100).toFixed(1)}% of pool)`} color="cyan"
                     tiers={weeklyTiers} setTiers={setWeeklyTiers}
-                    poolMultiplier={0.20} topN={topN} />
-                <TierEditor title="Seasonal tiers (30% of seasonal pool)" color="purple"
+                    poolMultiplier={weeklyPoolPct} topN={topN} />
+                <TierEditor title={`Seasonal Score (${(seasonalPoolPct * 100).toFixed(1)}% of pool)`} color="purple"
                     tiers={seasonalTiers} setTiers={setSeasonalTiers}
-                    poolMultiplier={0.30} topN={topN} />
+                    poolMultiplier={seasonalPoolPct} topN={topN} />
+                <TierEditor title={`Weekly Kills (${(killPoolPct * 100).toFixed(1)}% of pool)`} color="orange"
+                    tiers={killTiers} setTiers={setKillTiers}
+                    poolMultiplier={killPoolPct} topN={topN} />
             </div>
         </div>
     );
