@@ -139,6 +139,11 @@ export default function Leaderboard() {
 
     // Define poolQueryKey before useEffect dependencies
     const { week_id, season_id } = getCurrentPeriodIds();
+    
+    // S7+ feature — gate kill leaderboard to Season 7 and later
+    const seasonMatch = season_id?.match(/^(\d{4})-S(\d{1,2})$/);
+    const isS7OrLater = seasonMatch && (Number(seasonMatch[1]) > 2026 || (Number(seasonMatch[1]) === 2026 && Number(seasonMatch[2]) >= 7));
+    
     const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
     const fetchTimeoutRef = useRef(null);
 
@@ -431,13 +436,24 @@ export default function Leaderboard() {
                     >
                         Seasonal
                     </button>
-                    <button 
-                        onClick={() => setView('all_time')}
-                        className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                        title="Total kills from sector runs this week"
-                    >
-                        Weekly Sector Kills
-                    </button>
+                    {isS7OrLater ? (
+                        <button 
+                            onClick={() => setView('all_time')}
+                            className={`flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-colors ${view === 'all_time' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            title="Total kills from sector runs this week"
+                        >
+                            Weekly Sector Kills
+                        </button>
+                    ) : (
+                        <button 
+                            disabled
+                            className="flex-1 sm:flex-none px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base bg-slate-800 text-slate-600 cursor-not-allowed opacity-60"
+                            title="Available in Season 7"
+                        >
+                            Weekly Sector Kills
+                            <span className="text-[10px] md:text-xs block mt-0.5">Coming S7</span>
+                        </button>
+                    )}
 
                     <button 
                         onClick={() => setView('endless')}
