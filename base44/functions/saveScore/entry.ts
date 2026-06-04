@@ -79,12 +79,25 @@ const ENDLESS_KILLS_HARD_CEILING = 12000;
 // 10M to leave the leaderboard chase open for the final 10 days of S5. S6's new
 // formula caps endless naturally at ~10k/min and peaks ~1M overall, so 10M
 // remains a meaningful tampering backstop without constraining legit play.
-const SCORE_HARD_CEILING = 10_000_000;
+// Bumped 10M → 25M for Outer Galaxy (2026-06-04). Endless top runs were already
+// clipping the old 10M ceiling, and Outer Galaxy bonus mult at S20 (3.5× on
+// sector+victory) can push legit S20 Cosmic runs into ~2.2M; long endless tails
+// can reach ~7-10M. 25M gives comfortable headroom without losing the tampering
+// backstop. See SECTORS_11_20_PLAN.md.
+const SCORE_HARD_CEILING = 25_000_000;
 
 // Arena progression — must mirror game/Constants.js ARENAS order EXACTLY.
 // Bug 2026-05-01 (Crybel): old order had stale ids ('voidring', 'singularity')
 // and was missing 5 arenas, so beating Ethereal Nebula / Crimson Void didn't unlock the next sector.
-const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension'];
+// Extended 2026-06-04: 10 → 20 entries for Outer Galaxy (S11-S20). New arena ids
+// MUST match the new ARENAS entries appended in game/Constants.js. See SECTORS_11_20_PLAN.md.
+const ARENA_ORDER = [
+    // Inner Galaxy (S1-S10)
+    'station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension',
+    // Outer Galaxy (S11-S20)
+    'galactic_core', 'pillars', 'saturnian', 'andromeda', 'painters_spiral',
+    'harmony', 'chromatic', 'stormfront', 'supernova', 'devourer',
+];
 
 // Arena durations (seconds) — must mirror game/Constants.js ARENAS.duration EXACTLY.
 // Used to clamp time_survived on sector runs: the engine's `this.time` keeps ticking
@@ -92,8 +105,12 @@ const ARENA_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal
 // the boss dies). That post-duration tail was inflating time, gold accrual, and score.
 // Endless (Infinity) and raid (world_boss_arena) are not clamped — they have no duration.
 const ARENA_DURATIONS = {
+    // Inner Galaxy
     station: 180, asteroid: 210, nebula: 240, void: 270, plasma: 300,
     crystal: 330, moon: 360, blackhole: 390, mothership: 420, dimension: 450,
+    // Outer Galaxy (S11-S20) — +30s per sector, 8:00 → 12:30
+    galactic_core: 480, pillars: 510, saturnian: 540, andromeda: 570, painters_spiral: 600,
+    harmony: 630, chromatic: 660, stormfront: 690, supernova: 720, devourer: 750,
 };
 
 // Character unlock kill milestones — must mirror game/CharacterUnlocks.js.
@@ -237,8 +254,17 @@ function validateAndRecompute(scoreData) {
         const levelScore = level * level * 100;
         const sectorScore = (isEndless || isRaidRun) ? 0 : sectorIdxForBonus * 8000;
         const victoryBonus = (isVictory && !isEndless && !isRaidRun) ? sectorIdxForBonus * 15000 : 0;
+        // Outer Galaxy climb bonus (2026-06-04). Escalating multiplier on the
+        // sector + victory portion ONLY — kill score stays sacred (flat 120/kill).
+        // Compensates for kill-rate drop at high sectors so S20 still scores
+        // higher than farming S10. sectorIdxForBonus is 0-indexed: S15=14, S18=17, S20=19.
+        const bonusMult = sectorIdxForBonus >= 19 ? 3.5
+                        : sectorIdxForBonus >= 17 ? 2.5
+                        : sectorIdxForBonus >= 14 ? 2
+                        : 1;
+        const scaledSectorBonus = (sectorScore + victoryBonus) * bonusMult;
         const endlessScore = isEndless ? Math.floor(time / 60) * 10000 : 0;
-        const baseScore = killsScore + levelScore + sectorScore + victoryBonus + endlessScore;
+        const baseScore = killsScore + levelScore + scaledSectorBonus + endlessScore;
         score = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore));
     } else {
         // ====================================================================
@@ -478,9 +504,10 @@ function applyRunToSave(save, run, isVictory, charId, isEndless) {
             }
             map[charId] = charArenas;
             s.unlockedArenasByCharacter = map;
-        } else if (idx === ARENA_ORDER.length - 1) {
-            s.newGamePlusUnlocked = true;
         }
+        // NG+ branch removed 2026-06-04 — NG+ was retired and `newGamePlusUnlocked`
+        // is no longer read anywhere. Outer Galaxy extends the natural unlock chain
+        // through S20 instead of triggering a separate prestige flag.
     }
 
     // Character milestone unlocks (random)
