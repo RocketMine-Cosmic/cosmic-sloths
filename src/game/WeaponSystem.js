@@ -611,7 +611,12 @@ export function fireWeaponLogic(engine, w) {
             }
         });
         if (totalHeal > 0) {
-            totalHeal = Math.min(totalHeal, engine.player.maxHp * 0.05); // Cap at 5% max HP per swing
+            // Heal cap: 5% Max HP per swing on Inner Galaxy. Lifted to 10% on Outer
+            // Galaxy (S11-S20) where enemy damage outpaces the old cap — without
+            // this, sustain builds become unplayable past S13. Sector detection
+            // via the engine's _outerGalaxyActive flag (set in GameEngine ctor).
+            const healCap = engine._outerGalaxyActive ? 0.10 : 0.05;
+            totalHeal = Math.min(totalHeal, engine.player.maxHp * healCap);
             engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + totalHeal);
             engine.callbacks.onHpChange(engine.player.hp, engine.player.maxHp);
         }

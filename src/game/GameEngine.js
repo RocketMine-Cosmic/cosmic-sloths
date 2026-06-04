@@ -13,6 +13,27 @@ import { levelUp as levelUpLogic, generateChoices as generateChoicesLogic, apply
 import { updateCharacterMechanics } from './CharacterMechanics';
 import { isS6OrLater } from '@/lib/seasonGate';
 
+// Outer Galaxy (S11-S20) per-sector cap lifts (added 2026-06-04). Inner Galaxy
+// keeps the existing S6 ceilings (6.0 dmg / 4.0 area / 5.0 xp). Outer Galaxy
+// progressively lifts dmg/area/xp so fully-built whales actually have a chance
+// against the exponential enemy HP/dmg curve (S20 Cosmic ≈ 81× S10 Cosmic).
+// goldMult cap (8.0) intentionally NOT lifted — Outer Galaxy keeps S10 gold
+// drops flat per the rewards rule. cooldownMult floor (0.35) untouched — the
+// per-weapon Math.max(0.35, ...) in updateWeapons makes any constructor lift
+// dead code. Keys = sector index (1-20). See docs/SECTORS_11_20_PLAN.md.
+const OUTER_GALAXY_CAPS = {
+    11: { dmg: 10,  area: 5,  xp: 9  },
+    12: { dmg: 14,  area: 5,  xp: 11 },
+    13: { dmg: 18,  area: 6,  xp: 14 },
+    14: { dmg: 23,  area: 7,  xp: 17 },
+    15: { dmg: 30,  area: 8,  xp: 20 },
+    16: { dmg: 38,  area: 9,  xp: 24 },
+    17: { dmg: 50,  area: 10, xp: 28 },
+    18: { dmg: 62,  area: 11, xp: 33 },
+    19: { dmg: 70,  area: 11, xp: 36 },
+    20: { dmg: 80,  area: 12, xp: 40 },
+};
+
 export class GameEngine {
     constructor(canvas, characterId, arenaId, difficultyId, save, callbacks, isEndless = false, worldBossId = null, worldBossName = null, startingWeaponId = null) {
         this.canvas = canvas;
@@ -313,13 +334,31 @@ export class GameEngine {
         // caps in levelUp() (5.0 dmg / 2000 HP) DON'T apply to upgrade picks, so
         // without these clamps a 90-min endless player can blow past them via
         // Overcharge fillers. S5 unchanged (legacy whales keep their stacking).
+        //
+        // Outer Galaxy (S11-S20): per-sector caps lifted via OUTER_GALAXY_CAPS lookup
+        // — without this, whales hit the standard S6 walls (6.0 dmg etc) and have ZERO
+        // chance of clearing even S12 (enemy HP scales exponentially). See
+        // docs/SECTORS_11_20_PLAN.md "Player power cap lifts" section.
+        // `this._outerGalaxyActive` is exposed for other systems (e.g. WeaponSystem
+        // lifts Vampiric Lash heal cap 5% → 10% on Outer Galaxy).
+        const sectorIdx = ARENAS.findIndex(a => a.id === this.arena.id) + 1;
+        const outerCaps = OUTER_GALAXY_CAPS[sectorIdx];
+        this._outerGalaxyActive = !!outerCaps;
         if (this._isS6) {
-            this.player.damageMult = Math.min(6.0,  this.player.damageMult);
-            this.player.goldMult   = Math.min(8.0,  this.player.goldMult);
-            this.player.areaMult   = Math.min(4.0,  this.player.areaMult);
-            this.player.xpMult     = Math.min(5.0,  this.player.xpMult);
-            // cooldownMult is "lower is better" — floor at 0.35 (matches the
-            // existing per-weapon Math.max(0.35, ...) safeguard in updateWeapons).
+            if (outerCaps) {
+                this.player.damageMult = Math.min(outerCaps.dmg,  this.player.damageMult);
+                this.player.areaMult   = Math.min(outerCaps.area, this.player.areaMult);
+                this.player.xpMult     = Math.min(outerCaps.xp,   this.player.xpMult);
+            } else {
+                // Inner Galaxy (S1-S10) — standard S6 caps unchanged.
+                this.player.damageMult = Math.min(6.0, this.player.damageMult);
+                this.player.areaMult   = Math.min(4.0, this.player.areaMult);
+                this.player.xpMult     = Math.min(5.0, this.player.xpMult);
+            }
+            // goldMult cap + cooldownMult floor are sector-agnostic — Outer Galaxy
+            // keeps S10 gold drops flat (rewards rule) and the per-weapon Math.max
+            // safeguard in updateWeapons enforces the cooldown floor anyway.
+            this.player.goldMult     = Math.min(8.0,  this.player.goldMult);
             this.player.cooldownMult = Math.max(0.35, this.player.cooldownMult);
         }
 
