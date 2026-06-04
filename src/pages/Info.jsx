@@ -845,6 +845,52 @@ TABS_CONTENT.combat = (
                 </div>
             </SectionCard>
 
+            <SectionCard title="📊 Dynamic Difficulty Pill" color="orange">
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-3">
+                    The pill under <strong className="text-white">KILLS</strong> in your in-run HUD shows how the game is reading your performance <em>right now</em>. If you're dominating, spawns ramp up; if you're struggling, they ease off — the pill tells you exactly which side you're on.
+                </p>
+                <div className="space-y-1.5 mb-3">
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/60 rounded-lg px-3 py-2 border border-cyan-500/40">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">❄️</span>
+                            <span className="font-black text-cyan-300 text-xs tracking-widest uppercase">CHILL</span>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400">&lt; 0.8× spawn rate — easing up</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/60 rounded-lg px-3 py-2 border border-slate-600/60">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">⚪</span>
+                            <span className="font-black text-slate-300 text-xs tracking-widest uppercase">STEADY</span>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400">0.8×–1.2× — baseline pacing</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/60 rounded-lg px-3 py-2 border border-orange-500/50">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">🔥</span>
+                            <span className="font-black text-orange-300 text-xs tracking-widest uppercase">HEATED</span>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400">1.2×–2× — elite spawn boost kicks in</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/60 rounded-lg px-3 py-2 border border-fuchsia-500/60 shadow-[0_0_10px_rgba(217,70,239,0.2)]">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">⚡</span>
+                            <span className="font-black text-fuchsia-300 text-xs tracking-widest uppercase">IN THE ZONE</span>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400">2×–3× — end-of-run taper bypassed</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 bg-slate-900/60 rounded-lg px-3 py-2 border border-red-500/70 shadow-[0_0_10px_rgba(248,113,113,0.25)]">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">💀</span>
+                            <span className="font-black text-red-300 text-xs tracking-widest uppercase">FRENZY</span>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400">≥ 3× — burst spawns, mobs double up</span>
+                    </div>
+                </div>
+                <div className="bg-slate-900/40 rounded-lg p-3 border border-slate-700/60 text-xs text-slate-400 leading-relaxed">
+                    💡 The higher tiers aren't a punishment — they're a reward. <strong className="text-white">IN THE ZONE</strong> exempts you from the final-30s spawn taper, and <strong className="text-white">FRENZY</strong> doubles up every spawn so strong players keep racking up kills and XP. More kills = more level² score = better leaderboard finish.
+                </div>
+            </SectionCard>
+
             <SectionCard title="🌟 Level Ups & Rarity" color="purple">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
                     Every time you level up mid-run, you pick 1 of 3 random upgrades. Each can be one of 4 rarities:
