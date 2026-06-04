@@ -134,10 +134,11 @@ answer = flatter curve
 Today: 10k OMENX per player per period (one pool).
 Option A — **independent caps** (recommended): kill-pool 10k + score-pool 10k = up to 20k weekly for double-toppers. Rewards completionists.
 Option B — shared cap: a pilot can't exceed 10k total across both pools per week. Caps top earners but means a #1-on-both pilot effectively only gets one prize.
+answer = independant caps
 
 **Q4. Eligibility — which kills count?**
 Recommend: same rule the existing `weekly_sector_kills` counter uses (sector runs only, endless/raid/meteor excluded). Server-authoritative, already battle-tested.
-
+answer = recommended 
 **Q5. Staff cut accounting**
 Staff still takes `2% × N` of **`pool.total_spent`** (not of the score sub-pool), correct? Confirm — easy to misread the diff and accidentally double-skim.
 
