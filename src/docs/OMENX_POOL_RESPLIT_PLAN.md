@@ -139,8 +139,10 @@ answer = independant caps
 **Q4. Eligibility — which kills count?**
 Recommend: same rule the existing `weekly_sector_kills` counter uses (sector runs only, endless/raid/meteor excluded). Server-authoritative, already battle-tested.
 answer = recommended 
+
 **Q5. Staff cut accounting**
 Staff still takes `2% × N` of **`pool.total_spent`** (not of the score sub-pool), correct? Confirm — easy to misread the diff and accidentally double-skim.
+answer = correct
 
 **Q6. Transition timing**
 Recommend deploying on a **Monday 00:00 UTC** boundary so the new % applies cleanly to the entire week. Live preview/admin tools should reflect the new % the moment we deploy, even if the next distribution is days away.
